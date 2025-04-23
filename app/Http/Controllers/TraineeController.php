@@ -4,17 +4,21 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Trainees;
+use App\Models\Centres;
+use App\Models\Activities;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Storage;
+use Carbon\Carbon;
 
 class TraineeController extends Controller
 {
     /**
-     * Display a listing of the trainees.
+     * Display a listing of all trainees.
      *
      * @return \Illuminate\View\View
      */
+        // In TraineeController.php
     public function index()
     {
         // Get user role
@@ -26,9 +30,20 @@ class TraineeController extends Controller
         
         // Get trainees data
         $trainees = Trainees::all();
+        $traineesByCenter = $trainees->groupBy('centre_name');
+        $centres = Centres::where('status', 'active')->get();
+        $totalTrainees = $trainees->count();
+        $conditionTypes = $trainees->pluck('trainee_condition')->unique()->count();
+        $newTraineesCount = $trainees->where('created_at', '>=', now()->subDays(30))->count();
         
-        return view('trainees.index', [
-            'trainees' => $trainees
+        // Return the home view instead of index view
+        return view('trainees.home', [
+            'trainees' => $trainees,
+            'traineesByCenter' => $traineesByCenter,
+            'centres' => $centres,
+            'totalTrainees' => $totalTrainees,
+            'conditionTypes' => $conditionTypes,
+            'newTraineesCount' => $newTraineesCount
         ]);
     }
 
@@ -39,7 +54,11 @@ class TraineeController extends Controller
      */
     public function create()
     {
-        return view('trainees.create');
+        $centers = Centers::where('status', 'active')->get();
+        
+        return view('trainees.create', [
+            'centers' => $centers
+        ]);
     }
 
     /**
@@ -70,28 +89,32 @@ class TraineeController extends Controller
         $trainee->trainee_date_of_birth = $validatedData['trainee_date_of_birth'];
         $trainee->centre_name = $validatedData['centre_name'];
         $trainee->trainee_condition = $validatedData['trainee_condition'];
+        $trainee->trainee_attendance = 0; // Default attendance value
         
         // Handle avatar upload
         if ($request->hasFile('trainee_avatar')) {
             $avatar = $request->file('trainee_avatar');
             $avatarName = time() . '_' . $avatar->getClientOriginalName();
-            $avatar->move(public_path('avatars'), $avatarName);
-            $trainee->trainee_avatar = 'avatars/' . $avatarName;
+            $avatarPath = $avatar->storeAs('trainee_avatars', $avatarName, 'public');
+            $trainee->trainee_avatar = 'storage/' . $avatarPath;
+        } else {
+            // Set default avatar
+            $trainee->trainee_avatar = 'images/default-avatar.jpg';
         }
         
         $trainee->save();
         
-        Log::info('Trainee created', [
+        Log::info('Trainee created successfully', [
             'user_id' => session('id'),
             'trainee_id' => $trainee->id
         ]);
         
         return redirect()->route('trainees.index')
-            ->with('success', 'Trainee created successfully');
+            ->with('success', 'Trainee registered successfully!');
     }
 
     /**
-     * Display the specified trainee.
+     * Display the specified trainee profile.
      *
      * @param  int  $id
      * @return \Illuminate\View\View
@@ -99,9 +122,13 @@ class TraineeController extends Controller
     public function show($id)
     {
         $trainee = Trainees::findOrFail($id);
+        $activities = Activities::where('trainee_id', $id)
+                              ->orderBy('activity_date', 'desc')
+                              ->get();
         
         return view('trainees.show', [
-            'trainee' => $trainee
+            'trainee' => $trainee,
+            'activities' => $activities
         ]);
     }
 
@@ -114,9 +141,11 @@ class TraineeController extends Controller
     public function edit($id)
     {
         $trainee = Trainees::findOrFail($id);
+        $centers = Centers::where('status', 'active')->get();
         
         return view('trainees.edit', [
-            'trainee' => $trainee
+            'trainee' => $trainee,
+            'centers' => $centers
         ]);
     }
 
@@ -157,26 +186,28 @@ class TraineeController extends Controller
         
         // Handle avatar upload
         if ($request->hasFile('trainee_avatar')) {
-            // Remove old avatar if exists
-            if ($trainee->trainee_avatar && file_exists(public_path($trainee->trainee_avatar))) {
-                unlink(public_path($trainee->trainee_avatar));
+            // Remove old avatar if exists and not default
+            if ($trainee->trainee_avatar && 
+                !str_contains($trainee->trainee_avatar, 'default-avatar') && 
+                Storage::disk('public')->exists(str_replace('storage/', '', $trainee->trainee_avatar))) {
+                Storage::disk('public')->delete(str_replace('storage/', '', $trainee->trainee_avatar));
             }
             
             $avatar = $request->file('trainee_avatar');
             $avatarName = time() . '_' . $avatar->getClientOriginalName();
-            $avatar->move(public_path('avatars'), $avatarName);
-            $trainee->trainee_avatar = 'avatars/' . $avatarName;
+            $avatarPath = $avatar->storeAs('trainee_avatars', $avatarName, 'public');
+            $trainee->trainee_avatar = 'storage/' . $avatarPath;
         }
         
         $trainee->save();
         
-        Log::info('Trainee updated', [
+        Log::info('Trainee updated successfully', [
             'user_id' => session('id'),
             'trainee_id' => $trainee->id
         ]);
         
-        return redirect()->route('trainees.index')
-            ->with('success', 'Trainee updated successfully');
+        return redirect()->route('trainees.show', $trainee->id)
+            ->with('success', 'Trainee profile updated successfully!');
     }
 
     /**
@@ -189,93 +220,134 @@ class TraineeController extends Controller
     {
         $trainee = Trainees::findOrFail($id);
         
-        // Delete avatar file if exists
-        if ($trainee->trainee_avatar && file_exists(public_path($trainee->trainee_avatar))) {
-            unlink(public_path($trainee->trainee_avatar));
+        // Remove avatar file if exists and not the default
+        if ($trainee->trainee_avatar && 
+            !str_contains($trainee->trainee_avatar, 'default-avatar') && 
+            Storage::disk('public')->exists(str_replace('storage/', '', $trainee->trainee_avatar))) {
+            Storage::disk('public')->delete(str_replace('storage/', '', $trainee->trainee_avatar));
         }
         
+        // Delete related activities
+        Activities::where('trainee_id', $id)->delete();
+        
+        // Delete the trainee
         $trainee->delete();
         
-        Log::info('Trainee deleted', [
+        Log::info('Trainee deleted successfully', [
             'user_id' => session('id'),
             'trainee_id' => $id
         ]);
         
         return redirect()->route('trainees.index')
-            ->with('success', 'Trainee deleted successfully');
+            ->with('success', 'Trainee deleted successfully!');
     }
     
     /**
-     * Update progress for a specific trainee.
+     * Display trainees by center.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\RedirectResponse
+     * @return \Illuminate\View\View
      */
-    public function updateProgress(Request $request, $id)
+    public function byCenter()
     {
-        $trainee = Trainees::findOrFail($id);
+        $trainees = Trainees::all();
+        $traineesByCenter = $trainees->groupBy('centre_name');
+        $centers = Centers::where('status', 'active')->get();
         
-        // Validate input
-        $request->validate([
-            'progress_notes' => 'required|string',
-            'progress_date' => 'required|date',
-            'progress_rating' => 'required|integer|min:1|max:5'
+        return view('trainees.by-center', [
+            'traineesByCenter' => $traineesByCenter,
+            'centers' => $centers
         ]);
-        
-        // In a real implementation, you would save this to a progress table
-        // For now, we'll just log it
-        Log::info('Trainee progress updated', [
-            'user_id' => session('id'),
-            'trainee_id' => $id,
-            'progress_notes' => $request->progress_notes,
-            'progress_date' => $request->progress_date,
-            'progress_rating' => $request->progress_rating
-        ]);
-        
-        return redirect()->back()
-            ->with('success', 'Progress updated successfully');
     }
     
     /**
-     * Register trainee for participation in an activity.
+     * Search trainees by criteria.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\RedirectResponse
+     * @return \Illuminate\View\View
      */
-    public function registerParticipation(Request $request, $id)
+    public function search(Request $request)
     {
-        // In a real implementation, you would save this to a participation table
-        // For now, we'll just log it
-        Log::info('Trainee registered for activity', [
-            'user_id' => session('id'),
-            'trainee_id' => $id,
-            'activity_id' => $request->activity_id
-        ]);
+        $query = Trainees::query();
         
-        return redirect()->back()
-            ->with('success', 'Trainee registered for activity successfully');
+        if ($request->filled('keyword')) {
+            $keyword = $request->input('keyword');
+            $query->where(function($q) use ($keyword) {
+                $q->where('trainee_first_name', 'like', "%{$keyword}%")
+                  ->orWhere('trainee_last_name', 'like', "%{$keyword}%")
+                  ->orWhere('trainee_email', 'like', "%{$keyword}%");
+            });
+        }
+        
+        if ($request->filled('center')) {
+            $query->where('centre_name', $request->input('center'));
+        }
+        
+        if ($request->filled('condition')) {
+            $query->where('trainee_condition', $request->input('condition'));
+        }
+        
+        $trainees = $query->get();
+        $centers = Centers::where('status', 'active')->get();
+        $conditions = Trainees::select('trainee_condition')->distinct()->pluck('trainee_condition');
+        
+        return view('trainees.search', [
+            'trainees' => $trainees,
+            'centers' => $centers,
+            'conditions' => $conditions,
+            'searchParams' => $request->all()
+        ]);
     }
     
     /**
-     * Unregister trainee from an activity.
+     * Export trainees data to CSV.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\RedirectResponse
+     * @return \Symfony\Component\HttpFoundation\BinaryFileResponse
      */
-    public function unregisterParticipation(Request $request, $id)
+    public function export()
     {
-        // In a real implementation, you would remove this from a participation table
-        // For now, we'll just log it
-        Log::info('Trainee unregistered from activity', [
+        $trainees = Trainees::all();
+        $fileName = 'trainees_' . Carbon::now()->format('Y-m-d') . '.csv';
+        
+        $headers = array(
+            "Content-type" => "text/csv",
+            "Content-Disposition" => "attachment; filename=$fileName",
+            "Pragma" => "no-cache",
+            "Cache-Control" => "must-revalidate, post-check=0, pre-check=0",
+            "Expires" => "0"
+        );
+        
+        $columns = ['ID', 'First Name', 'Last Name', 'Email', 'Phone', 'Birth Date', 'Age', 'Center', 'Condition'];
+        
+        $callback = function() use($trainees, $columns) {
+            $file = fopen('php://output', 'w');
+            fputcsv($file, $columns);
+            
+            foreach ($trainees as $trainee) {
+                $age = Carbon::parse($trainee->trainee_date_of_birth)->age;
+                
+                $row = [
+                    $trainee->id,
+                    $trainee->trainee_first_name,
+                    $trainee->trainee_last_name,
+                    $trainee->trainee_email,
+                    $trainee->trainee_phone_number,
+                    $trainee->trainee_date_of_birth,
+                    $age,
+                    $trainee->centre_name,
+                    $trainee->trainee_condition,
+                ];
+                
+                fputcsv($file, $row);
+            }
+            
+            fclose($file);
+        };
+        
+        Log::info('Trainees data exported', [
             'user_id' => session('id'),
-            'trainee_id' => $id,
-            'activity_id' => $request->activity_id
+            'count' => $trainees->count()
         ]);
         
-        return redirect()->back()
-            ->with('success', 'Trainee unregistered from activity successfully');
+        return response()->stream($callback, 200, $headers);
     }
 }

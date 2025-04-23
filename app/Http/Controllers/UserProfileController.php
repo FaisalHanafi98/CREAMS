@@ -6,10 +6,11 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
-use App\Models\Admins;
-use App\Models\Supervisors;
-use App\Models\Teachers;
-use App\Models\AJKs;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
+use App\Models\Users;
+use Exception;
 
 class UserProfileController extends Controller
 {
@@ -20,32 +21,91 @@ class UserProfileController extends Controller
      */
     public function showProfile()
     {
-        // Get user data from session
-        $role = session('role');
-        $userId = session('id');
-        
-        Log::info('Profile page accessed', [
-            'user_id' => $userId,
-            'role' => $role
-        ]);
-        
-        // Get user model based on role
-        $user = $this->getUserModelByRole($role, $userId);
-        
-        if (!$user) {
-            Log::warning('User not found when accessing profile page', [
-                'user_id' => $userId,
-                'role' => $role
+        try {
+            // Get user data from session
+            $roleId = session('id');
+            $role = session('role');
+            
+            Log::info('Profile page accessed', [
+                'user_id' => $roleId,
+                'role' => $role,
+                'session_id' => session()->getId()
             ]);
             
-            return redirect()->back()->with('error', 'User profile not found.');
+            if (!$roleId || !$role) {
+                Log::warning('Incomplete session data when accessing profile', [
+                    'session_data' => session()->all()
+                ]);
+                
+                return redirect()->route('auth.loginpage')
+                    ->with('error', 'Your session has expired. Please log in again.');
+            }
+            
+            // Get user from database to ensure we have the latest data
+            $user = Users::find($roleId);
+            
+            if (!$user) {
+                Log::error('User not found in database', [
+                    'user_id' => $roleId,
+                    'role' => $role
+                ]);
+                
+                return redirect()->route('auth.loginpage')
+                    ->with('error', 'Your account could not be found. Please log in again.');
+            }
+            
+            // Create a user data array with standardized fields
+            $userData = [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'role' => $role,
+                'iium_id' => $user->iium_id,
+                'avatar' => $user->avatar,
+                'phone' => $user->phone,
+                'address' => $user->address,
+                'bio' => $user->about, 
+                'date_of_birth' => $user->date_of_birth,
+                'centre_id' => $user->centre_id
+            ];
+            
+            // Add debug log to see what data is being loaded
+            Log::debug('User data loaded for profile page', [
+                'userData' => [
+                                'name' => $user->name,
+                                'email' => $user->email,
+                                'phone' => $user->phone,
+                                'date_of_birth' => $user->date_of_birth,
+                                'address' => $user->address,
+                                'bio' => $user->about,
+                              ]
+            ]);
+            
+            // Update session with the latest user data
+            session([
+                'avatar' => $user->avatar,
+                'name' => $user->name,
+                'email' => $user->email,
+                'phone' => $user->phone,
+                'address' => $user->address,
+                'about' => $user->about,
+                'date_of_birth' => $user->date_of_birth
+            ]);
+            
+            // Return the profile view with user data
+            return view('profile', [
+                'user' => $userData,
+                'role' => $role
+            ]);
+        } catch (Exception $e) {
+            Log::error('Error displaying profile page', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return redirect()->route('dashboard')
+                ->with('error', 'There was a problem accessing your profile. Please try again later.');
         }
-        
-        // Return the profile view with user data
-        return view('profile', [
-            'user' => $user,
-            'role' => $role
-        ]);
     }
     
     /**
@@ -56,63 +116,148 @@ class UserProfileController extends Controller
      */
     public function updateProfile(Request $request)
     {
-        // Get user data from session
-        $role = session('role');
-        $userId = session('id');
+        DB::beginTransaction();
         
-        Log::info('Profile update attempted', [
-            'user_id' => $userId,
-            'role' => $role,
-            'data' => $request->except(['password', 'new_password', 'password_confirmation'])
-        ]);
-        
-        // Validate input
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|max:255',
-            'phone' => 'nullable|string|max:20',
-            'address' => 'nullable|string',
-            'bio' => 'nullable|string|max:1000',
-        ]);
-        
-        // Get user model based on role
-        $user = $this->getUserModelByRole($role, $userId);
-        
-        if (!$user) {
-            Log::warning('User not found when updating profile', [
-                'user_id' => $userId,
+        try {
+            // Get user data from session
+            $roleId = session('id');
+            $role = session('role');
+            
+            Log::info('Profile update attempted', [
+                'user_id' => $roleId,
+                'role' => $role,
+                'data' => $request->except(['password', 'new_password', 'password_confirmation'])
+            ]);
+            
+            if (!$roleId || !$role) {
+                Log::warning('Incomplete session data when updating profile', [
+                    'session_data' => session()->all()
+                ]);
+                
+                return redirect()->route('auth.loginpage')
+                    ->with('error', 'Your session has expired. Please log in again.');
+            }
+            
+            // Validate input with custom error messages
+            $validator = Validator::make($request->all(), [
+                'name' => 'required|string|max:255',
+                'email' => 'required|email|max:255',
+                'phone' => 'nullable|string|max:20',
+                'address' => 'nullable|string|max:500',
+                'bio' => 'nullable|string|max:1000',
+                'date_of_birth' => 'nullable|date|before:today',
+            ], [
+                'name.required' => 'Your name is required.',
+                'email.required' => 'Your email address is required.',
+                'email.email' => 'Please enter a valid email address.',
+                'phone.max' => 'Phone number must not exceed 20 characters.',
+                'date_of_birth.before' => 'Date of birth must be in the past.',
+            ]);
+            
+            if ($validator->fails()) {
+                return redirect()->route('profile')
+                    ->withErrors($validator)
+                    ->withInput();
+            }
+            
+            // Get user model
+            $user = Users::where('id', $roleId)->first();
+            
+            if (!$user) {
+                Log::error('User not found when updating profile', [
+                    'user_id' => $roleId,
+                    'role' => $role
+                ]);
+                
+                DB::rollBack();
+                return redirect()->route('auth.loginpage')
+                    ->with('error', 'Your account could not be found. Please log in again.');
+            }
+            
+            // Check if email changed and if it's unique
+            if ($user->email !== $request->email) {
+                $emailExists = Users::where('email', $request->email)
+                    ->where('id', '!=', $roleId)
+                    ->exists();
+                    
+                if ($emailExists) {
+                    DB::rollBack();
+                    return redirect()->route('profile')
+                        ->with('error', 'Email address is already in use by another account.')
+                        ->withInput();
+                }
+            }
+            
+            // Update user data
+            $user->name = $request->name;
+            $user->email = $request->email;
+            $user->phone = $request->phone;
+            $user->address = $request->address;
+            
+            // Update bio field (stored in about)
+            $user->about = $request->bio;
+            
+            if ($request->has('date_of_birth') && $request->date_of_birth) {
+                $user->date_of_birth = $request->date_of_birth;
+            }
+            
+            $saved = $user->save();
+            
+            if (!$saved) {
+                Log::error('Failed to save user profile', [
+                    'user_id' => $roleId,
+                    'role' => $role
+                ]);
+                
+                DB::rollBack();
+                return redirect()->route('profile')
+                    ->with('error', 'Failed to update profile. Please try again.')
+                    ->withInput();
+            }
+            
+            // Add debug log to verify what was saved
+            Log::debug('User data saved during update', [
+                'updatedFields' => [
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'phone' => $user->phone,
+                    'address' => $user->address,
+                    'about' => $user->about,
+                    'date_of_birth' => $user->date_of_birth
+                ]
+            ]);
+            
+            // Update session data
+            session([
+                'name' => $user->name, 
+                'email' => $user->email,
+                'phone' => $user->phone,
+                'address' => $user->address,
+                'about' => $user->about,
+                'date_of_birth' => $user->date_of_birth
+            ]);
+            
+            DB::commit();
+            
+            Log::info('Profile updated successfully', [
+                'user_id' => $roleId,
                 'role' => $role
             ]);
             
-            return redirect()->back()->with('error', 'User profile not found.');
+            return redirect()->route('profile')->with('success', 'Your profile has been updated successfully.');
+        } catch (Exception $e) {
+            DB::rollBack();
+            
+            Log::error('Exception during profile update', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'user_id' => session('id')
+            ]);
+            
+            return redirect()->route('profile')
+                ->with('error', 'An unexpected error occurred. Please try again later.')
+                ->withInput();
         }
-        
-        // Check if email changed and if it's unique
-        if ($user->email !== $request->email) {
-            $emailExists = $this->checkEmailExists($request->email, $role, $userId);
-            if ($emailExists) {
-                return redirect()->back()->with('error', 'Email address is already in use by another account.');
-            }
-        }
-        
-        // Update user data
-        $user->name = $request->name;
-        $user->email = $request->email;
-        $user->phone = $request->phone;
-        $user->address = $request->address;
-        $user->bio = $request->bio;
-        
-        $user->save();
-        
-        // Update session data
-        session(['name' => $user->name, 'email' => $user->email]);
-        
-        Log::info('Profile updated successfully', [
-            'user_id' => $userId,
-            'role' => $role
-        ]);
-        
-        return redirect()->back()->with('success', 'Profile updated successfully.');
     }
     
     /**
@@ -123,54 +268,114 @@ class UserProfileController extends Controller
      */
     public function changePassword(Request $request)
     {
-        // Get user data from session
-        $role = session('role');
-        $userId = session('id');
+        DB::beginTransaction();
         
-        Log::info('Password change attempted', [
-            'user_id' => $userId,
-            'role' => $role
-        ]);
-        
-        // Validate input
-        $request->validate([
-            'current_password' => 'required',
-            'new_password' => 'required|min:6|confirmed',
-            'new_password_confirmation' => 'required'
-        ]);
-        
-        // Get user model based on role
-        $user = $this->getUserModelByRole($role, $userId);
-        
-        if (!$user) {
-            Log::warning('User not found when changing password', [
-                'user_id' => $userId,
+        try {
+            // Get user data from session
+            $roleId = session('id');
+            $role = session('role');
+            
+            Log::info('Password change attempted', [
+                'user_id' => $roleId,
                 'role' => $role
             ]);
             
-            return redirect()->back()->with('error', 'User profile not found.');
-        }
-        
-        // Check if current password is correct
-        if (!Hash::check($request->current_password, $user->password)) {
-            Log::warning('Incorrect current password during password change', [
-                'user_id' => $userId,
+            if (!$roleId || !$role) {
+                Log::warning('Incomplete session data when changing password', [
+                    'session_data' => session()->all()
+                ]);
+                
+                return redirect()->route('auth.loginpage')
+                    ->with('error', 'Your session has expired. Please log in again.');
+            }
+            
+            // Validate input
+            $validator = Validator::make($request->all(), [
+                'current_password' => 'required',
+                'new_password' => [
+                    'required',
+                    'min:8',
+                    'confirmed',
+                    'different:current_password',
+                    'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/'
+                ],
+                'new_password_confirmation' => 'required'
+            ], [
+                'current_password.required' => 'Your current password is required.',
+                'new_password.required' => 'The new password is required.',
+                'new_password.min' => 'Your password must be at least 8 characters long.',
+                'new_password.confirmed' => 'The password confirmation does not match.',
+                'new_password.different' => 'Your new password cannot be the same as your current password.',
+                'new_password.regex' => 'Your password must include at least one uppercase letter, one lowercase letter, one number, and one special character.',
+                'new_password_confirmation.required' => 'Please confirm your new password.'
+            ]);
+            
+            if ($validator->fails()) {
+                return redirect()->route('profile')
+                    ->withErrors($validator);
+            }
+            
+            // Get user model
+            $user = Users::where('id', $roleId)->first();
+            
+            if (!$user) {
+                Log::error('User not found when changing password', [
+                    'user_id' => $roleId,
+                    'role' => $role
+                ]);
+                
+                DB::rollBack();
+                return redirect()->route('auth.loginpage')
+                    ->with('error', 'Your account could not be found. Please log in again.');
+            }
+            
+            // Check if current password is correct
+            if (!Hash::check($request->current_password, $user->password)) {
+                Log::warning('Incorrect current password during password change', [
+                    'user_id' => $roleId,
+                    'role' => $role
+                ]);
+                
+                DB::rollBack();
+                return redirect()->route('profile')
+                    ->with('error', 'Your current password is incorrect.');
+            }
+            
+            // Update password
+            $user->password = Hash::make($request->new_password);
+            $saved = $user->save();
+            
+            if (!$saved) {
+                Log::error('Failed to save new password', [
+                    'user_id' => $roleId,
+                    'role' => $role
+                ]);
+                
+                DB::rollBack();
+                return redirect()->route('profile')
+                    ->with('error', 'Failed to update password. Please try again.');
+            }
+            
+            DB::commit();
+            
+            Log::info('Password changed successfully', [
+                'user_id' => $roleId,
                 'role' => $role
             ]);
             
-            return redirect()->back()->with('error', 'Current password is incorrect.');
+            return redirect()->route('profile')->with('success', 'Your password has been changed successfully.');
+        } catch (Exception $e) {
+            DB::rollBack();
+            
+            Log::error('Exception during password change', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'user_id' => session('id')
+            ]);
+            
+            return redirect()->route('profile')
+                ->with('error', 'An unexpected error occurred. Please try again later.');
         }
-        
-        // Update password
-        $user->password = Hash::make($request->new_password);
-        $user->save();
-        
-        Log::info('Password changed successfully', [
-            'user_id' => $userId,
-            'role' => $role
-        ]);
-        
-        return redirect()->back()->with('success', 'Password changed successfully.');
     }
     
     /**
@@ -181,55 +386,89 @@ class UserProfileController extends Controller
      */
     public function uploadAvatar(Request $request)
     {
-        // Get user data from session
-        $role = session('role');
-        $userId = session('id');
+        DB::beginTransaction();
         
-        Log::info('Avatar upload attempted', [
-            'user_id' => $userId,
-            'role' => $role
-        ]);
-        
-        // Validate input with smaller file size limit
-        $request->validate([
-            'avatar' => 'required|image|mimes:jpeg,png,jpg,gif|max:1024', // 1MB max
-        ]);
-        
-        // Get user model based on role
-        $user = $this->getUserModelByRole($role, $userId);
-        
-        if (!$user) {
-            Log::warning('User not found when uploading avatar', [
-                'user_id' => $userId,
+        try {
+            // Get user data from session
+            $roleId = session('id');
+            $role = session('role');
+            
+            Log::info('Avatar upload attempted', [
+                'user_id' => $roleId,
                 'role' => $role
             ]);
             
-            return redirect()->back()->with('error', 'User profile not found.');
-        }
-        
-        try {
+            if (!$roleId || !$role) {
+                Log::warning('Incomplete session data when uploading avatar', [
+                    'session_data' => session()->all()
+                ]);
+                
+                return redirect()->route('auth.loginpage')
+                    ->with('error', 'Your session has expired. Please log in again.');
+            }
+            
+            // Validate input
+            $validator = Validator::make($request->all(), [
+                'avatar' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048', // 2MB max
+            ], [
+                'avatar.required' => 'Please select an image to upload.',
+                'avatar.image' => 'The uploaded file must be an image.',
+                'avatar.mimes' => 'Allowed image formats are: JPEG, PNG, JPG, GIF.',
+                'avatar.max' => 'The image size must not exceed 2MB.'
+            ]);
+            
+            if ($validator->fails()) {
+                return redirect()->route('profile')
+                    ->withErrors($validator);
+            }
+            
+            // Get user model
+            $user = Users::where('id', $roleId)->first();
+            
+            if (!$user) {
+                Log::error('User not found when uploading avatar', [
+                    'user_id' => $roleId,
+                    'role' => $role
+                ]);
+                
+                DB::rollBack();
+                return redirect()->route('auth.loginpage')
+                    ->with('error', 'Your account could not be found. Please log in again.');
+            }
+            
             // Ensure the avatar directory exists
             $avatarsPath = storage_path('app/public/avatars');
             if (!file_exists($avatarsPath)) {
                 if (!mkdir($avatarsPath, 0775, true)) {
                     Log::error('Failed to create avatars directory', ['path' => $avatarsPath]);
-                    return redirect()->back()->with('error', 'Server configuration error: Could not create storage directory');
+                    
+                    DB::rollBack();
+                    return redirect()->route('profile')
+                        ->with('error', 'Server configuration error: Could not create storage directory');
                 }
             }
             
             // Test write permissions
             if (!is_writable($avatarsPath)) {
                 Log::error('Avatars directory is not writable', ['path' => $avatarsPath]);
-                return redirect()->back()->with('error', 'Server configuration error: Storage directory is not writable');
+                
+                DB::rollBack();
+                return redirect()->route('profile')
+                    ->with('error', 'Server configuration error: Storage directory is not writable');
             }
             
             // Delete old avatar if exists
-            if ($user->avatar && Storage::disk('public')->exists('avatars/' . $user->avatar)) {
-                Storage::disk('public')->delete('avatars/' . $user->avatar);
+            $oldAvatarPath = null;
+            if (isset($user->avatar) && $user->avatar) {
+                $oldAvatarPath = 'public/avatars/' . $user->avatar;
             }
             
-            // Store new avatar with a more unique name
-            $avatarName = $role . '_' . $userId . '_' . time() . '.' . $request->avatar->extension();
+            if ($oldAvatarPath && Storage::exists($oldAvatarPath)) {
+                Storage::delete($oldAvatarPath);
+            }
+            
+            // Generate a unique avatar filename
+            $avatarName = $role . '_' . $roleId . '_' . Str::random(10) . '.' . $request->avatar->extension();
             
             // Log file details for debugging
             Log::info('Avatar file details', [
@@ -243,207 +482,59 @@ class UserProfileController extends Controller
             $path = $request->avatar->storeAs('avatars', $avatarName, 'public');
             
             // Verify the file was actually saved
-            if (!Storage::disk('public')->exists('avatars/' . $avatarName)) {
+            if (!Storage::exists('public/avatars/' . $avatarName)) {
                 Log::error('Avatar file was not saved properly', [
-                    'expected_path' => 'avatars/' . $avatarName
+                    'expected_path' => 'public/avatars/' . $avatarName
                 ]);
-                return redirect()->back()->with('error', 'Failed to save avatar file. Please try again.');
+                
+                DB::rollBack();
+                return redirect()->route('profile')
+                    ->with('error', 'Failed to save avatar file. Please try again.');
             }
             
-            // Update user avatar in database
+            // Update avatar field in the database
             $user->avatar = $avatarName;
-            $user->save();
+            $saved = $user->save();
+            
+            if (!$saved) {
+                Log::error('Failed to save avatar reference in database', [
+                    'user_id' => $roleId,
+                    'role' => $role,
+                    'avatar' => $avatarName
+                ]);
+                
+                // Clean up the uploaded file
+                Storage::delete('public/avatars/' . $avatarName);
+                
+                DB::rollBack();
+                return redirect()->route('profile')
+                    ->with('error', 'Failed to update avatar. Please try again.');
+            }
+            
+            // Update session data
+            session(['avatar' => $avatarName]);
+            
+            DB::commit();
             
             Log::info('Avatar uploaded successfully', [
-                'user_id' => $userId,
+                'user_id' => $roleId,
                 'role' => $role,
                 'avatar' => $avatarName,
                 'path' => $path
             ]);
             
-            return redirect()->back()->with('success', 'Avatar uploaded successfully.');
-        } catch (\Exception $e) {
-            Log::error('Error uploading avatar', [
-                'user_id' => $userId,
-                'role' => $role,
+            return redirect()->route('profile')->with('success', 'Your profile photo has been updated successfully.');
+        } catch (Exception $e) {
+            DB::rollBack();
+            
+            Log::error('Exception during avatar upload', [
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
+                'user_id' => session('id')
             ]);
             
-            return redirect()->back()->with('error', 'An error occurred while uploading your avatar: ' . $e->getMessage());
+            return redirect()->route('profile')
+                ->with('error', 'An unexpected error occurred while uploading your profile photo: ' . $e->getMessage());
         }
-    }
-    
-    /**
-     * Get user model based on role and ID
-     * 
-     * @param string $role
-     * @param int $userId
-     * @return mixed
-     */
-    private function getUserModelByRole($role, $userId)
-    {
-        switch ($role) {
-            case 'admin':
-                return Admins::find($userId);
-            case 'supervisor':
-                return Supervisors::find($userId);
-            case 'teacher':
-                return Teachers::find($userId);
-            case 'ajk':
-                return AJKs::find($userId);
-            default:
-                return null;
-        }
-    }
-    
-    /**
-     * Check if email exists in any user table except for the current user
-     * 
-     * @param string $email
-     * @param string $role
-     * @param int $userId
-     * @return bool
-     */
-    private function checkEmailExists($email, $role, $userId)
-    {
-        // Check in Admins table
-        if ($role !== 'admin' && Admins::where('email', $email)->exists()) {
-            return true;
-        }
-        
-        // Check in Supervisors table
-        if ($role !== 'supervisor' && Supervisors::where('email', $email)->exists()) {
-            return true;
-        }
-        
-        // Check in Teachers table
-        if ($role !== 'teacher' && Teachers::where('email', $email)->exists()) {
-            return true;
-        }
-        
-        // Check in AJKs table
-        if ($role !== 'ajk' && AJKs::where('email', $email)->exists()) {
-            return true;
-        }
-        
-        // Check in the user's own role table to exclude their own email
-        switch ($role) {
-            case 'admin':
-                return Admins::where('email', $email)->where('id', '!=', $userId)->exists();
-            case 'supervisor':
-                return Supervisors::where('email', $email)->where('id', '!=', $userId)->exists();
-            case 'teacher':
-                return Teachers::where('email', $email)->where('id', '!=', $userId)->exists();
-            case 'ajk':
-                return AJKs::where('email', $email)->where('id', '!=', $userId)->exists();
-            default:
-                return false;
-        }
-    }
-    
-    /**
-     * Send a message to another user
-     * 
-     * @param Request $request
-     * @return \Illuminate\Http\RedirectResponse
-     */
-    public function sendMessage(Request $request)
-    {
-        // This is a placeholder for messaging functionality that you might want to implement
-        // Logic for sending a message to another user would go here
-        
-        return redirect()->back()->with('success', 'Message sent successfully.');
-    }
-    
-    /**
-     * Get user messages
-     * 
-     * @return \Illuminate\View\View
-     */
-    public function getMessages()
-    {
-        // This is a placeholder for messaging functionality that you might want to implement
-        // Logic for retrieving messages would go here
-        
-        return view('messages.index', [
-            'messages' => []
-        ]);
-    }
-    
-    /**
-     * View a conversation with another user
-     * 
-     * @param int $id
-     * @return \Illuminate\View\View
-     */
-    public function viewConversation($id)
-    {
-        // This is a placeholder for messaging functionality that you might want to implement
-        // Logic for viewing a specific conversation would go here
-        
-        return view('messages.conversation', [
-            'conversation' => null
-        ]);
-    }
-    
-    /**
-     * Mark a message as read
-     * 
-     * @param int $id
-     * @return \Illuminate\Http\RedirectResponse
-     */
-    public function markMessageRead($id)
-    {
-        // This is a placeholder for messaging functionality that you might want to implement
-        // Logic for marking a message as read would go here
-        
-        return redirect()->back();
-    }
-    
-    /**
-     * Get notifications as JSON
-     * 
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function getNotificationsJson()
-    {
-        // This is a placeholder for notification functionality that you might want to implement
-        // Logic for retrieving notifications as JSON would go here
-        
-        return response()->json([
-            'notifications' => []
-        ]);
-    }
-    
-    /**
-     * List all centres
-     * 
-     * @return \Illuminate\View\View
-     */
-    public function listCentres()
-    {
-        // This is a placeholder for centre listing functionality that you might want to implement
-        // Logic for listing all centres would go here
-        
-        return view('centres.index', [
-            'centres' => []
-        ]);
-    }
-    
-    /**
-     * View a specific centre
-     * 
-     * @param int $id
-     * @return \Illuminate\View\View
-     */
-    public function viewCentre($id)
-    {
-        // This is a placeholder for centre viewing functionality that you might want to implement
-        // Logic for viewing a specific centre would go here
-        
-        return view('centres.view', [
-            'centre' => null
-        ]);
     }
 }

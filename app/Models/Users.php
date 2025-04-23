@@ -15,7 +15,7 @@ class Users extends Authenticatable
      * The attributes that are mass assignable.
      *
      * @var array<int, string>
-     */// Add 'centre_location' to the $fillable array in your Users model
+     */
     protected $fillable = [
         'iium_id',
         'name', 
@@ -28,15 +28,13 @@ class Users extends Authenticatable
         'position',
         'centre_id',
         'centre_location',
-        'user_avatar',
+        'avatar',
         'user_activity_1',
         'user_activity_2',
         'user_last_accessed_at',
         'about',
         'review',
         'date_of_birth',
-        'avatar',
-        'bio'
     ];
 
     /**
@@ -70,8 +68,6 @@ class Users extends Authenticatable
     {
         if ($this->avatar) {
             return asset('storage/avatars/' . $this->avatar);
-        } elseif ($this->user_avatar) {
-            return asset('storage/avatars/' . $this->user_avatar);
         }
         
         // Return default avatar if none is set
@@ -289,6 +285,7 @@ class Users extends Authenticatable
         $this->user_last_accessed_at = now();
         $this->save();
     }
+    
     /**
      * Boot function to handle model events.
      * 

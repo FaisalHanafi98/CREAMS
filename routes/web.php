@@ -21,6 +21,7 @@ use App\Http\Controllers\AJKController;
 use App\Http\Controllers\TraineeHomeController;
 use App\Http\Controllers\TraineeProfileController;
 use App\Http\Controllers\TraineeRegistrationController;
+use App\Http\Controllers\TraineeActivityController;
 
 // Activity and Resource Controllers
 use App\Http\Controllers\ActivityController;
@@ -136,13 +137,54 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/centres', [CentreController::class, 'index'])->name('centres');
     Route::get('/centres/{id}', [CentreController::class, 'show'])->name('centres.view');
     
-    // Trainee routes
-    Route::get('/traineeshome', [TraineeHomeController::class, 'index'])->name('traineeshome');
-    Route::get('/traineeprofile/{id}', [TraineeProfileController::class, 'index'])->name('traineeprofile');
-    Route::post('/updatetraineeprofile/{id}', [TraineeProfileController::class, 'update'])->name('updatetraineeprofile');
-    Route::get('/traineeactivity', function () { return view('traineeactivity'); })->name('traineeactivity');
-    Route::get('/traineesregistration', [TraineeRegistrationController::class, 'index'])->name('traineesregistrationpage');
-    Route::post('/traineesregistration/store', [TraineeRegistrationController::class, 'store'])->name('traineesregistrationstore');
+    /*
+    |--------------------------------------------------------------------------
+    | TRAINEE MODULE ROUTES (Common for all authenticated users)
+    |--------------------------------------------------------------------------
+    */
+    
+    // Trainee Home page - List all trainees
+    Route::get('/trainees', [TraineeHomeController::class, 'index'])->name('traineeshome');
+    Route::get('/traineeshome', [TraineeHomeController::class, 'index'])->name('traineeshome'); // Keep legacy route
+    Route::get('/trainees/filter', [TraineeHomeController::class, 'filter'])->name('trainees.filter');
+
+    // Individual Trainee Profile
+    Route::get('/trainee/profile/{id}', [TraineeProfileController::class, 'index'])->name('traineeprofile');
+    Route::get('/traineeprofile/{id}', [TraineeProfileController::class, 'index'])->name('traineeprofile'); // Keep legacy route
+    Route::get('/trainee/edit/{id}', [TraineeProfileController::class, 'edit'])->name('traineeprofile.edit');
+    Route::post('/trainee/update/{id}', [TraineeProfileController::class, 'update'])->name('updatetraineeprofile');
+    Route::post('/updatetraineeprofile/{id}', [TraineeProfileController::class, 'update'])->name('updatetraineeprofile'); // Keep legacy route
+
+    // Trainee profile actions
+    Route::delete('/trainee/delete/{id}', [TraineeProfileController::class, 'destroy'])->name('traineeprofile.destroy');
+    Route::post('/trainee/progress/{id}', [TraineeProfileController::class, 'updateProgress'])->name('traineeprofile.updateProgress');
+    Route::post('/trainee/attendance/{id}', [TraineeProfileController::class, 'recordAttendance'])->name('traineeprofile.recordAttendance');
+    Route::post('/trainee/activity/{id}', [TraineeProfileController::class, 'addActivity'])->name('traineeprofile.addActivity');
+    Route::get('/trainee/download/{id}', [TraineeProfileController::class, 'downloadProfile'])->name('traineeprofile.download');
+
+    // Trainee Registration
+    Route::get('/trainee/register', [TraineeRegistrationController::class, 'index'])->name('traineesregistrationpage');
+    Route::get('/traineesregistration', [TraineeRegistrationController::class, 'index'])->name('traineesregistrationpage'); // Keep legacy route
+    Route::post('/trainee/register', [TraineeRegistrationController::class, 'store'])->name('traineesregistrationstore');
+    Route::post('/traineesregistration/store', [TraineeRegistrationController::class, 'store'])->name('traineesregistrationstore'); // Keep legacy route
+    Route::post('/trainee/validate-email', [TraineeRegistrationController::class, 'validateEmail'])->name('validateEmail');
+
+    // Trainee Activities
+    Route::get('/trainee/activities', [TraineeActivityController::class, 'index'])->name('traineeactivity');
+    Route::get('/traineeactivity', [TraineeActivityController::class, 'index'])->name('traineeactivity'); // Keep legacy route
+    Route::get('/trainee/activities/{id}', [TraineeActivityController::class, 'traineeActivities'])->name('traineeactivity.trainee');
+    Route::post('/trainee/activities', [TraineeActivityController::class, 'store'])->name('traineeactivity.store');
+    Route::post('/traineeactivity/store', [TraineeActivityController::class, 'store'])->name('traineeactivity.store'); // Keep legacy route
+    Route::get('/trainee/activities/edit/{id}', [TraineeActivityController::class, 'edit'])->name('traineeactivity.edit');
+    Route::put('/trainee/activities/update/{id}', [TraineeActivityController::class, 'update'])->name('traineeactivity.update');
+    Route::post('/traineeactivity/update/{id}', [TraineeActivityController::class, 'update'])->name('traineeactivity.update'); // Keep legacy route
+    Route::delete('/trainee/activities/delete/{id}', [TraineeActivityController::class, 'destroy'])->name('traineeactivity.destroy');
+    Route::delete('/traineeactivity/delete/{id}', [TraineeActivityController::class, 'destroy'])->name('traineeactivity.destroy'); // Keep legacy route
+    Route::get('/traineeactivity/details/{id}', [TraineeActivityController::class, 'getActivityDetails'])->name('traineeactivity.details');
+
+    // Trainee JSON API 
+    Route::get('/api/trainees', [TraineeController::class, 'getTraineesJson'])->name('api.trainees');
+    Route::get('/api/trainees/filter', [TraineeController::class, 'filterTrainees'])->name('api.trainees.filter');
     
     // Asset management
     Route::get('/asset-management', [AssetController::class, 'index'])->name('assetmanagementpage');
@@ -158,6 +200,23 @@ Route::middleware(['auth'])->group(function () {
 Route::prefix('admin')->middleware(['auth', 'role:admin'])->group(function () {
     // Dashboard - using the DashboardController
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
+    
+    // Redirect role-specific trainee routes to common trainee routes
+    Route::get('/trainees', function() {
+        return redirect()->route('traineeshome');
+    })->name('admin.trainees');
+    
+    Route::get('/trainee/create', function() {
+        return redirect()->route('traineesregistrationpage');
+    })->name('admin.trainee.create');
+    
+    Route::get('/trainee/view/{id}', function($id) {
+        return redirect()->route('traineeprofile', ['id' => $id]);
+    })->name('admin.trainee.view');
+    
+    Route::get('/trainee/edit/{id}', function($id) {
+        return redirect()->route('traineeprofile.edit', ['id' => $id]);
+    })->name('admin.trainee.edit');
     
     // User management (using UserController for general user operations)
     Route::get('/users', [UserController::class, 'index'])->name('admin.users');
@@ -182,15 +241,6 @@ Route::prefix('admin')->middleware(['auth', 'role:admin'])->group(function () {
     
     // User bulk actions
     Route::post('/users/bulk-action', [AdminController::class, 'bulkUserAction'])->name('admin.users.bulk-action');
-    
-    // Trainee management - using TraineeController
-    Route::get('/trainees', [TraineeController::class, 'index'])->name('admin.trainees');
-    Route::get('/trainee/create', [TraineeController::class, 'create'])->name('admin.trainee.create');
-    Route::post('/trainee/store', [TraineeController::class, 'store'])->name('admin.trainee.store');
-    Route::get('/trainee/view/{id}', [TraineeController::class, 'show'])->name('admin.trainee.view');
-    Route::get('/trainee/edit/{id}', [TraineeController::class, 'edit'])->name('admin.trainee.edit');
-    Route::post('/trainee/update/{id}', [TraineeController::class, 'update'])->name('admin.trainee.update');
-    Route::delete('/trainee/delete/{id}', [TraineeController::class, 'destroy'])->name('admin.trainee.delete');
     
     // Activities management - using ActivityController
     Route::get('/activities', [ActivityController::class, 'index'])->name('admin.activities');
@@ -244,9 +294,21 @@ Route::prefix('supervisor')->middleware(['auth', 'role:supervisor'])->group(func
     // Dashboard - using the DashboardController
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('supervisor.dashboard');
     
+    // Redirect role-specific trainee routes to common trainee routes
+    Route::get('/trainees', function() {
+        return redirect()->route('traineeshome');
+    })->name('supervisor.trainees');
+    
+    Route::get('/trainee/view/{id}', function($id) {
+        return redirect()->route('traineeprofile', ['id' => $id]);
+    })->name('supervisor.trainee.view');
+    
+    Route::get('/trainee/edit/{id}', function($id) {
+        return redirect()->route('traineeprofile.edit', ['id' => $id]);
+    })->name('supervisor.trainee.edit');
+    
     // Missing routes from the menu items in dashboard.php
     Route::get('/users', [SupervisorController::class, 'users'])->name('supervisor.users');
-    Route::get('/trainees', [SupervisorController::class, 'trainees'])->name('supervisor.trainees');
     Route::get('/centres', [SupervisorController::class, 'centres'])->name('supervisor.centres');
     Route::get('/assets', [SupervisorController::class, 'assets'])->name('supervisor.assets');
     Route::get('/reports', [SupervisorController::class, 'reports'])->name('supervisor.reports');
@@ -265,11 +327,6 @@ Route::prefix('supervisor')->middleware(['auth', 'role:supervisor'])->group(func
     Route::get('/activity/edit/{id}', [SupervisorController::class, 'editActivity'])->name('supervisor.activity.edit');
     Route::post('/activity/update/{id}', [SupervisorController::class, 'updateActivity'])->name('supervisor.activity.update');
     
-    // Trainees specific actions
-    Route::get('/trainee/view/{id}', [SupervisorController::class, 'viewTrainee'])->name('supervisor.trainee.view');
-    Route::get('/trainee/edit/{id}', [SupervisorController::class, 'editTrainee'])->name('supervisor.trainee.edit');
-    Route::post('/trainee/update/{id}', [SupervisorController::class, 'updateTrainee'])->name('supervisor.trainee.update');
-    
     // Reports - using ReportController
     Route::get('/report/generate', [ReportController::class, 'generate'])->name('supervisor.report.generate');
     Route::post('/report/export', [ReportController::class, 'export'])->name('supervisor.report.export');
@@ -284,17 +341,21 @@ Route::prefix('teacher')->middleware(['auth', 'role:teacher'])->group(function (
     // Dashboard - using the DashboardController
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('teacher.dashboard');
     
+    // Redirect role-specific trainee routes to common trainee routes
+    Route::get('/trainees', function() {
+        return redirect()->route('traineeshome');
+    })->name('teacher.trainees');
+    
+    Route::get('/trainee/view/{id}', function($id) {
+        return redirect()->route('traineeprofile', ['id' => $id]);
+    })->name('teacher.trainee.view');
+    
     // Missing routes from the menu items in dashboard.php
     Route::get('/users', [TeacherController::class, 'users'])->name('teacher.users');
-    Route::get('/trainees', [TeacherController::class, 'trainees'])->name('teacher.trainees');
     Route::get('/centres', [TeacherController::class, 'centres'])->name('teacher.centres');
     Route::get('/assets', [TeacherController::class, 'assets'])->name('teacher.assets');
     Route::get('/reports', [TeacherController::class, 'reports'])->name('teacher.reports');
     Route::get('/settings', [TeacherController::class, 'settings'])->name('teacher.settings');
-    
-    // Trainees management
-    Route::get('/trainee/view/{id}', [TeacherController::class, 'viewTrainee'])->name('teacher.trainee.view');
-    Route::post('/trainee/progress/update/{id}', [TeacherController::class, 'updateTraineeProgress'])->name('teacher.trainee.progress.update');
     
     // Classes/Activities - using ClassController
     Route::get('/classes', [ClassController::class, 'index'])->name('teacher.classes');
@@ -317,9 +378,13 @@ Route::prefix('ajk')->middleware(['auth', 'role:ajk'])->group(function () {
     // Dashboard - using the DashboardController
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('ajk.dashboard');
     
+    // Redirect role-specific trainee routes to common trainee routes
+    Route::get('/trainees', function() {
+        return redirect()->route('traineeshome');
+    })->name('ajk.trainees');
+    
     // Missing routes from the menu items in dashboard.php
     Route::get('/users', [AJKController::class, 'users'])->name('ajk.users');
-    Route::get('/trainees', [AJKController::class, 'trainees'])->name('ajk.trainees');
     Route::get('/centres', [AJKController::class, 'centres'])->name('ajk.centres');
     Route::get('/assets', [AJKController::class, 'assets'])->name('ajk.assets');
     Route::get('/reports', [AJKController::class, 'reports'])->name('ajk.reports');
@@ -356,9 +421,6 @@ Route::prefix('ajk')->middleware(['auth', 'role:ajk'])->group(function () {
 */
 
 Route::middleware(['auth'])->group(function () {
-    // Trainee resource routes (accessible to multiple roles)
-    Route::resource('trainees', TraineeController::class);
-    
     // Activity resource routes
     Route::resource('activities', ActivityController::class)->except(['show']);
     Route::get('/activities/{id}', [ActivityController::class, 'show'])->name('activities.show');
@@ -366,9 +428,6 @@ Route::middleware(['auth'])->group(function () {
     // Activity participation
     Route::post('/activities/{id}/register', [ActivityController::class, 'registerParticipation'])->name('activities.register');
     Route::delete('/activities/{id}/unregister', [ActivityController::class, 'unregisterParticipation'])->name('activities.unregister');
-    
-    // Progress updates for trainees
-    Route::post('/trainees/{id}/progress', [TraineeController::class, 'updateProgress'])->name('trainees.progress.update');
 });
 
 /*

@@ -211,8 +211,8 @@ class DashboardController extends Controller
         switch ($role) {
             case 'admin':
                 $adminItems = [
-                    ['route' => 'admin.users', 'icon' => 'users', 'label' => 'User Management'],
-                    ['route' => 'admin.trainees', 'icon' => 'user-graduate', 'label' => 'Tainee Management'],
+                    ['route' => 'admin.users', 'icon' => 'users', 'label' => 'Staffs'],
+                    ['route' => 'admin.trainees', 'icon' => 'user-graduate', 'label' => 'Trainees'],
                     ['route' => 'admin.centres', 'icon' => 'building', 'label' => 'Centres'],
                     ['route' => 'admin.assets', 'icon' => 'boxes', 'label' => 'Assets'],
                     ['route' => 'admin.reports', 'icon' => 'chart-bar', 'label' => 'Reports'],
@@ -223,8 +223,8 @@ class DashboardController extends Controller
                 
             case 'supervisor':
                 $supervisorItems = [
-                    ['route' => 'supervisor.users', 'icon' => 'users', 'label' => 'User Management'],
-                    ['route' => 'supervisor.trainees', 'icon' => 'user-graduate', 'label' => 'Tainee Management'],
+                    ['route' => 'supervisor.users', 'icon' => 'users', 'label' => 'Staffs'],
+                    ['route' => 'supervisor.trainees', 'icon' => 'user-graduate', 'label' => 'Trainees'],
                     ['route' => 'supervisor.centres', 'icon' => 'building', 'label' => 'Centres'],
                     ['route' => 'supervisor.assets', 'icon' => 'boxes', 'label' => 'Assets'],
                     ['route' => 'supervisor.reports', 'icon' => 'chart-bar', 'label' => 'Reports'],
@@ -235,8 +235,8 @@ class DashboardController extends Controller
                 
             case 'ajk':
                 $ajkItems = [
-                    ['route' => 'ajk.users', 'icon' => 'users', 'label' => 'User Management'],
-                    ['route' => 'ajk.trainees', 'icon' => 'user-graduate', 'label' => 'Tainee Management'],
+                    ['route' => 'ajk.users', 'icon' => 'users', 'label' => 'Staffs'],
+                    ['route' => 'ajk.trainees', 'icon' => 'user-graduate', 'label' => 'Trainees'],
                     ['route' => 'ajk.centres', 'icon' => 'building', 'label' => 'Centres'],
                     ['route' => 'ajk.assets', 'icon' => 'boxes', 'label' => 'Assets'],
                     ['route' => 'ajk.reports', 'icon' => 'chart-bar', 'label' => 'Reports'],
@@ -247,8 +247,8 @@ class DashboardController extends Controller
                 
             case 'teacher':
                 $teacherItems = [
-                    ['route' => 'teacher.users', 'icon' => 'users', 'label' => 'User Management'],
-                    ['route' => 'teacher.trainees', 'icon' => 'user-graduate', 'label' => 'Tainee Management'],
+                    ['route' => 'teacher.users', 'icon' => 'users', 'label' => 'Staffs'],
+                    ['route' => 'teacher.trainees', 'icon' => 'user-graduate', 'label' => 'Trainees'],
                     ['route' => 'teacher.centres', 'icon' => 'building', 'label' => 'Centres'],
                     ['route' => 'teacher.assets', 'icon' => 'boxes', 'label' => 'Assets'],
                     ['route' => 'teacher.reports', 'icon' => 'chart-bar', 'label' => 'Reports'],

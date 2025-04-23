@@ -151,7 +151,7 @@
         @endif
       </div>
       <div class="admin-info">
-        <div class="admin-name">{{ session('name') }}</div>
+        <div class="admin-name">{{ Auth::user()->name }}</div>
         <div class="admin-role">{{ ucfirst(session('role')) }}</div>
       </div>
     </div>
@@ -172,7 +172,7 @@
       <li>
         <a href="{{ route('admin.users') }}">
           <i class="fas fa-users"></i>
-          <span>User Management</span>
+          <span>Staffs</span>
         </a>
       </li>
       <li>
@@ -236,7 +236,7 @@
               @else
                 <img src="{{ asset('images/admin-avatar.jpg') }}" alt="User">
               @endif
-              <span>{{ session('name') }}</span>
+              <span>{{ Auth::user()->name }}</span>
               <i class="fas fa-chevron-down"></i>
             </div>
             <div class="admin-dropdown-menu">

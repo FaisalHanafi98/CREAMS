@@ -4,16 +4,30 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Database\Eloquent\Builder;
 
 class Centres extends Model
 {
     use HasFactory;
 
+    /**
+     * The primary key for the model.
+     *
+     * @var string
+     */
     protected $primaryKey = 'centre_id';
+
+    /**
+     * The "type" of the primary key.
+     *
+     * @var string
+     */
     protected $keyType = 'string';
+
+    /**
+     * Indicates if the IDs are auto-incrementing.
+     *
+     * @var bool
+     */
     public $incrementing = false;
 
     /**
@@ -25,47 +39,8 @@ class Centres extends Model
         'centre_id',
         'centre_name',
         'centre_status',
-        'status',
+        'status'
     ];
-
-    /**
-     * Boot function to add global scopes
-     */
-    protected static function boot()
-    {
-        parent::boot();
-        
-        // Add a global scope to handle either status column
-        static::addGlobalScope('active', function (Builder $builder) {
-            // Determine which status column to use
-            $hasStatusColumn = Schema::hasColumn('centres', 'status');
-            $hasCentreStatusColumn = Schema::hasColumn('centres', 'centre_status');
-            
-            if ($hasStatusColumn) {
-                $builder->where('status', 'active');
-            } elseif ($hasCentreStatusColumn) {
-                $builder->where('centre_status', 'active');
-            }
-            
-            // If neither column exists, don't apply any filtering
-        });
-        
-        // Log when a center is created
-        static::created(function ($model) {
-            Log::info('Centre created', [
-                'centre_id' => $model->centre_id,
-                'centre_name' => $model->centre_name
-            ]);
-        });
-        
-        // Log when a center is updated
-        static::updated(function ($model) {
-            Log::info('Centre updated', [
-                'centre_id' => $model->centre_id,
-                'centre_name' => $model->centre_name
-            ]);
-        });
-    }
 
     /**
      * Get the users associated with this centre.
@@ -78,7 +53,17 @@ class Centres extends Model
     }
 
     /**
-     * Get the courses/activities conducted at this centre.
+     * Get the trainees associated with this centre.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function trainees()
+    {
+        return $this->hasMany(Trainees::class, 'centre_name', 'centre_name');
+    }
+
+    /**
+     * Get the courses associated with this centre.
      *
      * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */
@@ -88,7 +73,7 @@ class Centres extends Model
     }
 
     /**
-     * Get the assets belonging to this centre.
+     * Get the assets associated with this centre.
      *
      * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */
@@ -96,38 +81,60 @@ class Centres extends Model
     {
         return $this->hasMany(Assets::class, 'centre_name', 'centre_name');
     }
-    
+
     /**
-     * Get all active centres
-     * 
-     * @return \Illuminate\Database\Eloquent\Collection
+     * Scope a query to only include active centres.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @return \Illuminate\Database\Eloquent\Builder
      */
-    public static function getActive()
+    public function scopeActive($query)
     {
-        try {
-            $hasStatusColumn = Schema::hasColumn('centres', 'status');
-            $hasCentreStatusColumn = Schema::hasColumn('centres', 'centre_status');
-            
-            Log::info('Getting active centres', [
-                'has_status_column' => $hasStatusColumn,
-                'has_centre_status_column' => $hasCentreStatusColumn
-            ]);
-            
-            if ($hasStatusColumn) {
-                return self::where('status', 'active')->get();
-            } elseif ($hasCentreStatusColumn) {
-                return self::where('centre_status', 'active')->get();
-            }
-            
-            // Fallback to all centres if no status column exists
-            return self::all();
-        } catch (\Exception $e) {
-            Log::error('Error getting active centres', [
-                'message' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-            
-            return collect();
+        return $query->where('status', 'active')
+                    ->orWhere('centre_status', 'active');
+    }
+
+    /**
+     * Get the status of the centre, prioritizing the 'status' column
+     * but falling back to 'centre_status' for compatibility.
+     *
+     * @return string
+     */
+    public function getStatusAttribute($value)
+    {
+        // If status is set, use it
+        if (!empty($value)) {
+            return $value;
         }
+        
+        // Otherwise fall back to centre_status
+        return $this->centre_status ?? 'unknown';
+    }
+
+    /**
+     * Get all centres as a key-value array for dropdown lists
+     *
+     * @param bool $activeOnly Whether to include only active centres
+     * @return array
+     */
+    public static function getForDropdown($activeOnly = true)
+    {
+        $query = self::orderBy('centre_name');
+        
+        if ($activeOnly) {
+            $query->active();
+        }
+        
+        return $query->pluck('centre_name', 'centre_id')->toArray();
+    }
+
+    /**
+     * Get the default centre (Gombak)
+     *
+     * @return Centres|null
+     */
+    public static function getDefault()
+    {
+        return self::find('01');
     }
 }
