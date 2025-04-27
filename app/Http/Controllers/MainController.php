@@ -12,6 +12,7 @@ use App\Models\AJKs;
 use App\Models\Teachers;
 use App\Models\Centres;
 use App\Models\Notifications;
+use App\Models\Trainees;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Password;
@@ -26,7 +27,7 @@ class MainController extends Controller
 {
     /**
      * Display the login page
-     * 
+     *
      * @return \Illuminate\View\View
      */
     public function login()
@@ -37,23 +38,23 @@ class MainController extends Controller
 
     /**
      * Display the registration page
-     * 
+     *
      * @return \Illuminate\View\View
      */
     public function registration()
     {
         Log::info('Registration page accessed');
-        
+
         try {
             // Check which column exists in the centres table
             $hasStatusColumn = Schema::hasColumn('centres', 'status');
             $hasCentreStatusColumn = Schema::hasColumn('centres', 'centre_status');
-            
+
             Log::info('Centres table structure check', [
                 'has_status_column' => $hasStatusColumn,
                 'has_centre_status_column' => $hasCentreStatusColumn
             ]);
-            
+
             // Get centers for dropdown based on available columns
             if ($hasStatusColumn) {
                 Log::info('Querying centres using status column');
@@ -66,7 +67,7 @@ class MainController extends Controller
                 Log::info('No status columns found, getting all centres');
                 $centers = Centres::all();
             }
-            
+
             Log::info('Centres retrieved successfully', [
                 'count' => $centers->count()
             ]);
@@ -76,10 +77,10 @@ class MainController extends Controller
                 'message' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            
+
             $centers = collect();
         }
-        
+
         return view("auth.register", [
             'centers' => $centers
         ]);
@@ -87,11 +88,11 @@ class MainController extends Controller
 
     /**
      * Register a new user
-     * 
+     *
      * @param Request $request
      * @return \Illuminate\Http\RedirectResponse
      */
-    
+
     public function save(Request $request)
     {
 
@@ -102,7 +103,7 @@ class MainController extends Controller
             'centre_location' => $request->centre_location
         ]);
         Log::info('Registration form submitted', ['data' => $request->except(['password', 'password_confirmation'])]);
-        
+
         try {
             // Validate input with specific error messages
             Log::info('Beginning validation');
@@ -153,7 +154,7 @@ class MainController extends Controller
             if ($validator->fails()) {
                 $errors = $validator->errors()->toArray();
                 Log::warning('Validation failed with specific errors:', $errors);
-                
+
                 // Log specific error types for detailed debugging
                 if (isset($errors['iium_id']) && strpos(implode('', $errors['iium_id']), 'unique') !== false) {
                     Log::warning('Duplicate IIUM ID detected during registration', ['iium_id' => $request->iium_id]);
@@ -161,17 +162,17 @@ class MainController extends Controller
                 if (isset($errors['email']) && strpos(implode('', $errors['email']), 'unique') !== false) {
                     Log::warning('Duplicate email detected during registration', ['email' => $request->email]);
                 }
-                
+
                 return redirect()->back()->withErrors($validator)->withInput($request->except(['password', 'password_confirmation']));
             }
 
             // Get validated data
             $validatedData = $validator->validated();
             Log::info('Validation passed', ['role' => $validatedData['role'], 'iium_id' => $validatedData['iium_id']]);
-            
+
             // Encrypt password
             $validatedData['password'] = Hash::make($validatedData['password']);
-            
+
             DB::beginTransaction();
             try {
                 // Create the user with proper logging
@@ -182,15 +183,15 @@ class MainController extends Controller
                 $user->password = $validatedData['password'];
                 $user->role = $validatedData['role'];
                 $user->centre_id = $validatedData['centre_id'];
-                
+
                 // Set the centre_location if provided
                 if (isset($validatedData['centre_location'])) {
                     $user->centre_location = $validatedData['centre_location'];
                     Log::info('Centre location set', ['centre_location' => $validatedData['centre_location']]);
                 }
-                
+
                 $user->status = 'active';
-                
+
                 Log::info('Attempting to save user', [
                     'iium_id' => $user->iium_id,
                     'email' => $user->email,
@@ -198,15 +199,15 @@ class MainController extends Controller
                     'centre_location' => $user->centre_location ?? 'null',
                     'model' => get_class($user)
                 ]);
-                
+
                 $saved = $user->save();
-                
+
                 if (!$saved) {
                     Log::error('Failed to save user');
                     DB::rollBack();
                     return back()->with('fail', 'Something went wrong, try again later');
                 }
-                
+
                 // Create welcome notification
                 $notification = new Notifications();
                 $notification->user_id = $user->id;
@@ -215,7 +216,7 @@ class MainController extends Controller
                 $notification->content = 'Welcome to the Community-based REhAbilitation Management System. Your account has been created successfully.';
                 $notification->type = 'success';
                 $notification->save();
-                
+
                 DB::commit();
                 Log::info('User successfully registered', [
                     'id' => $user->id,
@@ -223,7 +224,7 @@ class MainController extends Controller
                     'role' => $user->role,
                     'centre_location' => $user->centre_location ?? 'null'
                 ]);
-                
+
                 $successMessage = "New " . ucfirst($validatedData['role']) . " has been registered";
                 return redirect()->route('auth.loginpage')->with('success', $successMessage);
             } catch (\PDOException $e) {
@@ -232,12 +233,12 @@ class MainController extends Controller
                     'message' => $e->getMessage(),
                     'code' => $e->getCode()
                 ]);
-                
+
                 // More specific database error messages
                 if ($e->getCode() == 23000) { // Integrity constraint violation
                     return back()->with('fail', 'This IIUM ID or email is already registered in our system.')->withInput($request->except(['password', 'password_confirmation']));
                 }
-                
+
                 return back()->with('fail', 'A database error occurred. Please try again later.')->withInput($request->except(['password', 'password_confirmation']));
             } catch (\Exception $e) {
                 DB::rollBack();
@@ -258,7 +259,7 @@ class MainController extends Controller
 
     /**
      * Handle login authentication
-     * 
+     *
      * @param Request $request
      * @return \Illuminate\Http\RedirectResponse
      */
@@ -270,7 +271,7 @@ class MainController extends Controller
             'ip' => $request->ip(),
             'user_agent' => $request->userAgent()
         ]);
-        
+
         try {
             // Validate with specific error messages
             $validator = Validator::make($request->all(), [
@@ -281,26 +282,26 @@ class MainController extends Controller
                 'password.required' => 'Password is required.',
                 'password.min' => 'Password must be at least 5 characters.'
             ]);
-            
+
             if ($validator->fails()) {
                 Log::warning('Login validation failed with specific errors:', $validator->errors()->toArray());
                 return redirect()->back()->withErrors($validator)->withInput($request->except('password'));
             }
-            
+
             // Determine if the identifier is an email or IIUM ID
             $identifier = $request->identifier;
             $isEmail = filter_var($identifier, FILTER_VALIDATE_EMAIL);
-            
+
             Log::info('Searching for user by ' . ($isEmail ? 'email' : 'IIUM ID'), ['identifier' => $identifier]);
-            
+
             // Find user based on the identifier type in the users table only
             $user = null;
-            
+
             if ($isEmail) {
                 $user = Users::where('email', $identifier)
                             ->where('status', 'active')
                             ->first();
-                
+
                 Log::debug('User search by email result', [
                     'email' => $identifier,
                     'found' => ($user ? 'Yes' : 'No')
@@ -310,31 +311,31 @@ class MainController extends Controller
                 $user = Users::where('iium_id', $iiumId)
                             ->where('status', 'active')
                             ->first();
-                
+
                 Log::debug('User search by IIUM ID result', [
                     'iium_id' => $iiumId,
                     'found' => ($user ? 'Yes' : 'No')
                 ]);
             }
-            
+
             // If user not found, return appropriate error message
             if (!$user) {
                 Log::warning('Login failed: User not found', [
                     'identifier' => $identifier,
                     'is_email' => $isEmail
                 ]);
-                
+
                 return redirect()->route('auth.loginpage')
                     ->with('error', 'No account found with this ' . ($isEmail ? 'email address' : 'IIUM ID'));
             }
-            
+
             Log::info('User found', [
                 'id' => $user->id,
                 'iium_id' => $user->iium_id,
                 'role' => $user->role,
                 'status' => $user->status
             ]);
-            
+
             // Verify password
             if (!Hash::check($request->password, $user->password)) {
                 Log::warning('Login failed: Incorrect password', [
@@ -342,16 +343,16 @@ class MainController extends Controller
                     'iium_id' => $user->iium_id,
                     'attempt_time' => now()->toDateTimeString()
                 ]);
-                
+
                 return redirect()->route('auth.loginpage')
                     ->with('error', 'The password you entered is incorrect');
             }
-            
+
             Log::info('Password verification successful', [
                 'id' => $user->id,
                 'iium_id' => $user->iium_id
             ]);
-            
+
             // Update last accessed time using updateLastLogin method
             try {
                 $user->updateLastLogin();
@@ -360,7 +361,7 @@ class MainController extends Controller
                 // If updateLastLogin fails, log it but continue with authentication
                 Log::warning('Could not update last login time: ' . $e->getMessage());
             }
-            
+
             // Set session data
             session([
                 'id' => $user->id,
@@ -372,24 +373,24 @@ class MainController extends Controller
                 'logged_in' => true,
                 'login_time' => now()->toDateTimeString()
             ]);
-            
+
             // Remember Me functionality
             if ($request->has('remember') && $request->remember == 'on') {
                 // Create a remember token if it doesn't exist
                 if (empty($user->remember_token)) {
                     $user->remember_token = Str::random(60);
                     $user->save();
-                    
+
                     Log::info('Remember token generated', [
                         'user_id' => $user->id,
                         'token_length' => strlen($user->remember_token)
                     ]);
                 }
-                
+
                 // Set a cookie with the remember token
                 Cookie::queue('remember_token', $user->remember_token, 43200); // 30 days
             }
-            
+
             Log::info('User logged in successfully', [
                 'id' => $user->id,
                 'iium_id' => $user->iium_id,
@@ -397,9 +398,9 @@ class MainController extends Controller
                 'remember_me' => $request->has('remember'),
                 'session_id' => session()->getId()
             ]);
-            
+
             return redirect()->route($user->role . '.dashboard');
-            
+
         } catch (\Exception $e) {
             // Log the exception with detailed information
             Log::error('Error occurred in login process', [
@@ -410,16 +411,16 @@ class MainController extends Controller
                 'trace' => $e->getTraceAsString(),
                 'identifier' => $request->identifier ?? 'not provided'
             ]);
-            
+
             // Return a generic error message to the user
             return redirect()->route('auth.loginpage')
                 ->with('error', 'An error occurred during login. Please try again later.');
         }
     }
-    
+
     /**
      * Find user by email in users table with role filtering
-     * 
+     *
      * @param string $email
      * @param string|null $role Role to filter by (optional)
      * @return mixed
@@ -427,30 +428,30 @@ class MainController extends Controller
     private function findUserByEmail($email, $role = null)
     {
         Log::debug('Searching for user by email', ['email' => $email, 'role_filter' => $role]);
-        
+
         try {
             // Start query
             $query = Users::where('email', $email)
                         ->where('status', 'active');
-            
+
             // Add role filter if specified
             if (!is_null($role)) {
                 $query->where('role', $role);
             }
-            
+
             // Execute query
             $user = $query->first();
-            
+
             if ($user) {
                 Log::info('User found by email', [
-                    'id' => $user->id, 
+                    'id' => $user->id,
                     'iium_id' => $user->iium_id,
                     'role' => $user->role
                 ]);
             } else {
                 Log::info('No user found by email', ['email' => $email]);
             }
-            
+
             return $user;
         } catch (\Exception $e) {
             Log::error('Error finding user by email', [
@@ -458,14 +459,14 @@ class MainController extends Controller
                 'message' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            
+
             return null;
         }
     }
 
     /**
      * Find user by IIUM ID in users table with role filtering
-     * 
+     *
      * @param string $iiumId
      * @param string|null $role Role to filter by (optional)
      * @return mixed
@@ -474,30 +475,30 @@ class MainController extends Controller
     {
         $iiumId = strtoupper($iiumId);
         Log::debug('Searching for user by IIUM ID', ['iium_id' => $iiumId, 'role_filter' => $role]);
-        
+
         try {
             // Start query
             $query = Users::where('iium_id', $iiumId)
                         ->where('status', 'active');
-            
+
             // Add role filter if specified
             if (!is_null($role)) {
                 $query->where('role', $role);
             }
-            
+
             // Execute query
             $user = $query->first();
-            
+
             if ($user) {
                 Log::info('User found by IIUM ID', [
-                    'id' => $user->id, 
+                    'id' => $user->id,
                     'iium_id' => $user->iium_id,
                     'role' => $user->role
                 ]);
             } else {
                 Log::info('No user found by IIUM ID', ['iium_id' => $iiumId]);
             }
-            
+
             return $user;
         } catch (\Exception $e) {
             Log::error('Error finding user by IIUM ID', [
@@ -505,14 +506,14 @@ class MainController extends Controller
                 'message' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            
+
             return null;
         }
     }
-    
+
     /**
      * Set user session data
-     * 
+     *
      * @param mixed $user
      * @return void
      */
@@ -521,16 +522,16 @@ class MainController extends Controller
         // First clear any existing session data
         $oldSessionId = session()->getId();
         $hadPreviousSession = session()->has('id');
-        
+
         Log::debug('Clearing previous session before setting new one', [
             'previous_session_id' => $oldSessionId,
             'had_user' => $hadPreviousSession,
             'previous_user_id' => session('id'),
             'previous_role' => session('role')
         ]);
-        
+
         session()->flush();
-        
+
         // Store user data in session with all relevant fields
         $sessionData = [
             'id' => $user->id,
@@ -542,17 +543,17 @@ class MainController extends Controller
             'logged_in' => true,
             'login_time' => now()->toDateTimeString()
         ];
-        
+
         session($sessionData);
-        
+
         // Force session to be saved immediately
         session()->save();
-        
+
         // Verify session was properly set
         $newSessionId = session()->getId();
         $sessionContainsId = session()->has('id');
         $sessionUserId = session('id');
-        
+
         Log::info('User session set', [
             'id' => $user->id,
             'iium_id' => $user->iium_id,
@@ -562,7 +563,7 @@ class MainController extends Controller
             'session_user_id' => $sessionUserId,
             'session_changed' => ($oldSessionId !== $newSessionId)
         ]);
-        
+
         // Double-check all session data is correct
         if ($sessionUserId != $user->id) {
             Log::warning('Session user ID mismatch after setting session', [
@@ -571,17 +572,17 @@ class MainController extends Controller
             ]);
         }
     }
-    
+
     /**
      * Get role name from user model
-     * 
+     *
      * @param mixed $user
      * @return string
      */
     private function getRoleFromModel($user)
     {
         $className = get_class($user);
-        
+
         if ($className === Admins::class) {
             return 'admin';
         } elseif ($className === Supervisors::class) {
@@ -591,7 +592,7 @@ class MainController extends Controller
         } elseif ($className === AJKs::class) {
             return 'ajk';
         }
-        
+
         // Default fallback (extract from class name)
         $baseName = strtolower(class_basename($className));
         return rtrim($baseName, 's');
@@ -599,7 +600,7 @@ class MainController extends Controller
 
     /**
      * Log out the user
-     * 
+     *
      * @param Request $request
      * @return \Illuminate\Http\RedirectResponse
      */
@@ -608,19 +609,19 @@ class MainController extends Controller
         $userId = session('id');
         $userRole = session('role');
         $sessionId = session()->getId();
-        
+
         Log::info('User logout initiated', [
             'user_id' => $userId,
             'role' => $userRole,
             'session_id' => $sessionId,
             'ip' => $request->ip()
         ]);
-        
+
         // If the user is logged in, find their model and clear the remember token
         if ($userId) {
             try {
                 $user = Users::find($userId);
-                
+
                 if ($user) {
                     Log::debug('Clearing remember token for user', ['user_id' => $userId]);
                     $user->remember_token = null;
@@ -635,10 +636,10 @@ class MainController extends Controller
                 ]);
             }
         }
-        
+
         // Clear cookies
         Cookie::queue(Cookie::forget('remember_token'));
-        
+
         // Store log data before clearing session
         $logData = [
             'user_id' => $userId,
@@ -646,14 +647,14 @@ class MainController extends Controller
             'session_id' => $sessionId,
             'logout_time' => now()->toDateTimeString()
         ];
-        
+
         // Clear the session
         $request->session()->invalidate();
         $request->session()->regenerateToken();
-        
+
         // Log after session is cleared
         Log::info('User logged out successfully', $logData);
-        
+
         return redirect('/');
     }
 }
