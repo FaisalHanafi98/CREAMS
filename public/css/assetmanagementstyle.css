@@ -30,7 +30,7 @@ nav {
 
 .logo {
   display: flex;
-  align-items: centre;
+  align-items: center;
   padding: 10px;
   font-family: 'Poppins', sans-serif;
   color: #fff;
@@ -49,7 +49,7 @@ ul a {
   font-size: 14px;
   color: #fff;
   display: flex;
-  align-items: centre;
+  align-items: center;
   padding: 10px;
   font-family: 'Poppins', sans-serif;
 }
@@ -65,7 +65,7 @@ ul a i {
 .nav-item {
   display: flex;
   flex-direction: column;
-  justify-content: centre;
+  justify-content: center;
   margin-left: 5px;
 }
 
@@ -95,7 +95,7 @@ nav .fas {
   height: 40px;
   top: 20px;
   font-size: 20px;
-  text-align: centre;
+  text-align: center;
 }
 
 ul a:hover {

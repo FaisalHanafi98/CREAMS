@@ -29,7 +29,7 @@
         </a>
     </div>
     
-    <div class="main-container" style="background-image: url('{{ asset('images/pexels-iqwan-alif-493640-1206101.jpg') }}'); background-size: cover; background-position: centre;">
+    <div class="main-container" style="background-image: url('{{ asset('images/pexels-iqwan-alif-493640-1206101.jpg') }}'); background-size: cover; background-position: center;">
         <div class="login-card">
             <!-- Login Icon at Top -->
             <div class="login-icon">
@@ -91,9 +91,7 @@
                     Sign In
                 </button>
                 
-                <div class="register-link">
-                    Don't have an account? <a href="{{ route('auth.registerpage') }}">Register now</a>
-                </div>
+                
             </form>
         </div>
     </div>

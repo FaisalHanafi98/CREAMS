@@ -453,7 +453,7 @@ th {
 .glyphicon-align-left:before {
   content: "\e052";
 }
-.glyphicon-align-centre:before {
+.glyphicon-align-center:before {
   content: "\e053";
 }
 .glyphicon-align-right:before {
@@ -1315,8 +1315,8 @@ mark,
 .text-right {
   text-align: right;
 }
-.text-centre {
-  text-align: centre;
+.text-center {
+  text-align: center;
 }
 .text-justify {
   text-align: justify;
@@ -2793,7 +2793,7 @@ select[multiple].input-lg {
   width: 34px;
   height: 34px;
   line-height: 34px;
-  text-align: centre;
+  text-align: center;
   pointer-events: none;
 }
 .input-lg + .form-control-feedback,
@@ -3007,7 +3007,7 @@ select[multiple].input-lg {
   font-size: 14px;
   font-weight: normal;
   line-height: 1.42857143;
-  text-align: centre;
+  text-align: center;
   white-space: nowrap;
   vertical-align: middle;
   -ms-touch-action: manipulation;
@@ -3901,7 +3901,7 @@ select[multiple].input-group-sm > .input-group-btn > .btn {
   font-weight: normal;
   line-height: 1;
   color: #555;
-  text-align: centre;
+  text-align: center;
   background-color: #eee;
   border: 1px solid #ccc;
   border-radius: 4px;
@@ -4049,7 +4049,7 @@ select[multiple].input-group-sm > .input-group-btn > .btn {
 }
 .nav-tabs.nav-justified > li > a {
   margin-bottom: 5px;
-  text-align: centre;
+  text-align: center;
 }
 .nav-tabs.nav-justified > .dropdown .dropdown-menu {
   top: auto;
@@ -4114,7 +4114,7 @@ select[multiple].input-group-sm > .input-group-btn > .btn {
 }
 .nav-justified > li > a {
   margin-bottom: 5px;
-  text-align: centre;
+  text-align: center;
 }
 .nav-justified > .dropdown .dropdown-menu {
   top: auto;
@@ -4807,7 +4807,7 @@ fieldset[disabled] .navbar-inverse .btn-link:focus {
 .pager {
   padding-left: 0;
   margin: 20px 0;
-  text-align: centre;
+  text-align: center;
   list-style: none;
 }
 .pager li {
@@ -4849,7 +4849,7 @@ fieldset[disabled] .navbar-inverse .btn-link:focus {
   font-weight: bold;
   line-height: 1;
   color: #fff;
-  text-align: centre;
+  text-align: center;
   white-space: nowrap;
   vertical-align: baseline;
   border-radius: .25em;
@@ -4917,7 +4917,7 @@ a.label:focus {
   font-weight: bold;
   line-height: 1;
   color: #fff;
-  text-align: centre;
+  text-align: center;
   white-space: nowrap;
   vertical-align: middle;
   background-color: #777;
@@ -5139,7 +5139,7 @@ a.thumbnail.active {
   font-size: 12px;
   line-height: 20px;
   color: #fff;
-  text-align: centre;
+  text-align: center;
   background-color: #337ab7;
   -webkit-box-shadow: inset 0 -1px 0 rgba(0, 0, 0, .15);
           box-shadow: inset 0 -1px 0 rgba(0, 0, 0, .15);
@@ -6034,7 +6034,7 @@ button.close {
   max-width: 200px;
   padding: 3px 8px;
   color: #fff;
-  text-align: centre;
+  text-align: center;
   background-color: #000;
   border-radius: 4px;
 }
@@ -6322,7 +6322,7 @@ button.close {
   width: 15%;
   font-size: 20px;
   color: #fff;
-  text-align: centre;
+  text-align: center;
   text-shadow: 0 1px 2px rgba(0, 0, 0, .6);
   background-color: rgba(0, 0, 0, 0);
   filter: alpha(opacity=50);
@@ -6395,7 +6395,7 @@ button.close {
   width: 60%;
   padding-left: 0;
   margin-left: -30%;
-  text-align: centre;
+  text-align: center;
   list-style: none;
 }
 .carousel-indicators li {
@@ -6425,7 +6425,7 @@ button.close {
   padding-top: 20px;
   padding-bottom: 20px;
   color: #fff;
-  text-align: centre;
+  text-align: center;
   text-shadow: 0 1px 2px rgba(0, 0, 0, .6);
 }
 .carousel-caption .btn {
@@ -6511,7 +6511,7 @@ button.close {
 .modal-footer:after {
   clear: both;
 }
-.centre-block {
+.center-block {
   display: block;
   margin-right: auto;
   margin-left: auto;

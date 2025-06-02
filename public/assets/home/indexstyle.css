@@ -190,7 +190,7 @@ nav-menu,
     background-color: #b0b0b0;
     background-image: url("images/banner-bg.jpg");
     background-repeat: no-repeat;
-    background-position: centre;
+    background-position: center;
     background-size: cover;
     position: relative;
 }
@@ -215,8 +215,8 @@ nav-menu,
 
 .login-alert-danger {
     display: flex;
-    align-items: centre;
-    justify-content: centre;
+    align-items: center;
+    justify-content: center;
     position: fixed;
     top: 0;
     left: 0;
@@ -239,7 +239,7 @@ nav-menu,
     font-size: 14px;
     font-weight: 600;
     padding: 15px 35px;
-    text-align: centre;
+    text-align: center;
     text-decoration: none;
     transition: 0.2s;
 }

@@ -84,6 +84,32 @@ class Trainees extends Model
     }
 
     /**
+     * Get the badge class for the trainee's condition.
+     *
+     * @return string
+     */
+    public function getConditionBadgeClassAttribute()
+    {
+        // Map conditions to Bootstrap badge classes
+        $conditionMap = [
+            'Autism Spectrum Disorder' => 'info',
+            'Down Syndrome' => 'primary',
+            'Cerebral Palsy' => 'warning',
+            'Hearing Impairment' => 'secondary',
+            'Visual Impairment' => 'secondary',
+            'Intellectual Disability' => 'danger',
+            'Physical Disability' => 'dark',
+            'Speech and Language Disorder' => 'light',
+            'Learning Disability' => 'success',
+            'Multiple Disabilities' => 'danger',
+            'Others' => 'secondary'
+        ];
+        
+        // Return the mapped badge class or default to secondary
+        return $conditionMap[$this->trainee_condition] ?? 'secondary';
+    }
+
+    /**
      * Get the profile associated with the trainee.
      */
     public function profile()

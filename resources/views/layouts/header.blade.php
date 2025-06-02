@@ -1,7 +1,7 @@
 {{-- Enhanced Header Section --}}
 <header id="header">
     <div class="header-container">
-        <div class="row align-items-centre justify-content-between">
+        <div class="row align-items-center justify-content-between">
             <div class="col-auto d-md-none">
                 <button class="mobile-nav-toggle" type="button" id="mobile-nav-toggle">
                     <i class="fas fa-bars"></i>
@@ -11,11 +11,11 @@
             <div class="col-lg-3 col-md-3">
                 <div class="logo-wrapper">
                     <a href="{{ route('home') }}">
-                        <img src="{{ asset('images/logo/logo iium.png') }}" alt="IIUM Logo" class="header-logo">
+                        <img src="{{ asset('images/logo/logo_ppdk.jpg') }}" alt="IIUM Logo" class="header-logo">
                     </a>
                     <a href="{{ route('home') }}">
-                        <h1 class="logo">CREAMS</h1>
-                        <span class="small-text">Community-based REhAbilitation Management System</span>
+                        <h1 class="logo">IIUM PD-CARE</h1>
+                        <span class="small-text">Community-based Rehabilitation Center</span>
                     </a>
                 </div>
             </div>
@@ -25,12 +25,12 @@
                     <ul class="nav-menu">
                         <li class="{{ Route::currentRouteName() == 'home' ? 'active' : '' }}">
                             <a href="{{ route('home') }}">Home</a>
-                        </li>                       
-                        <li class="{{ Route::currentRouteName() == 'supports' ? 'active' : '' }}">
-                            <a href="#support">Support</a>
                         </li>
-                        <li class="{{ Route::currentRouteName() == 'aboutus' ? 'active' : '' }}">
-                            <a href="#about">About</a>
+                        <li class="{{ in_array(Route::currentRouteName(), ['home']) ? '' : 'disabled' }}">
+                            <a href="{{ route('home') }}#services" class="support-link">Services</a>
+                        </li>
+                        <li>
+                            <a href="{{ route('home') }}#about">About</a>
                         </li>
                         <li class="{{ Route::currentRouteName() == 'contact' ? 'active' : '' }}">
                             <a href="{{ route('contact') }}">Contact</a>
@@ -50,11 +50,3 @@
         </div>
     </div>
 </header>
-
-
-
-{{-- Sticky Volunteer Button --}}
-<a href="{{ route('volunteer') }}" class="sticky-volunteer">
-    <i class="fas fa-hands-helping"></i>
-    <span class="tooltip">Volunteer With Us</span>
-</a>

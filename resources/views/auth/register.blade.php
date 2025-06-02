@@ -24,7 +24,7 @@
     
 </head>
 <body>
-    <body style="background-image: url('{{ asset('images/loginpagebackground.jpg') }}'); background-size: cover; background-position: centre; background-attachment: fixed;">
+    <body style="background-image: url('{{ asset('images/loginpagebackground.jpg') }}'); background-size: cover; background-position: center; background-attachment: fixed;">
     <div class="logo-container">
         <a href="{{ url('/') }}">
             <img src="{{ asset('images/logo.png') }}" alt="CREAMS Logo" onerror="this.style.display='none'">
@@ -72,7 +72,7 @@
                 <button class="tab-btn" id="tab-3">Review & Submit</button>
             </div>
             
-            <form action="{{ route('auth.save') }}" method="POST" id="registration-form" onsubmit="console.log('Form submitting with centre_id:', document.getElementById('centre_id').value); return true;">
+            <form action="{{ route('auth.save') }}" method="POST" id="registration-form" onsubmit="console.log('Form submitting with center_id:', document.getElementById('center_id').value); return true;">
                 @csrf
                 
                 <div class="form-sections-container">
@@ -180,24 +180,24 @@
                             </div>
                         </div>
 
-                        <!-- Centre Location dropdown -->
+                        <!-- center Location dropdown -->
                         <div class="form-group form-grid-full">
-                            <label for="centre_location">Centre Location*</label>
-                            <select class="form-control @error('centre_location') is-invalid @enderror" id="centre_location" name="centre_location" required>
+                            <label for="center_location">Centre Location*</label>
+                            <select class="form-control @error('center_location') is-invalid @enderror" id="center_location" name="center_location" required>
                                 <option value="">-- Select a Centre --</option>
-                                <option value="Gombak" {{ old('centre_location') === 'Gombak' ? 'selected' : '' }}>Gombak</option>
-                                <option value="Kuantan" {{ old('centre_location') === 'Kuantan' ? 'selected' : '' }}>Kuantan</option>
-                                <option value="Pagoh" {{ old('centre_location') === 'Pagoh' ? 'selected' : '' }}>Pagoh</option>
+                                <option value="Gombak" {{ old('center_location') === 'Gombak' ? 'selected' : '' }}>Gombak</option>
+                                <option value="Kuantan" {{ old('center_location') === 'Kuantan' ? 'selected' : '' }}>Kuantan</option>
+                                <option value="Pagoh" {{ old('center_location') === 'Pagoh' ? 'selected' : '' }}>Pagoh</option>
                             </select>
                             <div class="form-help">Select the campus centre location</div>
-                            @error('centre_location')
+                            @error('center_location')
                                 <div class="form-error">{{ $message }}</div>
                             @enderror
                         </div>
                         
-                        <!-- Hidden Centre ID field that gets populated based on selection -->
-                        <input type="hidden" id="centre_id" name="centre_id" value="{{ old('centre_id') }}">
-                        @error('centre_id')
+                        <!-- Hidden Center ID field that gets populated based on selection -->
+                        <input type="hidden" id="center_id" name="center_id" value="{{ old('center_id') }}">
+                        @error('center_id')
                             <div class="form-error">{{ $message }}</div>
                         @enderror
                         
@@ -234,7 +234,7 @@
                             </div>
                             <div class="review-item">
                                 <div class="review-label">Centre:</div>
-                                <div class="review-value" id="review-centre">Not selected</div>
+                                <div class="review-value" id="review-center">Not selected</div>
                             </div>
                         </div>
                         
@@ -267,7 +267,7 @@
             </div>
         </div>
         
-        <div class="text-centre">
+        <div class="text-center">
             <a href="{{ url('/') }}" class="back-link">
                 <i class="fas fa-arrow-left"></i> Back to Home Page
             </a>
@@ -333,32 +333,32 @@
     
     <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // ===== Centre ID mapping setup =====
+        // ===== Center ID mapping setup =====
         // Map locations to IDs
-        const locationToCentreId = {
+        const locationToCenterId = {
             'Gombak': '1',
             'Kuantan': '2',
             'Pagoh': '3'
         };
         
-        const centreLocationSelect = document.getElementById('centre_location');
-        const centreIdInput = document.getElementById('centre_id');
+        const centerLocationSelect = document.getElementById('center_location');
+        const centerIdInput = document.getElementById('center_id');
         
-        if (centreLocationSelect && centreIdInput) {
+        if (centerLocationSelect && centerIdInput) {
             // Set initial value if a location is already selected
-            if (centreLocationSelect.value && locationToCentreId[centreLocationSelect.value]) {
-                centreIdInput.value = locationToCentreId[centreLocationSelect.value];
-                console.log('Initial Centre ID set to:', centreIdInput.value, 'for location:', centreLocationSelect.value);
+            if (centerLocationSelect.value && locationToCenterId[centerLocationSelect.value]) {
+                centerIdInput.value = locationToCenterId[centerLocationSelect.value];
+                console.log('Initial Center ID set to:', centerIdInput.value, 'for location:', centerLocationSelect.value);
             }
             
-            // Update centre_id when centre_location changes
-            centreLocationSelect.addEventListener('change', function() {
-                if (this.value && locationToCentreId[this.value]) {
-                    centreIdInput.value = locationToCentreId[this.value];
-                    console.log('Centre ID updated to:', centreIdInput.value, 'for location:', this.value);
+            // Update center_id when center_location changes
+            centerLocationSelect.addEventListener('change', function() {
+                if (this.value && locationToCenterId[this.value]) {
+                    centerIdInput.value = locationToCenterId[this.value];
+                    console.log('Center ID updated to:', centerIdInput.value, 'for location:', this.value);
                 } else {
-                    centreIdInput.value = ''; // Clear the value if no location is selected
-                    console.log('Centre ID cleared because no location was selected');
+                    centerIdInput.value = ''; // Clear the value if no location is selected
+                    console.log('Center ID cleared because no location was selected');
                 }
             });
         }
@@ -583,33 +583,33 @@
             }, 800);
         });
     
-        // Validate centre selection
-        function validateCentreSelection() {
-            const centreLocationSelect = document.getElementById('centre_location');
-            const centreIdInput = document.getElementById('centre_id');
+        // Validate center selection
+        function validateCenterSelection() {
+            const centerLocationSelect = document.getElementById('center_location');
+            const centerIdInput = document.getElementById('center_id');
             
-            if (!centreLocationSelect) return true;
+            if (!centerLocationSelect) return true;
             
-            const isValid = centreLocationSelect.value !== '';
+            const isValid = centerLocationSelect.value !== '';
             
             if (!isValid) {
-                centreLocationSelect.classList.add('is-invalid');
-                shakeElement(centreLocationSelect);
+                centerLocationSelect.classList.add('is-invalid');
+                shakeElement(centerLocationSelect);
                 
                 // Add a visual indicator that this field is required
-                const centreFormGroup = centreLocationSelect.closest('.form-group');
-                centreFormGroup.classList.add('highlight-error');
+                const centerFormGroup = centerLocationSelect.closest('.form-group');
+                centerFormGroup.classList.add('highlight-error');
                 
                 setTimeout(() => {
-                    centreFormGroup.classList.remove('highlight-error');
+                    centerFormGroup.classList.remove('highlight-error');
                 }, 3000);
             } else {
-                centreLocationSelect.classList.remove('is-invalid');
-                centreLocationSelect.classList.add('is-valid');
+                centerLocationSelect.classList.remove('is-invalid');
+                centerLocationSelect.classList.add('is-valid');
                 
-                // Make sure centre_id is set based on the location
-                if (centreIdInput && locationToCentreId[centreLocationSelect.value]) {
-                    centreIdInput.value = locationToCentreId[centreLocationSelect.value];
+                // Make sure center_id is set based on the location
+                if (centerIdInput && locationToCenterId[centerLocationSelect.value]) {
+                    centerIdInput.value = locationToCenterId[centerLocationSelect.value];
                 }
             }
             
@@ -621,7 +621,7 @@
             // Validate second section
             const name = document.getElementById('name');
             const roleSelected = document.querySelector('input[name="role"]:checked');
-            const centreValid = validateCentreSelection();
+            const centerValid = validateCenterSelection();
             
             let isValid = true;
             
@@ -639,8 +639,8 @@
                 document.querySelector('.role-options').classList.remove('is-invalid');
             }
             
-            // Centre validation - use the result from validateCentreSelection
-            isValid = centreValid && isValid;
+            // Center validation - use the result from validateCenterSelection
+            isValid = centerValid && isValid;
             
             if (!isValid) {
                 // Shake the button to indicate validation error
@@ -696,17 +696,17 @@
                     document.getElementById('review-role').textContent = roleName;
                 }
                 
-                // Centre location and ID
-                const centreLocationSelect = document.getElementById('centre_location');
-                const centreIdInput = document.getElementById('centre_id');
-                if (centreLocationSelect && centreLocationSelect.value) {
-                    let centreText = centreLocationSelect.value;
-                    if (centreIdInput && centreIdInput.value) {
-                        centreText += ' (ID: ' + centreIdInput.value + ')';
+                // center location and ID
+                const centerLocationSelect = document.getElementById('center_location');
+                const centerIdInput = document.getElementById('center_id');
+                if (centerLocationSelect && centerLocationSelect.value) {
+                    let centerText = centerLocationSelect.value;
+                    if (centerIdInput && centerIdInput.value) {
+                        centerText += ' (ID: ' + centerIdInput.value + ')';
                     }
-                    document.getElementById('review-centre').textContent = centreText;
+                    document.getElementById('review-center').textContent = centerText;
                 } else {
-                    document.getElementById('review-centre').textContent = 'Not selected';
+                    document.getElementById('review-center').textContent = 'Not selected';
                 }
                 
                 // Animate each review value back in with staggered timing
@@ -943,8 +943,8 @@
                     iium_id: document.getElementById('iium_id').value,
                     name: document.getElementById('name').value,
                     role: document.querySelector('input[name="role"]:checked')?.value || 'none',
-                    centre_location: document.getElementById('centre_location').value,
-                    centre_id: document.getElementById('centre_id').value
+                    center_location: document.getElementById('center_location').value,
+                    center_id: document.getElementById('center_id').value
                 });
                 
                 submitButton.disabled = true;

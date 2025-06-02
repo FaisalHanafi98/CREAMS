@@ -88,7 +88,7 @@ section {
     cursor: pointer;
     text-transform: capitalize;
     padding: 1.2rem 2rem;
-    text-align: centre;
+    text-align: center;
     margin-top: 1rem;
   }
 
@@ -148,7 +148,7 @@ section {
 
 .header .flex {
     display: flex;
-    align-items: centre;
+    align-items: center;
     justify-content: space-between;
     position: relative;
     padding: 1.5rem 2rem;
@@ -184,7 +184,7 @@ section {
     background-color: var(--white);
     padding: 1.5rem 2rem;
     display: flex;
-    align-items: centre;
+    align-items: center;
     gap: 1.5rem;
 }
 
@@ -224,7 +224,7 @@ section {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(30rem, 1fr));
     gap: 2rem;
-    justify-content: centre;
+    justify-content: center;
     align-items: flex-start;
   }
   
@@ -236,7 +236,7 @@ section {
   }
   
   .teachers .box-container .box.offer {
-    text-align: centre;
+    text-align: center;
   }
   
   .teachers .box-container .box.offer h3 {
@@ -255,7 +255,7 @@ section {
 
   .teachers .box-container .box .tutor {
     display: flex;
-    align-items: centre;
+    align-items: center;
     gap: 2rem;
     margin-bottom: 1.5rem;
   }
@@ -288,7 +288,7 @@ section {
 }
 
 .teacher-profile .details {
-  text-align: centre;
+  text-align: center;
   background-color: var(--white);
   border-radius: 0.5rem;
   padding: 2rem;

@@ -66,7 +66,7 @@
         </a>
       </li>
       <li>
-        <a href="{{ route('admin.centres') }}">
+        <a href="{{ route('admin.centers') }}">
           <i class="fas fa-building"></i>
           <span>Centres</span>
           <div class="tooltip-sidebar">Centres</div>
@@ -252,8 +252,8 @@
             </div>
             <div class="form-col">
               <div class="form-group">
-                <label for="centre_id">Centre</label>
-                <select class="form-control" id="centre_id" name="centre_id" required>
+                <label for="center_id">Centre</label>
+                <select class="form-control" id="center_id" name="center_id" required>
                   <option value="1">IIUM Gombak</option>
                   <option value="2">IIUM Kuantan</option>
                   <option value="3">IIUM Pagoh</option>

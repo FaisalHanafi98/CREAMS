@@ -29,11 +29,11 @@
                             </div>
                             @if(auth()->user()->role == 'admin' || auth()->user()->role == 'supervisor')
                             <div class="col-md-3 mb-3">
-                                <label for="centre">Centre</label>
-                                <select class="form-control" id="centre" name="centre_id">
+                                <label for="center">Centre</label>
+                                <select class="form-control" id="center" name="center_id">
                                     <option value="">All Centres</option>
-                                    @foreach($centres as $centre)
-                                    <option value="{{ $centre->centre_id }}" {{ request('centre_id') == $centre->centre_id ? 'selected' : '' }}>{{ $centre->centre_name }}</option>
+                                    @foreach($centers as $center)
+                                    <option value="{{ $center->center_id }}" {{ request('center_id') == $center->center_id ? 'selected' : '' }}>{{ $center->center_name }}</option>
                                     @endforeach
                                 </select>
                             </div>
@@ -77,7 +77,7 @@
                                     <tr>
                                         <td>{{ $trainee->id }}</td>
                                         <td>
-                                            <div class="d-flex align-items-centre">
+                                            <div class="d-flex align-items-center">
                                                 <div class="avatar mr-3">
                                                     <img src="{{ asset($trainee->trainee_avatar) }}" alt="{{ $trainee->trainee_first_name }}" class="rounded-circle" width="40">
                                                 </div>
@@ -87,7 +87,7 @@
                                             </div>
                                         </td>
                                         <td>{{ $trainee->trainee_condition }}</td>
-                                        <td>{{ $trainee->centre_name }}</td>
+                                        <td>{{ $trainee->center_name }}</td>
                                         <td>
                                             <input type="hidden" name="attendance[{{ $trainee->id }}][trainee_id]" value="{{ $trainee->id }}">
                                             <div class="form-check form-check-inline">
@@ -113,7 +113,7 @@
                                     </tr>
                                     @empty
                                     <tr>
-                                        <td colspan="6" class="text-centre">No trainees found matching the selected criteria.</td>
+                                        <td colspan="6" class="text-center">No trainees found matching the selected criteria.</td>
                                     </tr>
                                     @endforelse
                                 </tbody>
@@ -196,7 +196,7 @@
 <script>
     $(document).ready(function() {
         // Date change automatic submit
-        $('#date, #centre, #activity').change(function() {
+        $('#date, #center, #activity').change(function() {
             $(this).closest('form').submit();
         });
         

@@ -12,7 +12,7 @@ class TeachersHomeControllerTeacher extends Controller
     public function index()
     {
         $users = Users::query()
-            ->select('id', 'user_first_name', 'user_last_name', 'role', 'user_activity_1', 'user_activity_2', 'user_avatar')
+            ->select('id', 'user_first_name', 'user_last_name', 'role', 'user_activity_1', 'user_activity_2', 'avatar')
             ->orderBy('role', 'asc')
             ->orderBy('user_activity_1', 'asc')
             ->get();

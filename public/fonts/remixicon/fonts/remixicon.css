@@ -41,7 +41,7 @@
 .ri-8x { font-size: 8em; }
 .ri-9x { font-size: 9em; }
 .ri-10x { font-size: 10em; }
-.ri-fw { text-align: centre; width: 1.25em; }
+.ri-fw { text-align: center; width: 1.25em; }
 
 .ri-24-hours-fill:before { content: "\ea01"; }
 .ri-24-hours-line:before { content: "\ea02"; }
@@ -79,7 +79,7 @@
 .ri-aliens-fill:before { content: "\ea22"; }
 .ri-aliens-line:before { content: "\ea23"; }
 .ri-align-bottom:before { content: "\ea24"; }
-.ri-align-centre:before { content: "\ea25"; }
+.ri-align-center:before { content: "\ea25"; }
 .ri-align-justify:before { content: "\ea26"; }
 .ri-align-left:before { content: "\ea27"; }
 .ri-align-right:before { content: "\ea28"; }

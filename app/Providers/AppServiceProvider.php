@@ -42,9 +42,7 @@ class AppServiceProvider extends ServiceProvider
                     // Add avatar if it exists in session
                     if (session()->has('avatar')) {
                         $userData['avatar'] = session('avatar');
-                    } elseif (session()->has('user_avatar')) {
-                        $userData['avatar'] = session('user_avatar');
-                    }
+                    } 
                     
                     // Share the user data with the view
                     $view->with('user', $userData);

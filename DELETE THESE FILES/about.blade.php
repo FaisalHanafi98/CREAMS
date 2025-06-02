@@ -25,7 +25,7 @@
         <div class="container">
             <div class="row">
                 <div class="col-md-4">
-                   <div class="about-item text-centre">
+                   <div class="about-item text-center">
                     <i class="fa fa-book"></i>
                     <h3>MISSION</h3>
                     <hr>
@@ -34,7 +34,7 @@
                     </div>
                 </div>
                 <div class="col-md-4">
-                   <div class="about-item text-centre">
+                   <div class="about-item text-center">
                     <i class="fa fa-globe"></i>
                     <h3>VISSION</h3>
                     <hr>
@@ -43,7 +43,7 @@
                     </div>
                 </div>
                 <div class="col-md-4">
-                   <div class="about-item text-centre">
+                   <div class="about-item text-center">
                     <i class="fa fa-pencil"></i>
                     <h3>ACHIEVEMENTS</h3>
                     <hr>
@@ -82,7 +82,7 @@
             </div>
         </div>
         <div class="row">
-            <div class="col-lg-12 text-centre">
+            <div class="col-lg-12 text-center">
                 <p class="copyright">Copyright &copy; {{ date('Y') }} CREAMS. All rights reserved.</p>
             </div>
         </div>

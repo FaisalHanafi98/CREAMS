@@ -1,132 +1,77 @@
-@extends('layouts.dashboard')
+@extends('layouts.app')
 
-@section('title', 'Centres')
+@section('title', 'Centres Management')
 
 @section('content')
-<div class="content-section">
-    <div class="card mb-4">
-        <div class="card-header">
-            <h5 class="card-title">Rehabilitation Centres</h5>
-        </div>
-        <div class="card-body">
-            <div class="row">
-                @foreach($centres as $centre)
-                <div class="col-md-4 mb-4">
-                    <div class="centre-card">
-                        <div class="centre-header">
-                            <h5 class="centre-name">{{ $centre['name'] }}</h5>
-                            <div class="centre-stats">
-                                <div class="stat">
-                                    <span class="stat-value">{{ $centre['staff_count'] }}</span>
-                                    <span class="stat-label">Staff</span>
-                                </div>
-                                <div class="stat">
-                                    <span class="stat-value">{{ $centre['trainee_count'] }}</span>
-                                    <span class="stat-label">Tainees</span>
-                                </div>
+<div class="container-fluid">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Centres Management</h1>
+        <a href="#" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm">
+            <i class="fas fa-plus fa-sm text-white-50"></i> Add New Centre
+        </a>
+    </div>
+    
+    <div class="row">
+        @foreach($centres as $centre)
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="card shadow h-100">
+                    <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                        <h6 class="m-0 font-weight-bold text-primary">{{ $centre['name'] }}</h6>
+                        <div class="dropdown no-arrow">
+                            <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
+                            </a>
+                            <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in" aria-labelledby="dropdownMenuLink">
+                                <div class="dropdown-header">Centre Actions:</div>
+                                <a class="dropdown-item" href="{{ route(session('role') . '.centres.show', $centre['id']) }}">View Details</a>
+                                <a class="dropdown-item" href="{{ route(session('role') . '.centres.assets', $centre['id']) }}">View Assets</a>
+                                <div class="dropdown-divider"></div>
+                                <a class="dropdown-item" href="#">Edit Centre</a>
                             </div>
-                        </div>
-                        <div class="centre-body">
-                            <div class="centre-info">
-                                <div class="info-item">
-                                    <i class="fas fa-map-marker-alt"></i>
-                                    <span>{{ $centre['address'] }}</span>
-                                </div>
-                                <div class="info-item">
-                                    <i class="fas fa-phone"></i>
-                                    <span>{{ $centre['phone'] }}</span>
-                                </div>
-                                <div class="info-item">
-                                    <i class="fas fa-envelope"></i>
-                                    <span>{{ $centre['email'] }}</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="centre-footer">
-                            <a href="{{ route('centres.show', $centre['id']) }}" class="btn btn-primary btn-sm">View Details</a>
                         </div>
                     </div>
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Location</div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $centre['location'] }}</div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-map-marker-alt fa-2x text-gray-300"></i>
+                            </div>
+                        </div>
+                        
+                        <hr>
+                        
+                        <div class="d-flex justify-content-between mb-3">
+                            <div>
+                                <p class="mb-0 text-muted">Staff</p>
+                                <h6>{{ $centre['staff_count'] }}</h6>
+                            </div>
+                            <div>
+                                <p class="mb-0 text-muted">Trainees</p>
+                                <h6>{{ $centre['trainee_count'] }}</h6>
+                            </div>
+                            <div>
+                                <p class="mb-0 text-muted">Assets</p>
+                                <h6>{{ $centre['asset_count'] }}</h6>
+                            </div>
+                        </div>
+                        
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Capacity</div>
+                        <div class="progress mb-2">
+                            <div class="progress-bar bg-success" role="progressbar" style="width: {{ ($centre['trainee_count'] / $centre['capacity']) * 100 }}%" aria-valuenow="{{ ($centre['trainee_count'] / $centre['capacity']) * 100 }}" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                        <small>{{ $centre['trainee_count'] }} / {{ $centre['capacity'] }} ({{ round(($centre['trainee_count'] / $centre['capacity']) * 100) }}%)</small>
+                    </div>
+                    <div class="card-footer bg-white">
+                        <span class="badge badge-{{ $centre['status'] == 'active' ? 'success' : 'secondary' }}">
+                            {{ ucfirst($centre['status']) }}
+                        </span>
+                    </div>
                 </div>
-                @endforeach
             </div>
-        </div>
+        @endforeach
     </div>
 </div>
-
-<style>
-    .centre-card {
-        background-color: var(--light-color);
-        border-radius: 15px;
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
-        overflow: hidden;
-        transition: all 0.3s ease;
-        height: 100%;
-        display: flex;
-        flex-direction: column;
-    }
-    
-    .centre-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
-    }
-    
-    .centre-header {
-        padding: 20px;
-        background: var(--primary-gradient);
-        color: var(--light-color);
-    }
-    
-    .centre-name {
-        margin-bottom: 15px;
-        font-weight: 600;
-    }
-    
-    .centre-stats {
-        display: flex;
-        gap: 20px;
-    }
-    
-    .stat {
-        text-align: centre;
-    }
-    
-    .stat-value {
-        font-size: 20px;
-        font-weight: 700;
-        display: block;
-    }
-    
-    .stat-label {
-        font-size: 12px;
-        opacity: 0.8;
-    }
-    
-    .centre-body {
-        padding: 20px;
-        flex: 1;
-    }
-    
-    .centre-info {
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-    }
-    
-    .info-item {
-        display: flex;
-        gap: 10px;
-        font-size: 14px;
-    }
-    
-    .info-item i {
-        color: var(--primary-color);
-        width: 16px;
-    }
-    
-    .centre-footer {
-        padding: 15px 20px;
-        border-top: 1px solid rgba(0, 0, 0, 0.05);
-        text-align: centre;
-    }
-</style>
 @endsection

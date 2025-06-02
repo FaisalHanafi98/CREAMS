@@ -81,7 +81,7 @@
                     <p>
                         Click the 'Edit' button to make changes to this activity section.
                     </p>
-                    <a href="{{ route('register') }}" class="inline-btn">Edit</a>
+                    <a href="{{ route('auth.registerpage') }}" class="inline-btn">Edit</a>
                 </div>
 
                 @php
@@ -97,7 +97,7 @@
                         @if ($index === 0)
                             <div class="box offer">
                                 <div class="tutor">
-                                    <img src="{{ asset($userItem->user_avatar) }}" alt="teacher dp">
+                                    <img src="{{ asset($userItem->avatar) }}" alt="teacher dp">
                                     <div>
                                         <h3>{{ $userItem->users_name ?? $userItem->user_first_name . ' ' . $userItem->user_last_name }}</h3>
                                         <span>{{ $userItem->role }}</span>
@@ -112,7 +112,7 @@
                         @else
                             <div class="box">
                                 <div class="tutor">
-                                    <img src="{{ asset($userItem->user_avatar) }}" alt="teacher dp">
+                                    <img src="{{ asset($userItem->avatar) }}" alt="teacher dp">
                                     <div>
                                         <h3>{{ $userItem->users_name ?? $userItem->user_first_name . ' ' . $userItem->user_last_name }}</h3>
                                         <span>{{ $userItem->role }}</span>

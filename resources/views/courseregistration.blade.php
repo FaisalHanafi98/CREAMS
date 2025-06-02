@@ -102,8 +102,8 @@
                     <label for="location_id">Location</label>
                     <select name="location_id" id="location_id">
                         <option value="">Select Location</option>
-                        @foreach ($centres as $centreId => $centreName)
-                            <option value="{{ $centreId }}">{{ $centreName }}</option>
+                        @foreach ($centres as $centerId => $centerName)
+                            <option value="{{ $centerId }}">{{ $centerName }}</option>
                         @endforeach
                     </select>
                 </div>

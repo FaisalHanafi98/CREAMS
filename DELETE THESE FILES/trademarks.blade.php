@@ -25,7 +25,7 @@
     {{-- Header Section --}}
     <header id="header">
         <div class="container">
-            <div class="row align-items-centre justify-content-between">
+            <div class="row align-items-center justify-content-between">
                 <div class="col-auto d-block d-md-none">
                     <button class="navbar-toggler" type="button" id="mobile-nav-toggle">
                         <i class="fas fa-bars"></i>
@@ -34,7 +34,7 @@
                 <div class="col-md-2 d-none d-md-block text-left">
                     <img src="{{ asset('images/logo/logo iium.png') }}" alt="IIUM Logo" class="header-logo">
                 </div>
-                <div class="col-md-8 text-centre" id="logo">
+                <div class="col-md-8 text-center" id="logo">
                     <a href="{{ route('home') }}">
                         <h1 class="logo">CREAMS</h1>
                         <span class="small-text">Community-based REhAbilitation Management System</span>
@@ -231,7 +231,7 @@
         <div class="copyright">
             <div class="container">
                 <div class="row">
-                    <div class="col-md-12 text-centre">
+                    <div class="col-md-12 text-center">
                         <p>&copy; {{ date('Y') }} CREAMS. All rights reserved. A collaborative initiative of International Islamic University Malaysia and Jabatan Kebajikan Masyarakat.</p>
                     </div>
                 </div>

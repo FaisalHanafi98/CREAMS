@@ -81,7 +81,7 @@
                             <p>
                                 Click the 'Edit' button to make changes to this activity section.
                             </p>
-                            <a href="{{ route('register') }}" class="inline-btn">Edit</a>
+                            <a href="{{ route('auth.registerpage') }}" class="inline-btn">Edit</a>
                         </div>
 
                         @foreach ($usersInActivity1 as $index => $userItem)
@@ -89,7 +89,7 @@
                                 @if ($index === 0)
                                     <div class="box offer">
                                         <div class="tutor">
-                                            <img src="{{ asset($userItem->user_avatar) }}" alt="teacher dp">
+                                            <img src="{{ asset($userItem->avatar) }}" alt="teacher dp">
                                             <div>
                                                 <h3>{{ $userItem->user_name }}</h3>
                                                 <span>{{ $userItem->role }}</span>
@@ -103,7 +103,7 @@
                                 @else
                                     <div class="box">
                                         <div class="tutor">
-                                            <img src="{{ asset($userItem->user_avatar) }}" alt="teacher dp">
+                                            <img src="{{ asset($userItem->avatar) }}" alt="teacher dp">
                                             <div>
                                                 <h3>{{ $userItem->user_name }}</h3>
                                                 <span>{{ $userItem->role }}</span>

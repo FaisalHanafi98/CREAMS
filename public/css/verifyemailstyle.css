@@ -21,7 +21,7 @@
             flex-direction: column;
             background-image: url('{{ asset("images/loginpagebackground.jpg") }}');
             background-size: cover;
-            background-position: centre;
+            background-position: center;
             background-attachment: fixed;
         }
         
@@ -42,7 +42,7 @@
             text-decoration: none;
             transition: all 0.3s ease;
             display: flex;
-            align-items: centre;
+            align-items: center;
         }
         
         .logo-container a:hover {
@@ -58,8 +58,8 @@
         .container {
             flex: 1;
             display: flex;
-            justify-content: centre;
-            align-items: centre;
+            justify-content: center;
+            align-items: center;
             padding: 40px 20px;
         }
         
@@ -79,7 +79,7 @@
         }
         
         .form-header {
-            text-align: centre;
+            text-align: center;
             margin-bottom: 30px;
         }
         
@@ -100,7 +100,7 @@
             color: #777;
             line-height: 1.6;
             margin-bottom: 30px;
-            text-align: centre;
+            text-align: center;
         }
         
         .btn-verify {
@@ -116,7 +116,7 @@
             cursor: pointer;
             transition: all 0.3s ease;
             margin-top: 10px;
-            text-align: centre;
+            text-align: center;
             text-decoration: none;
         }
         
@@ -139,7 +139,7 @@
             cursor: pointer;
             transition: all 0.3s ease;
             margin-top: 15px;
-            text-align: centre;
+            text-align: center;
             text-decoration: none;
         }
         

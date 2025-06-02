@@ -33,11 +33,11 @@
                             </div>
                             @if(auth()->user()->role == 'admin' || auth()->user()->role == 'supervisor')
                             <div class="col-md-3 mb-3">
-                                <label for="centre_name">Centre</label>
-                                <select class="form-control" id="centre_name" name="centre_name">
+                                <label for="center_name">Centre</label>
+                                <select class="form-control" id="center_name" name="center_name">
                                     <option value="">All Centres</option>
-                                    @foreach($centres as $centre)
-                                    <option value="{{ $centre->centre_name }}" {{ request('centre_name') == $centre->centre_name ? 'selected' : '' }}>{{ $centre->centre_name }}</option>
+                                    @foreach($centers as $center)
+                                    <option value="{{ $center->center_name }}" {{ request('center_name') == $center->center_name ? 'selected' : '' }}>{{ $center->center_name }}</option>
                                     @endforeach
                                 </select>
                             </div>
@@ -88,7 +88,7 @@
                                 <tr>
                                     <td>{{ $trainee->id }}</td>
                                     <td>
-                                        <div class="d-flex align-items-centre">
+                                        <div class="d-flex align-items-center">
                                             <div class="avatar mr-3">
                                                 <img src="{{ asset($trainee->trainee_avatar) }}" alt="{{ $trainee->trainee_first_name }}" class="rounded-circle" width="40">
                                             </div>
@@ -97,7 +97,7 @@
                                             </div>
                                         </div>
                                     </td>
-                                    <td>{{ $trainee->centre_name }}</td>
+                                    <td>{{ $trainee->center_name }}</td>
                                     <td>{{ $attendanceData[$trainee->id]['present'] ?? 0 }}</td>
                                     <td>{{ $attendanceData[$trainee->id]['absent'] ?? 0 }}</td>
                                     <td>{{ $attendanceData[$trainee->id]['late'] ?? 0 }}</td>

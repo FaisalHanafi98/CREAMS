@@ -3,239 +3,140 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 
 class CentreController extends Controller
 {
     /**
-     * Display a listing of centres.
-     *
-     * @return \Illuminate\View\View
+     * Display a listing of the centres.
      */
     public function index()
     {
-        // Get user ID and role
-        $userId = session('id');
-        $role = session('role');
+        // Placeholder data for centres
+        $centres = $this->getPlaceholderCentres();
         
-        // Dummy data for centres (replace with actual database queries)
-        $centres = [
-            [
-                'id' => 1,
-                'name' => 'IIUM Gombak Centre',
-                'address' => 'Jalan Gombak, 53100 Kuala Lumpur',
-                'phone' => '+60 3-6196 4000',
-                'email' => 'gombak@iium.edu.my',
-                'staff_count' => 25,
-                'trainee_count' => 150
-            ],
-            [
-                'id' => 2,
-                'name' => 'IIUM Kuantan Centre',
-                'address' => 'Jalan Sultan Ahmad Shah, 25200 Kuantan, Pahang',
-                'phone' => '+60 9-570 4000',
-                'email' => 'kuantan@iium.edu.my',
-                'staff_count' => 18,
-                'trainee_count' => 120
-            ],
-            [
-                'id' => 3,
-                'name' => 'IIUM Pagoh Centre',
-                'address' => 'KM 1, Jalan Panchor, 84600 Pagoh, Johor',
-                'phone' => '+60 6-974 2800',
-                'email' => 'pagoh@iium.edu.my',
-                'staff_count' => 15,
-                'trainee_count' => 90
-            ]
-        ];
-        
-        Log::info('Centres listing accessed', [
-            'user_id' => $userId,
-            'role' => $role
-        ]);
-        
-        return view('centres.index', [
-            'centres' => $centres
-        ]);
+        return view('centres.index', compact('centres'));
     }
     
     /**
      * Display the specified centre.
-     *
-     * @param  int  $id
-     * @return \Illuminate\View\View
      */
-    public function show($id)
+    public function show($role, $id)
     {
-        // Get user ID and role
-        $userId = session('id');
-        $role = session('role');
+        // Find centre by id from placeholder data
+        $centre = $this->getPlaceholderCentre($id);
         
-        // Dummy data for a specific centre (replace with actual database queries)
-        $centre = [
-            'id' => $id,
-            'name' => 'IIUM Gombak Centre',
-            'address' => 'Jalan Gombak, 53100 Kuala Lumpur',
-            'phone' => '+60 3-6196 4000',
-            'email' => 'gombak@iium.edu.my',
-            'website' => 'https://www.iium.edu.my',
-            'description' => 'The IIUM Gombak Centre provides rehabilitation services and special education programs for trainees with diverse needs.',
-            'facilities' => [
-                'Speech Therapy Rooms',
-                'Sensory Integration Room',
-                'Fine Motor Skills Lab',
-                'Computer Lab',
-                'Music Therapy Room',
-                'Outdoor Playground'
-            ],
-            'staff_count' => 25,
-            'trainee_count' => 150,
-            'staff' => [
-                [
-                    'id' => 1,
-                    'name' => 'Dr. Ahmad Razif',
-                    'role' => 'Admin',
-                    'email' => 'razif@iium.edu.my'
-                ],
-                [
-                    'id' => 2,
-                    'name' => 'Dr. Nurul Hafizah',
-                    'role' => 'Teacher',
-                    'email' => 'nurulh@iium.edu.my'
-                ]
-            ]
-        ];
-        
-        Log::info('Centre details accessed', [
-            'user_id' => $userId,
-            'role' => $role,
-            'centre_id' => $id
-        ]);
-        
-        return view('centres.show', [
-            'centre' => $centre
-        ]);
+        return view('centres.show', compact('centre'));
     }
     
     /**
-     * Display admin-specific listing of centres.
-     *
-     * @return \Illuminate\View\View
+     * Display assets for a specific centre.
      */
-    public function adminIndex()
+    public function assets($role, $id)
     {
-        // Check role access
-        $role = session('role');
-        if ($role !== 'admin') {
-            Log::warning('Unauthorized access attempt to admin centres', [
-                'user_id' => session('id'),
-                'role' => $role
-            ]);
-            
-            return redirect()->route('dashboard')
-                ->with('error', 'You do not have permission to access this page');
-        }
+        // Find centre by id from placeholder data
+        $centre = $this->getPlaceholderCentre($id);
         
-        // Same data as index, but with admin-specific options
-        $centres = [
+        // Get assets for this centre (placeholder data)
+        $assets = $this->getPlaceholderCentreAssets($id);
+        
+        return view('centres.assets', compact('centre', 'assets'));
+    }
+    
+    /**
+     * Get placeholder data for all centres
+     */
+    private function getPlaceholderCentres()
+    {
+        return [
             [
                 'id' => 1,
-                'name' => 'IIUM Gombak Centre',
-                'address' => 'Jalan Gombak, 53100 Kuala Lumpur',
-                'phone' => '+60 3-6196 4000',
-                'email' => 'gombak@iium.edu.my',
-                'staff_count' => 25,
-                'trainee_count' => 150,
+                'name' => 'Main Training Centre',
+                'location' => 'City Centre',
+                'capacity' => 120,
+                'staff_count' => 12,
+                'trainee_count' => 78,
+                'asset_count' => 45,
                 'status' => 'active'
             ],
             [
                 'id' => 2,
-                'name' => 'IIUM Kuantan Centre',
-                'address' => 'Jalan Sultan Ahmad Shah, 25200 Kuantan, Pahang',
-                'phone' => '+60 9-570 4000',
-                'email' => 'kuantan@iium.edu.my',
-                'staff_count' => 18,
-                'trainee_count' => 120,
+                'name' => 'East Branch',
+                'location' => 'East District',
+                'capacity' => 80,
+                'staff_count' => 8,
+                'trainee_count' => 54,
+                'asset_count' => 32,
                 'status' => 'active'
             ],
             [
                 'id' => 3,
-                'name' => 'IIUM Pagoh Centre',
-                'address' => 'KM 1, Jalan Panchor, 84600 Pagoh, Johor',
-                'phone' => '+60 6-974 2800',
-                'email' => 'pagoh@iium.edu.my',
-                'staff_count' => 15,
-                'trainee_count' => 90,
+                'name' => 'South Campus',
+                'location' => 'South District',
+                'capacity' => 70,
+                'staff_count' => 6,
+                'trainee_count' => 42,
+                'asset_count' => 28,
+                'status' => 'active'
+            ],
+            [
+                'id' => 4,
+                'name' => 'North Extension',
+                'location' => 'North District',
+                'capacity' => 60,
+                'staff_count' => 5,
+                'trainee_count' => 36,
+                'asset_count' => 22,
                 'status' => 'active'
             ]
         ];
-        
-        return view('centres.admin.index', [
-            'centres' => $centres
-        ]);
     }
     
     /**
-     * Show the form for creating a new centre.
-     *
-     * @return \Illuminate\View\View
+     * Get placeholder data for a specific centre
      */
-    public function create()
+    private function getPlaceholderCentre($id)
     {
-        // Check role access
-        $role = session('role');
-        if ($role !== 'admin') {
-            Log::warning('Unauthorized access attempt to create centre', [
-                'user_id' => session('id'),
-                'role' => $role
-            ]);
-            
-            return redirect()->route('dashboard')
-                ->with('error', 'You do not have permission to access this page');
+        $centres = $this->getPlaceholderCentres();
+        
+        // Find centre with matching ID or return the first one as fallback
+        foreach ($centres as $centre) {
+            if ($centre['id'] == $id) {
+                return $centre;
+            }
         }
         
-        return view('centres.admin.create');
+        return $centres[0];
     }
     
     /**
-     * Store a newly created centre in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\RedirectResponse
+     * Get placeholder assets for a specific centre
      */
-    public function store(Request $request)
+    private function getPlaceholderCentreAssets($centreId)
     {
-        // Check role access
-        $role = session('role');
-        if ($role !== 'admin') {
-            Log::warning('Unauthorized access attempt to store centre', [
-                'user_id' => session('id'),
-                'role' => $role
-            ]);
-            
-            return redirect()->route('dashboard')
-                ->with('error', 'You do not have permission to perform this action');
+        $assets = [];
+        $types = ['Computer', 'Furniture', 'Equipment', 'Vehicle', 'Books'];
+        $descriptions = [
+            'Used for training purposes',
+            'For administrative use',
+            'For trainee practice sessions',
+            'General use',
+            'For specific workshops'
+        ];
+        
+        // Generate different numbers of assets based on centre ID
+        $count = 5 + ($centreId * 2);
+        
+        for ($i = 0; $i < $count; $i++) {
+            $assets[] = [
+                'id' => $i + 1,
+                'name' => $types[array_rand($types)] . ' ' . chr(65 + $i),
+                'type' => $types[array_rand($types)],
+                'description' => $descriptions[array_rand($descriptions)],
+                'quantity' => rand(1, 20),
+                'status' => rand(0, 10) > 2 ? 'available' : 'maintenance'
+            ];
         }
         
-        // Validate input
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'address' => 'required|string',
-            'phone' => 'required|string|max:20',
-            'email' => 'required|email',
-            'description' => 'nullable|string'
-        ]);
-        
-        // In a real implementation, save the centre to database
-        
-        Log::info('Centre created', [
-            'user_id' => session('id'),
-            'centre_name' => $request->name
-        ]);
-        
-        return redirect()->route('admin.centres.index')
-            ->with('success', 'Centre created successfully');
+        return $assets;
     }
-    
-    // Additional methods (edit, update, destroy) would be similar
 }

@@ -19,7 +19,7 @@
     <header class="header-area">
         <div id="home">
             <div class="container">
-                <div class="row align-items-centre justify-content-between d-flex">
+                <div class="row align-items-center justify-content-between d-flex">
                     <div id="logo">
                         <a href="{{ url('/index') }}"><h1>CREAMS</h1></a>
                     </div>
@@ -78,7 +78,7 @@
             </div>
         </div>
         <div class="row">
-            <div class="col-lg-12 text-centre">
+            <div class="col-lg-12 text-center">
                 <p class="copyright">Copyright &copy; {{ date('Y') }} CREAMS. All rights reserved.</p>
             </div>
         </div>

@@ -657,4 +657,87 @@ class MainController extends Controller
 
         return redirect('/');
     }
+    
+    /**
+     * Search for users and trainees by name
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function search(Request $request)
+    {
+        Log::info('Global search initiated', [
+            'query' => $request->input('query'),
+            'user_id' => session('id')
+        ]);
+        
+        $query = $request->input('query');
+        
+        if (empty($query)) {
+            return response()->json([]);
+        }
+        
+        try {
+            // Search for users (staff/teachers)
+            $users = Users::where('name', 'like', "%{$query}%")
+                ->where('status', 'active')
+                ->where('role', '!=', 'admin') // Optional: exclude admins from results
+                ->select('id', 'name', 'role', 'centre_id')
+                ->with('centre:id,name,centre_id,centre_name')
+                ->limit(10)
+                ->get();
+                
+            // Search for trainees
+            $trainees = Trainees::where(function($q) use ($query) {
+                    $q->where('trainee_first_name', 'like', "%{$query}%")
+                      ->orWhere('trainee_last_name', 'like', "%{$query}%");
+                })
+                ->select('id', 'trainee_first_name', 'trainee_last_name', 'centre_id')
+                ->with('centre:id,name,centre_id,centre_name')
+                ->limit(10)
+                ->get()
+                ->map(function($trainee) {
+                    $trainee->role = 'trainee';
+                    $trainee->name = $trainee->trainee_first_name . ' ' . $trainee->trainee_last_name;
+                    return $trainee;
+                });
+            
+            // Combine and format results
+            $results = $users->concat($trainees)->map(function($item) {
+                $centreName = '';
+                
+                // Handle different centre relation formats
+                if ($item->centre) {
+                    $centreName = $item->centre->name ?? $item->centre->centre_name ?? $item->centre->centre_id ?? 'Unknown';
+                }
+                
+                return [
+                    'id' => $item->id,
+                    'name' => $item->name,
+                    'role' => ucfirst($item->role),
+                    'location' => $centreName ?: 'Not assigned',
+                    'url' => $item->role === 'trainee' 
+                        ? route('traineeprofile', ['id' => $item->id])
+                        : route(session('role') . '.user.view', ['id' => $item->id])
+                ];
+            });
+            
+            Log::info('Search results generated', [
+                'query' => $query,
+                'count' => $results->count()
+            ]);
+            
+            return response()->json($results);
+        } catch (\Exception $e) {
+            Log::error('Error in search function', [
+                'query' => $query,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json([
+                'error' => 'An error occurred while searching'
+            ], 500);
+        }
+    }
 }

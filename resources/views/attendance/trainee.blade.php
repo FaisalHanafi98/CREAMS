@@ -16,7 +16,7 @@
     .calendar-day {
         padding: 10px;
         border-radius: 5px;
-        text-align: centre;
+        text-align: center;
         background-color: #f8f9fa;
         position: relative;
     }
@@ -118,7 +118,7 @@
         background-color: #fff;
         border: 2px solid #dee2e6;
         border-radius: 50%;
-        text-align: centre;
+        text-align: center;
         line-height: 28px;
         z-index: 1;
     }
@@ -172,13 +172,13 @@
                 <div class="card-body">
                     <div class="row mb-4">
                         <div class="col-md-6">
-                            <div class="d-flex align-items-centre">
+                            <div class="d-flex align-items-center">
                                 <div class="avatar mr-3">
                                     <img src="{{ asset($trainee->trainee_avatar) }}" alt="{{ $trainee->trainee_first_name }}" class="rounded-circle" width="60">
                                 </div>
                                 <div>
                                     <h4 class="mb-1">{{ $trainee->trainee_first_name }} {{ $trainee->trainee_last_name }}</h4>
-                                    <p class="mb-0 text-muted">{{ $trainee->trainee_condition }} • {{ $trainee->centre_name }}</p>
+                                    <p class="mb-0 text-muted">{{ $trainee->trainee_condition }} • {{ $trainee->center_name }}</p>
                                 </div>
                             </div>
                         </div>
@@ -204,7 +204,7 @@
                     <div class="row mb-4">
                         <div class="col-lg-3 col-md-6 mb-3">
                             <div class="card bg-light">
-                                <div class="card-body text-centre">
+                                <div class="card-body text-center">
                                     <div class="display-4 text-success">{{ $attendanceRate['present'] }}</div>
                                     <h5 class="mt-2">Present Days</h5>
                                 </div>
@@ -212,7 +212,7 @@
                         </div>
                         <div class="col-lg-3 col-md-6 mb-3">
                             <div class="card bg-light">
-                                <div class="card-body text-centre">
+                                <div class="card-body text-center">
                                     <div class="display-4 text-danger">{{ $attendanceRate['absent'] }}</div>
                                     <h5 class="mt-2">Absent Days</h5>
                                 </div>
@@ -220,7 +220,7 @@
                         </div>
                         <div class="col-lg-3 col-md-6 mb-3">
                             <div class="card bg-light">
-                                <div class="card-body text-centre">
+                                <div class="card-body text-center">
                                     <div class="display-4 text-warning">{{ $attendanceRate['late'] }}</div>
                                     <h5 class="mt-2">Late Days</h5>
                                 </div>
@@ -228,7 +228,7 @@
                         </div>
                         <div class="col-lg-3 col-md-6 mb-3">
                             <div class="card bg-light">
-                                <div class="card-body text-centre">
+                                <div class="card-body text-center">
                                     <div class="display-4">{{ $attendanceRate['percentage'] }}%</div>
                                     <h5 class="mt-2">Attendance Rate</h5>
                                 </div>
@@ -242,7 +242,7 @@
                             <h5 class="card-title mb-0">Monthly Attendance Calendar</h5>
                         </div>
                         <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-centre mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
                                 <h5 class="mb-0">{{ date('F Y', strtotime($calendarMonth)) }}</h5>
                                 <div>
                                     <a href="{{ route('attendance.trainee', ['id' => $trainee->id, 'month' => date('Y-m', strtotime($calendarMonth . ' -1 month')), 'start_date' => request('start_date'), 'end_date' => request('end_date')]) }}" class="btn btn-sm btn-outline-primary">
@@ -285,17 +285,17 @@
                                 @endforeach
                             </div>
                             
-                            <div class="d-flex justify-content-centre">
-                                <div class="d-flex align-items-centre mr-4">
+                            <div class="d-flex justify-content-center">
+                                <div class="d-flex align-items-center mr-4">
                                     <span class="day-status status-present mr-1"></span> Present
                                 </div>
-                                <div class="d-flex align-items-centre mr-4">
+                                <div class="d-flex align-items-center mr-4">
                                     <span class="day-status status-absent mr-1"></span> Absent
                                 </div>
-                                <div class="d-flex align-items-centre mr-4">
+                                <div class="d-flex align-items-center mr-4">
                                     <span class="day-status status-late mr-1"></span> Late
                                 </div>
-                                <div class="d-flex align-items-centre">
+                                <div class="d-flex align-items-center">
                                     <span class="day-status status-excused mr-1"></span> Excused
                                 </div>
                             </div>
@@ -340,7 +340,7 @@
                                         </div>
                                     </div>
                                 @empty
-                                    <div class="text-centre py-5">
+                                    <div class="text-center py-5">
                                         <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
                                         <h5>No attendance records found for the selected date range.</h5>
                                         <p class="text-muted">Try selecting a different date range or check if attendance has been recorded for this trainee.</p>
