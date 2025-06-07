@@ -4,6 +4,9 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Users;
+use App\Models\Activities;
+use App\Models\ActivitySessions;
+use App\Models\ActivityAttendances;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Log;
@@ -11,22 +14,13 @@ use Carbon\Carbon;
 
 class DashboardController extends Controller
 {
-    /**
-     * Display the dashboard for the authenticated user
-     */
     public function index()
     {
-        // Get role from the authenticated user or use a default
         $role = session('role') ?? (Auth::user() ? Auth::user()->role : 'admin');
         $userId = session('id');
-        
-        // Store role in session for easy access throughout the application
         session(['role' => $role]);
-        
-        // Get common data for the dashboard
+
         $data = $this->getCommonData();
-        
-        // Prepare last accessed data (safely handle missing audit_logs table)
         $lastAccessedData = [
             'system_activities' => collect([
                 [
@@ -57,39 +51,55 @@ class DashboardController extends Controller
             ]),
             'last_login' => 'First login'
         ];
-        
-        // Get trainee statistics
+
         $traineeStats = $this->getTraineeStats();
-        
-        // Get rehabilitation statistics
         $rehabStats = $this->getRehabStats();
-        
-        // Get recent activities
         $recentActivities = $this->getRecentActivities();
-        
-        // Get centre statistics (placeholder data)
         $centreStats = $this->getCentreStats();
-        
-        // Get recent assets (placeholder data)
         $recentAssets = $this->getRecentAssets();
-        
-        // Get today's classes (placeholder, can be implemented later)
         $todayClasses = $this->getTodayClasses();
-        
-        // Update user's last accessed timestamp
+        $activityStats = $this->getActivityStats();
+
+        if ($role === 'teacher') {
+            $todaySessions = ActivitySession::where('teacher_id', $userId)
+                ->where('day_of_week', Carbon::now()->format('l'))
+                ->where('is_active', true)
+                ->with('activity')
+                ->get();
+
+            $data['todaySessions'] = $todaySessions;
+        }
+
         $this->updateLastAccessTimestamp($userId, $role);
-        
-        // Return the dashboard view with all necessary data
+
         return view('dashboard', compact(
-            'data', 
-            'traineeStats', 
+            'data',
+            'traineeStats',
             'rehabStats',
-            'recentActivities', 
-            'centreStats', 
+            'recentActivities',
+            'centreStats',
             'recentAssets',
             'todayClasses',
-            'lastAccessedData'
+            'lastAccessedData',
+            'activityStats'
         ));
+    }
+
+    /**
+     * Get key statistics about activities and attendance
+     */
+    private function getActivityStats()
+    {
+        return [
+            'total_activities' => Activities::count(),
+            'active_sessions' => ActivitySessions::where('is_active', true)->count(),
+            'todays_sessions' => ActivitySessions::where('day_of_week', Carbon::now()->format('l'))
+                ->where('is_active', true)
+                ->count(),
+            'attendance_today' => ActivityAttendances::whereDate('attendance_date', today())
+                ->where('status', 'Present')
+                ->count()
+        ];
     }
 
     /**

@@ -237,91 +237,277 @@
         </div>
     </section>
 
-    {{-- Leadership Team --}}
-    <section id="team" class="section">
-        <div class="container">
-            <div class="text-center mb-5">
-                <h2 class="section-title">Our Leadership</h2>
-                <div class="section-divider"></div>
-            </div>
-            
-            {{-- Simplified org chart --}}
+    
+{{-- Organization Structure Section --}}
+<section id="team" class="section">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="section-title">Organization Structure</h2>
+            <div class="section-divider"></div>
+        </div>
+        
+        {{-- First Org Chart --}}
+        <div class="org-chart-container mb-5">
+            <h3 class="text-center mb-4">Management Team</h3>
             <div class="org-structure">
-                <div class="org-director">
-                    <div class="team-card">
-                        <img src="{{ asset('images/team/director.jpg') }}" alt="Director">
-                        <h3>Dr. Sarah Ahmad</h3>
-                        <p>Director</p>
+                {{-- Director Level --}}
+                <div class="org-level">
+                    <div class="org-card director">
+                        <div class="position-badge">PENGERUSI</div>
+                        <img src="{{ asset('images/team/director1.jpg') }}" alt="Professor Dr. Ruzita">
+                        <h4>Professor Dr. Ruzita Binti Mohd Amin</h4>
                     </div>
                 </div>
                 
-                <div class="org-departments">
-                    <div class="team-card">
-                        <img src="{{ asset('images/team/admin.jpg') }}" alt="Admin">
-                        <h4>Ahmad Razif</h4>
-                        <p>Administration</p>
+                {{-- Deputy Director --}}
+                <div class="org-level">
+                    <div class="org-card deputy">
+                        <div class="position-badge">TIMBALAN PENGERUSI</div>
+                        <img src="{{ asset('images/team/deputy1.jpg') }}" alt="Professor Madya Dr. Aida">
+                        <h4>Professor Madya Dr. Aida Binti Mokhtar</h4>
                     </div>
-                    <div class="team-card">
-                        <img src="{{ asset('images/team/programs.jpg') }}" alt="Programs">
-                        <h4>Dr. Nurul Hafizah</h4>
-                        <p>Programs</p>
+                </div>
+                
+                {{-- Department Heads --}}
+                <div class="org-level departments">
+                    <div class="org-card">
+                        <div class="position-badge">SETIAUSAHA</div>
+                        <img src="{{ asset('images/team/secretary.jpg') }}" alt="Professor Madya Dr. Nor Azizan">
+                        <h4>Professor Madya Dr. Nor Azizan Binti Che Embi</h4>
                     </div>
-                    <div class="team-card">
-                        <img src="{{ asset('images/team/technical.jpg') }}" alt="Technical">
-                        <h4>Mohamad Faisal</h4>
-                        <p>Technical</p>
+                    <div class="org-card">
+                        <div class="position-badge">BENDAHARI</div>
+                        <img src="{{ asset('images/team/treasurer.jpg') }}" alt="Professor Madya Dr. Wan Rohaida">
+                        <h4>Professor Madya Dr. Wan Rohaida Binti Wan Husain</h4>
+                    </div>
+                </div>
+                
+                {{-- Assistant Secretary --}}
+                <div class="org-level">
+                    <div class="org-card">
+                        <div class="position-badge">PENOLONG SETIAUSAHA</div>
+                        <img src="{{ asset('images/team/assistant.jpg') }}" alt="Dr. Wan Aishah">
+                        <h4>Dr. Wan Aishah Hanim Abd Karim</h4>
+                    </div>
+                </div>
+                
+                {{-- Committee Members --}}
+                <div class="org-level committee">
+                    <h4 class="committee-title">AHLI JAWATANKUASA</h4>
+                    <div class="committee-members">
+                        <div class="org-card">
+                            <img src="{{ asset('images/team/member1.jpg') }}" alt="Professor Madya Dr. Radiah">
+                            <h4>Professor Madya Dr. Radiah Binti Abdul Ghani</h4>
+                        </div>
+                        <div class="org-card">
+                            <img src="{{ asset('images/team/member2.jpg') }}" alt="Dr. Zunaidah">
+                            <h4>Dr. Zunaidah Binti Mohd Marzuki</h4>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-    </section>
+        
+        {{-- Second Org Chart --}}
+        <div class="org-chart-container">
+            <h3 class="text-center mb-4">Administrative Team</h3>
+            <div class="org-structure">
+                {{-- Head --}}
+                <div class="org-level">
+                    <div class="org-card director">
+                        <div class="position-badge">PENYELIA</div>
+                        <img src="{{ asset('images/team/supervisor.jpg') }}" alt="Nurul Huda">
+                        <h4>Nurul Huda Binti Azaman</h4>
+                    </div>
+                </div>
+                
+                {{-- Officers --}}
+                <div class="org-level">
+                    <h4 class="committee-title">PETUGAS</h4>
+                    <div class="departments">
+                        <div class="org-card">
+                            <img src="{{ asset('images/team/officer1.jpg') }}" alt="Nabilah">
+                            <h4>Nabilah Binti Mohd Isa</h4>
+                        </div>
+                        <div class="org-card">
+                            <img src="{{ asset('images/team/officer2.jpg') }}" alt="Siti Nadia">
+                            <h4>Siti Nadia Binti Ashari</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
 
     {{-- Impact Section --}}
-    <section id="impact" class="section bg-primary text-white">
-        <div class="container">
-            <div class="text-center mb-5">
-                <h2 class="section-title text-white">Our Impact</h2>
-                <div class="section-divider bg-white"></div>
+<section id="impact" class="section bg-primary text-white">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="section-title text-white">Our Impact</h2>
+            <div class="section-divider bg-white"></div>
+        </div>
+        
+        <div class="row text-center">
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="impact-box">
+                    <div class="impact-number" data-count="50">0</div>
+                    <p>Children Supported</p>
+                </div>
             </div>
-            
-            <div class="row text-center">
-                <div class="col-lg-3 col-md-6 mb-4">
-                    <div class="impact-box">
-                        <div class="impact-number" data-count="50">0</div>
-                        <p>Children Supported</p>
-                    </div>
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="impact-box">
+                    <div class="impact-number" data-count="30">0</div>
+                    <p>Dedicated Volunteers</p>
                 </div>
-                <div class="col-lg-3 col-md-6 mb-4">
-                    <div class="impact-box">
-                        <div class="impact-number" data-count="30">0</div>
-                        <p>Dedicated Volunteers</p>
-                    </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="impact-box">
+                    <div class="impact-number" data-count="15">0</div>
+                    <p>Professional Staff</p>
                 </div>
-                <div class="col-lg-3 col-md-6 mb-4">
-                    <div class="impact-box">
-                        <div class="impact-number" data-count="15">0</div>
-                        <p>Professional Staff</p>
-                    </div>
-                </div>
-                <div class="col-lg-3 col-md-6 mb-4">
-                    <div class="impact-box">
-                        <div class="impact-number" data-count="200">0</div>
-                        <p>Activities Conducted</p>
-                    </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="impact-box">
+                    <div class="impact-number" data-count="200">0</div>
+                    <p>Activities Conducted</p>
                 </div>
             </div>
         </div>
-    </section>
+    </div>
+</section>
 
     {{-- Footer --}}
-    @include('layouts.footer')
+@include('layouts.footer')
 
-    {{-- Back to top --}}
-    <a href="#" class="back-to-top"><i class="fas fa-arrow-up"></i></a>
+{{-- Back to top --}}
+<a href="#" class="back-to-top"><i class="fas fa-arrow-up"></i></a>
 
-    {{-- Scripts --}}
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="{{ asset('js/homepage.js') }}"></script>
+{{-- Scripts --}}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="{{ asset('js/homepage.js') }}"></script>
+
+{{-- Add Org Chart Specific Styles --}}
+<style>
+.org-chart-container {
+    margin: 40px 0;
+    padding: 40px 20px;
+    background: #f8f9fa;
+    border-radius: 15px;
+}
+
+.org-structure {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 40px;
+}
+
+.org-level {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 30px;
+    position: relative;
+}
+
+.org-card {
+    background: white;
+    border-radius: 15px;
+    padding: 20px;
+    text-align: center;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    min-width: 200px;
+    position: relative;
+}
+
+.org-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+}
+
+.org-card img {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin: 15px auto;
+    border: 4px solid #f0f0f0;
+}
+
+.org-card h4 {
+    font-size: 14px;
+    margin: 10px 0 5px;
+    color: #333;
+}
+
+.position-badge {
+    background: linear-gradient(135deg, #32bdea, #c850c0);
+    color: white;
+    padding: 5px 15px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.org-card.director .position-badge {
+    background: linear-gradient(135deg, #1a2a3a, #2c4156);
+}
+
+.org-card.deputy .position-badge {
+    background: linear-gradient(135deg, #c850c0, #32bdea);
+}
+
+.committee-title {
+    text-align: center;
+    color: #1a2a3a;
+    font-weight: 600;
+    margin-bottom: 20px;
+    padding: 10px 30px;
+    background: linear-gradient(135deg, #32bdea, #c850c0);
+    color: white;
+    border-radius: 25px;
+    font-size: 16px;
+}
+
+.committee-members, .departments {
+    display: flex;
+    gap: 30px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+/* Connecting Lines */
+.org-level:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    bottom: -20px;
+    left: 50%;
+    width: 2px;
+    height: 40px;
+    background: #ddd;
+    transform: translateX(-50%);
+}
+
+@media (max-width: 768px) {
+    .org-card {
+        min-width: 150px;
+    }
+    
+    .org-card img {
+        width: 80px;
+        height: 80px;
+    }
+    
+    .org-card h4 {
+        font-size: 12px;
+    }
+}
+</style>
 </body>
 </html>

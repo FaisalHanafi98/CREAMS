@@ -1,4 +1,3 @@
-
 <?php
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Log;
@@ -40,22 +39,22 @@ use App\Http\Controllers\Auth\ForgotPasswordController;
 /*Public Routes (No Authentication Required)--------------------------------------------------------------------------*/
 // Home page with role-based redirection
 Route::get('/', function () {
-if (session('id') && session('role')) {
-$role = session('role');
-return redirect()->route("{$role}.dashboard");
-}
-return view('home');
-})->name('home');
-// Enhanced Contact Routes
+    if (session('id') && session('role')) {
+    $role = session('role');
+    return redirect()->route("{$role}.dashboard");
+    }
+    return view('home');
+    })->name('home');
+// Contact Routes
 Route::get('/contact', [ContactController::class, 'index'])->name('contact');
 Route::post('/contact/submit', [ContactController::class, 'submit'])->name('contact.submit');
-// Enhanced Volunteer Routes
+// Volunteer Routes
 Route::get('/volunteer', [VolunteerController::class, 'index'])->name('volunteer');
 Route::post('/volunteer/submit', [VolunteerController::class, 'submit'])->name('volunteer.submit');
 // Public information pages
 Route::get('/trademark', function () {
-return view('trademarks');
-})->name('trademark');
+    return view('trademarks');
+    })->name('trademark');
 /*Authentication Routes--------------------------------------------------------------------------*/
 // Custom authentication routes
 Route::middleware('guest')->group(function () {
@@ -87,6 +86,29 @@ Route::middleware(['auth'])->group(function () {
 Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 // Add search route
 Route::get('/search', [MainController::class, 'search'])->name('search');
+
+// Activity Module Routes
+Route::middleware(['auth'])->group(function () {
+    // Common routes for all authenticated users
+    Route::get('/activities', [ActivityController::class, 'index'])->name('activities.index');
+    Route::get('/activities/{id}', [ActivityController::class, 'show'])->name('activities.show');
+    
+    // Admin and Supervisor routes
+    Route::middleware(['role:admin,supervisor'])->group(function () {
+        Route::get('/activities/create', [ActivityController::class, 'create'])->name('activities.create');
+        Route::post('/activities', [ActivityController::class, 'store'])->name('activities.store');
+        Route::get('/activities/{id}/edit', [ActivityController::class, 'edit'])->name('activities.edit');
+        Route::put('/activities/{id}', [ActivityController::class, 'update'])->name('activities.update');
+        Route::delete('/activities/{id}', [ActivityController::class, 'destroy'])->name('activities.destroy');
+        Route::get('/activities/{id}/sessions', [ActivityController::class, 'sessions'])->name('activities.sessions');
+    });
+    
+    // Teacher routes (can mark attendance for their sessions)
+    Route::middleware(['role:teacher,admin,supervisor'])->group(function () {
+        Route::get('/sessions/{id}/attendance', [ActivityController::class, 'markAttendance'])->name('activities.attendance');
+        Route::post('/sessions/{id}/attendance', [ActivityController::class, 'storeAttendance'])->name('activities.attendance.store');
+    });
+});
 
 // Teachers Home page - centralized staff directory
 Route::get('/teachershome', [TeachersHomeController::class, 'index'])->name('teachershome');

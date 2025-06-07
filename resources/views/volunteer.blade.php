@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -13,7 +12,7 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css">
 
-{{-- External Custom Styles --}}
+{{-- Custom Styles --}}
 <link rel="stylesheet" href="{{ asset('css/homestyle.css') }}">
 <link rel="stylesheet" href="{{ asset('css/headerstyle.css') }}">
 <link rel="stylesheet" href="{{ asset('css/volunteerstyle.css') }}">
@@ -24,30 +23,25 @@
     <div class="preloader">
         <div class="spinner"></div>
     </div>
+{{-- Header --}}
 @include('layouts.header')
 
-{{-- Sticky Volunteer Button --}}
-<a href="{{ route('volunteer') }}" class="stickyvolunteer">
-    <i class="fas fa-hands-helping"></i>
-    <span class="tooltip">Volunteer With Us</span>
-</a>
-
 {{-- Video Hero Section --}}
-<section class="videohero">
-    <div class="videocontainer">
+<section class="video-hero">
+    <div class="video-container">
         <video autoplay muted loop playsinline id="volunteerVideo" poster="{{ asset('images/volunteerhero.jpg') }}">
             <source src="{{ asset('videos/volunteerpage.mp4') }}" type="video/mp4">
             Your browser does not support HTML5 video.
         </video>
-        <div class="videooverlay"></div>
+        <div class="video-overlay"></div>
     </div>
-    <div class="herocontent">
+    <div class="hero-content">
         <div class="container">
             <div class="row justify-content-center">
                 <div class="col-lg-10 text-center" data-aos="fade-up" data-aos-delay="100">
                     <h1>Make a Difference in a Child's Life</h1>
                     <p class="lead">At IIUM PD-CARE, we believe every volunteer has the power to transform lives. Join our community of dedicated individuals working together to support children with special needs.</p>
-                    <a href="#volunteerform" class="herobtn">
+                    <a href="#volunteer-form" class="hero-btn">
                         <span>Become a Volunteer</span>
                         <i class="fas fa-arrow-down"></i>
                     </a>
@@ -58,46 +52,46 @@
 </section>
 
 {{-- Impact Stats Section --}}
-<section class="impactstats">
+<section class="impact-stats">
     <div class="container">
         <div class="row justify-content-center">
             <div class="col-lg-10">
-                <div class="statswrapper">
+                <div class="stats-wrapper">
                     <div class="row text-center">
                         <div class="col-md-3 col-6" data-aos="fade-up" data-aos-delay="100">
-                            <div class="statitem">
-                                <div class="staticon">
+                            <div class="stat-item">
+                                <div class="stat-icon">
                                     <i class="fas fa-child"></i>
                                 </div>
-                                <div class="statnumber" data-count="50">0</div>
-                                <div class="statlabel">Children Supported</div>
+                                <div class="stat-number" data-count="50">0</div>
+                                <div class="stat-label">Children Supported</div>
                             </div>
                         </div>
                         <div class="col-md-3 col-6" data-aos="fade-up" data-aos-delay="200">
-                            <div class="statitem">
-                                <div class="staticon">
+                            <div class="stat-item">
+                                <div class="stat-icon">
                                     <i class="fas fa-hands-helping"></i>
                                 </div>
-                                <div class="statnumber" data-count="30">0</div>
-                                <div class="statlabel">Active Volunteers</div>
+                                <div class="stat-number" data-count="30">0</div>
+                                <div class="stat-label">Active Volunteers</div>
                             </div>
                         </div>
                         <div class="col-md-3 col-6" data-aos="fade-up" data-aos-delay="300">
-                            <div class="statitem">
-                                <div class="staticon">
+                            <div class="stat-item">
+                                <div class="stat-icon">
                                     <i class="fas fa-calendar-check"></i>
                                 </div>
-                                <div class="statnumber" data-count="120">0</div>
-                                <div class="statlabel">Monthly Sessions</div>
+                                <div class="stat-number" data-count="120">0</div>
+                                <div class="stat-label">Monthly Sessions</div>
                             </div>
                         </div>
                         <div class="col-md-3 col-6" data-aos="fade-up" data-aos-delay="400">
-                            <div class="statitem">
-                                <div class="staticon">
+                            <div class="stat-item">
+                                <div class="stat-icon">
                                     <i class="fas fa-clock"></i>
                                 </div>
-                                <div class="statnumber" data-count="5000">0</div>
-                                <div class="statlabel">Volunteer Hours</div>
+                                <div class="stat-number" data-count="5000">0</div>
+                                <div class="stat-label">Volunteer Hours</div>
                             </div>
                         </div>
                     </div>
@@ -108,145 +102,153 @@
 </section>
 
 {{-- How You Can Help Section --}}
-<section class="howyouhelp">
+<section class="how-you-help">
     <div class="container">
-        <div class="sectionheading text-center" data-aos="fade-up">
-            <span class="sectionsubtitle">Volunteer Opportunities</span>
+        <div class="section-heading text-center" data-aos="fade-up">
+            <span class="section-subtitle">Volunteer Opportunities</span>
             <h2>How You Can Make a Difference</h2>
-            <div class="headingline"></div>
-            <p class="sectiondescription">Discover the various ways you can contribute to our mission and help children with special needs reach their full potential.</p>
+            <div class="heading-line"></div>
+            <p class="section-description">Discover the various ways you can contribute to our mission and help children with special needs reach their full potential.</p>
         </div>
         
         <div class="row mt-5">
-            <div class="col-lg-4 col-md-6 mb-4" data-aos="fade-up" data-aos-delay="100">
-                <div class="helpcard">
-                    <div class="helpicon">
-                        <i class="fas fa-user-friends"></i>
-                    </div>
-                    <h3>Direct Support</h3>
-                    <p>Work one-on-one with children in rehabilitation activities, providing personalized care and support in their developmental journey.</p>
-                    <ul class="helpfeatures">
-                        <li><i class="fas fa-check-circle"></i> Tutoring & homework assistance</li>
-                        <li><i class="fas fa-check-circle"></i> Mobility assistance</li>
-                        <li><i class="fas fa-check-circle"></i> Recreational activities support</li>
-                    </ul>
-                    <div class="timecommitment">
-                        <i class="far fa-clock"></i> 4-6 hours weekly
-                    </div>
-                </div>
-            </div>
+            @php
+            $opportunities = [
+                [
+                    'icon' => 'fa-user-friends',
+                    'title' => 'Direct Support',
+                    'description' => 'Work one-on-one with children in rehabilitation activities, providing personalized care and support in their developmental journey.',
+                    'features' => [
+                        'Tutoring & homework assistance',
+                        'Mobility assistance',
+                        'Recreational activities support'
+                    ],
+                    'time' => '4-6 hours weekly',
+                    'featured' => false
+                ],
+                [
+                    'icon' => 'fa-chalkboard-teacher',
+                    'title' => 'Skills Sharing',
+                    'description' => 'Contribute your professional expertise in education, therapy, healthcare, or other relevant fields to enhance our comprehensive support system.',
+                    'features' => [
+                        'Speech therapy assistance',
+                        'Special education techniques',
+                        'Physical therapy support'
+                    ],
+                    'time' => '2-4 hours weekly',
+                    'featured' => true
+                ],
+                [
+                    'icon' => 'fa-calendar-alt',
+                    'title' => 'Event Support',
+                    'description' => 'Help organize and run special events, workshops, and community activities that raise awareness and support for children with special needs.',
+                    'features' => [
+                        'Fundraising events',
+                        'Community workshops',
+                        'Awareness campaigns'
+                    ],
+                    'time' => 'Flexible hours',
+                    'featured' => false
+                ],
+                [
+                    'icon' => 'fa-paint-brush',
+                    'title' => 'Creative Arts',
+                    'description' => 'Use your artistic talents to engage children in creative expression through art, music, dance, or drama therapy activities.',
+                    'features' => [
+                        'Art therapy sessions',
+                        'Music & movement classes',
+                        'Drama & storytelling'
+                    ],
+                    'time' => '2-3 hours weekly',
+                    'featured' => false
+                ],
+                [
+                    'icon' => 'fa-laptop-code',
+                    'title' => 'Administrative Support',
+                    'description' => 'Assist with administrative tasks, data management, and communication to help our operations run smoothly and efficiently.',
+                    'features' => [
+                        'Database management',
+                        'Communication assistance',
+                        'Document preparation'
+                    ],
+                    'time' => '3-5 hours weekly',
+                    'featured' => false
+                ],
+                [
+                    'icon' => 'fa-bullhorn',
+                    'title' => 'Advocacy & Outreach',
+                    'description' => 'Help spread awareness about disabilities, advocate for inclusive policies, and expand our reach within the community.',
+                    'features' => [
+                        'Community presentations',
+                        'Social media campaigns',
+                        'Partnership development'
+                    ],
+                    'time' => 'Flexible hours',
+                    'featured' => false
+                ]
+            ];
+            @endphp
             
-            <div class="col-lg-4 col-md-6 mb-4" data-aos="fade-up" data-aos-delay="200">
-                <div class="helpcard featured">
-                    <div class="featuredtag">Most Needed</div>
-                    <div class="helpicon">
-                        <i class="fas fa-chalkboard-teacher"></i>
+            @foreach($opportunities as $opp)
+            <div class="col-lg-4 col-md-6 mb-4" data-aos="fade-up" data-aos-delay="{{ $loop->iteration * 100 }}">
+                <div class="help-card {{ $opp['featured'] ? 'featured' : '' }}">
+                    @if($opp['featured'])
+                    <div class="featured-tag">Most Needed</div>
+                    @endif
+                    <div class="help-icon">
+                        <i class="fas {{ $opp['icon'] }}"></i>
                     </div>
-                    <h3>Skills Sharing</h3>
-                    <p>Contribute your professional expertise in education, therapy, healthcare, or other relevant fields to enhance our comprehensive support system.</p>
-                    <ul class="helpfeatures">
-                        <li><i class="fas fa-check-circle"></i> Speech therapy assistance</li>
-                        <li><i class="fas fa-check-circle"></i> Special education techniques</li>
-                        <li><i class="fas fa-check-circle"></i> Physical therapy support</li>
+                    <h3>{{ $opp['title'] }}</h3>
+                    <p>{{ $opp['description'] }}</p>
+                    <ul class="help-features">
+                        @foreach($opp['features'] as $feature)
+                        <li><i class="fas fa-check-circle"></i> {{ $feature }}</li>
+                        @endforeach
                     </ul>
-                    <div class="timecommitment">
-                        <i class="far fa-clock"></i> 2-4 hours weekly
+                    <div class="time-commitment">
+                        <i class="far fa-clock"></i> {{ $opp['time'] }}
                     </div>
                 </div>
             </div>
-            
-            <div class="col-lg-4 col-md-6 mb-4" data-aos="fade-up" data-aos-delay="300">
-                <div class="helpcard">
-                    <div class="helpicon">
-                        <i class="fas fa-calendar-alt"></i>
-                    </div>
-                    <h3>Event Support</h3>
-                    <p>Help organize and run special events, workshops, and community activities that raise awareness and support for children with special needs.</p>
-                    <ul class="helpfeatures">
-                        <li><i class="fas fa-check-circle"></i> Fundraising events</li>
-                        <li><i class="fas fa-check-circle"></i> Community workshops</li>
-                        <li><i class="fas fa-check-circle"></i> Awareness campaigns</li>
-                    </ul>
-                    <div class="timecommitment">
-                        <i class="far fa-clock"></i> Flexible hours
-                    </div>
-                </div>
-            </div>
-            
-            <div class="col-lg-4 col-md-6 mb-4" data-aos="fade-up" data-aos-delay="400">
-                <div class="helpcard">
-                    <div class="helpicon">
-                        <i class="fas fa-paint-brush"></i>
-                    </div>
-                    <h3>Creative Arts</h3>
-                    <p>Use your artistic talents to engage children in creative expression through art, music, dance, or drama therapy activities.</p>
-                    <ul class="helpfeatures">
-                        <li><i class="fas fa-check-circle"></i> Art therapy sessions</li>
-                        <li><i class="fas fa-check-circle"></i> Music & movement classes</li>
-                        <li><i class="fas fa-check-circle"></i> Drama & storytelling</li>
-                    </ul>
-                    <div class="timecommitment">
-                        <i class="far fa-clock"></i> 2-3 hours weekly
-                    </div>
-                </div>
-            </div>
-            
-            <div class="col-lg-4 col-md-6 mb-4" data-aos="fade-up" data-aos-delay="500">
-                <div class="helpcard">
-                    <div class="helpicon">
-                        <i class="fas fa-laptop-code"></i>
-                    </div>
-                    <h3>Administrative Support</h3>
-                    <p>Assist with administrative tasks, data management, and communication to help our operations run smoothly and efficiently.</p>
-                    <ul class="helpfeatures">
-                        <li><i class="fas fa-check-circle"></i> Database management</li>
-                        <li><i class="fas fa-check-circle"></i> Communication assistance</li>
-                        <li><i class="fas fa-check-circle"></i> Document preparation</li>
-                    </ul>
-                    <div class="timecommitment">
-                        <i class="far fa-clock"></i> 3-5 hours weekly
-                    </div>
-                </div>
-            </div>
-            
-            <div class="col-lg-4 col-md-6 mb-4" data-aos="fade-up" data-aos-delay="600">
-                <div class="helpcard">
-                    <div class="helpicon">
-                        <i class="fas fa-bullhorn"></i>
-                    </div>
-                    <h3>Advocacy & Outreach</h3>
-                    <p>Help spread awareness about disabilities, advocate for inclusive policies, and expand our reach within the community.</p>
-                    <ul class="helpfeatures">
-                        <li><i class="fas fa-check-circle"></i> Community presentations</li>
-                        <li><i class="fas fa-check-circle"></i> Social media campaigns</li>
-                        <li><i class="fas fa-check-circle"></i> Partnership development</li>
-                    </ul>
-                    <div class="timecommitment">
-                        <i class="far fa-clock"></i> Flexible hours
-                    </div>
-                </div>
-            </div>
+            @endforeach
         </div>
     </div>
 </section>
 
 {{-- Volunteer Application Form --}}
-<section id="volunteerform" class="formsection">
+<section id="volunteer-form" class="form-section">
     <div class="container">
         <div class="row justify-content-center">
             <div class="col-lg-8">
-                <div class="formwrapper" data-aos="fade-up">
-                    <div class="formheader">
-                        <div class="formicon">
+                <div class="form-wrapper" data-aos="fade-up">
+                    <div class="form-header">
+                        <div class="form-icon">
                             <i class="fas fa-hands-helping"></i>
                         </div>
                         <h2>Join Our Volunteer Team</h2>
                         <p>Complete the form below to start your volunteer journey with IIUM PD-CARE</p>
                     </div>
                     
-                    @if(session('success'))
-                        <div class="alert alert-success alert-dismissible fade show" role="alert">
-                            {{ session('success') }}
+                    {{-- Progress Bar --}}
+                    <div class="form-progress">
+                        <div class="progress">
+                            <div class="progress-bar form-progress-bar" role="progressbar" style="width: 33%"></div>
+                        </div>
+                    </div>
+
+                    {{-- Alert Messages --}}
+                    <div id="alert-container">
+                        @if(session('success'))
+                            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                                <i class="fas fa-check-circle"></i> {{ session('success') }}
+                                <button type="button" class="close" data-dismiss="alert">
+                                    <span>&times;</span>
+                                </button>
+                            </div>
+                        @endif
+                    @if(session('error'))
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <i class="fas fa-exclamation-circle"></i> {{ session('error') }}
                             <button type="button" class="close" data-dismiss="alert">
                                 <span>&times;</span>
                             </button>
@@ -255,44 +257,42 @@
 
                     @if($errors->any())
                         <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                            @foreach($errors->all() as $error)
-                                <p class="mb-0">{{ $error }}</p>
-                            @endforeach
+                            <i class="fas fa-exclamation-triangle"></i> Please correct the following errors:
+                            <ul class="mb-0 mt-2">
+                                @foreach($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
                             <button type="button" class="close" data-dismiss="alert">
                                 <span>&times;</span>
                             </button>
                         </div>
                     @endif
-
-                    @if(session('error'))
-                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                            {{ session('error') }}
-                            <button type="button" class="close" data-dismiss="alert">
-                                <span>&times;</span>
-                            </button>
-                        </div>
-                    @endif
+                    </div>
                     
+                    {{-- Main Form --}}
                     <form id="volunteerForm" action="{{ route('volunteer.submit') }}" method="POST">
                         @csrf
-                        <div class="formstep active" id="step1">
-                            <h3 class="steptitle">
-                                <span class="stepnumber">1</span> Personal Information
+                        
+                        {{-- Step 1: Personal Information --}}
+                        <div class="form-step active" id="step1">
+                            <h3 class="step-title">
+                                <span class="step-number">1</span> Personal Information
                             </h3>
                             
                             <div class="form-row">
                                 <div class="form-group col-md-6">
-                                    <label for="firstName">First Name <span class="required">*</span></label>
+                                    <label for="first_name">First Name <span class="required">*</span></label>
                                     <input type="text" class="form-control @error('first_name') is-invalid @enderror" 
-                                           id="firstName" name="first_name" value="{{ old('first_name') }}" required>
+                                           id="first_name" name="first_name" value="{{ old('first_name') }}" required>
                                     @error('first_name')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
                                 <div class="form-group col-md-6">
-                                    <label for="lastName">Last Name <span class="required">*</span></label>
+                                    <label for="last_name">Last Name <span class="required">*</span></label>
                                     <input type="text" class="form-control @error('last_name') is-invalid @enderror" 
-                                           id="lastName" name="last_name" value="{{ old('last_name') }}" required>
+                                           id="last_name" name="last_name" value="{{ old('last_name') }}" required>
                                     @error('last_name')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
@@ -311,7 +311,8 @@
                                 <div class="form-group col-md-6">
                                     <label for="phone">Phone Number <span class="required">*</span></label>
                                     <input type="tel" class="form-control @error('phone') is-invalid @enderror" 
-                                           id="phone" name="phone" value="{{ old('phone') }}" required>
+                                           id="phone" name="phone" value="{{ old('phone') }}" 
+                                           placeholder="+60123456789" required>
                                     @error('phone')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
@@ -346,16 +347,17 @@
                                 </div>
                             </div>
                             
-                            <div class="formnavigation text-right">
-                                <button type="button" class="btn nextbtn" data-step="2">
+                            <div class="form-navigation text-right">
+                                <button type="button" class="btn btn-primary next-btn" data-step="2">
                                     Next <i class="fas fa-arrow-right"></i>
                                 </button>
                             </div>
                         </div>
                         
-                        <div class="formstep" id="step2">
-                            <h3 class="steptitle">
-                                <span class="stepnumber">2</span> Volunteer Preferences
+                        {{-- Step 2: Volunteer Preferences --}}
+                        <div class="form-step" id="step2">
+                            <h3 class="step-title">
+                                <span class="step-number">2</span> Volunteer Preferences
                             </h3>
                             
                             <div class="form-group">
@@ -376,10 +378,10 @@
                                 @enderror
                             </div>
                             
-                            <div class="form-group" id="otherInterestGroup" style="display: none;">
-                                <label for="otherInterest">Please specify</label>
+                            <div class="form-group" id="otherInterestGroup" style="{{ old('interest') == 'other' ? 'display: block' : 'display: none' }}">
+                                <label for="other_interest">Please specify</label>
                                 <input type="text" class="form-control @error('other_interest') is-invalid @enderror" 
-                                       id="otherInterest" name="other_interest" value="{{ old('other_interest') }}">
+                                       id="other_interest" name="other_interest" value="{{ old('other_interest') }}">
                                 @error('other_interest')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
@@ -397,7 +399,7 @@
                             
                             <div class="form-group">
                                 <label>Availability <span class="required">*</span></label>
-                                <div class="availabilityoptions">
+                                <div class="availability-options">
                                     <div class="custom-control custom-checkbox">
                                         <input type="checkbox" class="custom-control-input @error('availability') is-invalid @enderror" 
                                                id="availWeekday" name="availability[]" value="weekday"
@@ -418,7 +420,7 @@
                                     </div>
                                 </div>
                                 @error('availability')
-                                    <div class="invalid-feedback">{{ $message }}</div>
+                                    <div class="text-danger small mt-1">{{ $message }}</div>
                                 @enderror
                             </div>
                             
@@ -437,19 +439,20 @@
                                 @enderror
                             </div>
                             
-                            <div class="formnavigation">
-                                <button type="button" class="btn prevbtn" data-step="1">
+                            <div class="form-navigation">
+                                <button type="button" class="btn btn-secondary prev-btn" data-step="1">
                                     <i class="fas fa-arrow-left"></i> Previous
                                 </button>
-                                <button type="button" class="btn nextbtn" data-step="3">
+                                <button type="button" class="btn btn-primary next-btn" data-step="3">
                                     Next <i class="fas fa-arrow-right"></i>
                                 </button>
                             </div>
                         </div>
                         
-                        <div class="formstep" id="step3">
-                            <h3 class="steptitle">
-                                <span class="stepnumber">3</span> Additional Information
+                        {{-- Step 3: Additional Information --}}
+                        <div class="form-step" id="step3">
+                            <h3 class="step-title">
+                                <span class="step-number">3</span> Additional Information
                             </h3>
                             
                             <div class="form-group">
@@ -491,22 +494,22 @@
                             <div class="form-group">
                                 <div class="custom-control custom-checkbox">
                                     <input type="checkbox" class="custom-control-input @error('consent') is-invalid @enderror" 
-                                           id="consent" name="consent" required 
+                                           id="consent" name="consent" value="1" required 
                                            {{ old('consent') ? 'checked' : '' }}>
                                     <label class="custom-control-label" for="consent">
                                         I consent to IIUM PD-CARE processing my personal information for volunteer recruitment purposes. I understand that IIUM PD-CARE will keep my information secure and will not share it with third parties. <span class="required">*</span>
                                     </label>
                                     @error('consent')
-                                        <div class="invalid-feedback">{{ $message }}</div>
+                                        <div class="invalid-feedback d-block">{{ $message }}</div>
                                     @enderror
                                 </div>
                             </div>
                             
-                            <div class="formnavigation">
-                                <button type="button" class="btn prevbtn" data-step="2">
+                            <div class="form-navigation">
+                                <button type="button" class="btn btn-secondary prev-btn" data-step="2">
                                     <i class="fas fa-arrow-left"></i> Previous
                                 </button>
-                                <button type="submit" class="btn submitbtn">
+                                <button type="submit" class="btn btn-primary submit-btn">
                                     Submit Application <i class="fas fa-paper-plane"></i>
                                 </button>
                             </div>
@@ -518,15 +521,16 @@
     </div>
 </section>
 
+{{-- Footer --}}
 @include('layouts.footer')
 
 {{-- Back to top button --}}
-<a href="#" class="backtotop"><i class="fas fa-arrow-up"></i></a>
+<a href="#" class="back-to-top"><i class="fas fa-arrow-up"></i></a>
 
-{{-- External JavaScript --}}
+{{-- Scripts --}}
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js"></script>
 <script src="{{ asset('js/volunteer.js') }}"></script>
 </body>

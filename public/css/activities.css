@@ -1,0 +1,231 @@
+/* Activity Module Styles */
+
+/* Page Header */
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid #e3e6f0;
+}
+
+.page-title {
+    color: #5a5c69;
+    font-size: 1.75rem;
+    font-weight: 400;
+    margin: 0;
+}
+
+.page-title i {
+    color: #4e73df;
+    margin-right: 10px;
+}
+
+/* Statistics Cards */
+.stat-card {
+    background: #fff;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.075);
+    display: flex;
+    align-items: center;
+    transition: transform 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+}
+
+.stat-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    margin-right: 20px;
+}
+
+.stat-primary .stat-icon {
+    background: rgba(78, 115, 223, 0.1);
+    color: #4e73df;
+}
+
+.stat-success .stat-icon {
+    background: rgba(28, 200, 138, 0.1);
+    color: #1cc88a;
+}
+
+.stat-info .stat-icon {
+    background: rgba(54, 185, 204, 0.1);
+    color: #36b9cc;
+}
+
+.stat-warning .stat-icon {
+    background: rgba(246, 194, 62, 0.1);
+    color: #f6c23e;
+}
+
+.stat-content h3 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #5a5c69;
+    margin: 0;
+}
+
+.stat-content p {
+    color: #858796;
+    margin: 0;
+    font-size: 0.875rem;
+}
+
+/* Activity Form */
+.activity-form .form-section {
+    background: #f8f9fc;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.activity-form .section-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #5a5c69;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+}
+
+.activity-form .section-title i {
+    color: #4e73df;
+    margin-right: 8px;
+}
+
+/* Activity Details */
+.activity-header {
+    background: linear-gradient(to right, #4e73df, #224abe);
+    color: white;
+    padding: 30px;
+    border-radius: 10px;
+    margin-bottom: 30px;
+}
+
+.activity-meta {
+    display: flex;
+    gap: 20px;
+    margin-top: 15px;
+}
+
+.activity-meta-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.activity-meta-item i {
+    opacity: 0.8;
+}
+
+/* Session Cards */
+.session-card {
+    background: #fff;
+    border: 1px solid #e3e6f0;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 15px;
+    transition: all 0.3s ease;
+}
+
+.session-card:hover {
+    box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.075);
+    border-color: #4e73df;
+}
+
+.session-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.session-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #5a5c69;
+    margin: 0;
+}
+
+.session-info {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 10px;
+}
+
+.session-info-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #858796;
+    font-size: 0.875rem;
+}
+
+.session-info-item i {
+    color: #4e73df;
+    width: 16px;
+}
+
+/* Attendance Table */
+.attendance-table th {
+    background: #f8f9fc;
+    font-weight: 600;
+    color: #5a5c69;
+    border-bottom: 2px solid #e3e6f0;
+}
+
+.attendance-status {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.attendance-status.present {
+    background: #1cc88a;
+    color: white;
+}
+
+.attendance-status.absent {
+    background: #e74a3b;
+    color: white;
+}
+
+.attendance-status.excused {
+    background: #f6c23e;
+    color: white;
+}
+
+.attendance-status.late {
+    background: #858796;
+    color: white;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+    
+    .stat-card {
+        margin-bottom: 15px;
+    }
+    
+    .activity-meta {
+        flex-direction: column;
+        gap: 10px;
+    }
+}
