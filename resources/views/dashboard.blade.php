@@ -629,7 +629,7 @@
                                         @foreach($recentAssets as $asset)
                                             <tr class="asset-row" data-id="{{ $asset->id }}">
                                                 <td>{{ $asset->name }}</td>
-                                                <td>{{ $asset->center_name }}</td>
+                                                {{ $item->center_name ?? $item->centre_name ?? 'Center Name' }}
                                                 <td>
                                                     @if($asset->quantity > 10)
                                                         <span class="badge badge-success">In Stock</span>

@@ -1,210 +1,241 @@
-{{-- This would typically be in resources/views/layouts/partials/sidebar.blade.php --}}
+@extends('layouts.main')
 
-<!-- Sidebar -->
-<div class="sidebar">
-    <div class="sidebar-brand">
-        <img src="{{ asset('images/logo.png') }}" alt="CREAMS Logo" class="sidebar-logo">
-        <span class="sidebar-brand-text">CREAMS</span>
+@section('title', $categoryInfo['name'] . ' Activities')
+
+@section('content')
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item">
+                        <a href="{{ route(session('role', 'admin') . '.rehabilitation') }}">Rehabilitation</a>
+                    </li>
+                    <li class="breadcrumb-item active" aria-current="page">{{ $categoryInfo['name'] }}</li>
+                </ol>
+            </nav>
+            <h1 class="h3 mb-0 text-gray-800">
+                <i class="fas {{ $categoryInfo['icon'] }} text-primary mr-2"></i>
+                {{ $categoryInfo['name'] }} Activities
+            </h1>
+            <p class="text-muted">{{ $categoryInfo['description'] }}</p>
+        </div>
+        <div>
+            <a href="{{ route(session('role', 'admin') . '.rehabilitation') }}" class="btn btn-outline-secondary mr-2">
+                <i class="fas fa-arrow-left mr-2"></i>Back to Categories
+            </a>
+            @if(in_array(session('role'), ['admin', 'supervisor']))
+            <a href="{{ route(session('role', 'admin') . '.rehabilitation.activities.create') }}?category={{ $categoryInfo['key'] }}" class="btn btn-primary">
+                <i class="fas fa-plus mr-2"></i>Create New Activity
+            </a>
+            @endif
+        </div>
     </div>
-    
-    <div class="sidebar-divider"></div>
-    
-    <!-- Dashboard -->
-    <div class="sidebar-heading">Main</div>
-    
-    <a href="{{ route(session('role') . '.dashboard') }}" class="sidebar-link {{ Route::is(session('role') . '.dashboard') ? 'active' : '' }}">
-        <i class="fas fa-tachometer-alt"></i>
-        <span>Dashboard</span>
-    </a>
-    
-    <!-- Staff Management Section -->
-    <div class="sidebar-heading">Staff</div>
-    
-    @php
-        $role = session('role');
-        $usersRoute = null;
-        
-        // Determine the best route to use for Users
-        if (Route::has($role . '.users')) {
-            $usersRoute = route($role . '.users');
-        } elseif (Route::has('users')) {
-            $usersRoute = route('users');
-        } else {
-            $usersRoute = route($role . '.dashboard');
-        }
-        
-        // Teachers route for supervisors
-        $teachersRoute = null;
-        if ($role === 'supervisor' && Route::has('supervisor.teachers')) {
-            $teachersRoute = route('supervisor.teachers');
-        } elseif ($role === 'admin' && Route::has('admin.users.teachers')) {
-            $teachersRoute = route('admin.users.teachers');
-        } elseif (Route::has($role . '.users')) {
-            $teachersRoute = route($role . '.users');
-        } else {
-            $teachersRoute = route($role . '.dashboard');
-        }
-    @endphp
-    
-    <a href="{{ $usersRoute }}" class="sidebar-link {{ Route::is($role . '.users') ? 'active' : '' }}">
-        <i class="fas fa-users"></i>
-        <span>Staff Management</span>
-    </a>
-    
-    @if($role === 'admin' || $role === 'supervisor')
-    <a href="{{ $teachersRoute }}" class="sidebar-link {{ Route::is($role . '.teachers') || Route::is($role . '.users.teachers') ? 'active' : '' }}">
-        <i class="fas fa-chalkboard-teacher"></i>
-        <span>Teachers</span>
-    </a>
-    @endif
-    
-    <!-- Trainee Management Section -->
-    <div class="sidebar-heading">Trainees</div>
-    
-    <a href="{{ route('traineeshome') }}" class="sidebar-link {{ Route::is('traineeshome') ? 'active' : '' }}">
-        <i class="fas fa-user-graduate"></i>
-        <span>Trainees</span>
-    </a>
-    
-    <a href="{{ route('traineesregistrationpage') }}" class="sidebar-link {{ Route::is('traineesregistrationpage') ? 'active' : '' }}">
-        <i class="fas fa-user-plus"></i>
-        <span>Add Trainee</span>
-    </a>
-    
-    <a href="{{ route('traineeactivity') }}" class="sidebar-link {{ Route::is('traineeactivity') ? 'active' : '' }}">
-        <i class="fas fa-tasks"></i>
-        <span>Trainee Activities</span>
-    </a>
-    
-    <!-- Center Management Section -->
-    <div class="sidebar-heading">Centers</div>
-    
-    @php
-        $centresRoute = null;
-        
-        // Determine the best route to use for Centres
-        if (Route::has($role . '.centres')) {
-            $centresRoute = route($role . '.centres');
-        } elseif (Route::has('centres')) {
-            $centresRoute = route('centres');
-        } else {
-            $centresRoute = route($role . '.dashboard');
-        }
-    @endphp
-    
-    <a href="{{ $centresRoute }}" class="sidebar-link {{ Route::is($role . '.centres') || Route::is('centres') ? 'active' : '' }}">
-        <i class="fas fa-building"></i>
-        <span>Centres</span>
-    </a>
-    
-    @php
-        $assetsRoute = null;
-        
-        // Determine the best route to use for Assets
-        if (Route::has($role . '.assets')) {
-            $assetsRoute = route($role . '.assets');
-        } elseif (Route::has('assets')) {
-            $assetsRoute = route('assets');
-        } else {
-            $assetsRoute = route($role . '.dashboard');
-        }
-    @endphp
-    
-    <a href="{{ $assetsRoute }}" class="sidebar-link {{ Route::is($role . '.assets') || Route::is('assets') ? 'active' : '' }}">
-        <i class="fas fa-boxes"></i>
-        <span>Assets</span>
-    </a>
-    
-    <!-- Activities Section -->
-    <div class="sidebar-heading">Activities</div>
-    
-    <a href="{{ route('rehabilitation.categories') }}" class="sidebar-link {{ Route::is('rehabilitation.categories') || Route::is('rehabilitation.categories.*') ? 'active' : '' }}">
-        <i class="fas fa-heartbeat"></i>
-        <span>Rehabilitation</span>
-    </a>
-    
-    @php
-        $activitiesRoute = null;
-        
-        // Determine the best route to use for Activities
-        if (Route::has($role . '.activities')) {
-            $activitiesRoute = route($role . '.activities');
-        } elseif (Route::has('activities.index')) {
-            $activitiesRoute = route('activities.index');
-        } else {
-            $activitiesRoute = route($role . '.dashboard');
-        }
-    @endphp
-    
-    <a href="{{ $activitiesRoute }}" class="sidebar-link {{ Route::is($role . '.activities') || Route::is('activities.index') ? 'active' : '' }}">
-        <i class="fas fa-calendar-alt"></i>
-        <span>Activities</span>
-    </a>
-    
-    @if($role === 'teacher')
-    <a href="{{ route('teacher.schedule') }}" class="sidebar-link {{ Route::is('teacher.schedule') ? 'active' : '' }}">
-        <i class="fas fa-calendar-week"></i>
-        <span>Schedule</span>
-    </a>
-    @endif
-    
-    @if($role === 'ajk')
-    <a href="{{ route('ajk.events') }}" class="sidebar-link {{ Route::is('ajk.events') || Route::is('ajk.event.*') ? 'active' : '' }}">
-        <i class="fas fa-calendar-day"></i>
-        <span>Events</span>
-    </a>
-    @endif
-    
-    <!-- Reports and Settings Section -->
-    <div class="sidebar-heading">System</div>
-    
-    @php
-        $reportsRoute = null;
-        
-        // Determine the best route to use for Reports
-        if (Route::has($role . '.reports')) {
-            $reportsRoute = route($role . '.reports');
-        } else {
-            $reportsRoute = route($role . '.dashboard');
-        }
-    @endphp
-    
-    <a href="{{ $reportsRoute }}" class="sidebar-link {{ Route::is($role . '.reports') ? 'active' : '' }}">
-        <i class="fas fa-chart-bar"></i>
-        <span>Reports</span>
-    </a>
-    
-    @php
-        $settingsRoute = null;
-        
-        // Determine the best route to use for Settings
-        if (Route::has($role . '.settings')) {
-            $settingsRoute = route($role . '.settings');
-        } else {
-            $settingsRoute = route($role . '.dashboard');
-        }
-    @endphp
-    
-    <a href="{{ $settingsRoute }}" class="sidebar-link {{ Route::is($role . '.settings') ? 'active' : '' }}">
-        <i class="fas fa-cog"></i>
-        <span>Settings</span>
-    </a>
-    
-    <!-- User Menu Section -->
-    <div class="sidebar-divider"></div>
-    
-    <a href="{{ route('profile') }}" class="sidebar-link {{ Route::is('profile') ? 'active' : '' }}">
-        <i class="fas fa-user-circle"></i>
-        <span>My Profile</span>
-    </a>
-    
-    <a href="{{ route('logout') }}" class="sidebar-link" 
-       onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
-        <i class="fas fa-sign-out-alt"></i>
-        <span>Logout</span>
-    </a>
-    <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
-        @csrf
-    </form>
+
+    <!-- Category Statistics -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Total Activities
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {{ $activities->count() }}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-clipboard-list fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Published
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {{ $activities->where('status', 'published')->count() }}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Draft
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {{ $activities->where('status', 'draft')->count() }}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-edit fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Recent
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {{ $activities->where('created_at', '>=', now()->subDays(30))->count() }}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-clock fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Activities List -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+            <h6 class="m-0 font-weight-bold text-primary">
+                {{ $categoryInfo['name'] }} Activities
+            </h6>
+            @if(in_array(session('role'), ['admin', 'supervisor']))
+            <a href="{{ route(session('role', 'admin') . '.rehabilitation.activities.create') }}?category={{ $categoryInfo['key'] }}" class="btn btn-sm btn-primary">
+                <i class="fas fa-plus mr-1"></i>Add Activity
+            </a>
+            @endif
+        </div>
+        <div class="card-body">
+            @if($activities->count() > 0)
+                <div class="row">
+                    @foreach($activities as $activity)
+                    <div class="col-lg-6 col-md-12 mb-4">
+                        <div class="card h-100 activity-card">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <h5 class="card-title mb-1">{{ $activity->name }}</h5>
+                                    <span class="badge badge-{{ $activity->status == 'published' ? 'success' : 'warning' }}">
+                                        {{ ucfirst($activity->status) }}
+                                    </span>
+                                </div>
+                                <p class="card-text text-muted">{{ $activity->short_description ?? 'No description available' }}</p>
+                                
+                                <div class="mb-3">
+                                    <small class="text-muted">
+                                        <i class="fas fa-user mr-1"></i>
+                                        Created by {{ $activity->creator->name ?? 'Unknown' }}
+                                    </small>
+                                    <br>
+                                    <small class="text-muted">
+                                        <i class="fas fa-calendar mr-1"></i>
+                                        {{ $activity->created_at ? $activity->created_at->diffForHumans() : 'Unknown date' }}
+                                    </small>
+                                </div>
+                                
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        @if(isset($activity->difficulty_level))
+                                        <span class="badge badge-pill badge-{{ 
+                                            $activity->difficulty_level == 'easy' ? 'success' : 
+                                            ($activity->difficulty_level == 'medium' ? 'warning' : 'danger') 
+                                        }}">
+                                            {{ ucfirst($activity->difficulty_level) }}
+                                        </span>
+                                        @endif
+                                        @if(isset($activity->duration))
+                                        <span class="badge badge-pill badge-secondary">
+                                            {{ $activity->duration }} min
+                                        </span>
+                                        @endif
+                                    </div>
+                                    <div class="btn-group" role="group">
+                                        <a href="#" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-eye"></i> View
+                                        </a>
+                                        @if(in_array(session('role'), ['admin', 'supervisor']))
+                                        <a href="#" class="btn btn-sm btn-outline-secondary">
+                                            <i class="fas fa-edit"></i> Edit
+                                        </a>
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    @endforeach
+                </div>
+            @else
+                <div class="text-center py-5">
+                    <i class="fas {{ $categoryInfo['icon'] }} fa-3x text-gray-300 mb-3"></i>
+                    <h5 class="text-muted">No activities available in this category</h5>
+                    <p class="text-muted">Get started by creating your first {{ strtolower($categoryInfo['name']) }} activity.</p>
+                    @if(in_array(session('role'), ['admin', 'supervisor']))
+                    <a href="{{ route(session('role', 'admin') . '.rehabilitation.activities.create') }}?category={{ $categoryInfo['key'] }}" class="btn btn-primary mt-3">
+                        <i class="fas fa-plus mr-2"></i>Create First Activity
+                    </a>
+                    @endif
+                </div>
+            @endif
+        </div>
+    </div>
 </div>
-<!-- End of Sidebar -->
+
+<style>
+.activity-card {
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    border: 1px solid #e3e6f0;
+}
+
+.activity-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.1) !important;
+}
+
+.border-left-primary {
+    border-left: 0.25rem solid #4e73df !important;
+}
+
+.border-left-success {
+    border-left: 0.25rem solid #1cc88a !important;
+}
+
+.border-left-info {
+    border-left: 0.25rem solid #36b9cc !important;
+}
+
+.border-left-warning {
+    border-left: 0.25rem solid #f6c23e !important;
+}
+
+.breadcrumb {
+    background-color: transparent;
+    padding: 0;
+    margin-bottom: 0.5rem;
+}
+
+.breadcrumb-item + .breadcrumb-item::before {
+    content: ">";
+    color: #6c757d;
+}
+</style>
+@endsection

@@ -2,112 +2,116 @@
 
 @section('title', 'Mark Attendance - CREAMS')
 
-@section('styles')
-<link rel="stylesheet" href="{{ asset('css/activities.css') }}">
-@endsection
-
 @section('content')
-<div class="container-fluid">
+<div class="attendance-container">
     <div class="page-header">
-        <h1 class="page-title">
-            <i class="fas fa-user-check"></i> Mark Attendance
-        </h1>
-        <div class="page-actions">
-            <a href="{{ route('activities.sessions', $session->activity_id) }}" class="btn btn-secondary">
-                <i class="fas fa-arrow-left"></i> Back to Sessions
-            </a>
+        <div>
+            <h1 class="page-title">Mark Attendance</h1>
+            <p class="page-subtitle">
+                {{ $session->activity->activity_name }} - 
+                {{ $session->date->format('M d, Y') }} at 
+                {{ \Carbon\Carbon::parse($session->start_time)->format('h:i A') }}
+            </p>
         </div>
+        <a href="{{ route('activities.sessions', $session->activity_id) }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Sessions
+        </a>
     </div>
 
-    <div class="card mb-4">
-        <div class="card-body">
-            <h5>{{ $session->activity->activity_name }} - {{ $session->class_name }}</h5>
-            <div class="row mt-3">
-                <div class="col-md-3">
-                    <p class="mb-1"><strong>Teacher:</strong> {{ $session->teacher->name }}</p>
-                </div>
-                <div class="col-md-3">
-                    <p class="mb-1"><strong>Day:</strong> {{ $session->day_of_week }}</p>
-                </div>
-                <div class="col-md-3">
-                    <p class="mb-1"><strong>Time:</strong> {{ date('g:i A', strtotime($session->start_time)) }} - {{ date('g:i A', strtotime($session->end_time)) }}</p>
-                </div>
-                <div class="col-md-3">
-                    <p class="mb-1"><strong>Date:</strong> {{ \Carbon\Carbon::parse($date)->format('M d, Y') }}</p>
-                </div>
-            </div>
+    @if($attendanceExists)
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle"></i>
+            Attendance has already been marked for today. You can update it below.
         </div>
-    </div>
+    @endif
 
-    <form action="{{ route('activities.attendance.store', $session->id) }}" method="POST">
+    <form action="{{ route('activities.attendance.store', [$session->activity_id, $session->id]) }}" method="POST">
         @csrf
-        <input type="hidden" name="attendance_date" value="{{ $date }}">
         
-        <div class="card">
-            <div class="card-header">
-                <h5 class="m-0">Trainee Attendance</h5>
+        <div class="attendance-card">
+            <div class="attendance-card-header">
+                <h2>Student Attendance</h2>
+                <div class="attendance-date">
+                    <label for="attendance_date">Attendance Date:</label>
+                    <input type="date" 
+                           id="attendance_date" 
+                           name="attendance_date" 
+                           value="{{ date('Y-m-d') }}" 
+                           max="{{ date('Y-m-d') }}" 
+                           class="form-control form-control-sm" 
+                           style="width: auto; display: inline-block;"
+                           required>
+                </div>
             </div>
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table attendance-table">
+            <div class="attendance-card-body">
+                <div class="attendance-table">
+                    <table class="table">
                         <thead>
                             <tr>
-                                <th>Trainee ID</th>
-                                <th>Name</th>
-                                <th>Status</th>
+                                <th width="40">#</th>
+                                <th>Student Name</th>
+                                <th width="400">Attendance Status</th>
                                 <th>Notes</th>
                             </tr>
                         </thead>
                         <tbody>
-                            @forelse($session->enrollments as $enrollment)
-                                @php
-                                    $trainee = $enrollment->trainee;
-                                    $attendance = $attendanceRecords->get($trainee->id);
-                                @endphp
+                            @forelse($session->enrollments as $index => $enrollment)
                                 <tr>
-                                    <td>{{ $trainee->trainee_id }}</td>
-                                    <td>{{ $trainee->name }}</td>
+                                    <td>{{ $index + 1 }}</td>
                                     <td>
-                                        <input type="hidden" name="attendance[{{ $loop->index }}][trainee_id]" value="{{ $trainee->id }}">
-                                        <input type="hidden" name="attendance[{{ $loop->index }}][status]" 
-                                               id="attendance_{{ $trainee->id }}_status" 
-                                               value="{{ $attendance->status ?? '' }}">
-                                        
-                                        <div class="btn-group" role="group">
-                                            <button type="button" 
-                                                    class="btn btn-sm {{ ($attendance && $attendance->status == 'Present') ? 'btn-success' : 'btn-outline-secondary' }}"
-                                                    onclick="markAttendance({{ $trainee->id }}, 'Present')">
-                                                Present
-                                            </button>
-                                            <button type="button" 
-                                                    class="btn btn-sm {{ ($attendance && $attendance->status == 'Absent') ? 'btn-danger' : 'btn-outline-secondary' }}"
-                                                    onclick="markAttendance({{ $trainee->id }}, 'Absent')">
-                                                Absent
-                                            </button>
-                                            <button type="button" 
-                                                    class="btn btn-sm {{ ($attendance && $attendance->status == 'Excused') ? 'btn-warning' : 'btn-outline-secondary' }}"
-                                                    onclick="markAttendance({{ $trainee->id }}, 'Excused')">
-                                                Excused
-                                            </button>
-                                            <button type="button" 
-                                                    class="btn btn-sm {{ ($attendance && $attendance->status == 'Late') ? 'btn-secondary' : 'btn-outline-secondary' }}"
-                                                    onclick="markAttendance({{ $trainee->id }}, 'Late')">
-                                                Late
-                                            </button>
+                                        <div class="student-info">
+                                            <strong>{{ $enrollment->trainee->trainee_first_name }} {{ $enrollment->trainee->trainee_last_name }}</strong>
+                                            <small class="text-muted d-block">ID: {{ $enrollment->trainee->trainee_ic_passport }}</small>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="attendance-options">
+                                            <label class="attendance-option present">
+                                                <input type="radio" 
+                                                       name="attendance[{{ $enrollment->trainee_id }}]" 
+                                                       value="present" 
+                                                       checked>
+                                                <span class="option-label">
+                                                    <i class="fas fa-check"></i> Present
+                                                </span>
+                                            </label>
+                                            <label class="attendance-option absent">
+                                                <input type="radio" 
+                                                       name="attendance[{{ $enrollment->trainee_id }}]" 
+                                                       value="absent">
+                                                <span class="option-label">
+                                                    <i class="fas fa-times"></i> Absent
+                                                </span>
+                                            </label>
+                                            <label class="attendance-option late">
+                                                <input type="radio" 
+                                                       name="attendance[{{ $enrollment->trainee_id }}]" 
+                                                       value="late">
+                                                <span class="option-label">
+                                                    <i class="fas fa-clock"></i> Late
+                                                </span>
+                                            </label>
+                                            <label class="attendance-option excused">
+                                                <input type="radio" 
+                                                       name="attendance[{{ $enrollment->trainee_id }}]" 
+                                                       value="excused">
+                                                <span class="option-label">
+                                                    <i class="fas fa-file-medical"></i> Excused
+                                                </span>
+                                            </label>
                                         </div>
                                     </td>
                                     <td>
                                         <input type="text" 
-                                               name="attendance[{{ $loop->index }}][notes]" 
+                                               name="notes[{{ $enrollment->trainee_id }}]" 
                                                class="form-control form-control-sm" 
-                                               value="{{ $attendance->notes ?? '' }}"
-                                               placeholder="Optional notes">
+                                               placeholder="Optional notes...">
                                     </td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="4" class="text-center text-muted">
-                                        No trainees enrolled in this session.
+                                    <td colspan="4" class="text-center py-4">
+                                        <p class="text-muted mb-0">No students enrolled in this session.</p>
                                     </td>
                                 </tr>
                             @endforelse
@@ -115,17 +119,21 @@
                     </table>
                 </div>
             </div>
-            <div class="card-footer">
-                <button type="submit" class="btn btn-primary">
+            <div class="attendance-card-footer">
+                <button type="submit" class="btn btn-success btn-lg" {{ $session->enrollments->count() == 0 ? 'disabled' : '' }}>
                     <i class="fas fa-save"></i> Save Attendance
                 </button>
-                <a href="{{ route('activities.sessions', $session->activity_id) }}" class="btn btn-secondary">
+                <a href="{{ route('activities.sessions', $session->activity_id) }}" class="btn btn-outline-secondary btn-lg">
                     Cancel
                 </a>
             </div>
         </div>
     </form>
 </div>
+@endsection
+
+@section('styles')
+<link rel="stylesheet" href="{{ asset('css/activities.css') }}">
 @endsection
 
 @section('scripts')

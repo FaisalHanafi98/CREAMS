@@ -2,182 +2,190 @@
 
 @section('title', $activity->activity_name . ' - CREAMS')
 
-@section('styles')
-<link rel="stylesheet" href="{{ asset('css/activities.css') }}">
-@endsection
-
 @section('content')
-<div class="container-fluid">
+<div class="activity-detail-container">
     <div class="page-header">
-        <h1 class="page-title">
-            <i class="fas fa-tasks"></i> Activity Details
-        </h1>
+        <div>
+            <h1 class="page-title">{{ $activity->activity_name }}</h1>
+            <p class="activity-code">{{ $activity->activity_code }}</p>
+        </div>
         <div class="page-actions">
-            @if(in_array(session('role'), ['admin', 'supervisor']))
-                <a href="{{ route('activities.edit', $activity->id) }}" class="btn btn-warning">
-                    <i class="fas fa-edit"></i> Edit
-                </a>
-                <a href="{{ route('activities.sessions', $activity->id) }}" class="btn btn-primary">
-                    <i class="fas fa-calendar"></i> Manage Sessions
+            @if(in_array($role, ['admin', 'supervisor']))
+                <a href="{{ route('activities.edit', $activity->id) }}" class="btn btn-outline-primary">
+                    <i class="fas fa-edit"></i> Edit Activity
                 </a>
             @endif
-            <a href="{{ route('activities.index') }}" class="btn btn-secondary">
+            <a href="{{ route('activities.sessions', $activity->id) }}" class="btn btn-primary">
+                <i class="fas fa-calendar"></i> Manage Sessions
+            </a>
+            <a href="{{ route('activities.index') }}" class="btn btn-outline-secondary">
                 <i class="fas fa-arrow-left"></i> Back
             </a>
         </div>
     </div>
 
-    <div class="activity-header">
-        <h2>{{ $activity->activity_name }}</h2>
-        <p class="mb-3">{{ $activity->description }}</p>
-        <div class="activity-meta">
-            <div class="activity-meta-item">
-                <i class="fas fa-tag"></i>
-                <span>{{ $activity->activity_code }}</span>
-            </div>
-            <div class="activity-meta-item">
-                <i class="fas fa-folder"></i>
-                <span>{{ $activity->category }}</span>
-            </div>
-            <div class="activity-meta-item">
-                <i class="fas fa-users"></i>
-                <span>{{ $activity->age_group }}</span>
-            </div>
-            <div class="activity-meta-item">
-                <i class="fas fa-layer-group"></i>
-                <span>{{ $activity->difficulty_level }}</span>
-            </div>
-        </div>
-    </div>
-
     <div class="row">
         <div class="col-lg-8">
-            <!-- Activity Information -->
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="m-0">Activity Information</h5>
+            {{-- Activity Details Card --}}
+            <div class="detail-card">
+                <div class="detail-card-header">
+                    <h2>Activity Details</h2>
+                    @if($activity->is_active)
+                        <span class="badge badge-success">Active</span>
+                    @else
+                        <span class="badge badge-secondary">Inactive</span>
+                    @endif
                 </div>
-                <div class="card-body">
+                <div class="detail-card-body">
+                    <div class="detail-section">
+                        <h3>Description</h3>
+                        <p>{{ $activity->description }}</p>
+                    </div>
+
                     @if($activity->objectives)
-                        <h6 class="font-weight-bold">Learning Objectives:</h6>
-                        <div class="mb-3">
-                            {!! nl2br(e($activity->objectives)) !!}
+                        <div class="detail-section">
+                            <h3>Learning Objectives</h3>
+                            <p>{{ $activity->objectives }}</p>
                         </div>
                     @endif
 
                     @if($activity->materials_needed)
-                        <h6 class="font-weight-bold">Materials Needed:</h6>
-                        <div class="mb-3">
-                            {!! nl2br(e($activity->materials_needed)) !!}
+                        <div class="detail-section">
+                            <h3>Materials Needed</h3>
+                            <p>{{ $activity->materials_needed }}</p>
                         </div>
                     @endif
+
+                    <div class="detail-meta">
+                        <div class="meta-item">
+                            <i class="fas fa-folder"></i>
+                            <span>Category: {{ $activity->category }}</span>
+                        </div>
+                        <div class="meta-item">
+                            <i class="fas fa-users"></i>
+                            <span>Age Group: {{ $activity->age_group }}</span>
+                        </div>
+                        <div class="meta-item">
+                            <i class="fas fa-layer-group"></i>
+                            <span>Difficulty: {{ $activity->difficulty_level }}</span>
+                        </div>
+                        <div class="meta-item">
+                            <i class="fas fa-user"></i>
+                            <span>Created by: {{ $activity->creator->name }}</span>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <!-- Active Sessions -->
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="m-0">Active Sessions</h5>
+            {{-- Recent Sessions --}}
+            <div class="detail-card mt-4">
+                <div class="detail-card-header">
+                    <h2>Recent Sessions</h2>
+                    <a href="{{ route('activities.sessions', $activity->id) }}" class="btn btn-sm btn-outline-primary">
+                        View All
+                    </a>
                 </div>
-                <div class="card-body">
-                    @forelse($activity->activeSessions as $session)
-                        <div class="session-card">
-                            <div class="session-header">
-                                <h6 class="session-title">{{ $session->class_name }}</h6>
-                                <span class="badge badge-info">{{ $session->day_of_week }}</span>
-                            </div>
-                            <div class="session-info">
-                                <div class="session-info-item">
-                                    <i class="fas fa-user-tie"></i>
-                                    {{ $session->teacher->name }}
-                                </div>
-                                <div class="session-info-item">
-                                    <i class="fas fa-clock"></i>
-                                    {{ date('g:i A', strtotime($session->start_time)) }} - 
-                                    {{ date('g:i A', strtotime($session->end_time)) }}
-                                </div>
-                                <div class="session-info-item">
-                                    <i class="fas fa-map-marker-alt"></i>
-                                    {{ $session->location }}
-                                </div>
-                                <div class="session-info-item">
-                                    <i class="fas fa-users"></i>
-                                    {{ $session->current_enrollment }}/{{ $session->max_capacity }} enrolled
-                                </div>
-                            </div>
+                <div class="detail-card-body">
+                    @if($activity->sessions->count() > 0)
+                        <div class="sessions-table">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Time</th>
+                                        <th>Teacher</th>
+                                        <th>Enrolled</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($activity->sessions->take(5) as $session)
+                                        <tr>
+                                            <td>{{ $session->date->format('M d, Y') }}</td>
+                                            <td>{{ \Carbon\Carbon::parse($session->start_time)->format('h:i A') }}</td>
+                                            <td>{{ $session->teacher->name }}</td>
+                                            <td>{{ $session->enrollments->count() }}/{{ $session->max_capacity }}</td>
+                                            <td>
+                                                <span class="badge badge-{{ $session->status == 'active' ? 'success' : 'secondary' }}">
+                                                    {{ ucfirst($session->status) }}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
                         </div>
-                    @empty
-                        <p class="text-muted">No active sessions scheduled for this activity.</p>
-                    @endforelse
+                    @else
+                        <p class="text-muted">No sessions scheduled yet.</p>
+                    @endif
                 </div>
             </div>
         </div>
 
         <div class="col-lg-4">
-            <!-- Statistics -->
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="m-0">Statistics</h5>
+            {{-- Statistics Card --}}
+            <div class="stats-card">
+                <div class="stats-card-header">
+                    <h3>Statistics</h3>
                 </div>
-                <div class="card-body">
-                    <div class="stat-item mb-3">
-                        <div class="d-flex justify-content-between">
-                            <span>Total Sessions:</span>
-                            <strong>{{ $stats['total_sessions'] }}</strong>
-                        </div>
+                <div class="stats-card-body">
+                    <div class="stat-item">
+                        <div class="stat-value">{{ $stats['totalSessions'] }}</div>
+                        <div class="stat-label">Total Sessions</div>
                     </div>
-                    <div class="stat-item mb-3">
-                        <div class="d-flex justify-content-between">
-                            <span>Active Sessions:</span>
-                            <strong>{{ $stats['active_sessions'] }}</strong>
-                        </div>
+                    <div class="stat-item">
+                        <div class="stat-value">{{ $stats['activeSessions'] }}</div>
+                        <div class="stat-label">Active Sessions</div>
                     </div>
-                    <div class="stat-item mb-3">
-                        <div class="d-flex justify-content-between">
-                            <span>Total Enrollment:</span>
-                            <strong>{{ $stats['total_enrollment'] }}</strong>
-                        </div>
+                    <div class="stat-item">
+                        <div class="stat-value">{{ $stats['totalEnrollments'] }}</div>
+                        <div class="stat-label">Total Enrollments</div>
                     </div>
-                    <div class="stat-item mb-3">
-                        <div class="d-flex justify-content-between">
-                            <span>Average Attendance:</span>
-                            <strong>{{ $stats['average_attendance'] }}%</strong>
-                        </div>
+                    <div class="stat-item">
+                        <div class="stat-value">{{ $stats['averageAttendance'] }}%</div>
+                        <div class="stat-label">Avg. Attendance</div>
                     </div>
                 </div>
             </div>
 
-            <!-- Activity Info -->
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="m-0">Activity Info</h5>
+            {{-- Quick Actions section for activities/show.blade.php --}}
+            @if(in_array($role, ['admin', 'supervisor']))
+            <div class="quick-actions-card mt-4">
+                <div class="quick-actions-header">
+                    <h3>Quick Actions</h3>
                 </div>
-                <div class="card-body">
-                    <p class="mb-2">
-                        <strong>Created by:</strong><br>
-                        {{ $activity->creator->name }}
-                    </p>
-                    <p class="mb-2">
-                        <strong>Created on:</strong><br>
-                        {{ $activity->created_at->format('M d, Y') }}
-                    </p>
-                    <p class="mb-2">
-                        <strong>Last updated:</strong><br>
-                        {{ $activity->updated_at->format('M d, Y') }}
-                    </p>
-                    <p class="mb-0">
-                        <strong>Status:</strong><br>
-                        @if($activity->is_active)
-                            <span class="badge badge-success">Active</span>
-                        @else
-                            <span class="badge badge-secondary">Inactive</span>
-                        @endif
-                    </p>
+                <div class="quick-actions-body">
+                    <a href="{{ route('activities.sessions', $activity->id) }}" class="action-item">
+                        <i class="fas fa-calendar-plus"></i>
+                        <span>Schedule New Session</span>
+                    </a>
+                    <a href="{{ route('activities.edit', $activity->id) }}" class="action-item">
+                        <i class="fas fa-edit"></i>
+                        <span>Edit Activity Details</span>
+                    </a>
+                    @if($role === 'admin')
+                        <form action="{{ route('activities.destroy', $activity->id) }}" 
+                            method="POST" 
+                            id="delete-form-{{ $activity->id }}"
+                            onsubmit="return confirm('Are you sure you want to delete this activity? All associated sessions will also be deleted.')">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="action-item text-danger">
+                                <i class="fas fa-trash-alt"></i>
+                                <span>Delete Activity</span>
+                            </button>
+                        </form>
+                    @endif
                 </div>
             </div>
+            @endif
         </div>
     </div>
 </div>
+@endsection
+
+@section('styles')
+<link rel="stylesheet" href="{{ asset('css/activities.css') }}">
 @endsection
 
 @section('scripts')
