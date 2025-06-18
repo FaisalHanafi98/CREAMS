@@ -30,8 +30,8 @@
         .main-container {
             flex: 1;
             display: flex;
-            align-items: centre;
-            justify-content: centre;
+            align-items: center;
+            justify-content: center;
             min-height: 100vh;
             background-color: #c3e6ff;
             position: relative;
@@ -55,7 +55,7 @@
             text-decoration: none;
             transition: all 0.3s ease;
             display: flex;
-            align-items: centre;
+            align-items: center;
         }
         
         .logo-container a:hover {
@@ -83,7 +83,7 @@
         
         .login-icon {
             display: flex;
-            justify-content: centre;
+            justify-content: center;
             margin-bottom: 30px;
         }
         
@@ -93,8 +93,8 @@
             background-color: #f5f5f5;
             border-radius: 50%;
             display: flex;
-            align-items: centre;
-            justify-content: centre;
+            align-items: center;
+            justify-content: center;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
         }
         
@@ -106,7 +106,7 @@
         }
         
         .login-header {
-            text-align: centre;
+            text-align: center;
             margin-bottom: 40px;
         }
         
@@ -167,13 +167,13 @@
         .form-options {
             display: flex;
             justify-content: space-between;
-            align-items: centre;
+            align-items: center;
             margin-bottom: 30px;
         }
         
         .form-check {
             display: flex;
-            align-items: centre;
+            align-items: center;
         }
         
         .form-check-input {
@@ -212,8 +212,8 @@
             cursor: pointer;
             transition: all 0.3s ease;
             display: flex;
-            justify-content: centre;
-            align-items: centre;
+            justify-content: center;
+            align-items: center;
             margin-bottom: 30px;
         }
         
@@ -227,7 +227,7 @@
         }
         
         .register-link {
-            text-align: centre;
+            text-align: center;
             font-size: 15px;
             color: #666;
             margin-top: 15px;
@@ -251,7 +251,7 @@
             font-size: 15px;
             border: none;
             display: flex;
-            align-items: centre;
+            align-items: center;
         }
         
         .alert-success {
@@ -340,7 +340,7 @@
             text-decoration: none;
             transition: all 0.3s ease;
             display: flex;
-            align-items: centre;
+            align-items: center;
         }
         
         .footer-column ul li a:hover {
@@ -365,8 +365,8 @@
         
         .footer-social a {
             display: inline-flex;
-            align-items: centre;
-            justify-content: centre;
+            align-items: center;
+            justify-content: center;
             width: 36px;
             height: 36px;
             border-radius: 50%;
@@ -384,7 +384,7 @@
         .footer-bottom {
             background-color: #0a0a0a;
             padding: 25px 0; /* Increased padding */
-            text-align: centre;
+            text-align: center;
             margin-top: 20px; /* Added margin */
         }
         

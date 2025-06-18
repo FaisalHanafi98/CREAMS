@@ -114,7 +114,7 @@
 
 .meta-item {
   display: flex;
-  align-items: centre;
+  align-items: center;
   gap: 8px;
   font-size: 14px;
   color: var(--text-color);
@@ -135,7 +135,7 @@
   font-size: 14px;
   font-weight: 500;
   display: flex;
-  align-items: centre;
+  align-items: center;
   gap: 8px;
   cursor: pointer;
   transition: all var(--transition-speed) ease;
@@ -190,7 +190,7 @@
   padding: 15px 20px;
   display: flex;
   justify-content: space-between;
-  align-items: centre;
+  align-items: center;
   border-bottom: 1px solid var(--border-color);
 }
 
@@ -211,8 +211,8 @@
   height: 32px;
   border-radius: 8px;
   display: flex;
-  align-items: centre;
-  justify-content: centre;
+  align-items: center;
+  justify-content: center;
   background: var(--light-bg);
   border: none;
   color: #888;
@@ -277,7 +277,7 @@
   border-radius: 10px;
   padding: 15px;
   display: flex;
-  align-items: centre;
+  align-items: center;
   gap: 15px;
 }
 
@@ -287,8 +287,8 @@
   border-radius: 10px;
   background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
   display: flex;
-  align-items: centre;
-  justify-content: centre;
+  align-items: center;
+  justify-content: center;
   color: var(--light-color);
   font-size: 18px;
 }
@@ -353,7 +353,7 @@
 
 .dropdown-toggle {
   display: flex;
-  align-items: centre;
+  align-items: center;
   gap: 8px;
   padding: 5px 10px;
   background: var(--light-bg);
@@ -413,7 +413,7 @@
 
 .schedule-item {
   display: flex;
-  align-items: centre;
+  align-items: center;
   gap: 15px;
   padding: 15px;
   background: var(--light-bg);
@@ -425,8 +425,8 @@
   height: 60px;
   display: flex;
   flex-direction: column;
-  align-items: centre;
-  justify-content: centre;
+  align-items: center;
+  justify-content: center;
   background: var(--dark-color);
   color: var(--light-color);
   border-radius: 10px;
@@ -477,7 +477,7 @@
 
 .schedule-status {
   min-width: 100px;
-  text-align: centre;
+  text-align: center;
   padding: 5px 10px;
   border-radius: 20px;
   font-size: 13px;
@@ -517,8 +517,8 @@
   border-radius: 50%;
   background: var(--light-bg);
   display: flex;
-  align-items: centre;
-  justify-content: centre;
+  align-items: center;
+  justify-content: center;
   color: var(--primary-color);
 }
 
@@ -588,7 +588,7 @@
 .edit-avatar-container {
   display: flex;
   flex-direction: column;
-  align-items: centre;
+  align-items: center;
   gap: 15px;
   margin-bottom: 20px;
 }
@@ -618,7 +618,7 @@
   border-radius: 8px;
   font-size: 14px;
   display: flex;
-  align-items: centre;
+  align-items: center;
   gap: 8px;
   cursor: pointer;
   transition: all var(--transition-speed) ease;
@@ -648,7 +648,7 @@
 
 .checkbox-wrapper {
   display: flex;
-  align-items: centre;
+  align-items: center;
   gap: 8px;
 }
 
@@ -714,15 +714,15 @@
   
   .profile-basic-info {
     padding-top: 70px;
-    text-align: centre;
+    text-align: center;
   }
   
   .profile-meta {
-    justify-content: centre;
+    justify-content: center;
   }
   
   .profile-actions {
-    justify-content: centre;
+    justify-content: center;
     flex-wrap: wrap;
   }
 }

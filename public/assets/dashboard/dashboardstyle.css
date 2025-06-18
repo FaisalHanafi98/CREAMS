@@ -34,7 +34,7 @@ nav:hover {
 }
 
 .logo {
-    text-align: centre;
+    text-align: center;
     display: flex;
     margin: 10px 0 0 10px;
     padding-bottom: 3rem;
@@ -68,7 +68,7 @@ nav .fas {
     height: 40px;
     top: 20px;
     font-size: 20px;
-    text-align: centre;
+    text-align: center;
 }
 
 .nav-item {
@@ -130,7 +130,7 @@ a:hover i {
     width: 25%;
     margin: 10px;
     background: #fff;
-    text-align: centre;
+    text-align: center;
     border-radius: 10px;
     padding: 10px;
     box-shadow: 0 20px 35px rgba(0, 0, 0, 0.1);

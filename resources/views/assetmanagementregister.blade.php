@@ -73,11 +73,11 @@
                 
                 
                 <div class="field">
-                    <label for="centre_name"></label>
-                    <select name="centre_name" id="centre_name" required>
-                        <option value="Gombak" {{ old('centre_name') == 'Gombak' ?  : '' }}>Gombak
+                    <label for="center_name"></label>
+                    <select name="center_name" id="center_name" required>
+                        <option value="Gombak" {{ old('center_name') == 'Gombak' ?  : '' }}>Gombak
                         </option>
-                        <option value="Kuantan" {{ old('centre_name') == 'Kuantan' ?  : '' }}>
+                        <option value="Kuantan" {{ old('center_name') == 'Kuantan' ?  : '' }}>
                             Kuantan</option>
                     </select>
                 </div>

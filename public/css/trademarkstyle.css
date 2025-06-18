@@ -22,11 +22,11 @@
             rgba(30, 136, 229, 0.8),
             rgba(67, 160, 71, 0.8)
         ),
-        url("../images/trademark-banner.jpg") centre/cover;
+        url("../images/trademark-banner.jpg") center/cover;
     display: flex;
-    align-items: centre;
-    justify-content: centre;
-    text-align: centre;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
     color: white;
     margin-top: 90px;
 }
@@ -87,7 +87,7 @@
     padding: 20px;
     background: var(--light-bg);
     border-radius: 10px;
-    text-align: centre;
+    text-align: center;
 }
 
 .trademark-logo img {

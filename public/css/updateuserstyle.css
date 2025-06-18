@@ -40,7 +40,7 @@ nav:hover {
 
 .logo {
   display: flex;
-  align-items: centre;
+  align-items: center;
   padding: 10px;
 }
 
@@ -73,7 +73,7 @@ ul a {
   font-size: 14px;
   color: #555353;
   display: flex;
-  align-items: centre;
+  align-items: center;
   padding: 10px;
 }
 
@@ -84,7 +84,7 @@ ul a i {
 .nav-item {
   display: flex;
   flex-direction: column;
-  justify-content: centre;
+  justify-content: center;
   margin-left: 5px;
 }
 
@@ -94,7 +94,7 @@ nav .fas {
   height: 40px;
   top: 20px;
   font-size: 20px;
-  text-align: centre;
+  text-align: center;
 }
 
 nav ul .active a {
@@ -160,7 +160,7 @@ a:hover i {
 }
 
 .profile-img {
-  text-align: centre;
+  text-align: center;
   position: relative;
 }
 
@@ -169,7 +169,7 @@ a:hover i {
   height: 100%;
   border-radius: 50%;
   object-fit: cover;
-  object-position: centre;
+  object-position: center;
 }
 
 .profile-img .file {

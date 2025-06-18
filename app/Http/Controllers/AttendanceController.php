@@ -1,328 +1,280 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Activity;
 
+use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\Attendances;
-use App\Models\Trainees;
-use App\Models\Activities;
-use App\Models\Centres;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
+use App\Models\ActivitySession;
+use App\Models\ActivityAttendance;
+use App\Models\SessionEnrollment;
 use Carbon\Carbon;
 
 class AttendanceController extends Controller
 {
     /**
-     * Display attendance form for a class/activity.
+     * Show attendance marking form
+     *
+     * @param  int  $sessionId
+     * @return \Illuminate\View\View
      */
-    public function index(Request $request)
+    public function mark($sessionId)
     {
-        $date = $request->input('date', now()->toDateString());
-        $centreId = $request->input('centre_id');
-        $activityId = $request->input('activity_id');
-        
-        // Get centres for dropdown
-        $centres = Centres::all();
-        
-        // Get activities for dropdown
-        $activities = Activities::all();
-        
-        // Get trainees based on filters
-        $traineesQuery = Trainees::query();
-        
-        // Apply centre filter if provided
-        if ($centreId) {
-            $traineesQuery->where('centre_id', $centreId);
-        } elseif (Auth::user()->role != 'admin') {
-            // For non-admin users, only show trainees from their centre
-            $traineesQuery->where('centre_id', Auth::user()->centre_id);
+        try {
+            // Get session with related data
+            $session = ActivitySession::with([
+                'activity',
+                'teacher',
+                'enrollments' => function($query) {
+                    $query->where('status', 'Active')
+                          ->with('trainee');
+                }
+            ])->findOrFail($sessionId);
+            
+            // Check if user has permission
+            if (session('role') === 'teacher' && session('id') != $session->teacher_id) {
+                $redirectRoute = session('role') . '.schedule';
+                return redirect()->route($redirectRoute)
+                    ->with('error', 'You are not authorized to mark attendance for this session.');
+            }
+            
+            // Get date parameter or use today's date
+            $date = request('date', Carbon::now()->format('Y-m-d'));
+            $dayOfWeek = Carbon::parse($date)->format('l');
+            
+            // Verify the date matches the session day
+            if ($dayOfWeek !== $session->day_of_week) {
+                return back()->with('error', 'Selected date does not match the session day (' . $session->day_of_week . ').');
+            }
+            
+            // Get existing attendance records
+            $attendanceRecords = ActivityAttendance::where('session_id', $sessionId)
+                ->where('attendance_date', $date)
+                ->get()
+                ->keyBy('trainee_id');
+                
+            Log::info('Attendance marking form accessed', [
+                'session_id' => $sessionId,
+                'date' => $date,
+                'user_id' => session('id')
+            ]);
+            
+            return view('activities.attendance.mark', [
+                'session' => $session,
+                'date' => $date,
+                'attendanceRecords' => $attendanceRecords
+            ]);
+            
+        } catch (\Exception $e) {
+            Log::error('Error accessing attendance form', [
+                'session_id' => $sessionId,
+                'error' => $e->getMessage()
+            ]);
+            
+            $redirectRoute = session('role') . '.schedule';
+            return redirect()->route($redirectRoute)
+                ->with('error', 'Session not found or an error occurred.');
         }
-        
-        // Get trainees
-        $trainees = $traineesQuery->orderBy('trainee_first_name')->get();
-        
-        // Get existing attendance records for this date
-        $attendanceRecords = Attendances::where('date', $date)
-            ->when($activityId, function($query) use ($activityId) {
-                return $query->where('activity_id', $activityId);
-            })
-            ->get()
-            ->keyBy('trainee_id');
-        
-        // Calculate attendance stats
-        $stats = [
-            'present_count' => $attendanceRecords->where('status', 'present')->count(),
-            'absent_count' => $attendanceRecords->where('status', 'absent')->count(),
-            'late_count' => $attendanceRecords->where('status', 'late')->count(),
-            'excused_count' => $attendanceRecords->where('status', 'excused')->count()
-        ];
-        
-        return view('attendance.index', [
-            'trainees' => $trainees,
-            'attendanceRecords' => $attendanceRecords,
-            'date' => $date,
-            'centres' => $centres,
-            'activities' => $activities,
-            'stats' => $stats
-        ]);
     }
     
     /**
-     * Store attendance records.
+     * Store attendance records
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  int  $sessionId
+     * @return \Illuminate\Http\RedirectResponse
      */
-    public function store(Request $request)
+    public function store(Request $request, $sessionId)
     {
-        $request->validate([
-            'date' => 'required|date',
-            'attendance' => 'required|array',
-            'attendance.*.trainee_id' => 'required|exists:trainees,id',
-            'attendance.*.status' => 'required|in:present,absent,excused,late',
-        ]);
-        
         try {
-            $date = $request->input('date');
-            $activityId = $request->input('activity_id');
-            $attendanceData = $request->input('attendance');
+            // Get session
+            $session = ActivitySession::findOrFail($sessionId);
             
-            foreach ($attendanceData as $data) {
-                Attendances::updateOrCreate(
+            // Check if user has permission
+            if (session('role') === 'teacher' && session('id') != $session->teacher_id) {
+                $redirectRoute = session('role') . '.schedule';
+                return redirect()->route($redirectRoute)
+                    ->with('error', 'You are not authorized to mark attendance for this session.');
+            }
+            
+            // Validate the request
+            $validator = $this->validateAttendanceRequest($request);
+            
+            if ($validator->fails()) {
+                return redirect()->back()
+                    ->withErrors($validator)
+                    ->withInput();
+            }
+            
+            DB::beginTransaction();
+            
+            // Get date from request
+            $date = $request->attendance_date;
+            
+            // Process each attendance record
+            foreach ($request->attendance as $traineeId => $data) {
+                // Find existing record or create new one
+                $attendance = ActivityAttendance::updateOrCreate(
                     [
-                        'trainee_id' => $data['trainee_id'],
-                        'date' => $date,
-                        'activity_id' => $activityId
+                        'session_id' => $sessionId,
+                        'trainee_id' => $traineeId,
+                        'attendance_date' => $date
                     ],
                     [
                         'status' => $data['status'],
                         'remarks' => $data['remarks'] ?? null,
-                        'marked_by' => Auth::id()
+                        'marked_by' => session('id'),
+                        'created_by' => session('id'),
+                        'updated_by' => session('id')
                     ]
                 );
             }
             
+            DB::commit();
+            
             Log::info('Attendance recorded successfully', [
+                'session_id' => $sessionId,
                 'date' => $date,
-                'activity_id' => $activityId,
-                'count' => count($attendanceData),
-                'user_id' => Auth::id()
+                'marked_by' => session('id')
             ]);
             
-            return redirect()->back()->with('success', 'Attendance has been recorded successfully.');
+            return redirect()->route(session('role') . '.schedule')
+                ->with('success', 'Attendance recorded successfully.');
+                
         } catch (\Exception $e) {
+            DB::rollBack();
+            
             Log::error('Error recording attendance', [
+                'session_id' => $sessionId,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
             
-            return redirect()->back()->with('error', 'Failed to record attendance: ' . $e->getMessage());
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'An error occurred while recording attendance. Please try again.');
         }
     }
     
     /**
-     * Generate attendance report.
+     * Show attendance report
+     *
+     * @param  int  $sessionId
+     * @return \Illuminate\View\View
      */
-    public function report(Request $request)
+    public function report($sessionId)
     {
-        $startDate = $request->input('start_date', now()->startOfMonth()->toDateString());
-        $endDate = $request->input('end_date', now()->toDateString());
-        $centreName = $request->input('centre_name');
-        
-        // Get centres for dropdown
-        $centres = Centres::all();
-        
-        // Get trainees based on filters
-        $traineesQuery = Trainees::query();
-        
-        // Apply centre filter if provided
-        if ($centreName) {
-            $traineesQuery->where('centre_name', $centreName);
-        } elseif (Auth::user()->role != 'admin') {
-            // For non-admin users, only show trainees from their centre
-            $traineesQuery->where('centre_name', Auth::user()->centre_name);
+        try {
+            // Get session with related data
+            $session = ActivitySession::with([
+                'activity',
+                'teacher',
+                'enrollments' => function($query) {
+                    $query->where('status', 'Active')
+                          ->with('trainee');
+                }
+            ])->findOrFail($sessionId);
+            
+            // Get attendance records
+            $attendanceRecords = ActivityAttendance::where('session_id', $sessionId)
+                ->orderBy('attendance_date', 'desc')
+                ->get()
+                ->groupBy('attendance_date');
+                
+            // Get statistics
+            $stats = $this->getAttendanceStats($sessionId);
+            
+            Log::info('Attendance report accessed', [
+                'session_id' => $sessionId,
+                'user_id' => session('id')
+            ]);
+            
+            return view('activities.attendance.report', [
+                'session' => $session,
+                'attendanceRecords' => $attendanceRecords,
+                'stats' => $stats
+            ]);
+            
+        } catch (\Exception $e) {
+            Log::error('Error accessing attendance report', [
+                'session_id' => $sessionId,
+                'error' => $e->getMessage()
+            ]);
+            
+            $redirectRoute = session('role') . '.schedule';
+            return redirect()->route($redirectRoute)
+                ->with('error', 'Session not found or an error occurred.');
         }
-        
-        // Get trainees
-        $trainees = $traineesQuery->orderBy('trainee_first_name')->get();
-        
-        // Initialize attendance data array
-        $attendanceData = [];
-        
-        // Get attendance data for each trainee
-        foreach ($trainees as $trainee) {
-            $attendanceData[$trainee->id] = $this->calculateAttendanceRate($trainee->id, $startDate, $endDate);
-        }
-        
-        // Calculate summary stats
-        $summaryStats = [
-            'present_count' => array_sum(array_column($attendanceData, 'present')),
-            'absent_count' => array_sum(array_column($attendanceData, 'absent')),
-            'late_count' => array_sum(array_column($attendanceData, 'late')),
-            'excused_count' => array_sum(array_column($attendanceData, 'excused'))
+    }
+    
+    // Helper methods
+    
+    /**
+     * Validate attendance request
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Contracts\Validation\Validator
+     */
+    private function validateAttendanceRequest(Request $request)
+    {
+        $rules = [
+            'attendance_date' => 'required|date|before_or_equal:' . Carbon::now()->format('Y-m-d'),
+            'attendance' => 'required|array',
+            'attendance.*.status' => 'required|in:Present,Absent,Late,Excused',
+            'attendance.*.remarks' => 'nullable|string|max:255'
         ];
         
-        return view('attendance.report', [
-            'trainees' => $trainees,
-            'attendanceData' => $attendanceData,
-            'startDate' => $startDate,
-            'endDate' => $endDate,
-            'centres' => $centres,
-            'summaryStats' => $summaryStats
-        ]);
+        return Validator::make($request->all(), $rules);
     }
     
     /**
-     * Show attendance record for a specific trainee.
-     */
-    public function showTraineeAttendance($id, Request $request)
-    {
-        $trainee = Trainees::findOrFail($id);
-        $startDate = $request->input('start_date', now()->startOfMonth()->toDateString());
-        $endDate = $request->input('end_date', now()->toDateString());
-        $calendarMonth = $request->input('month', date('Y-m'));
-        
-        // Get attendance records for the date range
-        $attendanceRecords = Attendances::with(['activity', 'markedBy'])
-            ->where('trainee_id', $id)
-            ->whereBetween('date', [$startDate, $endDate])
-            ->orderBy('date', 'desc')
-            ->get();
-        
-        // Calculate attendance rate for the period
-        $attendanceRate = $this->calculateAttendanceRate($id, $startDate, $endDate);
-        
-        // Generate calendar days for the month view
-        $calendarDays = $this->generateCalendarDays($calendarMonth, $id);
-        
-        return view('attendance.trainee', [
-            'trainee' => $trainee,
-            'attendanceRecords' => $attendanceRecords,
-            'attendanceRate' => $attendanceRate,
-            'startDate' => $startDate,
-            'endDate' => $endDate,
-            'calendarMonth' => $calendarMonth,
-            'calendarDays' => $calendarDays
-        ]);
-    }
-    
-    /**
-     * Calculate attendance rate for a trainee within a date range.
-     * 
-     * @param int $traineeId
-     * @param string $startDate
-     * @param string $endDate
+     * Get attendance statistics
+     *
+     * @param  int  $sessionId
      * @return array
      */
-    private function calculateAttendanceRate($traineeId, $startDate, $endDate)
+    private function getAttendanceStats($sessionId)
     {
-        // Get attendance records in the range
-        $records = Attendances::where('trainee_id', $traineeId)
-            ->whereBetween('date', [$startDate, $endDate])
-            ->get();
+        // Get total number of enrollments
+        $totalEnrollments = SessionEnrollment::where('session_id', $sessionId)
+            ->where('status', 'Active')
+            ->count();
+            
+        // Get total attendance records
+        $totalRecords = ActivityAttendance::where('session_id', $sessionId)->count();
         
-        // Count by status
-        $presentCount = $records->where('status', 'present')->count();
-        $absentCount = $records->where('status', 'absent')->count();
-        $lateCount = $records->where('status', 'late')->count();
-        $excusedCount = $records->where('status', 'excused')->count();
-        
-        $totalCount = $records->count();
-        
-        // Calculate percentage (considering late as half present)
-        if ($totalCount > 0) {
-            $percentage = round((($presentCount + ($lateCount * 0.5)) / $totalCount) * 100, 2);
-        } else {
-            $percentage = 0;
-        }
-        
+        // Get attendance by status
+        $presentCount = ActivityAttendance::where('session_id', $sessionId)
+            ->where('status', 'Present')
+            ->count();
+            
+        $absentCount = ActivityAttendance::where('session_id', $sessionId)
+            ->where('status', 'Absent')
+            ->count();
+            
+        $lateCount = ActivityAttendance::where('session_id', $sessionId)
+            ->where('status', 'Late')
+            ->count();
+            
+        $excusedCount = ActivityAttendance::where('session_id', $sessionId)
+            ->where('status', 'Excused')
+            ->count();
+            
+        // Calculate attendance rate
+        $attendanceRate = $totalRecords > 0 
+            ? round((($presentCount + $lateCount) / $totalRecords) * 100, 2)
+            : 0;
+            
         return [
-            'present' => $presentCount,
-            'absent' => $absentCount,
-            'late' => $lateCount,
-            'excused' => $excusedCount,
-            'total' => $totalCount,
-            'percentage' => $percentage
+            'total_enrollments' => $totalEnrollments,
+            'total_records' => $totalRecords,
+            'present_count' => $presentCount,
+            'absent_count' => $absentCount,
+            'late_count' => $lateCount,
+            'excused_count' => $excusedCount,
+            'attendance_rate' => $attendanceRate
         ];
-    }
-    
-    /**
-     * Generate calendar days for a specific month and trainee.
-     * 
-     * @param string $yearMonth
-     * @param int $traineeId
-     * @return array
-     */
-    private function generateCalendarDays($yearMonth, $traineeId)
-    {
-        // Parse year and month
-        list($year, $month) = explode('-', $yearMonth);
-        
-        // Get first day of the month
-        $firstDay = Carbon::createFromDate($year, $month, 1);
-        
-        // Get days in month
-        $daysInMonth = $firstDay->daysInMonth;
-        
-        // Get the day of week for the first day (0 = Sunday, 6 = Saturday)
-        $firstDayOfWeek = $firstDay->dayOfWeek;
-        
-        // Get attendance records for this month
-        $attendanceRecords = Attendances::where('trainee_id', $traineeId)
-            ->whereYear('date', $year)
-            ->whereMonth('date', $month)
-            ->get()
-            ->keyBy(function($item) {
-                return Carbon::parse($item->date)->day;
-            });
-        
-        // Initialize calendar array
-        $calendar = [];
-        
-        // Add empty cells for days before the first day of month
-        for ($i = 0; $i < $firstDayOfWeek; $i++) {
-            $prevMonth = Carbon::createFromDate($year, $month, 1)->subDays($firstDayOfWeek - $i);
-            $calendar[] = [
-                'day' => $prevMonth->day,
-                'current_month' => false,
-                'is_today' => false
-            ];
-        }
-        
-        // Add days of the current month
-        $today = Carbon::today();
-        for ($day = 1; $day <= $daysInMonth; $day++) {
-            $date = Carbon::createFromDate($year, $month, $day);
-            $isToday = $date->isSameDay($today);
-            
-            $calendarDay = [
-                'day' => $day,
-                'current_month' => true,
-                'is_today' => $isToday
-            ];
-            
-            // Add attendance status if available
-            if (isset($attendanceRecords[$day])) {
-                $record = $attendanceRecords[$day];
-                $calendarDay['status'] = $record->status;
-                $calendarDay['remarks'] = $record->remarks;
-            }
-            
-            $calendar[] = $calendarDay;
-        }
-        
-        // Fill remaining cells with days from next month
-        $remainingCells = 42 - count($calendar); // 6 rows x 7 days = 42 cells
-        if ($remainingCells > 7) {
-            $remainingCells = $remainingCells - 7; // Keep it to 35 cells (5 rows) if possible
-        }
-        
-        for ($i = 1; $i <= $remainingCells; $i++) {
-            $calendar[] = [
-                'day' => $i,
-                'current_month' => false,
-                'is_today' => false
-            ];
-        }
-        
-        return $calendar;
     }
 }

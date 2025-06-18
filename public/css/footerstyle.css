@@ -26,7 +26,7 @@
 
 .logo-wrapper {
     display: flex;
-    align-items: centre;
+    align-items: center;
 }
 
 .header-logo {
@@ -61,7 +61,7 @@
 /* Navigation Styles */
 .nav-menu {
     display: flex;
-    align-items: centre;
+    align-items: center;
     margin: 0;
     padding: 0;
     list-style: none;
@@ -107,7 +107,7 @@
 /* Action Buttons */
 .action-buttons {
     display: flex;
-    align-items: centre;
+    align-items: center;
     margin-left: 15px;
 }
 
@@ -136,7 +136,7 @@
     transition: all 0.3s ease;
     margin-right: 15px;
     display: flex;
-    align-items: centre;
+    align-items: center;
 }
 
 .volunteer-btn i {
@@ -176,7 +176,7 @@
 
     .mobile-visible {
         display: flex;
-        justify-content: centre;
+        justify-content: center;
     }
 }
 
@@ -267,8 +267,8 @@
     height: 60px;
     border-radius: 50%;
     display: flex;
-    align-items: centre;
-    justify-content: centre;
+    align-items: center;
+    justify-content: center;
     font-size: 24px;
     z-index: 995;
     box-shadow: 0 4px 15px rgba(200, 80, 192, 0.3);

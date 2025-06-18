@@ -1,0 +1,453 @@
+# CREAMS LOGIN AND REGISTER MODULE - COMPREHENSIVE PROGRESS DOCUMENTATION
+Version: 1.0
+Date: December 2024
+System: Community-based REhAbilitation Management System (CREAMS)
+
+================================================================================
+## 1. MODULE OVERVIEW
+================================================================================
+
+### Current Status: ✅ FULLY FUNCTIONAL
+Both login and register modules are complete and operational with the following features:
+- Multi-role authentication system (Admin, Supervisor, Teacher, AJK)
+- Unified user management using single Users table
+- Password reset functionality
+- Remember Me feature
+- Role-based dashboard redirects
+- Comprehensive form validation
+- Responsive design with animations
+
+### Technology Stack:
+- Backend: Laravel 10.x with PHP 8.4
+- Database: MySQL (single unified 'users' table)
+- Frontend: HTML5, CSS3, JavaScript (Vanilla)
+- CSS Framework: Bootstrap 5.3
+- Icons: Font Awesome 6.4
+- Fonts: Google Fonts (Poppins)
+- Authentication: Laravel's built-in auth with custom middleware
+
+================================================================================
+## 2. DATABASE ARCHITECTURE
+================================================================================
+
+### Unified Users Table Structure:
+```sql
+users
+├── id (bigint, primary key, auto-increment)
+├── iium_id (varchar(8), unique) - Format: ABCD1234
+├── name (varchar)
+├── email (varchar, unique)
+├── password (varchar, hashed)
+├── status (varchar, default: 'active')
+├── role (varchar) - Values: admin, supervisor, teacher, ajk
+├── phone (varchar, nullable)
+├── address (text, nullable)
+├── position (varchar, nullable)
+├── centre_id (varchar, nullable) - FK to centres table
+├── centre_location (varchar, nullable)
+├── avatar (varchar, nullable)
+├── user_activity_1 (varchar, nullable)
+├── user_activity_2 (varchar, nullable)
+├── user_last_accessed_at (datetime, nullable)
+├── about (text, nullable)
+├── review (text, nullable)
+├── date_of_birth (date, nullable)
+├── remember_token (varchar, nullable)
+├── created_at (timestamp)
+└── updated_at (timestamp)
+```
+
+### Password Reset Table:
+```sql
+password_resets
+├── id (bigint, primary key)
+├── email (varchar, indexed)
+├── token (varchar)
+└── created_at (timestamp, nullable)
+```
+
+### Key Design Decisions:
+1. **Single Users Table**: Consolidated from separate role tables
+2. **Role Field**: Determines user permissions and dashboard access
+3. **Centre Mapping**: centre_id values: 1=Gombak, 2=Kuantan, 3=Pagoh
+4. **Case Sensitivity**: IIUM ID always stored in uppercase
+
+================================================================================
+## 3. LOGIN MODULE IMPLEMENTATION
+================================================================================
+
+### 3.1 File Structure:
+```
+auth/
+├── LoginController.php → Handles authentication logic
+├── ForgotPasswordController.php → Password reset functionality
+├── login.blade.php → Login page view
+├── forgot-password.blade.php → Password reset request
+├── reset-password.blade.php → New password form
+└── loginstyle.css → Login page styling
+```
+
+### 3.2 Login Flow:
+
+1. **Route**: GET /auth/login → Shows login form
+2. **Submission**: POST /auth/check
+3. **Authentication Process**:
+   ```
+   User submits → Validate input → Check Users table
+   → Verify password → Set session data → Redirect to role dashboard
+   ```
+
+### 3.3 Key Features:
+
+#### A. Flexible Authentication:
+- Accepts email OR IIUM ID for login
+- Single 'identifier' field in form
+- Backend checks both email and iium_id columns
+
+#### B. Session Management:
+```php
+// Session data set on successful login:
+session([
+    'id' => $user->id,
+    'iium_id' => $user->iium_id,
+    'name' => $user->name,
+    'role' => $user->role,
+    'email' => $user->email,
+    'centre_id' => $user->centre_id,
+    'logged_in' => true,
+    'login_time' => now()->toDateTimeString()
+]);
+```
+
+#### C. Remember Me Feature:
+- Cookie-based token storage
+- 60-day expiration
+- RememberMe middleware checks on each request
+- Auto-login if valid token found
+
+#### D. Visual Features:
+- Password visibility toggle
+- Loading animation on submit
+- Auto-hide alerts after 5 seconds
+- Responsive design with mobile support
+- Background image with overlay
+- Gradient logo and buttons
+
+### 3.4 Security Measures:
+- CSRF token protection
+- Password hashing using bcrypt
+- Session regeneration on login
+- Failed login attempt logging
+- Rate limiting ready (not yet implemented)
+
+================================================================================
+## 4. REGISTER MODULE IMPLEMENTATION
+================================================================================
+
+### 4.1 File Structure:
+```
+auth/
+├── MainController.php → Handles registration logic
+├── register.blade.php → Registration form view
+└── registrationstyle.css → Registration page styling
+```
+
+### 4.2 Registration Flow:
+
+1. **Route**: GET /auth/register → Shows registration form
+2. **Submission**: POST /auth/save
+3. **Process**:
+   ```
+   3-step form → Validate all fields → Check uniqueness
+   → Create user → Set role → Redirect to login
+   ```
+
+### 4.3 Three-Step Form Structure:
+
+#### Step 1: Account Details
+- Email address (required, unique)
+- IIUM ID (required, 8 chars, format: ABCD1234)
+- Password (required, min 5 chars, must contain letter+number+special)
+- Password confirmation
+
+#### Step 2: Profile Information
+- Full name (required)
+- Role selection (required) - Visual role cards
+- Centre location (required) - Dropdown
+- Hidden centre_id field (auto-populated)
+
+#### Step 3: Review & Submit
+- Display all entered information
+- Terms & conditions checkbox
+- Final submission
+
+### 4.4 Advanced Features:
+
+#### A. Real-time Validation:
+- IIUM ID auto-uppercase and format checking
+- Password strength meter with visual feedback
+- Field-by-field validation before proceeding
+- Visual shake animations for errors
+
+#### B. Role Selection UI:
+```
+┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐
+│   Admin     │ │ Supervisor  │ │  Teacher    │ │    AJK      │
+│   👤⚙️      │ │    👤👔     │ │   👨‍🏫      │ │   👥⚙️     │
+└─────────────┘ └─────────────┘ └─────────────┘ └─────────────┘
+```
+
+#### C. Centre Mapping:
+```javascript
+const locationToCenterId = {
+    'Gombak': '1',
+    'Kuantan': '2',
+    'Pagoh': '3'
+};
+```
+
+#### D. Animation System:
+- Staggered form element animations
+- Tab transition animations
+- Success overlay with checkmark
+- Progress bar between steps
+- Button state changes
+
+### 4.5 Validation Rules:
+
+```php
+// Backend validation
+'iium_id' => 'required|size:8|regex:/^[A-Z]{4}\d{4}$/|unique:users',
+'email' => 'required|email|unique:users',
+'password' => 'required|min:5|regex:/^(?=.*[a-zA-Z])(?=.*\d)(?=.*[\W_]).{5,}$/',
+'role' => 'required|in:admin,supervisor,teacher,ajk',
+'centre_id' => 'required|exists:centres,id'
+```
+
+================================================================================
+## 5. PASSWORD RESET FUNCTIONALITY
+================================================================================
+
+### 5.1 Reset Flow:
+
+1. **Request Reset**:
+   - User enters email at /forgot-password
+   - System creates token in password_resets table
+   - Email sent with reset link (currently using log driver)
+
+2. **Reset Password**:
+   - User clicks link: /reset-password/{token}
+   - Token validated (60-minute expiration)
+   - New password form shown
+   - Password updated in users table
+   - Token deleted
+
+### 5.2 Key Features:
+- Token-based security
+- 60-minute token expiration
+- Password strength requirements enforced
+- Email pre-filled in reset form
+- Success redirect to login page
+
+================================================================================
+## 6. MIDDLEWARE & AUTHENTICATION
+================================================================================
+
+### 6.1 Middleware Stack:
+
+1. **RememberMe Middleware**:
+   - Runs on all routes
+   - Checks for remember_token cookie
+   - Auto-logs in if valid token found
+   - Updates last_accessed timestamp
+
+2. **Authenticate Middleware**:
+   - Protects authenticated routes
+   - Checks session for 'id' and 'role'
+   - Verifies user exists in database
+   - Redirects to login if not authenticated
+
+3. **Role Middleware**:
+   - Additional layer for role-specific routes
+   - Checks user role matches required role(s)
+   - Redirects to user's dashboard if unauthorized
+
+### 6.2 Route Protection:
+```php
+// Public routes (no auth required)
+Route::get('/auth/login', ...)
+Route::get('/auth/register', ...)
+
+// Authenticated routes
+Route::middleware(['auth'])->group(...)
+
+// Role-specific routes
+Route::middleware(['auth', 'role:admin'])->group(...)
+```
+
+================================================================================
+## 7. UI/UX IMPLEMENTATION
+================================================================================
+
+### 7.1 Design System:
+
+#### Color Palette:
+```css
+--primary-color: #32bdea (Light Blue)
+--secondary-color: #c850c0 (Purple)
+--primary-gradient: linear-gradient(135deg, #32bdea, #c850c0)
+--success-color: #28a745
+--error-color: #dc3545
+```
+
+#### Typography:
+- Font Family: Poppins (Google Fonts)
+- Weights: 300, 400, 500, 600, 700
+- Responsive sizing
+
+### 7.2 Responsive Breakpoints:
+- Desktop: > 992px
+- Tablet: 768px - 991px
+- Mobile: < 768px
+- Small Mobile: < 576px
+
+### 7.3 Animation Inventory:
+
+1. **Form Animations**:
+   - fadeIn: Entry animation for elements
+   - shake: Error validation feedback
+   - pulse: Success states
+   - slideIn: Tab transitions
+
+2. **Interactive Elements**:
+   - Password toggle with flip animation
+   - Loading spinners on submit
+   - Progress bars for multi-step form
+   - Hover effects on buttons and cards
+
+3. **Feedback Animations**:
+   - Alert auto-hide after 5 seconds
+   - Success checkmark drawing
+   - Field validation indicators
+   - Strength meter transitions
+
+================================================================================
+## 8. ERROR HANDLING & VALIDATION
+================================================================================
+
+### 8.1 Frontend Validation:
+- Real-time field validation
+- Visual feedback (red/green borders)
+- Error messages below fields
+- Shake animation for invalid fields
+- Progress blocked until valid
+
+### 8.2 Backend Validation:
+- Laravel validation rules
+- Custom error messages
+- Unique constraint checking
+- Format validation for IIUM ID
+- Password complexity requirements
+
+### 8.3 User Feedback:
+- Flash messages for success/error
+- Form-specific error display
+- Loading states during submission
+- Clear validation messages
+- Auto-clearing of stale messages
+
+================================================================================
+## 9. CURRENT LIMITATIONS & FUTURE ENHANCEMENTS
+================================================================================
+
+### 9.1 Current Limitations:
+1. Email system using log driver (not sending actual emails)
+2. No rate limiting implemented yet
+3. No OAuth/social login options
+4. No two-factor authentication
+5. Basic password requirements (could be stronger)
+
+### 9.2 Planned Enhancements:
+1. Implement SMTP email configuration
+2. Add rate limiting for login attempts
+3. Implement account lockout after failed attempts
+4. Add email verification for new registrations
+5. Implement profile picture upload during registration
+6. Add more detailed logging for security audits
+7. Implement password history to prevent reuse
+
+================================================================================
+## 10. INTEGRATION POINTS
+================================================================================
+
+### 10.1 Dashboard Redirection:
+```php
+// After successful login, users are redirected based on role:
+admin → /admin/dashboard
+supervisor → /supervisor/dashboard
+teacher → /teacher/dashboard
+ajk → /ajk/dashboard
+```
+
+### 10.2 Session Data Available Throughout System:
+- User ID for database queries
+- Role for permission checking
+- Name for display purposes
+- Centre ID for filtered data
+- Login time for session management
+
+### 10.3 Logout Functionality:
+- Clears all session data
+- Invalidates remember token
+- Regenerates session token
+- Redirects to home page
+
+================================================================================
+## 11. TESTING CHECKLIST
+================================================================================
+
+✅ Login with email
+✅ Login with IIUM ID
+✅ Password visibility toggle
+✅ Remember Me functionality
+✅ Invalid credentials handling
+✅ Registration form navigation
+✅ Field validation (all fields)
+✅ Role selection
+✅ Centre location mapping
+✅ Password strength meter
+✅ Terms acceptance
+✅ Successful registration
+✅ Duplicate email/IIUM ID prevention
+✅ Password reset request
+✅ Password reset with token
+✅ Token expiration handling
+✅ Mobile responsiveness
+✅ Animation performance
+✅ Session management
+✅ Role-based redirects
+
+================================================================================
+## 12. DEPLOYMENT NOTES
+================================================================================
+
+### Required Configuration:
+1. Set APP_ENV=production
+2. Configure MAIL_MAILER=smtp with credentials
+3. Run migrations for users and password_resets tables
+4. Ensure centres table exists with IDs 1, 2, 3
+5. Set proper file permissions
+6. Configure session driver for production
+7. Enable HTTPS for security
+8. Set up queue workers if using queued emails
+
+### Performance Considerations:
+1. Implement Redis for session storage
+2. Add database indexes on email and iium_id
+3. Optimize CSS/JS assets
+4. Enable Laravel caching
+5. Configure CDN for static assets
+
+================================================================================
+
+This documentation represents the complete current state of the login and register modules as of December 2024. All features listed are implemented and functional in the development environment.

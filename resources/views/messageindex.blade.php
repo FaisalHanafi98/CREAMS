@@ -56,7 +56,7 @@
         .header-content {
             display: flex;
             justify-content: space-between;
-            align-items: centre;
+            align-items: center;
             padding: 15px 20px;
             min-height: var(--header-height);
             border-bottom: 1px solid var(--border-color);
@@ -80,7 +80,7 @@
         
         .breadcrumb {
             display: flex;
-            align-items: centre;
+            align-items: center;
             font-size: 14px;
             margin: 0;
             padding: 0;
@@ -108,7 +108,7 @@
         
         .header-actions {
             display: flex;
-            align-items: centre;
+            align-items: center;
         }
         
         .action-buttons {
@@ -118,7 +118,7 @@
         
         .action-btn {
             display: flex;
-            align-items: centre;
+            align-items: center;
             gap: 8px;
             padding: 8px 15px;
             border-radius: 8px;
@@ -174,7 +174,7 @@
             position: relative;
             transition: color 0.3s ease;
             display: flex;
-            align-items: centre;
+            align-items: center;
             gap: 8px;
         }
         
@@ -200,8 +200,8 @@
         
         .badge {
             display: inline-flex;
-            align-items: centre;
-            justify-content: centre;
+            align-items: center;
+            justify-content: center;
             width: 24px;
             height: 24px;
             border-radius: 50%;
@@ -251,7 +251,7 @@
         .message-sender, .message-recipient {
             width: 200px;
             display: flex;
-            align-items: centre;
+            align-items: center;
             gap: 10px;
         }
         
@@ -322,7 +322,7 @@
         
         .status-badge {
             display: inline-flex;
-            align-items: centre;
+            align-items: center;
             gap: 5px;
             padding: 3px 8px;
             border-radius: 20px;
@@ -347,8 +347,8 @@
         
         .btn-icon {
             display: flex;
-            align-items: centre;
-            justify-content: centre;
+            align-items: center;
+            justify-content: center;
             width: 32px;
             height: 32px;
             border-radius: 8px;
@@ -373,10 +373,10 @@
         .empty-state {
             display: flex;
             flex-direction: column;
-            align-items: centre;
-            justify-content: centre;
+            align-items: center;
+            justify-content: center;
             padding: 50px 20px;
-            text-align: centre;
+            text-align: center;
         }
         
         .empty-icon {
@@ -401,7 +401,7 @@
         .pagination-container {
             padding: 20px;
             display: flex;
-            justify-content: centre;
+            justify-content: center;
         }
         
         /* Responsive */
@@ -439,7 +439,7 @@
             .message-meta {
                 flex-direction: row;
                 justify-content: space-between;
-                align-items: centre;
+                align-items: center;
                 width: 100%;
             }
         }
@@ -452,7 +452,7 @@
             
             .action-btn {
                 width: 100%;
-                justify-content: centre;
+                justify-content: center;
             }
         }
     </style>

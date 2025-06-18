@@ -15,13 +15,13 @@ body {
 }
 
 .about-1 h1 {
-    text-align: centre;
+    text-align: center;
     color: black;
     font-weight: bold;
 }
 
 .about-1 p {
-    text-align: centre;
+    text-align: center;
     padding: 3px;
     color: #fff;
 }
@@ -50,7 +50,7 @@ body {
     background-color: #5fbff9;
     margin: 0 auto;
     border: none;
-    text-align: centre;
+    text-align: center;
 }
 
 .about-item:hover {

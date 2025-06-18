@@ -81,13 +81,13 @@
                             value="{{ old('asset_price', $asset->asset_price) }}"readonly>
                     </div>
                     <div class="form-group">
-                        <label for="centre_name">Centre Name:</label>
-                        <select id="centre_name" name="centre_name" required readonly>
+                        <label for="center_name">Centre Name:</label>
+                        <select id="center_name" name="center_name" required readonly>
                             <option value="Gombak"
-                                {{ old('centre_name', $asset->centre_name) == 'Gombak' ? 'selected' : '' }}>Gombak
+                                {{ old('center_name', $asset->center_name) == 'Gombak' ? 'selected' : '' }}>Gombak
                             </option>
                             <option value="Kuantan"
-                                {{ old('centre_name', $asset->centre_name) == 'Kuantan' ? 'selected' : '' }}>Kuantan
+                                {{ old('center_name', $asset->center_name) == 'Kuantan' ? 'selected' : '' }}>Kuantan
                             </option>
                         </select>
                     </div>

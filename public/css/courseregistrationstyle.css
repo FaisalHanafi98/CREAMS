@@ -12,10 +12,10 @@
         display: grid;
         height: 100%;
         width: 100%;
-        place-items: centre;
+        place-items: center;
         background-image: url("/images/pexels-anastasia-shuraeva-8466158.jpg");
         background-size: cover;
-        background-position: centre;
+        background-position: center;
         background-attachment: fixed;
         background-repeat: no-repeat;
     }
@@ -54,7 +54,7 @@
         position: relative;
         font-size: 35px;
         font-weight: 600;
-        text-align: centre;
+        text-align: center;
         line-height: 100px;
         color: black;
         user-select: none;
@@ -78,7 +78,7 @@
 
     .image-preview-container {
         margin-bottom: 10px;
-        text-align: centre;
+        text-align: center;
     }
     
     .image-preview {
@@ -98,8 +98,8 @@
     .form-container {
         display: flex;
         flex-direction: column;
-        align-items: centre;
-        justify-content: centre;
+        align-items: center;
+        justify-content: center;
         margin-top: 100px;
     }
 
@@ -175,14 +175,14 @@
         width: 100%;
         height: 50px;
         font-size: 16px;
-        align-items: centre;
+        align-items: center;
         justify-content: space-between;
         margin-bottom: 20px;
     }
 
     .content .checkbox {
         display: flex;
-        align-items: centre;
+        align-items: center;
     }
 
     .content input {

@@ -17,7 +17,7 @@
             <ul class="sidebar-menu">
                 <li class="{{ Route::currentRouteNamed('accountprofile') ? 'active' : '' }}">
                     <a href="{{ route('accountprofile') }}" class="logo">
-                        <img src="{{ asset(Auth::user()->user_avatar) }}">
+                        <img src="{{ asset(Auth::user()->avatar) }}">
                         <div class="user-details">
                             <span class="nav-item">{{ Auth::user()->user_first_name }}</span>
                             <span class="nav-item role">{{ Auth::user()->role }}</span>
