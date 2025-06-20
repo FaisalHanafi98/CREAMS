@@ -9,13 +9,14 @@ use App\Models\ActivitySession;
 use App\Models\SessionEnrollment;
 use App\Models\Centres;
 use App\Models\Asset;
-use App\Models\Event;
+use App\Models\Events;
 use App\Models\ContactMessages;
 use App\Models\Volunteers;
 use App\Models\ActivityAttendance;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Schema;
 use Carbon\Carbon;
 use Exception;
 
@@ -36,7 +37,7 @@ abstract class BaseDashboardService
         return Cache::remember('dashboard_basic_stats', $this->cacheTimeout, function () {
             try {
                 return [
-                    'total_users' => Users::count(),
+                    'total_users' => Users::where('status', 'active')->count(),
                     'total_trainees' => Trainee::count(),
                     'total_activities' => Activity::count(),
                     'total_centres' => Centres::count(),
@@ -148,7 +149,12 @@ abstract class BaseDashboardService
     {
         return Cache::remember("dashboard_upcoming_events_{$limit}", $this->cacheTimeout, function () use ($limit) {
             try {
-                return Event::where('event_date', '>=', now())
+                // Check if events table exists
+                if (!Schema::hasTable('events')) {
+                    return [];
+                }
+                
+                return Events::where('event_date', '>=', now())
                     ->orderBy('event_date')
                     ->limit($limit)
                     ->get()

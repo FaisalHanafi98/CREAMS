@@ -68,8 +68,34 @@ class DashboardController extends Controller
             $data['user_id'] = $userId;
             $data['user_name'] = session('name');
             
+            // Extract all data sections for the view (for compatibility with existing view)
+            $stats = $data['stats'] ?? [];
+            $charts = $data['charts'] ?? [];
+            $recentActivities = $data['recent_activities'] ?? [];
+            $upcomingEvents = $data['upcoming_events'] ?? [];
+            $notifications = $data['notifications'] ?? [];
+            $quickActions = $data['quick_actions'] ?? [];
+            $systemHealth = $data['system_health'] ?? [];
+            
+            // Extract individual variables that the view partials expect
+            $totalUsers = $stats['total_users'] ?? 0;
+            $totalTrainees = $stats['total_trainees'] ?? 0;
+            $totalActivities = $stats['total_activities'] ?? 0;
+            $activeSessions = $stats['active_sessions'] ?? 0;
+            
+            // Role-specific variables
+            $mySessions = $stats['my_sessions'] ?? 0;
+            $myTrainees = $stats['my_trainees'] ?? 0;
+            $upcomingClasses = $stats['upcoming_classes'] ?? 0;
+            $completedSessions = $stats['completed_sessions'] ?? 0;
+            
             // Return unified dashboard view
-            return view('dashboard.index', compact('data', 'role'));
+            return view('dashboard.index', compact(
+                'data', 'role', 'stats', 'charts', 'recentActivities', 'upcomingEvents', 
+                'notifications', 'quickActions', 'systemHealth',
+                'totalUsers', 'totalTrainees', 'totalActivities', 'activeSessions',
+                'mySessions', 'myTrainees', 'upcomingClasses', 'completedSessions'
+            ));
 
         } catch (Exception $e) {
             Log::critical('Critical error in dashboard', [
@@ -321,6 +347,57 @@ class DashboardController extends Controller
                 ],
                 'timestamp' => now()->toISOString(),
             ]);
+        }
+    }
+
+    /**
+     * Save dashboard customization settings
+     */
+    public function saveCustomization(Request $request)
+    {
+        try {
+            if (!session('id') || !session('role')) {
+                return response()->json(['error' => 'Unauthorized'], 401);
+            }
+
+            $userId = session('id');
+            $role = session('role');
+
+            // Validate customization data
+            $customizationData = $request->validate([
+                'theme' => 'in:light,dark,auto',
+                'refresh_interval' => 'integer|min:0|max:600',
+                'widgets' => 'array',
+                'widgets.*' => 'boolean'
+            ]);
+
+            // Save to session for now (could be extended to save to database)
+            session([
+                'dashboard_customization' => $customizationData,
+                'dashboard_customization_updated' => now()->toISOString()
+            ]);
+
+            Log::info('Dashboard customization saved', [
+                'user_id' => $userId,
+                'role' => $role,
+                'customization' => $customizationData
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Customization saved successfully',
+                'data' => $customizationData,
+                'timestamp' => now()->toISOString(),
+            ]);
+
+        } catch (Exception $e) {
+            Log::error('Error saving dashboard customization', [
+                'user_id' => session('id'),
+                'role' => session('role'),
+                'error' => $e->getMessage()
+            ]);
+
+            return response()->json(['error' => 'Failed to save customization'], 500);
         }
     }
 }

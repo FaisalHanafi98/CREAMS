@@ -2,12 +2,20 @@
 
 namespace App\Services\Dashboard;
 
+use App\Services\Asset\AssetManagementService;
 use InvalidArgumentException;
 use Illuminate\Support\Facades\Log;
 use Exception;
 
 class DashboardServiceFactory
 {
+    private AssetManagementService $assetService;
+
+    public function __construct(AssetManagementService $assetService)
+    {
+        $this->assetService = $assetService;
+    }
+
     /**
      * Create dashboard service based on user role
      */
@@ -25,7 +33,7 @@ class DashboardServiceFactory
                     return new TeacherDashboardService();
                 
                 case 'ajk':
-                    return new AjkDashboardService();
+                    return new AjkDashboardService($this->assetService);
                 
                 default:
                     Log::warning('Unknown role requested for dashboard service', ['role' => $role]);

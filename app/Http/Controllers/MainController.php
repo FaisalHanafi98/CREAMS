@@ -370,6 +370,12 @@ class MainController extends Controller
                 'role' => $user->role,
                 'email' => $user->email,
                 'centre_id' => $user->centre_id,
+                'avatar' => $user->avatar ?? null,
+                'user_avatar' => $user->avatar ?? null,
+                'phone' => $user->phone ?? null,
+                'address' => $user->address ?? null,
+                'bio' => $user->bio ?? null,
+                'date_of_birth' => $user->date_of_birth ?? null,
                 'logged_in' => true,
                 'login_time' => now()->toDateTimeString()
             ]);

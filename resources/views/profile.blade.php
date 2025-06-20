@@ -247,9 +247,9 @@
         <div class="profile-header">
             <div class="profile-avatar" id="avatar-container">
                 @if(isset($user['avatar']) && $user['avatar'])
-                    <img src="{{ asset('storage/avatars/' . $user['avatar']) }}" alt="{{ $user['name'] ?? 'User' }}" id="avatar-preview">
+                    <img src="{{ asset('storage/avatars/' . $user['avatar']) }}" alt="{{ $user['name'] ?? 'User' }}" id="avatar-preview" onerror="this.src='{{ asset('images/default-avatar.svg') }}'">
                 @else
-                    <img src="{{ asset('images/default-avatar.png') }}" alt="{{ $user['name'] ?? 'User' }}" id="avatar-preview">
+                    <img src="{{ asset('images/default-avatar.svg') }}" alt="{{ $user['name'] ?? 'User' }}" id="avatar-preview">
                 @endif
                 <div class="avatar-overlay" id="avatar-upload-btn" title="Change Profile Photo">
                     <i class="fas fa-camera"></i>
@@ -262,7 +262,16 @@
             </div>
             <div class="profile-info">
                 <h2>{{ $user['name'] ?? 'User' }}</h2>
-                <div class="profile-role">{{ ucfirst($role) }}</div>
+                @php
+                    $roleDisplayNames = [
+                        'admin' => 'Administration',
+                        'supervisor' => 'Supervisor', 
+                        'teacher' => 'Teacher',
+                        'ajk' => 'AJK'
+                    ];
+                    $roleDisplay = $roleDisplayNames[$role] ?? ucfirst($role);
+                @endphp
+                <div class="profile-role">{{ $roleDisplay }}</div>
                 <div class="profile-meta">
                     <div class="meta-item">
                         <i class="fas fa-envelope"></i>
@@ -298,7 +307,7 @@
         <input type="hidden" id="debug_phone" value="{{ $user['phone'] ?? '' }}">
         <input type="hidden" id="debug_address" value="{{ $user['address'] ?? '' }}">
         <input type="hidden" id="debug_bio" value="{{ $user['bio'] ?? '' }}">
-        <input type="hidden" id="debug_dob" value="{{ isset($user['date_of_birth']) && $user['date_of_birth'] ? date('Y-m-d', strtotime($user['date_of_birth'])) : '' }}">
+        <input type="hidden" id="debug_dob" value="{{ $user['date_of_birth'] ?? '' }}">
         
         <!-- Profile Tabs -->
         <div class="profile-tabs">
@@ -322,7 +331,7 @@
             <div class="tab-content" id="pills-tabContent">
                 <!-- Edit Profile Tab -->
                 <div class="tab-pane fade show active" id="pills-edit" role="tabpanel" aria-labelledby="pills-edit-tab">
-                    <form id="profile-form" action="{{ route('profile.update') }}" method="POST">
+                    <form id="profile-form" action="{{ route('profile.update') }}" method="POST" onsubmit="console.log('Form data being submitted:', new FormData(this)); return true;">
                         @csrf
                         <div class="row">
                             <div class="col-md-6">
@@ -348,7 +357,7 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="date_of_birth">Date of Birth</label>
-                                    <input type="date" class="form-control editable-field" id="date_of_birth" name="date_of_birth" value="{{ isset($user['date_of_birth']) && $user['date_of_birth'] ? date('Y-m-d', strtotime($user['date_of_birth'])) : '' }}" readonly>
+                                    <input type="date" class="form-control editable-field" id="date_of_birth" name="date_of_birth" value="{{ $user['date_of_birth'] ?? '' }}" readonly>
                                 </div>
                             </div>
                         </div>

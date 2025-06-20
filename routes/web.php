@@ -45,6 +45,8 @@ use App\Http\Controllers\MessageController;
 
 // Auth Controllers
 use App\Http\Controllers\Auth\ForgotPasswordController;
+use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Auth\ResetPasswordController;
 
 /*
 |--------------------------------------------------------------------------
@@ -115,6 +117,17 @@ Route::middleware(['auth'])->group(function () {
 Route::middleware(['auth'])->group(function () {
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    
+    // Dashboard API routes
+    Route::prefix('dashboard/api')->name('dashboard.')->group(function () {
+        Route::get('/refresh', [DashboardController::class, 'refresh'])->name('refresh');
+        Route::get('/stats', [DashboardController::class, 'getStats'])->name('stats');
+        Route::get('/charts', [DashboardController::class, 'getCharts'])->name('charts');
+        Route::get('/notifications', [DashboardController::class, 'getNotifications'])->name('notifications');
+        Route::post('/customize', [DashboardController::class, 'saveCustomization'])->name('customize');
+        Route::post('/clear-cache', [DashboardController::class, 'clearCache'])->name('clear-cache');
+        Route::get('/health', [DashboardController::class, 'health'])->name('health');
+    });
     
     // Search functionality
     Route::get('/search', [MainController::class, 'search'])->name('search');

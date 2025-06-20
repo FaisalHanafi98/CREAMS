@@ -323,6 +323,7 @@
             background: var(--light-color);
             border-radius: 20px;
             padding: 6px 6px 6px 12px;
+            position: relative;
         }
         
         .user-avatar {
@@ -963,21 +964,37 @@
             
             <div class="user-profile" id="userProfileToggle">
                 <div class="user-avatar">
-                    <img src="{{ session('user_avatar') ?? asset('images/default-avatar.png') }}" alt="User Avatar">
+                    @php
+                        $avatarPath = session('user_avatar') ?? session('avatar');
+                        if ($avatarPath) {
+                            $avatarUrl = asset('storage/avatars/' . $avatarPath);
+                        } else {
+                            $avatarUrl = asset('images/default-avatar.svg');
+                        }
+                        
+                        $roleDisplayNames = [
+                            'admin' => 'Administration',
+                            'supervisor' => 'Supervisor', 
+                            'teacher' => 'Teacher',
+                            'ajk' => 'AJK'
+                        ];
+                        $roleDisplay = $roleDisplayNames[session('role')] ?? ucfirst(session('role') ?? 'User');
+                    @endphp
+                    <img src="{{ $avatarUrl }}" alt="User Avatar" onerror="this.src='{{ asset('images/default-avatar.svg') }}'">
                 </div>
                 <div class="user-info d-none d-md-flex">
                     <div class="user-name">{{ session('name') ?? 'User' }}</div>
-                    <div class="user-role">{{ ucfirst(session('role') ?? 'User') }}</div>
+                    <div class="user-role">{{ $roleDisplay }}</div>
                 </div>
                 <div class="dropdown-menu user-dropdown" id="userDropdown">
                     <div class="dropdown-header">
                         <div class="user-details d-flex align-items-center">
                             <div class="user-avatar mr-3">
-                                <img src="{{ session('user_avatar') ?? asset('images/default-avatar.png') }}" alt="User Avatar">
+                                <img src="{{ $avatarUrl }}" alt="User Avatar" onerror="this.src='{{ asset('images/default-avatar.svg') }}'">
                             </div>
                             <div class="user-info">
                                 <div class="user-name">{{ session('name') ?? 'User' }}</div>
-                                <div class="user-role">{{ ucfirst(session('role') ?? 'User') }}</div>
+                                <div class="user-role">{{ $roleDisplay }}</div>
                             </div>
                         </div>
                     </div>
@@ -1056,7 +1073,7 @@
                         </a>
                     </li>
                     <li>
-                        <a href="{{ route('traineesregistrationpage') }}" class="sidebar-submenu-link {{ Route::currentRouteName() == 'traineesregistrationpage' ? 'active' : '' }}">
+                        <a href="{{ route('trainees.create') }}" class="sidebar-submenu-link {{ Route::currentRouteName() == 'trainees.create' ? 'active' : '' }}">
                             Registration
                         </a>
                     </li>
@@ -1270,68 +1287,69 @@
                     
                     // Set a small delay to avoid too many requests
                     searchTimer = setTimeout(function() {
-                        // This would normally be an AJAX request to the server
-                        // Mock response for demo
-                        const mockResults = [
-                            {
-                                name: 'John Doe',
-                                role: 'Trainee',
-                                location: 'Main Centre',
-                                url: '#trainee-1'
-                            },
-                            {
-                                name: 'Training Session: Social Skills',
-                                role: 'Activity',
-                                location: 'Main Centre',
-                                url: '#activity-1'
-                            },
-                            {
-                                name: 'Communication Tools',
-                                role: 'Asset',
-                                location: 'East Wing',
-                                url: '#asset-1'
+                        // Make AJAX request to search endpoint
+                        fetch('/search?query=' + encodeURIComponent(query), {
+                            method: 'GET',
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
                             }
-                        ];
-                        
-                        searchResults.innerHTML = '';
-                        
-                        if (mockResults.length === 0) {
-                            searchResults.innerHTML = '<div class="search-no-results"><p>No results found</p></div>';
-                            searchResults.style.display = 'block';
-                            return;
-                        }
-                        
-                        mockResults.forEach(function(item) {
-                            // Create an icon based on role
-                            let icon = 'file';
-                            if (item.role.toLowerCase() === 'trainee') {
-                                icon = 'user-graduate';
-                            } else if (item.role.toLowerCase() === 'activity') {
-                                icon = 'calendar-alt';
-                            } else if (item.role.toLowerCase() === 'asset') {
-                                icon = 'boxes';
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            searchResults.innerHTML = '';
+                            
+                            if (!data.success || data.results.length === 0) {
+                                searchResults.innerHTML = '<div class="search-no-results"><p>No results found for "' + query + '"</p></div>';
+                                searchResults.style.display = 'block';
+                                return;
                             }
                             
-                            const resultItem = document.createElement('a');
-                            resultItem.href = item.url;
-                            resultItem.className = 'search-result-item';
-                            resultItem.innerHTML = `
-                                <div class="search-result-icon">
-                                    <i class="fas fa-${icon}"></i>
-                                </div>
-                                <div class="search-result-content">
-                                    <div class="search-result-name">${item.name}</div>
-                                    <div class="search-result-meta">
-                                        <span class="search-result-role">${item.role}</span> · 
-                                        <span class="search-result-location">${item.location}</span>
+                            data.results.forEach(function(item) {
+                                // Create an icon based on type
+                                let icon = 'file';
+                                let resultUrl = '#';
+                                
+                                if (item.type === 'trainee') {
+                                    icon = 'user-graduate';
+                                    resultUrl = '/trainee/profile/' + item.id;
+                                } else if (item.type === 'user') {
+                                    icon = 'user';
+                                    resultUrl = '/profile';
+                                } else if (item.type === 'activity') {
+                                    icon = 'calendar-alt';
+                                    resultUrl = '/activities/' + item.id;
+                                } else if (item.type === 'asset') {
+                                    icon = 'boxes';
+                                    resultUrl = '/assets/' + item.id;
+                                }
+                                
+                                const resultItem = document.createElement('a');
+                                resultItem.href = resultUrl;
+                                resultItem.className = 'search-result-item';
+                                resultItem.innerHTML = `
+                                    <div class="search-result-icon">
+                                        <i class="fas fa-${icon}"></i>
                                     </div>
-                                </div>
-                            `;
+                                    <div class="search-result-content">
+                                        <div class="search-result-name">${item.name}</div>
+                                        <div class="search-result-meta">
+                                            <span class="search-result-role">${item.role || item.type}</span> · 
+                                            <span class="search-result-location">${item.location || item.centre || 'N/A'}</span>
+                                        </div>
+                                    </div>
+                                `;
+                                
+                                searchResults.appendChild(resultItem);
+                            });
                             
-                            searchResults.appendChild(resultItem);
+                            searchResults.style.display = 'block';
+                        })
+                        .catch(error => {
+                            console.error('Search error:', error);
+                            searchResults.innerHTML = '<div class="search-no-results"><p>Search temporarily unavailable</p></div>';
+                            searchResults.style.display = 'block';
                         });
-                        
-                        searchResults.style.display = 'block';
                     }, 300);
                 });
                 
@@ -1451,19 +1469,44 @@
                 }
             }
             
-            // Fix avatar images
-            const avatarImages = document.querySelectorAll('.user-avatar img, .profile-img, .rounded-circle[src*="profile"]');
-            avatarImages.forEach(function(img) {
-                // Check if src is empty, null, or undefined
-                if (!img.getAttribute('src') || img.getAttribute('src') === '') {
-                    img.src = '/images/default-avatar.png';
-                }
-                
-                // Add error handler for loading failures
-                img.addEventListener('error', function() {
-                    this.src = '/images/default-avatar.png';
+            // Fix avatar images - optimized to prevent infinite loops
+            function fixAvatarImages() {
+                const avatarImages = document.querySelectorAll('.user-avatar img, .profile-img, .rounded-circle[src*="profile"]');
+                avatarImages.forEach(function(img) {
+                    // Skip if already processed or already showing default
+                    if (img.dataset.avatarProcessed || img.src.includes('default-avatar')) {
+                        return;
+                    }
+                    
+                    // Mark as processed to prevent reprocessing
+                    img.dataset.avatarProcessed = 'true';
+                    
+                    // Check if src is empty, null, or undefined
+                    if (!img.getAttribute('src') || img.getAttribute('src') === '' || img.getAttribute('src').includes('null')) {
+                        img.src = '/images/default-avatar.png';
+                        return;
+                    }
+                    
+                    // Add error handler for loading failures (only once)
+                    if (!img.dataset.errorHandlerAdded) {
+                        img.dataset.errorHandlerAdded = 'true';
+                        img.addEventListener('error', function() {
+                            if (!this.src.includes('default-avatar')) {
+                                console.log('Avatar failed to load, using default:', this.src);
+                                this.src = '/images/default-avatar.png';
+                            }
+                        });
+                    }
+                    
+                    // Also check if the src contains storage path but file doesn't exist
+                    if (img.src.includes('storage/avatars/') && img.src.includes('null')) {
+                        img.src = '/images/default-avatar.png';
+                    }
                 });
-            });
+            }
+            
+            // Run avatar fix only once on page load
+            fixAvatarImages();
         });
     </script>
     

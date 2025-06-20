@@ -48,7 +48,7 @@ class Teachers extends Authenticatable
         'position',
         'centre_id',
         'avatar',
-        'bio',
+        'about',
         'user_last_accessed_at',
         'status'
     ];

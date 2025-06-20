@@ -456,9 +456,9 @@
                         <label for="center-filter">center</label>
                         <select class="form-control" id="center-filter" name="center">
                             <option value="">All Centres</option>
-                            @foreach($centers as $center)
-                                <option value="{{ $center->center_id }}" {{ $filters['center'] == $center->center_id ? 'selected' : '' }}>
-                                    {{ $center->center_name }}
+                            @foreach($centres as $centre)
+                                <option value="{{ $centre->centre_id }}" {{ $filters['centre'] == $centre->centre_id ? 'selected' : '' }}>
+                                    {{ $centre->centre_name }}
                                 </option>
                             @endforeach
                         </select>
@@ -520,10 +520,16 @@
                                     <div class="teacher-header role-{{ $user->role }}">
                                         <span class="role-badge">{{ ucfirst($user->role) }}</span>
                                     </div>
-                                    <img src="{{ asset($user->avatar ?? 'images/default-avatar.png') }}" 
-                                         alt="{{ $user->user_name }}" 
-                                         class="teacher-avatar"
-                                         onerror="this.src='{{ asset('images/default-avatar.png') }}'">
+                                    @if(isset($user->avatar) && $user->avatar)
+                                        <img src="{{ asset('storage/avatars/' . $user->avatar) }}" 
+                                             alt="{{ $user->user_name }}" 
+                                             class="teacher-avatar"
+                                             onerror="this.src='{{ asset('images/default-avatar.png') }}'">
+                                    @else
+                                        <img src="{{ asset('images/default-avatar.png') }}" 
+                                             alt="{{ $user->user_name }}" 
+                                             class="teacher-avatar">
+                                    @endif
                                     <div class="teacher-body">
                                         <h5 class="teacher-name">{{ $user->user_name }}</h5>
                                         <div class="teacher-role">{{ ucfirst($user->role) }}</div>
@@ -590,10 +596,16 @@
                                         <div class="teacher-header role-{{ $user->role }}">
                                             <span class="role-badge">{{ ucfirst($user->role) }}</span>
                                         </div>
-                                        <img src="{{ asset($user->avatar ?? 'images/default-avatar.png') }}" 
-                                             alt="{{ $user->user_name }}" 
-                                             class="teacher-avatar"
-                                             onerror="this.src='{{ asset('images/default-avatar.png') }}'">
+                                        @if(isset($user->avatar) && $user->avatar)
+                                            <img src="{{ asset('storage/avatars/' . $user->avatar) }}" 
+                                                 alt="{{ $user->user_name }}" 
+                                                 class="teacher-avatar"
+                                                 onerror="this.src='{{ asset('images/default-avatar.png') }}'">
+                                        @else
+                                            <img src="{{ asset('images/default-avatar.png') }}" 
+                                                 alt="{{ $user->user_name }}" 
+                                                 class="teacher-avatar">
+                                        @endif
                                         <div class="teacher-body">
                                             <h5 class="teacher-name">{{ $user->user_name }}</h5>
                                             <div class="teacher-role">{{ ucfirst($user->role) }}</div>

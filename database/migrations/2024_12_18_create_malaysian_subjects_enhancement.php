@@ -77,7 +77,7 @@ return new class extends Migration
             $table->text('special_notes')->nullable();
             $table->timestamps();
             
-            $table->unique(['disability_type', 'subject_category']);
+            $table->unique(['disability_type', 'subject_category'], 'disability_type_subject_unique');
         });
 
         // Create individual trainee subject adaptations

@@ -3,20 +3,28 @@
 namespace App\Services\Dashboard;
 
 use App\Models\Users;
-use App\Models\Event;
+use App\Models\Events;
 use App\Models\Volunteers;
 use App\Models\ContactMessages;
 use App\Models\Asset;
 use App\Models\Activity;
 use App\Models\Centres;
+use App\Services\Asset\AssetManagementService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Schema;
 use Carbon\Carbon;
 use Exception;
 
 class AjkDashboardService extends BaseDashboardService
 {
+    private AssetManagementService $assetService;
+
+    public function __construct(AssetManagementService $assetService)
+    {
+        $this->assetService = $assetService;
+    }
     /**
      * Get dashboard data for AJK (Committee) users
      */
@@ -36,7 +44,7 @@ class AjkDashboardService extends BaseDashboardService
                     'upcomingEvents' => $this->getUpcomingEvents(10),
                     'volunteerManagement' => $this->getVolunteerManagement($ajkId),
                     'communityEngagement' => $this->getCommunityEngagement($ajkId),
-                    'assetOverview' => $this->getAssetOverview($ajkId),
+                    'assetOverview' => $this->getEnhancedAssetOverview($ajkId),
                     'quickActions' => $this->getAjkQuickActions($ajkId),
                     'eventMetrics' => $this->getEventMetrics($ajkId),
                     'monthlyOverview' => $this->getMonthlyOverview($ajkId),
@@ -59,16 +67,18 @@ class AjkDashboardService extends BaseDashboardService
     private function getAjkStats(int $ajkId, $ajk): array
     {
         try {
+            $eventsExist = Schema::hasTable('events');
+            
             return [
-                'total_events' => Event::count(),
-                'upcoming_events' => Event::where('event_date', '>', now())->count(),
+                'total_events' => $eventsExist ? Events::count() : 0,
+                'upcoming_events' => $eventsExist ? Events::where('event_date', '>', now())->count() : 0,
                 'active_volunteers' => Volunteers::where('status', 'approved')->count(),
                 'pending_volunteers' => Volunteers::where('status', 'pending')->count(),
                 'total_assets' => Asset::count(),
-                'asset_value' => Asset::sum('value') ?? 0,
+                'asset_value' => Asset::sum('current_value') ?? 0,
                 'community_messages' => ContactMessages::count(),
                 'unread_messages' => ContactMessages::where('status', 'unread')->count(),
-                'events_this_month' => Event::whereMonth('event_date', Carbon::now()->month)->count(),
+                'events_this_month' => $eventsExist ? Events::whereMonth('event_date', Carbon::now()->month)->count() : 0,
                 'volunteer_participation' => $this->getVolunteerParticipationRate(),
                 'centre_coordination_score' => $this->getCentreCoordinationScore(),
                 'community_satisfaction' => $this->getCommunityFeedbackScore(),
@@ -206,14 +216,84 @@ class AjkDashboardService extends BaseDashboardService
     }
 
     /**
-     * Get asset overview data
+     * Get enhanced asset overview data using AssetManagementService
+     */
+    private function getEnhancedAssetOverview(int $ajkId): array
+    {
+        try {
+            // Get comprehensive asset data from the service
+            $assetData = $this->assetService->getDashboardData();
+            
+            return [
+                'asset_summary' => [
+                    'total_value' => $assetData['statistics']['total_value'] ?? 0,
+                    'total_items' => $assetData['statistics']['total_assets'] ?? 0,
+                    'available_assets' => $assetData['statistics']['available_assets'] ?? 0,
+                    'in_use_assets' => $assetData['statistics']['in_use_assets'] ?? 0,
+                    'maintenance_assets' => $assetData['statistics']['maintenance_assets'] ?? 0,
+                    'utilization_rate' => $this->calculateUtilizationRate($assetData),
+                ],
+                
+                'financial_overview' => [
+                    'total_purchase_value' => $assetData['financial_metrics']['total_purchase_value'] ?? 0,
+                    'total_current_value' => $assetData['financial_metrics']['total_current_value'] ?? 0,
+                    'total_depreciation' => $assetData['financial_metrics']['total_depreciation'] ?? 0,
+                    'depreciation_percentage' => $assetData['financial_metrics']['depreciation_percentage'] ?? 0,
+                    'maintenance_cost_mtd' => $assetData['statistics']['maintenance_cost_mtd'] ?? 0,
+                    'average_asset_value' => $assetData['financial_metrics']['average_asset_value'] ?? 0,
+                ],
+                
+                'operational_metrics' => [
+                    'maintenance_efficiency' => $this->getMaintenanceEfficiency(),
+                    'asset_health_score' => $this->calculateAssetHealthScore($assetData),
+                    'compliance_status' => $this->getComplianceStatus(),
+                    'average_age_days' => $assetData['statistics']['average_age'] ?? 0,
+                ],
+                
+                'alerts_and_actions' => [
+                    'maintenance_overdue' => $assetData['maintenance_alerts']['overdue_count'] ?? 0,
+                    'maintenance_upcoming' => $assetData['maintenance_alerts']['upcoming_count'] ?? 0,
+                    'warranty_expiring' => $this->getWarrantyExpiringAssets(),
+                    'replacement_due' => $this->getReplacementDueAssets(),
+                ],
+                
+                'recent_activities' => [
+                    'recent_movements' => array_slice($assetData['recent_movements'] ?? [], 0, 5),
+                    'maintenance_completed' => $this->getRecentMaintenanceCompletions(),
+                    'new_acquisitions' => $this->getRecentAcquisitions(),
+                ],
+                
+                'distribution_charts' => [
+                    'by_type' => $assetData['distribution']['by_type'] ?? [],
+                    'by_location' => $assetData['distribution']['by_location'] ?? [],
+                    'by_status' => $assetData['distribution']['by_status'] ?? [],
+                ],
+                
+                'utilization_breakdown' => [
+                    'overall_utilization' => $assetData['utilization_rates']['overall_utilization'] ?? 0,
+                    'available_rate' => $assetData['utilization_rates']['available_rate'] ?? 0,
+                    'maintenance_rate' => $assetData['utilization_rates']['maintenance_rate'] ?? 0,
+                ],
+            ];
+        } catch (Exception $e) {
+            Log::error('Error getting enhanced asset overview', [
+                'ajk_id' => $ajkId, 
+                'error' => $e->getMessage()
+            ]);
+            
+            return $this->getFallbackAssetOverview();
+        }
+    }
+
+    /**
+     * Get asset overview data (fallback method)
      */
     private function getAssetOverview(int $ajkId): array
     {
         try {
             return [
                 'asset_summary' => [
-                    'total_value' => Asset::sum('value') ?? 0,
+                    'total_value' => Asset::sum('current_value') ?? 0,
                     'total_items' => Asset::count(),
                     'categories' => Asset::select('category', DB::raw('count(*) as count'))
                         ->groupBy('category')
@@ -254,9 +334,11 @@ class AjkDashboardService extends BaseDashboardService
         try {
             $pendingVolunteers = Volunteers::where('status', 'pending')->count();
             $unreadMessages = ContactMessages::where('status', 'unread')->count();
-            $upcomingEvents = Event::where('event_date', '>', now())
-                ->where('event_date', '<=', now()->addDays(7))
-                ->count();
+            $upcomingEvents = Schema::hasTable('events') 
+                ? Events::where('event_date', '>', now())
+                    ->where('event_date', '<=', now()->addDays(7))
+                    ->count()
+                : 0;
             
             return [
                 [
@@ -311,7 +393,11 @@ class AjkDashboardService extends BaseDashboardService
     private function getEventMetrics(int $ajkId): array
     {
         try {
-            return Event::with(['attendees'])
+            if (!Schema::hasTable('events')) {
+                return [];
+            }
+            
+            return Events::with(['attendees'])
                 ->get()
                 ->map(function ($event) {
                     return [
@@ -344,7 +430,7 @@ class AjkDashboardService extends BaseDashboardService
             
             return [
                 'period' => $currentMonth->format('F Y'),
-                'events_organized' => Event::where('event_date', '>=', $currentMonth)->count(),
+                'events_organized' => Schema::hasTable('events') ? Events::where('event_date', '>=', $currentMonth)->count() : 0,
                 'volunteers_recruited' => Volunteers::where('created_at', '>=', $currentMonth)->count(),
                 'messages_received' => ContactMessages::where('created_at', '>=', $currentMonth)->count(),
                 'assets_acquired' => Asset::where('created_at', '>=', $currentMonth)->count(),
@@ -579,10 +665,156 @@ class AjkDashboardService extends BaseDashboardService
         return null;
     }
 
-    private function getComplianceStatus(int $centreId): string
+    private function getComplianceStatus(int $centreId = null): string
     {
         // Implementation for compliance status
         return 'compliant';
+    }
+
+    // Enhanced asset management helper methods
+    private function calculateUtilizationRate(array $assetData): float
+    {
+        $totalAssets = $assetData['statistics']['total_assets'] ?? 0;
+        $inUseAssets = $assetData['statistics']['in_use_assets'] ?? 0;
+        
+        return $totalAssets > 0 ? ($inUseAssets / $totalAssets) * 100 : 0;
+    }
+
+    private function getMaintenanceEfficiency(): float
+    {
+        // Calculate maintenance efficiency based on completion rate and time
+        try {
+            // This would typically use AssetMaintenance model when available
+            return 85.0; // Placeholder value
+        } catch (Exception $e) {
+            return 0;
+        }
+    }
+
+    private function calculateAssetHealthScore(array $assetData): float
+    {
+        // Calculate overall asset health score
+        try {
+            $totalAssets = $assetData['statistics']['total_assets'] ?? 0;
+            $maintenanceAssets = $assetData['statistics']['maintenance_assets'] ?? 0;
+            $overdueCount = $assetData['maintenance_alerts']['overdue_count'] ?? 0;
+            
+            if ($totalAssets == 0) return 100;
+            
+            $maintenanceRate = ($maintenanceAssets / $totalAssets) * 100;
+            $overdueRate = ($overdueCount / $totalAssets) * 100;
+            
+            // Lower maintenance and overdue rates = higher health score
+            $healthScore = 100 - ($maintenanceRate * 0.5) - ($overdueRate * 2);
+            
+            return max(0, min(100, $healthScore));
+        } catch (Exception $e) {
+            return 0;
+        }
+    }
+
+    private function getWarrantyExpiringAssets(): int
+    {
+        try {
+            // Count assets with warranty expiring in next 30 days
+            return \App\Models\Asset::whereNotNull('warranty_date')
+                ->whereBetween('warranty_date', [now(), now()->addDays(30)])
+                ->count();
+        } catch (Exception $e) {
+            return 0;
+        }
+    }
+
+    private function getReplacementDueAssets(): int
+    {
+        try {
+            // Count assets that are near end of life
+            return \App\Models\Asset::whereNotNull('purchase_date')
+                ->where('purchase_date', '<', now()->subYears(5))
+                ->where('status', '!=', 'retired')
+                ->count();
+        } catch (Exception $e) {
+            return 0;
+        }
+    }
+
+    private function getRecentMaintenanceCompletions(): array
+    {
+        try {
+            // Get recent completed maintenance records
+            return []; // Placeholder - would use AssetMaintenance model
+        } catch (Exception $e) {
+            return [];
+        }
+    }
+
+    private function getRecentAcquisitions(): array
+    {
+        try {
+            return \App\Models\Asset::latest()
+                ->limit(5)
+                ->get(['id', 'name', 'purchase_price', 'created_at'])
+                ->map(function ($asset) {
+                    return [
+                        'id' => $asset->id,
+                        'name' => $asset->name,
+                        'value' => $asset->purchase_price ?? 0,
+                        'date' => $asset->created_at,
+                    ];
+                })
+                ->toArray();
+        } catch (Exception $e) {
+            return [];
+        }
+    }
+
+    private function getFallbackAssetOverview(): array
+    {
+        return [
+            'asset_summary' => [
+                'total_value' => 0,
+                'total_items' => 0,
+                'available_assets' => 0,
+                'in_use_assets' => 0,
+                'maintenance_assets' => 0,
+                'utilization_rate' => 0,
+            ],
+            'financial_overview' => [
+                'total_purchase_value' => 0,
+                'total_current_value' => 0,
+                'total_depreciation' => 0,
+                'depreciation_percentage' => 0,
+                'maintenance_cost_mtd' => 0,
+                'average_asset_value' => 0,
+            ],
+            'operational_metrics' => [
+                'maintenance_efficiency' => 0,
+                'asset_health_score' => 0,
+                'compliance_status' => 'unknown',
+                'average_age_days' => 0,
+            ],
+            'alerts_and_actions' => [
+                'maintenance_overdue' => 0,
+                'maintenance_upcoming' => 0,
+                'warranty_expiring' => 0,
+                'replacement_due' => 0,
+            ],
+            'recent_activities' => [
+                'recent_movements' => [],
+                'maintenance_completed' => [],
+                'new_acquisitions' => [],
+            ],
+            'distribution_charts' => [
+                'by_type' => [],
+                'by_location' => [],
+                'by_status' => [],
+            ],
+            'utilization_breakdown' => [
+                'overall_utilization' => 0,
+                'available_rate' => 0,
+                'maintenance_rate' => 0,
+            ],
+        ];
     }
 
     /**

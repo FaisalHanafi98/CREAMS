@@ -169,9 +169,10 @@ class NotificationController extends Controller
     /**
      * Mark all notifications as read.
      *
-     * @return \Illuminate\Http\RedirectResponse
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\RedirectResponse|\Illuminate\Http\JsonResponse
      */
-    public function markAllAsRead()
+    public function markAllAsRead(Request $request)
     {
         try {
             $role = session('role');
@@ -179,7 +180,8 @@ class NotificationController extends Controller
             
             Log::info('Marking all notifications as read', [
                 'user_id' => $userId,
-                'role' => $role
+                'role' => $role,
+                'is_ajax' => $request->ajax()
             ]);
             
             $count = Notifications::where('user_id', $userId)
@@ -195,6 +197,15 @@ class NotificationController extends Controller
                 'user_id' => $userId
             ]);
             
+            // Return JSON response for AJAX requests
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => $count . ' notifications marked as read',
+                    'count' => $count
+                ]);
+            }
+            
             return redirect()->back()
                 ->with('success', $count . ' notifications marked as read');
         } catch (\Exception $e) {
@@ -202,6 +213,14 @@ class NotificationController extends Controller
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
+            
+            // Return JSON error for AJAX requests
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to mark notifications as read'
+                ], 500);
+            }
             
             return redirect()->back()
                 ->with('error', 'Failed to mark notifications as read. Please try again later.');

@@ -3,16 +3,20 @@
         <h3 class="widget-title">
             <i class="fas fa-bell"></i> Notifications
         </h3>
-        <span class="badge badge-primary">{{ $notifications->where('read', false)->count() }}</span>
+        @php
+            $notificationsCollection = collect($notifications);
+            $unreadCount = $notificationsCollection->where('read', false)->count();
+        @endphp
+        <span class="badge badge-primary">{{ $unreadCount }}</span>
     </div>
     <div class="widget-body">
-        @if($notifications->count() > 0)
+        @if(count($notifications) > 0)
             <div class="notification-list">
-                @foreach($notifications->take(5) as $notification)
-                    <div class="notification-item {{ !$notification['read'] ? 'unread' : '' }}">
+                @foreach(array_slice($notifications, 0, 5) as $notification)
+                    <div class="notification-item {{ !($notification['read'] ?? true) ? 'unread' : '' }}">
                         <div class="notification-content">
-                            <p>{{ $notification['message'] }}</p>
-                            <small class="text-muted">{{ $notification['time'] }}</small>
+                            <p>{{ $notification['message'] ?? 'No message' }}</p>
+                            <small class="text-muted">{{ $notification['time'] ?? $notification['created_at'] ?? 'Just now' }}</small>
                         </div>
                     </div>
                 @endforeach

@@ -50,8 +50,23 @@ class LoginController extends Controller
                     // Authentication successful
                     $request->session()->regenerate();
                     
-                    // Store role in session
-                    session(['role' => $userType['role']]);
+                    // Store complete user data in session
+                    session([
+                        'id' => $user->id,
+                        'iium_id' => $user->iium_id ?? null,
+                        'name' => $user->name,
+                        'role' => $userType['role'],
+                        'email' => $user->email,
+                        'centre_id' => $user->centre_id ?? null,
+                        'avatar' => $user->avatar ?? null,
+                        'user_avatar' => $user->avatar ?? null,
+                        'phone' => $user->phone ?? null,
+                        'address' => $user->address ?? null,
+                        'bio' => $user->bio ?? $user->about ?? null,
+                        'date_of_birth' => $user->date_of_birth ?? null,
+                        'logged_in' => true,
+                        'login_time' => now()->toDateTimeString()
+                    ]);
                     
                     Log::info('User login successful', [
                         'email' => $credentials['email'],

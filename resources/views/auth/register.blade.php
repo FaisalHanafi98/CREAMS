@@ -1,68 +1,451 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register - CREAMS</title>
-    
-    <!-- Favicon -->
-    <link rel="shortcut icon" href="{{ asset('images/favicon.png') }}" type="image/x-icon">
-    
-    <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
-    <!-- Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- CSS Libraries -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+@extends('layouts.app')
 
-    <!-- Custom CSS -->
-    <link rel="stylesheet" href="{{ asset('css/registrationstyle.css') }}"> 
+@section('title', 'User Registration - CREAMS')
+
+@section('styles')
+<style>
+    /* Registration form styles */
+    .registration-page {
+        padding: 20px 0;
+    }
     
-</head>
-<body>
-    <body style="background-image: url('{{ asset('images/loginpagebackground.jpg') }}'); background-size: cover; background-position: center; background-attachment: fixed;">
-    <div class="logo-container">
-        <a href="{{ url('/') }}">
-            <img src="{{ asset('images/logo.png') }}" alt="CREAMS Logo" onerror="this.style.display='none'">
-            CREAMS
-        </a>
+    .register-container {
+        max-width: 900px;
+        margin: 0 auto;
+        background: #fff;
+        border-radius: 15px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        overflow: hidden;
+    }
+    
+    .registration-form-header {
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        color: white;
+        padding: 30px;
+        text-align: center;
+    }
+    
+    .registration-form-header h2 {
+        margin: 0 0 10px 0;
+        font-size: 28px;
+        font-weight: 600;
+    }
+    
+    .registration-form-header p {
+        margin: 0;
+        opacity: 0.9;
+        font-size: 16px;
+    }
+    
+    .form-content {
+        padding: 40px;
+    }
+    
+    .tab-nav {
+        display: flex;
+        margin-bottom: 40px;
+        border-bottom: 2px solid #f0f0f0;
+        overflow-x: auto;
+    }
+    
+    .tab-btn {
+        flex: 1;
+        padding: 15px 20px;
+        border: none;
+        background: none;
+        color: #666;
+        font-weight: 500;
+        font-size: 14px;
+        cursor: pointer;
+        position: relative;
+        transition: all 0.3s ease;
+        white-space: nowrap;
+        min-width: 160px;
+    }
+    
+    .tab-btn.active {
+        color: var(--primary-color);
+    }
+    
+    .tab-btn.active::after {
+        content: '';
+        position: absolute;
+        bottom: -2px;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        border-radius: 3px 3px 0 0;
+    }
+    
+    .tab-btn:hover:not(.active) {
+        color: var(--primary-color);
+        background: rgba(50, 189, 234, 0.05);
+    }
+    
+    .form-sections-container {
+        position: relative;
+        min-height: 400px;
+    }
+    
+    .form-section {
+        display: none;
+        animation: fadeInUp 0.3s ease;
+    }
+    
+    .form-section.active {
+        display: block;
+    }
+    
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .form-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 25px;
+        margin-bottom: 30px;
+    }
+    
+    .form-grid-full {
+        grid-column: 1 / -1;
+    }
+    
+    .form-group {
+        position: relative;
+    }
+    
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        color: #333;
+        font-weight: 500;
+        font-size: 14px;
+    }
+    
+    .form-control {
+        width: 100%;
+        padding: 12px 15px;
+        border: 2px solid #e9ecef;
+        border-radius: 8px;
+        font-size: 14px;
+        transition: all 0.3s ease;
+        background: #fff;
+    }
+    
+    .form-control:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(50, 189, 234, 0.1);
+        outline: none;
+    }
+    
+    .form-control.is-invalid {
+        border-color: #dc3545;
+    }
+    
+    .password-field {
+        position: relative;
+    }
+    
+    .toggle-password {
+        position: absolute;
+        right: 12px;
+        top: 38px;
+        background: none;
+        border: none;
+        color: #666;
+        cursor: pointer;
+        padding: 0;
+        width: 20px;
+        height: 20px;
+    }
+    
+    .form-help {
+        margin-top: 5px;
+        font-size: 12px;
+        color: #666;
+    }
+    
+    .form-error {
+        margin-top: 5px;
+        font-size: 12px;
+        color: #dc3545;
+    }
+    
+    .role-options {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 15px;
+        margin-top: 10px;
+    }
+    
+    .role-option {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 20px;
+        border: 2px solid #e9ecef;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-align: center;
+        position: relative;
+    }
+    
+    .role-option:hover {
+        border-color: var(--primary-color);
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(50, 189, 234, 0.1);
+    }
+    
+    .role-option.selected {
+        border-color: var(--primary-color);
+        background: rgba(50, 189, 234, 0.05);
+    }
+    
+    .role-radio {
+        position: absolute;
+        opacity: 0;
+        pointer-events: none;
+    }
+    
+    .role-icon {
+        font-size: 28px;
+        color: var(--primary-color);
+        margin-bottom: 10px;
+    }
+    
+    .role-name {
+        font-weight: 500;
+        color: #333;
+        font-size: 14px;
+    }
+    
+    .form-buttons {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 40px;
+        gap: 15px;
+    }
+    
+    .btn-prev, .btn-next, .btn-submit {
+        padding: 12px 24px;
+        border: none;
+        border-radius: 8px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .btn-prev {
+        background: #6c757d;
+        color: white;
+    }
+    
+    .btn-prev:hover {
+        background: #5a6268;
+        transform: translateY(-1px);
+    }
+    
+    .btn-next, .btn-submit {
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        color: white;
+    }
+    
+    .btn-next:hover, .btn-submit:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 5px 15px rgba(50, 189, 234, 0.3);
+    }
+    
+    .review-section {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 25px;
+        margin-bottom: 30px;
+    }
+    
+    .review-item {
+        display: flex;
+        padding: 12px 0;
+        border-bottom: 1px solid #e9ecef;
+    }
+    
+    .review-item:last-child {
+        border-bottom: none;
+    }
+    
+    .review-label {
+        font-weight: 500;
+        color: #333;
+        width: 150px;
+        flex-shrink: 0;
+    }
+    
+    .review-value {
+        color: #666;
+        flex-grow: 1;
+    }
+    
+    .terms-container {
+        background: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 30px;
+    }
+    
+    .form-check {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    
+    .form-check-input {
+        margin-top: 3px;
+    }
+    
+    .form-check-label {
+        font-size: 14px;
+        line-height: 1.5;
+    }
+    
+    .form-check-label a {
+        color: var(--primary-color);
+        text-decoration: none;
+    }
+    
+    .form-check-label a:hover {
+        text-decoration: underline;
+    }
+    
+    .login-link {
+        text-align: center;
+        margin-top: 30px;
+        padding-top: 20px;
+        border-top: 1px solid #e9ecef;
+        color: #666;
+    }
+    
+    .login-link a {
+        color: var(--primary-color);
+        text-decoration: none;
+        font-weight: 500;
+    }
+    
+    .login-link a:hover {
+        text-decoration: underline;
+    }
+    
+    /* Responsive design */
+    @media (max-width: 768px) {
+        .form-content {
+            padding: 20px;
+        }
+        
+        .form-grid {
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+        
+        .role-options {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        
+        .tab-nav {
+            flex-direction: column;
+        }
+        
+        .tab-btn {
+            min-width: auto;
+            text-align: center;
+        }
+        
+        .review-item {
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        .review-label {
+            width: auto;
+            font-size: 12px;
+            text-transform: uppercase;
+            color: #666;
+        }
+    }
+</style>
+@endsection
+
+@section('content')
+<div class="container-fluid registration-page">
+    <!-- Page Header -->
+    <div class="dashboard-header mb-4">
+        <div class="row align-items-center">
+            <div class="col">
+                <h1 class="dashboard-title">User Registration</h1>
+                <div class="breadcrumb">
+                    <a href="{{ route('dashboard') }}">Dashboard</a>
+                    <span class="separator">/</span>
+                    <a href="{{ route('teachershome') }}">Staff Management</a>
+                    <span class="separator">/</span>
+                    <span class="current">Registration</span>
+                </div>
+            </div>
+            <div class="col-auto">
+                <a href="{{ route('teachershome') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Staff Directory
+                </a>
+            </div>
+        </div>
     </div>
-    <div class="content-container">
-        <div class="page-title">
-            <h1>Create Your Account</h1>
-            <p>Join CREAMS to begin your journey with our community-based rehabilitation services</p>
+
+    <div class="register-container">
+        <div class="registration-form-header">
+            <h2>New User Registration</h2>
+            <p>Create a new staff account for the CREAMS system</p>
         </div>
         
-        <div class="register-container">
-            <div class="registration-form-header">
-                <h2>New Registration</h2>
-                <p>Please fill in the information to create your account</p>
-            </div>
-            
+        <div class="form-content">
             <!-- Flash Messages -->
             @if (session('success'))
-                <div class="alert alert-success">
+                <div class="alert alert-success alert-dismissible fade show">
                     <i class="fas fa-check-circle"></i> {{ session('success') }}
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
                 </div>
             @endif
             
             @if (session('fail'))
-                <div class="alert alert-danger">
+                <div class="alert alert-danger alert-dismissible fade show">
                     <i class="fas fa-exclamation-circle"></i> {{ session('fail') }}
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
                 </div>
             @endif
             
             @if ($errors->any())
-                <div class="alert alert-danger">
+                <div class="alert alert-danger alert-dismissible fade show">
                     <ul class="mb-0">
                         @foreach ($errors->all() as $error)
                             <li>{{ $error }}</li>
                         @endforeach
                     </ul>
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
                 </div>
             @endif
             
@@ -140,7 +523,7 @@
                             </div>
                             
                             <div class="form-group form-grid-full">
-                                <label>Select Your Role*</label>
+                                <label>Select User Role*</label>
                                 <div class="role-options">
                                     <label class="role-option {{ old('role') === 'admin' ? 'selected' : '' }}" id="role-admin">
                                         <input type="radio" name="role" value="admin" class="role-radio" {{ old('role') === 'admin' ? 'checked' : '' }}>
@@ -180,7 +563,7 @@
                             </div>
                         </div>
 
-                        <!-- center Location dropdown -->
+                        <!-- Centre Location dropdown -->
                         <div class="form-group form-grid-full">
                             <label for="center_location">Centre Location*</label>
                             <select class="form-control @error('center_location') is-invalid @enderror" id="center_location" name="center_location" required>
@@ -213,7 +596,7 @@
                     
                     <!-- Section 3: Review & Submit -->
                     <div class="form-section" id="section-3">
-                        <h3 class="mb-4">Review Your Information</h3>
+                        <h3 class="mb-4">Review Information</h3>
                         
                         <div class="review-section">
                             <div class="review-item">
@@ -242,7 +625,7 @@
                             <div class="form-check">
                                 <input class="form-check-input @error('terms') is-invalid @enderror" type="checkbox" id="terms" name="terms" required>
                                 <label class="form-check-label" for="terms">
-                                    I agree to the <a href="#" target="_blank">Terms and Conditions</a> and <a href="#" target="_blank">Privacy Policy</a>
+                                    I confirm that the information provided is accurate and that this user account is being created for official CREAMS system access.
                                 </label>
                                 @error('terms')
                                     <div class="form-error">{{ $message }}</div>
@@ -255,763 +638,164 @@
                                 <i class="fas fa-arrow-left"></i> Previous
                             </button>
                             <button type="submit" class="btn-submit" id="submit-button">
-                                <i class="fas fa-user-plus"></i> Complete Registration
+                                <i class="fas fa-user-plus"></i> Create User Account
                             </button>
                         </div>
                     </div>
                 </div>
             </form>
-            
-            <div class="login-link">
-                Already have an account? <a href="{{ route('auth.loginpage') }}">Login here</a>
-            </div>
-        </div>
-        
-        <div class="text-center">
-            <a href="{{ url('/') }}" class="back-link">
-                <i class="fas fa-arrow-left"></i> Back to Home Page
-            </a>
         </div>
     </div>
-    
-    <!-- Footer -->
-    <footer>
-        <div class="footer-content">
-            <div class="footer-column">
-                <h4>About CREAMS</h4>
-                <ul>
-                    <li><a href="{{ url('/') }}"><i class="fas fa-home"></i> Home</a></li>
-                    <li><a href="{{ url('/#about') }}"><i class="fas fa-info-circle"></i> About Us</a></li>
-                    <li><a href="{{ url('/#support') }}"><i class="fas fa-hands-helping"></i> Our Services</a></li>
-                    <li><a href="{{ url('/#team') }}"><i class="fas fa-users"></i> Our Team</a></li>
-                </ul>
-            </div>
-            
-            <div class="footer-column">
-                <h4>Quick Links</h4>
-                <ul>
-                    <li><a href="{{ route('volunteer') }}"><i class="fas fa-user-plus"></i> Volunteer</a></li>
-                    <li><a href="{{ route('contact') }}"><i class="fas fa-envelope"></i> Contact Us</a></li>
-                    <li><a href="{{ route('auth.loginpage') }}"><i class="fas fa-sign-in-alt"></i> Login</a></li>
-                    <li><a href="{{ route('auth.registerpage') }}"><i class="fas fa-user-plus"></i> Register</a></li>
-                </ul>
-            </div>
-            
-            <div class="footer-column">
-                <h4>Legal</h4>
-                <ul>
-                    <li><a href="{{ route('trademark') }}"><i class="fas fa-trademark"></i> Trademarks</a></li>
-                    <li><a href="#"><i class="fas fa-shield-alt"></i> Privacy Policy</a></li>
-                    <li><a href="#"><i class="fas fa-gavel"></i> Terms of Service</a></li>
-                    <li><a href="#"><i class="fas fa-universal-access"></i>
-                        Accessibility</a></li>
-                </ul>
-            </div>
-            
-            <div class="footer-column footer-info">
-                <h4>Contact Us</h4>
-                <p><i class="fas fa-map-marker-alt"></i> Disability Services Unit (DSU), IIUM, 53100 Kuala Lumpur</p>
-                <p><i class="fas fa-phone-alt"></i> (+60) 3642 1633 5</p>
-                <p><i class="fas fa-envelope"></i> dsu-creams@iium.edu.my</p>
-                <div class="footer-social">
-                    <a href="#"><i class="fab fa-facebook-f"></i></a>
-                    <a href="#"><i class="fab fa-twitter"></i></a>
-                    <a href="#"><i class="fab fa-instagram"></i></a>
-                    <a href="#"><i class="fab fa-linkedin-in"></i></a>
-                </div>
-            </div>
-        </div>
-        
-        <div class="footer-bottom">
-            <p>&copy; {{ date('Y') }} CREAMS - Community-based REhAbilitation Management System. All rights reserved.</p>
-        </div>
-    </footer>
-    
-    <!-- JavaScript Libraries -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    
-    <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // ===== Center ID mapping setup =====
-        // Map locations to IDs
-        const locationToCenterId = {
-            'Gombak': '1',
-            'Kuantan': '2',
-            'Pagoh': '3'
-        };
-        
-        const centerLocationSelect = document.getElementById('center_location');
-        const centerIdInput = document.getElementById('center_id');
-        
-        if (centerLocationSelect && centerIdInput) {
-            // Set initial value if a location is already selected
-            if (centerLocationSelect.value && locationToCenterId[centerLocationSelect.value]) {
-                centerIdInput.value = locationToCenterId[centerLocationSelect.value];
-                console.log('Initial Center ID set to:', centerIdInput.value, 'for location:', centerLocationSelect.value);
-            }
-            
-            // Update center_id when center_location changes
-            centerLocationSelect.addEventListener('change', function() {
-                if (this.value && locationToCenterId[this.value]) {
-                    centerIdInput.value = locationToCenterId[this.value];
-                    console.log('Center ID updated to:', centerIdInput.value, 'for location:', this.value);
-                } else {
-                    centerIdInput.value = ''; // Clear the value if no location is selected
-                    console.log('Center ID cleared because no location was selected');
-                }
-            });
-        }
-    
-        // ===== Animation Configuration =====
-        const animationConfig = {
-            duration: 300,            // Base duration for animations (ms)
-            easing: 'ease-out',       // Animation easing function
-            tabTransitionDelay: 50,   // Delay between tab and content animation (ms)
-            formControlDelay: 30,     // Staggered delay between form controls (ms)
-            roleOptionsStagger: 50,   // Staggered delay for role options (ms)
-            reviewItemStagger: 80,    // Staggered delay for review items (ms)
-            validationScale: 0.98,    // Scale factor for validation error animation
-            submitAnimationTime: 1500 // Total time for submit animation (ms)
-        };
+</div>
+@endsection
 
-        // ===== Helper Functions =====
-        
-        /**
-         * Animate entrance of form elements with staggered timing
-         * @param {HTMLElement} container - The container of elements to animate
-         * @param {String} selector - CSS selector for elements to animate
-         * @param {Number} staggerDelay - Delay between each element's animation
-         * @param {Boolean} clear - Whether to clear existing animations first
-         */
-        function animateElements(container, selector, staggerDelay = 30, clear = true) {
-            const elements = container.querySelectorAll(selector);
-            
-            if (clear) {
-                elements.forEach(el => {
-                    el.style.opacity = '0';
-                    el.style.transform = 'translateY(20px)';
-                });
-            }
-            
-            elements.forEach((el, index) => {
-                setTimeout(() => {
-                    el.style.transition = `opacity ${animationConfig.duration}ms ${animationConfig.easing}, transform ${animationConfig.duration}ms ${animationConfig.easing}`;
-                    el.style.opacity = '1';
-                    el.style.transform = 'translateY(0)';
-                }, index * staggerDelay);
-            });
-        }
-        
-        /**
-         * Add shake animation for validation errors
-         * @param {HTMLElement} element - The element to animate
-         */
-        function shakeElement(element) {
-            element.classList.add('validation-shake');
-            setTimeout(() => element.classList.remove('validation-shake'), 600);
-        }
-        
-        /**
-         * Validate field and show visual feedback
-         * @param {HTMLElement} field - The field to validate
-         * @param {Function} validationFn - Validation function returning boolean
-         * @returns {Boolean} - Whether validation passed
-         */
-        function validateField(field, validationFn) {
-            const isValid = validationFn(field);
-            
-            if (!isValid) {
-                field.classList.add('is-invalid');
-                shakeElement(field);
-                
-                // Add pulse animation to the label
-                const label = field.previousElementSibling;
-                if (label && label.tagName === 'LABEL') {
-                    label.classList.add('validation-pulse');
-                    setTimeout(() => label.classList.remove('validation-pulse'), 1000);
-                }
-            } else {
-                field.classList.remove('is-invalid');
-                field.classList.add('is-valid');
-                
-                // Add success checkmark animation
-                const parent = field.parentElement;
-                if (!parent.querySelector('.valid-feedback')) {
-                    const feedback = document.createElement('div');
-                    feedback.className = 'valid-feedback animated fadeIn';
-                    feedback.innerHTML = '<i class="fas fa-check-circle"></i> Looks good!';
-                    parent.appendChild(feedback);
-                    
-                    // Remove after 2 seconds
-                    setTimeout(() => {
-                        if (feedback.parentNode) {
-                            feedback.classList.add('fadeOut');
-                            setTimeout(() => {
-                                if (feedback.parentNode) feedback.parentNode.removeChild(feedback);
-                            }, 300);
-                        }
-                    }, 2000);
-                }
-            }
-            
-            return isValid;
-        }
-        
-        /**
-         * Smooth scroll to an element
-         * @param {HTMLElement} element - Element to scroll to
-         */
-        function smoothScrollTo(element) {
-            const headerOffset = 80;
-            const elementPosition = element.getBoundingClientRect().top;
-            const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
-            
-            window.scrollTo({
-                top: offsetPosition,
-                behavior: 'smooth'
-            });
-        }
-
-        // ===== Tab Navigation =====
-        const tabs = document.querySelectorAll('.tab-btn');
-        const sections = document.querySelectorAll('.form-section');
-        
-        function navigateToTab(tabIndex) {
-            // First, prepare the current section for exit
-            const currentActiveSection = document.querySelector('.form-section.active');
-            if (currentActiveSection) {
-                currentActiveSection.classList.add('section-exit');
-                
-                // Don't immediately remove active class to allow for animation
-                setTimeout(() => {
-                    currentActiveSection.classList.remove('active');
-                    currentActiveSection.classList.remove('section-exit');
-                }, animationConfig.duration);
-            }
-            
-            // Update tab buttons
-            tabs.forEach((tab, index) => {
-                if (index === tabIndex) {
-                    tab.classList.add('active');
-                    // Add pulse animation to active tab
-                    tab.classList.add('tab-pulse');
-                    setTimeout(() => tab.classList.remove('tab-pulse'), 600);
-                } else {
-                    tab.classList.remove('active');
-                }
-            });
-            
-            // Delay showing the new section slightly for a smoother transition
-            setTimeout(() => {
-                sections.forEach((section, index) => {
-                    if (index === tabIndex) {
-                        section.classList.add('active', 'section-enter');
-                        
-                        // Animate form controls within the section
-                        animateElements(section, '.form-group, .form-buttons', animationConfig.formControlDelay);
-                        
-                        // Special animations for specific sections
-                        if (index === 1) { // Section with role options
-                            animateElements(section, '.role-option', animationConfig.roleOptionsStagger);
-                        } else if (index === 2) { // Review section
-                            animateElements(section, '.review-item', animationConfig.reviewItemStagger);
-                        }
-                        
-                        // Remove entrance animation class after animation completes
-                        setTimeout(() => section.classList.remove('section-enter'), animationConfig.duration);
-                        
-                        // Scroll to top of section
-                        smoothScrollTo(section);
-                    }
-                });
-            }, animationConfig.tabTransitionDelay);
-        }
-        
-        tabs.forEach((tab, index) => {
-            tab.addEventListener('click', function() {
-                navigateToTab(index);
-            });
-        });
-        
-        // ===== Next/Previous Navigation =====
-        
-        // Section 1 to Section 2
-        document.getElementById('to-section-2').addEventListener('click', function() {
-            // Validate first section
-            const email = document.getElementById('email');
-            const iiumId = document.getElementById('iium_id');
-            const password = document.getElementById('password');
-            const passwordConfirmation = document.getElementById('password_confirmation');
-            
-            let isValid = true;
-            
-            // Email validation
-            isValid = validateField(email, field => {
-                return field.value && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(field.value);
-            }) && isValid;
-            
-            // IIUM ID validation
-            isValid = validateField(iiumId, field => {
-                return field.value && /^[A-Z]{4}\d{4}$/.test(field.value);
-            }) && isValid;
-            
-            // Password validation
-            isValid = validateField(password, field => {
-                return field.value && /^(?=.*[a-zA-Z])(?=.*\d)(?=.*[\W_]).{5,}$/.test(field.value);
-            }) && isValid;
-            
-            // Password confirmation validation
-            isValid = validateField(passwordConfirmation, field => {
-                return field.value && field.value === password.value;
-            }) && isValid;
-            
-            if (!isValid) {
-                // Shake the button to indicate validation error
-                shakeElement(this);
-                return;
-            }
-            
-            // Add success animation before navigating
-            this.innerHTML = '<i class="fas fa-check"></i> Validated!';
-            this.classList.add('btn-success-pulse');
-            
-            setTimeout(() => {
-                this.innerHTML = 'Next <i class="fas fa-arrow-right"></i>';
-                this.classList.remove('btn-success-pulse');
-                navigateToTab(1);
-            }, 800);
-        });
-    
-        // Validate center selection
-        function validateCenterSelection() {
-            const centerLocationSelect = document.getElementById('center_location');
-            const centerIdInput = document.getElementById('center_id');
-            
-            if (!centerLocationSelect) return true;
-            
-            const isValid = centerLocationSelect.value !== '';
-            
-            if (!isValid) {
-                centerLocationSelect.classList.add('is-invalid');
-                shakeElement(centerLocationSelect);
-                
-                // Add a visual indicator that this field is required
-                const centerFormGroup = centerLocationSelect.closest('.form-group');
-                centerFormGroup.classList.add('highlight-error');
-                
-                setTimeout(() => {
-                    centerFormGroup.classList.remove('highlight-error');
-                }, 3000);
-            } else {
-                centerLocationSelect.classList.remove('is-invalid');
-                centerLocationSelect.classList.add('is-valid');
-                
-                // Make sure center_id is set based on the location
-                if (centerIdInput && locationToCenterId[centerLocationSelect.value]) {
-                    centerIdInput.value = locationToCenterId[centerLocationSelect.value];
-                }
-            }
-            
-            return isValid;
-        }
-
-        // Section 2 to Section 3
-        document.getElementById('to-section-3').addEventListener('click', function() {
-            // Validate second section
-            const name = document.getElementById('name');
-            const roleSelected = document.querySelector('input[name="role"]:checked');
-            const centerValid = validateCenterSelection();
-            
-            let isValid = true;
-            
-            // Name validation
-            isValid = validateField(name, field => {
-                return field.value && field.value.trim().length > 0;
-            }) && isValid;
-            
-            // Role validation
-            if (!roleSelected) {
-                document.querySelector('.role-options').classList.add('is-invalid');
-                shakeElement(document.querySelector('.role-options'));
-                isValid = false;
-            } else {
-                document.querySelector('.role-options').classList.remove('is-invalid');
-            }
-            
-            // Center validation - use the result from validateCenterSelection
-            isValid = centerValid && isValid;
-            
-            if (!isValid) {
-                // Shake the button to indicate validation error
-                shakeElement(this);
-                return;
-            }
-            
-            // Add success animation before navigating
-            this.innerHTML = '<i class="fas fa-check"></i> Validated!';
-            this.classList.add('btn-success-pulse');
-            
-            setTimeout(() => {
-                // Update review information while button is animating
-                updateReviewInformation();
-                
-                this.innerHTML = 'Next <i class="fas fa-arrow-right"></i>';
-                this.classList.remove('btn-success-pulse');
-                navigateToTab(2);
-            }, 800);
-        });
-        
-        // Section 3 to Section 2 (Previous)
-        document.getElementById('to-section-2-from-3').addEventListener('click', function() {
-            navigateToTab(1);
-        });
-        
-        // Section 2 to Section 1 (Previous)
-        document.getElementById('to-section-1-from-2').addEventListener('click', function() {
-            navigateToTab(0);
-        });
-        
-        // ===== Update Review Information =====
-        function updateReviewInformation() {
-            // Add a subtle reveal animation to each review value as it's updated
-            const reviewValues = document.querySelectorAll('.review-value');
-            reviewValues.forEach(el => {
-                el.style.opacity = '0';
-                el.style.transform = 'translateY(10px)';
-            });
-            
-            // Update values with a slight delay for a sequenced reveal
-            setTimeout(() => {
-                // Basic info
-                document.getElementById('review-email').textContent = document.getElementById('email').value;
-                document.getElementById('review-iium-id').textContent = document.getElementById('iium_id').value;
-                document.getElementById('review-name').textContent = document.getElementById('name').value;
-                
-                // Selected role
-                const selectedRole = document.querySelector('input[name="role"]:checked');
-                if (selectedRole) {
-                    let roleName = selectedRole.value;
-                    roleName = roleName.charAt(0).toUpperCase() + roleName.slice(1);
-                    document.getElementById('review-role').textContent = roleName;
-                }
-                
-                // center location and ID
-                const centerLocationSelect = document.getElementById('center_location');
-                const centerIdInput = document.getElementById('center_id');
-                if (centerLocationSelect && centerLocationSelect.value) {
-                    let centerText = centerLocationSelect.value;
-                    if (centerIdInput && centerIdInput.value) {
-                        centerText += ' (ID: ' + centerIdInput.value + ')';
-                    }
-                    document.getElementById('review-center').textContent = centerText;
-                } else {
-                    document.getElementById('review-center').textContent = 'Not selected';
-                }
-                
-                // Animate each review value back in with staggered timing
-                reviewValues.forEach((el, index) => {
-                    setTimeout(() => {
-                        el.style.transition = `opacity 400ms ease-out, transform 400ms ease-out`;
-                        el.style.opacity = '1';
-                        el.style.transform = 'translateY(0)';
-                    }, index * 100);
-                });
-            }, 200);
-        }
-        
-        // ===== IIUM ID Formatting =====
-        const iiumIdInput = document.getElementById('iium_id');
-        if (iiumIdInput) {
-            iiumIdInput.addEventListener('input', function() {
-                // Convert to uppercase
-                this.value = this.value.toUpperCase();
-                
-                // Limit to 8 characters
-                if (this.value.length > 8) {
-                    this.value = this.value.slice(0, 8);
-                }
-                
-                // Add real-time formatting guidance
-                const validFormat = /^[A-Z]{4}\d{4}$/.test(this.value);
-                const partialFormat = /^[A-Z]{0,4}\d{0,4}$/.test(this.value);
-                
-                if (this.value.length > 0) {
-                    if (validFormat) {
-                        this.classList.add('is-valid');
-                        this.classList.remove('is-invalid');
-                        
-                        // Add a subtle success animation
-                        this.classList.add('valid-pulse');
-                        setTimeout(() => this.classList.remove('valid-pulse'), 500);
-                    } else if (!partialFormat) {
-                        this.classList.add('is-invalid');
-                        this.classList.remove('is-valid');
-                    } else {
-                        this.classList.remove('is-valid');
-                        this.classList.remove('is-invalid');
-                    }
-                } else {
-                    this.classList.remove('is-valid');
-                    this.classList.remove('is-invalid');
-                }
-            });
-        }
-        
-        // ===== Role Selection Animation =====
-        const roleOptions = document.querySelectorAll('.role-option');
-        if (roleOptions.length > 0) {
-            roleOptions.forEach(option => {
-                option.addEventListener('click', function() {
-                    // First, remove selected class from all options with animation
-                    roleOptions.forEach(opt => {
-                        if (opt.classList.contains('selected')) {
-                            opt.classList.add('deselect-animation');
-                            setTimeout(() => {
-                                opt.classList.remove('selected');
-                                opt.classList.remove('deselect-animation');
-                            }, 300);
-                        }
-                    });
-                    
-                    // Add selected class to clicked option with animation
-                    setTimeout(() => {
-                        this.classList.add('select-animation');
-                        this.classList.add('selected');
-                        
-                        setTimeout(() => {
-                            this.classList.remove('select-animation');
-                        }, 400);
-                        
-                        // Check the radio button
-                        const radioButton = this.querySelector('input[type="radio"]');
-                        if (radioButton) {
-                            radioButton.checked = true;
-                        }
-                    }, 150);
-                });
-            });
-            
-            // Check if any role is already selected (on page load)
-            const checkedRole = document.querySelector('input[name="role"]:checked');
-            if (checkedRole) {
-                const parentOption = checkedRole.closest('.role-option');
-                if (parentOption) {
-                    parentOption.classList.add('selected');
-                }
-            }
-        }
-        
-        // ===== Password Visibility Toggle =====
-        const setupPasswordToggle = (toggleId, inputId) => {
-            const toggle = document.getElementById(toggleId);
-            const input = document.getElementById(inputId);
-            
-            if (!toggle || !input) return;
-            
-            toggle.addEventListener('click', function() {
-                const type = input.getAttribute('type') === 'password' ? 'text' : 'password';
-                input.setAttribute('type', type);
-                
-                // Animate the icon change
-                const icon = this.querySelector('i');
-                if (icon) {
-                    icon.classList.add('flip-animation');
-                    
-                    setTimeout(() => {
-                        icon.classList.toggle('fa-eye-slash');
-                        icon.classList.toggle('fa-eye');
-                        icon.classList.remove('flip-animation');
-                    }, 150);
-                }
-                
-                // Add tooltip feedback
-                const feedbackText = type === 'text' ? 'Password visible' : 'Password hidden';
-                const tooltip = document.createElement('div');
-                tooltip.className = 'password-toggle-tooltip';
-                tooltip.textContent = feedbackText;
-                
-                this.appendChild(tooltip);
-                
-                setTimeout(() => {
-                    tooltip.classList.add('show-tooltip');
-                }, 10);
-                
-                setTimeout(() => {
-                    tooltip.classList.remove('show-tooltip');
-                    setTimeout(() => tooltip.remove(), 300);
-                }, 1500);
-            });
-        };
-        
-        setupPasswordToggle('togglePassword', 'password');
-        setupPasswordToggle('togglePasswordConfirmation', 'password_confirmation');
-        
-        // ===== Real-time Password Strength Indicator =====
-        const passwordInput = document.getElementById('password');
-        if (passwordInput) {
-            // Create strength indicator if it doesn't exist
-            if (!document.getElementById('password-strength')) {
-                const strengthContainer = document.createElement('div');
-                strengthContainer.className = 'password-strength-container';
-                strengthContainer.innerHTML = `
-                    <div class="password-strength-bar">
-                        <div id="password-strength" class="strength-meter"></div>
-                    </div>
-                    <div id="password-strength-text" class="strength-text"></div>
-                `;
-                
-                passwordInput.parentNode.insertBefore(strengthContainer, 
-                    document.querySelector('.form-help'));
-            }
-            
-            const strengthBar = document.getElementById('password-strength');
-            const strengthText = document.getElementById('password-strength-text');
-            
-            passwordInput.addEventListener('input', function() {
-                const password = this.value;
-                let strength = 0;
-                let feedback = '';
-                
-                if (password.length >= 5) strength += 20;
-                if (password.length >= 8) strength += 10;
-                if (/[a-z]/.test(password)) strength += 10;
-                if (/[A-Z]/.test(password)) strength += 15;
-                if (/\d/.test(password)) strength += 20;
-                if (/[@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) strength += 25;
-                
-                // Set the width of the strength meter
-                strengthBar.style.width = strength + '%';
-                
-                // Change color based on strength
-                if (strength < 30) {
-                    strengthBar.className = 'strength-meter weak';
-                    feedback = 'Weak password';
-                } else if (strength < 60) {
-                    strengthBar.className = 'strength-meter medium';
-                    feedback = 'Medium strength';
-                } else {
-                    strengthBar.className = 'strength-meter strong';
-                    feedback = 'Strong password';
-                }
-                
-                strengthText.textContent = feedback;
-                
-                // Animate the strength change
-                strengthBar.classList.add('strength-updated');
-                setTimeout(() => strengthBar.classList.remove('strength-updated'), 500);
-            });
-        }
-        
-        // ===== Terms Checkbox Animation =====
-        const termsCheckbox = document.getElementById('terms');
-        if (termsCheckbox) {
-            termsCheckbox.addEventListener('change', function() {
-                const label = this.closest('label');
-                if (this.checked) {
-                    label.classList.add('terms-checked');
-                } else {
-                    label.classList.remove('terms-checked');
-                }
-            });
-        }
-        
-        // ===== Form Submission Animation =====
-        const form = document.getElementById('registration-form');
-        const submitButton = document.getElementById('submit-button');
-        
-        if (form && submitButton) {
-            form.addEventListener('submit', function(e) {
-                // Check if terms are accepted
-                if (termsCheckbox && !termsCheckbox.checked) {
-                    e.preventDefault();
-                    // Shake the terms checkbox and add highlighting
-                    const termsContainer = document.querySelector('.terms-container');
-                    shakeElement(termsContainer);
-                    termsContainer.classList.add('terms-highlight');
-                    
-                    setTimeout(() => {
-                        termsContainer.classList.remove('terms-highlight');
-                    }, 2000);
-                    
-                    return;
-                }
-                
-                // Log form data before submission
-                console.log('Submitting form with data:', {
-                    email: document.getElementById('email').value,
-                    iium_id: document.getElementById('iium_id').value,
-                    name: document.getElementById('name').value,
-                    role: document.querySelector('input[name="role"]:checked')?.value || 'none',
-                    center_location: document.getElementById('center_location').value,
-                    center_id: document.getElementById('center_id').value
-                });
-                
-                submitButton.disabled = true;
-                submitButton.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Creating Your Account...';
-                submitButton.classList.add('btn-submitting');
-                
-                // Add a progress animation to the button
-                const progressOverlay = document.createElement('div');
-                progressOverlay.className = 'submit-progress';
-                submitButton.appendChild(progressOverlay);
-                
-                // Animate the progress overlay
-                setTimeout(() => {
-                    progressOverlay.style.width = '100%';
-                }, 10);
-                
-                // Add success animation to the form
-                setTimeout(() => {
-                    const successOverlay = document.createElement('div');
-                    successOverlay.className = 'form-section-overlay';
-                    successOverlay.innerHTML = `
-                        <div class="success-animation">
-                            <div class="checkmark-circle">
-                                <div class="background"></div>
-                                <div class="checkmark"></div>
-                            </div>
-                            <h3>Account Being Created!</h3>
-                            <p>Please wait while we process your registration...</p>
-                        </div>
-                    `;
-                    
-                    const formSection = document.querySelector('.form-section.active');
-                    formSection.appendChild(successOverlay);
-                    
-                    setTimeout(() => {
-                        successOverlay.classList.add('visible');
-                    }, 50);
-                }, animationConfig.submitAnimationTime / 2);
-            });
-        }
-        
-        // ===== Initial Animations =====
-        // Add entrance animation for the register container
-        const registerContainer = document.querySelector('.register-container');
-        if (registerContainer) {
-            registerContainer.classList.add('container-entrance');
-        }
-        
-        // Animate the first section's form elements with a delay
-        setTimeout(() => {
-            const activeSection = document.querySelector('.form-section.active');
-            if (activeSection) {
-                animateElements(activeSection, '.form-group, .form-buttons', animationConfig.formControlDelay);
-            }
-        }, 500);
-        
-        // ===== Enhancement: Auto-hide alerts after 5 seconds =====
-        setTimeout(function() {
-            const alerts = document.querySelectorAll('.alert');
-            alerts.forEach(function(alert) {
-                alert.classList.add('alert-fade-out');
-                setTimeout(function() {
-                    if (alert.parentNode) {
-                        alert.parentNode.removeChild(alert);
-                    }
-                }, 500);
-            });
-        }, 5000);
+@section('scripts')
+<script>
+$(document).ready(function() {
+    // Tab navigation
+    $('.tab-btn').click(function() {
+        const tabId = $(this).attr('id').split('-')[1];
+        switchToSection(tabId);
     });
+    
+    // Form navigation buttons
+    $('#to-section-2').click(function() {
+        if (validateSection1()) {
+            switchToSection('2');
+        }
+    });
+    
+    $('#to-section-3').click(function() {
+        if (validateSection2()) {
+            updateReviewSection();
+            switchToSection('3');
+        }
+    });
+    
+    $('#to-section-1-from-2').click(function() {
+        switchToSection('1');
+    });
+    
+    $('#to-section-2-from-3').click(function() {
+        switchToSection('2');
+    });
+    
+    // Password toggle functionality
+    $('#togglePassword').click(function() {
+        const passwordField = $('#password');
+        const type = passwordField.attr('type');
+        const icon = $(this).find('i');
+        
+        if (type === 'password') {
+            passwordField.attr('type', 'text');
+            icon.removeClass('fa-eye-slash').addClass('fa-eye');
+        } else {
+            passwordField.attr('type', 'password');
+            icon.removeClass('fa-eye').addClass('fa-eye-slash');
+        }
+    });
+    
+    $('#togglePasswordConfirmation').click(function() {
+        const passwordField = $('#password_confirmation');
+        const type = passwordField.attr('type');
+        const icon = $(this).find('i');
+        
+        if (type === 'password') {
+            passwordField.attr('type', 'text');
+            icon.removeClass('fa-eye-slash').addClass('fa-eye');
+        } else {
+            passwordField.attr('type', 'password');
+            icon.removeClass('fa-eye').addClass('fa-eye-slash');
+        }
+    });
+    
+    // Role selection
+    $('.role-option').click(function() {
+        $('.role-option').removeClass('selected');
+        $(this).addClass('selected');
+        $(this).find('.role-radio').prop('checked', true);
+    });
+    
+    // Centre location mapping
+    const centerMapping = {
+        'Gombak': '01',
+        'Kuantan': '02',
+        'Pagoh': '03'
+    };
+    
+    $('#center_location').change(function() {
+        const location = $(this).val();
+        const centerId = centerMapping[location] || '';
+        $('#center_id').val(centerId);
+    });
+    
+    // Functions
+    function switchToSection(sectionNumber) {
+        // Update tabs
+        $('.tab-btn').removeClass('active');
+        $('#tab-' + sectionNumber).addClass('active');
+        
+        // Update sections
+        $('.form-section').removeClass('active');
+        $('#section-' + sectionNumber).addClass('active');
+    }
+    
+    function validateSection1() {
+        let isValid = true;
+        const email = $('#email').val();
+        const iiumId = $('#iium_id').val();
+        const password = $('#password').val();
+        const passwordConfirm = $('#password_confirmation').val();
+        
+        // Basic validation
+        if (!email || !iiumId || !password || !passwordConfirm) {
+            alert('Please fill in all required fields.');
+            return false;
+        }
+        
+        // Password match validation
+        if (password !== passwordConfirm) {
+            alert('Passwords do not match.');
+            return false;
+        }
+        
+        // IIUM ID format validation
+        const iiumIdPattern = /^[A-Za-z]{4}[0-9]{4}$/;
+        if (!iiumIdPattern.test(iiumId)) {
+            alert('IIUM ID must be 4 letters followed by 4 digits.');
+            return false;
+        }
+        
+        return isValid;
+    }
+    
+    function validateSection2() {
+        const name = $('#name').val();
+        const role = $('input[name="role"]:checked').val();
+        const centerLocation = $('#center_location').val();
+        
+        if (!name || !role || !centerLocation) {
+            alert('Please fill in all required fields.');
+            return false;
+        }
+        
+        return true;
+    }
+    
+    function updateReviewSection() {
+        $('#review-email').text($('#email').val());
+        $('#review-iium-id').text($('#iium_id').val());
+        $('#review-name').text($('#name').val());
+        $('#review-role').text($('input[name="role"]:checked').val().charAt(0).toUpperCase() + $('input[name="role"]:checked').val().slice(1));
+        $('#review-center').text($('#center_location').val() || 'Not selected');
+    }
+    
+    // Set initial center_id if center_location is already selected
+    if ($('#center_location').val()) {
+        const location = $('#center_location').val();
+        const centerId = centerMapping[location] || '';
+        $('#center_id').val(centerId);
+    }
+});
 </script>
+@endsection

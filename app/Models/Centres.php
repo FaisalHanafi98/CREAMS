@@ -83,6 +83,18 @@ class Centres extends Model
     }
 
     /**
+     * Get the activities associated with this centre.
+     * Note: Since activities table doesn't have centre_id, this returns empty for now
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function activities()
+    {
+        // For now, return empty relationship since activities table doesn't have centre_id
+        return $this->hasMany(Activity::class, 'id', 'centre_id')->whereRaw('1 = 0');
+    }
+
+    /**
      * Scope a query to only include active centres.
      *
      * @param  \Illuminate\Database\Eloquent\Builder  $query
