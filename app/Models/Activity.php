@@ -27,6 +27,7 @@ class Activity extends Model
         'maximum_duration_minutes',
         'requires_special_accommodation',
         'is_active',
+<<<<<<< HEAD
         'created_by',
         // Enhanced features
         'max_participants',
@@ -42,6 +43,9 @@ class Activity extends Model
         'therapy_type',
         'target_skills',
         'prerequisites'
+=======
+        'created_by'
+>>>>>>> 143e32d27006496b74e6c06d9c359084d812058c
     ];
 
     protected $casts = [
@@ -49,6 +53,7 @@ class Activity extends Model
         'requires_special_accommodation' => 'boolean',
         'learning_outcomes' => 'array',
         'assessment_criteria' => 'array',
+<<<<<<< HEAD
         'materials_required' => 'array',
         'schedule_days' => 'array',
         'target_skills' => 'array',
@@ -59,6 +64,8 @@ class Activity extends Model
         'duration_minutes' => 'integer',
         'default_start_time' => 'datetime:H:i',
         'default_end_time' => 'datetime:H:i',
+=======
+>>>>>>> 143e32d27006496b74e6c06d9c359084d812058c
         'created_at' => 'datetime',
         'updated_at' => 'datetime'
     ];
@@ -261,6 +268,7 @@ class Activity extends Model
 
         return $badgeClasses[$this->subject_category] ?? 'secondary';
     }
+<<<<<<< HEAD
 
     /**
      * Get the ratings for this activity
@@ -369,4 +377,6 @@ class Activity extends Model
                                  WHERE acs.activity_id = activities.id 
                                  AND se.status = "enrolled") < max_participants');
     }
+=======
+>>>>>>> 143e32d27006496b74e6c06d9c359084d812058c
 }

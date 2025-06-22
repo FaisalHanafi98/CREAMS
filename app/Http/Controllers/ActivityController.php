@@ -12,7 +12,10 @@ use App\Models\Trainee;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
+<<<<<<< HEAD
 use Exception;
+=======
+>>>>>>> 143e32d27006496b74e6c06d9c359084d812058c
 
 class ActivityController extends Controller
 {
@@ -48,6 +51,7 @@ class ActivityController extends Controller
     }
 
     /**
+<<<<<<< HEAD
      * Display enhanced activities homepage with modern UI
      *
      * @return \Illuminate\View\View
@@ -193,6 +197,8 @@ class ActivityController extends Controller
     }
 
     /**
+=======
+>>>>>>> 143e32d27006496b74e6c06d9c359084d812058c
      * Show the form for creating a new activity
      */
     public function create()

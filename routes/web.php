@@ -563,6 +563,7 @@ Route::prefix('ajk')->middleware(['auth', 'role:ajk'])->group(function () {
 
 /*
 |--------------------------------------------------------------------------
+<<<<<<< HEAD
 | ENHANCED TEMPLATES ROUTES
 |--------------------------------------------------------------------------
 */
@@ -591,6 +592,8 @@ Route::middleware(['auth'])->group(function () {
 
 /*
 |--------------------------------------------------------------------------
+=======
+>>>>>>> 143e32d27006496b74e6c06d9c359084d812058c
 | API ROUTES FOR AJAX CALLS
 |--------------------------------------------------------------------------
 */
@@ -607,6 +610,7 @@ Route::middleware(['auth'])->prefix('api')->name('api.')->group(function () {
     Route::get('/search/trainees', [TraineeManagementController::class, 'search'])->name('search.trainees');
 
     // Activity APIs
+<<<<<<< HEAD
     Route::get('/activities', [ActivityController::class, 'apiIndex'])->name('activities');
     Route::get('/activities/categories', [ActivityController::class, 'getCategories'])->name('activities.categories');
     Route::get('/activities/filter', [ActivityController::class, 'filterActivities'])->name('activities.filter');
@@ -650,6 +654,9 @@ Route::middleware(['auth'])->group(function () {
     // Enhanced Settings Page
     Route::get('/settings/enhanced', [SettingController::class, 'enhancedIndex'])->name('settings.enhanced');
     Route::get('/settings/user', [SettingController::class, 'userSettings'])->name('settings.user');
+=======
+    Route::get('/activities/categories', [ActivityController::class, 'getCategories'])->name('activities.categories');
+>>>>>>> 143e32d27006496b74e6c06d9c359084d812058c
 });
 
 /*

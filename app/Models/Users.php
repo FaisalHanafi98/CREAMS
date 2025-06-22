@@ -97,6 +97,7 @@ class Users extends Authenticatable
     }
 
     /**
+<<<<<<< HEAD
      * Get the user's settings.
      */
     public function settings()
@@ -160,6 +161,8 @@ class Users extends Authenticatable
     }
 
     /**
+=======
+>>>>>>> 143e32d27006496b74e6c06d9c359084d812058c
      * Check if the user is an admin.
      *
      * @return bool

@@ -27,6 +27,7 @@ class Trainee extends Model
         'trainee_attendance',
         'trainee_condition',
         'course_id',
+<<<<<<< HEAD
         // Enhanced registration fields
         'medical_condition',
         'medical_history',
@@ -48,6 +49,8 @@ class Trainee extends Model
         'registration_completed_at',
         'registration_status',
         'photo_path',
+=======
+>>>>>>> 143e32d27006496b74e6c06d9c359084d812058c
     ];
 
     /**
@@ -59,9 +62,12 @@ class Trainee extends Model
         'trainee_date_of_birth' => 'date',
         'trainee_last_accessed_at' => 'datetime',
         'trainee_attendance' => 'integer',
+<<<<<<< HEAD
         'preferred_activities' => 'array',
         'data_consent' => 'boolean',
         'registration_completed_at' => 'datetime',
+=======
+>>>>>>> 143e32d27006496b74e6c06d9c359084d812058c
     ];
 
     /**
@@ -228,6 +234,7 @@ class Trainee extends Model
     {
         return $query->where('trainee_condition', $condition);
     }
+<<<<<<< HEAD
 
     /**
      * Scope a query to filter by registration status.
@@ -333,4 +340,6 @@ class Trainee extends Model
             return $activityMap[$activity] ?? $activity;
         }, $this->preferred_activities);
     }
+=======
+>>>>>>> 143e32d27006496b74e6c06d9c359084d812058c
 }

@@ -301,6 +301,7 @@ class TraineeHomeController extends Controller
     }
     
     /**
+<<<<<<< HEAD
      * Display enhanced trainee dashboard
      *
      * @return \Illuminate\View\View
@@ -352,6 +353,8 @@ class TraineeHomeController extends Controller
     }
 
     /**
+=======
+>>>>>>> 143e32d27006496b74e6c06d9c359084d812058c
      * Display detailed trainees statistics and analytics.
      *
      * @return \Illuminate\View\View

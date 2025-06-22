@@ -4,7 +4,10 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Trainees;
+<<<<<<< HEAD
 use App\Models\Trainee;
+=======
+>>>>>>> 143e32d27006496b74e6c06d9c359084d812058c
 use App\Models\Centres;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
@@ -74,6 +77,7 @@ class TraineeRegistrationController extends Controller
     }
 
     /**
+<<<<<<< HEAD
      * Display the enhanced multi-step registration form.
      *
      * @return \Illuminate\View\View
@@ -113,6 +117,8 @@ class TraineeRegistrationController extends Controller
     }
 
     /**
+=======
+>>>>>>> 143e32d27006496b74e6c06d9c359084d812058c
      * Store a newly created trainee.
      *
      * @param  \Illuminate\Http\Request  $request
@@ -494,6 +500,7 @@ class TraineeRegistrationController extends Controller
                 ->with('error', 'An error occurred during import: ' . $e->getMessage());
         }
     }
+<<<<<<< HEAD
 
     /**
      * Store enhanced registration data (AJAX-enabled for multi-step form)
@@ -809,4 +816,6 @@ class TraineeRegistrationController extends Controller
 
         return response()->json(['success' => true]);
     }
+=======
+>>>>>>> 143e32d27006496b74e6c06d9c359084d812058c
 }

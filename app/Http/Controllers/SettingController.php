@@ -4,16 +4,20 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+<<<<<<< HEAD
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use App\Models\Users;
 use App\Models\UserSettings;
 use App\Models\UserSession;
 use Exception;
+=======
+>>>>>>> 143e32d27006496b74e6c06d9c359084d812058c
 
 class SettingController extends Controller
 {
     /**
+<<<<<<< HEAD
      * Display enhanced settings interface with modern UI
      *
      * @return \Illuminate\View\View
@@ -71,6 +75,8 @@ class SettingController extends Controller
     }
 
     /**
+=======
+>>>>>>> 143e32d27006496b74e6c06d9c359084d812058c
      * Display the settings page.
      *
      * @return \Illuminate\View\View
@@ -167,6 +173,7 @@ class SettingController extends Controller
         return redirect()->route('settings')
             ->with('success', 'Settings updated successfully');
     }
+<<<<<<< HEAD
 
     /**
      * Display user settings page (individual user settings)
@@ -624,4 +631,6 @@ class SettingController extends Controller
             ], 500);
         }
     }
+=======
+>>>>>>> 143e32d27006496b74e6c06d9c359084d812058c
 }
