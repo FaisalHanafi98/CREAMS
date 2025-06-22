@@ -1,0 +1,792 @@
+@extends('layouts.app')
+
+@section('title', ucfirst(session('role')) . ' Dashboard')
+
+@section('styles')
+<style>
+    /* Enhanced Dashboard Styles Following Theme */
+    .dashboard-container {
+        padding: 20px;
+    }
+    
+    /* Welcome Section */
+    .welcome-section {
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        border-radius: 15px;
+        padding: 30px;
+        color: white;
+        margin-bottom: 30px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .welcome-section::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 300px;
+        height: 300px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+    }
+    
+    .welcome-content {
+        position: relative;
+        z-index: 1;
+    }
+    
+    .welcome-title {
+        font-size: 28px;
+        font-weight: 600;
+        margin-bottom: 10px;
+    }
+    
+    .welcome-subtitle {
+        font-size: 16px;
+        opacity: 0.9;
+        margin-bottom: 20px;
+    }
+    
+    .welcome-stats {
+        display: flex;
+        gap: 30px;
+        margin-top: 20px;
+    }
+    
+    .welcome-stat {
+        text-align: center;
+    }
+    
+    .welcome-stat-value {
+        font-size: 32px;
+        font-weight: 700;
+        display: block;
+    }
+    
+    .welcome-stat-label {
+        font-size: 14px;
+        opacity: 0.9;
+    }
+    
+    /* Stats Cards */
+    .stat-card {
+        background: white;
+        border-radius: 15px;
+        padding: 25px;
+        height: 100%;
+        transition: all 0.3s ease;
+        border: 1px solid #f0f0f0;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.1);
+        border-color: var(--primary-color);
+    }
+    
+    .stat-card::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 100%;
+        background: linear-gradient(to bottom, var(--primary-color), var(--secondary-color));
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+    
+    .stat-card:hover::after {
+        opacity: 1;
+    }
+    
+    .stat-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 20px;
+    }
+    
+    .stat-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        color: white;
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        box-shadow: 0 8px 20px rgba(50, 189, 234, 0.3);
+    }
+    
+    .stat-value {
+        font-size: 36px;
+        font-weight: 700;
+        color: #1a2a3a;
+        line-height: 1;
+        margin-bottom: 5px;
+    }
+    
+    .stat-label {
+        font-size: 14px;
+        color: #6c757d;
+        font-weight: 500;
+    }
+    
+    .stat-change {
+        display: inline-flex;
+        align-items: center;
+        font-size: 13px;
+        font-weight: 500;
+        margin-top: 10px;
+        padding: 5px 10px;
+        border-radius: 20px;
+    }
+    
+    .stat-change.positive {
+        color: #2ed573;
+        background: rgba(46, 213, 115, 0.1);
+    }
+    
+    .stat-change.negative {
+        color: #ff4757;
+        background: rgba(255, 71, 87, 0.1);
+    }
+    
+    .stat-change i {
+        margin-right: 5px;
+    }
+    
+    /* Activity Feed */
+    .activity-card {
+        background: white;
+        border-radius: 15px;
+        padding: 25px;
+        margin-bottom: 20px;
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
+    }
+    
+    .activity-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .activity-title {
+        font-size: 18px;
+        font-weight: 600;
+        color: #1a2a3a;
+    }
+    
+    .activity-view-all {
+        font-size: 14px;
+        color: var(--primary-color);
+        text-decoration: none;
+        font-weight: 500;
+        transition: color 0.3s ease;
+    }
+    
+    .activity-view-all:hover {
+        color: var(--secondary-color);
+    }
+    
+    .activity-item {
+        display: flex;
+        align-items: flex-start;
+        padding: 15px 0;
+        border-bottom: 1px solid #f8f9fa;
+        transition: background 0.3s ease;
+    }
+    
+    .activity-item:last-child {
+        border-bottom: none;
+    }
+    
+    .activity-item:hover {
+        background: #f8f9fa;
+        margin: 0 -15px;
+        padding-left: 15px;
+        padding-right: 15px;
+        border-radius: 10px;
+    }
+    
+    .activity-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 15px;
+        font-size: 18px;
+        flex-shrink: 0;
+    }
+    
+    .activity-icon.login {
+        background: rgba(50, 189, 234, 0.1);
+        color: var(--primary-color);
+    }
+    
+    .activity-icon.create {
+        background: rgba(46, 213, 115, 0.1);
+        color: #2ed573;
+    }
+    
+    .activity-icon.update {
+        background: rgba(255, 165, 2, 0.1);
+        color: #ffa502;
+    }
+    
+    .activity-icon.delete {
+        background: rgba(255, 71, 87, 0.1);
+        color: #ff4757;
+    }
+    
+    .activity-content {
+        flex: 1;
+    }
+    
+    .activity-text {
+        font-size: 14px;
+        color: #333;
+        margin-bottom: 3px;
+    }
+    
+    .activity-time {
+        font-size: 12px;
+        color: #999;
+    }
+    
+    /* Quick Actions */
+    .quick-actions {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 15px;
+        margin-bottom: 30px;
+    }
+    
+    .quick-action-btn {
+        background: white;
+        border: 2px solid #f0f0f0;
+        border-radius: 12px;
+        padding: 20px;
+        text-align: center;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .quick-action-btn::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        z-index: 0;
+    }
+    
+    .quick-action-btn:hover {
+        transform: translateY(-3px);
+        border-color: transparent;
+        box-shadow: 0 10px 25px rgba(50, 189, 234, 0.2);
+    }
+    
+    .quick-action-btn:hover::before {
+        opacity: 1;
+    }
+    
+    .quick-action-btn:hover * {
+        color: white !important;
+    }
+    
+    .quick-action-content {
+        position: relative;
+        z-index: 1;
+    }
+    
+    .quick-action-icon {
+        font-size: 28px;
+        margin-bottom: 10px;
+        color: var(--primary-color);
+        transition: color 0.3s ease;
+    }
+    
+    .quick-action-text {
+        font-size: 14px;
+        font-weight: 500;
+        color: #333;
+        transition: color 0.3s ease;
+    }
+    
+    /* Chart Card */
+    .chart-card {
+        background: white;
+        border-radius: 15px;
+        padding: 25px;
+        margin-bottom: 20px;
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
+        min-height: 350px;
+    }
+    
+    .chart-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+    
+    .chart-title {
+        font-size: 18px;
+        font-weight: 600;
+        color: #1a2a3a;
+    }
+    
+    .chart-options {
+        display: flex;
+        gap: 10px;
+    }
+    
+    .chart-option {
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        border: 1px solid #e0e0e0;
+        background: white;
+        color: #666;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .chart-option.active,
+    .chart-option:hover {
+        background: var(--primary-color);
+        color: white;
+        border-color: var(--primary-color);
+    }
+    
+    /* Notification Bell Animation */
+    @keyframes bellRing {
+        0%, 100% { transform: rotate(0deg); }
+        10%, 30% { transform: rotate(-10deg); }
+        20%, 40% { transform: rotate(10deg); }
+    }
+    
+    .notification-bell {
+        position: relative;
+        cursor: pointer;
+    }
+    
+    .notification-bell.has-notifications {
+        animation: bellRing 2s ease-in-out infinite;
+    }
+    
+    .notification-badge {
+        position: absolute;
+        top: -5px;
+        right: -5px;
+        background: #ff4757;
+        color: white;
+        font-size: 10px;
+        font-weight: 700;
+        padding: 2px 6px;
+        border-radius: 10px;
+        min-width: 18px;
+        text-align: center;
+    }
+    
+    /* Weather Widget */
+    .weather-widget {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 15px;
+        padding: 20px;
+        color: white;
+        margin-bottom: 20px;
+    }
+    
+    .weather-location {
+        font-size: 14px;
+        opacity: 0.9;
+        margin-bottom: 10px;
+    }
+    
+    .weather-temp {
+        font-size: 48px;
+        font-weight: 700;
+        line-height: 1;
+        margin-bottom: 10px;
+    }
+    
+    .weather-condition {
+        font-size: 16px;
+        margin-bottom: 15px;
+    }
+    
+    .weather-details {
+        display: flex;
+        gap: 20px;
+        font-size: 14px;
+    }
+    
+    /* Motivational Quote */
+    .quote-card {
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        border-radius: 15px;
+        padding: 25px;
+        text-align: center;
+        position: relative;
+        margin-bottom: 20px;
+    }
+    
+    .quote-icon {
+        font-size: 40px;
+        color: rgba(0, 0, 0, 0.1);
+        margin-bottom: 15px;
+    }
+    
+    .quote-text {
+        font-size: 18px;
+        font-style: italic;
+        color: #333;
+        margin-bottom: 10px;
+        line-height: 1.6;
+    }
+    
+    .quote-author {
+        font-size: 14px;
+        color: #666;
+        font-weight: 500;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .welcome-stats {
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .stat-value {
+            font-size: 28px;
+        }
+        
+        .quick-actions {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+</style>
+@endsection
+
+@section('content')
+<div class="dashboard-container">
+    <!-- Welcome Section -->
+    <div class="welcome-section">
+        <div class="welcome-content">
+            <h1 class="welcome-title">Welcome back, {{ $user['name'] ?? 'User' }}!</h1>
+            <p class="welcome-subtitle">
+                <i class="fas fa-calendar-day"></i> {{ date('l, F j, Y') }}
+                @if(isset($user['last_login']))
+                    | Last login: {{ $user['last_login'] }}
+                @endif
+            </p>
+            
+            @if(isset($quickStats) && count($quickStats) > 0)
+            <div class="welcome-stats">
+                @foreach(array_slice($quickStats, 0, 3) as $stat)
+                <div class="welcome-stat">
+                    <span class="welcome-stat-value">{{ $stat['value'] }}</span>
+                    <span class="welcome-stat-label">{{ $stat['label'] }}</span>
+                </div>
+                @endforeach
+            </div>
+            @endif
+        </div>
+    </div>
+    
+    <!-- Quick Actions -->
+    @if(isset($quickActions) && count($quickActions) > 0)
+    <div class="quick-actions">
+        @foreach($quickActions as $action)
+        <a href="{{ route($action['route']) }}" class="quick-action-btn">
+            <div class="quick-action-content">
+                <i class="fas {{ $action['icon'] }} quick-action-icon"></i>
+                <div class="quick-action-text">{{ $action['title'] }}</div>
+            </div>
+        </a>
+        @endforeach
+    </div>
+    @endif
+    
+    <!-- Main Stats Row -->
+    <div class="row mb-4">
+        @if(isset($stats))
+            @php
+                $statConfigs = [
+                    'total_users' => ['icon' => 'fa-users', 'label' => 'Total Users', 'change' => '+12%'],
+                    'total_trainees' => ['icon' => 'fa-child', 'label' => 'Total Trainees', 'change' => '+8%'],
+                    'total_activities' => ['icon' => 'fa-tasks', 'label' => 'Active Activities', 'change' => '+5%'],
+                    'total_centres' => ['icon' => 'fa-building', 'label' => 'Total Centres', 'change' => '0%'],
+                    'my_sessions' => ['icon' => 'fa-chalkboard-teacher', 'label' => 'My Sessions', 'change' => null],
+                    'total_students' => ['icon' => 'fa-users', 'label' => 'Total Students', 'change' => null],
+                    'today_sessions' => ['icon' => 'fa-calendar-check', 'label' => 'Today\'s Sessions', 'change' => null],
+                    'attendance_rate' => ['icon' => 'fa-percentage', 'label' => 'Attendance Rate', 'change' => null],
+                ];
+            @endphp
+            
+            @foreach($stats as $key => $value)
+                @if(isset($statConfigs[$key]))
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div>
+                                <div class="stat-value">{{ number_format($value) }}{{ $key == 'attendance_rate' ? '%' : '' }}</div>
+                                <div class="stat-label">{{ $statConfigs[$key]['label'] }}</div>
+                                @if($statConfigs[$key]['change'])
+                                <div class="stat-change {{ str_starts_with($statConfigs[$key]['change'], '+') ? 'positive' : 'negative' }}">
+                                    <i class="fas {{ str_starts_with($statConfigs[$key]['change'], '+') ? 'fa-arrow-up' : 'fa-arrow-down' }}"></i>
+                                    {{ $statConfigs[$key]['change'] }}
+                                </div>
+                                @endif
+                            </div>
+                            <div class="stat-icon">
+                                <i class="fas {{ $statConfigs[$key]['icon'] }}"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                @endif
+            @endforeach
+        @endif
+    </div>
+    
+    <div class="row">
+        <!-- Main Content Column -->
+        <div class="col-lg-8">
+            <!-- Activity Feed -->
+            <div class="activity-card">
+                <div class="activity-header">
+                    <h3 class="activity-title">Recent Activities</h3>
+                    <a href="#" class="activity-view-all">View All <i class="fas fa-arrow-right"></i></a>
+                </div>
+                
+                <div class="activity-list">
+                    @forelse($recentActivities ?? [] as $activity)
+                    <div class="activity-item">
+                        <div class="activity-icon {{ $activity['type'] ?? 'default' }}">
+                            <i class="fas {{ $activity['icon'] ?? 'fa-info-circle' }}"></i>
+                        </div>
+                        <div class="activity-content">
+                            <div class="activity-text">{{ $activity['title'] }}</div>
+                            <div class="activity-time">{{ $activity['time'] }}</div>
+                        </div>
+                    </div>
+                    @empty
+                    <div class="text-center py-4 text-muted">
+                        <i class="fas fa-inbox fa-3x mb-3"></i>
+                        <p>No recent activities</p>
+                    </div>
+                    @endforelse
+                </div>
+            </div>
+            
+            <!-- Charts Row -->
+            @if(isset($charts) && count($charts) > 0)
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3 class="chart-title">Performance Overview</h3>
+                            <div class="chart-options">
+                                <button class="chart-option active">Week</button>
+                                <button class="chart-option">Month</button>
+                                <button class="chart-option">Year</button>
+                            </div>
+                        </div>
+                        <canvas id="performanceChart" height="200"></canvas>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3 class="chart-title">Activity Distribution</h3>
+                        </div>
+                        <canvas id="distributionChart" height="200"></canvas>
+                    </div>
+                </div>
+            </div>
+            @endif
+        </div>
+        
+        <!-- Sidebar Column -->
+        <div class="col-lg-4">
+            <!-- Weather Widget -->
+            @if(isset($weatherWidget))
+            <div class="weather-widget">
+                <div class="weather-location">
+                    <i class="fas fa-map-marker-alt"></i> {{ $weatherWidget['location'] }}
+                </div>
+                <div class="weather-temp">{{ $weatherWidget['temperature'] }}</div>
+                <div class="weather-condition">
+                    <i class="fas {{ $weatherWidget['icon'] }}"></i> {{ $weatherWidget['condition'] }}
+                </div>
+                <div class="weather-details">
+                    <span><i class="fas fa-tint"></i> {{ $weatherWidget['humidity'] }}</span>
+                    <span><i class="fas fa-wind"></i> {{ $weatherWidget['wind'] }}</span>
+                </div>
+            </div>
+            @endif
+            
+            <!-- Motivational Quote -->
+            @if(isset($motivationalQuote))
+            <div class="quote-card">
+                <div class="quote-icon">
+                    <i class="fas fa-quote-left"></i>
+                </div>
+                <div class="quote-text">{{ $motivationalQuote['text'] }}</div>
+                <div class="quote-author">— {{ $motivationalQuote['author'] }}</div>
+            </div>
+            @endif
+            
+            <!-- Upcoming Events -->
+            @if(isset($upcomingEvents) && count($upcomingEvents) > 0)
+            <div class="activity-card">
+                <div class="activity-header">
+                    <h3 class="activity-title">Upcoming Events</h3>
+                    <a href="{{ route('events.index') }}" class="activity-view-all">View All</a>
+                </div>
+                
+                @foreach($upcomingEvents as $event)
+                <div class="activity-item">
+                    <div class="activity-icon create">
+                        <i class="fas fa-calendar-alt"></i>
+                    </div>
+                    <div class="activity-content">
+                        <div class="activity-text">{{ $event['title'] }}</div>
+                        <div class="activity-time">{{ $event['date'] }} at {{ $event['time'] }}</div>
+                    </div>
+                </div>
+                @endforeach
+            </div>
+            @endif
+            
+            <!-- Notifications -->
+            @if(isset($notifications) && count($notifications) > 0)
+            <div class="activity-card">
+                <div class="activity-header">
+                    <h3 class="activity-title">
+                        Notifications 
+                        <span class="notification-bell has-notifications">
+                            <i class="fas fa-bell"></i>
+                            <span class="notification-badge">{{ count($notifications) }}</span>
+                        </span>
+                    </h3>
+                    <a href="{{ route('notifications.index') }}" class="activity-view-all">View All</a>
+                </div>
+                
+                @foreach($notifications as $notification)
+                <div class="activity-item">
+                    <div class="activity-icon {{ $notification['type'] ?? 'info' }}">
+                        <i class="fas {{ $notification['icon'] ?? 'fa-info-circle' }}"></i>
+                    </div>
+                    <div class="activity-content">
+                        <div class="activity-text">{{ $notification['title'] }}</div>
+                        <div class="activity-time">{{ $notification['time'] ?? 'Just now' }}</div>
+                    </div>
+                </div>
+                @endforeach
+            </div>
+            @endif
+        </div>
+    </div>
+</div>
+@endsection
+
+@section('scripts')
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Performance Chart
+    const performanceCtx = document.getElementById('performanceChart');
+    if (performanceCtx) {
+        new Chart(performanceCtx.getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                datasets: [{
+                    label: 'Activities',
+                    data: [12, 19, 15, 25, 22, 30, 28],
+                    borderColor: '#32bdea',
+                    backgroundColor: 'rgba(50, 189, 234, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            borderDash: [5, 5]
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                }
+            }
+        });
+    }
+    
+    // Distribution Chart
+    const distributionCtx = document.getElementById('distributionChart');
+    if (distributionCtx) {
+        new Chart(distributionCtx.getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Speech Therapy', 'Physical Therapy', 'Occupational', 'Educational', 'Other'],
+                datasets: [{
+                    data: [30, 25, 20, 15, 10],
+                    backgroundColor: [
+                        '#32bdea',
+                        '#c850c0',
+                        '#ffa502',
+                        '#2ed573',
+                        '#ff4757'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+    }
+});
+</script>
+@endsection

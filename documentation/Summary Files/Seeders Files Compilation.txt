@@ -1,0 +1,2489 @@
+CentresSeeder
+
+<?php
+
+namespace Database\Seeders;
+
+use Illuminate\Database\Seeder;
+use App\Models\Centres;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Artisan;
+
+class CentresSeeder extends Seeder
+{
+    /**
+     * Run the database seeds.
+     *
+     * @return void
+     */
+    public function run()
+    {
+        $this->command->info('Seeding centres...');
+        
+        try {
+            // Safe deletion of existing centres
+            $this->command->info('Deleting existing centres...');
+            
+            // Temporarily disable foreign key checks
+            DB::statement('SET FOREIGN_KEY_CHECKS=0');
+            
+            // Delete existing centres
+            DB::table('centres')->delete();
+            
+            // Re-enable foreign key checks
+            DB::statement('SET FOREIGN_KEY_CHECKS=1');
+            
+            // Actual campus data with proper status field
+            $centres = [
+                [
+                    'centre_id' => '01',
+                    'centre_name' => 'Gombak',
+                    'centre_status' => 'active',
+                    'created_at' => now(),
+                    'updated_at' => now()
+                ],
+                [
+                    'centre_id' => '02',
+                    'centre_name' => 'Kuantan',
+                    'centre_status' => 'active',
+                    'created_at' => now(),
+                    'updated_at' => now()
+                ],
+                [
+                    'centre_id' => '03',
+                    'centre_name' => 'Gambang',
+                    'centre_status' => 'active',
+                    'created_at' => now(),
+                    'updated_at' => now()
+                ],
+                [
+                    'centre_id' => '04',
+                    'centre_name' => 'Pagoh',
+                    'centre_status' => 'active',
+                    'created_at' => now(),
+                    'updated_at' => now()
+                ]
+            ];
+            
+            // Insert all centres at once
+            DB::table('centres')->insert($centres);
+            
+            foreach ($centres as $centre) {
+                $this->command->info("Created centre: {$centre['centre_name']}");
+            }
+            
+            // Run the centre sync command to update any existing users
+            $this->command->info('Running centre sync command to update user records...');
+            Artisan::call('centres:sync');
+            $syncOutput = Artisan::output();
+            $this->command->info($syncOutput);
+            
+            $this->command->info('Centres seeding completed successfully!');
+            
+        } catch (\Exception $e) {
+            // Make sure to re-enable foreign key checks even if there's an error
+            DB::statement('SET FOREIGN_KEY_CHECKS=1');
+            
+            $this->command->error('Error seeding centres: ' . $e->getMessage());
+            Log::error('Error seeding centres', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            throw $e;
+        }
+    }
+}
+
+DatabaseSeeder
+
+<?php
+
+namespace Database\Seeders;
+
+use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Artisan;
+
+class DatabaseSeeder extends Seeder
+{
+    /**
+     * Seed the application's database.
+     *
+     * @return void
+     */
+    public function run()
+    {
+        try {
+            $this->call([
+                CentresSeeder::class,             // First, create all centres
+                UsersSeeder::class,          // Second, create initial users
+                TraineesSeeder::class,            // Create trainees
+            ]);
+            
+            // After seeding, diversify user centre distribution
+            $this->command->info('Diversifying user centre distribution...');
+            Artisan::call('centres:diversify');
+            $this->command->info(Artisan::output());
+            
+        } catch (\Exception $e) {
+            Log::error('Error in database seeding: ' . $e->getMessage());
+            echo "Error seeding database: " . $e->getMessage() . "\n";
+        }
+    }
+}
+
+MessagesSeeder
+
+<?php
+
+namespace Database\Seeders;
+
+use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Carbon\Carbon;
+use App\Models\Users;
+use App\Models\Admins;
+use App\Models\Supervisors;
+use App\Models\Teachers;
+use App\Models\AJKs;
+use App\Models\Messages;
+
+class MessagesSeeder extends Seeder
+{
+    /**
+     * Run the database seeds.
+     *
+     * @return void
+     */
+    public function run()
+    {
+        try {
+            Log::info('Starting messages table seeding');
+            
+            // Check if table already has data
+            if (Messages::count() > 0) {
+                if (!$this->command->confirm('Messages table already has data. Continue with seeding?')) {
+                    $this->command->info('Seeding aborted!');
+                    return;
+                }
+            }
+            
+            // Get seeding mode based on environment
+            $mode = config('app.env') === 'production' ? 'minimal' : 'full';
+            Log::info("Seeding messages in {$mode} mode");
+            
+            DB::beginTransaction();
+            
+            // Get some users from each role for test messages
+            $admins = Admins::where('status', 'active')->limit($mode === 'minimal' ? 1 : 2)->get();
+            $supervisors = Supervisors::where('status', 'active')->limit($mode === 'minimal' ? 1 : 2)->get();
+            $teachers = Teachers::where('status', 'active')->limit($mode === 'minimal' ? 2 : 3)->get();
+            $ajks = AJKs::where('status', 'active')->limit($mode === 'minimal' ? 1 : 2)->get();
+            
+            // Check if we have enough users to create messages
+            if ($admins->isEmpty() || $supervisors->isEmpty() || $teachers->isEmpty()) {
+                Log::warning('Not enough users found to seed messages. Please create users first.');
+                $this->command->warn('Not enough users found to seed messages. Please create users first.');
+                return;
+            }
+            
+            // Create sample messages between these users
+            $this->createSampleMessages($admins, $supervisors, $teachers, $ajks, $mode);
+            
+            DB::commit();
+            
+            Log::info('Messages table seeded successfully');
+            $this->command->info('Messages seeded successfully!');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error seeding messages table', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            $this->command->error('Error seeding messages: ' . $e->getMessage());
+            
+            throw $e;
+        }
+    }
+    
+    /**
+     * Create sample messages between users.
+     *
+     * @param  \Illuminate\Database\Eloquent\Collection  $admins
+     * @param  \Illuminate\Database\Eloquent\Collection  $supervisors
+     * @param  \Illuminate\Database\Eloquent\Collection  $teachers
+     * @param  \Illuminate\Database\Eloquent\Collection  $ajks
+     * @param  string  $mode
+     * @return void
+     */
+    private function createSampleMessages($admins, $supervisors, $teachers, $ajks, $mode)
+    {
+        // Sample message subjects
+        $subjects = [
+            'Welcome to CREAMS!',
+            'Important Update on Centre Operations',
+            'Regarding Upcoming Training Session',
+            'Schedule Change Notification',
+            'Feedback Request',
+            'Monthly Performance Review',
+            'System Update Notification',
+            'Holiday Schedule Information',
+            'Request for Information',
+            'Trainee Progress Report Discussion',
+            'Year-End Evaluation Process',
+            'New Resources Available',
+            'Staff Meeting Agenda',
+            'Training Workshop Registration',
+            'Community Event Planning'
+        ];
+        
+        // Message content templates
+        $contentTemplates = [
+            'Hello {recipient},'."\n\n".'I hope this message finds you well. {message_body}. '."\n\n".'Best regards,'."\n".'{sender}',
+            'Dear {recipient},'."\n\n".'I wanted to reach out about {message_body}. Please let me know if you have any questions.'."\n\n".'Thanks,'."\n".'{sender}',
+            'Hi {recipient},'."\n\n".'{message_body}. I look forward to your response.'."\n\n".'Regards,'."\n".'{sender}',
+            'Greetings {recipient},'."\n\n".'I am writing to inform you that {message_body}. Please review at your earliest convenience.'."\n\n".'Sincerely,'."\n".'{sender}',
+            'Dear {recipient},'."\n\n".'I hope you are doing well. {message_body}. '."\n\n".'Warm regards,'."\n".'{sender}',
+            '{recipient},'."\n\n".'Just a quick note to let you know that {message_body}. '."\n\n".'Cheers,'."\n".'{sender}'
+        ];
+        
+        // Message bodies with more variety
+        $messageBodies = [
+            'We have scheduled a staff meeting for next Friday at 2 PM to discuss the upcoming changes to our curriculum',
+            'The new assessment tools for tracking trainee progress have been uploaded to the shared drive for your review',
+            'I wanted to check if you received the updated materials for the speech therapy session',
+            'Could we schedule a time to discuss the progress of the new trainees in your class?',
+            'The maintenance team will be upgrading the centre facilities next weekend, so please plan accordingly',
+            'We have received positive feedback from the parents about the recent activities you organized',
+            'The monthly progress reports are due by the end of this week',
+            'There has been a change in the schedule for the upcoming training workshop',
+            'Please review and approve the attached list of resources needed for the next term',
+            'We need to discuss the individualized education plan for trainee ID #45892',
+            'I need your input on the new assessment framework we\'re implementing next month',
+            'Please review the quarterly performance metrics for your team - some trainees are showing excellent progress',
+            'The system maintenance is scheduled for this weekend. Please ensure all reports are submitted beforehand',
+            'We\'re organizing a community awareness day and would appreciate your participation',
+            'Could you provide feedback on the new training materials before we distribute them?',
+            'The parent-teacher meetings have been rescheduled due to the holiday next week',
+            'We\'ve updated the security protocols for accessing trainee records - please review the changes',
+            'Your request for additional teaching materials has been approved',
+            'There\'s a professional development workshop next month that might interest you',
+            'Could you share the success stories from your recent therapeutic session?'
+        ];
+        
+        // Create admin to supervisor conversations (threads of messages back and forth)
+        foreach ($admins as $admin) {
+            foreach ($supervisors as $supervisor) {
+                // Create a conversation thread with 3-5 messages
+                $messageCount = $mode === 'minimal' ? 2 : rand(3, 5);
+                $subject = $subjects[array_rand($subjects)];
+                $lastSent = Carbon::now()->subDays(rand(2, 30));
+                
+                for ($i = 0; $i < $messageCount; $i++) {
+                    // Alternate sender and recipient
+                    if ($i % 2 == 0) {
+                        $senderId = $admin->id;
+                        $senderType = 'admin';
+                        $senderName = $admin->name;
+                        $recipientId = $supervisor->id;
+                        $recipientType = 'supervisor';
+                        $recipientName = $supervisor->name;
+                    } else {
+                        $senderId = $supervisor->id;
+                        $senderType = 'supervisor';
+                        $senderName = $supervisor->name;
+                        $recipientId = $admin->id;
+                        $recipientType = 'admin';
+                        $recipientName = $admin->name;
+                    }
+                    
+                    // Replies should use the same subject with Re: prefix
+                    $messageSubject = ($i == 0) ? $subject : 'Re: ' . $subject;
+                    
+                    // Each message is a few hours or a day after the previous
+                    $createdAt = $lastSent->copy()->addHours(rand(2, 24));
+                    $lastSent = $createdAt;
+                    
+                    $this->createMessage(
+                        $senderId, $senderType, $senderName,
+                        $recipientId, $recipientType, $recipientName,
+                        $messageSubject,
+                        $this->formatContent($contentTemplates[array_rand($contentTemplates)], $recipientName, $senderName, $messageBodies[array_rand($messageBodies)]),
+                        $i < $messageCount - 1 // Only the last message might be unread
+                    );
+                }
+            }
+        }
+        
+        // Create supervisor to teacher messages
+        foreach ($supervisors as $supervisor) {
+            foreach ($teachers as $teacher) {
+                $this->createMessage(
+                    $supervisor->id, 'supervisor', $supervisor->name,
+                    $teacher->id, 'teacher', $teacher->name,
+                    $subjects[array_rand($subjects)],
+                    $this->formatContent($contentTemplates[array_rand($contentTemplates)], $teacher->name, $supervisor->name, $messageBodies[array_rand($messageBodies)]),
+                    rand(0, 1)
+                );
+                
+                // Create replies with 50% chance
+                if (rand(0, 1)) {
+                    $this->createMessage(
+                        $teacher->id, 'teacher', $teacher->name,
+                        $supervisor->id, 'supervisor', $supervisor->name,
+                        'Re: ' . $subjects[array_rand($subjects)],
+                        $this->formatContent($contentTemplates[array_rand($contentTemplates)], $supervisor->name, $teacher->name, $messageBodies[array_rand($messageBodies)]),
+                        rand(0, 1)
+                    );
+                }
+            }
+        }
+        
+        // Create AJK to admin messages
+        foreach ($ajks as $ajk) {
+            foreach ($admins as $admin) {
+                $this->createMessage(
+                    $ajk->id, 'ajk', $ajk->name,
+                    $admin->id, 'admin', $admin->name,
+                    $subjects[array_rand($subjects)],
+                    $this->formatContent($contentTemplates[array_rand($contentTemplates)], $admin->name, $ajk->name, $messageBodies[array_rand($messageBodies)]),
+                    rand(0, 1)
+                );
+                
+                // Create replies with 30% chance
+                if (rand(0, 2) == 0) {
+                    $this->createMessage(
+                        $admin->id, 'admin', $admin->name,
+                        $ajk->id, 'ajk', $ajk->name,
+                        'Re: ' . $subjects[array_rand($subjects)],
+                        $this->formatContent($contentTemplates[array_rand($contentTemplates)], $ajk->name, $admin->name, $messageBodies[array_rand($messageBodies)]),
+                        rand(0, 1)
+                    );
+                }
+            }
+        }
+        
+        // Create teacher to teacher messages
+        if (count($teachers) >= 2) {
+            for ($i = 0; $i < count($teachers) - 1; $i++) {
+                $this->createMessage(
+                    $teachers[$i]->id, 'teacher', $teachers[$i]->name,
+                    $teachers[$i + 1]->id, 'teacher', $teachers[$i + 1]->name,
+                    $subjects[array_rand($subjects)],
+                    $this->formatContent($contentTemplates[array_rand($contentTemplates)], $teachers[$i + 1]->name, $teachers[$i]->name, $messageBodies[array_rand($messageBodies)]),
+                    rand(0, 1)
+                );
+            }
+        }
+        
+        // Create a few very recent messages that should be unread
+        $recentUsers = [
+            ['type' => 'admin', 'users' => $admins],
+            ['type' => 'supervisor', 'users' => $supervisors],
+            ['type' => 'teacher', 'users' => $teachers],
+            ['type' => 'ajk', 'users' => $ajks]
+        ];
+        
+        // Create 3-5 recent messages
+        $recentCount = $mode === 'minimal' ? 3 : 5;
+        for ($i = 0; $i < $recentCount; $i++) {
+            // Select random sender and recipient
+            $senderGroup = $recentUsers[array_rand($recentUsers)];
+            $recipientGroup = $recentUsers[array_rand($recentUsers)];
+            
+            if ($senderGroup['users']->isEmpty() || $recipientGroup['users']->isEmpty()) {
+                continue;
+            }
+            
+            $sender = $senderGroup['users']->random();
+            $recipient = $recipientGroup['users']->random();
+            
+            // Don't send to self
+            if ($senderGroup['type'] === $recipientGroup['type'] && $sender->id === $recipient->id) {
+                if ($recipientGroup['users']->count() > 1) {
+                    // Try to get a different recipient
+                    $recipient = $recipientGroup['users']->filter(function($user) use ($sender) {
+                        return $user->id !== $sender->id;
+                    })->first();
+                    
+                    if (!$recipient) {
+                        continue;
+                    }
+                } else {
+                    continue;
+                }
+            }
+            
+            // Create recent message (from last few hours)
+            $this->createMessage(
+                $sender->id, $senderGroup['type'], $sender->name,
+                $recipient->id, $recipientGroup['type'], $recipient->name,
+                'URGENT: ' . $subjects[array_rand($subjects)],
+                $this->formatContent($contentTemplates[array_rand($contentTemplates)], $recipient->name, $sender->name, $messageBodies[array_rand($messageBodies)]),
+                false, // Unread
+                Carbon::now()->subHours(rand(1, 5))->subMinutes(rand(1, 59)) // Recent
+            );
+        }
+    }
+    
+    /**
+     * Format message content with sender, recipient, and message body.
+     *
+     * @param  string  $template
+     * @param  string  $recipient
+     * @param  string  $sender
+     * @param  string  $messageBody
+     * @return string
+     */
+    private function formatContent($template, $recipient, $sender, $messageBody)
+    {
+        return str_replace(
+            ['{recipient}', '{sender}', '{message_body}'],
+            [$recipient, $sender, $messageBody],
+            $template
+        );
+    }
+    
+    /**
+     * Create a message record.
+     *
+     * @param  int  $senderId
+     * @param  string  $senderType
+     * @param  string  $senderName
+     * @param  int  $recipientId
+     * @param  string  $recipientType
+     * @param  string  $recipientName
+     * @param  string  $subject
+     * @param  string  $content
+     * @param  bool  $read
+     * @param  \Carbon\Carbon|null  $createdAt
+     * @return void
+     */
+    private function createMessage($senderId, $senderType, $senderName, $recipientId, $recipientType, $recipientName, $subject, $content, $read, $createdAt = null)
+    {
+        $now = Carbon::now();
+        $createdAt = $createdAt ?? Carbon::now()->subMinutes(rand(5, 60 * 24 * 10)); // Random time within the past 10 days
+        
+        $data = [
+            'sender_id' => $senderId,
+            'sender_type' => $senderType,
+            'recipient_id' => $recipientId,
+            'recipient_type' => $recipientType,
+            'subject' => $subject,
+            'content' => $content,
+            'read' => $read,
+            'read_at' => $read ? $createdAt->copy()->addMinutes(rand(1, 60)) : null, // If read, set read time 1-60 minutes after creation
+            'created_at' => $createdAt,
+            'updated_at' => $createdAt
+        ];
+        
+        DB::table('messages')->insert($data);
+        
+        // Log message creation
+        Log::debug('Created sample message', [
+            'sender' => $senderName,
+            'recipient' => $recipientName,
+            'subject' => $subject,
+            'read' => $read,
+            'created_at' => $createdAt->toDateTimeString()
+        ]);
+    }
+}
+
+NotificationsSeeder
+
+<?php
+
+namespace Database\Seeders;
+
+use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Carbon\Carbon;
+use App\Models\Users;
+use App\Models\Admins;
+use App\Models\Supervisors;
+use App\Models\Teachers;
+use App\Models\AJKs;
+use App\Models\Notifications;
+use Illuminate\Support\Facades\Schema;
+
+class NotificationsSeeder extends Seeder
+{
+    /**
+     * Run the database seeds.
+     *
+     * @return void
+     */
+    public function run()
+    {
+        try {
+            Log::info('Starting notifications table seeding');
+            
+            // Check if table already has data
+            if (Schema::hasTable('notifications') && DB::table('notifications')->count() > 0) {
+                if (!$this->command->confirm('Notifications table already has data. Continue with seeding?')) {
+                    $this->command->info('Seeding aborted!');
+                    return;
+                }
+            }
+            
+            // Get seeding mode based on environment
+            $mode = config('app.env') === 'production' ? 'minimal' : 'full';
+            Log::info("Seeding notifications in {$mode} mode");
+            
+            DB::beginTransaction();
+            
+            // Get users from each role for test notifications
+            $admins = Admins::where('status', 'active')->get();
+            $supervisors = Supervisors::where('status', 'active')->get();
+            $teachers = Teachers::where('status', 'active')->get();
+            $ajks = AJKs::where('status', 'active')->get();
+            
+            // Check if we have users to create notifications for
+            if ($admins->isEmpty() && $supervisors->isEmpty() && $teachers->isEmpty() && $ajks->isEmpty()) {
+                Log::warning('No active users found to seed notifications for.');
+                $this->command->warn('No active users found to seed notifications for.');
+                DB::rollBack();
+                return;
+            }
+            
+            // Create notifications for each user
+            $totalNotifications = 0;
+            
+            foreach ($admins as $admin) {
+                $count = $this->createNotificationsForUser($admin->id, 'admin', $mode);
+                $totalNotifications += $count;
+            }
+            
+            foreach ($supervisors as $supervisor) {
+                $count = $this->createNotificationsForUser($supervisor->id, 'supervisor', $mode);
+                $totalNotifications += $count;
+            }
+            
+            foreach ($teachers as $teacher) {
+                $count = $this->createNotificationsForUser($teacher->id, 'teacher', $mode);
+                $totalNotifications += $count;
+            }
+            
+            foreach ($ajks as $ajk) {
+                $count = $this->createNotificationsForUser($ajk->id, 'ajk', $mode);
+                $totalNotifications += $count;
+            }
+            
+            DB::commit();
+            
+            Log::info('Notifications table seeded successfully', [
+                'total_notifications' => $totalNotifications
+            ]);
+            
+            $this->command->info("Successfully created {$totalNotifications} notifications.");
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error seeding notifications table', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            $this->command->error('Error seeding notifications: ' . $e->getMessage());
+            throw $e;
+        }
+    }
+    
+    /**
+     * Create notifications for a specific user.
+     *
+     * @param  int  $userId
+     * @param  string  $userType
+     * @param  string  $mode
+     * @return int Number of notifications created
+     */
+    private function createNotificationsForUser($userId, $userType, $mode = 'full')
+    {
+        // Generate 5-15 random notifications per user in full mode, 3-5 in minimal mode
+        $count = $mode === 'full' ? rand(5, 15) : rand(3, 5);
+        
+        Log::debug('Creating notifications for user', [
+            'user_id' => $userId,
+            'user_type' => $userType,
+            'count' => $count,
+            'mode' => $mode
+        ]);
+        
+        // Define notification types and their corresponding titles and content templates
+        $notificationTypes = [
+            'message' => [
+                'titles' => [
+                    'New Message Received',
+                    'Message from {sender}',
+                    'New Communication',
+                    'Inbox Update',
+                    'Message Regarding {topic}'
+                ],
+                'content' => [
+                    'You have received a new message from {sender}.',
+                    '{sender} has sent you a message regarding {topic}.',
+                    'You have a new message in your inbox from {sender} about {topic}.',
+                    'Please check your inbox for a new message from {sender}.',
+                    '{sender} is requesting your input on {topic}.'
+                ],
+                'icon' => 'fas fa-envelope',
+                'color' => 'primary'
+            ],
+            'activity' => [
+                'titles' => [
+                    'Activity Reminder',
+                    'Upcoming Session: {activity}',
+                    'Schedule Update',
+                    'New Activity Added',
+                    'Activity Cancelled'
+                ],
+                'content' => [
+                    'Reminder: {activity} is scheduled for {time}.',
+                    'Your {activity} session is starting soon at {time}.',
+                    'There has been an update to the schedule for {activity}.',
+                    'A new activity ({activity}) has been added to your schedule.',
+                    'The {activity} scheduled for {date} has been rescheduled to {time}.'
+                ],
+                'icon' => 'fas fa-calendar-alt',
+                'color' => 'success'
+            ],
+            'trainee' => [
+                'titles' => [
+                    'Trainee Update: {trainee_name}',
+                    'New Trainee Assignment',
+                    'Trainee Progress Note',
+                    'Trainee Attendance Alert',
+                    'Trainee Assessment Due'
+                ],
+                'content' => [
+                    'There is an update on trainee {trainee_name}\'s progress.',
+                    'A new trainee has been assigned to your class.',
+                    'Please review the progress notes for trainee {trainee_name}.',
+                    'Trainee {trainee_name} has been absent for {days} consecutive days.',
+                    'Quarterly assessment for {trainee_name} is due by {date}.'
+                ],
+                'icon' => 'fas fa-user-graduate',
+                'color' => 'info'
+            ],
+            'asset' => [
+                'titles' => [
+                    'Asset Assignment',
+                    'Inventory Update',
+                    'Resource Availability',
+                    'Asset Maintenance',
+                    'New Equipment Arrival'
+                ],
+                'content' => [
+                    'You have been assigned new equipment: {asset_name}.',
+                    'The inventory for {centre_name} has been updated.',
+                    'New resources are available for your class: {asset_name}.',
+                    'Maintenance scheduled for {asset_name} on {date}.',
+                    'New {asset_name} has arrived and is available for use in {centre_name}.'
+                ],
+                'icon' => 'fas fa-boxes',
+                'color' => 'warning'
+            ],
+            'system' => [
+                'titles' => [
+                    'System Update',
+                    'Maintenance Notification',
+                    'Security Alert',
+                    'Password Expiry',
+                    'System Downtime Scheduled'
+                ],
+                'content' => [
+                    'CREAMS system will be updated on {date}. Please save your work.',
+                    'System maintenance is scheduled for {date} from {start_time} to {end_time}.',
+                    'Security update has been applied to your account.',
+                    'Your password will expire in {days} days. Please update it.',
+                    'The system will be unavailable on {date} from {start_time} to {end_time} for scheduled maintenance.'
+                ],
+                'icon' => 'fas fa-cog',
+                'color' => 'danger'
+            ]
+        ];
+        
+        $senderNames = [
+            'Dr. Sarah Johnson',
+            'Ahmad Rizal',
+            'Nurul Izzah',
+            'Michael Tan',
+            'Dr. Suriani',
+            'Prof. Abdul Hamid',
+            'Siti Zainab',
+            'System Administrator',
+            'IT Department',
+            'HR Department'
+        ];
+        
+        $activities = [
+            'Team Meeting',
+            'Speech Therapy',
+            'Physical Therapy',
+            'Art Workshop',
+            'Parent Conference',
+            'Staff Training',
+            'Assessment Session',
+            'Music Therapy',
+            'Occupational Therapy',
+            'Social Skills Group'
+        ];
+        
+        $trainees = [
+            'Ahmad',
+            'Siti',
+            'James',
+            'Mei Ling',
+            'Rajesh',
+            'Fatimah',
+            'Xavier',
+            'Aisha',
+            'Harith',
+            'Ling Wei'
+        ];
+        
+        $assets = [
+            'iPad Pro',
+            'Speech Therapy Kit',
+            'Sensory Equipment',
+            'Educational Software',
+            'Mobility Aids',
+            'Art Supplies',
+            'Assessment Tools',
+            'Interactive Whiteboard',
+            'Sound System',
+            'Therapeutic Toys'
+        ];
+        
+        $centres = [
+            'Gombak',
+            'Kuantan',
+            'Gambang',
+            'Pagoh',
+            'Kuala Lumpur',
+            'Johor Bahru'
+        ];
+        
+        $topics = [
+            'curriculum updates',
+            'staff meeting',
+            'quarterly review',
+            'upcoming event',
+            'student assessment',
+            'training workshop',
+            'budget allocation',
+            'facility maintenance',
+            'volunteer program',
+            'parent feedback'
+        ];
+        
+        $notificationsCreated = 0;
+        
+        // Generate random notifications
+        for ($i = 0; $i < $count; $i++) {
+            $type = array_rand($notificationTypes);
+            $typeConfig = $notificationTypes[$type];
+            
+            $titleTemplate = $typeConfig['titles'][array_rand($typeConfig['titles'])];
+            $contentTemplate = $typeConfig['content'][array_rand($typeConfig['content'])];
+            
+            // Prepare placeholders for content
+            $replacements = [
+                '{sender}' => $senderNames[array_rand($senderNames)],
+                '{topic}' => $topics[array_rand($topics)],
+                '{activity}' => $activities[array_rand($activities)],
+                '{time}' => sprintf('%d:%02d %s', rand(1, 12), rand(0, 5) * 10, rand(0, 1) ? 'AM' : 'PM'),
+                '{trainee_name}' => $trainees[array_rand($trainees)],
+                '{days}' => rand(1, 5),
+                '{asset_name}' => $assets[array_rand($assets)],
+                '{centre_name}' => $centres[array_rand($centres)],
+                '{date}' => Carbon::now()->addDays(rand(1, 14))->format('F d, Y'),
+                '{start_time}' => sprintf('%d:%02d %s', rand(1, 12), rand(0, 5) * 10, 'PM'),
+                '{end_time}' => sprintf('%d:%02d %s', rand(1, 12), rand(0, 5) * 10, 'PM')
+            ];
+            
+            $title = str_replace(array_keys($replacements), array_values($replacements), $titleTemplate);
+            $content = str_replace(array_keys($replacements), array_values($replacements), $contentTemplate);
+            
+            // Random data for additional context (nullable)
+            $data = null;
+            if (rand(0, 2) == 0) { // 1/3 chance of having additional data
+                $data = json_encode([
+                    'action_url' => '#',
+                    'action_text' => 'View Details',
+                    'related_id' => rand(1000, 9999),
+                    'related_type' => $type,
+                    'additional_info' => 'This is additional information for the notification.',
+                    'priority' => rand(1, 3)  // 1 = low, 2 = medium, 3 = high
+                ]);
+            }
+            
+            // Random timestamps
+            $createdAt = Carbon::now()->subMinutes(rand(1, 60 * 24 * 7)); // Within the last week
+            $read = rand(0, 2) > 0; // 2/3 chance of being read
+            $readAt = $read ? $createdAt->copy()->addMinutes(rand(1, 60)) : null; // If read, set time 1-60 minutes after creation
+            
+            // Create the notification
+            DB::table('notifications')->insert([
+                'user_id' => $userId,
+                'user_type' => $userType,
+                'type' => $type,
+                'title' => $title,
+                'content' => $content,
+                'data' => $data,
+                'read' => $read,
+                'read_at' => $readAt,
+                'created_at' => $createdAt,
+                'updated_at' => $createdAt
+            ]);
+            
+            $notificationsCreated++;
+        }
+        
+        // Ensure some recent unread notifications for testing
+        $recentCount = $mode === 'minimal' ? 2 : 3;
+        for ($i = 0; $i < $recentCount; $i++) {
+            $type = array_rand($notificationTypes);
+            $typeConfig = $notificationTypes[$type];
+            
+            $titleTemplate = $typeConfig['titles'][array_rand($typeConfig['titles'])];
+            $contentTemplate = $typeConfig['content'][array_rand($typeConfig['content'])];
+            
+            // Create more recent notifications (within the last few hours)
+            $createdAt = Carbon::now()->subMinutes(rand(5, 180));
+            
+            // Prepare placeholders
+            $replacements = [
+                '{sender}' => $senderNames[array_rand($senderNames)],
+                '{topic}' => 'urgent ' . $topics[array_rand($topics)],
+                '{activity}' => $activities[array_rand($activities)],
+                '{time}' => sprintf('%d:%02d %s', rand(1, 12), rand(0, 5) * 10, rand(0, 1) ? 'AM' : 'PM'),
+                '{trainee_name}' => $trainees[array_rand($trainees)],
+                '{days}' => rand(1, 5),
+                '{asset_name}' => $assets[array_rand($assets)],
+                '{centre_name}' => $centres[array_rand($centres)],
+                '{date}' => Carbon::now()->addDays(rand(1, 3))->format('F d, Y'),
+                '{start_time}' => sprintf('%d:%02d %s', rand(1, 12), rand(0, 5) * 10, 'PM'),
+                '{end_time}' => sprintf('%d:%02d %s', rand(1, 12), rand(0, 5) * 10, 'PM')
+            ];
+            
+            $title = 'URGENT: ' . str_replace(array_keys($replacements), array_values($replacements), $titleTemplate);
+            $content = str_replace(array_keys($replacements), array_values($replacements), $contentTemplate);
+            
+            // Add action data for these important notifications
+            $data = json_encode([
+                'action_url' => '#',
+                'action_text' => 'Take Action',
+                'related_id' => rand(1000, 9999),
+                'related_type' => $type,
+                'priority' => 3, // High priority
+                'urgent' => true
+            ]);
+            
+            // Create the notification (always unread for these recent ones)
+            DB::table('notifications')->insert([
+                'user_id' => $userId,
+                'user_type' => $userType,
+                'type' => $type,
+                'title' => $title,
+                'content' => $content,
+                'data' => $data,
+                'read' => false,
+                'read_at' => null,
+                'created_at' => $createdAt,
+                'updated_at' => $createdAt
+            ]);
+            
+            $notificationsCreated++;
+        }
+        
+        return $notificationsCreated;
+    }
+}
+
+RehabilitationActivitiesSeeder
+
+<?php
+
+namespace Database\Seeders;
+
+use Illuminate\Database\Seeder;
+use App\Models\RehabilitationActivity;
+use Illuminate\Support\Facades\DB;
+
+class RehabilitationActivitiesSeeder extends Seeder
+{
+    /**
+     * Run the database seeds.
+     *
+     * @return void
+     */
+    public function run()
+    {
+        // Clear existing data if needed
+        DB::table('rehabilitation_activities')->truncate();
+        
+        // Create activities for Autism Spectrum Disorder
+        $this->createAutismActivities();
+        
+        // Create activities for Hearing Impairment
+        $this->createHearingActivities();
+        
+        // Create activities for Visual Impairment
+        $this->createVisualActivities();
+        
+        // Create activities for Physical Disabilities
+        $this->createPhysicalActivities();
+        
+        // Create activities for Learning Disabilities
+        $this->createLearningActivities();
+        
+        // Create activities for Speech and Language Disorders
+        $this->createSpeechActivities();
+        
+        // Create universal activities for all disability types
+        $this->createUniversalActivities();
+    }
+    
+    /**
+     * Create activities for Autism Spectrum Disorder.
+     */
+    private function createAutismActivities()
+    {
+        $activities = [
+            [
+                'name' => 'Picture Exchange Communication System (PECS)',
+                'description' => 'A visual communication system that helps individuals with autism communicate their needs, wants, and thoughts using pictures and symbols.',
+                'category' => 'autism',
+                'difficulty_level' => 2,
+                'age_group' => '3-18',
+                'duration_minutes' => 30,
+                'materials_required' => 'PECS cards, binder, Velcro, pictures representing common items and activities',
+                'staff_requirements' => 'Speech therapist or trained instructor',
+                'goals' => 'Improve communication skills, reduce frustration, enhance independence in expressing needs and wants',
+                'instructions' => "1. Begin by identifying highly motivating items for the trainee\n2. Use physical prompting to help the trainee pick up the picture and hand it to the communication partner\n3. Gradually reduce physical prompts as the trainee learns to exchange pictures independently\n4. Progress through the phases of PECS: picture exchange, increasing distance, picture discrimination, sentence structure, responsive commenting",
+                'modifications' => 'For younger children, use larger pictures with clear, simple images. For older trainees, use more abstract symbols and introduce digital PECS apps',
+                'assessment_criteria' => 'Number of successful exchanges, reduction in communication frustration, increased vocabulary of symbols used'
+            ],
+            [
+                'name' => 'Sensory Integration Activities',
+                'description' => 'A series of sensory-based activities designed to help individuals with autism process and respond appropriately to sensory stimuli in their environment.',
+                'category' => 'autism',
+                'difficulty_level' => 2,
+                'age_group' => '3-18',
+                'duration_minutes' => 45,
+                'materials_required' => 'Sensory bins, textured materials, swings, balance equipment, weighted items, fidget toys',
+                'staff_requirements' => 'Occupational therapist or trained specialist',
+                'goals' => 'Improve sensory processing, reduce sensory sensitivities, develop appropriate responses to sensory stimuli',
+                'instructions' => "1. Begin with a sensory profile assessment to identify specific sensory needs\n2. Create a personalized sensory diet that includes appropriate activities for each sensory system\n3. Introduce activities gradually, respecting the trainee's tolerance levels\n4. Include a mix of calming and alerting activities based on the trainee's needs\n5. Implement deep pressure techniques, proprioceptive inputs, and vestibular activities as appropriate",
+                'modifications' => 'For sensory-seeking trainees, provide more intense sensory experiences. For sensory-avoiding trainees, introduce sensory inputs gradually with more control given to the trainee',
+                'assessment_criteria' => 'Improved tolerance to sensory stimuli, reduced sensory-related behaviors, increased participation in daily activities'
+            ],
+            [
+                'name' => 'Social Stories',
+                'description' => 'A technique using personalized short stories to help individuals with autism understand social situations, expectations, and appropriate behaviors.',
+                'category' => 'autism',
+                'difficulty_level' => 1,
+                'age_group' => '4-18',
+                'duration_minutes' => 20,
+                'materials_required' => 'Social story book or cards, pictures, simple text, optional video modeling',
+                'staff_requirements' => 'Special education teacher or therapist',
+                'goals' => 'Improve understanding of social situations, reduce anxiety, teach appropriate social behaviors',
+                'instructions' => "1. Identify a specific social situation that is challenging for the trainee\n2. Create a simple, concise story using descriptive, perspective, directive, and control sentences\n3. Include visuals that are meaningful to the trainee\n4. Read the story with the trainee regularly, especially before encountering the situation\n5. Review and practice the concepts from the story through role-play or discussion",
+                'modifications' => 'For younger children, use more pictures and simpler language. For older trainees, include more perspective sentences and complex social concepts',
+                'assessment_criteria' => 'Demonstration of target behaviors in actual social situations, reduced anxiety in social settings, ability to recall key points from the story'
+            ],
+            [
+                'name' => 'Visual Schedule System',
+                'description' => 'A visual support system that helps individuals with autism understand and follow daily routines and transitions.',
+                'category' => 'autism',
+                'difficulty_level' => 1,
+                'age_group' => '3-18',
+                'duration_minutes' => 15,
+                'materials_required' => 'Picture cards, schedule board, Velcro, timer or clock',
+                'staff_requirements' => 'Teacher or caregiver',
+                'goals' => 'Improve independence in following routines, reduce transition anxiety, enhance time management',
+                'instructions' => "1. Create a visual schedule using pictures or symbols that represent activities\n2. Arrange the schedule in chronological order\n3. Review the schedule with the trainee at the start of the day or session\n4. Teach the trainee to check the schedule and move to the next activity\n5. Use a \"finished\" pocket or check-off system for completed activities",
+                'modifications' => 'For younger children, use a first-then board with only two activities. For older trainees, introduce weekly or monthly calendars',
+                'assessment_criteria' => 'Ability to follow the schedule independently, reduced resistance to transitions, decreased dependence on verbal prompts'
+            ]
+        ];
+        
+        foreach ($activities as $activity) {
+            RehabilitationActivity::create($activity);
+        }
+    }
+    
+    /**
+     * Create activities for Hearing Impairment.
+     */
+    private function createHearingActivities()
+    {
+        $activities = [
+            [
+                'name' => 'Sign Language Basics',
+                'description' => 'Introduction to basic sign language vocabulary and grammar to enhance communication for individuals with hearing impairments.',
+                'category' => 'hearing',
+                'difficulty_level' => 2,
+                'age_group' => '3-18',
+                'duration_minutes' => 30,
+                'materials_required' => 'Sign language flashcards, visual aids, mirror for self-observation, sign language videos',
+                'staff_requirements' => 'Sign language instructor or speech therapist',
+                'goals' => 'Develop basic sign language vocabulary, improve communication skills, enhance expressive abilities',
+                'instructions' => "1. Begin with common signs related to the trainee's daily needs and interests\n2. Demonstrate each sign clearly, explaining the hand shape, movement, and location\n3. Practice signs in front of a mirror to help the trainee see their own movements\n4. Incorporate signs into daily routines and conversations\n5. Gradually build vocabulary by introducing new signs regularly",
+                'modifications' => 'For younger children, focus on concrete signs for basic needs. For older trainees, introduce more abstract concepts and grammar',
+                'assessment_criteria' => 'Number of signs correctly produced, spontaneous use of signs in communication, ability to recognize signs made by others'
+            ],
+            [
+                'name' => 'Lip Reading Practice',
+                'description' => 'Structured practice in visual speech perception to enhance communication abilities for individuals with hearing impairments.',
+                'category' => 'hearing',
+                'difficulty_level' => 3,
+                'age_group' => '6-18',
+                'duration_minutes' => 25,
+                'materials_required' => 'Mirror, picture cards, video recording device, lip reading practice videos',
+                'staff_requirements' => 'Speech therapist or specialized instructor',
+                'goals' => 'Improve lip reading skills, enhance visual attention to facial movements, develop compensatory communication strategies',
+                'instructions' => "1. Begin with distinguishing visually different sounds (e.g., 'p' vs 's')\n2. Practice with single words before moving to phrases and sentences\n3. Use a clear, natural speaking rate without exaggeration\n4. Incorporate contextual clues and practice in various settings\n5. Gradually increase difficulty by adding background noise or distractions",
+                'modifications' => 'For beginners, use words with clear visual differences. For advanced trainees, practice with various speakers and in group settings',
+                'assessment_criteria' => 'Accuracy in identifying words and phrases, improvement in conversational understanding, reduced need for repetition'
+            ],
+            [
+                'name' => 'Auditory Training',
+                'description' => 'Structured listening activities to maximize use of residual hearing and/or hearing aids/cochlear implants.',
+                'category' => 'hearing',
+                'difficulty_level' => 2,
+                'age_group' => '3-18',
+                'duration_minutes' => 20,
+                'materials_required' => 'Various sound-making objects, recorded sounds, musical instruments, sound discrimination games',
+                'staff_requirements' => 'Audiologist or speech therapist',
+                'goals' => 'Improve sound awareness, develop sound discrimination skills, enhance auditory processing',
+                'instructions' => "1. Begin with awareness of presence vs. absence of sound\n2. Progress to discriminating between different environmental sounds\n3. Practice identifying differences in duration, intensity, and pitch\n4. Work on speech sound discrimination (vowels before consonants)\n5. Gradually increase complexity with words, phrases, and sentences",
+                'modifications' => 'For those with cochlear implants, focus on new sounds they can access. For those with hearing aids, emphasize sounds within their audible range',
+                'assessment_criteria' => 'Improved detection and discrimination of sounds, better speech understanding, effective use of assistive devices'
+            ],
+            [
+                'name' => 'Visual Attention Training',
+                'description' => 'Activities designed to enhance visual attention and perception skills which are crucial for individuals with hearing impairments.',
+                'category' => 'hearing',
+                'difficulty_level' => 1,
+                'age_group' => '3-18',
+                'duration_minutes' => 15,
+                'materials_required' => 'Visual tracking games, picture cards, matching activities, visual attention apps',
+                'staff_requirements' => 'Occupational therapist or special education teacher',
+                'goals' => 'Improve visual scanning, enhance sustained visual attention, develop visual discrimination skills',
+                'instructions' => "1. Start with simple visual tracking activities (following moving objects)\n2. Progress to visual search tasks (finding specific items in a busy picture)\n3. Practice visual memory games (remembering object locations or sequences)\n4. Incorporate scanning for visual cues in communication\n5. Gradually increase complexity and duration of visual tasks",
+                'modifications' => 'For younger children, use brightly colored, high-contrast materials. For older trainees, incorporate real-world visual scanning tasks',
+                'assessment_criteria' => 'Improved visual attention span, better visual scanning efficiency, enhanced ability to notice visual communication cues'
+            ]
+        ];
+        
+        foreach ($activities as $activity) {
+            RehabilitationActivity::create($activity);
+        }
+    }
+    
+    /**
+     * Create activities for Visual Impairment.
+     */
+    private function createVisualActivities()
+    {
+        $activities = [
+            [
+                'name' => 'Tactile Exploration and Discrimination',
+                'description' => 'Activities focused on developing tactile sensitivity and discrimination skills for individuals with visual impairments.',
+                'category' => 'visual',
+                'difficulty_level' => 1,
+                'age_group' => '3-18',
+                'duration_minutes' => 25,
+                'materials_required' => 'Textured materials, tactile discrimination boards, objects with various surfaces, tactile matching games',
+                'staff_requirements' => 'Occupational therapist or vision specialist',
+                'goals' => 'Develop tactile sensitivity, improve object identification through touch, enhance tactile discrimination',
+                'instructions' => "1. Begin with exploration of clearly different textures (rough vs. smooth)\n2. Progress to more subtle texture differences\n3. Practice identifying common objects by touch alone\n4. Incorporate tactile symbols and pre-braille activities when appropriate\n5. Encourage verbalization of tactile experiences to build descriptive language",
+                'modifications' => 'For younger children, use larger objects with pronounced textures. For older trainees, include more complex tactile discrimination tasks',
+                'assessment_criteria' => 'Accuracy in tactile identification, improved tactile discrimination abilities, development of systematic tactile exploration strategies'
+            ],
+            [
+                'name' => 'Orientation and Mobility Training',
+                'description' => 'Systematic instruction in safe and efficient movement techniques for individuals with visual impairments.',
+                'category' => 'visual',
+                'difficulty_level' => 3,
+                'age_group' => '5-18',
+                'duration_minutes' => 45,
+                'materials_required' => 'White cane (if appropriate), tactile maps, orientation landmarks, mobility aids',
+                'staff_requirements' => 'Certified orientation and mobility specialist',
+                'goals' => 'Develop safe navigation skills, improve spatial awareness, enhance independent travel abilities',
+                'instructions' => "1. Begin with body awareness and positional concepts\n2. Progress to familiar space orientation with clear landmarks\n3. Teach protective techniques and trailing methods\n4. Introduce cane techniques if appropriate\n5. Practice route planning and navigation in increasingly complex environments",
+                'modifications' => 'For trainees with some vision, incorporate use of visual cues alongside non-visual strategies. For young children, focus on basic spatial concepts in familiar settings',
+                'assessment_criteria' => 'Ability to navigate familiar environments, use of appropriate safety techniques, development of spatial awareness and mapping skills'
+            ],
+            [
+                'name' => 'Auditory Training for Spatial Awareness',
+                'description' => 'Activities designed to enhance the use of auditory information for orientation, localization, and environmental awareness.',
+                'category' => 'visual',
+                'difficulty_level' => 2,
+                'age_group' => '4-18',
+                'duration_minutes' => 30,
+                'materials_required' => 'Various sound sources, echo location practice spaces, audio recording equipment',
+                'staff_requirements' => 'Vision specialist or orientation and mobility instructor',
+                'goals' => 'Improve sound localization, develop echo location skills, enhance auditory memory and discrimination',
+                'instructions' => "1. Practice identifying direction of sound sources\n2. Work on distance estimation using sound cues\n3. Develop awareness of environmental sounds and their meaning\n4. Introduce basic echolocation techniques (detecting objects by sound reflections)\n5. Practice using auditory cues for orientation in various environments",
+                'modifications' => 'For beginners, use distinctive sounds in quiet environments. For advanced trainees, practice in more challenging acoustic environments',
+                'assessment_criteria' => 'Accuracy in sound localization, improved navigation using auditory cues, recognition of environmental sounds'
+            ],
+            [
+                'name' => 'Braille Introduction and Practice',
+                'description' => 'Systematic instruction in the tactile reading and writing system of braille for individuals with visual impairments.',
+                'category' => 'visual',
+                'difficulty_level' => 4,
+                'age_group' => '6-18',
+                'duration_minutes' => 40,
+                'materials_required' => 'Braille paper, slate and stylus, braille writer, braille teaching materials, tactile discrimination tools',
+                'staff_requirements' => 'Certified teacher of the visually impaired',
+                'goals' => 'Develop braille literacy skills, improve tactile discrimination, enhance reading and writing abilities',
+                'instructions' => "1. Begin with tactile readiness activities and finger sensitivity exercises\n2. Introduce the braille cell concept and basic letter patterns\n3. Teach letter recognition before word formation\n4. Practice tracking along braille lines with proper finger technique\n5. Gradually build vocabulary and reading fluency",
+                'modifications' => 'For younger children, use larger braille cells or pre-braille activities. For older beginners, relate braille patterns to previously known concepts',
+                'assessment_criteria' => 'Letter and word recognition accuracy, reading speed, proper finger technique, writing accuracy'
+            ]
+        ];
+        
+        foreach ($activities as $activity) {
+            RehabilitationActivity::create($activity);
+        }
+    }
+    
+    /**
+     * Create activities for Physical Disabilities.
+     */
+    private function createPhysicalActivities()
+    {
+        $activities = [
+            [
+                'name' => 'Adaptive Fine Motor Skills Development',
+                'description' => 'Activities designed to improve hand strength, dexterity, and coordination for individuals with physical disabilities.',
+                'category' => 'physical',
+                'difficulty_level' => 2,
+                'age_group' => '3-18',
+                'duration_minutes' => 30,
+                'materials_required' => 'Adaptive grips, therapy putty, finger strengthening tools, fine motor manipulation toys, adapted scissors',
+                'staff_requirements' => 'Occupational therapist',
+                'goals' => 'Improve hand strength and dexterity, enhance precision in manipulation, develop functional grasping patterns',
+                'instructions' => "1. Begin with assessment of current fine motor abilities\n2. Start with gross grasping activities before progressing to pincer grasp\n3. Incorporate hand strengthening with therapy putty or similar materials\n4. Practice functional tasks like buttoning, zipping, and using utensils with adaptations as needed\n5. Gradually reduce adaptations as capabilities improve",
+                'modifications' => 'For those with limited hand function, use built-up handles or universal cuffs. For those with unilateral involvement, incorporate activities that promote bilateral coordination',
+                'assessment_criteria' => 'Improved precision in manipulation tasks, increased strength in standardized measures, greater independence in activities of daily living'
+            ],
+            [
+                'name' => 'Adaptive Mobility and Gross Motor Skills',
+                'description' => 'Activities focused on improving strength, balance, coordination, and functional mobility for individuals with physical disabilities.',
+                'category' => 'physical',
+                'difficulty_level' => 3,
+                'age_group' => '3-18',
+                'duration_minutes' => 45,
+                'materials_required' => 'Therapy balls, balance equipment, mobility aids, parallel bars, stairs with railings, assistive devices as needed',
+                'staff_requirements' => 'Physical therapist',
+                'goals' => 'Improve balance and coordination, enhance functional mobility, develop strength and endurance',
+                'instructions' => "1. Begin with stability activities before mobility\n2. Practice weight shifting, transitional movements, and balance in various positions\n3. Incorporate strength training for major muscle groups\n4. Work on functional movements like sit-to-stand, floor-to-stand, and navigating different surfaces\n5. Train in the proper use of mobility aids if applicable",
+                'modifications' => 'For wheelchair users, focus on seated balance and upper body strength. For ambulatory trainees, incorporate gait training and stair navigation',
+                'assessment_criteria' => 'Improved balance scores, increased mobility independence, enhanced quality of movement patterns, improved strength measurements'
+            ],
+            [
+                'name' => 'Adaptive Equipment Training',
+                'description' => 'Instruction and practice in the effective use of adaptive equipment to enhance independence in daily activities.',
+                'category' => 'physical',
+                'difficulty_level' => 2,
+                'age_group' => '4-18',
+                'duration_minutes' => 30,
+                'materials_required' => 'Relevant adaptive equipment (communication devices, feeding aids, mobility devices, etc.), practice environments setup',
+                'staff_requirements' => 'Occupational therapist or physical therapist',
+                'goals' => 'Develop proficiency with adaptive equipment, improve independence in daily tasks, enhance functional capabilities',
+                'instructions' => "1. Assess specific needs and match with appropriate adaptive equipment\n2. Introduce equipment with clear demonstration and explanation\n3. Practice basic operations in simplified environment\n4. Gradually increase complexity of tasks and environments\n5. Train caregivers in supporting equipment use",
+                'modifications' => 'Equipment selection and training approach must be highly individualized based on specific physical limitations and functional goals',
+                'assessment_criteria' => 'Correct usage of equipment, increased independence in target activities, reduced need for physical assistance'
+            ],
+            [
+                'name' => 'Sensory Motor Integration',
+                'description' => 'Activities that combine sensory input with motor responses to improve body awareness and movement planning.',
+                'category' => 'physical',
+                'difficulty_level' => 2,
+                'age_group' => '3-18',
+                'duration_minutes' => 35,
+                'materials_required' => 'Therapy balls, textured surfaces, balance equipment, obstacle courses, visual cues',
+                'staff_requirements' => 'Occupational therapist or physical therapist',
+                'goals' => 'Improve body awareness, enhance motor planning, develop coordinated responses to sensory input',
+                'instructions' => "1. Begin with activities that provide clear proprioceptive input\n2. Incorporate multisensory feedback during movement activities\n3. Practice motor planning through obstacle courses and sequenced movements\n4. Use visual, verbal, and tactile cues to support motor learning\n5. Gradually reduce external cues as internal body awareness improves",
+                'modifications' => 'For those with high muscle tone, incorporate calming proprioceptive input. For those with low muscle tone, use stimulating sensory input to increase alertness',
+                'assessment_criteria' => 'Improved coordination, more efficient movement patterns, enhanced ability to motor plan novel tasks, better postural control'
+            ]
+        ];
+        
+        foreach ($activities as $activity) {
+            RehabilitationActivity::create($activity);
+        }
+    }
+    
+    /**
+     * Create activities for Learning Disabilities.
+     */
+    private function createLearningActivities()
+    {
+        $activities = [
+            [
+                'name' => 'Multisensory Reading Instruction',
+                'description' => 'Structured literacy approach that engages visual, auditory, tactile, and kinesthetic pathways simultaneously to improve reading skills.',
+                'category' => 'learning',
+                'difficulty_level' => 2,
+                'age_group' => '5-18',
+                'duration_minutes' => 30,
+                'materials_required' => 'Letter tiles, sand trays, textured letters, decodable texts, phonics cards, mirror for mouth positions',
+                'staff_requirements' => 'Special education teacher or reading specialist',
+                'goals' => 'Develop phonological awareness, improve decoding skills, enhance reading fluency and comprehension',
+                'instructions' => "1. Begin with phonological awareness activities (rhyming, segmenting, blending)\n2. Teach letter-sound correspondences using multiple sensory pathways\n3. Practice tracing letters while saying sounds\n4. Apply skills to decodable words and texts\n5. Use structured, cumulative approach with frequent review",
+                'modifications' => 'For younger children, focus more on phonological awareness. For older students, incorporate more advanced phonics patterns and application to content-area vocabulary',
+                'assessment_criteria' => 'Improved phonological awareness, increased decoding accuracy, enhanced reading fluency, better comprehension scores'
+            ],
+            [
+                'name' => 'Working Memory Enhancement',
+                'description' => 'Activities designed to strengthen working memory capacity, which is often impaired in individuals with learning disabilities.',
+                'category' => 'learning',
+                'difficulty_level' => 2,
+                'age_group' => '6-18',
+                'duration_minutes' => 20,
+                'materials_required' => 'Memory games, sequence cards, auditory memory activities, visual pattern materials, working memory apps',
+                'staff_requirements' => 'Special education teacher or cognitive trainer',
+                'goals' => 'Improve working memory capacity, enhance information retention, develop memory strategies',
+                'instructions' => "1. Start with simple span tasks (remembering 2-3 items)\n2. Gradually increase memory load as skills improve\n3. Teach explicit memory strategies (chunking, visualization, rehearsal)\n4. Practice both verbal and visual-spatial working memory tasks\n5. Apply memory strategies to academic content",
+                'modifications' => 'For trainees with primarily verbal memory deficits, focus more on visual supports. For those with visual-spatial memory challenges, provide verbal scaffolding',
+                'assessment_criteria' => 'Increased memory span, better retention of instructions, improved application of memory strategies, enhanced academic performance'
+            ],
+            [
+                'name' => 'Executive Function Training',
+                'description' => 'Structured activities to develop planning, organization, time management, and self-monitoring skills.',
+                'category' => 'learning',
+                'difficulty_level' => 3,
+                'age_group' => '7-18',
+                'duration_minutes' => 30,
+                'materials_required' => 'Planners, checklists, timers, graphic organizers, task analysis sheets, self-monitoring tools',
+                'staff_requirements' => 'Special education teacher or executive function coach',
+                'goals' => 'Improve planning and organization, enhance time management, develop self-monitoring and metacognitive skills',
+                'instructions' => "1. Teach explicit planning strategies (goal setting, breaking tasks into steps)\n2. Practice organization of materials and information using visual systems\n3. Implement time management techniques with visual timers\n4. Develop self-checking routines and error monitoring\n5. Gradually transfer responsibility for strategy implementation to the trainee",
+                'modifications' => 'For younger children, use more external supports and simpler tasks. For older students, focus on self-generated strategies and application to complex projects',
+                'assessment_criteria' => 'Improved task completion, better organization of materials, enhanced time management, development of self-monitoring skills'
+            ],
+            [
+                'name' => 'Mathematical Reasoning Through Concrete-Representational-Abstract Sequence',
+                'description' => 'Systematic instruction in mathematical concepts using hands-on materials, visual representations, and abstract symbols.',
+                'category' => 'learning',
+                'difficulty_level' => 3,
+                'age_group' => '6-18',
+                'duration_minutes' => 30,
+                'materials_required' => 'Manipulatives (counters, base-10 blocks, fraction pieces), visual models, graph paper, number lines, calculators',
+                'staff_requirements' => 'Special education teacher or math specialist',
+                'goals' => 'Develop conceptual understanding of mathematics, improve problem-solving skills, enhance mathematical fluency',
+                'instructions' => "1. Begin with concrete manipulatives to represent mathematical concepts\n2. Progress to visual representations (drawings, diagrams)\n3. Connect concrete and representational understanding to abstract symbols\n4. Teach explicit problem-solving strategies\n5. Practice retrieval of math facts with appropriate supports",
+                'modifications' => 'For trainees with math anxiety, use more collaborative, low-pressure approaches. For those with specific calculation difficulties, provide appropriate accommodations',
+                'assessment_criteria' => 'Improved conceptual understanding, increased accuracy in calculations, enhanced problem-solving abilities, better application of mathematical concepts'
+            ]
+        ];
+        
+        foreach ($activities as $activity) {
+            RehabilitationActivity::create($activity);
+        }
+    }
+    
+    /**
+     * Create activities for Speech and Language Disorders.
+     */
+    private function createSpeechActivities()
+    {
+        $activities = [
+            [
+                'name' => 'Articulation Therapy',
+                'description' => 'Structured activities to improve the production of speech sounds for clear, intelligible speech.',
+                'category' => 'speech',
+                'difficulty_level' => 2,
+                'age_group' => '3-18',
+                'duration_minutes' => 25,
+                'materials_required' => 'Mirror, articulation cards, sound-specific materials, recording device, articulation apps',
+                'staff_requirements' => 'Speech-language pathologist',
+                'goals' => 'Improve production of target sounds, enhance speech intelligibility, develop self-monitoring of articulation',
+                'instructions' => "1. Begin with assessment to identify specific sound errors\n2. Teach correct tongue, lip, and jaw positions for target sounds\n3. Practice sounds in isolation before progressing to syllables, words, phrases, sentences, and conversation\n4. Use visual and tactile cues to support correct production\n5. Incorporate self-monitoring strategies and recording for feedback",
+                'modifications' => 'For multiple sound errors, establish priority hierarchy. For motor planning difficulties, incorporate more tactile and kinesthetic cueing',
+                'assessment_criteria' => 'Increased accuracy of target sounds, improved intelligibility ratings, generalization to conversational speech'
+            ],
+            [
+                'name' => 'Expressive Language Development',
+                'description' => 'Activities designed to improve vocabulary, grammar, and sentence structure for effective communication.',
+                'category' => 'speech',
+                'difficulty_level' => 2,
+                'age_group' => '2-18',
+                'duration_minutes' => 30,
+                'materials_required' => 'Picture cards, story sequence cards, toys for play-based therapy, sentence formulation materials, visual supports',
+                'staff_requirements' => 'Speech-language pathologist',
+                'goals' => 'Expand vocabulary, improve grammar and syntax, enhance narrative skills, develop conversational abilities',
+                'instructions' => "1. Target vocabulary expansion through thematic units and multiple exposures\n2. Teach grammatical structures using modeling, recasting, and structured practice\n3. Scaffold sentence expansion and complexity\n4. Develop narrative skills through story grammar frameworks\n5. Practice conversational skills including turn-taking, topic maintenance, and repair strategies",
+                'modifications' => 'For early language learners, use play-based approaches and simple phrase targets. For advanced students, focus on complex language and social pragmatics',
+                'assessment_criteria' => 'Increased vocabulary usage, improved grammatical accuracy, enhanced syntactic complexity, better narrative structure'
+            ],
+            [
+                'name' => 'Receptive Language Enhancement',
+                'description' => 'Activities focused on improving comprehension of spoken language and following directions.',
+                'category' => 'speech',
+                'difficulty_level' => 2,
+                'age_group' => '2-18',
+                'duration_minutes' => 25,
+                'materials_required' => 'Picture cards, manipulatives, direction following activities, story comprehension materials, visual supports',
+                'staff_requirements' => 'Speech-language pathologist',
+                'goals' => 'Improve comprehension of vocabulary and concepts, enhance ability to follow directions, develop listening comprehension',
+                'instructions' => "1. Begin with simple identification of familiar objects and actions\n2. Progress to basic concepts (spatial, temporal, quantitative)\n3. Practice following directions of increasing length and complexity\n4. Develop active listening strategies and comprehension monitoring\n5. Work on inferencing and predicting from stories and conversations",
+                'modifications' => 'For significant comprehension difficulties, provide visual supports. For auditory processing issues, reduce background noise and allow extra processing time',
+                'assessment_criteria' => 'Improved response accuracy to questions, enhanced ability to follow multi-step directions, better comprehension of stories and conversations'
+            ],
+            [
+                'name' => 'Augmentative and Alternative Communication Training',
+                'description' => 'Instruction in the use of communication systems and devices for individuals with limited or no speech.',
+                'category' => 'speech',
+                'difficulty_level' => 3,
+                'age_group' => '2-18',
+                'duration_minutes' => 40,
+                'materials_required' => 'Communication boards, picture exchange systems, speech-generating devices, AAC apps, training materials',
+                'staff_requirements' => 'Speech-language pathologist with AAC expertise',
+                'goals' => 'Develop effective use of AAC system, improve communication independence, enhance expressive communication abilities',
+                'instructions' => "1. Conduct thorough assessment to determine appropriate AAC approach\n2. Begin with basic requesting using the selected system\n3. Expand to commenting, asking questions, and social communication\n4. Provide systematic instruction in navigating and operating the system\n5. Train communication partners in supporting and responding to AAC communication",
+                'modifications' => 'Systems must be customized to individual motor, cognitive, and sensory abilities. Symbol complexity should match cognitive and visual discrimination abilities',
+                'assessment_criteria' => 'Frequency of spontaneous communication, range of communicative functions expressed, efficiency of message generation, reduced communication breakdowns'
+            ]
+        ];
+        
+        foreach ($activities as $activity) {
+            RehabilitationActivity::create($activity);
+        }
+    }
+    
+    /**
+     * Create universal activities for all disability types.
+     */
+    private function createUniversalActivities()
+    {
+        $activities = [
+            [
+                'name' => 'Adaptive Art Expression',
+                'description' => 'Creative art activities adapted for accessibility and therapeutic benefit across different disability types.',
+                'category' => 'all',
+                'difficulty_level' => 1,
+                'age_group' => '3-18',
+                'duration_minutes' => 45,
+                'materials_required' => 'Adaptive art tools, various art media, sensory art materials, supportive seating, accessible workspace',
+                'staff_requirements' => 'Art therapist or trained facilitator',
+                'goals' => 'Encourage self-expression, develop fine motor skills, promote sensory integration, enhance creativity',
+                'instructions' => "1. Set up an accessible workspace with appropriate adaptations\n2. Introduce art materials with demonstration and sensory exploration\n3. Start with process-oriented rather than product-oriented activities\n4. Provide just enough support to enable success while encouraging independence\n5. Create opportunities for sharing and discussion about the artistic process",
+                'modifications' => 'For physical disabilities: use adaptive tools, stabilize materials. For visual impairments: incorporate tactile materials. For autism: provide clear structure and sensory options. For learning disabilities: break instructions into small steps',
+                'assessment_criteria' => 'Increased engagement in the creative process, development of fine motor skills, expression of thoughts and feelings, demonstrated pride in accomplishments'
+            ],
+            [
+                'name' => 'Adaptive Music and Movement',
+                'description' => 'Music-based activities that incorporate movement and rhythm for therapeutic benefit across disability types.',
+                'category' => 'all',
+                'difficulty_level' => 1,
+                'age_group' => '2-18',
+                'duration_minutes' => 30,
+                'materials_required' => 'Adaptive musical instruments, percussion items, recorded music, visual movement cues, movement props',
+                'staff_requirements' => 'Music therapist or trained facilitator',
+                'goals' => 'Develop rhythm and timing, improve motor coordination, enhance social interaction, encourage self-expression',
+                'instructions' => "1. Begin with basic rhythm activities that match natural movement abilities\n2. Incorporate songs with predictable patterns and movement components\n3. Use instruments that are accessible based on motor abilities\n4. Create opportunities for turn-taking and group participation\n5. Balance structured activities with creative expression",
+                'modifications' => 'For hearing impairments: emphasize visual cues and vibration. For physical disabilities: adapt movements and provide support. For autism: provide visual schedules and predictable routines. For learning disabilities: break down sequences into manageable steps',
+                'assessment_criteria' => 'Improved rhythmic synchronization, enhanced motor coordination, increased social engagement, demonstrated enjoyment and self-expression'
+            ],
+            [
+                'name' => 'Social Skills Group',
+                'description' => 'Structured group activities to develop and practice social interaction skills across disability types.',
+                'category' => 'all',
+                'difficulty_level' => 2,
+                'age_group' => '4-18',
+                'duration_minutes' => 45,
+                'materials_required' => 'Social scripts, role-play materials, visual supports, social games, video modeling equipment',
+                'staff_requirements' => 'Social skills specialist or trained facilitator',
+                'goals' => 'Develop turn-taking, improve conversation skills, enhance perspective-taking, build friendship skills',
+                'instructions' => "1. Establish group rules and positive behavioral expectations\n2. Introduce target social skill with clear explanation and modeling\n3. Provide structured practice through role-play and guided activities\n4. Create opportunities for naturalistic practice in supported environment\n5. Review and reinforce skill application",
+                'modifications' => 'For autism: provide explicit instruction and visual supports. For hearing impairments: ensure communication access. For physical disabilities: adapt activities for mobility differences. For learning disabilities: simplify instructions and provide additional practice',
+                'assessment_criteria' => 'Increased appropriate social initiations, improved conversation skills, enhanced perspective-taking, development of friendship skills'
+            ],
+            [
+                'name' => 'Adaptive Yoga and Mindfulness',
+                'description' => 'Modified yoga and mindfulness practices designed to be accessible and beneficial for various disability types.',
+                'category' => 'all',
+                'difficulty_level' => 1,
+                'age_group' => '4-18',
+                'duration_minutes' => 30,
+                'materials_required' => 'Yoga mats, props for positioning, visual pose cards, breathing visual aids, calming sensory tools',
+                'staff_requirements' => 'Adaptive yoga instructor or trained facilitator',
+                'goals' => 'Improve body awareness, develop self-regulation skills, enhance flexibility and strength, reduce anxiety',
+                'instructions' => "1. Begin with simple breathing techniques with concrete visual supports\n2. Introduce basic poses with appropriate modifications\n3. Create predictable sequences that can be learned over time\n4. Incorporate mindfulness activities appropriate to developmental level\n5. Balance movement with relaxation components",
+                'modifications' => 'For physical disabilities: offer seated or supported variations. For autism: provide visual schedules and concrete language. For visual impairments: use tactile guidance and clear verbal cues. For learning disabilities: break sequences into simple steps with consistent repetition',
+                'assessment_criteria' => 'Improved attention and focus, enhanced self-regulation, increased body awareness, demonstrated relaxation skills'
+            ]
+        ];
+        
+        foreach ($activities as $activity) {
+            RehabilitationActivity::create($activity);
+        }
+    }
+}
+
+TraineesSeeder
+
+<?php
+
+namespace Database\Seeders;
+
+use Illuminate\Database\Seeder;
+use App\Models\Trainees;
+use App\Models\Centres;
+use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
+use Faker\Factory as Faker;
+
+class TraineesSeeder extends Seeder
+{
+    /**
+     * Run the database seeds.
+     *
+     * @return void
+     */
+    public function run()
+    {
+        // Instead of truncating, we'll delete records more safely with respect to foreign keys
+        $this->command->info('Deleting existing trainees...');
+        
+        try {
+            // Temporarily disable foreign key checks
+            DB::statement('SET FOREIGN_KEY_CHECKS=0');
+            
+            // Delete existing trainees
+            DB::table('trainees')->delete();
+            
+            // Re-enable foreign key checks
+            DB::statement('SET FOREIGN_KEY_CHECKS=1');
+            
+            $faker = Faker::create('en_MY'); // Malaysian faker
+            
+            // First check what centres actually exist in the database
+            $centres = Centres::pluck('centre_name')->toArray();
+            
+            if (empty($centres)) {
+                $this->command->error('No centres found in the database. Please add centres first.');
+                $this->command->info('Creating a default centre for testing...');
+                
+                // Create a default centre if none exists
+                $defaultCentre = new Centres();
+                $defaultCentre->centre_id = 'DEFAULT';
+                $defaultCentre->centre_name = 'Default Centre';
+                $defaultCentre->centre_status = 'active';
+                $defaultCentre->save();
+                
+                $centres = ['Default Centre'];
+            }
+            
+            $this->command->info('Found these centres: ' . implode(', ', $centres));
+            
+            // Malay first names (male)
+            $malayMaleNames = [
+                'Ahmad', 'Muhammad', 'Mohd', 'Ismail', 'Ibrahim', 'Yusof', 'Aziz', 'Nasir', 
+                'Kamal', 'Rizal', 'Hafiz', 'Amir', 'Azman', 'Farid', 'Zulkifli', 'Nazri',
+                'Faisal', 'Zainal', 'Khairul', 'Anuar', 'Azlan', 'Hakim', 'Rahim', 'Saiful'
+            ];
+            
+            // Malay first names (female)
+            $malayFemaleNames = [
+                'Nurul', 'Siti', 'Nor', 'Noor', 'Fatimah', 'Zainab', 'Aishah', 'Aminah',
+                'Farah', 'Zulaikha', 'Khairiah', 'Rahmah', 'Safiah', 'Hasnah', 'Azizah',
+                'Halimah', 'Mariam', 'Rohani', 'Salmah', 'Khadijah', 'Sakinah', 'Amalina'
+            ];
+            
+            // Malay last names / surnames / bin/binti father's names
+            $malayLastNames = [
+                'bin Abdullah', 'bin Ahmad', 'bin Mohamed', 'bin Ibrahim', 'bin Ismail',
+                'bin Hassan', 'bin Yusof', 'binti Abdullah', 'binti Ahmad', 'binti Mohamed',
+                'bin Rahman', 'bin Othman', 'bin Ali', 'bin Omar', 'bin Kassim',
+                'Abdul Rahman', 'Abdul Hamid', 'Abdul Aziz', 'Abdul Kadir', 'Abdul Rahim'
+            ];
+            
+            // Chinese first names (male)
+            $chineseMaleNames = [
+                'Wei', 'Jian', 'Ming', 'Hao', 'Yong', 'Jun', 'Chen', 'Feng',
+                'Cheng', 'Tao', 'Kun', 'Xiang', 'Jie', 'Wen', 'Xiong'
+            ];
+            
+            // Chinese first names (female)
+            $chineseFemaleNames = [
+                'Mei', 'Li', 'Hui', 'Xiu', 'Yan', 'Ying', 'Qi', 'Jing',
+                'Yue', 'Fang', 'Lin', 'Zhen', 'Hong', 'Fen', 'Yu'
+            ];
+            
+            // Chinese last names
+            $chineseLastNames = [
+                'Tan', 'Lim', 'Lee', 'Wong', 'Ng', 'Cheong', 'Yap', 'Ong',
+                'Chin', 'Ho', 'Chong', 'Goh', 'Teo', 'Chan', 'Teh'
+            ];
+            
+            // Indian first names (male)
+            $indianMaleNames = [
+                'Raj', 'Kumar', 'Suresh', 'Ravi', 'Vijay', 'Ganesh', 'Arun', 'Prakash',
+                'Siva', 'Mohan', 'Ramesh', 'Arjun', 'Shan', 'Nathan', 'Raja'
+            ];
+            
+            // Indian first names (female)
+            $indianFemaleNames = [
+                'Priya', 'Lakshmi', 'Devi', 'Shanti', 'Meena', 'Rani', 'Kavitha', 'Anjali',
+                'Sunitha', 'Seetha', 'Deepa', 'Uma', 'Vani', 'Saranya', 'Gayathri'
+            ];
+            
+            // Indian last names
+            $indianLastNames = [
+                'Pillai', 'Naidu', 'Gopal', 'Raju', 'Nair', 'Patel', 'Singh',
+                'Sharma', 'Samy', 'Muthu', 'Chandra', 'Lingam', 'Krishnan', 'Rao', 'Sivan'
+            ];
+            
+            // List of possible conditions
+            $conditions = [
+                'Autism Spectrum Disorder',
+                'Down Syndrome',
+                'Cerebral Palsy',
+                'Hearing Impairment',
+                'Visual Impairment',
+                'Intellectual Disability',
+                'Physical Disability',
+                'Speech and Language Disorder',
+                'Learning Disability',
+                'Multiple Disabilities'
+            ];
+
+            // Create 20 trainees
+            for ($i = 1; $i <= 20; $i++) {
+                // Determine ethnicity based on desired ratio (70% Malay)
+                $ethnicity = $faker->randomElement(['malay', 'malay', 'malay', 'malay', 'malay', 'malay', 'malay', 'chinese', 'chinese', 'indian']);
+                
+                $gender = $faker->randomElement(['male', 'female']);
+                
+                // Set appropriate names based on ethnicity and gender
+                if ($ethnicity === 'malay') {
+                    if ($gender === 'male') {
+                        $firstName = $faker->randomElement($malayMaleNames);
+                    } else {
+                        $firstName = $faker->randomElement($malayFemaleNames);
+                    }
+                    $lastName = $faker->randomElement($malayLastNames);
+                } elseif ($ethnicity === 'chinese') {
+                    if ($gender === 'male') {
+                        $firstName = $faker->randomElement($chineseMaleNames);
+                    } else {
+                        $firstName = $faker->randomElement($chineseFemaleNames);
+                    }
+                    $lastName = $faker->randomElement($chineseLastNames);
+                } else { // indian
+                    if ($gender === 'male') {
+                        $firstName = $faker->randomElement($indianMaleNames);
+                    } else {
+                        $firstName = $faker->randomElement($indianFemaleNames);
+                    }
+                    $lastName = $faker->randomElement($indianLastNames);
+                }
+                
+                // Generate a birthdate for a child (between 4 and 17 years old)
+                $birthdate = $faker->dateTimeBetween('-17 years', '-4 years')->format('Y-m-d');
+                
+                // Select a random centre from the available centres
+                $centreName = $faker->randomElement($centres);
+                
+                // Create the trainee record
+                $trainee = new Trainees();
+                $trainee->trainee_first_name = $firstName;
+                $trainee->trainee_last_name = $lastName;
+                
+                // Email format depends on ethnicity
+                if ($ethnicity === 'malay') {
+                    // Malay typically use first name in email
+                    $trainee->trainee_email = strtolower($firstName) . mt_rand(1000, 9999) . '@gmail.com';
+                } else {
+                    // Chinese and Indian often use first name + last name
+                    $trainee->trainee_email = strtolower($firstName) . '.' . strtolower($lastName) . '@gmail.com';
+                }
+                
+                // Generate Malaysian mobile number format
+                $trainee->trainee_phone_number = '01' . $faker->numberBetween(0, 9) . '-' . $faker->numberBetween(1000000, 9999999);
+                
+                $trainee->trainee_date_of_birth = $birthdate;
+                $trainee->trainee_avatar = 'images/default-avatar.jpg'; // Default avatar
+                $trainee->trainee_attendance = $faker->numberBetween(0, 30);
+                $trainee->trainee_condition = $faker->randomElement($conditions);
+                $trainee->centre_name = $centreName;
+                
+                // Guardian information (typically parents)
+                // For Malay, use bin/binti for relationship
+                if ($ethnicity === 'malay') {
+                    $honorific = $gender === 'male' ? 'bin' : 'binti';
+                    // Extract father's name from last name if it has bin/binti
+                    if (strpos($lastName, 'bin') !== false || strpos($lastName, 'binti') !== false) {
+                        $fatherName = str_replace(['bin ', 'binti '], '', $lastName);
+                        $guardianFirstName = $faker->randomElement($malayMaleNames); // Father's name
+                        $guardianLastName = $fatherName;
+                    } else {
+                        $guardianFirstName = $faker->randomElement($malayMaleNames);
+                        $guardianLastName = $lastName;
+                    }
+                    
+                    // Typically, parent would be referenced as father/mother of child
+                    $guardianRelationship = $faker->randomElement(['Bapa', 'Ibu', 'Penjaga']);
+                } elseif ($ethnicity === 'chinese') {
+                    $guardianFirstName = $gender === 'male' ? $faker->randomElement($chineseMaleNames) : $faker->randomElement($chineseFemaleNames);
+                    $guardianLastName = $lastName; // Same family name
+                    $guardianRelationship = $faker->randomElement(['Father', 'Mother', 'Guardian']);
+                } else { // indian
+                    $guardianFirstName = $gender === 'male' ? $faker->randomElement($indianMaleNames) : $faker->randomElement($indianFemaleNames);
+                    $guardianLastName = $lastName;
+                    $guardianRelationship = $faker->randomElement(['Father', 'Mother', 'Guardian']);
+                }
+                
+                $trainee->guardian_name = $guardianFirstName . ' ' . $guardianLastName;
+                $trainee->guardian_relationship = $guardianRelationship;
+                
+                // Generate Malaysian mobile number format for guardian
+                $trainee->guardian_phone = '01' . $faker->numberBetween(0, 9) . '-' . $faker->numberBetween(1000000, 9999999);
+                
+                // Guardian email
+                if ($ethnicity === 'malay') {
+                    $trainee->guardian_email = strtolower($guardianFirstName) . mt_rand(1000, 9999) . '@gmail.com';
+                } else {
+                    $trainee->guardian_email = strtolower($guardianFirstName) . '.' . strtolower($guardianLastName) . '@gmail.com';
+                }
+                
+                // Malaysian address structure
+                $addressNum = $faker->buildingNumber();
+                $streetTypes = ['Jalan', 'Lorong', 'Persiaran', 'Lebuh'];
+                $streetNames = [
+                    'Merdeka', 'Bunga Raya', 'Melati', 'Mawar', 'Kenanga', 'Cempaka',
+                    'Sentosa', 'Harmoni', 'Damai', 'Setiawangsa', 'Perdana', 'Saujana',
+                    'Wawasan', 'Setia', 'Indah', 'Bistari', 'Bahagia', 'Sejahtera'
+                ];
+                
+                $taman = [
+                    'Taman', 'Bandar', 'Kampung', 'Desa'
+                ];
+                
+                $districts = [
+                    'Gombak', 'Petaling Jaya', 'Shah Alam', 'Ampang', 'Klang',
+                    'Kuantan', 'Temerloh', 'Bentong', 'Indera Mahkota', 'Gambang',
+                    'Batu Pahat', 'Pagoh', 'Muar', 'Kluang', 'Segamat'
+                ];
+                
+                $states = [
+                    'Selangor', 'Kuala Lumpur', 'Pahang', 'Johor', 'Perak', 'Pulau Pinang'
+                ];
+                
+                // Construct a Malaysian-style address
+                $tamanName = $faker->randomElement($taman) . ' ' . $faker->randomElement($streetNames);
+                $jalan = $faker->randomElement($streetTypes) . ' ' . $faker->randomElement($streetNames);
+                $district = $faker->randomElement($districts);
+                $state = $faker->randomElement($states);
+                $postcode = $faker->numberBetween(10000, 99999);
+                
+                $address = "No. $addressNum, $jalan,\n$tamanName,\n$postcode $district,\n$state, Malaysia";
+                
+                $trainee->guardian_address = $address;
+                
+                // Medical history with local context
+                $medicalHistories = [
+                    'Diagnosed with ' . $trainee->trainee_condition . ' at age ' . $faker->numberBetween(1, 5) . ' at Hospital ' . $faker->randomElement(['Kuala Lumpur', 'Selayang', 'Putrajaya', 'Sungai Buloh', 'Sultan Ahmad Shah', 'Tengku Ampuan Afzan']),
+                    'Regular check-ups at Klinik Kesihatan ' . $faker->randomElement(['Gombak', 'Kuantan', 'Pagoh', 'Ampang', 'Selayang', 'Petaling Jaya']),
+                    'Previously attended therapy sessions at ' . $faker->randomElement(['Hospital Rehabilitasi Cheras', 'Pusat Pemulihan PERKESO', 'National Autism Society of Malaysia (NASOM)', 'Malaysian Association for the Blind']),
+                    'No significant medical complications apart from the primary condition',
+                    'Allergic to ' . $faker->randomElement(['seafood', 'peanuts', 'eggs', 'milk', 'certain medications']),
+                    'Required hospitalization for ' . $faker->randomElement(['respiratory issues', 'seizures', 'surgery', 'infection']) . ' in ' . $faker->numberBetween(2018, 2022)
+                ];
+                
+                // Randomly select 1-3 items from medical histories and combine them
+                $selectedHistories = $faker->randomElements($medicalHistories, $faker->numberBetween(1, 3));
+                $trainee->medical_history = implode(". ", $selectedHistories);
+                
+                // Additional notes with local context
+                $additionalNotes = [
+                    'Requires assistance with ' . $faker->randomElement(['mobility', 'communication', 'self-care', 'social interaction']),
+                    'Prefers structured ' . $faker->randomElement(['routine', 'environment', 'learning sessions']),
+                    'Responds well to ' . $faker->randomElement(['music therapy', 'art therapy', 'physical activities', 'one-on-one attention']),
+                    'Shows interest in ' . $faker->randomElement(['drawing', 'music', 'computers', 'sports', 'reading']),
+                    'Previously attended ' . $faker->randomElement(['PPKI program', 'special education class', 'home-schooling']),
+                    'Parent is a member of ' . $faker->randomElement(['Persatuan Ibu Bapa Kanak-kanak Istimewa', 'Parent support group', 'Malaysian Rare Disorders Society']),
+                    'Sibling also attends ' . $faker->randomElement(['this center', 'another rehabilitation center', 'special education class'])
+                ];
+                
+                // Randomly select 0-2 items from additional notes
+                if ($faker->boolean(70)) { // 70% chance to have additional notes
+                    $selectedNotes = $faker->randomElements($additionalNotes, $faker->numberBetween(1, 2));
+                    $trainee->additional_notes = implode(". ", $selectedNotes);
+                }
+                
+                // Emergency contact (typically another family member)
+                if ($faker->boolean(70)) { // 70% chance to have emergency contact
+                    if ($ethnicity === 'malay') {
+                        // For Malay, could be other relatives with different surnames
+                        $emergencyRelationship = $faker->randomElement(['Pak Cik', 'Mak Cik', 'Nenek', 'Datuk', 'Abang', 'Kakak']);
+                        if ($faker->boolean(50)) { // 50% chance to be same last name
+                            $emergencyName = $faker->randomElement(array_merge($malayMaleNames, $malayFemaleNames)) . ' ' . $guardianLastName;
+                        } else {
+                            $emergencyName = $faker->randomElement(array_merge($malayMaleNames, $malayFemaleNames)) . ' ' . $faker->randomElement($malayLastNames);
+                        }
+                    } elseif ($ethnicity === 'chinese') {
+                        $emergencyRelationship = $faker->randomElement(['Uncle', 'Aunt', 'Grandfather', 'Grandmother', 'Elder Sibling']);
+                        // For Chinese, could be other relatives with different surnames
+                        if ($faker->boolean(50)) { // 50% chance to be same last name
+                            $emergencyName = $faker->randomElement(array_merge($chineseMaleNames, $chineseFemaleNames)) . ' ' . $lastName;
+                        } else {
+                            $emergencyName = $faker->randomElement(array_merge($chineseMaleNames, $chineseFemaleNames)) . ' ' . $faker->randomElement($chineseLastNames);
+                        }
+                    } else { // indian
+                        $emergencyRelationship = $faker->randomElement(['Uncle', 'Aunt', 'Grandfather', 'Grandmother', 'Elder Brother', 'Elder Sister']);
+                        // For Indian, could be other relatives with different surnames
+                        if ($faker->boolean(50)) { // 50% chance to be same last name
+                            $emergencyName = $faker->randomElement(array_merge($indianMaleNames, $indianFemaleNames)) . ' ' . $lastName;
+                        } else {
+                            $emergencyName = $faker->randomElement(array_merge($indianMaleNames, $indianFemaleNames)) . ' ' . $faker->randomElement($indianLastNames);
+                        }
+                    }
+                    
+                    $trainee->emergency_contact_name = $emergencyName;
+                    $trainee->emergency_contact_phone = '01' . $faker->numberBetween(0, 9) . '-' . $faker->numberBetween(1000000, 9999999);
+                    $trainee->emergency_contact_relationship = $emergencyRelationship;
+                }
+                
+                // IMPORTANT: Set created_at with proper format and with some variation in dates
+                // This is critical for the "New Trainees (30 days)" counter to work
+                $createdDate = null;
+                
+                // Ensure some trainees are created within the last 30 days (for the counter to work)
+                if ($i <= 10) { // First half of trainees
+                    // Created between 31-180 days ago (older trainees)
+                    $createdDate = $faker->dateTimeBetween('-180 days', '-31 days')->format('Y-m-d H:i:s');
+                } else { // Second half of trainees
+                    // Created within the last 30 days (newer trainees)
+                    $createdDate = $faker->dateTimeBetween('-30 days', 'now')->format('Y-m-d H:i:s');
+                }
+                
+                // Set the timestamps explicitly
+                $trainee->created_at = $createdDate;
+                $trainee->updated_at = $faker->dateTimeBetween($createdDate, 'now')->format('Y-m-d H:i:s');
+                
+                // Save the trainee
+                $trainee->save();
+                
+                $this->command->info("Created trainee: {$firstName} {$lastName} at {$centreName} (Created: {$createdDate})");
+            }
+            
+            $this->command->info('Trainees seeding completed successfully!');
+            
+        } catch (\Exception $e) {
+            // Make sure to re-enable foreign key checks even if there's an error
+            DB::statement('SET FOREIGN_KEY_CHECKS=1');
+            
+            $this->command->error('Error seeding trainees: ' . $e->getMessage());
+            throw $e;
+        }
+    }
+}
+
+UsersSeeder
+
+<?php
+
+namespace Database\Seeders;
+
+use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
+use App\Models\Users;
+use App\Models\Centres;
+
+class UsersSeeder extends Seeder
+{
+    /**
+     * Store used emails to prevent duplicates
+     * 
+     * @var array
+     */
+    private $usedEmails = [];
+    
+    /**
+     * Run the database seeds.
+     */
+    public function run(): void
+    {
+        // Fix existing users with wrong roles and wrong gender markers
+        $this->fixExistingUsers();
+        
+        // First, ensure we have the centers
+        $this->createCentres();
+        
+        // Create specific role-based users for each center
+        $this->command->info('Creating role-based users for each centre...');
+        $this->createUsersForCentre('04', 'Pagoh');
+        $this->createUsersForCentre('02', 'Kuantan');
+        $this->createUsersForCentre('03', 'Gambang');
+        $this->createUsersForCentre('01', 'Gombak');
+        
+        // Store all existing emails to prevent duplicates
+        $this->usedEmails = DB::table('users')->pluck('email')->toArray();
+        
+        // Now create additional diverse users across centers
+        $this->createDiverseUsers();
+        
+        // Verify final distribution
+        $this->verifyDistribution();
+        
+        $this->command->info('All users created successfully!');
+    }
+    
+    /**
+     * Create the required centers if they don't exist
+     */
+    private function createCentres(): void
+    {
+        $centres = [
+            [
+                'centre_id' => '01',
+                'centre_name' => 'Gombak',
+                'centre_status' => 'active',
+                'status' => 'active'
+            ],
+            [
+                'centre_id' => '02',
+                'centre_name' => 'Kuantan',
+                'centre_status' => 'active',
+                'status' => 'active'
+            ],
+            [
+                'centre_id' => '03',
+                'centre_name' => 'Gambang',
+                'centre_status' => 'active',
+                'status' => 'active'
+            ],
+            [
+                'centre_id' => '04',
+                'centre_name' => 'Pagoh',
+                'centre_status' => 'active',
+                'status' => 'active'
+            ]
+        ];
+        
+        foreach ($centres as $centre) {
+            Centres::updateOrCreate(
+                ['centre_id' => $centre['centre_id']],
+                $centre
+            );
+        }
+        
+        $this->command->info('Centers created: Gombak, Kuantan, Gambang, and Pagoh');
+    }
+    
+    /**
+     * Create users for a specific center with different roles
+     * 
+     * @param string $centreId The centre ID
+     * @param string $centreName The centre name
+     */
+    private function createUsersForCentre(string $centreId, string $centreName): void
+    {
+        // Create 1 admin
+        $this->createAdminForCentre($centreId, $centreName);
+        
+        // Create 2 supervisors
+        $this->createSupervisorsForCentre($centreId, $centreName, 2);
+        
+        // Create 3 AJKs
+        $this->createAJKsForCentre($centreId, $centreName, 3);
+        
+        // Create 5 teachers
+        $this->createTeachersForCentre($centreId, $centreName, 5);
+    }
+    
+    /**
+     * Create an admin for a center
+     */
+    private function createAdminForCentre(string $centreId, string $centreName): void
+    {
+        $maleNames = [
+            'Ahmad Razali',
+            'Mohd Hafiz',
+            'Muhammad Rizwan',
+            'Khairul Anuar',
+        ];
+        
+        $lastNames = [
+            'Abdullah',
+            'Ibrahim',
+            'Ismail',
+            'Othman',
+            'Bakar'
+        ];
+        
+        $firstName = $maleNames[array_rand($maleNames)];
+        $lastName = $lastNames[array_rand($lastNames)];
+        $name = $firstName . ' bin ' . $lastName;
+        $nameParts = explode(' ', $firstName);
+        
+        // Generate IIUM ID: 4 numbers followed by 4 alphabets
+        $numericPart = str_pad(mt_rand(1000, 9999), 4, '0', STR_PAD_LEFT);
+        $alphabetPart = strtoupper(substr(str_shuffle('ABCDEFGHIJKLMNOPQRSTUVWXYZ'), 0, 4));
+        $iiumId = $numericPart . $alphabetPart;
+        
+        $email = strtolower(str_replace(' ', '.', $nameParts[0])) . '.' . $centreId . '@iium.edu.my';
+        
+        Users::updateOrCreate(
+            ['email' => $email],
+            [
+                'iium_id' => $iiumId,
+                'name' => $name,
+                'email' => $email,
+                'password' => Hash::make('password123'),
+                'role' => 'admin',
+                'centre_id' => $centreId,
+                'status' => 'active'
+            ]
+        );
+        
+        $this->command->info("Created Admin for $centreName: $name ($email)");
+    }
+    
+    /**
+     * Create supervisors for a center
+     */
+    private function createSupervisorsForCentre(string $centreId, string $centreName, int $count): void
+    {
+        $femaleNames = [
+            'Noraziah',
+            'Nurul Huda',
+            'Fatimah',
+            'Siti Aisyah',
+            'Nur Syafiqah',
+        ];
+        
+        $maleNames = [
+            'Zulkifli',
+            'Ismail',
+            'Kamaruddin',
+            'Ahmad Firdaus',
+            'Muhammad Zikri',
+        ];
+        
+        $lastNames = [
+            'Hassan',
+            'Othman',
+            'Mohd Yusof',
+            'Abdullah',
+            'Zainuddin',
+            'Ahmad',
+        ];
+        
+        for ($i = 0; $i < $count; $i++) {
+            // Alternate between male and female names
+            if ($i % 2 == 0) {
+                $firstName = $maleNames[array_rand($maleNames)];
+                $gender = 'bin';
+            } else {
+                $firstName = $femaleNames[array_rand($femaleNames)];
+                $gender = 'binti';
+            }
+            
+            $lastName = $lastNames[array_rand($lastNames)];
+            $name = $firstName . ' ' . $gender . ' ' . $lastName;
+            
+            // Generate IIUM ID: 4 numbers followed by 4 alphabets
+            $numericPart = str_pad(mt_rand(1000, 9999), 4, '0', STR_PAD_LEFT);
+            $alphabetPart = strtoupper(substr(str_shuffle('ABCDEFGHIJKLMNOPQRSTUVWXYZ'), 0, 4));
+            $iiumId = $numericPart . $alphabetPart;
+            
+            $email = strtolower(str_replace(' ', '.', $firstName)) . '.' . $centreId . '.' . ($i + 1) . '@iium.edu.my';
+            
+            Users::updateOrCreate(
+                ['email' => $email],
+                [
+                    'iium_id' => $iiumId,
+                    'name' => $name,
+                    'email' => $email,
+                    'password' => Hash::make('password123'),
+                    'role' => 'supervisor',
+                    'centre_id' => $centreId,
+                    'status' => 'active'
+                ]
+            );
+            
+            $this->command->info("Created Supervisor for $centreName: $name ($email)");
+        }
+    }
+    
+    /**
+     * Create AJKs for a center
+     */
+    private function createAJKsForCentre(string $centreId, string $centreName, int $count): void
+    {
+        $femaleNames = [
+            'Amirah',
+            'Siti Aishah',
+            'Noraini',
+            'Zainab',
+            'Nurul Ain',
+            'Azlina',
+        ];
+        
+        $maleNames = [
+            'Mohd Faizal',
+            'Azman',
+            'Rosli',
+            'Ahmad Firdaus',
+            'Zainal',
+            'Anuar',
+        ];
+        
+        $lastNames = [
+            'Hamid',
+            'Razak',
+            'Mahmud',
+            'Mohd Noor',
+            'Ismail',
+            'Abdul Rahman',
+            'Mohamad',
+        ];
+        
+        for ($i = 0; $i < $count; $i++) {
+            // Alternate between male and female names with more females (2:1 ratio)
+            if ($i % 3 == 0 || $i % 3 == 1) {
+                $firstName = $femaleNames[array_rand($femaleNames)];
+                $gender = 'binti';
+            } else {
+                $firstName = $maleNames[array_rand($maleNames)];
+                $gender = 'bin';
+            }
+            
+            $lastName = $lastNames[array_rand($lastNames)];
+            $name = $firstName . ' ' . $gender . ' ' . $lastName;
+            
+            // Generate IIUM ID: 4 numbers followed by 4 alphabets
+            $numericPart = str_pad(mt_rand(1000, 9999), 4, '0', STR_PAD_LEFT);
+            $alphabetPart = strtoupper(substr(str_shuffle('ABCDEFGHIJKLMNOPQRSTUVWXYZ'), 0, 4));
+            $iiumId = $numericPart . $alphabetPart;
+            
+            $email = strtolower(str_replace(' ', '.', $firstName)) . '.ajk.' . $centreId . '.' . ($i + 1) . '@iium.edu.my';
+            
+            Users::updateOrCreate(
+                ['email' => $email],
+                [
+                    'iium_id' => $iiumId,
+                    'name' => $name,
+                    'email' => $email,
+                    'password' => Hash::make('password123'),
+                    'role' => 'ajk',
+                    'centre_id' => $centreId,
+                    'status' => 'active'
+                ]
+            );
+            
+            $this->command->info("Created AJK for $centreName: $name ($email)");
+        }
+    }
+    
+    /**
+     * Create teachers for a center
+     */
+    private function createTeachersForCentre(string $centreId, string $centreName, int $count): void
+    {
+        $femaleNames = [
+            'Nurul Ain',
+            'Azlina',
+            'Siti Noor',
+            'Faridah',
+            'Rosnah',
+            'Halimah',
+            'Nur Hidayah',
+        ];
+        
+        $maleNames = [
+            'Mohd Rizal',
+            'Ahmad Firdaus',
+            'Zainal',
+            'Mohd Hafiz',
+            'Khairul Anuar',
+            'Muhammad Imran',
+            'Azizi',
+        ];
+        
+        $lastNames = [
+            'Muhammad',
+            'Hamzah',
+            'Mohd Yusof',
+            'Omar',
+            'Abdul Aziz',
+            'Abidin',
+            'Ismail',
+            'Ibrahim',
+            'Abdul Hamid',
+            'Bakar',
+        ];
+        
+        for ($i = 0; $i < $count; $i++) {
+            // Balanced gender distribution
+            if ($i % 2 == 0) {
+                $firstName = $maleNames[array_rand($maleNames)];
+                $gender = 'bin';
+            } else {
+                $firstName = $femaleNames[array_rand($femaleNames)];
+                $gender = 'binti';
+            }
+            
+            $lastName = $lastNames[array_rand($lastNames)];
+            $name = $firstName . ' ' . $gender . ' ' . $lastName;
+            
+            // Generate IIUM ID: 4 numbers followed by 4 alphabets
+            $numericPart = str_pad(mt_rand(1000, 9999), 4, '0', STR_PAD_LEFT);
+            $alphabetPart = strtoupper(substr(str_shuffle('ABCDEFGHIJKLMNOPQRSTUVWXYZ'), 0, 4));
+            $iiumId = $numericPart . $alphabetPart;
+            
+            $email = strtolower(str_replace(' ', '.', $firstName)) . '.teacher.' . $centreId . '.' . ($i + 1) . '@iium.edu.my';
+            
+            Users::updateOrCreate(
+                ['email' => $email],
+                [
+                    'iium_id' => $iiumId,
+                    'name' => $name,
+                    'email' => $email,
+                    'password' => Hash::make('password123'),
+                    'role' => 'teacher',
+                    'centre_id' => $centreId,
+                    'status' => 'active'
+                ]
+            );
+            
+            $this->command->info("Created Teacher for $centreName: $name ($email)");
+        }
+    }
+    
+    /**
+     * Create additional diverse users across centres
+     */
+    private function createDiverseUsers(): void
+    {
+        $this->command->info("\nCreating additional diverse users across centres...");
+        
+        // Get all active centres
+        $centres = Centres::where('centre_status', 'active')->get(['centre_id', 'centre_name']);
+        
+        // Define number of additional users to create
+        $totalUsersToCreate = 60; // Adjust as needed
+        
+        // Distribution percentages across centers
+        $distribution = [
+            '01' => 28, // Gombak - 28%
+            '02' => 26, // Kuantan - 26% 
+            '03' => 24, // Gambang - 24%
+            '04' => 22, // Pagoh - 22%
+        ];
+        
+        // Calculate exact numbers
+        $userCounts = [];
+        $remainingUsers = $totalUsersToCreate;
+        
+        foreach ($distribution as $centreId => $percentage) {
+            if (array_search($centreId, $centres->pluck('centre_id')->toArray()) === false) {
+                // Skip if centre doesn't exist
+                continue;
+            }
+            
+            $count = floor($totalUsersToCreate * ($percentage / 100));
+            $userCounts[$centreId] = $count;
+            $remainingUsers -= $count;
+        }
+        
+        // Distribute any remaining users to the first centre
+        if ($remainingUsers > 0) {
+            $firstCentreId = $centres->first()->centre_id;
+            $userCounts[$firstCentreId] += $remainingUsers;
+        }
+        
+        // Define role distribution
+        $roleDistribution = [
+            'admin' => 5,      // 5%
+            'supervisor' => 10, // 10%
+            'ajk' => 25,       // 25%
+            'teacher' => 60     // 60% (remainder)
+        ];
+        
+        // Create the users for each centre
+        foreach ($userCounts as $centreId => $count) {
+            $centreName = $centres->where('centre_id', $centreId)->first()->centre_name;
+            
+            $this->command->info("Creating {$count} additional diverse users for {$centreName} (ID: {$centreId})");
+            
+            // Calculate role counts for this centre
+            $adminCount = max(1, round($count * ($roleDistribution['admin'] / 100)));
+            $supervisorCount = max(1, round($count * ($roleDistribution['supervisor'] / 100)));
+            $ajkCount = max(1, round($count * ($roleDistribution['ajk'] / 100)));
+            
+            // Ensure we don't exceed total count
+            $teacherCount = $count - ($adminCount + $supervisorCount + $ajkCount);
+            
+            // Combined count array
+            $roleCounts = [
+                'admin' => $adminCount,
+                'supervisor' => $supervisorCount,
+                'ajk' => $ajkCount,
+                'teacher' => $teacherCount
+            ];
+            
+            $this->command->info("  Role breakdown: Admin: $adminCount, Supervisor: $supervisorCount, AJK: $ajkCount, Teacher: $teacherCount");
+            
+            // Create users for each role
+            foreach ($roleCounts as $role => $roleCount) {
+                for ($i = 0; $i < $roleCount; $i++) {
+                    // Determine gender - approx 50/50 split
+                    $isMale = (rand(0, 1) == 1);
+                    
+                    // Get first name based on gender
+                    $firstName = $isMale ? $this->getRandomMalayMaleName() : $this->getRandomMalayFemaleName();
+                    $lastName = $this->getRandomMalayLastName();
+                    $gender = $isMale ? 'bin' : 'binti';
+                    $name = $firstName . ' ' . $gender . ' ' . $lastName;
+                    
+                    // Generate IIUM ID: 4 numbers followed by 4 alphabets
+                    $numericPart = str_pad(mt_rand(1000, 9999), 4, '0', STR_PAD_LEFT);
+                    $alphabetPart = strtoupper(substr(str_shuffle('ABCDEFGHIJKLMNOPQRSTUVWXYZ'), 0, 4));
+                    $iiumId = $numericPart . $alphabetPart;
+                    
+                    // Generate a guaranteed unique email by including timestamp and random string
+                    $uniqueSuffix = time() . rand(1000, 9999);
+                    $email = strtolower(str_replace(' ', '.', $firstName)) . '.' . 
+                             strtolower($lastName) . '.' . 
+                             $centreId . '.' . 
+                             $uniqueSuffix . '@iium.edu.my';
+                    
+                    Users::create([
+                        'iium_id' => $iiumId,
+                        'name' => $name,
+                        'email' => $email,
+                        'password' => Hash::make('password123'),
+                        'role' => $role,
+                        'centre_id' => $centreId,
+                        'status' => 'active'
+                    ]);
+                }
+            }
+        }
+    }
+    
+    /**
+     * Get a random Malay male name
+     * 
+     * @return string
+     */
+    private function getRandomMalayMaleName(): string
+    {
+        $malayMaleNames = [
+            'Ahmad', 'Muhammad', 'Ali', 'Hassan', 'Ibrahim', 'Ismail', 'Osman',
+            'Yusof', 'Abdullah', 'Othman', 'Razak', 'Hamid', 'Aziz', 'Bakar',
+            'Karim', 'Rahman', 'Salleh', 'Zain', 'Nasir', 'Malik', 'Anwar', 'Hasan',
+            'Mohd Rizal', 'Azman', 'Rosli', 'Zainal', 'Khairul', 'Imran', 'Azizi',
+            'Firdaus', 'Hafiz', 'Zikri', 'Amirul', 'Syafiq', 'Izzat', 'Faizal'
+        ];
+        
+        return $malayMaleNames[array_rand($malayMaleNames)];
+    }
+    
+    /**
+     * Get a random Malay female name
+     * 
+     * @return string
+     */
+    private function getRandomMalayFemaleName(): string
+    {
+        $malayFemaleNames = [
+            'Nurul', 'Siti', 'Fatimah', 'Aisha', 'Noraini', 'Zainab', 'Mariam',
+            'Hafsah', 'Aminah', 'Faridah', 'Azlina', 'Noor', 'Rosnah', 'Halimah',
+            'Ramlah', 'Saadiah', 'Zarina', 'Sharifah', 'Khadijah', 'Maimunah',
+            'Nur Syafiqah', 'Aisyah', 'Hidayah', 'Suhaila', 'Nadia', 'Amirah',
+            'Hani', 'Farah', 'Najwa', 'Syahirah', 'Adibah', 'Afiqah', 'Aliya'
+        ];
+        
+        return $malayFemaleNames[array_rand($malayFemaleNames)];
+    }
+    
+    /**
+     * Get a random Malay last name
+     * 
+     * @return string
+     */
+    private function getRandomMalayLastName(): string
+    {
+        $malayLastNames = [
+            'Ahmad', 'Muhammad', 'Ibrahim', 'Ismail', 'Abdullah', 'Othman', 
+            'Abdul Rahman', 'Abdul Aziz', 'Mohd Yusof', 'Abdul Hamid', 'Bakar',
+            'Hassan', 'Razak', 'Omar', 'Mohamad', 'Mahmud', 'Abdul Rahim',
+            'Hashim', 'Jamaluddin', 'Sulaiman', 'Hamzah', 'Mohd Noor', 'Yusoff',
+            'Idris', 'Yaakob', 'Mustafa', 'Abu Bakar', 'Zainal Abidin'
+        ];
+        
+        return $malayLastNames[array_rand($malayLastNames)];
+    }
+    
+    /**
+     * Fix existing users with wrong roles and bin/binti issues
+     */
+    private function fixExistingUsers(): void
+    {
+        $this->command->info('Starting to fix existing users...');
+        
+        // 1. Fix incorrect roles
+        $wrongRolesCount = DB::table('users')
+            ->whereNotIn('role', ['admin', 'supervisor', 'ajk', 'teacher'])
+            ->count();
+        
+        if ($wrongRolesCount > 0) {
+            $this->command->info("Found $wrongRolesCount users with incorrect roles to fix.");
+            
+            // Get the list of users with incorrect roles
+            $usersToFix = DB::table('users')
+                ->whereNotIn('role', ['admin', 'supervisor', 'ajk', 'teacher'])
+                ->get();
+            
+            // Get counts for proper distribution
+            $totalCount = $usersToFix->count();
+            $adminCount = max(1, round($totalCount * 0.05)); // 5%
+            $supervisorCount = max(1, round($totalCount * 0.10)); // 10%
+            $ajkCount = max(1, round($totalCount * 0.25)); // 25%
+            $teacherCount = $totalCount - ($adminCount + $supervisorCount + $ajkCount); // remainder
+            
+            $this->command->info("  Role distribution plan: Admin: $adminCount, Supervisor: $supervisorCount, AJK: $ajkCount, Teacher: $teacherCount");
+            
+            // Update roles according to the distribution
+            $counter = 0;
+            foreach ($usersToFix as $user) {
+                $newRole = 'teacher'; // Default to teacher
+                
+                if ($counter < $adminCount) {
+                    $newRole = 'admin';
+                } elseif ($counter < ($adminCount + $supervisorCount)) {
+                    $newRole = 'supervisor';
+                } elseif ($counter < ($adminCount + $supervisorCount + $ajkCount)) {
+                    $newRole = 'ajk';
+                }
+                
+                DB::table('users')
+                    ->where('id', $user->id)
+                    ->update(['role' => $newRole]);
+                
+                $counter++;
+            }
+            
+            $this->command->info("Fixed roles for $wrongRolesCount users.");
+        } else {
+            $this->command->info("No users with incorrect roles found.");
+        }
+        
+        // 2. Fix bin/binti issues
+        $invalidGenderCount = DB::table('users')
+            ->where('name', 'like', '% bin/binti %')
+            ->count();
+        
+        if ($invalidGenderCount > 0) {
+            $this->command->info("Found $invalidGenderCount users with 'bin/binti' in their names that need to be fixed.");
+            
+            // Get the list of users with bin/binti issues
+            $usersWithGenderIssues = DB::table('users')
+                ->where('name', 'like', '% bin/binti %')
+                ->get();
+            
+            foreach ($usersWithGenderIssues as $user) {
+                // Get the name parts
+                $nameParts = explode(' bin/binti ', $user->name);
+                
+                if (count($nameParts) < 2) {
+                    continue; // Skip if we can't parse the name properly
+                }
+                
+                $firstName = $nameParts[0];
+                $lastName = $nameParts[1];
+                
+                // Determine gender based on first name
+                // This is an approximation - we check if it contains common female name patterns
+                $isMale = true; // Default to male
+                $femalePrefixes = ['nurul', 'siti', 'nur', 'aisha', 'fatimah', 'noraini', 'zainab', 'mariam', 'faridah', 'azlina'];
+                
+                foreach ($femalePrefixes as $prefix) {
+                    if (stripos($firstName, $prefix) !== false) {
+                        $isMale = false;
+                        break;
+                    }
+                }
+                
+                // Build the corrected name
+                $gender = $isMale ? 'bin' : 'binti';
+                $correctedName = $firstName . ' ' . $gender . ' ' . $lastName;
+                
+                // Update the name
+                DB::table('users')
+                    ->where('id', $user->id)
+                    ->update(['name' => $correctedName]);
+                
+                $this->command->info("  Fixed name: {$user->name} → {$correctedName}");
+            }
+            
+            $this->command->info("Fixed bin/binti issues for $invalidGenderCount users.");
+        } else {
+            $this->command->info("No users with bin/binti issues found.");
+        }
+        
+        $this->command->info('User fixes completed!');
+    }
+    
+    /**
+     * Verify the distribution of users across centres
+     */
+    private function verifyDistribution(): void
+    {
+        $this->command->info("\nFinal user distribution across centres:");
+        
+        $stats = DB::table('users')
+            ->select('centre_id', DB::raw('count(*) as count'))
+            ->groupBy('centre_id')
+            ->orderBy('centre_id')
+            ->get();
+            
+        foreach ($stats as $stat) {
+            $centreName = Centres::where('centre_id', $stat->centre_id)->first()->centre_name ?? 'Unknown';
+            $this->command->info("- {$centreName} (ID: {$stat->centre_id}): {$stat->count} users");
+        }
+        
+        $this->command->info("\nRole distribution:");
+        $roleStats = DB::table('users')
+            ->select('role', DB::raw('count(*) as count'))
+            ->groupBy('role')
+            ->orderBy('count', 'desc')
+            ->get();
+            
+        foreach ($roleStats as $stat) {
+            $percentage = round(($stat->count / DB::table('users')->count()) * 100, 2);
+            $this->command->info("- {$stat->role}: {$stat->count} users ({$percentage}%)");
+        }
+        
+        $this->command->info("\nGender distribution:");
+        $maleCount = DB::table('users')->where('name', 'like', '% bin %')->count();
+        $femaleCount = DB::table('users')->where('name', 'like', '% binti %')->count();
+        $totalCount = $maleCount + $femaleCount;
+        
+        $malePercentage = $totalCount > 0 ? round(($maleCount / $totalCount) * 100, 2) : 0;
+        $femalePercentage = $totalCount > 0 ? round(($femaleCount / $totalCount) * 100, 2) : 0;
+        
+        $this->command->info("- Male (bin): {$maleCount} users ({$malePercentage}%)");
+        $this->command->info("- Female (binti): {$femaleCount} users ({$femalePercentage}%)");
+        
+        $this->command->info("\nTotal users: " . DB::table('users')->count());
+    }
+}
