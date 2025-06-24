@@ -808,6 +808,7 @@
                     <div class="tooltip-sidebar">Trainees</div>
                 </a>
             </li>
+            @if(Route::has('traineeactivity'))
             <li class="{{ request()->routeIs('traineeactivity') ? 'active' : '' }}">
                 <a href="{{ route('traineeactivity') }}">
                     <i class="fas fa-clipboard-list"></i>
@@ -815,6 +816,15 @@
                     <div class="tooltip-sidebar">Trainee Activities</div>
                 </a>
             </li>
+            @else
+            <li class="{{ request()->routeIs('activities.*') ? 'active' : '' }}">
+                <a href="{{ route('activities.index') }}">
+                    <i class="fas fa-clipboard-list"></i>
+                    <span>Activities</span>
+                    <div class="tooltip-sidebar">Activities</div>
+                </a>
+            </li>
+            @endif
             <li class="{{ request()->routeIs('teachershome') ? 'active' : '' }}">
                 <a href="{{ route('teachershome') }}">
                     <i class="fas fa-chalkboard-teacher"></i>

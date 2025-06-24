@@ -57,7 +57,11 @@
                   
                </div>
             </div>
-            <a href="/traineeactivity" class="inline-btn">View Activity</a>
+            @if(Route::has('traineeactivity'))
+                <a href="{{ route('traineeactivity') }}" class="inline-btn">View Activity</a>
+            @else
+                <a href="{{ route('activities.index') }}" class="inline-btn">View Activities</a>
+            @endif
          </div>
    
          <div class="box">
