@@ -25,7 +25,6 @@ use App\Http\Controllers\AJKController;
 use App\Http\Controllers\TraineeHomeController;
 use App\Http\Controllers\TraineeProfileController;
 use App\Http\Controllers\TraineeRegistrationController;
-use App\Http\Controllers\TraineeActivityController;
 use App\Http\Controllers\TraineeManagementController;
 
 // Activity and Resource Controllers
@@ -79,27 +78,21 @@ Route::get('/trademark', function () {
 */
 
 Route::middleware('guest')->group(function () {
-    // Login routes (maintain both old and new patterns)
+    // Login routes
     Route::get('/auth/login', [MainController::class, 'login'])->name('auth.loginpage');
     Route::get('/login', [MainController::class, 'login'])->name('login');
     Route::post('/auth/check', [MainController::class, 'check'])->name('auth.check');
-    Route::post('/loginuser', [MainController::class, 'check'])->name('loginuser');
 
     // Registration routes
     Route::get('/auth/register', [MainController::class, 'registration'])->name('auth.registerpage');
     Route::get('/registration', [MainController::class, 'registration'])->name('registration');
     Route::post('/auth/save', [MainController::class, 'save'])->name('auth.save');
-    Route::post('/registeruser', [MainController::class, 'save'])->name('registeruser');
 
     // Password reset routes
-    Route::get('/forgot-password', [ForgotPasswordController::class, 'showForgotPasswordForm'])
-        ->name('auth.forgotpassword')->name('password.request');
-    Route::post('/forgot-password', [ForgotPasswordController::class, 'submitForgotPasswordForm'])
-        ->name('auth.processforgotpassword')->name('password.email');
-    Route::get('/reset-password/{token}', [ForgotPasswordController::class, 'showResetPasswordForm'])
-        ->name('auth.resetpassword')->name('password.reset');
-    Route::post('/reset-password', [ForgotPasswordController::class, 'submitResetPasswordForm'])
-        ->name('auth.updatepassword')->name('password.update');
+    Route::get('/forgot-password', [ForgotPasswordController::class, 'showForgotPasswordForm'])->name('password.request');
+    Route::post('/forgot-password', [ForgotPasswordController::class, 'submitForgotPasswordForm'])->name('password.email');
+    Route::get('/reset-password/{token}', [ForgotPasswordController::class, 'showResetPasswordForm'])->name('password.reset');
+    Route::post('/reset-password', [ForgotPasswordController::class, 'submitResetPasswordForm'])->name('password.update');
 });
 
 // Logout routes
@@ -110,7 +103,7 @@ Route::middleware(['auth'])->group(function () {
 
 /*
 |--------------------------------------------------------------------------
-| COMMON AUTHENTICATED ROUTES (Available to All Staff Roles)
+| COMMON AUTHENTICATED ROUTES (Available to All Logged-in Users)
 |--------------------------------------------------------------------------
 */
 
@@ -118,21 +111,7 @@ Route::middleware(['auth'])->group(function () {
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     
-    // Dashboard API routes
-    Route::prefix('dashboard/api')->name('dashboard.')->group(function () {
-        Route::get('/refresh', [DashboardController::class, 'refresh'])->name('refresh');
-        Route::get('/stats', [DashboardController::class, 'getStats'])->name('stats');
-        Route::get('/charts', [DashboardController::class, 'getCharts'])->name('charts');
-        Route::get('/notifications', [DashboardController::class, 'getNotifications'])->name('notifications');
-        Route::post('/customize', [DashboardController::class, 'saveCustomization'])->name('customize');
-        Route::post('/clear-cache', [DashboardController::class, 'clearCache'])->name('clear-cache');
-        Route::get('/health', [DashboardController::class, 'health'])->name('health');
-    });
-    
-    // Search functionality
-    Route::get('/search', [MainController::class, 'search'])->name('search');
-
-    // Profile management (unified for all staff)
+    // Profile management
     Route::prefix('profile')->name('profile.')->group(function () {
         Route::get('/', [UserProfileController::class, 'showProfile'])->name('show');
         Route::post('/update', [UserProfileController::class, 'updateProfile'])->name('update');
@@ -140,12 +119,8 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/upload-avatar', [UserProfileController::class, 'uploadAvatar'])->name('avatar');
     });
 
-    // Legacy profile route
-    Route::get('/profile', [UserProfileController::class, 'showProfile'])->name('profile');
-
-    // Activity Management (Enhanced Structure)
+    // Activity Management
     Route::prefix('activities')->name('activities.')->group(function () {
-        // Common routes for all authenticated users
         Route::get('/', [ActivityController::class, 'index'])->name('index');
         Route::get('/{id}', [ActivityController::class, 'show'])->name('show');
         
@@ -160,101 +135,53 @@ Route::middleware(['auth'])->group(function () {
             Route::post('/{id}/sessions', [ActivityController::class, 'createSession'])->name('sessions.create');
         });
         
-        // Teacher routes (can mark attendance for their sessions)
+        // Teacher routes
         Route::middleware(['role:teacher,admin,supervisor'])->group(function () {
             Route::get('/{activityId}/sessions/{sessionId}/attendance', [ActivityController::class, 'markAttendance'])->name('attendance');
             Route::post('/{activityId}/sessions/{sessionId}/attendance', [ActivityController::class, 'storeAttendance'])->name('attendance.store');
             Route::get('/{activityId}/sessions/{sessionId}/enrollments', [ActivityController::class, 'manageEnrollments'])->name('enrollments');
             Route::post('/{activityId}/sessions/{sessionId}/enroll', [ActivityController::class, 'enrollTrainees'])->name('enroll');
         });
-
-        // Activity participation
-        Route::post('/{id}/register', [ActivityController::class, 'registerParticipation'])->name('register');
-        Route::delete('/{id}/unregister', [ActivityController::class, 'unregisterParticipation'])->name('unregister');
     });
-
-    // Legacy activity routes (backward compatibility)
-    Route::get('/sessions/{id}/attendance', [ActivityController::class, 'markAttendance'])->name('sessions.attendance');
-    Route::post('/sessions/{id}/attendance', [ActivityController::class, 'storeAttendance'])->name('sessions.attendance.store');
 
     // Rehabilitation Routes
     Route::prefix('rehabilitation')->name('rehabilitation.')->group(function () {
         Route::get('/categories', [ActivityController::class, 'categories'])->name('categories');
         Route::get('/categories/{category}', [ActivityController::class, 'categoryShow'])->name('categories.show');
-        
-        Route::middleware(['role:admin,supervisor'])->group(function () {
-            Route::get('/activities/create', [ActivityController::class, 'createActivity'])->name('activities.create');
-            Route::post('/activities', [ActivityController::class, 'storeActivity'])->name('activities.store');
-            Route::get('/activities/{id}/edit', [ActivityController::class, 'editActivity'])->name('activities.edit');
-            Route::put('/activities/{id}', [ActivityController::class, 'updateActivity'])->name('activities.update');
-            Route::delete('/activities/{id}', [ActivityController::class, 'destroyActivity'])->name('activities.destroy');
-        });
-        
-        Route::get('/activities/{id}', [ActivityController::class, 'showActivity'])->name('activities.show');
     });
 
-    // Teachers Directory (centralized staff directory)
+    // Teachers/Staff Directory
     Route::get('/teachershome', [TeachersHomeController::class, 'index'])->name('teachershome');
-    Route::get('/updateuserprofile/{id}', [TeachersHomeController::class, 'updateuserpage'])->name('updateuser');
-    Route::post('/updateuser/{id}', [TeachersHomeController::class, 'updateuser'])->name('updateuserpost');
 
-    // Centres (common access)
+    // Centres
     Route::prefix('centres')->name('centres.')->group(function () {
         Route::get('/', [CentreController::class, 'index'])->name('index');
-        Route::get('/{id}', [CentreController::class, 'show'])->name('view')->name('show');
+        Route::get('/{id}', [CentreController::class, 'show'])->name('show');
         Route::get('/{id}/assets', [CentreController::class, 'assets'])->name('assets');
     });
 
-    // Legacy centre routes
-    Route::get('/centres', [CentreController::class, 'index'])->name('centres');
+    // Assets
+    Route::prefix('assets')->name('assets.')->group(function () {
+        Route::get('/', [AssetController::class, 'index'])->name('index');
+        Route::get('/{id}', [AssetController::class, 'show'])->name('show');
+    });
 
-    // Message System
+    // Messages
     Route::prefix('messages')->name('messages.')->group(function () {
         Route::get('/', [MessageController::class, 'index'])->name('index');
         Route::get('/create', [MessageController::class, 'create'])->name('create');
         Route::post('/', [MessageController::class, 'store'])->name('store');
         Route::get('/{id}', [MessageController::class, 'show'])->name('show');
-        Route::get('/{id}/reply', [MessageController::class, 'reply'])->name('reply');
-        Route::post('/{id}/mark-read', [MessageController::class, 'markAsRead'])->name('mark-read');
-        Route::post('/mark-all-read', [MessageController::class, 'markAllAsRead'])->name('mark-all-read');
         Route::delete('/{id}', [MessageController::class, 'destroy'])->name('destroy');
     });
 
-    // Notification System
+    // Notifications
     Route::prefix('notifications')->name('notifications.')->group(function () {
         Route::get('/', [NotificationController::class, 'index'])->name('index');
-        Route::get('/unread', [NotificationController::class, 'getUnread'])->name('unread');
         Route::get('/{id}', [NotificationController::class, 'show'])->name('show');
         Route::post('/{id}/mark-read', [NotificationController::class, 'markAsRead'])->name('mark-read');
         Route::post('/mark-all-read', [NotificationController::class, 'markAllAsRead'])->name('mark-all-read');
-        Route::post('/clear-read', [NotificationController::class, 'clearRead'])->name('clear-read');
         Route::delete('/{id}', [NotificationController::class, 'destroy'])->name('destroy');
-    });
-
-    // Fallback routes for common menus
-    Route::redirect('/messages', '/messages/index')->name('messages');
-    Route::redirect('/notifications', '/notifications/index')->name('notifications');
-
-    // User Management (Admin and Supervisor only)
-    Route::middleware(['role:admin,supervisor'])->prefix('users')->name('users.')->group(function () {
-        Route::get('/', [MainController::class, 'manageUsers'])->name('index');
-        Route::get('/create', [UserController::class, 'create'])->name('create');
-        Route::post('/', [UserController::class, 'store'])->name('store');
-        Route::get('/{id}/edit', [AdminController::class, 'editUser'])->name('edit');
-        Route::put('/{id}', [AdminController::class, 'updateUser'])->name('update');
-        Route::delete('/{id}', [AdminController::class, 'deleteUser'])->name('destroy');
-    });
-
-    // Development/Testing route
-    Route::get('/test-email', function() {
-        try {
-            \Mail::raw('Test email content', function($message) {
-                $message->to('test@example.com')->subject('Test Email from CREAMS');
-            });
-            return "Email sent! Check storage/logs/laravel.log";
-        } catch (\Exception $e) {
-            return "Error: " . $e->getMessage();
-        }
     });
 });
 
@@ -264,11 +191,8 @@ Route::middleware(['auth'])->group(function () {
 |--------------------------------------------------------------------------
 */
 
-// Trainee Management (for staff)
 Route::middleware(['auth'])->prefix('trainees')->name('trainees.')->group(function () {
-    // Enhanced trainee management with both old and new patterns
     Route::get('/', [TraineeHomeController::class, 'index'])->name('index');
-    Route::get('/filter', [TraineeHomeController::class, 'filter'])->name('filter');
     Route::get('/create', [TraineeRegistrationController::class, 'index'])->name('create');
     Route::post('/', [TraineeRegistrationController::class, 'store'])->name('store');
     Route::get('/{id}', [TraineeProfileController::class, 'index'])->name('show');
@@ -280,56 +204,16 @@ Route::middleware(['auth'])->prefix('trainees')->name('trainees.')->group(functi
 // Legacy trainee routes (backward compatibility)
 Route::middleware(['auth'])->group(function () {
     Route::get('/traineeshome', [TraineeHomeController::class, 'index'])->name('traineeshome');
-    Route::get('/trainee/profile/{id}', [TraineeProfileController::class, 'index'])->name('traineeprofile');
-    Route::get('/traineeprofile/{id}', [TraineeProfileController::class, 'index']); // Legacy
-    Route::get('/trainee/edit/{id}', [TraineeProfileController::class, 'edit'])->name('traineeprofile.edit');
-    Route::post('/trainee/update/{id}', [TraineeProfileController::class, 'update'])->name('updatetraineeprofile');
-    Route::post('/updatetraineeprofile/{id}', [TraineeProfileController::class, 'update']); // Legacy
-
-    // Trainee profile actions
-    Route::delete('/trainee/delete/{id}', [TraineeProfileController::class, 'destroy'])->name('traineeprofile.destroy');
-    Route::post('/trainee/progress/{id}', [TraineeProfileController::class, 'updateProgress'])->name('traineeprofile.updateProgress');
-    Route::post('/trainee/attendance/{id}', [TraineeProfileController::class, 'recordAttendance'])->name('traineeprofile.recordAttendance');
-    Route::post('/trainee/activity/{id}', [TraineeProfileController::class, 'addActivity'])->name('traineeprofile.addActivity');
-    Route::get('/trainee/download/{id}', [TraineeProfileController::class, 'downloadProfile'])->name('traineeprofile.download');
-
-    // Trainee Registration
-    Route::get('/trainee/register', [TraineeRegistrationController::class, 'index'])->name('traineesregistrationpage');
-    Route::get('/traineesregistration', [TraineeRegistrationController::class, 'index']); // Legacy
-    Route::post('/trainee/register', [TraineeRegistrationController::class, 'store'])->name('traineesregistrationstore');
-    Route::post('/traineesregistration/store', [TraineeRegistrationController::class, 'store']); // Legacy
-    Route::post('/trainee/validate-email', [TraineeRegistrationController::class, 'validateEmail'])->name('validateEmail');
-
-    // Trainee Activities
-    Route::get('/trainee/activities', [TraineeActivityController::class, 'index'])->name('traineeactivity');
-    Route::get('/traineeactivity', [TraineeActivityController::class, 'index']); // Legacy
-    Route::get('/trainee/activities/{id}', [TraineeActivityController::class, 'traineeActivities'])->name('traineeactivity.trainee');
-    Route::post('/trainee/activities', [TraineeActivityController::class, 'store'])->name('traineeactivity.store');
-    Route::post('/traineeactivity/store', [TraineeActivityController::class, 'store']); // Legacy
-    Route::get('/trainee/activities/edit/{id}', [TraineeActivityController::class, 'edit'])->name('traineeactivity.edit');
-    Route::put('/trainee/activities/update/{id}', [TraineeActivityController::class, 'update'])->name('traineeactivity.update');
-    Route::post('/traineeactivity/update/{id}', [TraineeActivityController::class, 'update']); // Legacy
-    Route::delete('/trainee/activities/delete/{id}', [TraineeActivityController::class, 'destroy'])->name('traineeactivity.destroy');
-    Route::delete('/traineeactivity/delete/{id}', [TraineeActivityController::class, 'destroy']); // Legacy
-    Route::get('/traineeactivity/details/{id}', [TraineeActivityController::class, 'getActivityDetails'])->name('traineeactivity.details');
+    Route::get('/traineeprofile/{id}', [TraineeProfileController::class, 'index'])->name('traineeprofile');
+    Route::get('/traineesregistrationpage', [TraineeRegistrationController::class, 'index'])->name('traineesregistrationpage');
+    Route::post('/traineesregistrationstore', [TraineeRegistrationController::class, 'store'])->name('traineesregistrationstore');
 });
 
-// Separate Trainee Authentication (New Feature)
-Route::prefix('trainee')->name('trainee.')->group(function () {
-    Route::get('/login', [TraineeController::class, 'showLoginForm'])->name('login');
-    Route::post('/login', [TraineeController::class, 'login'])->name('login.submit');
-    Route::get('/register', [TraineeController::class, 'showRegistrationForm'])->name('register');
-    Route::post('/register', [TraineeController::class, 'register'])->name('register.submit');
-    
-    Route::middleware(['trainee.auth'])->group(function () {
-        Route::get('/home', [TraineeController::class, 'home'])->name('home');
-        Route::get('/profile', [TraineeProfileController::class, 'show'])->name('profile');
-        Route::get('/profile/edit', [TraineeProfileController::class, 'edit'])->name('profile.edit');
-        Route::put('/profile', [TraineeProfileController::class, 'update'])->name('profile.update');
-        Route::get('/activities', [TraineeController::class, 'activities'])->name('activities');
-        Route::get('/schedule', [TraineeController::class, 'schedule'])->name('schedule');
-        Route::post('/logout', [TraineeController::class, 'logout'])->name('logout');
-    });
+// Legacy asset route
+Route::middleware(['auth'])->group(function () {
+    Route::get('/assetmanagementpage', [AssetController::class, 'index'])->name('assetmanagementpage');
+    Route::get('/schedulehomepage', function () { return view('schedulehome'); })->name('schedulehomepage');
+    Route::get('/aboutus', function () { return view('aboutus'); })->name('aboutus');
 });
 
 /*
@@ -342,223 +226,61 @@ Route::prefix('trainee')->name('trainee.')->group(function () {
 Route::prefix('admin')->middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
 
-    // Contact & Volunteer Management
-    Route::get('/contacts', [ContactController::class, 'getMessages'])->name('admin.contacts.index');
-    Route::get('/contacts/{id}', [ContactController::class, 'show'])->name('admin.contacts.show');
-    Route::post('/contacts/{id}/status', [ContactController::class, 'updateStatus'])->name('admin.contacts.update-status');
-    Route::get('/volunteers', [VolunteerController::class, 'getApplications'])->name('admin.volunteers.index');
-    Route::get('/volunteers/{id}', [VolunteerController::class, 'show'])->name('admin.volunteers.show');
-    Route::post('/volunteers/{id}/status', [VolunteerController::class, 'updateStatus'])->name('admin.volunteers.update-status');
-
-    // Redirect to common routes
-    Route::get('/trainees', function() { return redirect()->route('traineeshome'); })->name('admin.trainees');
-    Route::get('/trainee/create', function() { return redirect()->route('traineesregistrationpage'); })->name('admin.trainee.create');
-    Route::get('/trainee/view/{id}', function($id) { return redirect()->route('traineeprofile', ['id' => $id]); })->name('admin.trainee.view');
-    Route::get('/trainee/edit/{id}', function($id) { return redirect()->route('traineeprofile.edit', ['id' => $id]); })->name('admin.trainee.edit');
-    Route::get('/users', function() { return redirect()->route('teachershome'); })->name('admin.users');
-
-    // User CRUD operations
-    Route::get('/user/create', [UserController::class, 'create'])->name('admin.user.create');
-    Route::post('/user/store', [UserController::class, 'store'])->name('admin.user.store');
-    Route::get('/user/view/{id}', [AdminController::class, 'viewUser'])->name('admin.user.view');
-    Route::get('/user/edit/{id}', [AdminController::class, 'editUser'])->name('admin.user.edit');
-    Route::post('/user/update/{id}', [AdminController::class, 'updateUser'])->name('admin.user.update');
-    Route::post('/user/reset-password/{id}', [AdminController::class, 'resetUserPassword'])->name('admin.user.reset-password');
-    Route::post('/user/change-status/{id}', [AdminController::class, 'changeUserStatus'])->name('admin.user.change-status');
-    Route::delete('/user/delete/{id}', [AdminController::class, 'deleteUser'])->name('admin.user.delete');
-    Route::post('/user/send-message/{id}', [AdminController::class, 'sendUserMessage'])->name('admin.user.send-message');
-    Route::post('/users/bulk-action', [AdminController::class, 'bulkUserAction'])->name('admin.users.bulk-action');
-
-    // Activities management
-    Route::get('/activities', [ActivityController::class, 'index'])->name('admin.activities');
-    Route::get('/activity/create', [ActivityController::class, 'create'])->name('admin.activity.create');
-    Route::post('/activity/store', [ActivityController::class, 'store'])->name('admin.activity.store');
-    Route::get('/activity/view/{id}', [ActivityController::class, 'show'])->name('admin.activity.view');
-    Route::get('/activity/edit/{id}', [ActivityController::class, 'edit'])->name('admin.activity.edit');
-    Route::post('/activity/update/{id}', [ActivityController::class, 'update'])->name('admin.activity.update');
-    Route::delete('/activity/delete/{id}', [ActivityController::class, 'destroy'])->name('admin.activity.delete');
-
     // Centres management
-    Route::get('/centres', [CentreController::class, 'index'])->name('admin.centres');
-    Route::get('/centre/create', [CentreController::class, 'create'])->name('admin.centre.create');
-    Route::post('/centre/store', [CentreController::class, 'store'])->name('admin.centre.store');
-    Route::get('/centre/view/{id}', [CentreController::class, 'show'])->name('admin.centre.view');
-    Route::get('/centre/edit/{id}', [CentreController::class, 'edit'])->name('admin.centre.edit');
-    Route::post('/centre/update/{id}', [CentreController::class, 'update'])->name('admin.centre.update');
-    Route::delete('/centre/delete/{id}', [CentreController::class, 'destroy'])->name('admin.centre.delete');
-    Route::get('/centres/{id}', [CentreController::class, 'show'])->name('admin.centres.show');
-    Route::get('/centres/{id}/assets', [CentreController::class, 'assets'])->name('admin.centres.assets');
-    Route::get('/centre/{id}/assets', [CentreController::class, 'assets'])->name('admin.centre.assets');
+    Route::prefix('centres')->name('admin.centres.')->group(function () {
+        Route::get('/', [CentreController::class, 'index'])->name('index');
+        Route::get('/create', [CentreController::class, 'create'])->name('create');
+        Route::post('/', [CentreController::class, 'store'])->name('store');
+        Route::get('/{id}', [CentreController::class, 'show'])->name('show');
+        Route::get('/{id}/edit', [CentreController::class, 'edit'])->name('edit');
+        Route::put('/{id}', [CentreController::class, 'update'])->name('update');
+        Route::delete('/{id}', [CentreController::class, 'destroy'])->name('destroy');
+        Route::get('/{id}/assets', [CentreController::class, 'assets'])->name('assets');
+    });
 
     // Assets management
-    Route::get('/assets', [AssetController::class, 'index'])->name('admin.assets');
-    Route::get('/asset/create', [AssetController::class, 'create'])->name('admin.asset.create');
-    Route::post('/asset/store', [AssetController::class, 'store'])->name('admin.asset.store');
-    Route::get('/asset/view/{id}', [AssetController::class, 'show'])->name('admin.asset.view');
-    Route::get('/asset/edit/{id}', [AssetController::class, 'edit'])->name('admin.asset.edit');
-    Route::post('/asset/update/{id}', [AssetController::class, 'update'])->name('admin.asset.update');
-    Route::delete('/asset/delete/{id}', [AssetController::class, 'destroy'])->name('admin.asset.delete');
-    Route::get('/assets/{id}', [AssetController::class, 'show'])->name('admin.assets.show');
+    Route::prefix('assets')->name('admin.assets.')->group(function () {
+        Route::get('/', [AssetController::class, 'index'])->name('index');
+        Route::get('/create', [AssetController::class, 'create'])->name('create');
+        Route::post('/', [AssetController::class, 'store'])->name('store');
+        Route::get('/{id}', [AssetController::class, 'show'])->name('show');
+        Route::get('/{id}/edit', [AssetController::class, 'edit'])->name('edit');
+        Route::put('/{id}', [AssetController::class, 'update'])->name('update');
+        Route::delete('/{id}', [AssetController::class, 'destroy'])->name('destroy');
+    });
 
-    // Reports
-    Route::get('/reports', [ReportController::class, 'index'])->name('admin.reports');
-    Route::get('/report/generate', [ReportController::class, 'generate'])->name('admin.report.generate');
-    Route::post('/report/export', [ReportController::class, 'export'])->name('admin.report.export');
-
-    // System
-    Route::get('/logs', [AdminController::class, 'logs'])->name('admin.logs');
-    Route::get('/settings', [SettingController::class, 'index'])->name('admin.settings');
-    Route::post('/settings/update', [SettingController::class, 'update'])->name('admin.settings.update');
-    Route::post('/settings/backup', [AdminController::class, 'createBackup'])->name('admin.settings.backup');
-    Route::post('/settings/restore', [AdminController::class, 'restoreBackup'])->name('admin.settings.restore');
-
-    // Rehabilitation redirects
-    Route::get('/rehabilitation', function() { return redirect()->route('rehabilitation.categories'); })->name('admin.rehabilitation');
+    // Redirect routes to common routes
+    Route::get('/centres', function() { return redirect()->route('centres.index'); })->name('admin.centres');
+    Route::get('/assets', function() { return redirect()->route('assets.index'); })->name('admin.assets');
+    Route::get('/activities', function() { return redirect()->route('activities.index'); })->name('admin.activities');
+    Route::get('/trainees', function() { return redirect()->route('traineeshome'); })->name('admin.trainees');
+    Route::get('/users', function() { return redirect()->route('teachershome'); })->name('admin.users');
 });
 
 // Supervisor Routes
 Route::prefix('supervisor')->middleware(['auth', 'role:supervisor'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('supervisor.dashboard');
-
-    // Redirect to common routes
+    Route::get('/centres', function() { return redirect()->route('centres.index'); })->name('supervisor.centres');
+    Route::get('/activities', function() { return redirect()->route('activities.index'); })->name('supervisor.activities');
     Route::get('/trainees', function() { return redirect()->route('traineeshome'); })->name('supervisor.trainees');
-    Route::get('/trainee/view/{id}', function($id) { return redirect()->route('traineeprofile', ['id' => $id]); })->name('supervisor.trainee.view');
-    Route::get('/trainee/edit/{id}', function($id) { return redirect()->route('traineeprofile.edit', ['id' => $id]); })->name('supervisor.trainee.edit');
     Route::get('/users', function() { return redirect()->route('teachershome'); })->name('supervisor.users');
-
-    // User management
-    Route::get('/user/view/{id}', [SupervisorController::class, 'viewUser'])->name('supervisor.user.view');
-    Route::get('/user/edit/{id}', [SupervisorController::class, 'editUser'])->name('supervisor.user.edit');
-
-    // Centres management
-    Route::get('/centres', [SupervisorController::class, 'centres'])->name('supervisor.centres');
-    Route::get('/centres/{id}', [CentreController::class, 'show'])->name('supervisor.centres.show');
-    Route::get('/centres/{id}/assets', [CentreController::class, 'assets'])->name('supervisor.centres.assets');
-    Route::get('/centre/{id}', [CentreController::class, 'show'])->name('supervisor.centre.view');
-
-    // Assets management
-    Route::get('/assets', [SupervisorController::class, 'assets'])->name('supervisor.assets');
-    Route::get('/assets/{id}', [AssetController::class, 'show'])->name('supervisor.assets.show');
-    Route::get('/asset/view/{id}', [AssetController::class, 'show'])->name('supervisor.asset.view');
-
-    // Teachers management
-    Route::get('/teachers', [SupervisorController::class, 'manageTeachers'])->name('supervisor.teachers');
-    Route::get('/teacher/view/{id}', [SupervisorController::class, 'viewTeacher'])->name('supervisor.teacher.view');
-    Route::get('/teacher/edit/{id}', [SupervisorController::class, 'editTeacher'])->name('supervisor.teacher.edit');
-    Route::post('/teacher/update/{id}', [SupervisorController::class, 'updateTeacher'])->name('supervisor.teacher.update');
-    Route::post('/teacher/change-status/{id}', [SupervisorController::class, 'changeTeacherStatus'])->name('supervisor.teacher.change-status');
-
-    // Activities
-    Route::get('/activities', [SupervisorController::class, 'activities'])->name('supervisor.activities');
-    Route::get('/activity/view/{id}', [SupervisorController::class, 'viewActivity'])->name('supervisor.activity.view');
-    Route::get('/activity/edit/{id}', [SupervisorController::class, 'editActivity'])->name('supervisor.activity.edit');
-    Route::post('/activity/update/{id}', [SupervisorController::class, 'updateActivity'])->name('supervisor.activity.update');
-
-    // Reports
-    Route::get('/reports', [SupervisorController::class, 'reports'])->name('supervisor.reports');
-    Route::get('/report/generate', [ReportController::class, 'generate'])->name('supervisor.report.generate');
-    Route::post('/report/export', [ReportController::class, 'export'])->name('supervisor.report.export');
-
-    // Settings & Notifications
-    Route::get('/settings', [SupervisorController::class, 'settings'])->name('supervisor.settings');
-    Route::get('/notifications', [SupervisorController::class, 'notifications'])->name('supervisor.notifications');
-    Route::post('/notifications/mark-read', [SupervisorController::class, 'markNotificationsRead'])->name('supervisor.notifications.mark-read');
-
-    // Rehabilitation redirects
-    Route::get('/rehabilitation', function() { return redirect()->route('rehabilitation.categories'); })->name('supervisor.rehabilitation');
 });
 
 // Teacher Routes
 Route::prefix('teacher')->middleware(['auth', 'role:teacher'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('teacher.dashboard');
-
-    // Redirect to common routes
+    Route::get('/centres', function() { return redirect()->route('centres.index'); })->name('teacher.centres');
+    Route::get('/activities', function() { return redirect()->route('activities.index'); })->name('teacher.activities');
     Route::get('/trainees', function() { return redirect()->route('traineeshome'); })->name('teacher.trainees');
-    Route::get('/trainee/view/{id}', function($id) { return redirect()->route('traineeprofile', ['id' => $id]); })->name('teacher.trainee.view');
-    Route::get('/users', function() { return redirect()->route('teachershome'); })->name('teacher.users');
-
-    Route::get('/user/view/{id}', [TeacherController::class, 'viewUser'])->name('teacher.user.view');
-
-    // Centres management
-    Route::get('/centres', [TeacherController::class, 'centres'])->name('teacher.centres');
-    Route::get('/centres/{id}', [CentreController::class, 'show'])->name('teacher.centres.show');
-    Route::get('/centres/{id}/assets', [CentreController::class, 'assets'])->name('teacher.centres.assets');
-    Route::get('/centre/{id}', [CentreController::class, 'show'])->name('teacher.centre.view');
-
-    // Assets management
-    Route::get('/assets', [TeacherController::class, 'assets'])->name('teacher.assets');
-    Route::get('/assets/{id}', [AssetController::class, 'show'])->name('teacher.assets.show');
-    Route::get('/asset/view/{id}', [AssetController::class, 'show'])->name('teacher.asset.view');
-
-    // Classes/Activities
-    Route::get('/classes', [ClassController::class, 'index'])->name('teacher.classes');
-    Route::get('/class/view/{id}', [ClassController::class, 'show'])->name('teacher.class.view');
-    Route::post('/class/attendance/{id}', [ClassController::class, 'updateAttendance'])->name('teacher.class.attendance');
     Route::get('/schedule', [ClassController::class, 'schedule'])->name('teacher.schedule');
-
-    // Activities
-    Route::get('/activities', [TeacherController::class, 'activities'])->name('teacher.activities');
-    Route::get('/activity/view/{id}', [ActivityController::class, 'show'])->name('teacher.activity.view');
-
-    // Reports, Settings & Notifications
-    Route::get('/reports', [TeacherController::class, 'reports'])->name('teacher.reports');
-    Route::get('/settings', [TeacherController::class, 'settings'])->name('teacher.settings');
-    Route::get('/notifications', [TeacherController::class, 'notifications'])->name('teacher.notifications');
-    Route::post('/notifications/mark-read', [TeacherController::class, 'markNotificationsRead'])->name('teacher.notifications.mark-read');
-
-    // Rehabilitation redirects
-    Route::get('/rehabilitation', function() { return redirect()->route('rehabilitation.categories'); })->name('teacher.rehabilitation');
 });
 
 // AJK Routes
 Route::prefix('ajk')->middleware(['auth', 'role:ajk'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('ajk.dashboard');
-
-    // Redirect to common routes
+    Route::get('/centres', function() { return redirect()->route('centres.index'); })->name('ajk.centres');
+    Route::get('/activities', function() { return redirect()->route('activities.index'); })->name('ajk.activities');
     Route::get('/trainees', function() { return redirect()->route('traineeshome'); })->name('ajk.trainees');
-    Route::get('/users', function() { return redirect()->route('teachershome'); })->name('ajk.users');
-
-    Route::get('/user/view/{id}', [AJKController::class, 'viewUser'])->name('ajk.user.view');
-
-    // Centres management
-    Route::get('/centres', [AJKController::class, 'centres'])->name('ajk.centres');
-    Route::get('/centres/{id}', [CentreController::class, 'show'])->name('ajk.centres.show');
-    Route::get('/centres/{id}/assets', [CentreController::class, 'assets'])->name('ajk.centres.assets');
-    Route::get('/centre/{id}', [CentreController::class, 'show'])->name('ajk.centre.view');
-
-    // Assets management
-    Route::get('/assets', [AJKController::class, 'assets'])->name('ajk.assets');
-    Route::get('/assets/{id}', [AssetController::class, 'show'])->name('ajk.assets.show');
-    Route::get('/asset/view/{id}', [AssetController::class, 'show'])->name('ajk.asset.view');
-
-    // Events
-    Route::get('/events', [EventController::class, 'index'])->name('ajk.events');
-    Route::get('/event/create', [EventController::class, 'create'])->name('ajk.event.create');
-    Route::post('/event/store', [EventController::class, 'store'])->name('ajk.event.store');
-    Route::get('/event/view/{id}', [EventController::class, 'show'])->name('ajk.event.view');
-    Route::get('/event/edit/{id}', [EventController::class, 'edit'])->name('ajk.event.edit');
-    Route::post('/event/update/{id}', [EventController::class, 'update'])->name('ajk.event.update');
-    Route::delete('/event/delete/{id}', [EventController::class, 'destroy'])->name('ajk.event.delete');
-
-    // Volunteers
-    Route::get('/volunteers', [AJKController::class, 'manageVolunteers'])->name('ajk.volunteers');
-    Route::get('/volunteer/view/{id}', [AJKController::class, 'viewVolunteer'])->name('ajk.volunteer.view');
-    Route::get('/volunteer/edit/{id}', [AJKController::class, 'editVolunteer'])->name('ajk.volunteer.edit');
-    Route::post('/volunteer/update/{id}', [AJKController::class, 'updateVolunteer'])->name('ajk.volunteer.update');
-    Route::post('/volunteer/change-status/{id}', [AJKController::class, 'changeVolunteerStatus'])->name('ajk.volunteer.change-status');
-
-    // Activities
-    Route::get('/activities', [AJKController::class, 'activities'])->name('ajk.activities');
-    Route::get('/activity/view/{id}', [ActivityController::class, 'show'])->name('ajk.activity.view');
-
-    // Reports, Settings & Notifications
-    Route::get('/reports', [AJKController::class, 'reports'])->name('ajk.reports');
-    Route::get('/settings', [AJKController::class, 'settings'])->name('ajk.settings');
-    Route::get('/notifications', [AJKController::class, 'notifications'])->name('ajk.notifications');
-    Route::post('/notifications/mark-read', [AJKController::class, 'markNotificationsRead'])->name('ajk.notifications.mark-read');
-
-    // Rehabilitation redirects
-    Route::get('/rehabilitation', function() { return redirect()->route('rehabilitation.categories'); })->name('ajk.rehabilitation');
 });
 
 /*
@@ -568,31 +290,9 @@ Route::prefix('ajk')->middleware(['auth', 'role:ajk'])->group(function () {
 */
 
 Route::middleware(['auth'])->prefix('api')->name('api.')->group(function () {
-    // User APIs
-    Route::get('/users', [AdminController::class, 'getUsersJson'])->name('users');
-    Route::get('/users/filter', [AdminController::class, 'filterUsers'])->name('users.filter');
-    Route::get('/search/users', [MainController::class, 'searchUsers'])->name('search.users');
-
-    // Trainee APIs
-    Route::get('/trainees', [TraineeController::class, 'getTraineesJson'])->name('trainees');
-    Route::get('/trainees/filter', [TraineeController::class, 'filterTrainees'])->name('trainees.filter');
-    Route::get('/search/trainees', [TraineeManagementController::class, 'search'])->name('search.trainees');
-
-    // Activity APIs
+    Route::get('/activities', [ActivityController::class, 'apiIndex'])->name('activities');
     Route::get('/activities/categories', [ActivityController::class, 'getCategories'])->name('activities.categories');
-});
-
-/*
-|--------------------------------------------------------------------------
-| LEGACY ROUTES (Backward Compatibility)
-|--------------------------------------------------------------------------
-*/
-
-Route::middleware(['auth'])->group(function () {
-    Route::get('/aboutus', function () { return view('aboutus'); })->name('aboutus');
-    Route::get('/accountprofile', function () { return view('accountprofile'); })->name('accountprofile');
-    Route::get('/schedulehomepage', function () { return view('schedulehome'); })->name('schedulehomepage');
-    Route::get('/assetmanagementpage', [AssetController::class, 'index'])->name('assetmanagementpage');
+    Route::get('/assets', [AssetController::class, 'getAssetsJson'])->name('assets');
 });
 
 /*

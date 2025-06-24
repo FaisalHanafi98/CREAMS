@@ -6,12 +6,13 @@ use Illuminate\Http\Request;
 use App\Models\Activity;
 use App\Models\ActivitySession;
 use App\Models\SessionEnrollment;
-use App\Models\ActivityAttendance;
-use App\Models\Users;
+use App\Models\User;
 use App\Models\Trainee;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cache;
 use Carbon\Carbon;
+use Exception;
 
 class ActivityController extends Controller
 {
@@ -20,30 +21,102 @@ class ActivityController extends Controller
      */
     public function index()
     {
-        $role = session('role');
-        $userId = session('id');
+        try {
+            $role = session('role');
+            $userId = session('id');
 
-        // Role-based activity filtering
-        $query = Activity::with(['sessions', 'creator']);
+            $query = Activity::with(['sessions', 'creator', 'centre']);
 
-        if ($role === 'teacher') {
-            // Teachers see only activities they teach
-            $query->whereHas('sessions', function ($q) use ($userId) {
-                $q->where('teacher_id', $userId);
-            });
+            // Role-based filtering
+            if ($role === 'teacher') {
+                $query->whereHas('sessions', function ($q) use ($userId) {
+                    $q->where('teacher_id', $userId);
+                });
+            } elseif ($role === 'ajk') {
+                // AJK can only view activities
+                $query->where('is_active', true);
+            }
+
+            $activities = $query->orderBy('created_at', 'desc')->paginate(12);
+
+            // Get statistics
+            $stats = $this->getActivityStats($role, $userId);
+
+            return view('activities.index', compact('activities', 'stats', 'role'));
+
+        } catch (Exception $e) {
+            Log::error('Error loading activities index: ' . $e->getMessage());
+            return redirect()->route('dashboard')
+                ->with('error', 'Unable to load activities. Please try again.');
         }
+    }
 
-        $activities = $query->orderBy('created_at', 'desc')->paginate(12);
+    /**
+     * Display activity categories for rehabilitation module
+     */
+    public function categories()
+    {
+        try {
+            $categories = [
+                'Physical Therapy' => [
+                    'icon' => 'fas fa-running',
+                    'description' => 'Improve physical strength and mobility',
+                    'count' => Activity::where('category', 'Physical Therapy')->count()
+                ],
+                'Occupational Therapy' => [
+                    'icon' => 'fas fa-hands-helping',
+                    'description' => 'Develop daily living skills',
+                    'count' => Activity::where('category', 'Occupational Therapy')->count()
+                ],
+                'Speech Therapy' => [
+                    'icon' => 'fas fa-comments',
+                    'description' => 'Enhance communication abilities',
+                    'count' => Activity::where('category', 'Speech Therapy')->count()
+                ],
+                'Behavioral Therapy' => [
+                    'icon' => 'fas fa-brain',
+                    'description' => 'Manage behaviors and emotions',
+                    'count' => Activity::where('category', 'Behavioral Therapy')->count()
+                ],
+                'Sensory Integration' => [
+                    'icon' => 'fas fa-hand-paper',
+                    'description' => 'Process sensory information effectively',
+                    'count' => Activity::where('category', 'Sensory Integration')->count()
+                ],
+                'Life Skills' => [
+                    'icon' => 'fas fa-graduation-cap',
+                    'description' => 'Learn essential life skills',
+                    'count' => Activity::where('category', 'Life Skills')->count()
+                ]
+            ];
 
-        // Get statistics
-        $stats = [
-            'total' => Activity::count(),
-            'active' => Activity::where('is_active', true)->count(),
-            'rehabilitation' => Activity::whereIn('category', ['Physical Therapy', 'Occupational Therapy', 'Speech Therapy', 'Sensory Integration'])->count(),
-            'academic' => Activity::whereIn('category', ['Mathematics', 'Literacy', 'Science', 'Computer Skills'])->count()
-        ];
+            return view('rehabilitation.categories', compact('categories'));
 
-        return view('activities.index', compact('activities', 'stats', 'role'));
+        } catch (Exception $e) {
+            Log::error('Error loading rehabilitation categories: ' . $e->getMessage());
+            return redirect()->route('activities.index')
+                ->with('error', 'Unable to load categories.');
+        }
+    }
+
+    /**
+     * Show activities for a specific category
+     */
+    public function categoryShow($category)
+    {
+        try {
+            $activities = Activity::where('category', $category)
+                ->where('is_active', true)
+                ->with(['sessions', 'creator'])
+                ->paginate(12);
+
+            return view('rehabilitation.category-show', compact('category', 'activities'));
+
+        } catch (Exception $e) {
+            Log::error('Error loading category activities: ' . $e->getMessage());
+            return redirect()->route('rehabilitation.categories')
+                ->with('error', 'Unable to load activities for this category.');
+        }
     }
 
     /**
@@ -53,7 +126,6 @@ class ActivityController extends Controller
     {
         $role = session('role');
         
-        // Only admin and supervisor can create activities
         if (!in_array($role, ['admin', 'supervisor'])) {
             return redirect()->route('activities.index')
                 ->with('error', 'You do not have permission to create activities.');
@@ -81,10 +153,14 @@ class ActivityController extends Controller
             'activity_code' => 'required|string|max:20|unique:activities',
             'description' => 'required|string',
             'category' => 'required|string',
+            'activity_type' => 'required|in:Individual,Group,Both',
             'objectives' => 'nullable|string',
             'materials_needed' => 'nullable|string',
             'age_group' => 'required|string',
             'difficulty_level' => 'required|in:Beginner,Intermediate,Advanced',
+            'min_participants' => 'required|integer|min:1',
+            'max_participants' => 'required|integer|gte:min_participants',
+            'duration_minutes' => 'required|integer|min:15',
             'is_active' => 'boolean'
         ]);
 
@@ -96,12 +172,17 @@ class ActivityController extends Controller
                 'activity_code' => strtoupper($validated['activity_code']),
                 'description' => $validated['description'],
                 'category' => $validated['category'],
+                'activity_type' => $validated['activity_type'],
                 'objectives' => $validated['objectives'],
                 'materials_needed' => $validated['materials_needed'],
                 'age_group' => $validated['age_group'],
                 'difficulty_level' => $validated['difficulty_level'],
+                'min_participants' => $validated['min_participants'],
+                'max_participants' => $validated['max_participants'],
+                'duration_minutes' => $validated['duration_minutes'],
                 'is_active' => $request->has('is_active'),
-                'created_by' => session('id')
+                'created_by' => session('id'),
+                'centre_id' => session('centre_id')
             ]);
 
             DB::commit();
@@ -109,7 +190,7 @@ class ActivityController extends Controller
             return redirect()->route('activities.show', $activity->id)
                 ->with('success', 'Activity created successfully!');
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             DB::rollBack();
             Log::error('Error creating activity: ' . $e->getMessage());
             return redirect()->back()
@@ -123,30 +204,38 @@ class ActivityController extends Controller
      */
     public function show($id)
     {
-        $activity = Activity::with(['sessions.teacher', 'sessions.enrollments.trainee', 'creator'])
-            ->findOrFail($id);
+        try {
+            $activity = Activity::with(['sessions.teacher', 'sessions.enrollments.trainee', 'creator', 'centre'])
+                ->findOrFail($id);
 
-        $role = session('role');
-        $userId = session('id');
+            $role = session('role');
+            $userId = session('id');
 
-        // Check access for teachers
-        if ($role === 'teacher') {
-            $hasAccess = $activity->sessions->contains('teacher_id', $userId);
-            if (!$hasAccess) {
-                return redirect()->route('activities.index')
-                    ->with('error', 'You do not have access to this activity.');
+            // Check access for teachers
+            if ($role === 'teacher') {
+                $hasAccess = $activity->sessions->contains('teacher_id', $userId);
+                if (!$hasAccess) {
+                    return redirect()->route('activities.index')
+                        ->with('error', 'You do not have access to this activity.');
+                }
             }
+
+            // Get activity statistics
+            $stats = [
+                'totalSessions' => $activity->sessions->count(),
+                'upcomingSessions' => $activity->upcomingSessions->count(),
+                'completedSessions' => $activity->completedSessions->count(),
+                'totalEnrollments' => SessionEnrollment::whereIn('session_id', $activity->sessions->pluck('id'))->count(),
+                'averageAttendance' => $this->calculateAverageAttendance($activity)
+            ];
+
+            return view('activities.show', compact('activity', 'stats', 'role'));
+
+        } catch (Exception $e) {
+            Log::error('Error showing activity: ' . $e->getMessage());
+            return redirect()->route('activities.index')
+                ->with('error', 'Activity not found.');
         }
-
-        // Get activity statistics
-        $stats = [
-            'totalSessions' => $activity->sessions->count(),
-            'activeSessions' => $activity->sessions->where('status', 'active')->count(),
-            'totalEnrollments' => SessionEnrollment::whereIn('session_id', $activity->sessions->pluck('id'))->count(),
-            'averageAttendance' => $this->calculateAverageAttendance($activity)
-        ];
-
-        return view('activities.show', compact('activity', 'stats', 'role'));
     }
 
     /**
@@ -161,10 +250,17 @@ class ActivityController extends Controller
                 ->with('error', 'You do not have permission to edit activities.');
         }
 
-        $activity = Activity::findOrFail($id);
-        $categories = $this->getActivityCategories();
-        
-        return view('activities.edit', compact('activity', 'categories'));
+        try {
+            $activity = Activity::findOrFail($id);
+            $categories = $this->getActivityCategories();
+            
+            return view('activities.edit', compact('activity', 'categories'));
+
+        } catch (Exception $e) {
+            Log::error('Error loading activity for edit: ' . $e->getMessage());
+            return redirect()->route('activities.index')
+                ->with('error', 'Activity not found.');
+        }
     }
 
     /**
@@ -179,37 +275,45 @@ class ActivityController extends Controller
                 ->with('error', 'You do not have permission to update activities.');
         }
 
-        $activity = Activity::findOrFail($id);
-
-        $validated = $request->validate([
-            'activity_name' => 'required|string|max:255',
-            'activity_code' => 'required|string|max:20|unique:activities,activity_code,' . $id,
-            'description' => 'required|string',
-            'category' => 'required|string',
-            'objectives' => 'nullable|string',
-            'materials_needed' => 'nullable|string',
-            'age_group' => 'required|string',
-            'difficulty_level' => 'required|in:Beginner,Intermediate,Advanced',
-            'is_active' => 'boolean'
-        ]);
-
         try {
+            $activity = Activity::findOrFail($id);
+
+            $validated = $request->validate([
+                'activity_name' => 'required|string|max:255',
+                'activity_code' => 'required|string|max:20|unique:activities,activity_code,' . $id,
+                'description' => 'required|string',
+                'category' => 'required|string',
+                'activity_type' => 'required|in:Individual,Group,Both',
+                'objectives' => 'nullable|string',
+                'materials_needed' => 'nullable|string',
+                'age_group' => 'required|string',
+                'difficulty_level' => 'required|in:Beginner,Intermediate,Advanced',
+                'min_participants' => 'required|integer|min:1',
+                'max_participants' => 'required|integer|gte:min_participants',
+                'duration_minutes' => 'required|integer|min:15',
+                'is_active' => 'boolean'
+            ]);
+
             $activity->update([
                 'activity_name' => $validated['activity_name'],
                 'activity_code' => strtoupper($validated['activity_code']),
                 'description' => $validated['description'],
                 'category' => $validated['category'],
+                'activity_type' => $validated['activity_type'],
                 'objectives' => $validated['objectives'],
                 'materials_needed' => $validated['materials_needed'],
                 'age_group' => $validated['age_group'],
                 'difficulty_level' => $validated['difficulty_level'],
+                'min_participants' => $validated['min_participants'],
+                'max_participants' => $validated['max_participants'],
+                'duration_minutes' => $validated['duration_minutes'],
                 'is_active' => $request->has('is_active')
             ]);
 
             return redirect()->route('activities.show', $activity->id)
                 ->with('success', 'Activity updated successfully!');
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Error updating activity: ' . $e->getMessage());
             return redirect()->back()
                 ->withInput()
@@ -224,18 +328,18 @@ class ActivityController extends Controller
     {
         $role = session('role');
         
-        if ($role !== 'admin') {
+        if (!in_array($role, ['admin', 'supervisor'])) {
             return redirect()->route('activities.index')
-                ->with('error', 'Only administrators can delete activities.');
+                ->with('error', 'You do not have permission to delete activities.');
         }
 
         try {
             $activity = Activity::findOrFail($id);
             
-            // Check if there are active sessions
-            if ($activity->sessions()->where('status', 'active')->exists()) {
+            // Check if activity has upcoming sessions
+            if ($activity->upcomingSessions->count() > 0) {
                 return redirect()->back()
-                    ->with('error', 'Cannot delete activity with active sessions.');
+                    ->with('error', 'Cannot delete activity with upcoming sessions.');
             }
 
             $activity->delete();
@@ -243,7 +347,7 @@ class ActivityController extends Controller
             return redirect()->route('activities.index')
                 ->with('success', 'Activity deleted successfully!');
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Error deleting activity: ' . $e->getMessage());
             return redirect()->back()
                 ->with('error', 'An error occurred while deleting the activity.');
@@ -251,26 +355,37 @@ class ActivityController extends Controller
     }
 
     /**
-     * Show sessions for an activity
+     * Display sessions for an activity
      */
     public function sessions($id)
     {
-        $activity = Activity::findOrFail($id);
-        $role = session('role');
-        
-        $sessions = ActivitySession::where('activity_id', $id)
-            ->with(['teacher', 'enrollments.trainee'])
-            ->orderBy('date', 'desc')
-            ->orderBy('start_time', 'desc')
-            ->paginate(20);
+        try {
+            $activity = Activity::with(['sessions.teacher', 'sessions.enrollments'])
+                ->findOrFail($id);
 
-        $teachers = Users::where('role', 'teacher')->where('status', 'active')->get();
+            $role = session('role');
+            $userId = session('id');
 
-        return view('activities.sessions', compact('activity', 'sessions', 'teachers', 'role'));
+            // Filter sessions based on role
+            $sessions = $activity->sessions();
+            
+            if ($role === 'teacher') {
+                $sessions = $sessions->where('teacher_id', $userId);
+            }
+
+            $sessions = $sessions->orderBy('scheduled_date', 'desc')->paginate(10);
+
+            return view('activities.sessions', compact('activity', 'sessions', 'role'));
+
+        } catch (Exception $e) {
+            Log::error('Error loading activity sessions: ' . $e->getMessage());
+            return redirect()->route('activities.show', $id)
+                ->with('error', 'Unable to load sessions.');
+        }
     }
 
     /**
-     * Create a new session
+     * Create a new session for an activity
      */
     public function createSession(Request $request, $id)
     {
@@ -281,139 +396,51 @@ class ActivityController extends Controller
                 ->with('error', 'You do not have permission to create sessions.');
         }
 
-        $validated = $request->validate([
-            'teacher_id' => 'required|exists:users,id',
-            'date' => 'required|date|after_or_equal:today',
-            'start_time' => 'required|date_format:H:i',
-            'duration' => 'required|in:15,20,30,45',
-            'location' => 'required|string|max:255',
-            'max_capacity' => 'required|integer|min:1|max:50'
-        ]);
-
         try {
+            $activity = Activity::findOrFail($id);
+
+            $validated = $request->validate([
+                'teacher_id' => 'required|exists:users,id',
+                'scheduled_date' => 'required|date|after:today',
+                'start_time' => 'required|date_format:H:i',
+                'end_time' => 'required|date_format:H:i|after:start_time',
+                'venue' => 'nullable|string|max:255',
+                'room_number' => 'nullable|string|max:50',
+                'max_participants' => 'required|integer|min:' . $activity->min_participants . '|max:' . $activity->max_participants,
+                'notes' => 'nullable|string'
+            ]);
+
             DB::beginTransaction();
 
-            // Check for teacher conflicts
-            $endTime = Carbon::parse($validated['date'] . ' ' . $validated['start_time'])
-                ->addMinutes($validated['duration']);
-
-            $conflict = ActivitySession::where('teacher_id', $validated['teacher_id'])
-                ->where('date', $validated['date'])
-                ->where(function ($query) use ($validated, $endTime) {
-                    $query->whereBetween('start_time', [$validated['start_time'], $endTime->format('H:i')])
-                        ->orWhere(function ($q) use ($validated, $endTime) {
-                            $q->where('start_time', '<=', $validated['start_time'])
-                              ->whereRaw("ADDTIME(start_time, SEC_TO_TIME(duration * 60)) > ?", [$validated['start_time']]);
-                        });
-                })
-                ->exists();
-
-            if ($conflict) {
-                return redirect()->back()
-                    ->withInput()
-                    ->with('error', 'Teacher has a scheduling conflict at this time.');
-            }
+            // Calculate duration
+            $start = Carbon::parse($validated['start_time']);
+            $end = Carbon::parse($validated['end_time']);
+            $duration = $start->diffInMinutes($end);
 
             $session = ActivitySession::create([
-                'activity_id' => $id,
+                'activity_id' => $activity->id,
                 'teacher_id' => $validated['teacher_id'],
-                'date' => $validated['date'],
+                'scheduled_date' => $validated['scheduled_date'],
                 'start_time' => $validated['start_time'],
-                'duration' => $validated['duration'],
-                'location' => $validated['location'],
-                'max_capacity' => $validated['max_capacity'],
-                'status' => 'active'
+                'end_time' => $validated['end_time'],
+                'duration_minutes' => $duration,
+                'venue' => $validated['venue'],
+                'room_number' => $validated['room_number'],
+                'max_participants' => $validated['max_participants'],
+                'notes' => $validated['notes']
             ]);
 
             DB::commit();
 
             return redirect()->route('activities.sessions', $id)
-                ->with('success', 'Session scheduled successfully!');
+                ->with('success', 'Session created successfully!');
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             DB::rollBack();
             Log::error('Error creating session: ' . $e->getMessage());
             return redirect()->back()
                 ->withInput()
-                ->with('error', 'An error occurred while scheduling the session.');
-        }
-    }
-
-    /**
-     * Manage enrollments for a session
-     */
-    public function manageEnrollments($activityId, $sessionId)
-    {
-        $role = session('role');
-        
-        if (!in_array($role, ['admin', 'supervisor', 'teacher'])) {
-            return redirect()->route('activities.sessions', $activityId)
-                ->with('error', 'You do not have permission to manage enrollments.');
-        }
-
-        $session = ActivitySession::with(['activity', 'enrollments.trainee'])
-            ->findOrFail($sessionId);
-
-        // Check if teacher has access
-        if ($role === 'teacher' && $session->teacher_id != session('id')) {
-            return redirect()->route('activities.sessions', $activityId)
-                ->with('error', 'You can only manage enrollments for your own sessions.');
-        }
-
-        // Get eligible trainees
-        $enrolledTraineeIds = $session->enrollments->pluck('trainee_id');
-        $eligibleTrainees = Trainee::whereNotIn('id', $enrolledTraineeIds)
-            ->where('status', 'active')
-            ->get();
-
-        return view('activities.enrollments', compact('session', 'eligibleTrainees'));
-    }
-
-    /**
-     * Enroll trainees in a session
-     */
-    public function enrollTrainees(Request $request, $activityId, $sessionId)
-    {
-        $role = session('role');
-        
-        if (!in_array($role, ['admin', 'supervisor', 'teacher'])) {
-            return redirect()->route('activities.sessions', $activityId)
-                ->with('error', 'You do not have permission to enroll trainees.');
-        }
-
-        $session = ActivitySession::findOrFail($sessionId);
-
-        // Check capacity
-        $currentEnrollments = $session->enrollments()->count();
-        $availableSpots = $session->max_capacity - $currentEnrollments;
-
-        $validated = $request->validate([
-            'trainee_ids' => 'required|array|max:' . $availableSpots,
-            'trainee_ids.*' => 'exists:trainees,id'
-        ]);
-
-        try {
-            DB::beginTransaction();
-
-            foreach ($validated['trainee_ids'] as $traineeId) {
-                SessionEnrollment::create([
-                    'session_id' => $sessionId,
-                    'trainee_id' => $traineeId,
-                    'enrolled_by' => session('id'),
-                    'enrollment_date' => now()
-                ]);
-            }
-
-            DB::commit();
-
-            return redirect()->route('activities.manageEnrollments', [$activityId, $sessionId])
-                ->with('success', count($validated['trainee_ids']) . ' trainee(s) enrolled successfully!');
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('Error enrolling trainees: ' . $e->getMessage());
-            return redirect()->back()
-                ->with('error', 'An error occurred while enrolling trainees.');
+                ->with('error', 'An error occurred while creating the session.');
         }
     }
 
@@ -422,24 +449,32 @@ class ActivityController extends Controller
      */
     public function markAttendance($activityId, $sessionId)
     {
-        $session = ActivitySession::with(['activity', 'enrollments.trainee'])
-            ->findOrFail($sessionId);
+        try {
+            $session = ActivitySession::with(['activity', 'enrollments.trainee'])
+                ->where('activity_id', $activityId)
+                ->findOrFail($sessionId);
 
-        $role = session('role');
-        $userId = session('id');
+            $role = session('role');
+            $userId = session('id');
 
-        // Only teacher of the session or admin/supervisor can mark attendance
-        if ($role === 'teacher' && $session->teacher_id != $userId) {
+            // Check permissions
+            if ($role === 'teacher' && $session->teacher_id != $userId) {
+                return redirect()->route('activities.sessions', $activityId)
+                    ->with('error', 'You can only mark attendance for your own sessions.');
+            }
+
+            if ($session->status !== 'scheduled' && $session->status !== 'ongoing') {
+                return redirect()->route('activities.sessions', $activityId)
+                    ->with('error', 'Cannot mark attendance for ' . $session->status . ' sessions.');
+            }
+
+            return view('activities.attendance', compact('session'));
+
+        } catch (Exception $e) {
+            Log::error('Error loading attendance form: ' . $e->getMessage());
             return redirect()->route('activities.sessions', $activityId)
-                ->with('error', 'You can only mark attendance for your own sessions.');
+                ->with('error', 'Session not found.');
         }
-
-        // Check if attendance already marked for today
-        $attendanceExists = ActivityAttendance::where('session_id', $sessionId)
-            ->whereDate('attendance_date', Carbon::today())
-            ->exists();
-
-        return view('activities.attendance', compact('session', 'attendanceExists'));
     }
 
     /**
@@ -447,44 +482,155 @@ class ActivityController extends Controller
      */
     public function storeAttendance(Request $request, $activityId, $sessionId)
     {
-        $session = ActivitySession::findOrFail($sessionId);
-        
-        $validated = $request->validate([
-            'attendance_date' => 'required|date',
-            'attendance' => 'required|array',
-            'attendance.*' => 'required|in:present,absent,late,excused',
-            'notes' => 'array',
-            'notes.*' => 'nullable|string|max:255'
-        ]);
-
         try {
+            $session = ActivitySession::where('activity_id', $activityId)
+                ->findOrFail($sessionId);
+
+            $role = session('role');
+            $userId = session('id');
+
+            // Check permissions
+            if ($role === 'teacher' && $session->teacher_id != $userId) {
+                return redirect()->route('activities.sessions', $activityId)
+                    ->with('error', 'You can only mark attendance for your own sessions.');
+            }
+
+            $validated = $request->validate([
+                'attendance' => 'required|array',
+                'attendance.*' => 'required|in:present,absent,late,excused',
+                'participation_scores' => 'array',
+                'participation_scores.*' => 'nullable|integer|min:0|max:10',
+                'progress_notes' => 'array',
+                'progress_notes.*' => 'nullable|string|max:500'
+            ]);
+
             DB::beginTransaction();
 
-            foreach ($validated['attendance'] as $traineeId => $status) {
-                ActivityAttendance::updateOrCreate(
-                    [
-                        'session_id' => $sessionId,
-                        'trainee_id' => $traineeId,
-                        'attendance_date' => $validated['attendance_date']
-                    ],
-                    [
-                        'status' => $status,
-                        'notes' => $validated['notes'][$traineeId] ?? null,
-                        'marked_by' => session('id')
-                    ]
-                );
+            // Update session status if needed
+            if ($session->status === 'scheduled') {
+                $session->update([
+                    'status' => 'ongoing',
+                    'actual_start' => now()
+                ]);
             }
+
+            // Mark attendance for each trainee
+            foreach ($validated['attendance'] as $traineeId => $status) {
+                $enrollment = SessionEnrollment::where('session_id', $sessionId)
+                    ->where('trainee_id', $traineeId)
+                    ->first();
+
+                if ($enrollment) {
+                    $enrollment->update([
+                        'attendance_status' => $status,
+                        'checked_in_at' => $status === 'present' ? now() : null,
+                        'participation_score' => $validated['participation_scores'][$traineeId] ?? null,
+                        'progress_notes' => $validated['progress_notes'][$traineeId] ?? null
+                    ]);
+                }
+            }
+
+            $session->update(['attendance_marked' => true]);
 
             DB::commit();
 
             return redirect()->route('activities.sessions', $activityId)
                 ->with('success', 'Attendance marked successfully!');
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             DB::rollBack();
             Log::error('Error marking attendance: ' . $e->getMessage());
             return redirect()->back()
                 ->with('error', 'An error occurred while marking attendance.');
+        }
+    }
+
+    /**
+     * Manage enrollments for a session
+     */
+    public function manageEnrollments($activityId, $sessionId)
+    {
+        try {
+            $session = ActivitySession::with(['activity', 'enrollments.trainee'])
+                ->where('activity_id', $activityId)
+                ->findOrFail($sessionId);
+
+            $role = session('role');
+
+            if (!in_array($role, ['admin', 'supervisor', 'teacher'])) {
+                return redirect()->route('activities.sessions', $activityId)
+                    ->with('error', 'You do not have permission to manage enrollments.');
+            }
+
+            // Get eligible trainees (not already enrolled)
+            $enrolledTraineeIds = $session->enrollments->pluck('trainee_id');
+            $eligibleTrainees = Trainee::whereNotIn('id', $enrolledTraineeIds)
+                ->where('status', 'active')
+                ->get();
+
+            return view('activities.enrollments', compact('session', 'eligibleTrainees'));
+
+        } catch (Exception $e) {
+            Log::error('Error loading enrollments: ' . $e->getMessage());
+            return redirect()->route('activities.sessions', $activityId)
+                ->with('error', 'Session not found.');
+        }
+    }
+
+    /**
+     * Enroll trainees in a session
+     */
+    public function enrollTrainees(Request $request, $activityId, $sessionId)
+    {
+        try {
+            $session = ActivitySession::where('activity_id', $activityId)
+                ->findOrFail($sessionId);
+
+            $role = session('role');
+
+            if (!in_array($role, ['admin', 'supervisor', 'teacher'])) {
+                return redirect()->route('activities.sessions', $activityId)
+                    ->with('error', 'You do not have permission to manage enrollments.');
+            }
+
+            $validated = $request->validate([
+                'trainee_ids' => 'required|array',
+                'trainee_ids.*' => 'exists:trainees,id'
+            ]);
+
+            DB::beginTransaction();
+
+            $enrolled = 0;
+            foreach ($validated['trainee_ids'] as $traineeId) {
+                // Check if already enrolled
+                $exists = SessionEnrollment::where('session_id', $sessionId)
+                    ->where('trainee_id', $traineeId)
+                    ->exists();
+
+                if (!$exists && $session->enrolled_count < $session->max_participants) {
+                    SessionEnrollment::create([
+                        'session_id' => $sessionId,
+                        'trainee_id' => $traineeId,
+                        'enrolled_at' => now(),
+                        'enrolled_by' => session('id'),
+                        'enrollment_status' => 'enrolled'
+                    ]);
+
+                    $session->increment('enrolled_count');
+                    $enrolled++;
+                }
+            }
+
+            DB::commit();
+
+            return redirect()->route('activities.enrollments', [$activityId, $sessionId])
+                ->with('success', $enrolled . ' trainee(s) enrolled successfully!');
+
+        } catch (Exception $e) {
+            DB::rollBack();
+            Log::error('Error enrolling trainees: ' . $e->getMessage());
+            return redirect()->back()
+                ->with('error', 'An error occurred while enrolling trainees.');
         }
     }
 
@@ -494,23 +640,49 @@ class ActivityController extends Controller
     private function getActivityCategories()
     {
         return [
-            'Rehabilitation' => [
-                'Physical Therapy',
-                'Occupational Therapy',
-                'Speech & Language Therapy',
-                'Sensory Integration',
-                'Social Skills Training',
-                'Daily Living Skills'
-            ],
-            'Academic' => [
-                'Basic Mathematics',
-                'Language & Literacy',
-                'Science Exploration',
-                'Art & Creativity',
-                'Music Therapy',
-                'Computer Skills'
-            ]
+            'Physical Therapy',
+            'Occupational Therapy',
+            'Speech Therapy',
+            'Behavioral Therapy',
+            'Sensory Integration',
+            'Mathematics',
+            'Literacy',
+            'Science',
+            'Computer Skills',
+            'Art & Creativity',
+            'Music Therapy',
+            'Social Skills',
+            'Life Skills',
+            'Vocational Training'
         ];
+    }
+
+    /**
+     * Get activity statistics
+     */
+    private function getActivityStats($role, $userId)
+    {
+        return Cache::remember("activity_stats_{$role}_{$userId}", 300, function () use ($role, $userId) {
+            $query = Activity::query();
+
+            if ($role === 'teacher') {
+                $query->whereHas('sessions', function ($q) use ($userId) {
+                    $q->where('teacher_id', $userId);
+                });
+            }
+
+            return [
+                'total' => $query->count(),
+                'active' => $query->where('is_active', true)->count(),
+                'rehabilitation' => $query->whereIn('category', [
+                    'Physical Therapy', 'Occupational Therapy', 
+                    'Speech Therapy', 'Sensory Integration'
+                ])->count(),
+                'academic' => $query->whereIn('category', [
+                    'Mathematics', 'Literacy', 'Science', 'Computer Skills'
+                ])->count()
+            ];
+        });
     }
 
     /**
@@ -518,13 +690,123 @@ class ActivityController extends Controller
      */
     private function calculateAverageAttendance($activity)
     {
-        $sessionIds = $activity->sessions->pluck('id');
+        $completedSessions = $activity->completedSessions;
         
-        $total = ActivityAttendance::whereIn('session_id', $sessionIds)->count();
-        $present = ActivityAttendance::whereIn('session_id', $sessionIds)
-            ->where('status', 'present')
-            ->count();
+        if ($completedSessions->count() === 0) {
+            return 0;
+        }
 
-        return $total > 0 ? round(($present / $total) * 100, 2) : 0;
+        $totalAttendance = 0;
+        $totalEnrollments = 0;
+
+        foreach ($completedSessions as $session) {
+            $presentCount = $session->enrollments->where('attendance_status', 'present')->count();
+            $totalCount = $session->enrollments->count();
+            
+            if ($totalCount > 0) {
+                $totalAttendance += $presentCount;
+                $totalEnrollments += $totalCount;
+            }
+        }
+
+        return $totalEnrollments > 0 ? round(($totalAttendance / $totalEnrollments) * 100, 2) : 0;
+    }
+
+    // Rehabilitation module methods
+    public function createActivity()
+    {
+        return $this->create();
+    }
+
+    public function storeActivity(Request $request)
+    {
+        return $this->store($request);
+    }
+
+    public function showActivity($id)
+    {
+        return $this->show($id);
+    }
+
+    public function editActivity($id)
+    {
+        return $this->edit($id);
+    }
+
+    public function updateActivity(Request $request, $id)
+    {
+        return $this->update($request, $id);
+    }
+
+    public function destroyActivity($id)
+    {
+        return $this->destroy($id);
+    }
+
+    /**
+     * API: Get activities
+     */
+    public function apiIndex(Request $request)
+    {
+        try {
+            $query = Activity::with(['sessions', 'creator']);
+
+            if ($request->has('category')) {
+                $query->where('category', $request->category);
+            }
+
+            if ($request->has('search')) {
+                $search = $request->search;
+                $query->where(function ($q) use ($search) {
+                    $q->where('activity_name', 'LIKE', "%{$search}%")
+                      ->orWhere('description', 'LIKE', "%{$search}%")
+                      ->orWhere('activity_code', 'LIKE', "%{$search}%");
+                });
+            }
+
+            $activities = $query->where('is_active', true)->get();
+
+            return response()->json([
+                'success' => true,
+                'data' => $activities
+            ]);
+
+        } catch (Exception $e) {
+            Log::error('API Error fetching activities: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Unable to fetch activities'
+            ], 500);
+        }
+    }
+
+    /**
+     * API: Get activity categories
+     */
+    public function getCategories()
+    {
+        try {
+            $categories = $this->getActivityCategories();
+            
+            return response()->json([
+                'success' => true,
+                'data' => $categories
+            ]);
+
+        } catch (Exception $e) {
+            Log::error('API Error fetching categories: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Unable to fetch categories'
+            ], 500);
+        }
+    }
+
+    /**
+     * API: Filter activities
+     */
+    public function filterActivities(Request $request)
+    {
+        return $this->apiIndex($request);
     }
 }

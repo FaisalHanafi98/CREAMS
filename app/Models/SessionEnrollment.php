@@ -12,67 +12,60 @@ class SessionEnrollment extends Model
     protected $fillable = [
         'session_id',
         'trainee_id',
+        'enrolled_at',
         'enrolled_by',
-        'enrollment_date',
-        'status'
+        'enrollment_status',
+        'attendance_status',
+        'checked_in_at',
+        'participation_score',
+        'progress_notes',
+        'skills_demonstrated',
+        'special_requirements',
+        'requires_assistance'
     ];
 
     protected $casts = [
-        'enrollment_date' => 'datetime',
         'created_at' => 'datetime',
-        'updated_at' => 'datetime'
+        'checked_in_at' => 'datetime',
+        'skills_demonstrated' => 'array',
+        'requires_assistance' => 'boolean'
     ];
+    
 
-    /**
-     * Get the session
-     */
+    // Relationships
     public function session()
     {
         return $this->belongsTo(ActivitySession::class, 'session_id');
     }
 
-    /**
-     * Get the trainee
-     */
     public function trainee()
     {
-        return $this->belongsTo(Trainee::class, 'trainee_id');
+        return $this->belongsTo(Trainee::class);
     }
 
-    /**
-     * Get the user who enrolled the trainee
-     */
     public function enrolledBy()
     {
-        return $this->belongsTo(Users::class, 'enrolled_by');
+        return $this->belongsTo(User::class, 'enrolled_by');
     }
 
-    /**
-     * Get attendance for this enrollment
-     */
-    public function attendance()
-    {
-        return $this->hasMany(ActivityAttendance::class, 'trainee_id', 'trainee_id')
-                    ->where('session_id', $this->session_id);
-    }
-
-    /**
-     * Calculate attendance percentage
-     */
-    public function getAttendancePercentageAttribute()
-    {
-        $total = $this->attendance()->count();
-        if ($total === 0) return 0;
-
-        $present = $this->attendance()->where('status', 'present')->count();
-        return round(($present / $total) * 100, 2);
-    }
-
-    /**
-     * Scope for active enrollments
-     */
+    // Scopes
     public function scopeActive($query)
     {
-        return $query->where('status', 'active');
+        return $query->where('enrollment_status', 'enrolled');
+    }
+
+    public function scopePresent($query)
+    {
+        return $query->where('attendance_status', 'present');
+    }
+
+    // Methods
+    public function markAttendance($status)
+    {
+        $this->attendance_status = $status;
+        if ($status === 'present') {
+            $this->checked_in_at = now();
+        }
+        return $this->save();
     }
 }

@@ -20,6 +20,7 @@ class DatabaseSeeder extends Seeder
                 CentresSeeder::class,             // First, create all centres
                 UsersSeeder::class,          // Second, create initial users
                 TraineesSeeder::class,            // Create trainees
+                ActivitiesSeeder::class,
             ]);
             
             // After seeding, diversify user centre distribution

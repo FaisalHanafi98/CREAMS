@@ -15,92 +15,93 @@
     <link rel="stylesheet" href="{{ asset('css/traineehomestyle.css') }}">
 </head>
 <body>
-    <!-- Sidebar -->
-    <div class="sidebar">
-        <div class="sidebar-header">
-            <div class="logo">
-                <img src="{{ asset('images/favicon.png') }}" alt="CREAMS Logo">
-                <span class="logo-text">CREAMS</span>
-            </div>
-            <div class="toggle-btn">
-                <i class="fas fa-chevron-left"></i>
-            </div>
+    <ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar">
+        <!-- Sidebar - Brand -->
+        <a class="sidebar-brand d-flex align-items-center justify-content-center" href="{{ route('dashboard') }}">
+            <div class="sidebar-brand-text mx-3">CREAMS</div>
+        </a>
+
+        <!-- Divider -->
+        <hr class="sidebar-divider my-0">
+
+        <!-- Nav Items -->
+        <li class="nav-item {{ request()->routeIs('dashboard') ? 'active' : '' }}">
+            <a class="nav-link" href="{{ route('dashboard') }}">
+                <i class="fas fa-fw fa-tachometer-alt"></i>
+                <span>Dashboard</span>
+            </a>
+        </li>
+
+        <li class="nav-item {{ request()->routeIs('traineeshome') || request()->routeIs('trainees.*') ? 'active' : '' }}">
+            <a class="nav-link" href="{{ route('traineeshome') }}">
+                <i class="fas fa-fw fa-user-graduate"></i>
+                <span>Trainees</span>
+            </a>
+        </li>
+
+        @if(Route::has('traineeactivity'))
+        <li class="nav-item {{ request()->routeIs('traineeactivity') ? 'active' : '' }}">
+            <a class="nav-link" href="{{ route('traineeactivity') }}">
+                <i class="fas fa-fw fa-clipboard-list"></i>
+                <span>Activities</span>
+            </a>
+        </li>
+        @else
+        <li class="nav-item {{ request()->routeIs('activities.*') ? 'active' : '' }}">
+            <a class="nav-link" href="{{ route('activities.index') }}">
+                <i class="fas fa-fw fa-clipboard-list"></i>
+                <span>Activities</span>
+            </a>
+        </li>
+        @endif
+
+        <li class="nav-item {{ request()->routeIs('teachershome') ? 'active' : '' }}">
+            <a class="nav-link" href="{{ route('teachershome') }}">
+                <i class="fas fa-fw fa-chalkboard-teacher"></i>
+                <span>Staff</span>
+            </a>
+        </li>
+
+        @if(Route::has('schedulehomepage'))
+        <li class="nav-item {{ request()->routeIs('schedulehomepage') ? 'active' : '' }}">
+            <a class="nav-link" href="{{ route('schedulehomepage') }}">
+                <i class="fas fa-fw fa-calendar-alt"></i>
+                <span>Schedule</span>
+            </a>
+        </li>
+        @endif
+
+        @if(Route::has('assetmanagementpage'))
+        <li class="nav-item {{ request()->routeIs('assetmanagementpage') || request()->routeIs('assets.*') ? 'active' : '' }}">
+            <a class="nav-link" href="{{ route('assetmanagementpage') }}">
+                <i class="fas fa-fw fa-boxes"></i>
+                <span>Assets</span>
+            </a>
+        </li>
+        @elseif(in_array(session('role'), ['admin']))
+        <li class="nav-item {{ request()->routeIs('assets.*') ? 'active' : '' }}">
+            <a class="nav-link" href="{{ route('assets.index') }}">
+                <i class="fas fa-fw fa-boxes"></i>
+                <span>Assets</span>
+            </a>
+        </li>
+        @endif
+
+        <li class="nav-item {{ request()->routeIs('centres.*') ? 'active' : '' }}">
+            <a class="nav-link" href="{{ route('centres.index') }}">
+                <i class="fas fa-fw fa-building"></i>
+                <span>Centres</span>
+            </a>
+        </li>
+
+        <!-- Divider -->
+        <hr class="sidebar-divider">
+
+        <!-- Sidebar Toggler -->
+        <div class="text-center d-none d-md-inline">
+            <button class="rounded-circle border-0" id="sidebarToggle"></button>
         </div>
-        
-        <div class="admin-profile">
-            <div class="admin-avatar">
-                @if(isset($user['avatar']) && $user['avatar'])
-                    <img src="{{ asset('storage/avatars/' . $user['avatar']) }}" alt="User Avatar">
-                @else
-                    <img src="{{ asset('images/admin-avatar.jpg') }}" alt="User Avatar">
-                @endif
-            </div>
-            <div class="admin-info">
-                <div class="admin-name">{{ $user['name'] ?? 'User' }}</div>
-                <div class="admin-role">{{ ucfirst($user['role'] ?? 'guest') }}</div>
-            </div>
-        </div>
-        
-        <ul class="nav-menu">
-            <li class="{{ request()->routeIs('dashboard') ? 'active' : '' }}">
-                <a href="{{ route('dashboard') }}">
-                    <i class="fas fa-home"></i>
-                    <span>Dashboard</span>
-                    <div class="tooltip-sidebar">Dashboard</div>
-                </a>
-            </li>
-            <li class="{{ request()->routeIs('traineeshome') || request()->routeIs('traineeprofile') || request()->routeIs('traineesregistrationpage') ? 'active' : '' }}">
-                <a href="{{ route('traineeshome') }}">
-                    <i class="fas fa-user-graduate"></i>
-                    <span>Trainees</span>
-                    <div class="tooltip-sidebar">Trainees</div>
-                </a>
-            </li>
-            <li class="{{ request()->routeIs('traineeactivity') ? 'active' : '' }}">
-                <a href="{{ route('traineeactivity') }}">
-                    <i class="fas fa-clipboard-list"></i>
-                    <span>Activities</span>
-                    <div class="tooltip-sidebar">Trainee Activities</div>
-                </a>
-            </li>
-            <li class="{{ request()->routeIs('teachershome') ? 'active' : '' }}">
-                <a href="{{ route('teachershome') }}">
-                    <i class="fas fa-chalkboard-teacher"></i>
-                    <span>Staff</span>
-                    <div class="tooltip-sidebar">Staff</div>
-                </a>
-            </li>
-            <li class="{{ request()->routeIs('schedulehomepage') ? 'active' : '' }}">
-                <a href="{{ route('schedulehomepage') }}">
-                    <i class="fas fa-calendar-alt"></i>
-                    <span>Schedule</span>
-                    <div class="tooltip-sidebar">Schedule</div>
-                </a>
-            </li>
-            <li class="{{ request()->routeIs('assetmanagementpage') ? 'active' : '' }}">
-                <a href="{{ route('assetmanagementpage') }}">
-                    <i class="fas fa-box"></i>
-                    <span>Assets</span>
-                    <div class="tooltip-sidebar">Asset Management</div>
-                </a>
-            </li>
-            <li class="{{ request()->routeIs('aboutus') ? 'active' : '' }}">
-                <a href="{{ route('aboutus') }}">
-                    <i class="fas fa-info-circle"></i>
-                    <span>About</span>
-                    <div class="tooltip-sidebar">About Us</div>
-                </a>
-            </li>
-        </ul>
-        
-        <form method="POST" action="{{ route('logout') }}" class="logout-container">
-            @csrf
-            <button type="submit" class="logout-btn">
-                <i class="fas fa-sign-out-alt"></i>
-                <span>Logout</span>
-            </button>
-        </form>
-    </div>
+    </ul>
 
     <!-- Main Content -->
     <div class="main-content">

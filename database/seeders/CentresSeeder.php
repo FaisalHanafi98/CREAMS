@@ -4,92 +4,64 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use App\Models\Centres;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Artisan;
 
 class CentresSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     *
-     * @return void
-     */
     public function run()
     {
-        $this->command->info('Seeding centres...');
-        
-        try {
-            // Safe deletion of existing centres
-            $this->command->info('Deleting existing centres...');
-            
-            // Temporarily disable foreign key checks
-            DB::statement('SET FOREIGN_KEY_CHECKS=0');
-            
-            // Delete existing centres
-            DB::table('centres')->delete();
-            
-            // Re-enable foreign key checks
-            DB::statement('SET FOREIGN_KEY_CHECKS=1');
-            
-            // Actual campus data with proper status field
-            $centres = [
-                [
-                    'centre_id' => '01',
-                    'centre_name' => 'Gombak',
-                    'centre_status' => 'active',
-                    'created_at' => now(),
-                    'updated_at' => now()
-                ],
-                [
-                    'centre_id' => '02',
-                    'centre_name' => 'Kuantan',
-                    'centre_status' => 'active',
-                    'created_at' => now(),
-                    'updated_at' => now()
-                ],
-                [
-                    'centre_id' => '03',
-                    'centre_name' => 'Gambang',
-                    'centre_status' => 'active',
-                    'created_at' => now(),
-                    'updated_at' => now()
-                ],
-                [
-                    'centre_id' => '04',
-                    'centre_name' => 'Pagoh',
-                    'centre_status' => 'active',
-                    'created_at' => now(),
-                    'updated_at' => now()
-                ]
-            ];
-            
-            // Insert all centres at once
-            DB::table('centres')->insert($centres);
-            
-            foreach ($centres as $centre) {
-                $this->command->info("Created centre: {$centre['centre_name']}");
-            }
-            
-            // Run the centre sync command to update any existing users
-            $this->command->info('Running centre sync command to update user records...');
-            Artisan::call('centres:sync');
-            $syncOutput = Artisan::output();
-            $this->command->info($syncOutput);
-            
-            $this->command->info('Centres seeding completed successfully!');
-            
-        } catch (\Exception $e) {
-            // Make sure to re-enable foreign key checks even if there's an error
-            DB::statement('SET FOREIGN_KEY_CHECKS=1');
-            
-            $this->command->error('Error seeding centres: ' . $e->getMessage());
-            Log::error('Error seeding centres', [
-                'message' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-            
-            throw $e;
+        $centres = [
+            [
+                'centre_id' => 'CTR001',
+                'centre_name' => 'Main Rehabilitation Centre',
+                'address' => 'Jalan Merdeka 123',
+                'city' => 'Kuala Lumpur',
+                'state' => 'Wilayah Persekutuan',
+                'postcode' => '50450',
+                'phone' => '03-1234-5678',
+                'email' => 'main@creams.edu.my',
+                'capacity' => 150,
+                'description' => 'Our flagship centre with comprehensive rehabilitation facilities',
+                'facilities' => json_encode(['Therapy Pool', 'Sensory Room', 'Computer Lab', 'Art Studio', 'Gym']),
+                'opening_time' => '08:00',
+                'closing_time' => '18:00',
+                'is_active' => true
+            ],
+            [
+                'centre_id' => 'CTR002',
+                'centre_name' => 'Shah Alam Branch',
+                'address' => 'Persiaran Perdana 45',
+                'city' => 'Shah Alam',
+                'state' => 'Selangor',
+                'postcode' => '40000',
+                'phone' => '03-5567-8901',
+                'email' => 'shahalam@creams.edu.my',
+                'capacity' => 100,
+                'description' => 'Modern facility focusing on pediatric rehabilitation',
+                'facilities' => json_encode(['Play Therapy Room', 'Speech Lab', 'Occupational Therapy Suite']),
+                'opening_time' => '08:30',
+                'closing_time' => '17:30',
+                'is_active' => true
+            ],
+            [
+                'centre_id' => 'CTR003',
+                'centre_name' => 'Penang Centre',
+                'address' => 'Jalan Georgetown 78',
+                'city' => 'Georgetown',
+                'state' => 'Pulau Pinang',
+                'postcode' => '10200',
+                'phone' => '04-2234-5678',
+                'email' => 'penang@creams.edu.my',
+                'capacity' => 80,
+                'description' => 'Specialized centre for autism and behavioral therapy',
+                'facilities' => json_encode(['Behavioral Therapy Rooms', 'Quiet Zones', 'Parent Training Room']),
+                'opening_time' => '09:00',
+                'closing_time' => '17:00',
+                'is_active' => true
+            ]
+        ];
+
+        foreach ($centres as $centre) {
+            Centres::create($centre);
         }
     }
 }

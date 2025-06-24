@@ -4,237 +4,105 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Activity extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'activity_name',
         'activity_code',
+        'activity_name',
         'description',
         'category',
-        'subject_category',
-        'curriculum_level',
+        'activity_type',
         'objectives',
-        'learning_outcomes',
-        'assessment_criteria',
         'materials_needed',
+        'skills_developed',
         'age_group',
         'difficulty_level',
-        'standard_duration_minutes',
-        'minimum_duration_minutes',
-        'maximum_duration_minutes',
-        'requires_special_accommodation',
+        'min_participants',
+        'max_participants',
+        'duration_minutes',
+        'location_type',
+        'requires_equipment',
+        'equipment_list',
         'is_active',
-        'created_by'
+        'times_conducted',
+        'average_rating',
+        'created_by',
+        'centre_id'
     ];
 
     protected $casts = [
+        'skills_developed' => 'array',
+        'equipment_list' => 'array',
         'is_active' => 'boolean',
-        'requires_special_accommodation' => 'boolean',
-        'learning_outcomes' => 'array',
-        'assessment_criteria' => 'array',
-        'created_at' => 'datetime',
-        'updated_at' => 'datetime'
+        'requires_equipment' => 'boolean'
     ];
 
-    /**
-     * Get the user who created the activity
-     */
+    // Relationships
     public function creator()
     {
-        return $this->belongsTo(Users::class, 'created_by');
+        return $this->belongsTo(User::class, 'created_by');
     }
 
-    /**
-     * Get all sessions for the activity
-     */
+    public function centre()
+    {
+        return $this->belongsTo(Centres::class, 'centre_id', 'centre_id');
+    }
+
     public function sessions()
     {
         return $this->hasMany(ActivitySession::class);
     }
 
-    /**
-     * Get active sessions
-     */
-    public function activeSessions()
+    public function upcomingSessions()
     {
-        return $this->hasMany(ActivitySession::class)->where('status', 'active');
+        return $this->sessions()
+            ->where('scheduled_date', '>=', now())
+            ->where('status', 'scheduled')
+            ->orderBy('scheduled_date');
     }
 
-    /**
-     * Scope for active activities
-     */
+    public function completedSessions()
+    {
+        return $this->sessions()->where('status', 'completed');
+    }
+
+    // Scopes
     public function scopeActive($query)
     {
         return $query->where('is_active', true);
     }
 
-    /**
-     * Scope for rehabilitation activities
-     */
-    public function scopeRehabilitation($query)
+    public function scopeByCategory($query, $category)
     {
-        return $query->whereIn('category', [
-            'Physical Therapy',
-            'Occupational Therapy',
-            'Speech & Language Therapy',
-            'Sensory Integration',
-            'Social Skills Training',
-            'Daily Living Skills'
-        ]);
+        return $query->where('category', $category);
     }
 
-    /**
-     * Scope for academic activities
-     */
-    public function scopeAcademic($query)
+    public function scopeForAgeGroup($query, $age)
     {
-        return $query->whereIn('category', [
-            'Basic Mathematics',
-            'Language & Literacy',
-            'Science Exploration',
-            'Art & Creativity',
-            'Music Therapy',
-            'Computer Skills'
-        ]);
+        return $query->where('age_group', 'LIKE', "%{$age}%");
     }
 
-    /**
-     * Scope for Malaysian curriculum subjects
-     */
-    public function scopeMalaysianCurriculum($query)
+    // Accessors
+    public function getFormattedDurationAttribute()
     {
-        return $query->whereIn('subject_category', [
-            'bahasa_malaysia',
-            'english_language', 
-            'arabic_language',
-            'mathematics',
-            'science',
-            'life_skills'
-        ]);
-    }
-
-    /**
-     * Scope for therapy activities
-     */
-    public function scopeTherapy($query)
-    {
-        return $query->whereIn('subject_category', [
-            'physical_therapy',
-            'occupational_therapy',
-            'speech_therapy',
-            'social_skills'
-        ]);
-    }
-
-    /**
-     * Get formatted subject category name
-     */
-    public function getFormattedSubjectCategoryAttribute()
-    {
-        $categories = [
-            'bahasa_malaysia' => 'Bahasa Malaysia',
-            'english_language' => 'English Language',
-            'arabic_language' => 'Arabic Language',
-            'mathematics' => 'Mathematics',
-            'science' => 'Science',
-            'life_skills' => 'Life Skills',
-            'physical_therapy' => 'Physical Therapy',
-            'occupational_therapy' => 'Occupational Therapy',
-            'speech_therapy' => 'Speech Therapy',
-            'social_skills' => 'Social Skills Training'
-        ];
-
-        return $categories[$this->subject_category] ?? $this->subject_category;
-    }
-
-    /**
-     * Get formatted curriculum level
-     */
-    public function getFormattedCurriculumLevelAttribute()
-    {
-        $levels = [
-            'pre_foundation' => 'Pre-Foundation (Pre-school)',
-            'foundation' => 'Foundation (Primary 1-3)',
-            'basic' => 'Basic (Primary 4-6)',
-            'adaptive' => 'Adaptive (Special Needs)'
-        ];
-
-        return $levels[$this->curriculum_level] ?? $this->curriculum_level;
-    }
-
-    /**
-     * Get recommended duration for a specific trainee
-     */
-    public function getRecommendedDurationForTrainee($traineeId)
-    {
-        // Check if trainee has specific adaptations
-        $adaptation = \DB::table('trainee_subject_adaptations')
-            ->where('trainee_id', $traineeId)
-            ->where('subject_category', $this->subject_category)
-            ->first();
-
-        if ($adaptation) {
-            return $adaptation->adapted_duration_minutes;
-        }
-
-        // Fall back to disability-based accommodations
-        $trainee = \App\Models\Trainee::find($traineeId);
-        if ($trainee && $trainee->trainee_condition) {
-            $accommodation = \DB::table('disability_accommodations')
-                ->where('disability_type', $trainee->trainee_condition)
-                ->where('subject_category', $this->subject_category)
-                ->first();
-
-            if ($accommodation) {
-                return $accommodation->recommended_duration_minutes;
-            }
-        }
-
-        // Default to standard duration
-        return $this->standard_duration_minutes ?? 45;
-    }
-
-    /**
-     * Check if activity requires special accommodation
-     */
-    public function needsAccommodationForTrainee($traineeId)
-    {
-        $trainee = \App\Models\Trainee::find($traineeId);
+        $hours = floor($this->duration_minutes / 60);
+        $minutes = $this->duration_minutes % 60;
         
-        if (!$trainee || !$trainee->trainee_condition) {
-            return false;
+        if ($hours > 0) {
+            return $hours . 'h ' . ($minutes > 0 ? $minutes . 'm' : '');
         }
-
-        // Check if there are specific accommodations for this disability type and subject
-        $hasAccommodation = \DB::table('disability_accommodations')
-            ->where('disability_type', $trainee->trainee_condition)
-            ->where('subject_category', $this->subject_category)
-            ->exists();
-
-        return $hasAccommodation || $this->requires_special_accommodation;
+        return $minutes . 'm';
     }
 
-    /**
-     * Get subject category badge class for UI
-     */
-    public function getSubjectBadgeClassAttribute()
+    public function getParticipantRangeAttribute()
     {
-        $badgeClasses = [
-            'bahasa_malaysia' => 'primary',
-            'english_language' => 'info',
-            'arabic_language' => 'secondary',
-            'mathematics' => 'success',
-            'science' => 'warning',
-            'life_skills' => 'dark',
-            'physical_therapy' => 'danger',
-            'occupational_therapy' => 'primary',
-            'speech_therapy' => 'info',
-            'social_skills' => 'secondary'
-        ];
-
-        return $badgeClasses[$this->subject_category] ?? 'secondary';
+        if ($this->min_participants == $this->max_participants) {
+            return $this->min_participants . ' participants';
+        }
+        return $this->min_participants . '-' . $this->max_participants . ' participants';
     }
 }

@@ -1,132 +1,90 @@
-@extends('layouts.dashboard')
+@extends('layouts.app')
 
-@section('title', 'Centres')
+@section('title', 'Centres Management')
 
 @section('content')
-<div class="content-section">
-    <div class="card mb-4">
-        <div class="card-header">
-            <h5 class="card-title">Rehabilitation Centres</h5>
-        </div>
-        <div class="card-body">
-            <div class="row">
-                @foreach($centres as $centre)
-                <div class="col-md-4 mb-4">
-                    <div class="centre-card">
-                        <div class="centre-header">
-                            <h5 class="centre-name">{{ $centre['name'] }}</h5>
-                            <div class="centre-stats">
-                                <div class="stat">
-                                    <span class="stat-value">{{ $centre['staff_count'] }}</span>
-                                    <span class="stat-label">Staff</span>
-                                </div>
-                                <div class="stat">
-                                    <span class="stat-value">{{ $centre['trainee_count'] }}</span>
-                                    <span class="stat-label">Tainees</span>
-                                </div>
+<div class="container-fluid">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Centres Management</h1>
+        @if(session('role') === 'admin')
+        <a href="{{ route('admin.centres.create') }}" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm">
+            <i class="fas fa-plus fa-sm text-white-50"></i> Add New Centre
+        </a>
+        @endif
+    </div>
+    
+    <div class="row">
+        @forelse($centres as $centre)
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="card shadow h-100">
+                    <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                        <h6 class="m-0 font-weight-bold text-primary">{{ $centre->centre_name }}</h6>
+                        <span class="badge badge-{{ $centre->is_active ? 'success' : 'secondary' }}">
+                            {{ $centre->is_active ? 'Active' : 'Inactive' }}
+                        </span>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <i class="fas fa-map-marker-alt text-gray-400"></i>
+                            <span class="ml-2">{{ $centre->address ?? $centre->city ?? 'Location not specified' }}</span>
+                        </div>
+                        <div class="mb-3">
+                            <i class="fas fa-phone text-gray-400"></i>
+                            <span class="ml-2">{{ $centre->phone ?? 'No phone' }}</span>
+                        </div>
+                        <div class="mb-3">
+                            <i class="fas fa-users text-gray-400"></i>
+                            <span class="ml-2">Capacity: {{ $centre->capacity ?? 0 }}</span>
+                        </div>
+                        <hr>
+                        <div class="row text-center">
+                            <div class="col-4">
+                                <div class="text-xs text-gray-600">Staff</div>
+                                <div class="font-weight-bold">{{ $centre->users_count ?? 0 }}</div>
+                            </div>
+                            <div class="col-4">
+                                <div class="text-xs text-gray-600">Trainees</div>
+                                <div class="font-weight-bold">{{ $centre->trainees_count ?? 0 }}</div>
+                            </div>
+                            <div class="col-4">
+                                <div class="text-xs text-gray-600">Assets</div>
+                                <div class="font-weight-bold">{{ $centre->assets_count ?? 0 }}</div>
                             </div>
                         </div>
-                        <div class="centre-body">
-                            <div class="centre-info">
-                                <div class="info-item">
-                                    <i class="fas fa-map-marker-alt"></i>
-                                    <span>{{ $centre['address'] }}</span>
-                                </div>
-                                <div class="info-item">
-                                    <i class="fas fa-phone"></i>
-                                    <span>{{ $centre['phone'] }}</span>
-                                </div>
-                                <div class="info-item">
-                                    <i class="fas fa-envelope"></i>
-                                    <span>{{ $centre['email'] }}</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="centre-footer">
-                            <a href="{{ route('centres.show', $centre['id']) }}" class="btn btn-primary btn-sm">View Details</a>
+                    </div>
+                    <div class="card-footer bg-transparent">
+                        <div class="btn-group btn-group-sm w-100" role="group">
+                            <a href="{{ route('centres.show', $centre->centre_id) }}" class="btn btn-info">
+                                <i class="fas fa-eye"></i> View
+                            </a>
+                            @if(in_array(session('role'), ['admin']))
+                            <a href="{{ route('admin.centres.edit', $centre->centre_id) }}" class="btn btn-warning">
+                                <i class="fas fa-edit"></i> Edit
+                            </a>
+                            @endif
+                            <a href="{{ route('centres.assets', $centre->centre_id) }}" class="btn btn-secondary">
+                                <i class="fas fa-boxes"></i> Assets
+                            </a>
                         </div>
                     </div>
                 </div>
-                @endforeach
             </div>
-        </div>
+        @empty
+            <div class="col-12">
+                <div class="card shadow">
+                    <div class="card-body text-center py-5">
+                        <i class="fas fa-building fa-3x text-gray-400 mb-3"></i>
+                        <h5>No centres found</h5>
+                        <p class="text-muted">There are no centres registered in the system yet.</p>
+                        @if(session('role') === 'admin')
+                        <a href="{{ route('admin.centres.create') }}" class="btn btn-primary mt-2">
+                            <i class="fas fa-plus mr-1"></i>Create First Centre
+                        </a>
+                        @endif
+                    </div>
+                </div>
+            </div>
+        @endforelse
     </div>
 </div>
-
-<style>
-    .centre-card {
-        background-color: var(--light-color);
-        border-radius: 15px;
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
-        overflow: hidden;
-        transition: all 0.3s ease;
-        height: 100%;
-        display: flex;
-        flex-direction: column;
-    }
-    
-    .centre-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
-    }
-    
-    .centre-header {
-        padding: 20px;
-        background: var(--primary-gradient);
-        color: var(--light-color);
-    }
-    
-    .centre-name {
-        margin-bottom: 15px;
-        font-weight: 600;
-    }
-    
-    .centre-stats {
-        display: flex;
-        gap: 20px;
-    }
-    
-    .stat {
-        text-align: centre;
-    }
-    
-    .stat-value {
-        font-size: 20px;
-        font-weight: 700;
-        display: block;
-    }
-    
-    .stat-label {
-        font-size: 12px;
-        opacity: 0.8;
-    }
-    
-    .centre-body {
-        padding: 20px;
-        flex: 1;
-    }
-    
-    .centre-info {
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-    }
-    
-    .info-item {
-        display: flex;
-        gap: 10px;
-        font-size: 14px;
-    }
-    
-    .info-item i {
-        color: var(--primary-color);
-        width: 16px;
-    }
-    
-    .centre-footer {
-        padding: 15px 20px;
-        border-top: 1px solid rgba(0, 0, 0, 0.05);
-        text-align: centre;
-    }
-</style>
 @endsection

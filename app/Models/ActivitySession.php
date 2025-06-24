@@ -4,119 +4,123 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Carbon\Carbon;
 
 class ActivitySession extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
         'activity_id',
         'teacher_id',
-        'date',
+        'session_code',
+        'scheduled_date',
         'start_time',
-        'duration',
-        'location',
-        'max_capacity',
-        'status'
+        'end_time',
+        'duration_minutes',
+        'venue',
+        'room_number',
+        'max_participants',
+        'enrolled_count',
+        'status',
+        'notes',
+        'materials_prepared',
+        'attendance_marked',
+        'actual_start',
+        'actual_end',
+        'session_report'
     ];
 
     protected $casts = [
-        'date' => 'date',
-        'start_time' => 'datetime:H:i',
-        'duration' => 'integer',
-        'max_capacity' => 'integer',
-        'created_at' => 'datetime',
-        'updated_at' => 'datetime'
+        'scheduled_date' => 'datetime',
+        'actual_start' => 'datetime',
+        'actual_end' => 'datetime',
+        'attendance_marked' => 'boolean'
     ];
 
-    /**
-     * Get the activity
-     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($session) {
+            // Generate unique session code
+            $session->session_code = 'SES' . date('Ymd') . strtoupper(substr(uniqid(), -4));
+        });
+    }
+
+    // Relationships
     public function activity()
     {
         return $this->belongsTo(Activity::class);
     }
 
-    /**
-     * Get the teacher
-     */
     public function teacher()
     {
-        return $this->belongsTo(Users::class, 'teacher_id');
+        return $this->belongsTo(User::class, 'teacher_id');
     }
 
-    /**
-     * Get enrollments
-     */
     public function enrollments()
     {
         return $this->hasMany(SessionEnrollment::class, 'session_id');
     }
 
-    /**
-     * Get attendance records
-     */
-    public function attendance()
+    public function trainees()
     {
-        return $this->hasMany(ActivityAttendance::class, 'session_id');
+        return $this->belongsToMany(Trainee::class, 'session_enrollments', 'session_id', 'trainee_id')
+            ->withPivot(['attendance_status', 'participation_score', 'progress_notes'])
+            ->withTimestamps();
     }
 
-    /**
-     * Get end time attribute
-     */
-    public function getEndTimeAttribute()
-    {
-        return Carbon::parse($this->start_time)->addMinutes($this->duration)->format('H:i');
-    }
-
-    /**
-     * Get enrollment count
-     */
-    public function getEnrollmentCountAttribute()
-    {
-        return $this->enrollments()->count();
-    }
-
-    /**
-     * Check if session is full
-     */
-    public function getIsFullAttribute()
-    {
-        return $this->enrollment_count >= $this->max_capacity;
-    }
-
-    /**
-     * Get available spots
-     */
-    public function getAvailableSpotsAttribute()
-    {
-        return max(0, $this->max_capacity - $this->enrollment_count);
-    }
-
-    /**
-     * Scope for active sessions
-     */
-    public function scopeActive($query)
-    {
-        return $query->where('status', 'active');
-    }
-
-    /**
-     * Scope for upcoming sessions
-     */
+    // Scopes
     public function scopeUpcoming($query)
     {
-        return $query->where('date', '>=', Carbon::today())
-                     ->orderBy('date')
-                     ->orderBy('start_time');
+        return $query->where('scheduled_date', '>=', now())
+            ->where('status', 'scheduled')
+            ->orderBy('scheduled_date');
     }
 
-    /**
-     * Scope for today's sessions
-     */
     public function scopeToday($query)
     {
-        return $query->whereDate('date', Carbon::today());
+        return $query->whereDate('scheduled_date', today());
+    }
+
+    public function scopeByTeacher($query, $teacherId)
+    {
+        return $query->where('teacher_id', $teacherId);
+    }
+
+    // Accessors
+    public function getIsFullAttribute()
+    {
+        return $this->enrolled_count >= $this->max_participants;
+    }
+
+    public function getAvailableSlotsAttribute()
+    {
+        return max(0, $this->max_participants - $this->enrolled_count);
+    }
+
+    public function getFormattedScheduleAttribute()
+    {
+        return Carbon::parse($this->scheduled_date)->format('M d, Y') . ' at ' . 
+               Carbon::parse($this->start_time)->format('g:i A') . ' - ' . 
+               Carbon::parse($this->end_time)->format('g:i A');
+    }
+
+    // Methods
+    public function canEnroll()
+    {
+        return $this->status === 'scheduled' && !$this->is_full && $this->scheduled_date > now();
+    }
+
+    public function markAttendance($traineeId, $status)
+    {
+        return $this->enrollments()
+            ->where('trainee_id', $traineeId)
+            ->update([
+                'attendance_status' => $status,
+                'checked_in_at' => $status === 'present' ? now() : null
+            ]);
     }
 }
