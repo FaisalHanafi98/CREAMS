@@ -1,0 +1,529 @@
+/**
+ * Dashboard Charts Styles
+ * CREAMS - Care Rehabilitation Centre Management System
+ */
+
+/* Chart Container Styles */
+.chart-container {
+    position: relative;
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    margin-bottom: 20px;
+    transition: all 0.3s ease;
+}
+
+.chart-container:hover {
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+    transform: translateY(-2px);
+}
+
+.chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #f1f2f6;
+}
+
+.chart-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #2c3e50;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.chart-title i {
+    color: var(--primary-color, #32bdea);
+    font-size: 1.1rem;
+}
+
+.chart-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.chart-action-btn {
+    background: none;
+    border: 2px solid #e9ecef;
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    color: #7f8c8d;
+    font-size: 0.9rem;
+}
+
+.chart-action-btn:hover {
+    border-color: var(--primary-color, #32bdea);
+    color: var(--primary-color, #32bdea);
+    background: rgba(50, 189, 234, 0.1);
+}
+
+.chart-action-btn.active {
+    background: var(--primary-color, #32bdea);
+    border-color: var(--primary-color, #32bdea);
+    color: white;
+}
+
+/* Chart Canvas */
+.chart-canvas {
+    position: relative;
+    height: 300px;
+    margin-bottom: 15px;
+}
+
+.chart-canvas canvas {
+    max-height: 100%;
+    border-radius: 8px;
+}
+
+/* Chart Legend */
+.chart-legend {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid #f1f2f6;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+    color: #2c3e50;
+}
+
+.legend-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+    flex-shrink: 0;
+}
+
+/* Chart Types */
+.chart-line {
+    border-left: 4px solid var(--primary-color, #32bdea);
+}
+
+.chart-bar {
+    border-left: 4px solid var(--success-color, #2ed573);
+}
+
+.chart-pie {
+    border-left: 4px solid var(--warning-color, #ffa502);
+}
+
+.chart-doughnut {
+    border-left: 4px solid var(--info-color, #1e90ff);
+}
+
+.chart-area {
+    border-left: 4px solid var(--secondary-color, #c850c0);
+}
+
+/* Chart Statistics */
+.chart-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 15px;
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid #f1f2f6;
+}
+
+.chart-stat {
+    text-align: center;
+    padding: 12px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.chart-stat:hover {
+    background: white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.chart-stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--primary-color, #32bdea);
+    margin-bottom: 5px;
+}
+
+.chart-stat-label {
+    font-size: 0.85rem;
+    color: #7f8c8d;
+    font-weight: 500;
+}
+
+/* Chart Filters */
+.chart-filters {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.chart-filter {
+    background: white;
+    border: 2px solid #e9ecef;
+    padding: 8px 15px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    color: #7f8c8d;
+    font-weight: 500;
+}
+
+.chart-filter:hover {
+    border-color: var(--primary-color, #32bdea);
+    color: var(--primary-color, #32bdea);
+}
+
+.chart-filter.active {
+    background: var(--primary-color, #32bdea);
+    border-color: var(--primary-color, #32bdea);
+    color: white;
+}
+
+/* Loading State */
+.chart-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 200px;
+    color: #7f8c8d;
+}
+
+.chart-loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #f1f2f6;
+    border-top: 4px solid var(--primary-color, #32bdea);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 15px;
+}
+
+.chart-loading-text {
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Empty Chart State */
+.chart-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 200px;
+    color: #7f8c8d;
+    text-align: center;
+}
+
+.chart-empty-icon {
+    font-size: 3rem;
+    margin-bottom: 15px;
+    opacity: 0.5;
+}
+
+.chart-empty-text {
+    font-size: 1rem;
+    font-weight: 500;
+    margin-bottom: 5px;
+}
+
+.chart-empty-subtitle {
+    font-size: 0.85rem;
+    color: #bdc3c7;
+}
+
+/* Chart Tooltip Custom Styles */
+.chartjs-tooltip {
+    background: rgba(0, 0, 0, 0.8);
+    border-radius: 8px;
+    padding: 10px 15px;
+    color: white;
+    font-size: 0.9rem;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    pointer-events: none;
+    transition: all 0.1s ease;
+}
+
+.chartjs-tooltip-key {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    margin-right: 8px;
+    border-radius: 2px;
+}
+
+/* Performance Charts */
+.performance-chart {
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    border: none;
+}
+
+.performance-chart .chart-title {
+    color: var(--primary-color, #32bdea);
+}
+
+/* Activity Charts */
+.activity-chart {
+    background: linear-gradient(135deg, rgba(46, 213, 115, 0.05), rgba(0, 230, 118, 0.05));
+    border-left-color: var(--success-color, #2ed573);
+}
+
+.activity-chart .chart-title {
+    color: var(--success-color, #2ed573);
+}
+
+/* User Analytics Charts */
+.analytics-chart {
+    background: linear-gradient(135deg, rgba(255, 165, 2, 0.05), rgba(255, 202, 40, 0.05));
+    border-left-color: var(--warning-color, #ffa502);
+}
+
+.analytics-chart .chart-title {
+    color: var(--warning-color, #ffa502);
+}
+
+/* System Health Charts */
+.health-chart {
+    background: linear-gradient(135deg, rgba(255, 71, 87, 0.05), rgba(255, 82, 82, 0.05));
+    border-left-color: var(--danger-color, #ff4757);
+}
+
+.health-chart .chart-title {
+    color: var(--danger-color, #ff4757);
+}
+
+/* Chart Animations */
+.chart-container.fade-in {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Chart Grid Layout */
+.charts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 25px;
+    margin-bottom: 30px;
+}
+
+.charts-grid.single-column {
+    grid-template-columns: 1fr;
+}
+
+.charts-grid.two-column {
+    grid-template-columns: repeat(2, 1fr);
+}
+
+.charts-grid.three-column {
+    grid-template-columns: repeat(3, 1fr);
+}
+
+/* Chart Size Variants */
+.chart-small .chart-canvas {
+    height: 200px;
+}
+
+.chart-medium .chart-canvas {
+    height: 300px;
+}
+
+.chart-large .chart-canvas {
+    height: 400px;
+}
+
+.chart-extra-large .chart-canvas {
+    height: 500px;
+}
+
+/* Responsive Chart Behavior */
+@media (max-width: 1200px) {
+    .charts-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 20px;
+    }
+    
+    .charts-grid.three-column {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .charts-grid {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+    
+    .chart-container {
+        padding: 15px;
+    }
+    
+    .chart-canvas {
+        height: 250px;
+    }
+    
+    .chart-large .chart-canvas,
+    .chart-extra-large .chart-canvas {
+        height: 300px;
+    }
+    
+    .chart-header {
+        flex-direction: column;
+        gap: 10px;
+        text-align: center;
+    }
+    
+    .chart-actions {
+        justify-content: center;
+    }
+    
+    .chart-filters {
+        justify-content: center;
+    }
+    
+    .chart-stats {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+    
+    .chart-legend {
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+    }
+}
+
+@media (max-width: 480px) {
+    .chart-container {
+        padding: 12px;
+        margin-bottom: 15px;
+    }
+    
+    .chart-canvas {
+        height: 200px;
+    }
+    
+    .chart-title {
+        font-size: 1rem;
+    }
+    
+    .chart-stats {
+        grid-template-columns: 1fr;
+    }
+    
+    .chart-stat {
+        padding: 10px;
+    }
+    
+    .chart-stat-value {
+        font-size: 1.2rem;
+    }
+    
+    .chart-filters {
+        gap: 5px;
+    }
+    
+    .chart-filter {
+        padding: 6px 12px;
+        font-size: 0.8rem;
+    }
+}
+
+/* Dark Theme Support */
+.theme-dark .chart-container {
+    background: #34495e;
+    color: #ecf0f1;
+}
+
+.theme-dark .chart-header {
+    border-bottom-color: #4a5f7a;
+}
+
+.theme-dark .chart-title {
+    color: #ecf0f1;
+}
+
+.theme-dark .chart-action-btn {
+    border-color: #4a5f7a;
+    color: #bdc3c7;
+}
+
+.theme-dark .chart-action-btn:hover {
+    border-color: var(--primary-color, #32bdea);
+    background: rgba(50, 189, 234, 0.2);
+}
+
+.theme-dark .chart-legend {
+    border-top-color: #4a5f7a;
+}
+
+.theme-dark .legend-item {
+    color: #ecf0f1;
+}
+
+.theme-dark .chart-stat {
+    background: #2c3e50;
+}
+
+.theme-dark .chart-stat:hover {
+    background: #34495e;
+}
+
+.theme-dark .chart-stat-label {
+    color: #bdc3c7;
+}
+
+.theme-dark .chart-filter {
+    background: #34495e;
+    border-color: #4a5f7a;
+    color: #bdc3c7;
+}
+
+.theme-dark .chart-filter:hover {
+    color: var(--primary-color, #32bdea);
+}
+
+.theme-dark .chart-loading,
+.theme-dark .chart-empty {
+    color: #bdc3c7;
+}
+
+.theme-dark .chart-empty-subtitle {
+    color: #7f8c8d;
+}

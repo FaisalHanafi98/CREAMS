@@ -1,0 +1,3299 @@
+activities.js
+
+// Activities Module JavaScript
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize filters
+    initializeFilters();
+    
+    // Initialize form validations
+    initializeFormValidation();
+    
+    // Initialize attendance marking
+    initializeAttendance();
+    
+    // Initialize tooltips
+    initializeTooltips();
+});
+
+/**
+ * Initialize activity filters
+ */
+function initializeFilters() {
+    const categoryFilter = document.getElementById('categoryFilter');
+    const statusFilter = document.getElementById('statusFilter');
+    const searchInput = document.getElementById('searchInput');
+    const activitiesGrid = document.getElementById('activitiesGrid');
+    
+    if (!categoryFilter || !statusFilter || !searchInput) return;
+    
+    // Category filter
+    categoryFilter.addEventListener('change', filterActivities);
+    
+    // Status filter
+    statusFilter.addEventListener('change', filterActivities);
+    
+    // Search filter
+    let searchTimeout;
+    searchInput.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(filterActivities, 300);
+    });
+    
+    function filterActivities() {
+        const category = categoryFilter.value.toLowerCase();
+        const status = statusFilter.value;
+        const search = searchInput.value.toLowerCase();
+        
+        const items = activitiesGrid.querySelectorAll('.activity-item');
+        
+        items.forEach(item => {
+            const itemCategory = item.dataset.category.toLowerCase();
+            const itemStatus = item.dataset.status;
+            const itemName = item.dataset.name;
+            
+            let show = true;
+            
+            if (category && itemCategory !== category) show = false;
+            if (status && itemStatus !== status) show = false;
+            if (search && !itemName.includes(search)) show = false;
+            
+            item.style.display = show ? '' : 'none';
+        });
+        
+        // Show empty state if no items visible
+        const visibleItems = Array.from(items).filter(item => item.style.display !== 'none');
+        const emptyState = activitiesGrid.querySelector('.empty-state');
+        
+        if (visibleItems.length === 0 && !emptyState) {
+            activitiesGrid.innerHTML = `
+                <div class="col-12">
+                    <div class="empty-state">
+                        <i class="fas fa-search fa-4x text-muted mb-3"></i>
+                        <h4>No Activities Found</h4>
+                        <p class="text-muted">Try adjusting your filters or search terms.</p>
+                    </div>
+                </div>
+            `;
+        } else if (visibleItems.length > 0 && emptyState) {
+            emptyState.parentElement.remove();
+        }
+    }
+}
+
+/**
+ * Initialize form validation
+ */
+function initializeFormValidation() {
+    const forms = document.querySelectorAll('.needs-validation, #createActivityForm, #editActivityForm');
+    
+    forms.forEach(form => {
+        form.addEventListener('submit', function(event) {
+            if (!form.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            
+            form.classList.add('was-validated');
+        });
+    });
+    
+    // Activity code auto-generation
+    const activityNameInput = document.getElementById('activity_name');
+    const activityCodeInput = document.getElementById('activity_code');
+    
+    if (activityNameInput && activityCodeInput && !activityCodeInput.value) {
+        activityNameInput.addEventListener('input', function() {
+            if (!activityCodeInput.dataset.manual) {
+                const words = this.value.trim().split(' ');
+                let code = '';
+                
+                if (words.length === 1) {
+                    code = words[0].substring(0, 4).toUpperCase();
+                } else {
+                    code = words.map(word => word.charAt(0).toUpperCase()).join('');
+                }
+                
+                code += Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+                activityCodeInput.value = code;
+            }
+        });
+        
+        activityCodeInput.addEventListener('input', function() {
+            this.dataset.manual = 'true';
+        });
+    }
+}
+
+/**
+ * Initialize attendance marking functionality
+ */
+function initializeAttendance() {
+    const attendanceForm = document.getElementById('attendanceForm');
+    if (!attendanceForm) return;
+    
+    // Quick mark buttons
+    const quickMarkBtns = document.querySelectorAll('.quick-mark');
+    quickMarkBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const status = this.dataset.status;
+            const checkboxes = document.querySelectorAll(`.attendance-status[value="${status}"]`);
+            
+            checkboxes.forEach(cb => {
+                cb.checked = true;
+                updateAttendanceRow(cb);
+            });
+        });
+    });
+    
+    // Individual attendance status change
+    const statusInputs = document.querySelectorAll('.attendance-status');
+    statusInputs.forEach(input => {
+        input.addEventListener('change', function() {
+            updateAttendanceRow(this);
+        });
+    });
+    
+    function updateAttendanceRow(input) {
+        const row = input.closest('.attendance-item');
+        const participationInput = row.querySelector('.participation-score');
+        
+        if (input.value === 'Present' || input.value === 'Late') {
+            participationInput.disabled = false;
+            row.classList.add('present');
+            row.classList.remove('absent');
+        } else {
+            participationInput.disabled = true;
+            participationInput.value = '';
+            row.classList.add('absent');
+            row.classList.remove('present');
+        }
+    }
+    
+    // Form submission
+    attendanceForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const submitBtn = this.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+        
+        // Simulate API call
+        setTimeout(() => {
+            this.submit();
+        }, 500);
+    });
+}
+
+/**
+ * Initialize tooltips
+ */
+function initializeTooltips() {
+    const tooltips = document.querySelectorAll('[data-toggle="tooltip"]');
+    tooltips.forEach(tooltip => {
+        new bootstrap.Tooltip(tooltip);
+    });
+}
+
+/**
+ * Confirm delete action
+ */
+function confirmDelete(message) {
+    return confirm(message || 'Are you sure you want to delete this item?');
+}
+
+/**
+ * Format time display
+ */
+function formatTime(time) {
+    const [hours, minutes] = time.split(':');
+    const hour = parseInt(hours);
+    const ampm = hour >= 12 ? 'PM' : 'AM';
+    const displayHour = hour > 12 ? hour - 12 : (hour === 0 ? 12 : hour);
+    return `${displayHour}:${minutes} ${ampm}`;
+}
+
+/**
+ * Handle session enrollment
+ */
+function enrollTrainees(sessionId) {
+    const modal = new bootstrap.Modal(document.getElementById('enrollModal'));
+    const form = document.getElementById('enrollForm');
+    
+    // Load eligible trainees via AJAX
+    fetch(`/api/sessions/${sessionId}/eligible-trainees`)
+        .then(response => response.json())
+        .then(data => {
+            const container = document.getElementById('traineesList');
+            container.innerHTML = '';
+            
+            if (data.trainees.length === 0) {
+                container.innerHTML = '<p class="text-muted">No eligible trainees found.</p>';
+                return;
+            }
+            
+            data.trainees.forEach(trainee => {
+                const item = document.createElement('div');
+                item.className = 'form-check mb-2';
+                item.innerHTML = `
+                    <input class="form-check-input" type="checkbox" 
+                           value="${trainee.id}" id="trainee_${trainee.id}" 
+                           name="trainee_ids[]">
+                    <label class="form-check-label" for="trainee_${trainee.id}">
+                        ${trainee.name} (${trainee.centre_name})
+                    </label>
+                `;
+                container.appendChild(item);
+            });
+        })
+        .catch(error => {
+            console.error('Error loading trainees:', error);
+        });
+    
+    // Update form action
+    form.action = `/sessions/${sessionId}/enroll`;
+    
+    modal.show();
+}
+
+/**
+ * Export activities to CSV
+ */
+function exportActivities() {
+    window.location.href = '/activities/export?format=csv';
+}
+
+/**
+ * Print activity schedule
+ */
+function printSchedule() {
+    window.print();
+}
+
+// Helper functions for activity management
+const ActivityManager = {
+    /**
+     * Update activity status via AJAX
+     */
+    toggleStatus: function(activityId, currentStatus) {
+        const newStatus = !currentStatus;
+        
+        fetch(`/api/activities/${activityId}/status`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+            },
+            body: JSON.stringify({ is_active: newStatus })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Failed to update activity status.');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while updating the activity status.');
+        });
+    },
+    
+    /**
+     * Load activity statistics
+     */
+    loadStats: function(activityId) {
+        fetch(`/api/activities/${activityId}/stats`)
+            .then(response => response.json())
+            .then(data => {
+                updateStatsDisplay(data);
+            })
+            .catch(error => {
+                console.error('Error loading stats:', error);
+            });
+    },
+    
+    /**
+     * Search activities
+     */
+    search: function(query) {
+        return fetch(`/api/activities/search?q=${encodeURIComponent(query)}`)
+            .then(response => response.json());
+    }
+};
+
+/**
+ * Update statistics display
+ */
+function updateStatsDisplay(stats) {
+    Object.keys(stats).forEach(key => {
+        const element = document.getElementById(`stat-${key}`);
+        if (element) {
+            element.textContent = stats[key];
+        }
+    });
+}
+
+activity-form.js
+
+/**
+ * Activity Forms JavaScript
+ * Handles create and edit forms for activities
+ */
+
+class ActivityFormManager {
+    constructor() {
+        this.currentStep = 1;
+        this.totalSteps = 4;
+        this.formData = {};
+        this.validationRules = {};
+        this.init();
+    }
+
+    init() {
+        this.bindEvents();
+        this.initializeComponents();
+        this.setupValidation();
+        this.loadSavedData();
+    }
+
+    bindEvents() {
+        // Wizard navigation
+        document.querySelectorAll('.wizard-step-link').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const step = parseInt(link.dataset.step);
+                this.goToStep(step);
+            });
+        });
+
+        // Form navigation buttons
+        document.getElementById('btnPrevious')?.addEventListener('click', () => this.previousStep());
+        document.getElementById('btnNext')?.addEventListener('click', () => this.nextStep());
+        document.getElementById('btnSave')?.addEventListener('click', () => this.saveForm());
+        document.getElementById('btnSaveExit')?.addEventListener('click', () => this.saveAndExit());
+
+        // Auto-save functionality
+        this.setupAutoSave();
+
+        // Dynamic lists
+        this.setupDynamicLists();
+
+        // File uploads
+        this.setupFileUploads();
+
+        // Category selector
+        this.setupCategorySelector();
+    }
+
+    initializeComponents() {
+        // Initialize sortable lists
+        this.initializeSortable();
+
+        // Setup rich text editors
+        this.initializeEditors();
+
+        // Initialize date/time pickers
+        this.initializeDatePickers();
+
+        // Setup tooltips and help
+        this.initializeTooltips();
+    }
+
+    setupValidation() {
+        this.validationRules = {
+            step1: {
+                name: { required: true, minLength: 3, maxLength: 255 },
+                category: { required: true },
+                short_description: { required: true, maxLength: 255 }
+            },
+            step2: {
+                full_description: { required: true, minLength: 50 },
+                objectives: { required: true, minItems: 1 }
+            },
+            step3: {
+                difficulty_level: { required: true },
+                age_range: { required: true },
+                activity_type: { required: true },
+                duration: { required: true, min: 5, max: 180 }
+            },
+            step4: {
+                progress_metrics: { required: true, minLength: 20 }
+            }
+        };
+
+        // Real-time validation
+        document.querySelectorAll('input, textarea, select').forEach(field => {
+            field.addEventListener('blur', () => this.validateField(field));
+            field.addEventListener('input', () => this.clearFieldError(field));
+        });
+    }
+
+    goToStep(step) {
+        if (step < 1 || step > this.totalSteps) return;
+        
+        // Validate current step before moving
+        if (step > this.currentStep && !this.validateCurrentStep()) {
+            return;
+        }
+
+        // Save current step data
+        this.saveStepData();
+
+        // Hide current step
+        document.querySelector(`#step${this.currentStep}`)?.classList.add('d-none');
+        document.querySelector(`.wizard-step:nth-child(${this.currentStep})`)?.classList.remove('active');
+
+        // Show new step
+        this.currentStep = step;
+        document.querySelector(`#step${this.currentStep}`)?.classList.remove('d-none');
+        document.querySelector(`.wizard-step:nth-child(${this.currentStep})`)?.classList.add('active');
+
+        // Update step indicators
+        this.updateStepIndicators();
+
+        // Update navigation buttons
+        this.updateNavigationButtons();
+
+        // Animate step transition
+        this.animateStepTransition();
+
+        // Focus first input in new step
+        this.focusFirstInput();
+    }
+
+    nextStep() {
+        if (this.validateCurrentStep()) {
+            this.goToStep(this.currentStep + 1);
+        }
+    }
+
+    previousStep() {
+        this.goToStep(this.currentStep - 1);
+    }
+
+    validateCurrentStep() {
+        const stepRules = this.validationRules[`step${this.currentStep}`];
+        if (!stepRules) return true;
+
+        let isValid = true;
+        const stepElement = document.querySelector(`#step${this.currentStep}`);
+
+        Object.keys(stepRules).forEach(fieldName => {
+            const field = stepElement.querySelector(`[name="${fieldName}"], [name="${fieldName}[]"]`);
+            if (field && !this.validateField(field, stepRules[fieldName])) {
+                isValid = false;
+            }
+        });
+
+        return isValid;
+    }
+
+    validateField(field, rules = null) {
+        if (!rules) {
+            const stepRules = this.validationRules[`step${this.currentStep}`];
+            rules = stepRules?.[field.name];
+        }
+
+        if (!rules) return true;
+
+        const value = field.value.trim();
+        let isValid = true;
+        let errorMessage = '';
+
+        // Required validation
+        if (rules.required && !value) {
+            isValid = false;
+            errorMessage = 'This field is required.';
+        }
+
+        // Length validation
+        if (isValid && rules.minLength && value.length < rules.minLength) {
+            isValid = false;
+            errorMessage = `Minimum length is ${rules.minLength} characters.`;
+        }
+
+        if (isValid && rules.maxLength && value.length > rules.maxLength) {
+            isValid = false;
+            errorMessage = `Maximum length is ${rules.maxLength} characters.`;
+        }
+
+        // Number validation
+        if (isValid && rules.min && parseFloat(value) < rules.min) {
+            isValid = false;
+            errorMessage = `Minimum value is ${rules.min}.`;
+        }
+
+        if (isValid && rules.max && parseFloat(value) > rules.max) {
+            isValid = false;
+            errorMessage = `Maximum value is ${rules.max}.`;
+        }
+
+        // Array validation (for dynamic lists)
+        if (rules.minItems && field.name.includes('[]')) {
+            const items = document.querySelectorAll(`[name="${field.name}"]`);
+            const filledItems = Array.from(items).filter(item => item.value.trim());
+            if (filledItems.length < rules.minItems) {
+                isValid = false;
+                errorMessage = `Minimum ${rules.minItems} items required.`;
+            }
+        }
+
+        this.showFieldValidation(field, isValid, errorMessage);
+        return isValid;
+    }
+
+    showFieldValidation(field, isValid, errorMessage) {
+        const formGroup = field.closest('.form-group');
+        const feedback = formGroup?.querySelector('.invalid-feedback') || this.createFeedbackElement(formGroup);
+
+        field.classList.toggle('is-invalid', !isValid);
+        field.classList.toggle('is-valid', isValid && field.value.trim());
+
+        if (feedback) {
+            feedback.textContent = errorMessage;
+            feedback.style.display = !isValid ? 'block' : 'none';
+        }
+    }
+
+    createFeedbackElement(formGroup) {
+        const feedback = document.createElement('div');
+        feedback.className = 'invalid-feedback';
+        formGroup?.appendChild(feedback);
+        return feedback;
+    }
+
+    clearFieldError(field) {
+        field.classList.remove('is-invalid');
+        const formGroup = field.closest('.form-group');
+        const feedback = formGroup?.querySelector('.invalid-feedback');
+        if (feedback) {
+            feedback.style.display = 'none';
+        }
+    }
+
+    setupDynamicLists() {
+        // Objectives list
+        this.setupDynamicList('objectives', 'Add Objective');
+        
+        // Resources list
+        this.setupDynamicList('resources', 'Add Resource');
+        
+        // Steps list
+        this.setupDynamicList('steps', 'Add Step');
+    }
+
+    setupDynamicList(listName, addButtonText) {
+        const container = document.getElementById(`${listName}Container`);
+        if (!container) return;
+
+        const addButton = container.querySelector('.btn-add-item');
+        if (addButton) {
+            addButton.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.addListItem(listName, container);
+            });
+        }
+
+        // Bind existing remove buttons
+        container.querySelectorAll('.btn-remove-item').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.removeListItem(btn.closest('.list-item'));
+            });
+        });
+    }
+
+    addListItem(listName, container) {
+        const template = container.querySelector('.list-item-template');
+        if (!template) return;
+
+        const clone = template.cloneNode(true);
+        clone.classList.remove('list-item-template', 'd-none');
+        clone.classList.add('list-item');
+
+        // Update input names and IDs
+        const inputs = clone.querySelectorAll('input, textarea');
+        inputs.forEach(input => {
+            const currentName = input.name || input.id;
+            if (currentName.includes('[]')) {
+                input.name = currentName;
+            } else {
+                input.name = `${listName}[]`;
+            }
+            input.value = '';
+        });
+
+        // Bind remove button
+        const removeBtn = clone.querySelector('.btn-remove-item');
+        if (removeBtn) {
+            removeBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.removeListItem(clone);
+            });
+        }
+
+        // Insert before add button
+        const addButton = container.querySelector('.btn-add-item');
+        addButton.parentNode.insertBefore(clone, addButton);
+
+        // Animate in
+        clone.style.opacity = '0';
+        clone.style.transform = 'translateY(-10px)';
+        requestAnimationFrame(() => {
+            clone.style.transition = 'all 0.3s ease';
+            clone.style.opacity = '1';
+            clone.style.transform = 'translateY(0)';
+        });
+
+        // Focus new input
+        const firstInput = clone.querySelector('input, textarea');
+        if (firstInput) firstInput.focus();
+    }
+
+    removeListItem(item) {
+        item.style.transition = 'all 0.3s ease';
+        item.style.opacity = '0';
+        item.style.transform = 'translateX(-100%)';
+        
+        setTimeout(() => {
+            item.remove();
+        }, 300);
+    }
+
+    setupFileUploads() {
+        const uploadAreas = document.querySelectorAll('.file-upload');
+        
+        uploadAreas.forEach(area => {
+            const input = area.querySelector('input[type="file"]');
+            if (!input) return;
+
+            // Click to upload
+            area.addEventListener('click', () => input.click());
+
+            // Drag and drop
+            area.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                area.classList.add('dragover');
+            });
+
+            area.addEventListener('dragleave', () => {
+                area.classList.remove('dragover');
+            });
+
+            area.addEventListener('drop', (e) => {
+                e.preventDefault();
+                area.classList.remove('dragover');
+                
+                const files = Array.from(e.dataTransfer.files);
+                this.handleFileUpload(files, area);
+            });
+
+            // File input change
+            input.addEventListener('change', (e) => {
+                const files = Array.from(e.target.files);
+                this.handleFileUpload(files, area);
+            });
+        });
+    }
+
+    handleFileUpload(files, uploadArea) {
+        const previewContainer = uploadArea.querySelector('.file-preview') || this.createPreviewContainer(uploadArea);
+        
+        files.forEach(file => {
+            if (this.validateFile(file)) {
+                this.createFilePreview(file, previewContainer);
+            }
+        });
+    }
+
+    validateFile(file) {
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'application/pdf'];
+        const maxSize = 5 * 1024 * 1024; // 5MB
+
+        if (!allowedTypes.includes(file.type)) {
+            this.showNotification('Invalid file type. Please upload images or PDF files.', 'error');
+            return false;
+        }
+
+        if (file.size > maxSize) {
+            this.showNotification('File too large. Maximum size is 5MB.', 'error');
+            return false;
+        }
+
+        return true;
+    }
+
+    createFilePreview(file, container) {
+        const preview = document.createElement('div');
+        preview.className = 'preview-item';
+        
+        if (file.type.startsWith('image/')) {
+            const img = document.createElement('img');
+            img.className = 'preview-image';
+            img.src = URL.createObjectURL(file);
+            preview.appendChild(img);
+        } else {
+            const icon = document.createElement('div');
+            icon.className = 'preview-icon';
+            icon.innerHTML = '<i class="fas fa-file-pdf fa-3x"></i>';
+            preview.appendChild(icon);
+        }
+
+        const removeBtn = document.createElement('button');
+        removeBtn.className = 'preview-remove';
+        removeBtn.innerHTML = '×';
+        removeBtn.addEventListener('click', () => {
+            preview.remove();
+            URL.revokeObjectURL(preview.querySelector('img')?.src);
+        });
+        
+        preview.appendChild(removeBtn);
+        container.appendChild(preview);
+    }
+
+    createPreviewContainer(uploadArea) {
+        const container = document.createElement('div');
+        container.className = 'file-preview';
+        uploadArea.appendChild(container);
+        return container;
+    }
+
+    setupCategorySelector() {
+        const categories = document.querySelectorAll('.category-option');
+        const hiddenInput = document.getElementById('selectedCategory');
+
+        categories.forEach(option => {
+            option.addEventListener('click', () => {
+                // Remove previous selection
+                categories.forEach(cat => cat.classList.remove('selected'));
+                
+                // Select current
+                option.classList.add('selected');
+                
+                // Update hidden input
+                if (hiddenInput) {
+                    hiddenInput.value = option.dataset.category;
+                }
+
+                // Trigger change event for validation
+                hiddenInput?.dispatchEvent(new Event('change'));
+            });
+        });
+    }
+
+    setupAutoSave() {
+        let saveTimeout;
+        const autoSaveInterval = 30000; // 30 seconds
+
+        // Auto-save on form changes
+        document.addEventListener('input', () => {
+            clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(() => {
+                this.autoSave();
+            }, 2000); // Save 2 seconds after last change
+        });
+
+        // Periodic auto-save
+        setInterval(() => {
+            this.autoSave();
+        }, autoSaveInterval);
+
+        // Save before page unload
+        window.addEventListener('beforeunload', () => {
+            this.saveStepData();
+        });
+    }
+
+    autoSave() {
+        this.saveStepData();
+        const formData = this.collectFormData();
+        
+        if (Object.keys(formData).length > 0) {
+            localStorage.setItem('activityFormData', JSON.stringify({
+                data: formData,
+                timestamp: Date.now(),
+                currentStep: this.currentStep
+            }));
+            
+            this.showNotification('Draft saved', 'info', 2000);
+        }
+    }
+
+    loadSavedData() {
+        const saved = localStorage.getItem('activityFormData');
+        if (!saved) return;
+
+        try {
+            const { data, timestamp, currentStep } = JSON.parse(saved);
+            
+            // Check if data is recent (less than 24 hours old)
+            if (Date.now() - timestamp < 24 * 60 * 60 * 1000) {
+                this.populateForm(data);
+                this.currentStep = currentStep || 1;
+                this.goToStep(this.currentStep);
+                
+                this.showNotification('Draft restored', 'success');
+            }
+        } catch (error) {
+            console.error('Failed to load saved data:', error);
+        }
+    }
+
+    collectFormData() {
+        const formData = {};
+        const form = document.querySelector('form[data-validate="true"]');
+        
+        if (form) {
+            const inputs = form.querySelectorAll('input, textarea, select');
+            inputs.forEach(input => {
+                if (input.name && input.value) {
+                    if (input.name.endsWith('[]')) {
+                        const baseName = input.name.slice(0, -2);
+                        if (!formData[baseName]) formData[baseName] = [];
+                        formData[baseName].push(input.value);
+                    } else {
+                        formData[input.name] = input.value;
+                    }
+                }
+            });
+        }
+        
+        return formData;
+    }
+
+    populateForm(data) {
+        Object.keys(data).forEach(key => {
+            const value = data[key];
+            
+            if (Array.isArray(value)) {
+                // Handle array values (dynamic lists)
+                value.forEach((item, index) => {
+                    const input = document.querySelector(`[name="${key}[]"]:nth-of-type(${index + 1})`);
+                    if (input) input.value = item;
+                });
+            } else {
+                // Handle single values
+                const input = document.querySelector(`[name="${key}"]`);
+                if (input) {
+                    input.value = value;
+                    
+                    // Trigger change event for category selector
+                    if (key === 'category') {
+                        const categoryOption = document.querySelector(`[data-category="${value}"]`);
+                        if (categoryOption) {
+                            categoryOption.click();
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    saveForm() {
+        if (this.validateAllSteps()) {
+            const form = document.querySelector('form[data-validate="true"]');
+            if (form) {
+                // Clear auto-saved data
+                localStorage.removeItem('activityFormData');
+                
+                // Show loading state
+                this.showFormLoading(true);
+                
+                // Submit form
+                form.submit();
+            }
+        }
+    }
+
+    saveAndExit() {
+        this.autoSave();
+        window.location.href = document.referrer || '/rehabilitation/categories';
+    }
+
+    validateAllSteps() {
+        for (let step = 1; step <= this.totalSteps; step++) {
+            const stepRules = this.validationRules[`step${step}`];
+            if (!stepRules) continue;
+
+            const stepElement = document.querySelector(`#step${step}`);
+            let stepValid = true;
+
+            Object.keys(stepRules).forEach(fieldName => {
+                const field = stepElement.querySelector(`[name="${fieldName}"], [name="${fieldName}[]"]`);
+                if (field && !this.validateField(field, stepRules[fieldName])) {
+                    stepValid = false;
+                }
+            });
+
+            if (!stepValid) {
+                this.goToStep(step);
+                this.showNotification(`Please complete Step ${step} before saving.`, 'error');
+                return false;
+            }
+        }
+        
+        return true;
+    }
+
+    saveStepData() {
+        const stepData = {};
+        const currentStepElement = document.querySelector(`#step${this.currentStep}`);
+        
+        if (currentStepElement) {
+            const inputs = currentStepElement.querySelectorAll('input, textarea, select');
+            inputs.forEach(input => {
+                if (input.name && input.value) {
+                    stepData[input.name] = input.value;
+                }
+            });
+        }
+        
+        this.formData[`step${this.currentStep}`] = stepData;
+    }
+
+    updateStepIndicators() {
+        const steps = document.querySelectorAll('.wizard-step');
+        steps.forEach((step, index) => {
+            const stepNumber = index + 1;
+            
+            step.classList.toggle('active', stepNumber === this.currentStep);
+            step.classList.toggle('completed', stepNumber < this.currentStep);
+        });
+    }
+
+    updateNavigationButtons() {
+        const btnPrevious = document.getElementById('btnPrevious');
+        const btnNext = document.getElementById('btnNext');
+        const btnSave = document.getElementById('btnSave');
+
+        if (btnPrevious) {
+            btnPrevious.style.display = this.currentStep === 1 ? 'none' : 'inline-block';
+        }
+
+        if (btnNext) {
+            btnNext.style.display = this.currentStep === this.totalSteps ? 'none' : 'inline-block';
+        }
+
+        if (btnSave) {
+            btnSave.style.display = this.currentStep === this.totalSteps ? 'inline-block' : 'none';
+        }
+    }
+
+    animateStepTransition() {
+        const currentStepElement = document.querySelector(`#step${this.currentStep}`);
+        if (currentStepElement) {
+            currentStepElement.classList.add('fade-in-up');
+            setTimeout(() => {
+                currentStepElement.classList.remove('fade-in-up');
+            }, 600);
+        }
+    }
+
+    focusFirstInput() {
+        const currentStepElement = document.querySelector(`#step${this.currentStep}`);
+        const firstInput = currentStepElement?.querySelector('input, textarea, select');
+        if (firstInput) {
+            setTimeout(() => firstInput.focus(), 100);
+        }
+    }
+
+    showFormLoading(show) {
+        const form = document.querySelector('form[data-validate="true"]');
+        if (form) {
+            form.classList.toggle('form-loading', show);
+            
+            if (show && !form.querySelector('.loading-spinner')) {
+                const spinner = document.createElement('div');
+                spinner.className = 'loading-spinner';
+                spinner.innerHTML = '<div class="spinner-border text-primary" role="status"></div>';
+                form.appendChild(spinner);
+            } else if (!show) {
+                form.querySelector('.loading-spinner')?.remove();
+            }
+        }
+    }
+
+    initializeSortable() {
+        // Initialize drag-and-drop sorting for lists
+        const sortableLists = document.querySelectorAll('.sortable-list');
+        
+        sortableLists.forEach(list => {
+            this.makeSortable(list);
+        });
+    }
+
+    makeSortable(element) {
+        let draggedElement = null;
+
+        element.addEventListener('dragstart', (e) => {
+            draggedElement = e.target.closest('.list-item');
+            e.dataTransfer.effectAllowed = 'move';
+        });
+
+        element.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+        });
+
+        element.addEventListener('drop', (e) => {
+            e.preventDefault();
+            const targetElement = e.target.closest('.list-item');
+            
+            if (targetElement && targetElement !== draggedElement) {
+                const rect = targetElement.getBoundingClientRect();
+                const midpoint = rect.top + rect.height / 2;
+                
+                if (e.clientY < midpoint) {
+                    targetElement.parentNode.insertBefore(draggedElement, targetElement);
+                } else {
+                    targetElement.parentNode.insertBefore(draggedElement, targetElement.nextSibling);
+                }
+            }
+        });
+    }
+
+    initializeEditors() {
+        // Initialize rich text editors for description fields
+        const editors = document.querySelectorAll('.rich-editor');
+        
+        editors.forEach(editor => {
+            // Simple rich text editor implementation
+            this.setupRichEditor(editor);
+        });
+    }
+
+    setupRichEditor(textarea) {
+        // Create toolbar
+        const toolbar = document.createElement('div');
+        toolbar.className = 'editor-toolbar';
+        
+        const buttons = [
+            { icon: 'fas fa-bold', command: 'bold' },
+            { icon: 'fas fa-italic', command: 'italic' },
+            { icon: 'fas fa-list-ul', command: 'insertUnorderedList' },
+            { icon: 'fas fa-list-ol', command: 'insertOrderedList' }
+        ];
+        
+        buttons.forEach(btn => {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'btn btn-sm btn-outline-secondary';
+            button.innerHTML = `<i class="${btn.icon}"></i>`;
+            button.addEventListener('click', () => {
+                document.execCommand(btn.command, false, null);
+            });
+            toolbar.appendChild(button);
+        });
+        
+        textarea.parentNode.insertBefore(toolbar, textarea);
+    }
+
+    initializeDatePickers() {
+        // Initialize date/time pickers if needed
+        const datePickers = document.querySelectorAll('.date-picker');
+        
+        datePickers.forEach(picker => {
+            // Simple date picker setup
+            picker.type = 'date';
+        });
+    }
+
+    initializeTooltips() {
+        // Initialize tooltips
+        const tooltipElements = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+        
+        tooltipElements.forEach(element => {
+            if (typeof bootstrap !== 'undefined') {
+                new bootstrap.Tooltip(element);
+            }
+        });
+    }
+
+    showNotification(message, type = 'info', duration = 5000) {
+        const notification = document.createElement('div');
+        notification.className = `alert alert-${type} alert-dismissible fade show notification-toast`;
+        notification.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            min-width: 300px;
+        `;
+
+        document.body.appendChild(notification);
+
+        if (duration > 0) {
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                setTimeout(() => notification.remove(), 300);
+            }, duration);
+        }
+    }
+}
+
+// Initialize when DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+    const activityForm = new ActivityFormManager();
+    
+    // Make available globally for debugging
+    window.activityForm = activityForm;
+});
+
+// Export for use in modules
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = ActivityFormManager;
+}
+
+volunteer.js
+
+document.addEventListener('DOMContentLoaded', function () {
+    initializePreloader();
+    initializeAnimations();
+    initializeMultiStepForm();
+    initializeCounters();
+    initializeBackToTop();
+    initializeSmoothScrolling();
+    initializeFormValidation();
+    initializeVideoHero();
+    initializeFormAutoSave();
+    console.log('Volunteer page initialized successfully');
+});
+
+/** Preloader Management */
+function initializePreloader() {
+    const preloader = document.querySelector('.preloader');
+    if (!preloader) return;
+
+    const hidePreloader = () => {
+        preloader.style.transition = 'opacity 0.5s ease';
+        preloader.style.opacity = '0';
+        setTimeout(() => {
+            preloader.style.display = 'none';
+        }, 500);
+    };
+
+    if (document.readyState === 'complete') {
+        setTimeout(hidePreloader, 500);
+    } else {
+        window.addEventListener('load', () => setTimeout(hidePreloader, 500));
+    }
+}
+
+/** Initialize AOS Animations */
+function initializeAnimations() {
+    if (typeof AOS !== 'undefined') {
+        AOS.init({
+            duration: 800,
+            easing: 'ease-in-out',
+            once: true,
+            offset: 100
+        });
+    }
+}
+
+/** Multi-Step Form Handler */
+function initializeMultiStepForm() {
+    const form = document.getElementById('volunteerForm');
+    if (!form) {
+        console.error('Volunteer form not found!');
+        return;
+    }
+
+    let currentStep = 1;
+    const totalSteps = 3;
+
+    document.querySelectorAll('.next-btn').forEach(btn => {
+        btn.addEventListener('click', function () {
+            const nextStepNum = parseInt(this.dataset.step);
+            if (validateCurrentStep(currentStep)) {
+                goToStep(nextStepNum);
+            }
+        });
+    });
+
+    document.querySelectorAll('.prev-btn').forEach(btn => {
+        btn.addEventListener('click', function () {
+            const prevStepNum = parseInt(this.dataset.step);
+            goToStep(prevStepNum);
+        });
+    });
+
+    function goToStep(stepNumber) {
+        const currentStepElement = document.getElementById(`step${currentStep}`);
+        if (currentStepElement) {
+            currentStepElement.classList.remove('active');
+        }
+
+        const targetStepElement = document.getElementById(`step${stepNumber}`);
+        if (targetStepElement) {
+            targetStepElement.classList.add('active');
+        }
+
+        currentStep = stepNumber;
+        updateProgressIndicator();
+
+        const formSection = document.getElementById('volunteer-form');
+        if (formSection) {
+            formSection.scrollIntoView({
+                behavior: 'smooth',
+                block: 'start'
+            });
+        }
+    }
+
+    function validateCurrentStep(step) {
+        const currentStepElement = document.getElementById(`step${step}`);
+        if (!currentStepElement) return true;
+
+        const requiredFields = currentStepElement.querySelectorAll('[required]');
+        let isValid = true;
+
+        requiredFields.forEach(field => {
+            if (!validateField(field)) {
+                isValid = false;
+            }
+        });
+
+        if (step === 2) {
+            const availabilityChecked = form.querySelectorAll('input[name="availability[]"]:checked');
+            if (availabilityChecked.length === 0) {
+                isValid = false;
+                const availabilityGroup = form.querySelector('.availability-options');
+                if (availabilityGroup && !availabilityGroup.querySelector('.error-message')) {
+                    const errorDiv = document.createElement('div');
+                    errorDiv.className = 'text-danger small mt-1 error-message';
+                    errorDiv.textContent = 'Please select at least one availability option';
+                    availabilityGroup.parentNode.appendChild(errorDiv);
+                }
+            }
+        }
+
+        return isValid;
+    }
+
+    function validateField(field) {
+        const value = field.type === 'checkbox' ? field.checked : field.value.trim();
+        const isValid = field.type === 'checkbox' ? field.checked : value !== '';
+        toggleFieldError(field, isValid, 'This field is required');
+        return isValid;
+    }
+
+    function toggleFieldError(field, isValid, message) {
+        const formGroup = field.closest('.form-group');
+        if (!formGroup) return;
+
+        if (isValid) {
+            field.classList.remove('is-invalid');
+            const errorDiv = formGroup.querySelector('.invalid-feedback');
+            if (errorDiv) {
+                errorDiv.remove();
+            }
+        } else {
+            field.classList.add('is-invalid');
+            if (!formGroup.querySelector('.invalid-feedback')) {
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'invalid-feedback';
+                errorDiv.textContent = message;
+                field.parentNode.appendChild(errorDiv);
+            }
+        }
+    }
+
+    function updateProgressIndicator() {
+        const progress = (currentStep / totalSteps) * 100;
+        const progressBar = document.querySelector('.form-progress-bar');
+        if (progressBar) {
+            progressBar.style.width = `${progress}%`;
+        }
+    }
+
+    const interestSelect = document.getElementById('interest');
+    const otherInterestGroup = document.getElementById('otherInterestGroup');
+
+    if (interestSelect && otherInterestGroup) {
+        interestSelect.addEventListener('change', function () {
+            const otherInterestField = document.getElementById('other_interest');
+            if (this.value === 'other') {
+                otherInterestGroup.style.display = 'block';
+                if (otherInterestField) {
+                    otherInterestField.setAttribute('required', 'required');
+                }
+            } else {
+                otherInterestGroup.style.display = 'none';
+                if (otherInterestField) {
+                    otherInterestField.removeAttribute('required');
+                    otherInterestField.value = '';
+                }
+            }
+        });
+    }
+
+    form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        if (!validateCurrentStep(currentStep)) {
+            return false;
+        }
+
+        const submitBtn = this.querySelector('.submit-btn') || this.querySelector('button[type="submit"]');
+        if (submitBtn) {
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting Application...';
+            submitBtn.disabled = true;
+        }
+
+        setTimeout(() => {
+            this.submit();
+        }, 500);
+    });
+}
+
+/** Counter Animation */
+function initializeCounters() {
+    const counters = document.querySelectorAll('.stat-number[data-count]');
+    if (counters.length === 0) return;
+
+    const observerOptions = {
+        threshold: 0.5,
+        rootMargin: '0px 0px -100px 0px'
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting && !entry.target.classList.contains('counted')) {
+                animateCounter(entry.target);
+                entry.target.classList.add('counted');
+            }
+        });
+    }, observerOptions);
+
+    counters.forEach(counter => observer.observe(counter));
+
+    function animateCounter(element) {
+        const target = parseInt(element.dataset.count);
+        const duration = 2000;
+        const step = target / (duration / 16);
+        let current = 0;
+        const timer = setInterval(() => {
+            current += step;
+            element.textContent = Math.floor(current);
+            if (current >= target) {
+                element.textContent = target;
+                clearInterval(timer);
+            }
+        }, 16);
+    }
+}
+
+/** Back to Top Button */
+function initializeBackToTop() {
+    const backToTop = document.querySelector('.back-to-top');
+    if (!backToTop) return;
+
+    window.addEventListener('scroll', () => {
+        if (window.pageYOffset > 300) {
+            backToTop.classList.add('active');
+        } else {
+            backToTop.classList.remove('active');
+        }
+    });
+
+    backToTop.addEventListener('click', function (e) {
+        e.preventDefault();
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
+    });
+}
+
+/** Smooth Scrolling */
+function initializeSmoothScrolling() {
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            const target = document.querySelector(this.getAttribute('href'));
+            if (target) {
+                const headerOffset = 80;
+                const elementPosition = target.getBoundingClientRect().top;
+                const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+                window.scrollTo({
+                    top: offsetPosition,
+                    behavior: 'smooth'
+                });
+            }
+        });
+    });
+}
+
+/** Enhanced Form Validation */
+function initializeFormValidation() {
+    const form = document.getElementById('volunteerForm');
+    if (!form) return;
+
+    form.querySelectorAll('input, select, textarea').forEach(field => {
+        field.addEventListener('blur', function () {
+            if (this.hasAttribute('required')) {
+                validateField(this);
+            }
+        });
+
+        field.addEventListener('input', function () {
+            if (this.classList.contains('is-invalid')) {
+                validateField(this);
+            }
+        });
+    });
+
+    function validateField(field) {
+        let isValid = true;
+        let message = '';
+
+        if (field.hasAttribute('required') && !field.value.trim()) {
+            isValid = false;
+            message = 'This field is required';
+        }
+
+        if (field.type === 'email' && field.value.trim()) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(field.value)) {
+                isValid = false;
+                message = 'Please enter a valid email address';
+            }
+        }
+
+        if (field.type === 'tel' && field.value.trim()) {
+            const phoneRegex = /^[\+]?[0-9\s\-\(\)]{8,}$/;
+            if (!phoneRegex.test(field.value)) {
+                isValid = false;
+                message = 'Please enter a valid phone number';
+            }
+        }
+
+        const formGroup = field.closest('.form-group');
+        if (!formGroup) return isValid;
+
+        if (isValid) {
+            field.classList.remove('is-invalid');
+            field.classList.add('is-valid');
+            const errorDiv = formGroup.querySelector('.invalid-feedback');
+            if (errorDiv) {
+                errorDiv.remove();
+            }
+        } else {
+            field.classList.remove('is-valid');
+            field.classList.add('is-invalid');
+            let errorDiv = formGroup.querySelector('.invalid-feedback');
+            if (!errorDiv) {
+                errorDiv = document.createElement('div');
+                errorDiv.className = 'invalid-feedback';
+                field.parentNode.appendChild(errorDiv);
+            }
+            errorDiv.textContent = message;
+        }
+
+        return isValid;
+    }
+}
+
+/** Video Hero Section */
+function initializeVideoHero() {
+    const video = document.getElementById('volunteerVideo');
+    if (!video) return;
+
+    video.addEventListener('loadedmetadata', function () {
+        this.currentTime = 0;
+    });
+
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                video.play().catch(() => {});
+            } else {
+                video.pause();
+            }
+        });
+    });
+    observer.observe(video);
+}
+
+/** Form Auto-save */
+function initializeFormAutoSave() {
+    const form = document.getElementById('volunteerForm');
+    if (!form) return;
+
+    const AUTO_SAVE_KEY = 'volunteer_form_data';
+    let autoSaveTimeout;
+
+    loadFormData();
+
+    form.addEventListener('input', function () {
+        clearTimeout(autoSaveTimeout);
+        autoSaveTimeout = setTimeout(saveFormData, 1000);
+    });
+
+    function saveFormData() {
+        const formData = new FormData(form);
+        const data = {};
+        for (let [key, value] of formData.entries()) {
+            if (data[key]) {
+                if (Array.isArray(data[key])) {
+                    data[key].push(value);
+                } else {
+                    data[key] = [data[key], value];
+                }
+            } else {
+                data[key] = value;
+            }
+        }
+
+        try {
+            localStorage.setItem(AUTO_SAVE_KEY, JSON.stringify(data));
+        } catch (e) {
+            console.log('Could not save form data:', e);
+        }
+    }
+
+    function loadFormData() {
+        try {
+            const savedData = localStorage.getItem(AUTO_SAVE_KEY);
+            if (!savedData) return;
+
+            const data = JSON.parse(savedData);
+
+            Object.keys(data).forEach(key => {
+                const field = form.querySelector(`[name="${key}"]`);
+                if (field) {
+                    if (field.type === 'checkbox' || field.type === 'radio') {
+                        const values = Array.isArray(data[key]) ? data[key] : [data[key]];
+                        values.forEach(value => {
+                            const specificField = form.querySelector(`[name="${key}"][value="${value}"]`);
+                            if (specificField) specificField.checked = true;
+                        });
+                    } else {
+                        field.value = data[key];
+                    }
+                }
+            });
+        } catch (e) {
+            console.log('Could not load form data:', e);
+        }
+    }
+
+    form.addEventListener('submit', function () {
+        try {
+            localStorage.removeItem(AUTO_SAVE_KEY);
+        } catch (e) {
+            console.log('Could not clear saved data:', e);
+        }
+    });
+}
+
+contact.js
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize all components
+    initializePreloader();
+    initializeFormValidation();
+    initializeFormEnhancements();
+    initializeBackToTop();
+    initializeSmoothScrolling();
+    initializeAnimations();
+    initializeAlerts();
+    initializeMobileMenu();
+    console.log('Contact page initialized successfully');
+    });
+    /**
+    
+    Preloader Management
+    */
+    function initializePreloader() {
+    const preloader = document.querySelector('.preloader');
+    if (!preloader) return;
+    const hidePreloader = () => {
+    preloader.style.transition = 'opacity 0.5s ease';
+    preloader.style.opacity = '0';
+    setTimeout(() => {
+    preloader.style.display = 'none';
+    }, 500);
+    };
+    // Hide preloader after page load
+    if (document.readyState === 'complete') {
+    setTimeout(hidePreloader, 300);
+    } else {
+    window.addEventListener('load', () => setTimeout(hidePreloader, 300));
+    }
+    // Fallback - hide after 3 seconds
+    setTimeout(hidePreloader, 3000);
+    }
+    
+    /**
+    
+    Enhanced Form Validation
+    */
+    function initializeFormValidation() {
+    const form = document.getElementById('contactForm');
+    if (!form) return;
+    // Real-time validation for all form fields
+    const formFields = form.querySelectorAll('input, select, textarea');
+    formFields.forEach(field => {
+    // Validate on blur (when user leaves field)
+    field.addEventListener('blur', function() {
+    validateField(this);
+    updateFormProgress();
+    });
+     // Clear errors on input (when user starts typing)
+     field.addEventListener('input', function() {
+         if (this.classList.contains('is-invalid')) {
+             validateField(this);
+         }
+         updateCharacterCount(this);
+         updateFormProgress();
+     });
+    });
+    // Form submission handling
+    form.addEventListener('submit', function(e) {
+    e.preventDefault();
+     if (validateForm()) {
+         submitForm();
+     }
+    });
+    function validateField(field) {
+    const fieldType = field.type || field.tagName.toLowerCase();
+    let isValid = true;
+    let message = '';
+     // Check required fields
+     if (field.hasAttribute('required')) {
+         if (!field.value.trim()) {
+             isValid = false;
+             message = getRequiredMessage(field);
+         }
+     }
+    
+     // Field-specific validation
+     if (field.value.trim() && isValid) {
+         switch (fieldType) {
+             case 'email':
+                 if (!isValidEmail(field.value)) {
+                     isValid = false;
+                     message = 'Please enter a valid email address (e.g., name@example.com)';
+                 }
+                 break;
+                 
+             case 'tel':
+                 if (!isValidPhone(field.value)) {
+                     isValid = false;
+                     message = 'Please enter a valid phone number (e.g., +60123456789)';
+                 }
+                 break;
+                 
+             case 'text':
+                 if (field.name === 'name' && !isValidName(field.value)) {
+                     isValid = false;
+                     message = 'Please enter a valid name (letters, spaces, hyphens only)';
+                 }
+                 break;
+                 
+             case 'textarea':
+                 if (field.name === 'message') {
+                     if (field.value.length < 10) {
+                         isValid = false;
+                         message = 'Message must be at least 10 characters long';
+                     } else if (field.value.length > 2000) {
+                         isValid = false;
+                         message = 'Message cannot exceed 2000 characters';
+                     }
+                 }
+                 break;
+         }
+     }
+    
+     updateFieldState(field, isValid, message);
+     return isValid;
+    }
+    function validateForm() {
+    let isFormValid = true;
+     formFields.forEach(field => {
+         if (!validateField(field)) {
+             isFormValid = false;
+         }
+     });
+    
+     return isFormValid;
+    }
+    function updateFieldState(field, isValid, message) {
+    const fieldContainer = field.closest('.form-group') || field.parentNode;
+     // Remove existing validation classes and messages
+     field.classList.remove('is-valid', 'is-invalid');
+     const existingFeedback = fieldContainer.querySelector('.invalid-feedback');
+     if (existingFeedback) {
+         existingFeedback.remove();
+     }
+    
+     if (field.hasAttribute('required') || field.value.trim()) {
+         if (isValid) {
+             field.classList.add('is-valid');
+         } else {
+             field.classList.add('is-invalid');
+             
+             // Add error message
+             const feedback = document.createElement('div');
+             feedback.className = 'invalid-feedback';
+             feedback.textContent = message;
+             fieldContainer.appendChild(feedback);
+         }
+     }
+    }
+    function getRequiredMessage(field) {
+    const messages = {
+    'name': 'Please enter your full name',
+    'email': 'Please enter your email address',
+    'reason': 'Please select a reason for contacting us',
+    'message': 'Please enter your message'
+    };
+    return messages[field.name] || 'This field is required';
+    }
+    }
+    
+    /**
+    
+    Form Enhancement Features
+    */
+    function initializeFormEnhancements() {
+    const form = document.getElementById('contactForm');
+    if (!form) return;
+    // Character counter for message field
+    const messageField = document.getElementById('message');
+    if (messageField) {
+    addCharacterCounter(messageField, 2000);
+    }
+    // Dynamic subject generation based on reason
+    const reasonSelect = document.getElementById('reason');
+    const subjectField = document.getElementById('subject');
+    if (reasonSelect && subjectField) {
+    reasonSelect.addEventListener('change', function() {
+    if (!subjectField.value.trim()) {
+    subjectField.value = generateSubject(this.value);
+    }
+    });
+    }
+    // Auto-format phone number
+    const phoneField = document.getElementById('phone');
+    if (phoneField) {
+    phoneField.addEventListener('input', function() {
+    this.value = formatPhoneNumber(this.value);
+    });
+    }
+    // Form progress indicator
+    createFormProgressIndicator();
+    // Auto-save form data
+    initializeAutoSave();
+    function addCharacterCounter(field, maxLength) {
+    const container = field.closest('.form-group');
+    const counter = document.createElement('small');
+    counter.className = 'form-text text-muted character-counter';
+    counter.innerHTML = `<span class="current">0</span>/${maxLength} characters`;
+    container.appendChild(counter);
+     field.addEventListener('input', function() {
+         updateCharacterCount(this);
+     });
+    }
+    function generateSubject(reason) {
+    const subjects = {
+    'services': 'Inquiry About Rehabilitation Services',
+    'support': 'Support and Assistance Request',
+    'volunteer': 'Volunteer Opportunity Inquiry',
+    'partnership': 'Partnership Opportunity',
+    'admission': 'Admission Inquiry',
+    'complaint': 'Complaint Submission',
+    'feedback': 'Feedback Submission',
+    'general': 'General Inquiry',
+    'other': 'Contact Form Submission'
+    };
+    return subjects[reason] || '';
+    }
+    function formatPhoneNumber(phone) {
+    // Remove all non-numeric characters except +
+    let cleaned = phone.replace(/[^\d+]/g, '');
+     // Format Malaysian numbers
+     if (cleaned.startsWith('60')) {
+         cleaned = '+' + cleaned;
+     } else if (cleaned.startsWith('0') && cleaned.length > 1) {
+         cleaned = '+60' + cleaned.substring(1);
+     } else if (!cleaned.startsWith('+') && cleaned.length > 0 && !cleaned.startsWith('60')) {
+         cleaned = '+60' + cleaned;
+     }
+     
+     return cleaned;
+    }
+    function createFormProgressIndicator() {
+    const form = document.getElementById('contactForm');
+    const progressContainer = document.createElement('div');
+    progressContainer.className = 'form-progress-container mb-3';
+    progressContainer.innerHTML = `
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <small class="text-muted">Form Completion</small>
+      <small class="text-muted"><span id="progress-percentage">0</span>% Complete</small>
+    </div>
+    <div class="progress" style="height: 6px;">
+      <div class="progress-bar bg-primary" id="form-progress-bar" style="width: 0%"></div>
+    </div>
+  `;
+    const firstFormGroup = form.querySelector('.form-group');
+     if (firstFormGroup) {
+         firstFormGroup.parentNode.insertBefore(progressContainer, firstFormGroup);
+     }
+    }
+    }
+    
+    /**
+    
+    Auto-save functionality
+    */
+    function initializeAutoSave() {
+    const form = document.getElementById('contactForm');
+    if (!form) return;
+    const AUTO_SAVE_KEY = 'contact_form_data';
+    let autoSaveTimeout;
+    // Load saved data on page load
+    loadSavedFormData();
+    // Save form data on input
+    form.addEventListener('input', function() {
+    clearTimeout(autoSaveTimeout);
+    autoSaveTimeout = setTimeout(saveFormData, 1000);
+    });
+    // Clear saved data on successful submission
+    form.addEventListener('submit', function() {
+    clearSavedFormData();
+    });
+    function saveFormData() {
+    const formData = new FormData(form);
+    const data = {};
+     for (let [key, value] of formData.entries()) {
+         data[key] = value;
+     }
+    
+     try {
+         localStorage.setItem(AUTO_SAVE_KEY, JSON.stringify(data));
+         showAutoSaveIndicator();
+     } catch (e) {
+         console.log('Could not save form data:', e);
+     }
+    }
+    function loadSavedFormData() {
+    try {
+    const savedData = localStorage.getItem(AUTO_SAVE_KEY);
+    if (!savedData) return;
+         const data = JSON.parse(savedData);
+         let hasData = false;
+         
+         Object.keys(data).forEach(key => {
+             const field = form.querySelector(`[name="${key}"]`);
+             if (field && data[key]) {
+                 field.value = data[key];
+                 hasData = true;
+             }
+         });
+    
+         if (hasData) {
+             showRestoredDataNotification();
+             updateFormProgress();
+         }
+     } catch (e) {
+         console.log('Could not load saved form data:', e);
+     }
+    }
+    function clearSavedFormData() {
+    try {
+    localStorage.removeItem(AUTO_SAVE_KEY);
+    } catch (e) {
+    console.log('Could not clear saved form data:', e);
+    }
+    }
+    function showAutoSaveIndicator() {
+    // Create or update auto-save indicator
+    let indicator = document.getElementById('auto-save-indicator');
+    if (!indicator) {
+    indicator = document.createElement('small');
+    indicator.id = 'auto-save-indicator';
+    indicator.className = 'text-muted auto-save-indicator';
+    indicator.style.cssText = 'position: fixed; bottom: 20px; right: 20px; background: rgba(0,0,0,0.7); color: white; padding: 5px 10px; border-radius: 3px; z-index: 1000; opacity: 0; transition: opacity 0.3s;';
+    document.body.appendChild(indicator);
+    }
+     indicator.textContent = 'Draft saved automatically';
+     indicator.style.opacity = '1';
+     
+     setTimeout(() => {
+         indicator.style.opacity = '0';
+     }, 2000);
+    }
+    function showRestoredDataNotification() {
+    const notification = document.createElement('div');
+    notification.className = 'alert alert-info alert-dismissible fade show';
+    notification.innerHTML = `
+    <i class="fas fa-info-circle"></i>
+    We've restored your previously entered information.
+    <button type="button" class="close" data-dismiss="alert">
+        <span>&times;</span>
+    </button>
+    `;
+     const form = document.getElementById('contactForm');
+     form.parentNode.insertBefore(notification, form);
+     
+     // Auto-dismiss after 5 seconds
+     setTimeout(() => {
+         if (notification.parentNode) {
+             notification.remove();
+         }
+     }, 5000);
+    }
+    }
+    
+    /**
+    
+    Form submission handling
+    */
+    function submitForm() {
+    const form = document.getElementById('contactForm');
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+    // Show loading state
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending Message...';
+    submitBtn.disabled = true;
+    // Add loading class to form
+    form.classList.add('form-submitting');
+    // Submit after brief delay for UX
+    setTimeout(() => {
+    form.submit();
+    }, 500);
+    }
+    
+    /**
+    
+    Utility functions
+    */
+    function updateCharacterCount(field) {
+    const counter = field.parentNode.querySelector('.character-counter .current');
+    if (counter) {
+    const currentLength = field.value.length;
+    counter.textContent = currentLength;
+     // Change color based on limit
+     const maxLength = parseInt(field.getAttribute('maxlength')) || 2000;
+     const percentage = (currentLength / maxLength) * 100;
+     
+     if (percentage > 90) {
+         counter.style.color = '#dc3545'; // Red
+     } else if (percentage > 75) {
+         counter.style.color = '#ffc107'; // Yellow
+     } else {
+         counter.style.color = '#6c757d'; // Gray
+     }
+    }
+    }
+    
+    function updateFormProgress() {
+    const form = document.getElementById('contactForm');
+    const progressBar = document.getElementById('form-progress-bar');
+    const progressPercentage = document.getElementById('progress-percentage');
+    if (!progressBar || !progressPercentage) return;
+    
+    const requiredFields = form.querySelectorAll('[required]');
+    const filledFields = Array.from(requiredFields).filter(field => field.value.trim() !== '');
+    
+    const progress = (filledFields.length / requiredFields.length) * 100;
+    
+    progressBar.style.width = progress + '%';
+    progressPercentage.textContent = Math.round(progress);
+    
+    // Change color based on progress
+    progressBar.className = 'progress-bar';
+    if (progress === 100) {
+        progressBar.classList.add('bg-success');
+    } else if (progress > 50) {
+        progressBar.classList.add('bg-warning');
+    } else {
+        progressBar.classList.add('bg-primary');
+    }
+    }
+    function isValidEmail(email) {
+    const emailRegex = /^[^\s@]+@[^\s@]+.[^\s@]{2,}$/;
+    return emailRegex.test(email.trim());
+    }
+    function isValidPhone(phone) {
+    const phoneRegex = /^[+]?[0-9\s-()]{8,}$/;
+    return phoneRegex.test(phone.trim());
+    }
+    function isValidName(name) {
+    const nameRegex = /^[a-zA-Z\s-.']+$/;
+    return nameRegex.test(name.trim()) && name.trim().length >= 2;
+    }
+    /**
+    
+    Back to Top Button
+    */
+    function initializeBackToTop() {
+    const backToTop = document.querySelector('.back-to-top');
+    if (!backToTop) return;
+    window.addEventListener('scroll', () => {
+    if (window.pageYOffset > 300) {
+    backToTop.classList.add('show');
+    } else {
+    backToTop.classList.remove('show');
+    }
+    });
+    backToTop.addEventListener('click', function(e) {
+    e.preventDefault();
+    window.scrollTo({
+    top: 0,
+    behavior: 'smooth'
+    });
+    });
+    }
+    
+    /**
+    
+    Smooth Scrolling
+    */
+    function initializeSmoothScrolling() {
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+    anchor.addEventListener('click', function(e) {
+    e.preventDefault();
+         const target = document.querySelector(this.getAttribute('href'));
+         if (target) {
+             const headerOffset = 80;
+             const elementPosition = target.getBoundingClientRect().top;
+             const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+             
+             window.scrollTo({
+                 top: offsetPosition,
+                 behavior: 'smooth'
+             });
+         }
+     });
+    });
+    }
+    
+    /**
+    
+    Initialize animations if AOS is available
+    */
+    function initializeAnimations() {
+    if (typeof AOS !== 'undefined') {
+    AOS.init({
+    duration: 800,
+    easing: 'ease-in-out',
+    once: true,
+    offset: 100
+    });
+    }
+    }
+    
+    /**
+    
+    Enhanced alert handling
+    */
+    function initializeAlerts() {
+    // Auto-dismiss alerts after 5 seconds
+    const alerts = document.querySelectorAll('.alert');
+    alerts.forEach(alert => {
+    // Add close functionality if not present
+    const closeBtn = alert.querySelector('.close');
+    if (closeBtn) {
+    closeBtn.addEventListener('click', function() {
+    alert.style.opacity = '0';
+    setTimeout(() => {
+    if (alert.parentNode) {
+    alert.remove();
+    }
+    }, 300);
+    });
+    }
+     // Auto-dismiss
+     setTimeout(() => {
+         if (alert && alert.parentNode) {
+             alert.style.opacity = '0';
+             setTimeout(() => {
+                 if (alert.parentNode) {
+                     alert.remove();
+                 }
+             }, 300);
+         }
+     }, 5000);
+    });
+    }
+    
+    /**
+    
+    Mobile menu integration
+    */
+    function initializeMobileMenu() {
+    const mobileToggle = document.getElementById('mobile-nav-toggle');
+    const mobileNav = document.getElementById('mobile-nav');
+    if (mobileToggle && mobileNav) {
+    mobileToggle.addEventListener('click', function() {
+    mobileNav.classList.toggle('mobile-nav-active');
+    this.classList.toggle('active');
+    });
+     // Close mobile menu when clicking outside
+     document.addEventListener('click', function(e) {
+         if (!mobileNav.contains(e.target) && !mobileToggle.contains(e.target)) {
+             mobileNav.classList.remove('mobile-nav-active');
+             mobileToggle.classList.remove('active');
+         }
+     });
+    }
+}
+
+contactpage.js
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Preloader
+    window.addEventListener('load', function() {
+        const preloader = document.querySelector('.preloader');
+        if (preloader) {
+            setTimeout(() => {
+                preloader.style.opacity = '0';
+                setTimeout(() => {
+                    preloader.style.display = 'none';
+                }, 500);
+            }, 300);
+        }
+    });
+
+    // Back to Top Button
+    const backToTop = document.querySelector('.back-to-top');
+    window.addEventListener('scroll', function() {
+        if (window.pageYOffset > 300) {
+            backToTop.classList.add('show');
+        } else {
+            backToTop.classList.remove('show');
+        }
+    });
+
+    backToTop?.addEventListener('click', function(e) {
+        e.preventDefault();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+
+    // Smooth Scrolling
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function(e) {
+            e.preventDefault();
+            const target = document.querySelector(this.getAttribute('href'));
+            if (target) {
+                const headerOffset = 80;
+                const elementPosition = target.getBoundingClientRect().top;
+                const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+                
+                window.scrollTo({
+                    top: offsetPosition,
+                    behavior: 'smooth'
+                });
+            }
+        });
+    });
+
+    // Form Validation Enhancement
+    const contactForm = document.getElementById('contactForm');
+    if (contactForm) {
+        contactForm.addEventListener('submit', function(e) {
+            // Add loading state to button
+            const submitBtn = this.querySelector('.submit-btn');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+            submitBtn.disabled = true;
+        });
+    }
+
+    // Auto-dismiss alerts after 5 seconds
+    const alerts = document.querySelectorAll('.alert');
+    alerts.forEach(alert => {
+        setTimeout(() => {
+            alert.style.opacity = '0';
+            setTimeout(() => {
+                alert.remove();
+            }, 500);
+        }, 5000);
+    });
+
+    // Support link fix for header
+    const supportLinks = document.querySelectorAll('.support-link');
+    supportLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            // If not on homepage, navigate to homepage first
+            if (window.location.pathname !== '/') {
+                e.preventDefault();
+                window.location.href = this.getAttribute('href');
+            }
+        });
+    });
+});
+
+homepage.js
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Preloader
+    window.addEventListener('load', function() {
+        const preloader = document.querySelector('.preloader');
+        if (preloader) {
+            setTimeout(() => {
+                preloader.style.opacity = '0';
+                setTimeout(() => {
+                    preloader.style.display = 'none';
+                }, 500);
+            }, 500);
+        }
+    });
+
+    // Back to Top
+    const backToTop = document.querySelector('.back-to-top');
+    window.addEventListener('scroll', function() {
+        if (window.pageYOffset > 300) {
+            backToTop.classList.add('show');
+        } else {
+            backToTop.classList.remove('show');
+        }
+    });
+
+    backToTop?.addEventListener('click', function(e) {
+        e.preventDefault();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+
+    // Smooth Scrolling
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function(e) {
+            e.preventDefault();
+            const target = document.querySelector(this.getAttribute('href'));
+            if (target) {
+                const headerOffset = 80;
+                const elementPosition = target.getBoundingClientRect().top;
+                const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+                
+                window.scrollTo({
+                    top: offsetPosition,
+                    behavior: 'smooth'
+                });
+            }
+        });
+    });
+
+    // Number Counter Animation
+    const counters = document.querySelectorAll('.impact-number');
+    const observerOptions = {
+        threshold: 0.5,
+        rootMargin: '0px 0px -100px 0px'
+    };
+
+    const counterObserver = new IntersectionObserver(function(entries) {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const counter = entry.target;
+                const target = parseInt(counter.getAttribute('data-count'));
+                let count = 0;
+                const increment = target / 100;
+                
+                const updateCounter = () => {
+                    if (count < target) {
+                        count += increment;
+                        counter.textContent = Math.ceil(count);
+                        requestAnimationFrame(updateCounter);
+                    } else {
+                        counter.textContent = target;
+                    }
+                };
+                
+                updateCounter();
+                counterObserver.unobserve(counter);
+            }
+        });
+    }, observerOptions);
+
+    counters.forEach(counter => {
+        counterObserver.observe(counter);
+    });
+
+    // Timeline Animation
+    const timelineBlocks = document.querySelectorAll('.timeline-block');
+    const timelineObserver = new IntersectionObserver(function(entries) {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.style.opacity = '1';
+                entry.target.style.transform = 'translateY(0)';
+            }
+        });
+    }, {
+        threshold: 0.3,
+        rootMargin: '0px 0px -50px 0px'
+    });
+
+    timelineBlocks.forEach(block => {
+        block.style.opacity = '0';
+        block.style.transform = 'translateY(20px)';
+        block.style.transition = 'all 0.6s ease';
+        timelineObserver.observe(block);
+    });
+});
+
+common.js
+
+/**
+ * Common JavaScript functions for CREAMS - Community-based REhAbilitation Management System
+ * 
+ * This file contains all the common functionality used across different pages
+ * in the CREAMS application, ensuring consistent behavior and user experience.
+ * 
+ * Enhanced with route helpers to improve navigation and prevent 404 errors.
+ */
+
+// Role-based route map for permission checking
+const routeMap = {
+    'admin': {
+        'users': true,
+        'user.view': true,
+        'user.edit': true,
+        'centres': true,
+        'centre.view': true,
+        'assets': true,
+        'asset.view': true,
+        'activities': true,
+        'activity.view': true,
+        'reports': true,
+        'settings': true,
+        'rehabilitation': true
+    },
+    'supervisor': {
+        'users': true,
+        'user.view': true,
+        'teacher.view': true,
+        'centres': true,
+        'centre.view': true,
+        'assets': true,
+        'asset.view': true,
+        'activities': true,
+        'activity.view': true,
+        'reports': true,
+        'settings': true,
+        'rehabilitation': true
+    },
+    'teacher': {
+        'users': true,
+        'user.view': false,
+        'centres': true,
+        'centre.view': true,
+        'assets': true,
+        'asset.view': true,
+        'activities': true,
+        'activity.view': true,
+        'classes': true,
+        'class.view': true,
+        'schedule': true,
+        'reports': true,
+        'settings': true,
+        'rehabilitation': true
+    },
+    'ajk': {
+        'users': true,
+        'user.view': false,
+        'centres': true,
+        'centre.view': true,
+        'assets': true,
+        'asset.view': true,
+        'activities': true,
+        'activity.view': true,
+        'events': true,
+        'event.view': true,
+        'volunteers': true,
+        'reports': true,
+        'settings': true,
+        'rehabilitation': true
+    }
+};
+
+// Utility function to check if a route exists
+function routeExists(routeName, role = null) {
+    // Get current role if not provided
+    const currentRole = role || document.body.getAttribute('data-user-role') || 
+                       sessionStorage.getItem('userRole') || 'admin';
+    
+    // Check if route exists for this role
+    return routeMap[currentRole] && routeMap[currentRole][routeName] === true;
+}
+
+// Store the current user role in session storage
+document.addEventListener('DOMContentLoaded', function() {
+    const role = document.body.getAttribute('data-user-role') || 
+               document.querySelector('meta[name="user-role"]')?.getAttribute('content');
+               
+    if (role) {
+        sessionStorage.setItem('userRole', role);
+    }
+
+    // Initialize all interactive elements
+    initializeSidebar();
+    initializeDropdowns();
+    initializeNotifications();
+    initializeTooltips();
+    initializeSearch();
+    initializeRecentItems();
+    fixAvatarImages();
+    initializeAnimations();
+    initializeRoleBasedNavigation();
+});
+
+/**
+ * Initialize animations for UI elements
+ */
+function initializeAnimations() {
+    // Animate stat values counting up
+    const statValues = document.querySelectorAll('.stat-value');
+    if (window.jQuery) {
+        statValues.forEach(function(el) {
+            const value = parseInt(el.textContent, 10);
+            window.jQuery({ countNum: 0 }).animate({
+                countNum: value
+            }, {
+                duration: 1000,
+                easing: 'swing',
+                step: function() {
+                    el.textContent = Math.floor(this.countNum);
+                },
+                complete: function() {
+                    el.textContent = value;
+                }
+            });
+        });
+    } else {
+        // Fallback animation without jQuery
+        statValues.forEach(function(el) {
+            const finalValue = parseInt(el.textContent, 10);
+            let currentValue = 0;
+            const increment = Math.max(1, Math.floor(finalValue / 30)); // Aim for 30 steps
+            const duration = 1000; // 1 second total
+            const stepTime = duration / (finalValue / increment);
+            
+            const counter = setInterval(function() {
+                currentValue += increment;
+                if (currentValue >= finalValue) {
+                    currentValue = finalValue;
+                    clearInterval(counter);
+                }
+                el.textContent = currentValue;
+            }, stepTime);
+        });
+    }
+    
+    // Animate category cards appearance
+    const categoryCards = document.querySelectorAll('.category-card, .rehab-category');
+    categoryCards.forEach(function(card, index) {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+        
+        setTimeout(function() {
+            card.style.transition = 'all 0.5s ease';
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }, 100 * index);
+    });
+    
+    // Animate dashboard sections
+    const dashboardSections = document.querySelectorAll('.dashboard-section, .card-body > .row');
+    dashboardSections.forEach(function(section, index) {
+        section.style.opacity = '0';
+        section.style.transform = 'translateY(20px)';
+        
+        setTimeout(function() {
+            section.style.transition = 'all 0.5s ease';
+            section.style.opacity = '1';
+            section.style.transform = 'translateY(0)';
+        }, 200 + (100 * index));
+    });
+}
+
+// Handle page-specific initializations
+document.addEventListener('DOMContentLoaded', function() {
+    // Rehabilitation category page specific
+    const rehabCategoryLinks = document.querySelectorAll('.category-footer a, .activity-link');
+    rehabCategoryLinks.forEach(function(link) {
+        link.addEventListener('click', function(e) {
+            const linkText = this.textContent.trim();
+            const linkUrl = this.getAttribute('href');
+            let type = 'Activity';
+            
+            if (this.closest('.category-footer')) {
+                const categoryTitle = this.closest('.category-card').querySelector('.category-title').textContent.trim();
+                type = 'Rehabilitation Category: ' + categoryTitle;
+            }
+            
+            // Track the item
+            window.trackDetailedItem(linkText, linkUrl, type);
+        });
+    });
+    
+    // Trainee management page specific
+    const traineeCards = document.querySelectorAll('.trainee-card a, .trainee-row');
+    traineeCards.forEach(function(link) {
+        link.addEventListener('click', function(e) {
+            // Don't track clicks on action buttons within the row/card
+            if (e.target.closest('.btn')) return;
+            
+            let traineeName = '';
+            let traineeUrl = '';
+            
+            if (this.closest('.card')) {
+                // Card view
+                const traineeCard = this.closest('.card');
+                traineeName = traineeCard.querySelector('.card-title').textContent.trim();
+                traineeUrl = this.getAttribute('href');
+            } else if (this.classList.contains('trainee-row')) {
+                // Table row
+                traineeName = this.querySelector('td:first-child').textContent.trim();
+                traineeUrl = this.getAttribute('data-url') || '';
+                
+                // If no data-url is specified, prevent default and return
+                if (!traineeUrl) {
+                    return;
+                }
+                
+                // Prevent default behavior to handle navigation manually
+                e.preventDefault();
+            }
+            
+            // Track the trainee
+            window.trackDetailedItem(traineeName, traineeUrl, 'Trainee');
+            
+            // Navigate if needed
+            if (this.classList.contains('trainee-row') && traineeUrl) {
+                window.location.href = traineeUrl;
+            }
+        });
+    });
+    
+    // Make sure all links in tables use the correct role-based URLs
+    document.querySelectorAll('table a, .data-table a').forEach(link => {
+        const href = link.getAttribute('href');
+        
+        // Skip non-href links
+        if (!href) return;
+        
+        // Don't modify external links or special URLs
+        if (href.startsWith('http') || href.startsWith('#') || 
+            href.startsWith('javascript:') || href.startsWith('tel:') || 
+            href.startsWith('mailto:')) {
+            return;
+        }
+        
+        // Fix problematic URLs
+        const role = getCachedUserRole();
+        const urlPatterns = [
+            { pattern: /^\/users$/, replacement: `/${role}/users` },
+            { pattern: /^\/users\/(\d+)$/, replacement: `/${role}/user/view/$1` },
+            { pattern: /^\/centres$/, replacement: `/${role}/centres` },
+            { pattern: /^\/assets$/, replacement: `/${role}/assets` }
+        ];
+        
+        for (const pattern of urlPatterns) {
+            if (pattern.pattern.test(href)) {
+                const newHref = href.replace(pattern.pattern, pattern.replacement);
+                link.setAttribute('href', newHref);
+                break;
+            }
+        }
+    });
+});
+
+/**
+ * Route Helper Functions
+ * These functions help ensure navigation works correctly with role-based routes
+ */
+
+/**
+ * Check if a route exists for the current user's role
+ * @param {string} routeName - The base route name without role prefix
+ * @param {string|null} role - User role (optional, defaults to current role)
+ * @returns {boolean} - True if route exists, false otherwise
+ */
+window.routeExists = function(routeName, role = null) {
+    // Get current role from session if not provided
+    const currentRole = role || getCachedUserRole();
+    
+    // Use route map if available (populated by server)
+    if (typeof routeMap !== 'undefined' && routeMap[currentRole] && routeMap[currentRole][routeName] !== undefined) {
+        return routeMap[currentRole][routeName];
+    }
+    
+    // Default to true when we can't determine - the server will handle redirects
+    return true;
+};
+
+/**
+ * Generate a safe URL based on route pattern and role
+ * @param {string} routeName - The base route name without role prefix
+ * @param {object} params - Route parameters (e.g., {id: 123})
+ * @param {string|null} role - User role (optional, defaults to current role)
+ * @returns {string} - Complete URL
+ */
+window.generateRoleUrl = function(routeName, params = {}, role = null) {
+    // Get current role from session if not provided
+    const currentRole = role || getCachedUserRole();
+    
+    // Start building the URL
+    let url = '/' + currentRole;
+    
+    // Add the route name
+    if (routeName.startsWith('/')) {
+        url += routeName;
+    } else {
+        url += '/' + routeName;
+    }
+    
+    // Add params to the URL
+    if (Object.keys(params).length > 0) {
+        // For simple numeric ID
+        if (params.id) {
+            // Replace {id} in URL pattern or append /id
+            if (url.includes('{id}')) {
+                url = url.replace('{id}', params.id);
+            } else if (!url.endsWith('/')) {
+                url += '/' + params.id;
+            } else {
+                url += params.id;
+            }
+        }
+        
+        // Add other params as query string
+        const queryParams = [];
+        for (const key in params) {
+            if (key !== 'id') {
+                queryParams.push(`${key}=${encodeURIComponent(params[key])}`);
+            }
+        }
+        
+        if (queryParams.length > 0) {
+            url += '?' + queryParams.join('&');
+        }
+    }
+    
+    return url;
+};
+
+/**
+ * Get user role from various sources
+ * @returns {string} - User role, defaults to 'admin' if not found
+ */
+function getCachedUserRole() {
+    // Try from data attribute on body tag
+    const bodyRole = document.body.getAttribute('data-user-role');
+    if (bodyRole) return bodyRole;
+    
+    // Try from session storage
+    const sessionRole = sessionStorage.getItem('userRole');
+    if (sessionRole) return sessionRole;
+    
+    // Try from meta tag
+    const metaRole = document.querySelector('meta[name="user-role"]');
+    if (metaRole && metaRole.getAttribute('content')) {
+        return metaRole.getAttribute('content');
+    }
+    
+    // Default to admin if we can't determine
+    return 'admin';
+}
+
+/**
+ * Initialize role-based navigation
+ * Ensures all navigation links use the correct routes based on user role
+ */
+function initializeRoleBasedNavigation() {
+    // Store the current user role in session storage for convenience
+    const role = getCachedUserRole();
+    sessionStorage.setItem('userRole', role);
+    
+    // Fix navigation links by ensuring they use proper role-based URLs
+    fixNavigationLinks();
+    
+    // Add global error handler for navigation links
+    document.addEventListener('click', function(e) {
+        // Check if the clicked element is a navigation link
+        if (e.target.tagName === 'A' || e.target.closest('a')) {
+            const link = e.target.tagName === 'A' ? e.target : e.target.closest('a');
+            const href = link.getAttribute('href');
+            
+            // Skip external links, anchor links, and javascript links
+            if (!href || href.startsWith('http') || href.startsWith('#') || 
+                href.startsWith('javascript:') || href.startsWith('tel:') || 
+                href.startsWith('mailto:')) {
+                return;
+            }
+            
+            // Check if this might be a problematic link (contains /users without role)
+            if (href === '/users' || href.startsWith('/users/')) {
+                e.preventDefault();
+                
+                // Redirect to the role-specific users route
+                const redirectUrl = generateRoleUrl('users');
+                window.location.href = redirectUrl;
+                return;
+            }
+        }
+    });
+}
+
+/**
+ * Function to track detailed items (trainees, centres, assets)
+ * This can be called from anywhere in the application
+ */
+window.trackDetailedItem = function(name, url, type) {
+    // Create item object
+    const detailedItem = {
+        name: name,
+        url: url,
+        type: type,
+        timestamp: new Date().toISOString()
+    };
+    
+    // Get existing items from localStorage
+    let recentItems = [];
+    try {
+        recentItems = JSON.parse(localStorage.getItem('recentItems')) || [];
+    } catch (e) {
+        console.error('Error parsing recent items:', e);
+    }
+    
+    // Check if this item already exists
+    const existingItemIndex = recentItems.findIndex(item => item.url === url);
+    
+    if (existingItemIndex >= 0) {
+        // Remove existing item
+        recentItems.splice(existingItemIndex, 1);
+    }
+    
+    // Add new item at the beginning
+    recentItems.unshift(detailedItem);
+    
+    // Limit to 10 items
+    recentItems = recentItems.slice(0, 10);
+    
+    // Save back to localStorage
+    localStorage.setItem('recentItems', JSON.stringify(recentItems));
+};
+
+/**
+ * Fix for avatar images not loading properly
+ * Applies default image when avatars fail to load
+ */
+function fixAvatarImages() {
+    const avatarImages = document.querySelectorAll('.avatar-img, .profile-img, .rounded-circle[src*="profile"], .user-avatar img, .avatar-container img');
+    
+    avatarImages.forEach(function(img) {
+        // Check if src is empty, null, or undefined
+        if (!img.getAttribute('src') || img.getAttribute('src') === '') {
+            applyDefaultImage(img);
+        }
+        
+        // Add error handler for loading failures
+        img.addEventListener('error', function() {
+            applyDefaultImage(this);
+        });
+    });
+    
+    function applyDefaultImage(imgElement) {
+        // Check if the default image exists
+        const defaultImagePath = '/images/default-avatar.png';
+        const fallbackImagePath = '/assets/images/default-avatar.png';
+        
+        // Try the primary path first
+        imgElement.src = defaultImagePath;
+        // Also set as background in case img element is styled with size but content doesn't load
+        imgElement.style.backgroundImage = `url('${defaultImagePath}')`;
+        imgElement.style.backgroundSize = "cover";
+        imgElement.style.backgroundPosition = "center";
+        
+        // Add a second error handler in case the first default image also fails
+        imgElement.addEventListener('error', function() {
+            this.src = fallbackImagePath;
+            this.style.backgroundImage = `url('${fallbackImagePath}')`;
+            
+            // If all else fails, use a data URI for a generic avatar
+            this.addEventListener('error', function() {
+                const genericAvatarDataURI = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0OTYgNTEyIj48cGF0aCBmaWxsPSIjY2NjY2NjIiBkPSJNMjQ4IDhDMTExIDggMCAxMTkgMCAyNTZzMTExIDI0OCAyNDggMjQ4IDI0OC0xMTEgMjQ4LTI0OFMzODUgOCAyNDggOHptMCA5NmM0OC42IDAgODggMzkuNCA4OCA4OHMtMzkuNCA4OC04OCA4OC04OC0zOS40LTg4LTg4IDM5LjQtODggODgtODh6bTAgMzQ0Yy01OC43IDAtMTExLjMtMjYuNi0xNDYuNS02OC4yIDE4LjgtMzUuNCAtMi41LTE2LjQgMzUuNC04Mi44IDUuMi05IDI4LjItMTMuNSAzOS41LTEzLjUgMTQ1LjIgMCAwIDI1LjggMzkuNSAyNS44IDI2LjkgMCAzOC42IDEyIDM5LjUgMjkuNSAyOC41IDY3LjEgOS4xIDEwNy4zIDMzLjQgNjUuOSAxNDYuNS02OC4yIDk2LjEtMTEzLjYgNDYuNC0xMTMuNiAxNDYuNS02OC4yek0yNDggNDA4Yy00NC4xIDAtODAtMzUuOS04MC04MGg2MGMwIDExIDkgMjAgMjAgMjBzMjAtOSAyMC0yMGg2MGMwIDQ0LjEtMzUuOSA4MC04MCA4MHoiPjwvcGF0aD48L3N2Zz4=';
+                this.src = genericAvatarDataURI;
+                this.style.backgroundImage = `url('${genericAvatarDataURI}')`;
+            });
+        });
+    }
+}
+
+/**
+ * Fix navigation links in the page to ensure they use correct role-based URLs
+ */
+function fixNavigationLinks() {
+    const role = getCachedUserRole();
+    
+    // Common problematic routes that need fixing
+    const routePatterns = [
+        { pattern: /^\/users$/, replacement: `/${role}/users` },
+        { pattern: /^\/users\/(\d+)$/, replacement: `/${role}/user/view/$1` },
+        { pattern: /^\/centres$/, replacement: `/${role}/centres` },
+        { pattern: /^\/assets$/, replacement: `/${role}/assets` }
+    ];
+    
+    // Find all links in the page
+    const links = document.querySelectorAll('a[href]');
+    
+    links.forEach(link => {
+        const href = link.getAttribute('href');
+        
+        // Skip links that are not internal page navigation
+        if (!href || href.startsWith('http') || href.startsWith('#') || 
+            href.startsWith('javascript:') || href.startsWith('tel:') || 
+            href.startsWith('mailto:')) {
+            return;
+        }
+        
+        // Check if this link matches any of our problematic patterns
+        for (const route of routePatterns) {
+            if (route.pattern.test(href)) {
+                // Update the href to use the role-specific URL
+                const newHref = href.replace(route.pattern, route.replacement);
+                link.setAttribute('href', newHref);
+                
+                // Also add a data attribute to mark that this link was fixed
+                link.setAttribute('data-fixed-route', 'true');
+                break;
+            }
+        }
+    });
+}
+
+/**
+ * Initialize sidebar toggle functionality
+ */
+function initializeSidebar() {
+    const sidebarToggle = document.getElementById('sidebarToggle');
+    if (!sidebarToggle) return;
+
+    // Check if sidebar was collapsed previously
+    if (localStorage.getItem('sidebar-collapsed') === 'true') {
+        document.body.classList.add('sidebar-collapsed');
+    }
+    
+    // Toggle sidebar on click
+    sidebarToggle.addEventListener('click', function() {
+        document.body.classList.toggle('sidebar-collapsed');
+        
+        // Store sidebar state in localStorage
+        localStorage.setItem('sidebar-collapsed', document.body.classList.contains('sidebar-collapsed'));
+    });
+    
+    // Handle submenu toggles
+    const submenuLinks = document.querySelectorAll('.sidebar-link');
+    submenuLinks.forEach(link => {
+        if (link.nextElementSibling && link.nextElementSibling.classList.contains('sidebar-submenu')) {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const parent = this.parentElement;
+                
+                // Toggle submenu-open class
+                parent.classList.toggle('submenu-open');
+                
+                // Close other submenus
+                const siblings = Array.from(parent.parentElement.children).filter(el => el !== parent);
+                siblings.forEach(sibling => {
+                    sibling.classList.remove('submenu-open');
+                });
+                
+                // Store state of open submenus
+                storeOpenSubmenus();
+            });
+        }
+    });
+    
+    // Restore open submenus
+    restoreOpenSubmenus();
+    
+    // Auto-expand submenu with active item
+    const activeLink = document.querySelector('.sidebar-submenu-link.active');
+    if (activeLink) {
+        const submenu = activeLink.closest('.sidebar-submenu');
+        if (submenu) {
+            const parent = submenu.parentElement;
+            if (parent) {
+                parent.classList.add('submenu-open');
+            }
+        }
+    }
+    
+    // Handle responsive sidebar
+    function handleResize() {
+        if (window.innerWidth <= 991) {
+            document.body.classList.add('sidebar-collapsed');
+        }
+    }
+    
+    // Call on load and on resize
+    handleResize();
+    window.addEventListener('resize', handleResize);
+}
+
+/**
+ * Initialize dropdown menus
+ */
+function initializeDropdowns() {
+    // User profile dropdown
+    const userProfileToggle = document.getElementById('userProfileToggle');
+    const userDropdown = document.getElementById('userDropdown');
+    
+    if (userProfileToggle && userDropdown) {
+        userProfileToggle.addEventListener('click', function(e) {
+            e.stopPropagation();
+            userDropdown.classList.toggle('show');
+            
+            // Close notification menu if open
+            const notificationMenu = document.getElementById('notificationMenu');
+            if (notificationMenu) {
+                notificationMenu.classList.remove('show');
+            }
+            
+            // Close mobile search if open
+            const mobileSearch = document.querySelector('.mobile-search');
+            if (mobileSearch) {
+                mobileSearch.classList.remove('show');
+            }
+        });
+    }
+    
+    // Mobile search toggle
+    const searchMobileToggle = document.querySelector('.search-mobile-toggle');
+    const mobileSearch = document.querySelector('.mobile-search');
+    
+    if (searchMobileToggle && mobileSearch) {
+        searchMobileToggle.addEventListener('click', function(e) {
+            e.stopPropagation();
+            mobileSearch.classList.toggle('show');
+            
+            // Close other dropdowns
+            if (userDropdown) userDropdown.classList.remove('show');
+            
+            const notificationMenu = document.getElementById('notificationMenu');
+            if (notificationMenu) notificationMenu.classList.remove('show');
+        });
+    }
+    
+    // Close dropdowns when clicking outside
+    document.addEventListener('click', function() {
+        if (userDropdown) userDropdown.classList.remove('show');
+        
+        const notificationMenu = document.getElementById('notificationMenu');
+        if (notificationMenu) notificationMenu.classList.remove('show');
+        
+        if (mobileSearch) mobileSearch.classList.remove('show');
+    });
+    
+    // Prevent dropdown close when clicking inside
+    const dropdownElements = [userDropdown, document.getElementById('notificationMenu'), mobileSearch];
+    dropdownElements.forEach(el => {
+        if (el) {
+            el.addEventListener('click', function(e) {
+                e.stopPropagation();
+            });
+        }
+    });
+}
+
+/**
+ * Initialize notifications system
+ */
+function initializeNotifications() {
+    const notificationToggle = document.getElementById('notificationToggle');
+    const notificationMenu = document.getElementById('notificationMenu');
+    
+    if (notificationToggle && notificationMenu) {
+        notificationToggle.addEventListener('click', function(e) {
+            e.stopPropagation();
+            notificationMenu.classList.toggle('show');
+            
+            // Close user dropdown if open
+            const userDropdown = document.getElementById('userDropdown');
+            if (userDropdown) userDropdown.classList.remove('show');
+            
+            // Close mobile search if open
+            const mobileSearch = document.querySelector('.mobile-search');
+            if (mobileSearch) mobileSearch.classList.remove('show');
+            
+            // If notification menu is showing, load notifications
+            if (notificationMenu.classList.contains('show')) {
+                loadNotifications();
+            }
+        });
+    }
+}
+
+/**
+ * Load notifications from the server
+ */
+function loadNotifications() {
+    const notificationMenu = document.getElementById('notificationMenu');
+    if (!notificationMenu) return;
+    
+    // Add a loading state
+    notificationMenu.innerHTML = `
+        <div class="p-3 text-center">
+            <div class="spinner-border spinner-border-sm text-primary" role="status">
+                <span class="sr-only">Loading...</span>
+            </div>
+            <p class="mb-0 mt-2">Loading notifications...</p>
+        </div>
+    `;
+    
+    // In a real implementation, this would be an AJAX call to fetch notifications
+    // For demonstration, using mock data and a small delay to simulate network request
+    setTimeout(() => {
+        // Get notification data - this would normally be a fetch request
+        const mockNotifications = [
+            {
+                id: 1,
+                title: 'New Trainee Registered',
+                content: 'A new trainee has been registered in the system.',
+                icon: 'fas fa-user-plus',
+                color: 'primary',
+                time: '5 minutes ago',
+                url: '#notification-1'
+            },
+            {
+                id: 2,
+                title: 'Activity Scheduled',
+                content: 'A new activity has been scheduled for tomorrow.',
+                icon: 'fas fa-calendar-alt',
+                color: 'success',
+                time: '1 hour ago',
+                url: '#notification-2'
+            },
+            {
+                id: 3,
+                title: 'System Update',
+                content: 'The system will be undergoing maintenance tonight.',
+                icon: 'fas fa-cog',
+                color: 'warning',
+                time: '3 hours ago',
+                url: '#notification-3'
+            }
+        ];
+        
+        // Build notification HTML
+        let notificationsHtml = `
+            <div class="p-3 border-bottom">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h6 class="m-0">Notifications</h6>
+                    <a href="#" class="text-muted small" id="mark-all-read">
+                        Mark all as read
+                    </a>
+                </div>
+            </div>
+        `;
+        
+        if (mockNotifications.length > 0) {
+            mockNotifications.forEach(notification => {
+                notificationsHtml += `
+                    <a href="${notification.url}" class="d-flex p-3 border-bottom notification-item">
+                        <div class="mr-3">
+                            <div class="notification-icon ${notification.color}">
+                                <i class="${notification.icon}"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="font-weight-bold">${notification.title}</div>
+                            <div class="small text-muted">${notification.content}</div>
+                            <div class="smallest text-muted mt-1">${notification.time}</div>
+                        </div>
+                    </a>
+                `;
+            });
+        } else {
+            notificationsHtml += `
+                <div class="p-3 text-center text-muted">
+                    <i class="fas fa-bell-slash fa-2x mb-3"></i>
+                    <p>No new notifications</p>
+                </div>
+            `;
+        }
+        
+        // Get the correct notifications route based on user role
+        const role = getCachedUserRole();
+        const viewAllUrl = window.generateRoleUrl('notifications');
+        
+        notificationsHtml += `
+            <div class="p-2 text-center border-top">
+                <a href="${viewAllUrl}" class="btn btn-sm btn-light w-100">
+                    View All Notifications
+                </a>
+            </div>
+        `;
+        
+        notificationMenu.innerHTML = notificationsHtml;
+        
+        // Add animation to notification items
+        const notificationItems = document.querySelectorAll('.notification-item');
+        notificationItems.forEach((item, index) => {
+            item.style.opacity = 0;
+            item.style.transform = 'translateY(10px)';
+            
+            setTimeout(() => {
+                item.style.transition = 'all 0.3s ease';
+                item.style.opacity = 1;
+                item.style.transform = 'translateY(0)';
+            }, index * 100);
+        });
+        
+        // Set up mark all read button
+        const markAllReadBtn = document.getElementById('mark-all-read');
+        if (markAllReadBtn) {
+            markAllReadBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                const notificationCount = document.querySelector('.notification-count');
+                if (notificationCount) {
+                    notificationCount.style.display = 'none';
+                    
+                    // Add a subtle animation to show the action was registered
+                    notificationCount.style.transition = 'transform 0.3s ease, opacity 0.3s ease';
+                    notificationCount.style.transform = 'scale(0.5)';
+                    notificationCount.style.opacity = '0';
+                }
+                
+                notificationMenu.classList.remove('show');
+                
+                // In a real implementation, make an AJAX call to mark all as read
+                // Example:
+                // fetch('/notifications/mark-all-read', {
+                //     method: 'POST',
+                //     headers: {
+                //         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                //         'Content-Type': 'application/json'
+                //     }
+                // }).then(response => response.json())
+                //   .then(data => console.log('All notifications marked as read'))
+                //   .catch(error => console.error('Error marking notifications as read:', error));
+            });
+        }
+    });
+}
+
+avatar-fix.js
+
+/**
+ * Avatar Fix Script
+ * 
+ * This script fixes issues with avatars not loading properly.
+ */
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Fix for avatar images
+    function fixAvatarImages() {
+        const avatarImages = document.querySelectorAll('.avatar-img, .profile-img, .rounded-circle[src*="profile"], .user-avatar img');
+        
+        avatarImages.forEach(function(img) {
+            // Check if src is empty, null, or undefined
+            if (!img.getAttribute('src') || img.getAttribute('src') === '') {
+                console.log('Avatar with empty src found, applying default image');
+                applyDefaultImage(img);
+            }
+            
+            // Add error handler for loading failures
+            img.addEventListener('error', function(e) {
+                console.log('Avatar image failed to load, applying default image');
+                applyDefaultImage(this);
+            });
+        });
+        
+        function applyDefaultImage(imgElement) {
+            imgElement.src = '/images/default-avatar.png';
+            // Also set as background in case img element is styled with size but content doesn't load
+            imgElement.style.backgroundImage = "url('/images/default-avatar.png')";
+            imgElement.style.backgroundSize = "cover";
+            imgElement.style.backgroundPosition = "center";
+        }
+    }
+    
+    // Run immediately
+    fixAvatarImages();
+    
+    // Also run after a short delay to catch dynamically loaded elements
+    setTimeout(fixAvatarImages, 500);
+    setTimeout(fixAvatarImages, 1500);
+    
+    // Fix navbar avatar
+    function fixNavbarAvatar() {
+        const navbarAvatar = document.querySelector('.user-avatar img');
+        if (navbarAvatar) {
+            if (!navbarAvatar.getAttribute('src') || navbarAvatar.getAttribute('src') === '') {
+                navbarAvatar.src = '/images/default-avatar.png';
+            }
+            
+            navbarAvatar.addEventListener('error', function() {
+                this.src = '/images/default-avatar.png';
+            });
+        }
+    }
+    
+    // Run navbar avatar fix
+    fixNavbarAvatar();
+});
+
+app.js
+
+import './bootstrap';
+
+
+
+import Alpine from 'alpinejs';
+
+window.Alpine = Alpine;
+
+Alpine.start();
+ 
+header.js
+
+// Header functionality
+document.addEventListener("DOMContentLoaded", function () {
+    // Mobile menu toggle
+    const mobileNavToggle = document.getElementById("mobile-nav-toggle");
+    const mobileNav = document.getElementById("mobile-nav");
+
+    if (mobileNavToggle && mobileNav) {
+        mobileNavToggle.addEventListener("click", function () {
+            mobileNav.classList.toggle("mobile-nav-active");
+        });
+    }
+
+    // Header scrolling effect
+    const header = document.getElementById("header");
+
+    window.addEventListener("scroll", function () {
+        if (window.scrollY > 50) {
+            header.classList.add("header-scrolled");
+        } else {
+            header.classList.remove("header-scrolled");
+        }
+    });
+
+    // Close mobile menu when clicking outside
+    document.addEventListener("click", function (e) {
+        if (
+            mobileNav &&
+            mobileNav.classList.contains("mobile-nav-active") &&
+            !mobileNav.contains(e.target) &&
+            e.target !== mobileNavToggle &&
+            !mobileNavToggle.contains(e.target)
+        ) {
+            mobileNav.classList.remove("mobile-nav-active");
+        }
+    });
+});

@@ -1,0 +1,33 @@
+# Only exclude the biggest token wasters
+/vendor/
+/node_modules/
+/storage/logs/
+/storage/framework/cache/
+/storage/framework/sessions/
+/storage/framework/views/
+/composer.lock
+/package-lock.json
+
+# Large media files that are rarely needed for development
+/public/videos/
+/public/images/WhatsApp*
+/public/images/*.pdf
+/public/images/*.jpg
+/public/images/*.jpeg
+/public/images/*.png
+/public/images/*.gif
+/public/images/*.webp
+/public/images/*.jfif
+
+# Large asset files
+/public/fonts/
+/public/assets/*/images/
+/public/avatars/
+
+# Compiled and cached files
+/public/build/
+/public/hot
+/public/storage
+
+# Log files
+*.log
