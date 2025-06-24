@@ -1,0 +1,3032 @@
+Activities
+
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+
+class Activities extends Model
+{
+    use HasFactory;
+
+    protected $fillable = [
+        'activity_name',
+        'activity_code',
+        'category',
+        'description',
+        'objectives',
+        'materials_needed',
+        'age_group',
+        'difficulty_level',
+        'is_active',
+        'created_by',
+        'updated_by'
+    ];
+
+    protected $casts = [
+        'is_active' => 'boolean'
+    ];
+
+    // Relationships
+    public function creator()
+    {
+        return $this->belongsTo(Users::class, 'created_by');
+    }
+
+    public function updater()
+    {
+        return $this->belongsTo(Users::class, 'updated_by');
+    }
+
+    public function sessions()
+    {
+        return $this->hasMany(ActivitySession::class);
+    }
+
+    public function activeSessions()
+    {
+        return $this->hasMany(ActivitySession::class)->where('is_active', true);
+    }
+
+    // Scopes
+    public function scopeActive($query)
+    {
+        return $query->where('is_active', true);
+    }
+
+    public function scopeByCategory($query, $category)
+    {
+        return $query->where('category', $category);
+    }
+
+    // Methods
+    public function hasActiveEnrollments()
+    {
+        return $this->sessions()
+            ->whereHas('enrollments', function ($query) {
+                $query->where('status', 'Active');
+            })
+            ->exists();
+    }
+
+    public function getTotalEnrollmentsAttribute()
+    {
+        return $this->sessions()
+            ->withCount(['enrollments' => function ($query) {
+                $query->where('status', 'Active');
+            }])
+            ->get()
+            ->sum('enrollments_count');
+    }
+}
+
+ActivityAttendances
+
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
+class ActivityAttendances extends Model
+{
+    use HasFactory;
+
+    protected $fillable = [
+        'activity_session_id',
+        'trainee_id',
+        'marked_by',
+        'attendance_date',
+        'session_start_time',
+        'session_end_time',
+        'attendance_status',
+        'actual_arrival_time',
+        'actual_departure_time',
+        'session_notes',
+        'participation_score',
+        'session_objectives_met',
+        'teacher_observations',
+        'behavioral_notes',
+        'requires_followup'
+    ];
+
+    protected $casts = [
+        'attendance_date' => 'date',
+        'session_start_time' => 'datetime:H:i',
+        'session_end_time' => 'datetime:H:i',
+        'actual_arrival_time' => 'datetime:H:i',
+        'actual_departure_time' => 'datetime:H:i',
+        'session_objectives_met' => 'array',
+        'requires_followup' => 'boolean'
+    ];
+
+    // Relationships
+    public function activitySession()
+    {
+        return $this->belongsTo(ActivitySessions::class);
+    }
+
+    public function trainee()
+    {
+        return $this->belongsTo(Trainees::class);
+    }
+
+    public function markedBy()
+    {
+        return $this->belongsTo(Users::class, 'marked_by');
+    }
+
+    // Scopes
+    public function scopePresent($query)
+    {
+        return $query->where('attendance_status', 'present');
+    }
+
+    public function scopeAbsent($query)
+    {
+        return $query->where('attendance_status', 'absent');
+    }
+
+    public function scopeToday($query)
+    {
+        return $query->whereDate('attendance_date', today());
+    }
+
+    public function scopeThisWeek($query)
+    {
+        return $query->whereBetween('attendance_date', [
+            now()->startOfWeek(),
+            now()->endOfWeek()
+        ]);
+    }
+
+    // Helper methods
+    public function wasPresent()
+    {
+        return $this->attendance_status === 'present';
+    }
+
+    public function wasLate()
+    {
+        if (!$this->actual_arrival_time || !$this->session_start_time) {
+            return false;
+        }
+        
+        return $this->actual_arrival_time > $this->session_start_time;
+    }
+
+    public function leftEarly()
+    {
+        if (!$this->actual_departure_time || !$this->session_end_time) {
+            return false;
+        }
+        
+        return $this->actual_departure_time < $this->session_end_time;
+    }
+}
+
+ActivityEntrollments
+
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+
+class ActivityEnrollments extends Model
+{
+    use HasFactory, SoftDeletes;
+
+    protected $fillable = [
+        'activity_session_id',
+        'trainee_id',
+        'enrolled_by',
+        'enrollment_status',
+        'enrollment_date',
+        'start_date',
+        'end_date',
+        'enrollment_notes',
+        'withdrawal_reason',
+        'withdrawal_date',
+        'progress_percentage',
+        'individual_goals'
+    ];
+
+    protected $casts = [
+        'enrollment_date' => 'date',
+        'start_date' => 'date',
+        'end_date' => 'date',
+        'withdrawal_date' => 'date',
+        'individual_goals' => 'array',
+        'progress_percentage' => 'decimal:2'
+    ];
+
+    // Relationships
+    public function activitySession()
+    {
+        return $this->belongsTo(ActivitySessions::class);
+    }
+
+    public function trainee()
+    {
+        return $this->belongsTo(Trainees::class);
+    }
+
+    public function enrolledBy()
+    {
+        return $this->belongsTo(Users::class, 'enrolled_by');
+    }
+
+    public function attendance()
+    {
+        return $this->hasMany(ActivityAttendances::class, 'trainee_id', 'trainee_id')
+                    ->where('activity_session_id', $this->activity_session_id);
+    }
+
+    public function progressReports()
+    {
+        return $this->hasMany(TraineeProgress::class);
+    }
+
+    // Scopes
+    public function scopeActive($query)
+    {
+        return $query->where('enrollment_status', 'active');
+    }
+
+    public function scopeByTrainee($query, $traineeId)
+    {
+        return $query->where('trainee_id', $traineeId);
+    }
+
+    public function scopeBySession($query, $sessionId)
+    {
+        return $query->where('activity_session_id', $sessionId);
+    }
+
+    // Helper methods
+    public function isActive()
+    {
+        return $this->enrollment_status === 'active';
+    }
+
+    public function canWithdraw()
+    {
+        return in_array($this->enrollment_status, ['active', 'pending']);
+    }
+
+    public function getAttendanceRate()
+    {
+        $totalSessions = $this->attendance()->count();
+        $presentSessions = $this->attendance()->where('attendance_status', 'present')->count();
+        
+        return $totalSessions > 0 ? ($presentSessions / $totalSessions) * 100 : 0;
+    }
+}
+
+ActivitySessions
+
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+
+class ActivitySessions extends Model
+{
+    use HasFactory;
+
+    protected $fillable = [
+        'activity_id',
+        'teacher_id',
+        'class_name',
+        'semester',
+        'day_of_week',
+        'start_time',
+        'end_time',
+        'location',
+        'max_trainees',
+        'notes',
+        'is_active',
+        'created_by',
+        'updated_by'
+    ];
+
+    protected $casts = [
+        'is_active' => 'boolean',
+        'start_time' => 'datetime:H:i',
+        'end_time' => 'datetime:H:i'
+    ];
+
+    // Relationships
+    public function activity()
+    {
+        return $this->belongsTo(Activities::class);
+    }
+
+    public function teacher()
+    {
+        return $this->belongsTo(Users::class, 'teacher_id');
+    }
+
+    public function enrollments()
+    {
+        return $this->hasMany(SessionEnrollments::class, 'session_id');
+    }
+
+    public function activeEnrollments()
+    {
+        return $this->hasMany(SessionEnrollments::class, 'session_id')
+            ->where('status', 'Active');
+    }
+
+    public function attendance()
+    {
+        return $this->hasMany(ActivityAttendances::class, 'session_id');
+    }
+
+    // Scopes
+    public function scopeActive($query)
+    {
+        return $query->where('is_active', true);
+    }
+
+    public function scopeByTeacher($query, $teacherId)
+    {
+        return $query->where('teacher_id', $teacherId);
+    }
+
+    public function scopeCurrentSemester($query)
+    {
+        $currentSemester = date('Y') . '-' . (date('n') <= 6 ? '1' : '2');
+        return $query->where('semester', $currentSemester);
+    }
+
+    // Methods
+    public function getAvailableSlotsAttribute()
+    {
+        return $this->max_trainees - $this->activeEnrollments()->count();
+    }
+
+    public function isFullAttribute()
+    {
+        return $this->available_slots <= 0;
+    }
+
+    public function canEnroll($traineeId)
+    {
+        // Check if already enrolled
+        if ($this->enrollments()->where('trainee_id', $traineeId)->exists()) {
+            return false;
+        }
+
+        // Check if session is full
+        if ($this->is_full) {
+            return false;
+        }
+
+        // Check if session is active
+        if (!$this->is_active) {
+            return false;
+        }
+
+        return true;
+    }
+}
+
+Admins
+
+<?php
+
+namespace App\Models;
+
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Traits\AuthenticationTrait;
+use Illuminate\Support\Facades\Log;
+
+class Admins extends Authenticatable
+{
+    use Notifiable, HasFactory, AuthenticationTrait;
+
+    /**
+     * The primary key for the model.
+     *
+     * @var string
+     */
+    protected $primaryKey = 'id';
+    
+    /**
+     * The "type" of the primary key ID.
+     *
+     * @var string
+     */
+    protected $keyType = 'int';
+    
+    /**
+     * Indicates if the IDs are auto-incrementing.
+     *
+     * @var bool
+     */
+    public $incrementing = true;
+
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<int, string>
+     */
+    protected $fillable = [
+        'iium_id',
+        'name', 
+        'email', 
+        'password',
+        'phone',
+        'address',
+        'position',
+        'centre_id',
+        'avatar',
+        'bio',
+        'user_last_accessed_at',
+        'status'
+    ];
+
+    /**
+     * The attributes that should be hidden for serialization.
+     *
+     * @var array<int, string>
+     */
+    protected $hidden = [
+        'password', 
+        'remember_token',
+    ];
+
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array<string, string>
+     */
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+        'password' => 'hashed',
+        'user_last_accessed_at' => 'datetime'
+    ];
+
+    /**
+     * Get the avatar URL for the admin.
+     *
+     * @return string
+     */
+    public function getAvatarUrlAttribute()
+    {
+        if ($this->avatar) {
+            return asset('storage/avatars/' . $this->avatar);
+        }
+        
+        // Return default avatar if none is set
+        return asset('images/default-avatar.png');
+    }
+
+    /**
+     * Direct role getter method as fallback if trait is not working
+     * 
+     * @return string
+     */
+    public function getRole()
+    {
+        Log::debug('Direct getRole method called on Admins model');
+        return 'admin';
+    }
+
+    /**
+     * Get the activities associated with this admin.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function activities()
+    {
+        return $this->hasMany(Activities::class);
+    }
+
+    /**
+     * Get the trainees managed by this admin.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function trainees()
+    {
+        return $this->hasMany(Trainees::class);
+    }
+
+    /**
+     * Get the assets managed by this admin.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function assets()
+    {
+        return $this->hasMany(Assets::class);
+    }
+    
+    /**
+     * Get the centre this admin belongs to.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function centre()
+    {
+        return $this->belongsTo(Centres::class, 'centre_id');
+    }
+    
+    /**
+     * Get the centres managed by this admin.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function centres()
+    {
+        return $this->hasMany(Centres::class, 'admin_id');
+    }
+    
+    /**
+     * Find an admin by their email.
+     *
+     * @param string $email
+     * @return Admins|null
+     */
+    public static function findByEmail($email)
+    {
+        return self::where('email', $email)->first();
+    }
+    
+    /**
+     * Find an admin by their IIUM ID.
+     *
+     * @param string $iiumId
+     * @return Admins|null
+     */
+    public static function findByIiumId($iiumId)
+    {
+        return self::where('iium_id', strtoupper($iiumId))->first();
+    }
+    
+    /**
+     * Boot function to handle model events.
+     * 
+     * @return void
+     */
+    protected static function boot()
+    {
+        parent::boot();
+        
+        // Convert IIUM ID to uppercase before saving
+        static::saving(function ($model) {
+            if (isset($model->iium_id)) {
+                $model->iium_id = strtoupper($model->iium_id);
+            }
+        });
+    }
+}
+
+AJKs
+
+<?php
+
+namespace App\Models;
+
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Traits\AuthenticationTrait;
+use Illuminate\Support\Facades\Log;
+
+class AJKs extends Authenticatable
+{
+    use Notifiable, HasFactory, AuthenticationTrait;
+
+    /**
+     * The table associated with the model.
+     *
+     * @var string
+     */
+    protected $table = 'ajks';
+    
+    /**
+     * The primary key for the model.
+     *
+     * @var string
+     */
+    protected $primaryKey = 'id';
+    
+    /**
+     * The "type" of the primary key ID.
+     *
+     * @var string
+     */
+    protected $keyType = 'int';
+    
+    /**
+     * Indicates if the IDs are auto-incrementing.
+     *
+     * @var bool
+     */
+    public $incrementing = true;
+
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<int, string>
+     */
+    protected $fillable = [
+        'iium_id',
+        'name', 
+        'email', 
+        'password',
+        'phone',
+        'address',
+        'position',
+        'centre_id',
+        'avatar',
+        'bio',
+        'user_last_accessed_at',
+        'status'
+    ];
+
+    /**
+     * The attributes that should be hidden for serialization.
+     *
+     * @var array<int, string>
+     */
+    protected $hidden = [
+        'password', 
+        'remember_token',
+    ];
+
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array<string, string>
+     */
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+        'password' => 'hashed',
+    ];
+
+    /**
+     * Direct role getter method as fallback if trait is not working
+     * 
+     * @return string
+     */
+    public function getRole()
+    {
+        Log::debug('Direct getRole method called on AJKs model');
+        return 'ajk';
+    }
+
+    /**
+     * Get the activities associated with this AJK.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function activities()
+    {
+        return $this->hasMany(Activities::class);
+    }
+
+    /**
+     * Get the trainees managed by this AJK.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function trainees()
+    {
+        return $this->hasMany(Trainees::class);
+    }
+
+    /**
+     * Get the assets managed by this AJK.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function assets()
+    {
+        return $this->hasMany(Assets::class);
+    }
+    
+    /**
+     * Get the centre this AJK belongs to.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function centre()
+    {
+        return $this->belongsTo(Centres::class, 'centre_id');
+    }
+    
+    /**
+     * Find an AJK by their email.
+     *
+     * @param string $email
+     * @return AJKs|null
+     */
+    public static function findByEmail($email)
+    {
+        return self::where('email', $email)->first();
+    }
+    
+    /**
+     * Find an AJK by their IIUM ID.
+     *
+     * @param string $iiumId
+     * @return AJKs|null
+     */
+    public static function findByIiumId($iiumId)
+    {
+        return self::where('iium_id', strtoupper($iiumId))->first();
+    }
+    
+    /**
+     * Boot function to handle model events.
+     * 
+     * @return void
+     */
+    protected static function boot()
+    {
+        parent::boot();
+        
+        // Convert IIUM ID to uppercase before saving
+        static::saving(function ($model) {
+            if (isset($model->iium_id)) {
+                $model->iium_id = strtoupper($model->iium_id);
+            }
+        });
+    }
+}
+
+Attendances
+
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
+class Attendances extends Model
+{
+    use HasFactory;
+
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<int, string>
+     */
+    protected $fillable = [
+        'trainee_id',
+        'activity_id',
+        'date',
+        'status',
+        'remarks',
+        'marked_by',
+    ];
+
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array<string, string>
+     */
+    protected $casts = [
+        'date' => 'date',
+    ];
+
+    /**
+     * Get the trainee that owns the attendance record.
+     */
+    public function trainee()
+    {
+        return $this->belongsTo(Trainees::class, 'trainee_id');
+    }
+
+    /**
+     * Get the activity for this attendance record.
+     */
+    public function activity()
+    {
+        return $this->belongsTo(Activities::class, 'activity_id');
+    }
+
+    /**
+     * Get the user who marked this attendance.
+     */
+    public function markedBy()
+    {
+        return $this->belongsTo(Users::class, 'marked_by');
+    }
+
+    /**
+     * Scope a query to only include attendance records for a specific date.
+     */
+    public function scopeForDate($query, $date)
+    {
+        return $query->whereDate('date', $date);
+    }
+
+    /**
+     * Scope a query to only include attendance records for a specific trainee.
+     */
+    public function scopeForTrainee($query, $traineeId)
+    {
+        return $query->where('trainee_id', $traineeId);
+    }
+
+    /**
+     * Scope a query to only include attendance records for a specific activity.
+     */
+    public function scopeForActivity($query, $activityId)
+    {
+        return $query->where('activity_id', $activityId);
+    }
+
+    /**
+     * Get attendance records for a date range.
+     */
+    public static function getForDateRange($startDate, $endDate, $traineeId = null)
+    {
+        $query = self::whereBetween('date', [$startDate, $endDate]);
+        
+        if ($traineeId) {
+            $query->where('trainee_id', $traineeId);
+        }
+        
+        return $query->orderBy('date', 'desc')->get();
+    }
+    
+    /**
+     * Calculate attendance rate for a trainee within a date range.
+     */
+    public static function calculateAttendanceRate($traineeId, $startDate, $endDate)
+    {
+        // Get attendance records in the range
+        $records = self::where('trainee_id', $traineeId)
+            ->whereBetween('date', [$startDate, $endDate])
+            ->get();
+        
+        // Count by status
+        $presentCount = $records->where('status', 'present')->count();
+        $absentCount = $records->where('status', 'absent')->count();
+        $lateCount = $records->where('status', 'late')->count();
+        $excusedCount = $records->where('status', 'excused')->count();
+        
+        $totalCount = $records->count();
+        
+        // Calculate percentage (considering late as half present)
+        if ($totalCount > 0) {
+            $percentage = round((($presentCount + ($lateCount * 0.5)) / $totalCount) * 100, 2);
+        } else {
+            $percentage = 0;
+        }
+        
+        return [
+            'present' => $presentCount,
+            'absent' => $absentCount,
+            'late' => $lateCount,
+            'excused' => $excusedCount,
+            'total' => $totalCount,
+            'percentage' => $percentage
+        ];
+    }
+}
+
+AuditLog
+
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class AuditLog extends Model
+{
+    protected $fillable = [
+        'user_id',
+        'user_role',
+        'action',
+        'table',
+        'record_id',
+        'old_values',
+        'new_values',
+        'ip_address',
+        'user_agent'
+    ];
+    
+    protected $casts = [
+        'old_values' => 'array',
+        'new_values' => 'array',
+    ];
+    
+    /**
+     * Get the user who performed the action.
+     */
+    public function user()
+    {
+        return $this->belongsTo(Users::class, 'user_id');
+    }
+    
+    /**
+     * Get formatted changes as HTML.
+     */
+    public function getFormattedChangesAttribute()
+    {
+        $html = '';
+        
+        if ($this->action === 'create') {
+            $html .= '<strong>Created new ' . rtrim($this->table, 's') . '</strong><br>';
+            foreach ($this->new_values as $key => $value) {
+                $html .= '<span class="text-muted">' . ucfirst(str_replace('_', ' ', $key)) . ':</span> ' . $value . '<br>';
+            }
+        } 
+        else if ($this->action === 'update') {
+            $html .= '<strong>Updated ' . rtrim($this->table, 's') . ' information</strong><br>';
+            foreach ($this->new_values as $key => $value) {
+                $old = $this->old_values[$key] ?? 'empty';
+                $html .= '<span class="text-muted">' . ucfirst(str_replace('_', ' ', $key)) . ':</span> ' . 
+                         '<span class="text-danger">' . $old . '</span> → ' .
+                         '<span class="text-success">' . $value . '</span><br>';
+            }
+        } 
+        else if ($this->action === 'delete') {
+            $html .= '<strong>Deleted ' . rtrim($this->table, 's') . '</strong><br>';
+            $html .= 'User information: <br>';
+            foreach ($this->new_values as $key => $value) {
+                $html .= '<span class="text-muted">' . ucfirst(str_replace('_', ' ', $key)) . ':</span> ' . $value . '<br>';
+            }
+        } 
+        else if ($this->action === 'password_reset') {
+            $html .= '<strong>Password reset</strong><br>';
+        } 
+        else if ($this->action === 'status_change') {
+            $html .= '<strong>Status changed</strong><br>';
+            $newStatus = $this->new_values['status'] ?? '';
+            $oldStatus = $this->old_values['status'] ?? '';
+            $html .= '<span class="text-muted">Status:</span> ' . 
+                     '<span class="text-danger">' . $oldStatus . '</span> → ' .
+                     '<span class="text-success">' . $newStatus . '</span><br>';
+        }
+        
+        return $html;
+    }
+    
+    /**
+     * Get formatted timestamp.
+     */
+    public function getFormattedTimestampAttribute()
+    {
+        return $this->created_at->format('M d, Y H:i:s');
+    }
+}
+
+Centres
+
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
+class Centres extends Model
+{
+    use HasFactory;
+
+    /**
+     * The primary key for the model.
+     *
+     * @var string
+     */
+    protected $primaryKey = 'centre_id';
+
+    /**
+     * The "type" of the primary key.
+     *
+     * @var string
+     */
+    protected $keyType = 'string';
+
+    /**
+     * Indicates if the IDs are auto-incrementing.
+     *
+     * @var bool
+     */
+    public $incrementing = false;
+
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<int, string>
+     */
+    protected $fillable = [
+        'centre_id',
+        'centre_name',
+        'centre_status',
+        'status'
+    ];
+
+    /**
+     * Get the users associated with this centre.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function users()
+    {
+        return $this->hasMany(Users::class, 'centre_id', 'centre_id');
+    }
+
+    /**
+     * Get the trainees associated with this centre.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function trainees()
+    {
+        return $this->hasMany(Trainees::class, 'centre_name', 'centre_name');
+    }
+
+    /**
+     * Get the courses associated with this centre.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function courses()
+    {
+        return $this->hasMany(Courses::class, 'location_id', 'centre_id');
+    }
+
+    /**
+     * Get the assets associated with this centre.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function assets()
+    {
+        return $this->hasMany(Assets::class, 'centre_name', 'centre_name');
+    }
+
+    /**
+     * Scope a query to only include active centres.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeActive($query)
+    {
+        return $query->where('status', 'active')
+                    ->orWhere('centre_status', 'active');
+    }
+
+    /**
+     * Get the status of the centre, prioritizing the 'status' column
+     * but falling back to 'centre_status' for compatibility.
+     *
+     * @return string
+     */
+    public function getStatusAttribute($value)
+    {
+        // If status is set, use it
+        if (!empty($value)) {
+            return $value;
+        }
+        
+        // Otherwise fall back to centre_status
+        return $this->centre_status ?? 'unknown';
+    }
+
+    /**
+     * Get all centres as a key-value array for dropdown lists
+     *
+     * @param bool $activeOnly Whether to include only active centres
+     * @return array
+     */
+    public static function getForDropdown($activeOnly = true)
+    {
+        $query = self::orderBy('centre_name');
+        
+        if ($activeOnly) {
+            $query->active();
+        }
+        
+        return $query->pluck('centre_name', 'centre_id')->toArray();
+    }
+
+    /**
+     * Get the default centre (Gombak)
+     *
+     * @return Centres|null
+     */
+    public static function getDefault()
+    {
+        return self::find('01');
+    }
+}
+
+Classes
+
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
+class Classes extends Model
+{
+    use HasFactory;
+
+    protected $table = 'classes';
+
+    protected $fillable = [
+        'name',
+        'course_id',
+        'teacher_id',
+        'centre_id',
+        'schedule',
+        'location',
+        'description',
+        'start_date',
+        'end_date',
+        'status'
+    ];
+
+    protected $casts = [
+        'schedule' => 'array',
+        'start_date' => 'date',
+        'end_date' => 'date'
+    ];
+
+    /**
+     * Get the course that owns the class
+     */
+    public function course()
+    {
+        return $this->belongsTo(Courses::class);
+    }
+
+    /**
+     * Get the teacher that owns the class
+     */
+    public function teacher()
+    {
+        return $this->belongsTo(Teachers::class, 'teacher_id');
+    }
+
+    /**
+     * Get the centre that owns the class
+     */
+    public function centre()
+    {
+        return $this->belongsTo(Centres::class);
+    }
+
+    /**
+     * Get the trainees for the class
+     */
+    public function trainees()
+    {
+        return $this->belongsToMany(Trainees::class, 'class_trainee');
+    }
+
+    /**
+     * Get the attendance records for the class
+     */
+    public function attendance()
+    {
+        return $this->hasMany(Attendances::class, 'class_id');
+    }
+}
+
+ContactMessages
+
+<?php
+namespace App\Models;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+class ContactMessages extends Model
+{
+use HasFactory;
+/**
+ * The table associated with the model.
+ *
+ * @var string
+ */
+protected $table = 'contact_messages';
+
+/**
+ * The attributes that are mass assignable.
+ *
+ * @var array<int, string>
+ */
+protected $fillable = [
+    // Contact Information
+    'name',
+    'email',    
+    'phone',
+    'organization',
+    
+    // Message Details
+    'reason',
+    'subject',
+    'message',
+    'urgency',
+    'preferred_contact_method',
+    
+    // System fields
+    'status',
+    'ip_address',
+    'user_agent',
+    'referrer',
+    'submitted_at',
+    
+    // Admin fields
+    'assigned_to',
+    'admin_notes',
+    'response_sent_at',
+    'resolved_at',
+];
+
+/**
+ * The attributes that should be cast.
+ *
+ * @var array<string, string>
+ */
+protected $casts = [
+    'submitted_at' => 'datetime',
+    'response_sent_at' => 'datetime',
+    'resolved_at' => 'datetime',
+];
+
+/**
+ * The attributes that should be hidden for serialization.
+ *
+ * @var array<int, string>
+ */
+protected $hidden = [
+    'ip_address',
+    'user_agent',
+    'referrer',
+];
+
+/**
+ * Relationship with the user assigned to handle this message
+ *
+ * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+ */
+public function assignedUser()
+{
+    return $this->belongsTo(Users::class, 'assigned_to');
+}
+
+/**
+ * Scope a query to only include new messages.
+ *
+ * @param  \Illuminate\Database\Eloquent\Builder  $query
+ * @return \Illuminate\Database\Eloquent\Builder
+ */
+public function scopeNew($query)
+{
+    return $query->where('status', 'new');
+}
+
+/**
+ * Scope a query to only include urgent messages.
+ *
+ * @param  \Illuminate\Database\Eloquent\Builder  $query
+ * @return \Illuminate\Database\Eloquent\Builder
+ */
+public function scopeUrgent($query)
+{
+    return $query->where('urgency', 'urgent');
+}
+
+/**
+ * Scope a query to only include resolved messages.
+ *
+ * @param  \Illuminate\Database\Eloquent\Builder  $query
+ * @return \Illuminate\Database\Eloquent\Builder
+ */
+public function scopeResolved($query)
+{
+    return $query->where('status', 'resolved');
+}
+
+/**
+ * Scope a query to filter by reason.
+ *
+ * @param  \Illuminate\Database\Eloquent\Builder  $query
+ * @param  string  $reason
+ * @return \Illuminate\Database\Eloquent\Builder
+ */
+public function scopeByReason($query, $reason)
+{
+    return $query->where('reason', $reason);
+}
+
+/**
+ * Scope a query to filter by urgency.
+ *
+ * @param  \Illuminate\Database\Eloquent\Builder  $query
+ * @param  string  $urgency
+ * @return \Illuminate\Database\Eloquent\Builder
+ */
+public function scopeByUrgency($query, $urgency)
+{
+    return $query->where('urgency', $urgency);
+}
+
+/**
+ * Set the name attribute with proper capitalization.
+ *
+ * @param  string  $value
+ * @return void
+ */
+public function setNameAttribute($value)
+{
+    $this->attributes['name'] = ucwords(strtolower(trim($value)));
+}
+
+/**
+ * Set the email attribute in lowercase.
+ *
+ * @param  string  $value
+ * @return void
+ */
+public function setEmailAttribute($value)
+{
+    $this->attributes['email'] = strtolower(trim($value));
+}
+
+/**
+ * Get the formatted reason attribute.
+ *
+ * @return string
+ */
+public function getFormattedReasonAttribute()
+{
+    $reasonMap = [
+        'services' => 'Rehabilitation Services',
+        'support' => 'Support & Assistance',
+        'volunteer' => 'Volunteer Inquiry',
+        'partnership' => 'Partnership Opportunity',
+        'general' => 'General Inquiry',
+        'admission' => 'Admission Inquiry',
+        'complaint' => 'Complaint',
+        'feedback' => 'Feedback',
+        'other' => 'Other'
+    ];
+
+    return $reasonMap[$this->reason] ?? ucfirst($this->reason);
+}
+
+/**
+ * Get the formatted urgency attribute.
+ *
+ * @return string
+ */
+public function getFormattedUrgencyAttribute()
+{
+    return ucfirst($this->urgency);
+}
+
+/**
+ * Get the status badge color.
+ *
+ * @return string
+ */
+public function getStatusBadgeColorAttribute()
+{
+    $colors = [
+        'new' => 'primary',
+        'read' => 'info',
+        'in_progress' => 'warning',
+        'resolved' => 'success',
+        'closed' => 'secondary'
+    ];
+
+    return $colors[$this->status] ?? 'secondary';
+}
+
+/**
+ * Get the urgency badge color.
+ *
+ * @return string
+ */
+public function getUrgencyBadgeColorAttribute()
+{
+    $colors = [
+        'low' => 'secondary',
+        'medium' => 'info',
+        'high' => 'warning',
+        'urgent' => 'danger'
+    ];
+
+    return $colors[$this->urgency] ?? 'secondary';
+}
+
+/**
+ * Get time since submission.
+ *
+ * @return string
+ */
+public function getTimeSinceSubmissionAttribute()
+{
+    return $this->created_at->diffForHumans();
+}
+
+/**
+ * Check if message is urgent.
+ *
+ * @return bool
+ */
+public function isUrgent()
+{
+    return $this->urgency === 'urgent';
+}
+
+/**
+ * Check if message is overdue for response.
+ *
+ * @return bool
+ */
+public function isOverdue()
+{
+    $hours = $this->isUrgent() ? 24 : 72; // 24 hours for urgent, 72 for others
+    return $this->created_at->diffInHours(now()) > $hours && !in_array($this->status, ['resolved', 'closed']);
+}
+
+/**
+ * Mark as read.
+ *
+ * @return bool
+ */
+public function markAsRead()
+{
+    if ($this->status === 'new') {
+        $this->status = 'read';
+        return $this->save();
+    }
+    return true;
+}
+
+/**
+ * Mark as in progress.
+ *
+ * @return bool
+ */
+public function markAsInProgress()
+{
+    $this->status = 'in_progress';
+    return $this->save();
+}
+
+/**
+ * Mark as resolved.
+ *
+ * @return bool
+ */
+public function markAsResolved()
+{
+    $this->status = 'resolved';
+    $this->resolved_at = now();
+    return $this->save();
+}
+
+/**
+ * Mark response as sent.
+ *
+ * @return bool
+ */
+public function markResponseSent()
+{
+    $this->response_sent_at = now();
+    return $this->save();
+}
+
+/**
+ * Assign to user.
+ *
+ * @param int $userId
+ * @return bool
+ */
+public function assignTo($userId)
+{
+    $this->assigned_to = $userId;
+    if ($this->status === 'new') {
+        $this->status = 'read';
+    }
+    return $this->save();
+}
+}
+
+Courses
+
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
+class Courses extends Model
+{
+    use HasFactory;
+    
+    /**
+     * The primary key for the model.
+     *
+     * @var string
+     */
+    protected $primaryKey = 'course_id';
+    
+    /**
+     * Indicates if the model's ID is auto-incrementing.
+     *
+     * @var bool
+     */
+    public $incrementing = false;
+
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<int, string>
+     */
+    protected $fillable = [
+        'course_id',
+        'course_type',
+        'teacher_id',
+        'participant_id',
+        'course_day',
+        'start_time',
+        'end_time',
+        'location_id',
+    ];
+
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array<string, string>
+     */
+    protected $casts = [
+        'start_time' => 'datetime',
+        'end_time' => 'datetime',
+    ];
+
+    /**
+     * Get the teacher associated with this course.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function teacher()
+    {
+        return $this->belongsTo(Users::class, 'teacher_id');
+    }
+
+    /**
+     * Get the participant (trainee) associated with this course.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function participant()
+    {
+        return $this->belongsTo(Trainees::class, 'participant_id');
+    }
+
+    /**
+     * Get the location (centre) associated with this course.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function location()
+    {
+        return $this->belongsTo(Centres::class, 'location_id');
+    }
+    
+    /**
+     * Get courses by course type.
+     *
+     * @param string $type
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public static function getByType($type)
+    {
+        return self::where('course_type', $type)->get();
+    }
+    
+    /**
+     * Get courses by teacher ID.
+     *
+     * @param string $teacherId
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public static function getByTeacher($teacherId)
+    {
+        return self::where('teacher_id', $teacherId)->get();
+    }
+    
+    /**
+     * Get courses by location (centre) ID.
+     *
+     * @param string $locationId
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public static function getByLocation($locationId)
+    {
+        return self::where('location_id', $locationId)->get();
+    }
+}
+
+Events
+
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
+class Events extends Model
+{
+    use HasFactory;
+
+    protected $fillable = [
+        'title',
+        'date',
+        'start_time',
+        'end_time',
+        'location',
+        'description',
+        'organizer',
+        'contact_person',
+        'contact_email',
+        'contact_phone',
+        'max_participants',
+        'status',
+        'centre_id'
+    ];
+
+    protected $casts = [
+        'date' => 'date',
+        'schedule' => 'array'
+    ];
+
+    /**
+     * Get the centre that owns the event
+     */
+    public function centre()
+    {
+        return $this->belongsTo(Centres::class);
+    }
+
+    /**
+     * Get the participants for the event
+     */
+    public function participants()
+    {
+        return $this->belongsToMany(Users::class, 'event_participants')
+                    ->withPivot('status')
+                    ->withTimestamps();
+    }
+
+    /**
+     * Get the volunteers for the event
+     */
+    public function volunteers()
+    {
+        return $this->belongsToMany(Users::class, 'event_volunteers')
+                    ->withPivot('role', 'status')
+                    ->withTimestamps();
+    }
+}
+
+Messages
+
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
+class Messages extends Model
+{
+    use HasFactory;
+
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<int, string>
+     */
+    protected $fillable = [
+        'sender_id',
+        'sender_type',
+        'recipient_id',
+        'recipient_type',
+        'subject',
+        'content',
+        'read',
+        'read_at',
+    ];
+
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array<string, string>
+     */
+    protected $casts = [
+        'read' => 'boolean',
+        'read_at' => 'datetime',
+    ];
+
+    /**
+     * Get the sender.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\MorphTo
+     */
+    public function sender()
+    {
+        return $this->morphTo('sender', 'sender_type', 'sender_id');
+    }
+
+    /**
+     * Get the recipient.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\MorphTo
+     */
+    public function recipient()
+    {
+        return $this->morphTo('recipient', 'recipient_type', 'recipient_id');
+    }
+
+    /**
+     * Scope a query to only include unread messages.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeUnread($query)
+    {
+        return $query->where('read', false);
+    }
+
+    /**
+     * Mark the message as read.
+     *
+     * @return void
+     */
+    public function markAsRead()
+    {
+        $this->read = true;
+        $this->read_at = now();
+        $this->save();
+    }
+
+    /**
+     * Determine if the message is read.
+     *
+     * @return bool
+     */
+    public function isRead()
+    {
+        return $this->read;
+    }
+
+    /**
+     * Get the sender name.
+     *
+     * @return string
+     */
+    public function getSenderNameAttribute()
+    {
+        switch ($this->sender_type) {
+            case 'admin':
+                $user = Admins::find($this->sender_id);
+                break;
+            case 'supervisor':
+                $user = Supervisors::find($this->sender_id);
+                break;
+            case 'teacher':
+                $user = Teachers::find($this->sender_id);
+                break;
+            case 'ajk':
+                $user = AJKs::find($this->sender_id);
+                break;
+            default:
+                return 'Unknown User';
+        }
+
+        return $user ? $user->name : 'Unknown User';
+    }
+
+    /**
+     * Get the recipient name.
+     *
+     * @return string
+     */
+    public function getRecipientNameAttribute()
+    {
+        switch ($this->recipient_type) {
+            case 'admin':
+                $user = Admins::find($this->recipient_id);
+                break;
+            case 'supervisor':
+                $user = Supervisors::find($this->recipient_id);
+                break;
+            case 'teacher':
+                $user = Teachers::find($this->recipient_id);
+                break;
+            case 'ajk':
+                $user = AJKs::find($this->recipient_id);
+                break;
+            default:
+                return 'Unknown User';
+        }
+
+        return $user ? $user->name : 'Unknown User';
+    }
+}
+
+Notifications
+
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
+class Notifications extends Model
+{
+    use HasFactory;
+
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<int, string>
+     */
+    protected $fillable = [
+        'user_id',
+        'user_type',
+        'type',
+        'title',
+        'content',
+        'data',
+        'read',
+        'read_at',
+    ];
+
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array<string, string>
+     */
+    protected $casts = [
+        'data' => 'array',
+        'read' => 'boolean',
+        'read_at' => 'datetime',
+    ];
+
+    /**
+     * Get the user.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\MorphTo
+     */
+    public function user()
+    {
+        return $this->morphTo('user', 'user_type', 'user_id');
+    }
+
+    /**
+     * Scope a query to only include unread notifications.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeUnread($query)
+    {
+        return $query->where('read', false);
+    }
+
+    /**
+     * Mark the notification as read.
+     *
+     * @return void
+     */
+    public function markAsRead()
+    {
+        $this->read = true;
+        $this->read_at = now();
+        $this->save();
+    }
+
+    /**
+     * Determine if the notification is read.
+     *
+     * @return bool
+     */
+    public function isRead()
+    {
+        return $this->read;
+    }
+
+    /**
+     * Get the user's name.
+     *
+     * @return string
+     */
+    public function getUserNameAttribute()
+    {
+        switch ($this->user_type) {
+            case 'admin':
+                $user = Admins::find($this->user_id);
+                break;
+            case 'supervisor':
+                $user = Supervisors::find($this->user_id);
+                break;
+            case 'teacher':
+                $user = Teachers::find($this->user_id);
+                break;
+            case 'ajk':
+                $user = AJKs::find($this->user_id);
+                break;
+            default:
+                return 'Unknown User';
+        }
+
+        return $user ? $user->name : 'Unknown User';
+    }
+
+    /**
+     * Get the notification icon.
+     *
+     * @return string
+     */
+    public function getIconAttribute()
+    {
+        switch ($this->type) {
+            case 'message':
+                return 'fas fa-envelope';
+            case 'activity':
+                return 'fas fa-calendar-alt';
+            case 'trainee':
+                return 'fas fa-user-graduate';
+            case 'asset':
+                return 'fas fa-boxes';
+            case 'system':
+                return 'fas fa-cog';
+            default:
+                return 'fas fa-bell';
+        }
+    }
+
+    /**
+     * Get the notification color.
+     *
+     * @return string
+     */
+    public function getColorAttribute()
+    {
+        switch ($this->type) {
+            case 'message':
+                return 'primary'; // Blue
+            case 'activity':
+                return 'success'; // Green
+            case 'trainee':
+                return 'info'; // Light blue
+            case 'asset':
+                return 'warning'; // Yellow
+            case 'system':
+                return 'danger'; // Red
+            default:
+                return 'secondary'; // Gray
+        }
+    }
+}
+
+Roles
+
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
+class Roles extends Model
+{
+    use HasFactory;
+
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<int, string>
+     */
+    protected $fillable = [
+        'name',
+        'description',
+        'permissions',
+    ];
+
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array<string, string>
+     */
+    protected $casts = [
+        'permissions' => 'array',
+    ];
+
+    /**
+     * Get the users that belong to this role.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function users()
+    {
+        return $this->hasMany(Users::class);
+    }
+    
+    /**
+     * Find a role by name.
+     *
+     * @param string $name
+     * @return Roles|null
+     */
+    public static function findByName($name)
+    {
+        return self::where('name', $name)->first();
+    }
+    
+    /**
+     * Check if a role with the given name exists.
+     *
+     * @param string $name
+     * @return bool
+     */
+    public static function nameExists($name)
+    {
+        return self::where('name', $name)->exists();
+    }
+}
+
+SessionEntrollments
+
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+
+class SessionEnrollments extends Model
+{
+    use HasFactory;
+
+    protected $fillable = [
+        'session_id',
+        'trainee_id',
+        'enrollment_date',
+        'status',
+        'notes',
+        'enrolled_by'
+    ];
+
+    protected $casts = [
+        'enrollment_date' => 'date'
+    ];
+
+    // Relationships
+    public function session()
+    {
+        return $this->belongsTo(ActivitySessions::class, 'session_id');
+    }
+
+    public function trainee()
+    {
+        return $this->belongsTo(Trainees::class, 'trainee_id');
+    }
+
+    public function enrolledBy()
+    {
+        return $this->belongsTo(Users::class, 'enrolled_by');
+    }
+
+    public function attendance()
+    {
+        return $this->hasMany(ActivityAttendances::class, 'trainee_id', 'trainee_id')
+            ->where('session_id', $this->session_id);
+    }
+
+    // Scopes
+    public function scopeActive($query)
+    {
+        return $query->where('status', 'Active');
+    }
+
+    // Methods
+    public function getAttendanceRate()
+    {
+        $totalClasses = $this->attendance()->count();
+        if ($totalClasses == 0) return 0;
+
+        $presentCount = $this->attendance()
+            ->whereIn('status', ['Present', 'Late'])
+            ->count();
+
+        return round(($presentCount / $totalClasses) * 100, 2);
+    }
+}
+
+Supervisors
+
+<?php
+
+namespace App\Models;
+
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Traits\AuthenticationTrait;
+use Illuminate\Support\Facades\Log;
+
+class Supervisors extends Authenticatable
+{
+    use Notifiable, HasFactory, AuthenticationTrait;
+
+    /**
+     * The primary key for the model.
+     *
+     * @var string
+     */
+    protected $primaryKey = 'id';
+    
+    /**
+     * The "type" of the primary key ID.
+     *
+     * @var string
+     */
+    protected $keyType = 'int';
+    
+    /**
+     * Indicates if the IDs are auto-incrementing.
+     *
+     * @var bool
+     */
+    public $incrementing = true;
+
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<int, string>
+     */
+    protected $fillable = [
+        'iium_id',
+        'name', 
+        'email', 
+        'password',
+        'phone',
+        'address',
+        'position',
+        'centre_id',
+        'avatar',
+        'bio',
+        'user_last_accessed_at',
+        'status'
+    ];
+
+    /**
+     * The attributes that should be hidden for serialization.
+     *
+     * @var array<int, string>
+     */
+    protected $hidden = [
+        'password', 
+        'remember_token',
+    ];
+
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array<string, string>
+     */
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+        'password' => 'hashed',
+    ];
+
+    /**
+     * Direct role getter method as fallback if trait is not working
+     * 
+     * @return string
+     */
+    public function getRole()
+    {
+        Log::debug('Direct getRole method called on Supervisors model');
+        return 'supervisor';
+    }
+
+    /**
+     * Get the activities associated with this supervisor.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function activities()
+    {
+        return $this->hasMany(Activities::class);
+    }
+
+    /**
+     * Get the trainees managed by this supervisor.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function trainees()
+    {
+        return $this->hasMany(Trainees::class);
+    }
+
+    /**
+     * Get the assets managed by this supervisor.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function assets()
+    {
+        return $this->hasMany(Assets::class);
+    }
+    
+    /**
+     * Get the centre this supervisor belongs to.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function centre()
+    {
+        return $this->belongsTo(Centres::class, 'centre_id');
+    }
+    
+    /**
+     * Get the centres managed by this supervisor.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function centres()
+    {
+        return $this->hasMany(Centres::class, 'supervisor_id');
+    }
+    
+    /**
+     * Find a supervisor by their email.
+     *
+     * @param string $email
+     * @return Supervisors|null
+     */
+    public static function findByEmail($email)
+    {
+        return self::where('email', $email)->first();
+    }
+    
+    /**
+     * Find a supervisor by their IIUM ID.
+     *
+     * @param string $iiumId
+     * @return Supervisors|null
+     */
+    public static function findByIiumId($iiumId)
+    {
+        return self::where('iium_id', strtoupper($iiumId))->first();
+    }
+    
+    /**
+     * Boot function to handle model events.
+     * 
+     * @return void
+     */
+    protected static function boot()
+    {
+        parent::boot();
+        
+        // Convert IIUM ID to uppercase before saving
+        static::saving(function ($model) {
+            if (isset($model->iium_id)) {
+                $model->iium_id = strtoupper($model->iium_id);
+            }
+        });
+    }
+}
+
+Teachers
+
+<?php
+
+namespace App\Models;
+
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Traits\AuthenticationTrait;
+use Illuminate\Support\Facades\Log;
+
+class Teachers extends Authenticatable
+{
+    use Notifiable, HasFactory, AuthenticationTrait;
+
+    /**
+     * The primary key for the model.
+     *
+     * @var string
+     */
+    protected $primaryKey = 'id';
+    
+    /**
+     * The "type" of the primary key ID.
+     *
+     * @var string
+     */
+    protected $keyType = 'int';
+    
+    /**
+     * Indicates if the IDs are auto-incrementing.
+     *
+     * @var bool
+     */
+    public $incrementing = true;
+
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<int, string>
+     */
+    protected $fillable = [
+        'iium_id',
+        'name', 
+        'email', 
+        'password',
+        'phone',
+        'address',
+        'position',
+        'centre_id',
+        'avatar',
+        'bio',
+        'user_last_accessed_at',
+        'status'
+    ];
+
+    /**
+     * The attributes that should be hidden for serialization.
+     *
+     * @var array<int, string>
+     */
+    protected $hidden = [
+        'password', 
+        'remember_token',
+    ];
+
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array<string, string>
+     */
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+        'password' => 'hashed',
+    ];
+
+    /**
+     * Direct role getter method as fallback if trait is not working
+     * 
+     * @return string
+     */
+    public function getRole()
+    {
+        Log::debug('Direct getRole method called on Teachers model');
+        return 'teacher';
+    }
+
+    /**
+     * Get the activities associated with this teacher.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function activities()
+    {
+        return $this->hasMany(Activities::class);
+    }
+
+    /**
+     * Get the trainees managed by this teacher.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function trainees()
+    {
+        return $this->hasMany(Trainees::class);
+    }
+
+    /**
+     * Get the assets managed by this teacher.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function assets()
+    {
+        return $this->hasMany(Assets::class);
+    }
+    
+    /**
+     * Get the centre this teacher belongs to.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function centre()
+    {
+        return $this->belongsTo(Centres::class, 'centre_id');
+    }
+    
+    /**
+     * Find a teacher by their email.
+     *
+     * @param string $email
+     * @return Teachers|null
+     */
+    public static function findByEmail($email)
+    {
+        return self::where('email', $email)->first();
+    }
+    
+    /**
+     * Find a teacher by their IIUM ID.
+     *
+     * @param string $iiumId
+     * @return Teachers|null
+     */
+    public static function findByIiumId($iiumId)
+    {
+        return self::where('iium_id', strtoupper($iiumId))->first();
+    }
+    
+    /**
+     * Boot function to handle model events.
+     * 
+     * @return void
+     */
+    protected static function boot()
+    {
+        parent::boot();
+        
+        // Convert IIUM ID to uppercase before saving
+        static::saving(function ($model) {
+            if (isset($model->iium_id)) {
+                $model->iium_id = strtoupper($model->iium_id);
+            }
+        });
+    }
+}
+
+Trainees
+
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Carbon;
+
+class Trainees extends Model
+{
+    use HasFactory;
+
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<int, string>
+     */
+    protected $fillable = [
+        'trainee_first_name',
+        'trainee_last_name',
+        'trainee_email',
+        'trainee_phone_number',
+        'trainee_date_of_birth',
+        'trainee_last_accessed_at',
+        'centre_name',
+        'avatar',                 // Standard avatar field
+        'trainee_attendance',
+        'trainee_condition',
+        'course_id',
+    ];
+
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array<string, string>
+     */
+    protected $casts = [
+        'trainee_date_of_birth' => 'date',
+        'trainee_last_accessed_at' => 'datetime',
+        'trainee_attendance' => 'integer',
+    ];
+
+    /**
+     * Get the trainee's full name.
+     *
+     * @return string
+     */
+    public function getFullNameAttribute()
+    {
+        return "{$this->trainee_first_name} {$this->trainee_last_name}";
+    }
+
+    /**
+     * Get the trainee's age.
+     *
+     * @return int|null
+     */
+    public function getAgeAttribute()
+    {
+        if ($this->trainee_date_of_birth) {
+            return Carbon::parse($this->trainee_date_of_birth)->age;
+        }
+        
+        return null;
+    }
+
+    /**
+     * Get the avatar URL for the trainee.
+     *
+     * @return string
+     */
+    public function getAvatarUrlAttribute()
+    {
+        if ($this->avatar) {
+            return asset('storage/avatars/' . $this->avatar);
+        }
+        
+        // Return default avatar based on gender if available
+        if (isset($this->trainee_gender) && $this->trainee_gender == 'female') {
+            return asset('images/default-female-avatar.png');
+        }
+        
+        return asset('images/default-avatar.png');
+    }
+
+    /**
+     * Get the badge class for the trainee's condition.
+     *
+     * @return string
+     */
+    public function getConditionBadgeClassAttribute()
+    {
+        // Map conditions to Bootstrap badge classes
+        $conditionMap = [
+            'Autism Spectrum Disorder' => 'info',
+            'Down Syndrome' => 'primary',
+            'Cerebral Palsy' => 'warning',
+            'Hearing Impairment' => 'secondary',
+            'Visual Impairment' => 'secondary',
+            'Intellectual Disability' => 'danger',
+            'Physical Disability' => 'dark',
+            'Speech and Language Disorder' => 'light',
+            'Learning Disability' => 'success',
+            'Multiple Disabilities' => 'danger',
+            'Others' => 'secondary'
+        ];
+        
+        // Return the mapped badge class or default to secondary
+        return $conditionMap[$this->trainee_condition] ?? 'secondary';
+    }
+
+    /**
+     * Get the profile associated with the trainee.
+     */
+    public function profile()
+    {
+        return $this->hasOne(TraineeProfile::class, 'trainee_id');
+    }
+
+    /**
+     * Get the activities associated with the trainee.
+     */
+    public function activities()
+    {
+        return $this->hasMany(TraineeActivities::class, 'trainee_id');
+    }
+
+    /**
+     * Get the attendance records associated with the trainee.
+     */
+    public function attendances()
+    {
+        return $this->hasMany(Attendance::class, 'trainee_id');
+    }
+
+    /**
+     * Get the course that the trainee is enrolled in.
+     */
+    public function course()
+    {
+        return $this->belongsTo(Courses::class, 'course_id');
+    }
+
+    /**
+     * Get the centre that the trainee belongs to.
+     */
+    public function centre()
+    {
+        return $this->belongsTo(Centres::class, 'centre_name', 'centre_name');
+    }
+
+    /**
+     * Get the classes that the trainee is enrolled in.
+     */
+    public function classes()
+    {
+        return $this->belongsToMany(Classes::class, 'class_trainee', 'trainee_id', 'class_id')
+                    ->withTimestamps();
+    }
+
+    /**
+     * Scope a query to only include active trainees.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeActive($query)
+    {
+        return $query->where('status', 'active');
+    }
+
+    /**
+     * Scope a query to only include trainees of a specific centre.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  string  $centreName
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeByCentre($query, $centreName)
+    {
+        return $query->where('centre_name', $centreName);
+    }
+
+    /**
+     * Scope a query to only include trainees of a specific course.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  string  $courseId
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeByCourse($query, $courseId)
+    {
+        return $query->where('course_id', $courseId);
+    }
+
+    /**
+     * Scope a query to only include trainees with a specific condition.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  string  $condition
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeByCondition($query, $condition)
+    {
+        return $query->where('trainee_condition', $condition);
+    }
+}
+
+Users
+
+<?php
+
+namespace App\Models;
+
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Support\Facades\Log;
+
+class Users extends Authenticatable
+{
+    use Notifiable, HasFactory;
+
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<int, string>
+     */
+    protected $fillable = [
+        'iium_id',
+        'name', 
+        'email', 
+        'password',
+        'status',
+        'role',
+        'phone',
+        'address',
+        'position',
+        'centre_id',
+        'centre_location',
+        'avatar',
+        'user_activity_1',
+        'user_activity_2',
+        'user_last_accessed_at',
+        'about',
+        'review',
+        'date_of_birth',
+    ];
+
+    /**
+     * The attributes that should be hidden for serialization.
+     *
+     * @var array<int, string>
+     */
+    protected $hidden = [
+        'password', 
+        'remember_token',
+    ];
+
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array<string, string>
+     */
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+        'password' => 'hashed',
+        'user_last_accessed_at' => 'datetime',
+        'date_of_birth' => 'date',
+    ];
+
+    /**
+     * Get the avatar URL for the user.
+     *
+     * @return string
+     */
+    public function getAvatarUrlAttribute()
+    {
+        if ($this->avatar) {
+            return asset('storage/avatars/' . $this->avatar);
+        }
+        
+        // Return default avatar if none is set
+        return asset('images/default-avatar.png');
+    }
+
+    /**
+     * Get role
+     * 
+     * @return string
+     */
+    public function getRole()
+    {
+        Log::debug('getRole method called on User model');
+        return $this->role;
+    }
+
+    /**
+     * Check if the user has a specific role.
+     *
+     * @param string $roleName
+     * @return bool
+     */
+    public function hasRole($roleName)
+    {
+        return $this->role === $roleName;
+    }
+
+    /**
+     * Check if the user is an admin.
+     *
+     * @return bool
+     */
+    public function isAdmin()
+    {
+        return $this->role === 'admin';
+    }
+
+    /**
+     * Check if the user is a supervisor.
+     *
+     * @return bool
+     */
+    public function isSupervisor()
+    {
+        return $this->role === 'supervisor';
+    }
+
+    /**
+     * Check if the user is a teacher.
+     *
+     * @return bool
+     */
+    public function isTeacher()
+    {
+        return $this->role === 'teacher';
+    }
+
+    /**
+     * Check if the user is an AJK.
+     *
+     * @return bool
+     */
+    public function isAJK()
+    {
+        return $this->role === 'ajk';
+    }
+    
+    /**
+     * Get the activities associated with this user.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function activities()
+    {
+        return $this->hasMany(Activities::class);
+    }
+
+    /**
+     * Get the trainees managed by this user.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function trainees()
+    {
+        return $this->hasMany(Trainees::class);
+    }
+
+    /**
+     * Get the assets managed by this user.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function assets()
+    {
+        return $this->hasMany(Assets::class);
+    }
+    
+    /**
+     * Get the centre this user belongs to.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function centre()
+    {
+        return $this->belongsTo(Centres::class, 'centre_id');
+    }
+    
+    /**
+     * Get the centres managed by this admin/supervisor.
+     * 
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function centres()
+    {
+        if ($this->isAdmin()) {
+            return $this->hasMany(Centres::class, 'admin_id');
+        } elseif ($this->isSupervisor()) {
+            return $this->hasMany(Centres::class, 'supervisor_id');
+        }
+        
+        return $this->hasMany(Centres::class, 'user_id');
+    }
+    
+    /**
+     * Get the classes taught by this teacher.
+     * 
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function classes()
+    {
+        if ($this->isTeacher()) {
+            return $this->hasMany(Classes::class, 'teacher_id');
+        }
+        
+        return null;
+    }
+    
+    /**
+     * Get the courses associated with this user.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function courses()
+    {
+        return $this->hasMany(Courses::class, 'teacher_id');
+    }
+    
+    /**
+     * Get the events organized by this user.
+     * 
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function events()
+    {
+        if ($this->isAJK()) {
+            return $this->hasMany(Events::class, 'organizer_id');
+        }
+        
+        return null;
+    }
+    
+    /**
+     * Get the user's notifications.
+     * 
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function notifications()
+    {
+        return $this->hasMany(Notifications::class, 'user_id');
+    }
+    
+    /**
+     * Find a user by their email.
+     *
+     * @param string $email
+     * @return Users|null
+     */
+    public static function findByEmail($email)
+    {
+        return self::where('email', $email)->first();
+    }
+    
+    /**
+     * Find a user by their IIUM ID.
+     *
+     * @param string $iiumId
+     * @return Users|null
+     */
+    public static function findByIiumId($iiumId)
+    {
+        return self::where('iium_id', strtoupper($iiumId))->first();
+    }
+    
+    /**
+     * Find active users by role.
+     * 
+     * @param string $role
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public static function findByRole($role)
+    {
+        return self::where('role', $role)
+            ->where('status', 'active')
+            ->get();
+    }
+    
+    /**
+     * Update last login time.
+     * 
+     * @return void
+     */
+    public function updateLastLogin()
+    {
+        $this->user_last_accessed_at = now();
+        $this->save();
+    }
+    
+    /**
+     * Boot function to handle model events.
+     * 
+     * @return void
+     */
+    protected static function boot()
+    {
+        parent::boot();
+        
+        // Convert IIUM ID to uppercase before saving
+        static::saving(function ($model) {
+            if (isset($model->iium_id)) {
+                $model->iium_id = strtoupper($model->iium_id);
+            }
+        });
+        
+        // Log when a user is created
+        static::created(function ($model) {
+            Log::info('User created', [
+                'id' => $model->id,
+                'iium_id' => $model->iium_id,
+                'role' => $model->role
+            ]);
+        });
+        
+        // Log when a user is updated
+        static::updated(function ($model) {
+            Log::info('User updated', [
+                'id' => $model->id,
+                'iium_id' => $model->iium_id,
+                'role' => $model->role
+            ]);
+        });
+    }
+}
