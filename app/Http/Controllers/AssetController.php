@@ -45,7 +45,7 @@ class AssetController extends Controller
                 'available' => Asset::where('status', 'available')->count(),
                 'in_use' => Asset::where('status', 'in-use')->count(),
                 'maintenance' => Asset::where('status', 'maintenance')->count(),
-                'total_value' => Asset::sum('current_value')
+                'total_value' => 0 // Asset values not available in current table structure
             ];
 
             $centres = Centres::all();
@@ -99,7 +99,6 @@ class AssetController extends Controller
             'serial_number' => 'nullable|string|max:100|unique:assets',
             'purchase_date' => 'nullable|date',
             'purchase_price' => 'nullable|numeric|min:0',
-            'current_value' => 'nullable|numeric|min:0',
             'warranty_date' => 'nullable|date|after:purchase_date',
             'status' => 'required|in:available,in-use,maintenance,retired,disposed'
         ]);
@@ -117,7 +116,6 @@ class AssetController extends Controller
                 'serial_number' => $validated['serial_number'],
                 'purchase_date' => $validated['purchase_date'],
                 'purchase_price' => $validated['purchase_price'],
-                'current_value' => $validated['current_value'] ?? $validated['purchase_price'],
                 'warranty_date' => $validated['warranty_date'],
                 'status' => $validated['status']
             ]);
@@ -210,8 +208,7 @@ class AssetController extends Controller
                 'serial_number' => 'nullable|string|max:100|unique:assets,serial_number,' . $id,
                 'purchase_date' => 'nullable|date',
                 'purchase_price' => 'nullable|numeric|min:0',
-                'current_value' => 'nullable|numeric|min:0',
-                'warranty_date' => 'nullable|date',
+                    'warranty_date' => 'nullable|date',
                 'status' => 'required|in:available,in-use,maintenance,retired,disposed'
             ]);
 
@@ -225,7 +222,6 @@ class AssetController extends Controller
                 'serial_number' => $validated['serial_number'],
                 'purchase_date' => $validated['purchase_date'],
                 'purchase_price' => $validated['purchase_price'],
-                'current_value' => $validated['current_value'],
                 'warranty_date' => $validated['warranty_date'],
                 'status' => $validated['status']
             ]);

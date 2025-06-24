@@ -233,7 +233,7 @@ class AssetType extends Model
         return [
             'total_assets' => $this->assets()->count(),
             'active_assets' => $this->assets()->where('status', '!=', 'retired')->count(),
-            'total_value' => $this->assets()->sum('current_value'),
+            'total_value' => 0, // current_value column not available
             'average_age' => $this->assets()->whereNotNull('purchase_date')->get()->avg(function ($asset) {
                 return $asset->age_in_days;
             }),

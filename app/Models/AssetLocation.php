@@ -451,7 +451,7 @@ class AssetLocation extends Model
         
         return [
             'total_assets' => $assets->count(),
-            'asset_value' => $assets->sum('current_value'),
+            'asset_value' => 0, // current_value column not available
             'available_capacity' => $this->available_capacity,
             'utilization_percentage' => $this->utilization_percentage,
             'asset_types' => $assets->groupBy('asset_type_id')->count(),

@@ -85,7 +85,7 @@ class AdminDashboardService extends BaseDashboardService
                 'total_centres' => Centres::count(),
                 'active_centres' => Centres::where('status', 'active')->count(),
                 'total_assets' => Asset::count(),
-                'asset_value' => Asset::sum('current_value') ?? 0,
+                'asset_value' => 0, // Asset values not available in current table structure
             ];
 
             // Add admin-specific stats
@@ -140,7 +140,7 @@ class AdminDashboardService extends BaseDashboardService
                     'total_centres' => Centres::count(),
                     'active_centres' => Centres::where('status', 'active')->count(),
                     'total_assets' => Asset::count(),
-                    'asset_value' => Asset::sum('current_value') ?? 0,
+                    'asset_value' => 0, // Asset values not available in current table structure
                     'active_today' => 0,
                     'active_week' => 0,
                     'fellow_teachers' => Users::where('role', 'teacher')->count(),

@@ -24,7 +24,13 @@ class TraineeRegistrationController extends Controller
     {
         try {
             // Get centres for dropdown - only retrieve centre_name
-            $centres = Centres::where('centre_status', 'active')->get();
+            // Get centres with safe query
+            try {
+                $centres = Centres::where('status', 'active')->get();
+            } catch (\Exception $e) {
+                // If status column doesn't exist, get all centres
+                $centres = Centres::all();
+            }
             
             // Get conditions for dropdown (could be from a separate model/table in the future)
             $conditions = [

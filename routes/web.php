@@ -112,12 +112,11 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     
     // Profile management
-    Route::prefix('profile')->name('profile.')->group(function () {
-        Route::get('/', [UserProfileController::class, 'showProfile'])->name('show');
-        Route::post('/update', [UserProfileController::class, 'updateProfile'])->name('update');
-        Route::post('/change-password', [UserProfileController::class, 'changePassword'])->name('password');
-        Route::post('/upload-avatar', [UserProfileController::class, 'uploadAvatar'])->name('avatar');
-    });
+    // Profile management routes
+    Route::get('/profile', [UserProfileController::class, 'showProfile'])->name('profile');
+    Route::post('/profile/update', [UserProfileController::class, 'updateProfile'])->name('profile.update');
+    Route::post('/profile/change-password', [UserProfileController::class, 'changePassword'])->name('profile.password');
+    Route::post('/profile/upload-avatar', [UserProfileController::class, 'uploadAvatar'])->name('profile.avatar');
 
     // Activity Management
     Route::prefix('activities')->name('activities.')->group(function () {
@@ -152,6 +151,8 @@ Route::middleware(['auth'])->group(function () {
 
     // Teachers/Staff Directory
     Route::get('/teachershome', [TeachersHomeController::class, 'index'])->name('teachershome');
+    Route::get('/updateuser/{id}', [TeachersHomeController::class, 'updateuserpage'])->name('updateuser');
+    Route::post('/updateuser/{id}', [TeachersHomeController::class, 'updateuser'])->name('updateuser.post');
 
     // Centres
     Route::prefix('centres')->name('centres.')->group(function () {
@@ -294,6 +295,50 @@ Route::middleware(['auth'])->prefix('api')->name('api.')->group(function () {
     Route::get('/activities/categories', [ActivityController::class, 'getCategories'])->name('activities.categories');
     Route::get('/assets', [AssetController::class, 'getAssetsJson'])->name('assets');
 });
+
+/*
+|--------------------------------------------------------------------------
+| DEBUG ROUTE - Remove in production
+|--------------------------------------------------------------------------
+*/
+
+Route::get('/debug/database', function () {
+    try {
+        $tables = ['users', 'trainees', 'activities', 'centres', 'assets', 'events'];
+        $results = [];
+        
+        foreach($tables as $table) {
+            if (Schema::hasTable($table)) {
+                $results[$table] = [
+                    'columns' => Schema::getColumnListing($table),
+                    'record_count' => DB::table($table)->count()
+                ];
+            } else {
+                $results[$table] = 'TABLE NOT FOUND';
+            }
+        }
+        
+        return response()->json($results, 200, [], JSON_PRETTY_PRINT);
+    } catch (Exception $e) {
+        return response()->json(['error' => $e->getMessage()], 500);
+    }
+})->name('debug.database');
+
+/*
+|--------------------------------------------------------------------------
+| SEARCH ROUTE
+|--------------------------------------------------------------------------
+*/
+
+Route::get('/search', function () {
+    // Redirect to appropriate dashboard based on role
+    if (session('id') && session('role')) {
+        $role = session('role');
+        return redirect()->route("{$role}.dashboard")
+            ->with('info', 'Search functionality is coming soon.');
+    }
+    return redirect()->route('home');
+})->name('search');
 
 /*
 |--------------------------------------------------------------------------

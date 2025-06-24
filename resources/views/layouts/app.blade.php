@@ -921,7 +921,7 @@
         <div class="topbar-spacer"></div>
         
         <div class="search-container d-none d-md-block">
-            <form id="searchForm" action="{{ route('search') }}" method="GET">
+            <form id="searchForm" action="{{ Route::has('search') ? route('search') : '#' }}" method="GET">
                 <div class="search-box">
                     <input type="text" name="query" id="globalSearch" placeholder="Search..." class="form-control">
                     <button type="submit" class="btn-search">
@@ -938,7 +938,7 @@
             </div>
             
             <div class="mobile-search">
-                <form action="{{ route('search') }}" method="GET" class="mb-0">
+                <form action="{{ Route::has('search') ? route('search') : '#' }}" method="GET" class="mb-0">
                     <div class="input-group">
                         <input type="text" name="query" class="form-control" placeholder="Search...">
                         <div class="input-group-append">
@@ -999,14 +999,33 @@
                         </div>
                     </div>
                     <div class="dropdown-divider"></div>
-                    <a href="{{ route('profile') }}" class="dropdown-item">
-                        <i class="fas fa-user-circle"></i> My Profile
-                    </a>
-                    <a href="{{ route('notifications.index') }}" class="dropdown-item">
-                        <i class="fas fa-bell"></i> Notifications
-                    </a>
-                    <a href="{{ route(session('role') . '.settings') }}" class="dropdown-item">
-                        <i class="fas fa-cog"></i> Settings
+                    @if(Route::has('profile'))
+                        <a href="{{ route('profile') }}" class="dropdown-item">
+                            <i class="fas fa-user-circle"></i> My Profile
+                        </a>
+                    @else
+                        <a href="#" class="dropdown-item" onclick="alert('Profile feature coming soon')">
+                            <i class="fas fa-user-circle"></i> My Profile
+                        </a>
+                    @endif
+                    @if(Route::has('notifications.index'))
+                        <a href="{{ route('notifications.index') }}" class="dropdown-item">
+                            <i class="fas fa-bell"></i> Notifications
+                        </a>
+                    @else
+                        <a href="#" class="dropdown-item" onclick="alert('Notifications feature coming soon')">
+                            <i class="fas fa-bell"></i> Notifications
+                        </a>
+                    @endif
+                    @if(Route::has(session('role') . '.settings'))
+                        <a href="{{ route(session('role') . '.settings') }}" class="dropdown-item">
+                            <i class="fas fa-cog"></i> Settings
+                        </a>
+                    @else
+                        <a href="#" class="dropdown-item" onclick="alert('Settings feature coming soon')">
+                            <i class="fas fa-cog"></i> Settings
+                        </a>
+                    @endif
                     </a>
                     <div class="dropdown-divider"></div>
                     <a href="{{ route('logout') }}" class="dropdown-item text-danger">
@@ -1028,10 +1047,17 @@
             </li>
 
             <li class="sidebar-item">
-                <a href="{{ route('profile') }}" class="sidebar-link {{ Route::currentRouteName() == 'profile' ? 'active' : '' }}">
-                    <span class="sidebar-icon"><i class="fas fa-user-circle"></i></span>
-                    <span class="sidebar-text">My Profile</span>
-                </a>
+                @if(Route::has('profile'))
+                    <a href="{{ route('profile') }}" class="sidebar-link {{ Route::currentRouteName() == 'profile' ? 'active' : '' }}">
+                        <span class="sidebar-icon"><i class="fas fa-user-circle"></i></span>
+                        <span class="sidebar-text">My Profile</span>
+                    </a>
+                @else
+                    <a href="#" class="sidebar-link" onclick="alert('Profile feature coming soon')">
+                        <span class="sidebar-icon"><i class="fas fa-user-circle"></i></span>
+                        <span class="sidebar-text">My Profile</span>
+                    </a>
+                @endif
             </li>
 
             <li class="sidebar-divider"></li>
@@ -1047,14 +1073,26 @@
                 </a>
                 <ul class="sidebar-submenu">
                     <li>
-                        <a href="{{ route(session('role') . '.users') }}" class="sidebar-submenu-link {{ Route::currentRouteName() == session('role') . '.users' ? 'active' : '' }}">
-                            Home
-                        </a>
+                        @if(Route::has(session('role') . '.users'))
+                            <a href="{{ route(session('role') . '.users') }}" class="sidebar-submenu-link {{ Route::currentRouteName() == session('role') . '.users' ? 'active' : '' }}">
+                                Home
+                            </a>
+                        @else
+                            <a href="#" class="sidebar-submenu-link" onclick="alert('Users feature coming soon')">
+                                Home
+                            </a>
+                        @endif
                     </li>
                     <li>
-                        <a href="{{ route('auth.registerpage') }}" class="sidebar-submenu-link {{ Route::currentRouteName() == 'auth.registerpage' ? 'active' : '' }}">
-                            Registration
-                        </a>
+                        @if(Route::has('auth.registerpage'))
+                            <a href="{{ route('auth.registerpage') }}" class="sidebar-submenu-link {{ Route::currentRouteName() == 'auth.registerpage' ? 'active' : '' }}">
+                                Registration
+                            </a>
+                        @else
+                            <a href="#" class="sidebar-submenu-link" onclick="alert('Registration feature coming soon')">
+                                Registration
+                            </a>
+                        @endif
                     </li>
                 </ul>
             </li>
@@ -1108,14 +1146,26 @@
                 </a>
                 <ul class="sidebar-submenu">
                     <li>
-                        <a href="{{ route(session('role') . '.centres') }}" class="sidebar-submenu-link {{ Route::currentRouteName() == session('role') . '.centres' ? 'active' : '' }}">
-                            Home
-                        </a>
+                        @if(Route::has(session('role') . '.centres'))
+                            <a href="{{ route(session('role') . '.centres') }}" class="sidebar-submenu-link {{ Route::currentRouteName() == session('role') . '.centres' ? 'active' : '' }}">
+                                Home
+                            </a>
+                        @else
+                            <a href="#" class="sidebar-submenu-link" onclick="alert('Centres feature coming soon')">
+                                Home
+                            </a>
+                        @endif
                     </li>
                     <li>
-                        <a href="{{ route(session('role') . '.assets') }}" class="sidebar-submenu-link {{ Route::currentRouteName() == session('role') . '.assets' ? 'active' : '' }}">
-                            Assets
-                        </a>
+                        @if(Route::has(session('role') . '.assets'))
+                            <a href="{{ route(session('role') . '.assets') }}" class="sidebar-submenu-link {{ Route::currentRouteName() == session('role') . '.assets' ? 'active' : '' }}">
+                                Assets
+                            </a>
+                        @else
+                            <a href="#" class="sidebar-submenu-link" onclick="alert('Assets feature coming soon')">
+                                Assets
+                            </a>
+                        @endif
                     </li>
                 </ul>
             </li>
@@ -1125,18 +1175,33 @@
             <li class="sidebar-title">Reports & Settings</li>
 
             <li class="sidebar-item">
-                <a href="{{ route(session('role') . '.reports') }}" class="sidebar-link {{ Route::currentRouteName() == session('role') . '.reports' ? 'active' : '' }}">
-                    <span class="sidebar-icon"><i class="fas fa-chart-bar"></i></span>
-                    <span class="sidebar-text">Reports</span>
-                    <span class="feature-badge">Development</span>
-                </a>
+                @if(Route::has(session('role') . '.reports'))
+                    <a href="{{ route(session('role') . '.reports') }}" class="sidebar-link {{ Route::currentRouteName() == session('role') . '.reports' ? 'active' : '' }}">
+                        <span class="sidebar-icon"><i class="fas fa-chart-bar"></i></span>
+                        <span class="sidebar-text">Reports</span>
+                        <span class="feature-badge">Development</span>
+                    </a>
+                @else
+                    <a href="#" class="sidebar-link" onclick="alert('Reports feature coming soon')">
+                        <span class="sidebar-icon"><i class="fas fa-chart-bar"></i></span>
+                        <span class="sidebar-text">Reports</span>
+                        <span class="feature-badge">Development</span>
+                    </a>
+                @endif
             </li>
 
             <li class="sidebar-item">
-                <a href="{{ route(session('role') . '.settings') }}" class="sidebar-link {{ Route::currentRouteName() == session('role') . '.settings' ? 'active' : '' }}">
-                    <span class="sidebar-icon"><i class="fas fa-cog"></i></span>
-                    <span class="sidebar-text">Settings</span>
-                </a>
+                @if(Route::has(session('role') . '.settings'))
+                    <a href="{{ route(session('role') . '.settings') }}" class="sidebar-link {{ Route::currentRouteName() == session('role') . '.settings' ? 'active' : '' }}">
+                        <span class="sidebar-icon"><i class="fas fa-cog"></i></span>
+                        <span class="sidebar-text">Settings</span>
+                    </a>
+                @else
+                    <a href="#" class="sidebar-link" onclick="alert('Settings feature coming soon')">
+                        <span class="sidebar-icon"><i class="fas fa-cog"></i></span>
+                        <span class="sidebar-text">Settings</span>
+                    </a>
+                @endif
             </li>
         </ul>
     </div>

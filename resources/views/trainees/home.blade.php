@@ -145,9 +145,15 @@
                                 <i class="fas fa-user"></i> My Profile
                             </a>
                             @if(isset($user['role']) && $user['role'] == 'admin')
-                                <a href="{{ route('admin.settings') }}">
-                                    <i class="fas fa-cog"></i> Settings
-                                </a>
+                                @if(Route::has('admin.settings'))
+                                    <a href="{{ route('admin.settings') }}">
+                                        <i class="fas fa-cog"></i> Settings
+                                    </a>
+                                @else
+                                    <a href="#" onclick="alert('Settings feature coming soon')">
+                                        <i class="fas fa-cog"></i> Settings
+                                    </a>
+                                @endif
                             @endif
                             <form method="POST" action="{{ route('logout') }}">
                                 @csrf

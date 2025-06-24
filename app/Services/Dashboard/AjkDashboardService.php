@@ -75,7 +75,7 @@ class AjkDashboardService extends BaseDashboardService
                 'active_volunteers' => Volunteers::where('status', 'approved')->count(),
                 'pending_volunteers' => Volunteers::where('status', 'pending')->count(),
                 'total_assets' => Asset::count(),
-                'asset_value' => Asset::sum('current_value') ?? 0,
+                'asset_value' => 0, // Asset values not available in current table structure
                 'community_messages' => ContactMessages::count(),
                 'unread_messages' => ContactMessages::where('status', 'unread')->count(),
                 'events_this_month' => $eventsExist ? Events::whereMonth('event_date', Carbon::now()->month)->count() : 0,
@@ -293,7 +293,7 @@ class AjkDashboardService extends BaseDashboardService
         try {
             return [
                 'asset_summary' => [
-                    'total_value' => Asset::sum('current_value') ?? 0,
+                    'total_value' => 0, // Asset values not available in current table structure
                     'total_items' => Asset::count(),
                     'categories' => Asset::select('category', DB::raw('count(*) as count'))
                         ->groupBy('category')

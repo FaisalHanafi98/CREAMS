@@ -250,7 +250,7 @@ class CentreController extends Controller
                 'available' => Asset::where('centre_id', $id)->where('status', 'available')->count(),
                 'in_use' => Asset::where('centre_id', $id)->where('status', 'in-use')->count(),
                 'maintenance' => Asset::where('centre_id', $id)->where('status', 'maintenance')->count(),
-                'total_value' => Asset::where('centre_id', $id)->sum('current_value')
+                'total_value' => 0 // Asset values not available in current table structure
             ];
             
             return view('centres.assets', compact('centre', 'assets', 'stats'));

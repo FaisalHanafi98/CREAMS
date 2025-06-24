@@ -152,7 +152,7 @@ class AssetManagementService
                 $query->where('location_id', $locationId);
             })
             ->when($filters['value_range'] ?? null, function ($query, $range) {
-                $query->whereBetween('current_value', [$range['min'], $range['max']]);
+                // $query->whereBetween('current_value', [$range['min'], $range['max']]); // Column not available
             });
 
         return $query->paginate($filters['per_page'] ?? 15);
@@ -171,7 +171,7 @@ class AssetManagementService
 
         return [
             'total_assets' => $query->count(),
-            'total_value' => $query->sum('current_value'),
+            'total_value' => 0, // current_value column not available
             'available_assets' => $query->where('status', 'available')->count(),
             'in_use_assets' => $query->where('status', 'in-use')->count(),
             'maintenance_assets' => $query->where('status', 'maintenance')->count(),
@@ -251,7 +251,7 @@ class AssetManagementService
         }
 
         $totalPurchaseValue = $query->sum('purchase_price');
-        $totalCurrentValue = $query->sum('current_value');
+        $totalCurrentValue = 0; // current_value column not available
 
         return [
             'total_purchase_value' => $totalPurchaseValue,
@@ -260,7 +260,7 @@ class AssetManagementService
             'depreciation_percentage' => $totalPurchaseValue > 0 ? 
                 (($totalPurchaseValue - $totalCurrentValue) / $totalPurchaseValue) * 100 : 0,
             'maintenance_cost_mtd' => $this->getMaintenanceCostMTD($centreId),
-            'average_asset_value' => $query->avg('current_value') ?? 0,
+            'average_asset_value' => 0, // current_value column not available
         ];
     }
 
@@ -293,7 +293,7 @@ class AssetManagementService
             $query->where('centre_id', $centreId);
         }
 
-        return $query->selectRaw('status, COUNT(*) as count, SUM(current_value) as total_value')
+        return $query->selectRaw('status, COUNT(*) as count, 0 as total_value') // current_value column not available
             ->groupBy('status')
             ->get()
             ->keyBy('status')

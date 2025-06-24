@@ -55,7 +55,13 @@ class TraineeHomeController extends Controller
             
             // Get all active centers for filter dropdown
             // Check if we need to use status or centre_status based on your DB structure
-            $centres = Centres::where('centre_status', 'active')->get();
+            // Get centres with safe query
+            try {
+                $centres = Centres::where('status', 'active')->get();
+            } catch (\Exception $e) {
+                // If status column doesn't exist, get all centres
+                $centres = Centres::all();
+            }
             
             // Get distinct condition types for filter dropdown
             $conditions = Trainees::select('trainee_condition')
@@ -158,7 +164,13 @@ class TraineeHomeController extends Controller
             $traineesByCenter = $trainees->groupBy('centre_name');
             
             // Get all centers for filter dropdown - using centre_status instead of status
-            $centres = Centres::where('centre_status', 'active')->get();
+            // Get centres with safe query
+            try {
+                $centres = Centres::where('status', 'active')->get();
+            } catch (\Exception $e) {
+                // If status column doesn't exist, get all centres
+                $centres = Centres::all();
+            }
             
             // Get condition types for filter dropdown
             $conditions = Trainees::select('trainee_condition')
@@ -198,7 +210,7 @@ class TraineeHomeController extends Controller
             
             return view('trainees.home', [
                 'traineesByCenter' => collect(),
-                'centres' => Centres::where('centre_status', 'active')->get(),
+                'centres' => Centres::all(), // Safe fallback for error case
                 'error' => 'An error occurred while filtering trainees. Please try again later.'
             ]);
         }

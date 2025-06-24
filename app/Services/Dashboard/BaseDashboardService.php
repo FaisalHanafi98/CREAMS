@@ -6,17 +6,14 @@ use App\Models\Users;
 use App\Models\Trainee;
 use App\Models\Activity;
 use App\Models\ActivitySession;
-use App\Models\SessionEnrollment;
 use App\Models\Centres;
 use App\Models\Asset;
 use App\Models\Events;
-use App\Models\ContactMessages;
-use App\Models\Volunteers;
-use App\Models\ActivityAttendance;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Route;
 use Carbon\Carbon;
 use Exception;
 
@@ -30,40 +27,85 @@ abstract class BaseDashboardService
     abstract public function getDashboardData(int $userId): array;
 
     /**
-     * Get basic statistics shared across roles
+     * Get basic statistics - SAFE VERSION with only existing columns
      */
     protected function getBasicStats(): array
     {
-        return Cache::remember('dashboard_basic_stats', $this->cacheTimeout, function () {
+        return Cache::remember('dashboard_basic_stats_safe', $this->cacheTimeout, function () {
+            $stats = [
+                'total_users' => 0,
+                'total_trainees' => 0,
+                'total_activities' => 0,
+                'total_centres' => 0,
+                'total_assets' => 0,
+                'active_sessions' => 0,
+            ];
+
             try {
-                return [
-                    'total_users' => Users::where('status', 'active')->count(),
-                    'total_trainees' => Trainee::count(),
-                    'total_activities' => Activity::count(),
-                    'total_centres' => Centres::count(),
-                    'active_sessions' => ActivitySession::where('status', 'active')->count(),
-                    'total_assets' => Asset::count(),
-                ];
+                // Safe user count
+                if (Schema::hasTable('users')) {
+                    $stats['total_users'] = DB::table('users')->count();
+                }
             } catch (Exception $e) {
-                Log::error('Error getting basic stats', ['error' => $e->getMessage()]);
-                return [
-                    'total_users' => 0,
-                    'total_trainees' => 0,
-                    'total_activities' => 0,
-                    'total_centres' => 0,
-                    'active_sessions' => 0,
-                    'total_assets' => 0,
-                ];
+                Log::error('Error counting users', ['error' => $e->getMessage()]);
             }
+
+            try {
+                // Safe trainee count
+                if (Schema::hasTable('trainees')) {
+                    $stats['total_trainees'] = DB::table('trainees')->count();
+                }
+            } catch (Exception $e) {
+                Log::error('Error counting trainees', ['error' => $e->getMessage()]);
+            }
+
+            try {
+                // Safe activity count
+                if (Schema::hasTable('activities')) {
+                    $stats['total_activities'] = DB::table('activities')->count();
+                }
+            } catch (Exception $e) {
+                Log::error('Error counting activities', ['error' => $e->getMessage()]);
+            }
+
+            try {
+                // Safe centre count
+                if (Schema::hasTable('centres')) {
+                    $stats['total_centres'] = DB::table('centres')->count();
+                }
+            } catch (Exception $e) {
+                Log::error('Error counting centres', ['error' => $e->getMessage()]);
+            }
+
+            try {
+                // Safe asset count (NO VALUE CALCULATION)
+                if (Schema::hasTable('assets')) {
+                    $stats['total_assets'] = DB::table('assets')->count();
+                }
+            } catch (Exception $e) {
+                Log::error('Error counting assets', ['error' => $e->getMessage()]);
+            }
+
+            try {
+                // Safe session count - only if table exists
+                if (Schema::hasTable('activity_sessions')) {
+                    $stats['active_sessions'] = DB::table('activity_sessions')->count();
+                }
+            } catch (Exception $e) {
+                Log::error('Error counting sessions', ['error' => $e->getMessage()]);
+            }
+
+            Log::info('Dashboard stats generated safely', $stats);
+            return $stats;
         });
     }
 
     /**
-     * Get system health status
+     * Get system health status - SAFE VERSION
      */
-    protected function getSystemHealth(): array
+    public function getSystemHealth(): array
     {
-        return Cache::remember('dashboard_system_health', $this->cacheTimeout, function () {
+        return Cache::remember('dashboard_system_health_safe', $this->cacheTimeout, function () {
             try {
                 $dbStatus = 'healthy';
                 $cacheStatus = 'healthy';
@@ -72,12 +114,13 @@ abstract class BaseDashboardService
                 // Test database connection
                 try {
                     DB::connection()->getPdo();
+                    DB::table('users')->limit(1)->count(); // Test actual query
                 } catch (Exception $e) {
                     $dbStatus = 'unhealthy';
                     Log::error('Database health check failed', ['error' => $e->getMessage()]);
                 }
 
-                // Test cache (already using it, so if we get here it's working)
+                // Test cache
                 try {
                     Cache::put('health_check', 'test', 1);
                     Cache::forget('health_check');
@@ -86,7 +129,7 @@ abstract class BaseDashboardService
                     Log::error('Cache health check failed', ['error' => $e->getMessage()]);
                 }
 
-                // Test storage (check if storage directory is writable)
+                // Test storage
                 try {
                     $storageStatus = is_writable(storage_path()) ? 'healthy' : 'unhealthy';
                 } catch (Exception $e) {
@@ -115,26 +158,31 @@ abstract class BaseDashboardService
     }
 
     /**
-     * Get recent activities for dashboard
+     * Get recent activities - SAFE VERSION
      */
     protected function getRecentActivities(int $limit = 5): array
     {
-        return Cache::remember("dashboard_recent_activities_{$limit}", $this->cacheTimeout, function () use ($limit) {
+        return Cache::remember("dashboard_recent_activities_safe_{$limit}", $this->cacheTimeout, function () use ($limit) {
             try {
-                return Activity::with(['centre'])
-                    ->latest()
+                if (!Schema::hasTable('activities')) {
+                    return [];
+                }
+
+                $activities = DB::table('activities')
+                    ->orderBy('created_at', 'desc')
                     ->limit($limit)
-                    ->get()
-                    ->map(function ($activity) {
-                        return [
-                            'id' => $activity->id,
-                            'name' => $activity->name,
-                            'centre' => $activity->centre->name ?? 'Unknown Centre',
-                            'created_at' => $activity->created_at,
-                            'status' => $activity->status ?? 'active',
-                        ];
-                    })
-                    ->toArray();
+                    ->get();
+
+                return $activities->map(function ($activity) {
+                    return [
+                        'id' => $activity->id ?? 0,
+                        'name' => $activity->activity_name ?? 'Unknown Activity',
+                        'centre' => $activity->centre_id ?? 'Unknown Centre',
+                        'created_at' => $activity->created_at ?? now(),
+                        'status' => 'active',
+                    ];
+                })->toArray();
+
             } catch (Exception $e) {
                 Log::error('Error getting recent activities', ['error' => $e->getMessage()]);
                 return [];
@@ -143,31 +191,32 @@ abstract class BaseDashboardService
     }
 
     /**
-     * Get upcoming events
+     * Get upcoming events - SAFE VERSION
      */
     protected function getUpcomingEvents(int $limit = 5): array
     {
-        return Cache::remember("dashboard_upcoming_events_{$limit}", $this->cacheTimeout, function () use ($limit) {
+        return Cache::remember("dashboard_upcoming_events_safe_{$limit}", $this->cacheTimeout, function () use ($limit) {
             try {
-                // Check if events table exists
-                if (!Schema::hasTable('events')) {
+                if (!Schema::hasTable('events') || !Schema::hasColumn('events', 'date')) {
                     return [];
                 }
-                
-                return Events::where('event_date', '>=', now())
-                    ->orderBy('event_date')
+
+                $events = DB::table('events')
+                    ->where('date', '>=', now()->toDateString())
+                    ->orderBy('date')
                     ->limit($limit)
-                    ->get()
-                    ->map(function ($event) {
-                        return [
-                            'id' => $event->id,
-                            'title' => $event->title,
-                            'event_date' => $event->event_date,
-                            'location' => $event->location ?? 'TBD',
-                            'status' => $event->status ?? 'scheduled',
-                        ];
-                    })
-                    ->toArray();
+                    ->get();
+
+                return $events->map(function ($event) {
+                    return [
+                        'id' => $event->id ?? 0,
+                        'title' => $event->title ?? 'Unknown Event',
+                        'event_date' => $event->date ?? now(),
+                        'location' => $event->location ?? 'TBD',
+                        'status' => $event->status ?? 'scheduled',
+                    ];
+                })->toArray();
+
             } catch (Exception $e) {
                 Log::error('Error getting upcoming events', ['error' => $e->getMessage()]);
                 return [];
@@ -176,50 +225,45 @@ abstract class BaseDashboardService
     }
 
     /**
-     * Get notifications for a user
+     * Get notifications - SAFE VERSION
      */
     protected function getNotifications(int $userId, string $role): array
     {
-        return Cache::remember("dashboard_notifications_{$userId}_{$role}", $this->cacheTimeout, function () use ($userId, $role) {
+        return Cache::remember("dashboard_notifications_safe_{$userId}_{$role}", $this->cacheTimeout, function () use ($userId, $role) {
             try {
                 $notifications = [];
 
-                // Add role-specific notifications
+                // Simple role-based notifications without complex queries
                 switch ($role) {
                     case 'admin':
-                        // Check for new contact messages
-                        $newMessages = ContactMessages::where('status', 'unread')->count();
-                        if ($newMessages > 0) {
-                            $notifications[] = [
-                                'type' => 'info',
-                                'message' => "You have {$newMessages} unread contact messages",
-                                'action' => '/admin/messages',
-                                'created_at' => now(),
-                            ];
-                        }
-
-                        // Check for new volunteer applications
-                        $newVolunteers = Volunteers::where('status', 'pending')->count();
-                        if ($newVolunteers > 0) {
-                            $notifications[] = [
-                                'type' => 'warning',
-                                'message' => "{$newVolunteers} volunteer applications awaiting approval",
-                                'action' => '/admin/volunteers',
-                                'created_at' => now(),
-                            ];
+                        try {
+                            if (Schema::hasTable('users')) {
+                                $userCount = DB::table('users')->count();
+                                $notifications[] = [
+                                    'type' => 'info',
+                                    'message' => "System has {$userCount} total users",
+                                    'action' => '#',
+                                    'created_at' => now(),
+                                ];
+                            }
+                        } catch (Exception $e) {
+                            Log::error('Error creating admin notifications', ['error' => $e->getMessage()]);
                         }
                         break;
 
                     case 'teacher':
-                        // Check for today's sessions
-                        $todaySessions = ActivitySession::whereDate('session_date', today())->count();
-                        if ($todaySessions > 0) {
-                            $notifications[] = [
-                                'type' => 'info',
-                                'message' => "You have {$todaySessions} sessions scheduled for today",
-                                'action' => '/teacher/sessions',
-                                'created_at' => now(),
-                            ];
+                        try {
+                            if (Schema::hasTable('activities')) {
+                                $activityCount = DB::table('activities')->count();
+                                $notifications[] = [
+                                    'type' => 'info',
+                                    'message' => "System has {$activityCount} activities available",
+                                    'action' => '#',
+                                    'created_at' => now(),
+                                ];
+                            }
+                        } catch (Exception $e) {
+                            Log::error('Error creating teacher notifications', ['error' => $e->getMessage()]);
                         }
                         break;
                 }
@@ -233,129 +277,14 @@ abstract class BaseDashboardService
     }
 
     /**
-     * Get chart data for dashboard
-     */
-    protected function getChartData(string $type, array $filters = []): array
-    {
-        $cacheKey = "dashboard_chart_{$type}_" . md5(serialize($filters));
-        
-        return Cache::remember($cacheKey, $this->cacheTimeout, function () use ($type, $filters) {
-            try {
-                switch ($type) {
-                    case 'user_registration':
-                        return $this->getUserRegistrationChartData($filters);
-                    case 'activity_participation':
-                        return $this->getActivityParticipationChartData($filters);
-                    case 'attendance_trends':
-                        return $this->getAttendanceTrendsChartData($filters);
-                    default:
-                        return [];
-                }
-            } catch (Exception $e) {
-                Log::error("Error getting chart data for type: {$type}", ['error' => $e->getMessage()]);
-                return [];
-            }
-        });
-    }
-
-    /**
-     * Get user registration chart data
-     */
-    private function getUserRegistrationChartData(array $filters): array
-    {
-        $days = $filters['days'] ?? 30;
-        $startDate = Carbon::now()->subDays($days);
-
-        $data = Users::where('created_at', '>=', $startDate)
-            ->select(DB::raw('DATE(created_at) as date'), DB::raw('count(*) as count'))
-            ->groupBy('date')
-            ->orderBy('date')
-            ->get();
-
-        return [
-            'labels' => $data->pluck('date')->map(fn($date) => Carbon::parse($date)->format('M d'))->toArray(),
-            'datasets' => [[
-                'label' => 'New Users',
-                'data' => $data->pluck('count')->toArray(),
-                'borderColor' => 'rgb(75, 192, 192)',
-                'backgroundColor' => 'rgba(75, 192, 192, 0.2)',
-            ]]
-        ];
-    }
-
-    /**
-     * Get activity participation chart data
-     */
-    private function getActivityParticipationChartData(array $filters): array
-    {
-        $data = Activity::withCount('sessions')
-            ->orderBy('sessions_count', 'desc')
-            ->limit($filters['limit'] ?? 10)
-            ->get();
-
-        return [
-            'labels' => $data->pluck('name')->toArray(),
-            'datasets' => [[
-                'label' => 'Sessions',
-                'data' => $data->pluck('sessions_count')->toArray(),
-                'backgroundColor' => [
-                    'rgba(255, 99, 132, 0.8)',
-                    'rgba(54, 162, 235, 0.8)',
-                    'rgba(255, 205, 86, 0.8)',
-                    'rgba(75, 192, 192, 0.8)',
-                    'rgba(153, 102, 255, 0.8)',
-                ],
-            ]]
-        ];
-    }
-
-    /**
-     * Get attendance trends chart data
-     */
-    private function getAttendanceTrendsChartData(array $filters): array
-    {
-        $days = $filters['days'] ?? 30;
-        $startDate = Carbon::now()->subDays($days);
-
-        $data = ActivityAttendance::where('created_at', '>=', $startDate)
-            ->select(
-                DB::raw('DATE(created_at) as date'),
-                DB::raw('SUM(CASE WHEN status = "present" THEN 1 ELSE 0 END) as present'),
-                DB::raw('SUM(CASE WHEN status = "absent" THEN 1 ELSE 0 END) as absent')
-            )
-            ->groupBy('date')
-            ->orderBy('date')
-            ->get();
-
-        return [
-            'labels' => $data->pluck('date')->map(fn($date) => Carbon::parse($date)->format('M d'))->toArray(),
-            'datasets' => [
-                [
-                    'label' => 'Present',
-                    'data' => $data->pluck('present')->toArray(),
-                    'borderColor' => 'rgb(75, 192, 192)',
-                    'backgroundColor' => 'rgba(75, 192, 192, 0.2)',
-                ],
-                [
-                    'label' => 'Absent',
-                    'data' => $data->pluck('absent')->toArray(),
-                    'borderColor' => 'rgb(255, 99, 132)',
-                    'backgroundColor' => 'rgba(255, 99, 132, 0.2)',
-                ]
-            ]
-        ];
-    }
-
-    /**
      * Clear cache for specific user/role
      */
     public function clearUserCache(int $userId, string $role): void
     {
         $patterns = [
-            "dashboard_notifications_{$userId}_{$role}",
+            "dashboard_notifications_safe_{$userId}_{$role}",
             "dashboard_{$role}_{$userId}",
-            "dashboard_stats_{$role}_{$userId}",
-            "dashboard_charts_{$role}_{$userId}",
+            "dashboard_stats_safe_{$role}_{$userId}",
         ];
 
         foreach ($patterns as $pattern) {
@@ -368,12 +297,13 @@ abstract class BaseDashboardService
      */
     public function clearAllCache(): void
     {
+        Cache::forget('dashboard_basic_stats_safe');
+        Cache::forget('dashboard_system_health_safe');
+        
+        // Clear pattern-based cache keys
         $patterns = [
-            'dashboard_basic_stats',
-            'dashboard_system_health',
-            'dashboard_recent_activities_*',
-            'dashboard_upcoming_events_*',
-            'dashboard_chart_*',
+            'dashboard_recent_activities_safe_*',
+            'dashboard_upcoming_events_safe_*',
         ];
 
         foreach ($patterns as $pattern) {

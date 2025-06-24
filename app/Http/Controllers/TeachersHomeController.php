@@ -101,12 +101,16 @@ class TeachersHomeController extends Controller
             
             // Get centres for filter dropdown
             try {
-                $centres = Centres::where('centre_status', 'active')
-                    ->orWhere('status', 'active') // Try both column names
+                $centres = Centres::where('status', 'active')
                     ->get(['centre_id', 'centre_name']);
             } catch (\Exception $e) {
-                $centres = collect(); // Empty collection if error
-                Log::error('Error fetching centres: ' . $e->getMessage());
+                // If status column doesn't exist, get all centres
+                try {
+                    $centres = Centres::all(['centre_id', 'centre_name']);
+                } catch (\Exception $e2) {
+                    $centres = collect(); // Empty collection if error
+                    Log::error('Error fetching centres: ' . $e2->getMessage());
+                }
             }
             
             // Statistics for dashboard
@@ -176,9 +180,13 @@ class TeachersHomeController extends Controller
             $user = Users::findOrFail($id);
             
             // Get centres for dropdown
-            $centres = Centres::where('centre_status', 'active')
-                ->orWhere('status', 'active') // Try both column names
-                ->get(['centre_id', 'centre_name']);
+            try {
+                $centres = Centres::where('status', 'active')
+                    ->get(['centre_id', 'centre_name']);
+            } catch (\Exception $e) {
+                // If status column doesn't exist, get all centres
+                $centres = Centres::all(['centre_id', 'centre_name']);
+            }
             
             // Check if current user has permission to edit this user
             $canEdit = $this->checkEditPermission($user);
@@ -186,8 +194,8 @@ class TeachersHomeController extends Controller
             // Get current user's role for permission checks in the view
             $currentUserRole = session('role') ?? 'teacher';
             
-            // Return view with data
-            return view('updateuserprofile', [
+            // Return view with data (using profile view)
+            return view('profile', [
                 'user' => $user,
                 'centres' => $centres,
                 'canEdit' => $canEdit,
