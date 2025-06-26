@@ -455,7 +455,7 @@
                 <button class="tab-btn" id="tab-3">Review & Submit</button>
             </div>
             
-            <form action="{{ route('auth.save') }}" method="POST" id="registration-form" onsubmit="console.log('Form submitting with center_id:', document.getElementById('center_id').value); return true;">
+            <form action="{{ route('auth.save') }}" method="POST" id="registration-form" onsubmit="console.log('Form submitting with centre_id:', document.getElementById('centre_id').value); return true;">
                 @csrf
                 
                 <div class="form-sections-container">
@@ -565,22 +565,22 @@
 
                         <!-- Centre Location dropdown -->
                         <div class="form-group form-grid-full">
-                            <label for="center_location">Centre Location*</label>
-                            <select class="form-control @error('center_location') is-invalid @enderror" id="center_location" name="center_location" required>
+                            <label for="centre_location">Centre Location*</label>
+                            <select class="form-control @error('centre_location') is-invalid @enderror" id="centre_location" name="centre_location" required>
                                 <option value="">-- Select a Centre --</option>
-                                <option value="Gombak" {{ old('center_location') === 'Gombak' ? 'selected' : '' }}>Gombak</option>
-                                <option value="Kuantan" {{ old('center_location') === 'Kuantan' ? 'selected' : '' }}>Kuantan</option>
-                                <option value="Pagoh" {{ old('center_location') === 'Pagoh' ? 'selected' : '' }}>Pagoh</option>
+                                <option value="Gombak" {{ old('centre_location') === 'Gombak' ? 'selected' : '' }}>Gombak</option>
+                                <option value="Kuantan" {{ old('centre_location') === 'Kuantan' ? 'selected' : '' }}>Kuantan</option>
+                                <option value="Pagoh" {{ old('centre_location') === 'Pagoh' ? 'selected' : '' }}>Pagoh</option>
                             </select>
                             <div class="form-help">Select the campus centre location</div>
-                            @error('center_location')
+                            @error('centre_location')
                                 <div class="form-error">{{ $message }}</div>
                             @enderror
                         </div>
                         
-                        <!-- Hidden Center ID field that gets populated based on selection -->
-                        <input type="hidden" id="center_id" name="center_id" value="{{ old('center_id') }}">
-                        @error('center_id')
+                        <!-- Hidden Centre ID field that gets populated based on selection -->
+                        <input type="hidden" id="centre_id" name="centre_id" value="{{ old('centre_id') }}">
+                        @error('centre_id')
                             <div class="form-error">{{ $message }}</div>
                         @enderror
                         
@@ -617,7 +617,7 @@
                             </div>
                             <div class="review-item">
                                 <div class="review-label">Centre:</div>
-                                <div class="review-value" id="review-center">Not selected</div>
+                                <div class="review-value" id="review-centre">Not selected</div>
                             </div>
                         </div>
                         
@@ -717,16 +717,16 @@ $(document).ready(function() {
     });
     
     // Centre location mapping
-    const centerMapping = {
+    const centreMapping = {
         'Gombak': '01',
         'Kuantan': '02',
         'Pagoh': '03'
     };
     
-    $('#center_location').change(function() {
+    $('#centre_location').change(function() {
         const location = $(this).val();
-        const centerId = centerMapping[location] || '';
-        $('#center_id').val(centerId);
+        const centreId = centreMapping[location] || '';
+        $('#centre_id').val(centreId);
     });
     
     // Functions
@@ -772,9 +772,9 @@ $(document).ready(function() {
     function validateSection2() {
         const name = $('#name').val();
         const role = $('input[name="role"]:checked').val();
-        const centerLocation = $('#center_location').val();
+        const centreLocation = $('#centre_location').val();
         
-        if (!name || !role || !centerLocation) {
+        if (!name || !role || !centreLocation) {
             alert('Please fill in all required fields.');
             return false;
         }
@@ -787,14 +787,14 @@ $(document).ready(function() {
         $('#review-iium-id').text($('#iium_id').val());
         $('#review-name').text($('#name').val());
         $('#review-role').text($('input[name="role"]:checked').val().charAt(0).toUpperCase() + $('input[name="role"]:checked').val().slice(1));
-        $('#review-center').text($('#center_location').val() || 'Not selected');
+        $('#review-centre').text($('#centre_location').val() || 'Not selected');
     }
     
-    // Set initial center_id if center_location is already selected
-    if ($('#center_location').val()) {
-        const location = $('#center_location').val();
-        const centerId = centerMapping[location] || '';
-        $('#center_id').val(centerId);
+    // Set initial centre_id if centre_location is already selected
+    if ($('#centre_location').val()) {
+        const location = $('#centre_location').val();
+        const centreId = centreMapping[location] || '';
+        $('#centre_id').val(centreId);
     }
 });
 </script>

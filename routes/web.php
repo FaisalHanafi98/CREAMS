@@ -134,13 +134,27 @@ Route::middleware(['auth'])->group(function () {
             Route::post('/{id}/sessions', [ActivityController::class, 'createSession'])->name('sessions.create');
         });
         
+        // Scheduling routes (Teacher, Admin, Supervisor)
+        Route::middleware(['role:teacher,admin,supervisor'])->group(function () {
+            Route::get('/{id}/schedule', [ActivityController::class, 'schedule'])->name('schedule');
+            Route::post('/{id}/schedule', [ActivityController::class, 'storeSchedule'])->name('schedule.store');
+            Route::get('/{id}/enroll', [ActivityController::class, 'enrollmentForm'])->name('enroll');
+            Route::post('/{id}/enroll', [ActivityController::class, 'enrollTrainees'])->name('enroll.submit');
+        });
+        
         // Teacher routes
         Route::middleware(['role:teacher,admin,supervisor'])->group(function () {
             Route::get('/{activityId}/sessions/{sessionId}/attendance', [ActivityController::class, 'markAttendance'])->name('attendance');
             Route::post('/{activityId}/sessions/{sessionId}/attendance', [ActivityController::class, 'storeAttendance'])->name('attendance.store');
             Route::get('/{activityId}/sessions/{sessionId}/enrollments', [ActivityController::class, 'manageEnrollments'])->name('enrollments');
-            Route::post('/{activityId}/sessions/{sessionId}/enroll', [ActivityController::class, 'enrollTrainees'])->name('enroll');
+            Route::post('/{activityId}/sessions/{sessionId}/enroll', [ActivityController::class, 'enrollTrainees'])->name('enroll.legacy');
         });
+    });
+
+    // Schedule Routes
+    Route::prefix('schedule')->name('schedule.')->group(function () {
+        Route::get('/weekly', [ActivityController::class, 'weeklySchedule'])->name('weekly');
+        Route::get('/teacher/{teacherId}', [ActivityController::class, 'teacherSchedule'])->name('teacher');
     });
 
     // Rehabilitation Routes
@@ -153,6 +167,16 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/teachershome', [TeachersHomeController::class, 'index'])->name('teachershome');
     Route::get('/updateuser/{id}', [TeachersHomeController::class, 'updateuserpage'])->name('updateuser');
     Route::post('/updateuser/{id}', [TeachersHomeController::class, 'updateuser'])->name('updateuser.post');
+    
+    // NEW STAFF PROFILE MANAGEMENT SYSTEM
+    Route::prefix('staff')->name('staff.')->group(function () {
+        Route::get('/view/{id}', [App\Http\Controllers\StaffController::class, 'viewProfile'])->name('view');
+        Route::get('/edit/{id}', [App\Http\Controllers\StaffController::class, 'editProfile'])->name('edit');
+        Route::put('/update/{id}', [App\Http\Controllers\StaffController::class, 'updateProfile'])->name('update');
+        Route::get('/schedule/{id}', [App\Http\Controllers\StaffController::class, 'showSchedule'])->name('schedule');
+        Route::get('/activities/{id}', [App\Http\Controllers\StaffController::class, 'showActivities'])->name('activities');
+        Route::get('/trainees/{id}', [App\Http\Controllers\StaffController::class, 'showTrainees'])->name('trainees');
+    });
 
     // Centres
     Route::prefix('centres')->name('centres.')->group(function () {
@@ -205,7 +229,17 @@ Route::middleware(['auth'])->prefix('trainees')->name('trainees.')->group(functi
 // Legacy trainee routes (backward compatibility)
 Route::middleware(['auth'])->group(function () {
     Route::get('/traineeshome', [TraineeHomeController::class, 'index'])->name('traineeshome');
+    
+    // Trainee Profile Routes
     Route::get('/traineeprofile/{id}', [TraineeProfileController::class, 'index'])->name('traineeprofile');
+    Route::get('/traineeprofile/{id}/edit', [TraineeProfileController::class, 'edit'])->name('traineeprofile.edit');
+    Route::put('/traineeprofile/{id}', [TraineeProfileController::class, 'update'])->name('traineeprofile.update');
+    Route::post('/traineeprofile/{id}/progress', [TraineeProfileController::class, 'updateProgress'])->name('traineeprofile.progress');
+    Route::post('/traineeprofile/{id}/attendance', [TraineeProfileController::class, 'recordAttendance'])->name('traineeprofile.attendance');
+    Route::post('/traineeprofile/{id}/activity', [TraineeProfileController::class, 'addActivity'])->name('traineeprofile.addActivity');
+    Route::get('/traineeprofile/{id}/download', [TraineeProfileController::class, 'downloadProfile'])->name('traineeprofile.download');
+    Route::delete('/traineeprofile/{id}', [TraineeProfileController::class, 'destroy'])->name('traineeprofile.destroy');
+    
     Route::get('/traineesregistrationpage', [TraineeRegistrationController::class, 'index'])->name('traineesregistrationpage');
     Route::post('/traineesregistrationstore', [TraineeRegistrationController::class, 'store'])->name('traineesregistrationstore');
     Route::post('/validateEmail', [TraineeRegistrationController::class, 'validateEmail'])->name('validateEmail');
@@ -303,6 +337,7 @@ Route::middleware(['auth'])->prefix('api')->name('api.')->group(function () {
 |--------------------------------------------------------------------------
 */
 
+
 Route::get('/debug/database', function () {
     try {
         $tables = ['users', 'trainees', 'activities', 'centres', 'assets', 'events'];
@@ -324,6 +359,18 @@ Route::get('/debug/database', function () {
         return response()->json(['error' => $e->getMessage()], 500);
     }
 })->name('debug.database');
+
+/*
+|--------------------------------------------------------------------------
+| SAFE DASHBOARD ROUTES - Backup for testing
+|--------------------------------------------------------------------------
+*/
+
+Route::get('/safe-dashboard', 'App\Http\Controllers\SafeDashboardController@index')
+    ->name('safe.dashboard');
+
+Route::get('/api/safe-stats', 'App\Http\Controllers\SafeDashboardController@getStats')
+    ->name('safe.dashboard.stats');
 
 /*
 |--------------------------------------------------------------------------

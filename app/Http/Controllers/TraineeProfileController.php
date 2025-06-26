@@ -32,9 +32,7 @@ class TraineeProfileController extends Controller
             ]);
             
             // Find the trainee by ID with eager loading
-            $trainee = Trainees::with(['centre', 'activities' => function($query) {
-                $query->orderBy('activity_date', 'desc');
-            }])->findOrFail($id);
+            $trainee = Trainees::with(['activities', 'enrollments'])->findOrFail($id);
             
             // Calculate some stats for the dashboard
             $age = Carbon::parse($trainee->trainee_date_of_birth)->age;

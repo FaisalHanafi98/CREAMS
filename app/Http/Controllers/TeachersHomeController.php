@@ -176,8 +176,22 @@ class TeachersHomeController extends Controller
     public function updateuserpage(Request $request, $id)
     {
         try {
+            // Debug: Log what ID we're trying to fetch
+            Log::info('TeachersHomeController@updateuserpage called', [
+                'requested_id' => $id,
+                'session_id' => session('id'),
+                'current_user' => session('name')
+            ]);
+            
             // Get user with ID
             $user = Users::findOrFail($id);
+            
+            // Debug: Log what user we found
+            Log::info('User found for profile viewing', [
+                'user_id' => $user->id,
+                'user_name' => $user->name,
+                'user_email' => $user->email
+            ]);
             
             // Get centres for dropdown
             try {
@@ -194,9 +208,25 @@ class TeachersHomeController extends Controller
             // Get current user's role for permission checks in the view
             $currentUserRole = session('role') ?? 'teacher';
             
+            // Convert user to array for consistent access in view
+            $userData = $user->toArray();
+            $userData['role'] = $user->role;
+            
+            // Debug: Log the data being passed to view
+            Log::info('Data being passed to profile view', [
+                'user_data' => [
+                    'id' => $userData['id'] ?? 'missing',
+                    'name' => $userData['name'] ?? 'missing',
+                    'email' => $userData['email'] ?? 'missing',
+                    'role' => $userData['role'] ?? 'missing'
+                ]
+            ]);
+            
             // Return view with data (using profile view)
             return view('profile', [
-                'user' => $user,
+                'user' => $userData,  // Pass as array for consistent access
+                'role' => $user->role,  // Add missing $role variable
+                'name' => $user->name,  // Add missing $name variable
                 'centres' => $centres,
                 'canEdit' => $canEdit,
                 'currentUserRole' => $currentUserRole

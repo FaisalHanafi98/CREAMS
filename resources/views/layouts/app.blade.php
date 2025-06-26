@@ -1000,7 +1000,7 @@
                     </div>
                     <div class="dropdown-divider"></div>
                     @if(Route::has('profile'))
-                        <a href="{{ route('profile') }}" class="dropdown-item">
+                        <a href="{{ Route::has('profile') ? route('profile') : '#' }}" class="dropdown-item">
                             <i class="fas fa-user-circle"></i> My Profile
                         </a>
                     @else
@@ -1048,7 +1048,7 @@
 
             <li class="sidebar-item">
                 @if(Route::has('profile'))
-                    <a href="{{ route('profile') }}" class="sidebar-link {{ Route::currentRouteName() == 'profile' ? 'active' : '' }}">
+                    <a href="{{ Route::has('profile') ? route('profile') : '#' }}" class="sidebar-link {{ Route::has('profile') && Route::currentRouteName() == 'profile' ? 'active' : '' }}">
                         <span class="sidebar-icon"><i class="fas fa-user-circle"></i></span>
                         <span class="sidebar-text">My Profile</span>
                     </a>

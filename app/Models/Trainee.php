@@ -118,11 +118,21 @@ class Trainee extends Model
     }
 
     /**
-     * Get the activities associated with the trainee.
+     * Get the activities associated with the trainee through enrollments.
      */
     public function activities()
     {
-        return $this->hasMany(TraineeActivities::class, 'trainee_id');
+        return $this->belongsToMany(Activity::class, 'activity_enrollments', 'trainee_id', 'activity_id')
+                    ->withPivot(['enrollment_date', 'status', 'notes'])
+                    ->withTimestamps();
+    }
+
+    /**
+     * Get the activity enrollments for the trainee.
+     */
+    public function enrollments()
+    {
+        return $this->hasMany(ActivityEnrollment::class, 'trainee_id');
     }
 
     /**

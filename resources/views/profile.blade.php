@@ -303,11 +303,6 @@
             <input type="file" id="avatarInput" name="avatar" accept="image/jpeg,image/png,image/jpg,image/gif">
         </form>
         
-        <!-- Debug hidden fields -->
-        <input type="hidden" id="debug_phone" value="{{ $user['phone'] ?? '' }}">
-        <input type="hidden" id="debug_address" value="{{ $user['address'] ?? '' }}">
-        <input type="hidden" id="debug_bio" value="{{ $user['bio'] ?? '' }}">
-        <input type="hidden" id="debug_dob" value="{{ $user['date_of_birth'] ?? '' }}">
         
         <!-- Profile Tabs -->
         <div class="profile-tabs">
@@ -366,8 +361,8 @@
                             <textarea class="form-control editable-field" id="address" name="address" rows="3" readonly>{{ $user['address'] ?? '' }}</textarea>
                         </div>
                         <div class="form-group">
-                            <label for="bio">Bio</label>
-                            <textarea class="form-control editable-field" id="bio" name="bio" rows="5" readonly>{{ $user['bio'] ?? '' }}</textarea>
+                            <label for="about">Bio</label>
+                            <textarea class="form-control editable-field" id="about" name="about" rows="5" readonly>{{ $user['about'] ?? '' }}</textarea>
                         </div>
                         <div class="form-actions" id="profile-actions" style="display: none;">
                             <button type="button" class="btn btn-outline-secondary" id="cancel-edit">Cancel</button>
@@ -515,11 +510,6 @@
             }
         }
         
-        // CRITICAL FIX: Force set form field values from hidden fields to solve the null value problem
-        $('#phone').val($('#debug_phone').val());
-        $('#address').val($('#debug_address').val());
-        $('#bio').val($('#debug_bio').val());
-        $('#date_of_birth').val($('#debug_dob').val());
         
         // Avatar upload functionality
         $('#avatar-upload-btn').click(function(e) {
@@ -585,7 +575,7 @@
                 $('#phone').prop('readonly', true);
                 $('#date_of_birth').prop('readonly', true);
                 $('#address').prop('readonly', true);
-                $('#bio').prop('readonly', true);
+                $('#about').prop('readonly', true);
                 
                 $('#profile-actions').hide();
                 
@@ -600,7 +590,7 @@
                 $('#phone').prop('readonly', false);
                 $('#date_of_birth').prop('readonly', false);
                 $('#address').prop('readonly', false);
-                $('#bio').prop('readonly', false);
+                $('#about').prop('readonly', false);
                 
                 $('#profile-actions').show();
                 
@@ -617,12 +607,6 @@
             // Reset the form with original values
             $('#profile-form')[0].reset();
             
-            // Make sure to reset fields with data from hidden fields
-            $('#phone').val($('#debug_phone').val());
-            $('#address').val($('#debug_address').val());
-            $('#bio').val($('#debug_bio').val());
-            $('#date_of_birth').val($('#debug_dob').val());
-            
             // Disable editing
             $('#edit-profile-toggle').removeClass('active');
             $('#edit-profile-toggle').html('<i class="fas fa-edit"></i> Edit Profile');
@@ -631,7 +615,7 @@
             $('#phone').prop('readonly', true);
             $('#date_of_birth').prop('readonly', true);
             $('#address').prop('readonly', true);
-            $('#bio').prop('readonly', true);
+            $('#about').prop('readonly', true);
             
             $('#profile-actions').hide();
             

@@ -70,6 +70,39 @@ class Activity extends Model
         return $this->sessions()->where('status', 'completed');
     }
 
+    // New relationships for scheduling and enrollment
+    public function schedules()
+    {
+        return $this->hasMany(ActivitySchedule::class);
+    }
+
+    public function activeSchedules()
+    {
+        return $this->schedules()->where('status', 'active');
+    }
+
+    public function enrollments()
+    {
+        return $this->hasMany(ActivityEnrollment::class);
+    }
+
+    public function activeEnrollments()
+    {
+        return $this->enrollments()->whereIn('status', ['enrolled', 'active']);
+    }
+
+    public function trainees()
+    {
+        return $this->belongsToMany(Trainees::class, 'activity_enrollments', 'activity_id', 'trainee_id')
+                    ->withPivot(['enrollment_date', 'status', 'notes'])
+                    ->withTimestamps();
+    }
+
+    public function teacher()
+    {
+        return $this->belongsTo(Users::class, 'created_by');
+    }
+
     // Scopes
     public function scopeActive($query)
     {

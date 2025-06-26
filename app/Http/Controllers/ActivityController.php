@@ -5,9 +5,11 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Activity;
 use App\Models\ActivitySession;
+use App\Models\ActivitySchedule;
+use App\Models\ActivityEnrollment;
 use App\Models\SessionEnrollment;
-use App\Models\User;
-use App\Models\Trainee;
+use App\Models\Users;
+use App\Models\Trainees;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
@@ -564,8 +566,7 @@ class ActivityController extends Controller
 
             // Get eligible trainees (not already enrolled)
             $enrolledTraineeIds = $session->enrollments->pluck('trainee_id');
-            $eligibleTrainees = Trainee::whereNotIn('id', $enrolledTraineeIds)
-                ->where('status', 'active')
+            $eligibleTrainees = Trainees::whereNotIn('id', $enrolledTraineeIds)
                 ->get();
 
             return view('activities.enrollments', compact('session', 'eligibleTrainees'));
@@ -808,5 +809,276 @@ class ActivityController extends Controller
     public function filterActivities(Request $request)
     {
         return $this->apiIndex($request);
+    }
+
+    // ========================================
+    // NEW SCHEDULING & ENROLLMENT METHODS
+    // ========================================
+
+    /**
+     * Display activity schedule management
+     */
+    public function schedule($id)
+    {
+        try {
+            $activity = Activity::with(['schedules', 'activeEnrollments.trainee'])->findOrFail($id);
+            
+            // Check permissions
+            $role = session('role');
+            $userId = session('id');
+            
+            if (!$this->canManageActivity($activity, $role, $userId)) {
+                return redirect()->route('activities.index')
+                    ->with('error', 'You do not have permission to manage this activity schedule.');
+            }
+
+            return view('activities.schedule', compact('activity'));
+
+        } catch (Exception $e) {
+            Log::error('Error loading activity schedule: ' . $e->getMessage());
+            return redirect()->route('activities.index')
+                ->with('error', 'Unable to load activity schedule.');
+        }
+    }
+
+    /**
+     * Display weekly schedule overview
+     */
+    public function weeklySchedule()
+    {
+        try {
+            $schedules = ActivitySchedule::with(['activity.teacher', 'activity.centre'])
+                ->active()
+                ->forWeek()
+                ->get()
+                ->groupBy('day_of_week');
+
+            $days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+            
+            return view('activities.weekly-schedule', compact('schedules', 'days'));
+
+        } catch (Exception $e) {
+            Log::error('Error loading weekly schedule: ' . $e->getMessage());
+            return redirect()->route('activities.index')
+                ->with('error', 'Unable to load weekly schedule.');
+        }
+    }
+
+    /**
+     * Display teacher's personal schedule
+     */
+    public function teacherSchedule($teacherId)
+    {
+        try {
+            $teacher = Users::findOrFail($teacherId);
+            
+            // Check permissions - users can only view their own schedule unless admin/supervisor
+            $role = session('role');
+            $currentUserId = session('id');
+            
+            if (!in_array($role, ['admin', 'supervisor']) && $currentUserId != $teacherId) {
+                return redirect()->route('activities.index')
+                    ->with('error', 'You can only view your own schedule.');
+            }
+
+            // Get sessions for this teacher - using ActivitySession model to match existing view
+            $sessions = \App\Models\ActivitySession::whereHas('activity', function($query) use ($teacherId) {
+                    $query->where('created_by', $teacherId);
+                })
+                ->with(['activity', 'enrollments'])
+                ->where('status', 'scheduled')
+                ->orderBy('day_of_week')
+                ->orderBy('start_time')
+                ->get();
+
+            // Group sessions by day of week for the existing view
+            $groupedSessions = $sessions->groupBy('day_of_week');
+
+            return view('activities.activitiesteacherschedule', compact('teacher', 'groupedSessions'));
+
+        } catch (Exception $e) {
+            Log::error('Error loading teacher schedule: ' . $e->getMessage());
+            return redirect()->route('activities.index')
+                ->with('error', 'Unable to load teacher schedule.');
+        }
+    }
+
+    /**
+     * Show enrollment form for an activity
+     */
+    public function enrollmentForm($id)
+    {
+        try {
+            $activity = Activity::with(['activeEnrollments.trainee', 'schedules'])->findOrFail($id);
+            
+            // Get available trainees (not already enrolled in this activity)
+            $enrolledTraineeIds = $activity->activeEnrollments->pluck('trainee_id');
+            $availableTrainees = Trainees::whereNotIn('id', $enrolledTraineeIds)
+                ->orderBy('trainee_first_name')
+                ->get();
+
+            return view('activities.enroll', compact('activity', 'availableTrainees'));
+
+        } catch (Exception $e) {
+            Log::error('Error loading enrollment form: ' . $e->getMessage());
+            return redirect()->route('activities.show', $id)
+                ->with('error', 'Unable to load enrollment form.');
+        }
+    }
+
+    /**
+     * Process trainee enrollments
+     */
+    public function enrollTrainees(Request $request, $id)
+    {
+        try {
+            $activity = Activity::findOrFail($id);
+            
+            $request->validate([
+                'trainee_ids' => 'required|array|min:1',
+                'trainee_ids.*' => 'exists:trainees,id',
+                'enrollment_date' => 'required|date',
+                'goals' => 'nullable|string|max:1000'
+            ]);
+
+            $enrolledCount = 0;
+            $errors = [];
+
+            foreach ($request->trainee_ids as $traineeId) {
+                try {
+                    // Check if already enrolled
+                    $existingEnrollment = ActivityEnrollment::where('activity_id', $id)
+                        ->where('trainee_id', $traineeId)
+                        ->first();
+
+                    if ($existingEnrollment) {
+                        $trainee = Trainees::find($traineeId);
+                        $errors[] = $trainee->full_name . ' is already enrolled in this activity.';
+                        continue;
+                    }
+
+                    // Check capacity
+                    $currentEnrollments = $activity->activeEnrollments()->count();
+                    if ($currentEnrollments >= $activity->max_participants) {
+                        $errors[] = 'Activity is at full capacity.';
+                        break;
+                    }
+
+                    // Create enrollment
+                    ActivityEnrollment::create([
+                        'activity_id' => $id,
+                        'trainee_id' => $traineeId,
+                        'enrollment_date' => $request->enrollment_date,
+                        'start_date' => $request->enrollment_date,
+                        'status' => 'enrolled',
+                        'goals' => $request->goals,
+                        'enrolled_by' => session('id')
+                    ]);
+
+                    $enrolledCount++;
+
+                } catch (Exception $e) {
+                    Log::error('Error enrolling trainee: ' . $e->getMessage());
+                    $errors[] = 'Error enrolling trainee ID: ' . $traineeId;
+                }
+            }
+
+            $message = "{$enrolledCount} trainee(s) successfully enrolled.";
+            if (!empty($errors)) {
+                $message .= ' Errors: ' . implode(' ', $errors);
+            }
+
+            return redirect()->route('activities.show', $id)
+                ->with($enrolledCount > 0 ? 'success' : 'error', $message);
+
+        } catch (Exception $e) {
+            Log::error('Error processing enrollments: ' . $e->getMessage());
+            return redirect()->back()
+                ->with('error', 'Unable to process enrollments.')
+                ->withInput();
+        }
+    }
+
+    /**
+     * Store a new activity schedule
+     */
+    public function storeSchedule(Request $request, $id)
+    {
+        try {
+            $activity = Activity::findOrFail($id);
+            
+            $request->validate([
+                'day_of_week' => 'required|in:Monday,Tuesday,Wednesday,Thursday,Friday,Saturday,Sunday',
+                'start_time' => 'required|date_format:H:i',
+                'end_time' => 'required|date_format:H:i|after:start_time',
+                'location' => 'nullable|string|max:255',
+                'room' => 'nullable|string|max:255',
+                'recurring' => 'required|in:weekly,biweekly,monthly,one_time',
+                'start_date' => 'nullable|date',
+                'end_date' => 'nullable|date|after_or_equal:start_date',
+                'max_capacity' => 'nullable|integer|min:1'
+            ]);
+
+            ActivitySchedule::create([
+                'activity_id' => $id,
+                'day_of_week' => $request->day_of_week,
+                'start_time' => $request->start_time,
+                'end_time' => $request->end_time,
+                'location' => $request->location,
+                'room' => $request->room,
+                'recurring' => $request->recurring,
+                'start_date' => $request->start_date,
+                'end_date' => $request->end_date,
+                'max_capacity' => $request->max_capacity,
+                'status' => 'active'
+            ]);
+
+            return redirect()->route('activities.schedule', $id)
+                ->with('success', 'Schedule added successfully.');
+
+        } catch (Exception $e) {
+            Log::error('Error storing schedule: ' . $e->getMessage());
+            return redirect()->back()
+                ->with('error', 'Unable to add schedule.')
+                ->withInput();
+        }
+    }
+
+    /**
+     * Check if user can manage activity
+     */
+    private function canManageActivity($activity, $role, $userId)
+    {
+        if (in_array($role, ['admin', 'supervisor'])) {
+            return true;
+        }
+        
+        if ($role === 'teacher' && $activity->created_by == $userId) {
+            return true;
+        }
+        
+        return false;
+    }
+
+    /**
+     * Get today's schedule for dashboard widget
+     */
+    public function getTodaysSchedule()
+    {
+        try {
+            $today = Carbon::now()->format('l'); // Full day name
+            
+            $schedules = ActivitySchedule::with(['activity.teacher', 'activity.activeEnrollments'])
+                ->where('day_of_week', $today)
+                ->where('status', 'active')
+                ->orderBy('start_time')
+                ->get();
+
+            return $schedules;
+
+        } catch (Exception $e) {
+            Log::error('Error getting today\'s schedule: ' . $e->getMessage());
+            return collect([]);
+        }
     }
 }

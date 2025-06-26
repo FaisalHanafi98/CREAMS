@@ -553,12 +553,12 @@
                                         </ul>
                                     </div>
                                     <div class="teacher-footer">
-                                        <a href="{{ route('updateuser', ['id' => $user->id]) }}" class="btn btn-primary btn-sm">
+                                        <a href="{{ route('staff.view', ['id' => $user->id]) }}" class="btn btn-primary btn-sm">
                                             <i class="fas fa-user mr-1"></i> View Profile
                                         </a>
                                         @if(in_array($currentUserRole, ['admin', 'supervisor']) && 
                                             ($currentUserRole == 'admin' || $user->role != 'admin'))
-                                            <a href="{{ route('updateuser', ['id' => $user->id]) }}" class="btn btn-info btn-sm ml-2">
+                                            <a href="{{ route('staff.edit', ['id' => $user->id]) }}" class="btn btn-info btn-sm ml-2">
                                                 <i class="fas fa-edit mr-1"></i> Edit
                                             </a>
                                         @endif
@@ -629,12 +629,12 @@
                                             </ul>
                                         </div>
                                         <div class="teacher-footer">
-                                            <a href="{{ route('updateuser', ['id' => $user->id]) }}" class="btn btn-primary btn-sm">
+                                            <a href="{{ route('staff.view', ['id' => $user->id]) }}" class="btn btn-primary btn-sm">
                                                 <i class="fas fa-user mr-1"></i> View Profile
                                             </a>
                                             @if(in_array($currentUserRole, ['admin', 'supervisor']) && 
                                                 ($currentUserRole == 'admin' || $user->role != 'admin'))
-                                                <a href="{{ route('updateuser', ['id' => $user->id]) }}" class="btn btn-info btn-sm ml-2">
+                                                <a href="{{ route('staff.edit', ['id' => $user->id]) }}" class="btn btn-info btn-sm ml-2">
                                                     <i class="fas fa-edit mr-1"></i> Edit
                                                 </a>
                                             @endif

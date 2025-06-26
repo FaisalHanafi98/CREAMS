@@ -51,6 +51,33 @@ class Trainees extends Model
     }
 
     /**
+     * Get the condition badge CSS class for displaying medical conditions.
+     *
+     * @return string
+     */
+    public function getConditionBadgeClassAttribute()
+    {
+        // Map conditions to Bootstrap badge classes
+        $conditionMap = [
+            'Autism Spectrum Disorder' => 'info',
+            'Down Syndrome' => 'primary', 
+            'Cerebral Palsy' => 'warning',
+            'ADHD' => 'success',
+            'Learning Disabilities' => 'secondary',
+            'Intellectual Disability' => 'danger',
+            'Speech and Language Disorders' => 'light',
+            'Hearing Impairment' => 'secondary',
+            'Visual Impairment' => 'secondary',
+            'Physical Disability' => 'dark',
+            'Multiple Disabilities' => 'danger',
+            'Others' => 'secondary'
+        ];
+        
+        // Return the mapped badge class or default to secondary
+        return $conditionMap[$this->trainee_condition] ?? 'secondary';
+    }
+
+    /**
      * Get the trainee's age.
      *
      * @return int|null
@@ -92,11 +119,21 @@ class Trainees extends Model
     }
 
     /**
-     * Get the activities associated with the trainee.
+     * Get the activities associated with the trainee through enrollments.
      */
     public function activities()
     {
-        return $this->hasMany(TraineeActivities::class, 'trainee_id');
+        return $this->belongsToMany(Activity::class, 'activity_enrollments', 'trainee_id', 'activity_id')
+                    ->withPivot(['enrollment_date', 'status', 'notes'])
+                    ->withTimestamps();
+    }
+
+    /**
+     * Get the activity enrollments for the trainee.
+     */
+    public function enrollments()
+    {
+        return $this->hasMany(ActivityEnrollment::class, 'trainee_id');
     }
 
     /**
@@ -104,7 +141,7 @@ class Trainees extends Model
      */
     public function attendances()
     {
-        return $this->hasMany(Attendance::class, 'trainee_id');
+        return $this->hasMany(ActivityAttendance::class, 'trainee_id');
     }
 
     /**
