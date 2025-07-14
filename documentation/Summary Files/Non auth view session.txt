@@ -1,0 +1,33 @@
+Files to Remove from CREAMS Project
+1. Empty or Duplicate Files
+
+home.blade.php (document 3) - Empty file
+home.blade.php (document 7) - Empty file
+home.blade.php (document 9) - Empty file
+main.css (document 34) - Duplicate CSS file
+loginstyle.css (document 30) - Duplicate of document 22
+
+2. Redundant CSS Files That Will Be Replaced by New Files
+
+headerstyle.css (document 28) - Will be replaced by new header.css
+footerstyle.css (document 27) - Will be replaced by new footer.css
+homestyle.css (document 29) - Will be replaced by new home-page.css
+volunteerstyle.css (document 33) - Will be replaced by new volunteer-page.css
+trademarkstyle.css (document 31) - Will be replaced by new trademarks-page.css
+verifyemailstyle.css (document 32) - Will be replaced by new verify-email.css
+
+3. React Component That Should Be Refactored
+
+CREAMS System Implementation PDF.tsx (document 11) - Should be converted to standard HTML/CSS
+
+4. Redundant Controller Files with Overlapping Functionality
+
+AuthenticatedSessionController.php (document 44) - Functionality overlaps with MainController
+LoginController.php (document 41) - Functionality overlaps with MainController
+
+5. Unused JS Files
+
+avatar-fix.js (document 21) - This functionality should be incorporated into common.js
+
+Note on Naming Consistency
+For all new files, we'll use hyphenated naming (e.g., "home-page.css" instead of "homestyle.css") for better readability and maintain British English spelling throughout.

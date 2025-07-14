@@ -1,0 +1,571 @@
+# CREAMS USER/STAFF MODULE - COMPREHENSIVE DOCUMENTATION
+Version: 1.0
+Date: December 2024
+System: Community-based REhAbilitation Management System (CREAMS)
+
+================================================================================
+## 1. MODULE OVERVIEW
+================================================================================
+
+### Module Purpose:
+The User/Staff module manages all system users across four distinct roles (Admin, Supervisor, Teacher, AJK) who work together to provide rehabilitation services for children with special needs. Each role has specific permissions and responsibilities within the system.
+
+### Current Status: ✅ FULLY FUNCTIONAL
+- Unified user management with single 'users' table
+- Role-based access control (RBAC)
+- Staff directory with filtering capabilities
+- Individual profile management
+- Activity (subject) specialization tracking
+- Multi-level permission hierarchy
+
+### Key Features:
+- **Hierarchical Role System**: Admin > Supervisor > Teacher/AJK
+- **Staff Directory**: Central hub for viewing all staff members
+- **Profile Management**: View/edit own profile and manage other users (based on permissions)
+- **Activity Tracking**: Major and minor subject specializations
+- **Centre Assignment**: Staff linked to specific rehabilitation centres
+- **Real-time Search**: Filter staff by role, activity, centre, or name
+- **Responsive Design**: Mobile-friendly interface
+
+================================================================================
+## 2. ROLE HIERARCHY & PERMISSIONS
+================================================================================
+
+### 2.1 Role Structure:
+
+```
+Admin (Highest Level)
+├── Can manage ALL users (create, read, update, delete)
+├── Access to system settings
+├── Full asset inventory management
+└── Complete system visibility
+
+Supervisor (High Level)  
+├── Can manage Teachers and AJKs only
+├── Cannot manage Admins
+├── Limited asset management
+└── Centre-specific oversight
+
+Teacher (Standard Level)
+├── Can view other staff profiles
+├── Manage own classes and trainees
+├── Cannot edit other users
+└── Activity-specific responsibilities
+
+AJK (Standard Level - Committee)
+├── Can view other staff profiles  
+├── Event and volunteer management
+├── Cannot edit other users
+└── Community engagement focus
+```
+
+### 2.2 Permission Matrix:
+
+| Action | Admin | Supervisor | Teacher | AJK |
+|--------|-------|------------|---------|-----|
+| View all staff | ✓ | ✓ | ✓ | ✓ |
+| Create users | ✓ | ✓* | ✗ | ✗ |
+| Edit users | ✓ | ✓* | ✗ | ✗ |
+| Delete users | ✓ | ✓* | ✗ | ✗ |
+| Manage assets | ✓ | ✗ | ✗ | ✗ |
+| System settings | ✓ | ✗ | ✗ | ✗ |
+
+*Supervisors can only manage Teachers and AJKs, not Admins
+
+================================================================================
+## 3. DATABASE STRUCTURE
+================================================================================
+
+### 3.1 Users Table (Unified for all roles):
+```sql
+users
+├── id (bigint, primary key)
+├── iium_id (varchar(8), unique) - Format: ABCD1234
+├── name (varchar)
+├── email (varchar, unique)
+├── password (varchar, hashed)
+├── role (varchar) - Values: admin, supervisor, teacher, ajk
+├── status (varchar) - Values: active, inactive
+├── phone (varchar, nullable)
+├── address (text, nullable)
+├── position (varchar, nullable) - Job title/position
+├── centre_id (varchar) - FK to centres table
+├── centre_location (varchar) - Gombak/Kuantan/Pagoh
+├── avatar (varchar, nullable) - Profile picture filename
+├── user_activity_1 (varchar) - Major subject/specialization
+├── user_activity_2 (varchar, nullable) - Minor subject/specialization
+├── user_last_accessed_at (datetime, nullable)
+├── about (text, nullable) - Bio/description
+├── review (text, nullable) - Performance review
+├── date_of_birth (date, nullable)
+├── remember_token (varchar, nullable)
+├── created_at (timestamp)
+└── updated_at (timestamp)
+```
+
+### 3.2 Key Relationships:
+- **users** → **centres** (Many-to-One via centre_id)
+- **users** → **classes** (One-to-Many for teachers)
+- **users** → **activities** (One-to-Many)
+- **users** → **trainees** (One-to-Many through classes)
+- **users** → **events** (One-to-Many for AJKs)
+
+### 3.3 Activity Specializations:
+Common values for user_activity_1 and user_activity_2:
+- Autism Spectrum Intervention
+- Speech Therapy
+- Occupational Therapy
+- Physical Therapy
+- Special Education
+- Behavioral Therapy
+- Sensory Integration
+- Communication Skills
+- Motor Skills Development
+- Cognitive Development
+
+================================================================================
+## 4. STAFF DIRECTORY (TEACHERSHOME)
+================================================================================
+
+### 4.1 Overview:
+The Staff Directory (teachershome.blade.php) serves as the central hub for viewing and managing all system users. Despite the name, it's accessible to ALL authenticated users, not just teachers.
+
+### 4.2 File Structure:
+```
+Controllers/
+├── TeachersHomeController.php - Main controller for all roles
+├── TeachersHomeControllerSupervisor.php - Legacy/alternate implementation
+└── TeachersHomeControllerTeacher.php - Legacy/alternate implementation
+
+Views/
+├── teachershome.blade.php - Unified staff directory view
+├── teachershomesupervisor.blade.php - Legacy supervisor-specific view
+└── teachershometeacher.blade.php - Legacy teacher-specific view
+
+Styles/
+└── teachershomestyle.css - Staff directory styling
+```
+
+### 4.3 Features:
+
+#### A. Staff Statistics Dashboard:
+```
+┌─────────────────┬─────────────────┬─────────────────┬─────────────────┐
+│ Total Staff: 45 │ Teachers: 24    │ Supervisors: 8  │ Admins: 3       │
+└─────────────────┴─────────────────┴─────────────────┴─────────────────┘
+```
+
+#### B. Filter System:
+- **Role Filter**: All Roles / Admin / Supervisor / Teacher / AJK
+- **Activity Filter**: Filter by major specialization
+- **Centre Filter**: Gombak / Kuantan / Pagoh
+- **Search Bar**: Real-time search by name, email, or activity
+
+#### C. Staff Cards Display:
+Each staff member shown as a card with:
+- Profile picture (avatar)
+- Name and role badge
+- Staff ID
+- Major activity (user_activity_1)
+- Minor activity (user_activity_2)
+- Centre assignment
+- Action buttons (View Profile / Edit - based on permissions)
+
+#### D. View Organization by Tabs:
+- **All Staff**: Complete list
+- **By Activity**: Grouped by specialization (Speech Therapy, OT, etc.)
+- **Activity-specific tabs**: Dynamic tabs for each activity type
+
+### 4.4 Permission-Based Display:
+```javascript
+// Edit button visibility logic
+if (currentUserRole === 'admin' || 
+    (currentUserRole === 'supervisor' && targetRole !== 'admin')) {
+    // Show Edit button
+}
+```
+
+================================================================================
+## 5. USER PROFILE MANAGEMENT
+================================================================================
+
+### 5.1 Profile System Overview:
+
+#### A. Own Profile Management (profile.blade.php):
+- **Route**: /profile
+- **Controller**: UserProfileController
+- **Features**:
+  - View/edit personal information
+  - Change password with strength meter
+  - Upload/change avatar
+  - Update contact details
+  - Manage bio and specializations
+
+#### B. User Management by Admins/Supervisors:
+- **View Route**: /updateuser/{id} or /{role}/user/view/{id}
+- **Edit Route**: /updateuser/{id} or /{role}/user/edit/{id}
+- **Controller**: TeachersHomeController@updateuser
+- **Features**:
+  - Full profile editing
+  - Status management (active/inactive)
+  - Role changes (within permissions)
+  - Password reset capability
+  - Activity assignment
+
+### 5.2 Profile Components:
+
+#### A. Header Section:
+```
+┌─────────────────────────────────────────┐
+│ [Avatar]  Name: Dr. Nurul Hafizah       │
+│           Role: Teacher                  │
+│           📧 nurul@iium.edu.my          │
+│           📱 +60 12-345-6789            │
+│           🆔 EFGH5678                   │
+│                          [Edit Profile]  │
+└─────────────────────────────────────────┘
+```
+
+#### B. Information Tabs:
+1. **Personal Information**
+   - Full name, email, phone
+   - Address, date of birth
+   - Bio/about section
+   - Editable fields with validation
+
+2. **Change Password**
+   - Current password verification
+   - New password with requirements
+   - Real-time strength meter
+   - Confirmation field
+
+3. **Preferences** (Future implementation)
+   - Notification settings
+   - Display preferences
+   - Language settings
+
+### 5.3 Avatar Management:
+- **Supported Formats**: JPEG, PNG, JPG, GIF
+- **Max Size**: 2MB
+- **Storage Path**: storage/app/public/avatars/
+- **Naming Convention**: {role}_{id}_{random}.{ext}
+- **Features**:
+  - Drag-and-drop upload
+  - Preview before save
+  - Default avatar fallback
+  - Old avatar auto-deletion
+
+================================================================================
+## 6. USER CRUD OPERATIONS
+================================================================================
+
+### 6.1 Create New User:
+**Only Admin and Supervisor roles can create users**
+
+#### Flow:
+1. Navigate to Staff Directory
+2. Click "Add Staff" button
+3. Fill registration form (same as public registration)
+4. Assign role based on permissions
+5. Set centre and activities
+6. User created with active status
+
+#### Validation:
+- IIUM ID: 8 characters (4 letters + 4 numbers)
+- Email: Unique, valid format
+- Password: Min 5 chars with letter+number+special
+- Role: Must be within creator's permission level
+
+### 6.2 Read/View User:
+**All authenticated users can view profiles**
+
+#### Information Displayed:
+- Personal details
+- Contact information
+- Role and centre assignment
+- Major/minor activities
+- Account status
+- Last login time
+- Performance metrics (if applicable)
+
+### 6.3 Update User:
+**Admin can update all; Supervisor can update Teacher/AJK only**
+
+#### Editable Fields:
+- Name, email, phone, address
+- Centre assignment
+- Activity specializations
+- Position/title
+- Account status
+- Bio/about section
+
+#### Non-editable Fields:
+- IIUM ID (unique identifier)
+- Role (requires special permission)
+- Created/updated timestamps
+
+### 6.4 Delete User:
+**Soft delete implementation (status = inactive)**
+
+#### Process:
+1. Change status to 'inactive'
+2. User cannot login
+3. Historical data preserved
+4. Can be reactivated if needed
+
+================================================================================
+## 7. ACTIVITY TRACKING & CHARTS
+================================================================================
+
+### 7.1 Staff Analytics (Admin Dashboard):
+
+#### User Registration Chart:
+- Monthly registration trends
+- New user growth rate
+- Historical comparison
+
+#### Role Distribution Pie Chart:
+- Visual breakdown by role
+- Percentage of each user type
+- Interactive hover details
+
+### 7.2 Activity Distribution:
+
+#### Staff by Specialization:
+```
+Speech Therapy        ████████████ 12 staff
+Occupational Therapy  ████████ 8 staff  
+Special Education     ██████████ 10 staff
+Physical Therapy      ████████████████ 15 staff
+Behavioral Therapy    ██████ 6 staff
+```
+
+#### Centre Distribution:
+- Bar chart showing staff per centre
+- Capacity utilization metrics
+- Geographic distribution
+
+### 7.3 Performance Metrics:
+
+#### For Teachers:
+- Number of classes assigned
+- Total trainees under care
+- Attendance rate
+- Activity completion rate
+
+#### For Supervisors:
+- Teachers managed
+- Centre performance
+- Activity oversight metrics
+
+================================================================================
+## 8. SEARCH & FILTER FUNCTIONALITY
+================================================================================
+
+### 8.1 Global Search:
+- **Route**: /search
+- **Method**: GET with AJAX
+- **Searches**: Name, email, activities
+- **Returns**: JSON with user matches
+
+### 8.2 Filter Implementation:
+
+```javascript
+// Filter combination example
+filters = {
+    role: 'teacher',
+    activity: 'Speech Therapy',
+    centre: '1', // Gombak
+    search: 'Ahmad'
+}
+```
+
+### 8.3 Results Display:
+- Real-time filtering without page reload
+- Loading states during search
+- Empty state messages
+- Result count display
+
+================================================================================
+## 9. SECURITY & ACCESS CONTROL
+================================================================================
+
+### 9.1 Middleware Protection:
+```php
+// Route protection examples
+Route::middleware(['auth'])->group(function () {
+    // All authenticated users
+    Route::get('/teachershome', ...);
+});
+
+Route::middleware(['auth', 'role:admin,supervisor'])->group(function () {
+    // Admin and Supervisor only
+    Route::post('/user/create', ...);
+});
+```
+
+### 9.2 Permission Checks:
+```php
+// Controller-level permission check
+private function canManageRole($targetRole) {
+    $userLevel = $this->roleHierarchy[$userRole];
+    $targetLevel = $this->roleHierarchy[$targetRole];
+    return $userLevel > $targetLevel;
+}
+```
+
+### 9.3 Data Scoping:
+- Users see data based on their centre
+- Role-based data filtering
+- Sensitive information hidden from lower roles
+
+================================================================================
+## 10. UI/UX COMPONENTS
+================================================================================
+
+### 10.1 Staff Card Design:
+```css
+.teacher-card {
+    border-radius: 10px;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+    transition: transform 0.3s ease;
+}
+
+.teacher-card:hover {
+    transform: translateY(-5px);
+}
+```
+
+### 10.2 Role-Specific Colors:
+```css
+.role-admin { background-color: #4e73df; }
+.role-supervisor { background-color: #1cc88a; }
+.role-teacher { background-color: #36b9cc; }
+.role-ajk { background-color: #f6c23e; }
+```
+
+### 10.3 Responsive Design:
+- Mobile: Single column cards
+- Tablet: 2-column grid
+- Desktop: 3-4 column grid
+- Collapsible filters on mobile
+
+================================================================================
+## 11. INTEGRATION WITH OTHER MODULES
+================================================================================
+
+### 11.1 Dashboard Integration:
+- User counts displayed on main dashboard
+- Recent user activities tracked
+- Quick access to staff directory
+
+### 11.2 Trainee Module Integration:
+- Teachers linked to trainees through classes
+- Supervisor oversight of teacher-trainee relationships
+- Performance metrics aggregation
+
+### 11.3 Activity Module Integration:
+- Staff assigned to activities based on specialization
+- Activity scheduling considers staff availability
+- Workload distribution tracking
+
+### 11.4 Centre Module Integration:
+- Staff assigned to specific centres
+- Centre capacity planning
+- Geographic distribution reports
+
+================================================================================
+## 12. COMMON WORKFLOWS
+================================================================================
+
+### 12.1 New Staff Onboarding:
+1. Admin/Supervisor creates account
+2. Assigns role and centre
+3. Sets major/minor specializations
+4. User receives login credentials
+5. First login prompts profile completion
+
+### 12.2 Staff Performance Review:
+1. Supervisor accesses teacher profile
+2. Views performance metrics
+3. Updates review section
+4. Adjusts status if needed
+5. System tracks review history
+
+### 12.3 Finding Specialized Staff:
+1. Access Staff Directory
+2. Filter by required activity
+3. Check availability by centre
+4. View detailed profiles
+5. Contact or assign as needed
+
+================================================================================
+## 13. ERROR HANDLING & VALIDATION
+================================================================================
+
+### 13.1 Common Validation Rules:
+- Email uniqueness across system
+- IIUM ID format and uniqueness
+- Role assignment within permissions
+- Centre existence validation
+- Activity selection from predefined list
+
+### 13.2 Error Messages:
+- "You do not have permission to edit this user"
+- "Email address already in use"
+- "Invalid IIUM ID format"
+- "User not found"
+- "Cannot modify admin accounts"
+
+### 13.3 Success Feedback:
+- "User created successfully"
+- "Profile updated successfully"
+- "Password changed successfully"
+- "Avatar uploaded successfully"
+- "User status updated"
+
+================================================================================
+## 14. FUTURE ENHANCEMENTS
+================================================================================
+
+### 14.1 Planned Features:
+1. Bulk user import via CSV
+2. Advanced role customization
+3. Detailed audit logging
+4. Performance analytics dashboard
+5. Staff scheduling integration
+6. Multi-factor authentication
+7. API for external integrations
+
+### 14.2 UI/UX Improvements:
+1. Dark mode support
+2. Advanced filtering options
+3. Batch operations (multiple select)
+4. Export functionality (PDF/Excel)
+5. Real-time notifications
+6. Mobile app consideration
+
+================================================================================
+## 15. TROUBLESHOOTING GUIDE
+================================================================================
+
+### 15.1 Common Issues:
+
+**Issue**: Cannot see Edit button for users
+**Solution**: Check your role permissions - only Admin and Supervisor can edit
+
+**Issue**: Avatar upload fails
+**Solution**: Check file size (<2MB) and format (JPEG/PNG/JPG/GIF)
+
+**Issue**: Filter returns no results
+**Solution**: Clear filters and try broader search terms
+
+**Issue**: Cannot change user role
+**Solution**: Role changes require Admin permission
+
+**Issue**: Profile changes not saving
+**Solution**: Check validation errors and required fields
+
+================================================================================
+
+This documentation represents the complete User/Staff module implementation as of December 2024. The module successfully manages all four user roles with appropriate permissions and provides a comprehensive staff management system for the CREAMS rehabilitation platform.

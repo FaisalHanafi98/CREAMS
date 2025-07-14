@@ -1,0 +1,186 @@
+        :root {
+            --primary-color: #32bdea;
+            --secondary-color: #c850c0;
+            --primary-gradient: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            --dark-color: #333;
+            --light-color: #f9f9fc;
+            --text-color: #444444;
+            --border-color: #e3e6f0;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+        
+        body {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background-image: url('{{ asset("images/loginpagebackground.jpg") }}');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+        }
+        
+        .logo-container {
+            position: fixed;
+            top: 30px;
+            left: 50px;
+            z-index: 100;
+        }
+        
+        .logo-container a {
+            font-size: 32px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+        }
+        
+        .logo-container a:hover {
+            transform: translateY(-2px);
+            text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .logo-container img {
+            height: 40px;
+            margin-right: 10px;
+        }
+        
+        .container {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 40px 20px;
+        }
+        
+        .verify-email-card {
+            width: 100%;
+            max-width: 500px;
+            background-color: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .form-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .form-header h2 {
+            font-size: 28px;
+            font-weight: 600;
+            color: var(--dark-color);
+            margin-bottom: 15px;
+        }
+        
+        .form-header .icon {
+            font-size: 50px;
+            color: var(--primary-color);
+            margin-bottom: 15px;
+        }
+        
+        .message {
+            color: #777;
+            line-height: 1.6;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .btn-verify {
+            display: block;
+            width: 100%;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-weight: 500;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+            text-align: center;
+            text-decoration: none;
+        }
+        
+        .btn-verify:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+            color: white;
+        }
+        
+        .btn-logout {
+            display: block;
+            width: 100%;
+            background: none;
+            color: #777;
+            border: 1px solid var(--border-color);
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-weight: 500;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 15px;
+            text-align: center;
+            text-decoration: none;
+        }
+        
+        .btn-logout:hover {
+            background-color: #f5f5f5;
+            color: var(--dark-color);
+        }
+        
+        .action-buttons {
+            margin-top: 30px;
+        }
+        
+        .alert {
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 25px;
+            border: none;
+        }
+        
+        .alert-success {
+            background-color: rgba(28, 200, 138, 0.15);
+            color: #1cc88a;
+        }
+        
+        .alert-info {
+            background-color: rgba(54, 185, 204, 0.15);
+            color: #36b9cc;
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .logo-container {
+                left: 20px;
+                top: 20px;
+            }
+            
+            .logo-container a {
+                font-size: 28px;
+            }
+            
+            .verify-email-card {
+                padding: 30px 20px;
+            }
+        }

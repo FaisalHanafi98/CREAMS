@@ -1,0 +1,260 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Carbon;
+
+class Trainee extends Model
+{
+    use HasFactory;
+
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<int, string>
+     */
+    protected $fillable = [
+        'trainee_first_name',
+        'trainee_last_name',
+        'trainee_email',
+        'trainee_phone_number',
+        'trainee_date_of_birth',
+        'gender',
+        'trainee_address',
+        'avatar',
+        'trainee_condition',
+        // Guardian information
+        'guardian_name',
+        'guardian_phone',
+        'guardian_email', 
+        'guardian_relationship',
+        'guardian_address',
+        // Emergency contact
+        'emergency_contact_name',
+        'emergency_contact_phone',
+        'emergency_contact_relationship',
+        // Additional fields
+        'medical_history',
+        'additional_notes',
+    ];
+    
+    /**
+     * The attributes that should be guarded from mass assignment.
+     * These fields require explicit authorization to modify.
+     *
+     * @var array<int, string>
+     */
+    protected $guarded = [
+        'trainee_last_accessed_at', // System-managed field
+        'centre_name',              // Requires admin approval
+        'trainee_attendance',       // System-calculated field
+        'course_id',               // Requires enrollment process
+        'photo_consent',           // Legal consent requires verification
+        'services_consent',        // Legal consent requires verification
+        'status',                  // Status changes require approval
+        'created_at',
+        'updated_at',
+    ];
+
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array<string, string>
+     */
+    protected $casts = [
+        'trainee_date_of_birth' => 'date',
+        'trainee_last_accessed_at' => 'datetime',
+        'trainee_attendance' => 'integer',
+    ];
+
+    /**
+     * Get the trainee's full name.
+     *
+     * @return string
+     */
+    public function getFullNameAttribute()
+    {
+        return "{$this->trainee_first_name} {$this->trainee_last_name}";
+    }
+
+    /**
+     * Get the trainee's age.
+     *
+     * @return int|null
+     */
+    public function getAgeAttribute()
+    {
+        if ($this->trainee_date_of_birth) {
+            return Carbon::parse($this->trainee_date_of_birth)->age;
+        }
+        
+        return null;
+    }
+
+    /**
+     * Get the avatar URL for the trainee.
+     *
+     * @return string
+     */
+    public function getAvatarUrlAttribute()
+    {
+        if ($this->avatar) {
+            // Check if path already starts with 'storage/'
+            if (strpos($this->avatar, 'storage/') === 0) {
+                // Path already includes storage/, just add asset()
+                return asset($this->avatar);
+            } elseif (strpos($this->avatar, 'trainee_avatars/') !== false) {
+                // Path has trainee_avatars but no storage prefix
+                return asset('storage/' . $this->avatar);
+            } else {
+                // Just filename, add full path
+                return asset('storage/trainee_avatars/' . $this->avatar);
+            }
+        }
+        
+        // Return default avatar
+        return asset('images/default-avatar.png');
+    }
+
+    /**
+     * Get the badge class for the trainee's condition.
+     *
+     * @return string
+     */
+    public function getConditionBadgeClassAttribute()
+    {
+        // Map conditions to Bootstrap badge classes
+        $conditionMap = [
+            'Autism Spectrum Disorder' => 'info',
+            'Down Syndrome' => 'primary',
+            'Cerebral Palsy' => 'warning',
+            'Hearing Impairment' => 'secondary',
+            'Visual Impairment' => 'secondary',
+            'Intellectual Disability' => 'danger',
+            'Physical Disability' => 'dark',
+            'Speech and Language Disorder' => 'light',
+            'Learning Disability' => 'success',
+            'Multiple Disabilities' => 'danger',
+            'Others' => 'secondary'
+        ];
+        
+        // Return the mapped badge class or default to secondary
+        return $conditionMap[$this->trainee_condition] ?? 'secondary';
+    }
+
+    /**
+     * Get the profile associated with the trainee.
+     */
+    public function profile()
+    {
+        return $this->hasOne(TraineeProfile::class, 'trainee_id');
+    }
+
+    /**
+     * Get the activities associated with the trainee through enrollments.
+     */
+    public function activities()
+    {
+        return $this->belongsToMany(Activity::class, 'activity_enrollments', 'trainee_id', 'activity_id')
+                    ->withPivot(['enrollment_date', 'status', 'notes'])
+                    ->withTimestamps();
+    }
+
+    /**
+     * Get the activity enrollments for the trainee.
+     */
+    public function enrollments()
+    {
+        return $this->hasMany(ActivityEnrollment::class, 'trainee_id');
+    }
+
+    /**
+     * Get the session enrollments for the trainee.
+     */
+    public function sessionEnrollments()
+    {
+        return $this->hasMany(SessionEnrollment::class, 'trainee_id');
+    }
+
+    /**
+     * Get the attendance records associated with the trainee.
+     */
+    public function attendances()
+    {
+        return $this->hasMany(Attendance::class, 'trainee_id');
+    }
+
+    /**
+     * Get the course that the trainee is enrolled in.
+     */
+    public function course()
+    {
+        return $this->belongsTo(Courses::class, 'course_id');
+    }
+
+    /**
+     * Get the centre that the trainee belongs to.
+     */
+    public function centre()
+    {
+        return $this->belongsTo(Centres::class, 'centre_name', 'centre_name');
+    }
+
+    /**
+     * Get the classes that the trainee is enrolled in.
+     */
+    public function classes()
+    {
+        return $this->belongsToMany(Classes::class, 'class_trainee', 'trainee_id', 'class_id')
+                    ->withTimestamps();
+    }
+
+    /**
+     * Scope a query to only include active trainees.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeActive($query)
+    {
+        return $query->where('status', 'active');
+    }
+
+    /**
+     * Scope a query to only include trainees of a specific centre.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  string  $centreName
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeByCentre($query, $centreName)
+    {
+        return $query->where('centre_name', $centreName);
+    }
+
+    /**
+     * Scope a query to only include trainees of a specific course.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  string  $courseId
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeByCourse($query, $courseId)
+    {
+        return $query->where('course_id', $courseId);
+    }
+
+    /**
+     * Scope a query to only include trainees with a specific condition.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  string  $condition
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeByCondition($query, $condition)
+    {
+        return $query->where('trainee_condition', $condition);
+    }
+}

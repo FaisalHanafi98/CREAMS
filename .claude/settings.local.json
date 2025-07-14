@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(rg:*)",
+      "Bash(php artisan optimize:clear:*)",
+      "Bash(php artisan make:migration:*)",
+      "Bash(rm:*)",
+      "Bash(php artisan make:controller:*)",
+      "Bash(php artisan:*)",
+      "Bash(php:*)",
+      "Bash(grep:*)",
+      "Bash(vendor/bin/pint:*)",
+      "Bash(composer:*)",
+      "Bash(mkdir:*)",
+      "Bash(find:*)",
+      "Bash(mv:*)"
+    ],
+    "deny": []
+  }
+}

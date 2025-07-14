@@ -1,0 +1,32 @@
+{
+    "private": true,
+    "type": "module",
+    "name": "cream",
+    "version": "1.0.0",
+    "description": "CREAMS - Care Rehabilitation Centre Management System",
+    "main": "postcss.config.js",
+    "directories": {
+        "test": "tests"
+    },
+    "scripts": {
+        "dev": "vite",
+        "build": "vite build"
+    },
+    "devDependencies": {
+        "@tailwindcss/forms": "^0.5.2",
+        "alpinejs": "^3.4.2",
+        "autoprefixer": "^10.4.2",
+        "axios": "^1.1.2",
+        "laravel-vite-plugin": "^1.2.0",
+        "postcss": "^8.4.31",
+        "tailwindcss": "^3.1.0",
+        "vite": "^6.2.0"
+    },
+    "dependencies": {
+        "bootstrap": "^5.3.3",
+        "jquery": "^3.7.1"
+    },
+    "keywords": ["laravel", "rehabilitation", "management", "healthcare"],
+    "author": "",
+    "license": "ISC"
+}

@@ -1,0 +1,132 @@
+# CREAMS System Overview
+
+CREAMS (Community-based REhAbilitation Management System) is a comprehensive web-based application built with Laravel that provides management solutions for rehabilitation centers serving children with special needs.
+
+## System Architecture
+
+- **Framework**: Laravel (PHP)
+- **Database**: MySQL
+- **Frontend**: HTML, CSS, JavaScript, Bootstrap
+- **Authentication**: Custom role-based system
+
+## User Roles & Access Hierarchy
+
+The system implements a four-tier role-based access control:
+
+1. **Admin** - Full system access
+2. **Supervisor** - Extensive access with some admin restrictions
+3. **AJK** (Committee Member) - Moderate access level
+4. **Teacher** - Limited access to teaching-related functions
+
+## Authentication Process
+
+1. Users navigate to the login page (`auth.loginpage` route)
+2. They enter either IIUM ID or email plus password
+3. System validates credentials against the `Users` model (or role-specific models)
+4. On successful validation:
+   - User role is determined
+   - Session data is stored (ID, role, name, center info)
+   - User is redirected to role-specific dashboard
+5. Optional "Remember Me" functionality via cookies
+
+## Dashboard System
+
+Each role has a custom dashboard displaying relevant metrics:
+
+### Admin Dashboard
+- Complete visibility of all modules
+- User registration and role distribution charts
+- Last accessed user profile card with direct link
+- Current courses in progress with comprehensive details
+- Schedule overview with time-specific course information
+- Full access to staff management for all roles
+- Complete trainee management capabilities
+- Asset inventory management
+- System settings and configuration
+
+### Supervisor Dashboard
+- Teacher performance metrics
+- Limited staff management (cannot manage admin users)
+- Trainee management access
+- Course and class oversight
+- Activity approval capabilities
+- Cannot access asset inventory
+
+### AJK Dashboard
+- Event management functionality
+- Volunteer coordination
+- Limited trainee information access
+- Event participation analytics
+
+### Teacher Dashboard
+- Class schedule view
+- Trainee attendance tracking
+- Progress monitoring for assigned trainees
+- Limited to own classes and assigned trainees
+- Performance analytics for their trainees
+
+## Core Modules
+
+### User Management
+- Registration with role assignment
+- Profile management (view/edit based on role)
+- Password and status management
+- IIUM ID integration
+
+### Trainee Management
+- Comprehensive registration for children with disabilities
+- Detailed profile tracking with condition-specific fields
+- Progress monitoring system
+- Attendance tracking
+- Class enrollment
+
+### Course/Class Management
+- Scheduling system for rehabilitation activities
+- Teacher assignment
+- Trainee enrollment
+- Location and resource allocation
+- Progress tracking integration
+
+### Asset Inventory (Admin only)
+- Resource tracking
+- Equipment management
+- Maintenance scheduling
+- Allocation to centers and activities
+
+### Reporting and Analytics
+- Performance dashboards with visual charts
+- Attendance reporting
+- Progress visualization
+- Export capabilities
+
+## Navigation System
+
+- Responsive sidebar navigation that collapses for mobile
+- Role-based menu items
+- Profile dropdown with quick links
+- Notification system
+- Search functionality
+
+## Security Features
+
+- Role-based middleware protection on all routes
+- Form validation with specific error messages
+- Session management and timeout
+- Password hashing
+- Activity logging
+- Input sanitization
+
+## Data Models
+
+Core models include:
+- Users (and role-specific extensions: Admins, Supervisors, Teachers, AJKs)
+- Trainees
+- Courses
+- Classes
+- Centres
+- Assets
+- Activities
+- Attendances
+- Events
+
+The system's modular design ensures each user role has access exactly to the functionality they need while maintaining robust security and data privacy across the rehabilitation center ecosystem.

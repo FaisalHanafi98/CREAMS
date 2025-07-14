@@ -1,0 +1,220 @@
+CREAMS SYSTEM AUDIT LOG
+========================
+Enhancement: Malaysian Curriculum Database Schema Migration
+Date: December 18, 2024
+Migration File: database/migrations/2024_12_18_create_malaysian_subjects_enhancement.php
+Status: CREATED - Ready for Execution
+
+OVERVIEW
+--------
+Created comprehensive database migration to enhance CREAMS with Malaysian special education
+curriculum standards and disability accommodation framework for rehabilitation centers.
+
+MIGRATION STRUCTURE
+-------------------
+
+1. ACTIVITIES TABLE ENHANCEMENTS
+   Added columns to existing 'activities' table:
+   
+   a) subject_category (ENUM, nullable)
+      Values: bahasa_malaysia, english_language, arabic_language, mathematics, 
+              science, life_skills, physical_therapy, occupational_therapy, 
+              speech_therapy, social_skills
+      Purpose: Align activities with Malaysian curriculum subjects
+   
+   b) curriculum_level (ENUM, default: 'foundation')
+      Values: pre_foundation, foundation, basic, adaptive
+      Purpose: Map to Malaysian Foundation Standards educational levels
+   
+   c) standard_duration_minutes (INTEGER, default: 45)
+      Purpose: Standard lesson duration for activity planning
+   
+   d) minimum_duration_minutes (INTEGER, default: 15)
+      Purpose: Shortest acceptable duration for flexibility
+   
+   e) maximum_duration_minutes (INTEGER, default: 90)
+      Purpose: Longest duration to prevent over-scheduling
+   
+   f) learning_outcomes (JSON, nullable)
+      Purpose: Store Malaysian curriculum learning outcomes as structured data
+   
+   g) assessment_criteria (JSON, nullable)
+      Purpose: Store assessment methods and criteria
+   
+   h) requires_special_accommodation (BOOLEAN, default: false)
+      Purpose: Flag activities requiring disability accommodations
+
+2. DISABILITY_ACCOMMODATIONS TABLE (NEW)
+   Primary Purpose: Template-based accommodation recommendations
+   
+   Schema:
+   - id: Primary key
+   - disability_type: ENUM of recognized disability categories
+   - subject_category: ENUM matching activity subjects
+   - recommended_duration_minutes: Suggested lesson length
+   - break_frequency_minutes: Required break intervals
+   - teaching_strategies: JSON array of recommended methods
+   - assessment_modifications: JSON array of assessment adaptations
+   - special_notes: TEXT for additional guidance
+   - timestamps: Created/updated tracking
+   
+   Unique Constraint: [disability_type, subject_category]
+   Ensures one template per disability-subject combination
+
+3. TRAINEE_SUBJECT_ADAPTATIONS TABLE (NEW)
+   Primary Purpose: Individual trainee customizations
+   
+   Schema:
+   - id: Primary key
+   - trainee_id: Foreign key to trainees table (CASCADE DELETE)
+   - subject_category: ENUM matching activity subjects
+   - adapted_duration_minutes: Personalized lesson duration
+   - break_frequency_minutes: Individual break requirements
+   - accommodations: JSON array of specific adaptations
+   - teacher_notes: TEXT for educator guidance
+   - requires_aide: BOOLEAN for support staff needs
+   - timestamps: Created/updated tracking
+   
+   Unique Constraint: [trainee_id, subject_category]
+   Ensures one adaptation record per trainee-subject combination
+
+DISABILITY CATEGORIES SUPPORTED
+-------------------------------
+1. Autism Spectrum Disorder
+2. Down Syndrome
+3. Cerebral Palsy
+4. Hearing Impairment
+5. Visual Impairment
+6. Intellectual Disability
+7. Physical Disability
+8. Speech and Language Disorder
+9. Learning Disability
+10. Multiple Disabilities
+
+SUBJECT CATEGORIES ALIGNMENT
+----------------------------
+Malaysian Curriculum Subjects:
+- Bahasa Malaysia (Primary language)
+- English Language (Secondary language)
+- Arabic Language (Religious education)
+- Mathematics (Numeracy skills)
+- Science (Basic scientific concepts)
+- Life Skills (Daily living, vocational)
+
+Therapy Categories:
+- Physical Therapy
+- Occupational Therapy
+- Speech Therapy
+- Social Skills Training
+
+TECHNICAL SPECIFICATIONS
+------------------------
+
+Data Integrity:
+- Foreign key constraints with proper cascade rules
+- Unique constraints prevent duplicate configurations
+- ENUM values ensure data consistency
+- JSON validation for structured fields
+
+Performance Optimization:
+- Indexed foreign keys for fast lookups
+- Unique constraints double as performance indexes
+- Minimal table joins required for common queries
+
+Storage Efficiency:
+- ENUM fields reduce storage vs VARCHAR
+- JSON fields for variable-length arrays
+- Appropriate field sizes for expected data ranges
+
+BUSINESS LOGIC INTEGRATION
+--------------------------
+
+Accommodation Hierarchy:
+1. Individual trainee adaptations (highest priority)
+2. Disability-based templates (medium priority)
+3. Activity defaults (lowest priority)
+
+Duration Calculation Logic:
+- Respects minimum/maximum boundaries
+- Considers break frequency requirements
+- Adapts to individual trainee needs
+
+Assessment Adaptation:
+- Maintains educational standards
+- Provides alternative assessment methods
+- Supports diverse learning needs
+
+COMPLIANCE FEATURES
+-------------------
+
+Educational Standards:
+- Aligns with Malaysian Ministry of Education guidelines
+- Supports individualized education programs (IEPs)
+- Enables curriculum-based assessment
+
+Data Protection:
+- Secure storage of sensitive disability information
+- Audit trail through timestamp fields
+- Proper data relationships for integrity
+
+Accessibility:
+- Comprehensive accommodation framework
+- Multiple adaptation levels
+- Inclusive design principles
+
+ROLLBACK STRATEGY
+-----------------
+
+The migration includes a complete down() method that:
+1. Drops new tables (trainee_subject_adaptations, disability_accommodations)
+2. Removes added columns from activities table
+3. Preserves existing data integrity
+4. Can be executed safely if issues arise
+
+DEPLOYMENT REQUIREMENTS
+-----------------------
+
+Pre-deployment:
+- Backup existing database
+- Verify Laravel migration environment
+- Ensure proper database permissions
+
+Post-deployment:
+- Run DisabilityAccommodationsSeeder
+- Update existing activities with subject categories
+- Train staff on new features
+- Monitor system performance
+
+TESTING CHECKLIST
+------------------
+□ Migration runs successfully
+□ Foreign key constraints work
+□ Unique constraints prevent duplicates
+□ JSON fields accept valid data
+□ ENUM values enforce allowed options
+□ Rollback migration works
+□ Data integrity maintained
+□ Performance benchmarks met
+
+SECURITY CONSIDERATIONS
+-----------------------
+- Sensitive disability data requires proper access controls
+- JSON fields validated to prevent injection attacks
+- Foreign key constraints prevent orphaned records
+- Audit logging for accommodation changes
+
+MAINTENANCE NOTES
+-----------------
+- Regular review of accommodation templates
+- Update disability categories as needed
+- Monitor JSON field usage and performance
+- Periodic data cleanup of unused adaptations
+
+AUDIT TRAIL
+-----------
+- Created by: Claude Code Assistant
+- Reviewed by: [Pending]
+- Approved by: [Pending]
+- Executed by: [Pending]
+
+END OF AUDIT LOG

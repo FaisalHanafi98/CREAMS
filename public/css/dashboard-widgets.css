@@ -1,0 +1,600 @@
+/**
+ * Dashboard Widgets Styles
+ * CREAMS - Care Rehabilitation Centre Management System
+ */
+
+/* Quick Actions Widget */
+.quick-actions-list {
+    display: flex;
+    flex-direction: column;
+}
+
+.quick-action-item {
+    display: flex;
+    align-items: center;
+    padding: 15px 20px;
+    color: #2c3e50;
+    text-decoration: none;
+    border-bottom: 1px solid #f1f2f6;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.quick-action-item:last-child {
+    border-bottom: none;
+}
+
+.quick-action-item:hover {
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    color: #2c3e50;
+    text-decoration: none;
+    transform: translateX(5px);
+}
+
+.quick-action-item::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: 0;
+    background: linear-gradient(135deg, var(--primary-color, #32bdea), #00d2ff);
+    transition: width 0.3s ease;
+}
+
+.quick-action-item:hover::before {
+    width: 4px;
+}
+
+.quick-action-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 15px;
+    font-size: 1.2rem;
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    color: var(--primary-color, #32bdea);
+    transition: all 0.3s ease;
+}
+
+.quick-action-item:hover .quick-action-icon {
+    background: linear-gradient(135deg, var(--primary-color, #32bdea), #00d2ff);
+    color: white;
+    transform: scale(1.1);
+}
+
+.quick-action-text {
+    font-weight: 500;
+    flex: 1;
+}
+
+/* Color variants for quick actions */
+.quick-action-primary .quick-action-icon {
+    background: linear-gradient(135deg, rgba(50, 189, 234, 0.1), rgba(0, 210, 255, 0.1));
+    color: var(--primary-color, #32bdea);
+}
+
+.quick-action-primary:hover .quick-action-icon {
+    background: linear-gradient(135deg, var(--primary-color, #32bdea), #00d2ff);
+    color: white;
+}
+
+.quick-action-success .quick-action-icon {
+    background: linear-gradient(135deg, rgba(46, 213, 115, 0.1), rgba(0, 230, 118, 0.1));
+    color: var(--success-color, #2ed573);
+}
+
+.quick-action-success:hover .quick-action-icon {
+    background: linear-gradient(135deg, var(--success-color, #2ed573), #00e676);
+    color: white;
+}
+
+.quick-action-warning .quick-action-icon {
+    background: linear-gradient(135deg, rgba(255, 165, 2, 0.1), rgba(255, 202, 40, 0.1));
+    color: var(--warning-color, #ffa502);
+}
+
+.quick-action-warning:hover .quick-action-icon {
+    background: linear-gradient(135deg, var(--warning-color, #ffa502), #ffca28);
+    color: white;
+}
+
+.quick-action-danger .quick-action-icon {
+    background: linear-gradient(135deg, rgba(255, 71, 87, 0.1), rgba(255, 82, 82, 0.1));
+    color: var(--danger-color, #ff4757);
+}
+
+.quick-action-danger:hover .quick-action-icon {
+    background: linear-gradient(135deg, var(--danger-color, #ff4757), #ff5252);
+    color: white;
+}
+
+.quick-action-info .quick-action-icon {
+    background: linear-gradient(135deg, rgba(30, 144, 255, 0.1), rgba(0, 176, 255, 0.1));
+    color: var(--info-color, #1e90ff);
+}
+
+.quick-action-info:hover .quick-action-icon {
+    background: linear-gradient(135deg, var(--info-color, #1e90ff), #00b0ff);
+    color: white;
+}
+
+/* Notifications Widget */
+.notification-list {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.notification-list::-webkit-scrollbar {
+    width: 4px;
+}
+
+.notification-list::-webkit-scrollbar-track {
+    background: #f1f2f6;
+    border-radius: 10px;
+}
+
+.notification-list::-webkit-scrollbar-thumb {
+    background: #ddd;
+    border-radius: 10px;
+}
+
+.notification-list::-webkit-scrollbar-thumb:hover {
+    background: #bbb;
+}
+
+.notification-item {
+    padding: 15px 20px;
+    border-bottom: 1px solid #f1f2f6;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.notification-item:last-child {
+    border-bottom: none;
+}
+
+.notification-item:hover {
+    background: #f8f9fa;
+}
+
+.notification-item.unread {
+    background: linear-gradient(135deg, rgba(50, 189, 234, 0.05), rgba(0, 210, 255, 0.05));
+    border-left: 4px solid var(--primary-color, #32bdea);
+}
+
+.notification-item.unread::before {
+    content: '';
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 8px;
+    height: 8px;
+    background: var(--primary-color, #32bdea);
+    border-radius: 50%;
+}
+
+.notification-content p {
+    margin: 0 0 5px 0;
+    color: #2c3e50;
+    font-weight: 500;
+    line-height: 1.4;
+}
+
+.notification-content small {
+    color: #7f8c8d;
+    font-size: 0.85rem;
+}
+
+.notification-item.unread .notification-content p {
+    font-weight: 600;
+}
+
+/* Calendar Widget */
+.calendar-widget {
+    padding: 0;
+}
+
+.calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 25px;
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    border-bottom: 1px solid #dee2e6;
+}
+
+.calendar-nav {
+    display: flex;
+    gap: 10px;
+}
+
+.calendar-nav button {
+    background: none;
+    border: 2px solid #dee2e6;
+    width: 35px;
+    height: 35px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    color: #7f8c8d;
+}
+
+.calendar-nav button:hover {
+    border-color: var(--primary-color, #32bdea);
+    color: var(--primary-color, #32bdea);
+    background: rgba(50, 189, 234, 0.1);
+}
+
+.calendar-month {
+    font-weight: 600;
+    color: #2c3e50;
+    font-size: 1.1rem;
+}
+
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 1px;
+    background: #dee2e6;
+    margin: 0;
+}
+
+.calendar-day-header {
+    background: #f8f9fa;
+    padding: 10px 5px;
+    text-align: center;
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: #7f8c8d;
+}
+
+.calendar-day {
+    background: white;
+    padding: 10px 8px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.calendar-day:hover {
+    background: rgba(50, 189, 234, 0.1);
+}
+
+.calendar-day.today {
+    background: var(--primary-color, #32bdea);
+    color: white;
+    font-weight: 600;
+}
+
+.calendar-day.other-month {
+    color: #bdc3c7;
+    background: #f8f9fa;
+}
+
+.calendar-day.has-event::after {
+    content: '';
+    position: absolute;
+    bottom: 5px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 6px;
+    height: 6px;
+    background: var(--success-color, #2ed573);
+    border-radius: 50%;
+}
+
+.calendar-day.today.has-event::after {
+    background: white;
+}
+
+/* System Health Widget */
+.health-metrics {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.health-metric {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border-left: 4px solid #ddd;
+    transition: all 0.3s ease;
+}
+
+.health-metric:hover {
+    background: white;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.health-metric.status-healthy {
+    border-left-color: var(--success-color, #2ed573);
+}
+
+.health-metric.status-warning {
+    border-left-color: var(--warning-color, #ffa502);
+}
+
+.health-metric.status-error {
+    border-left-color: var(--danger-color, #ff4757);
+}
+
+.health-metric-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 500;
+    color: #2c3e50;
+}
+
+.health-metric-icon {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+}
+
+.health-metric.status-healthy .health-metric-icon {
+    background: rgba(46, 213, 115, 0.2);
+    color: var(--success-color, #2ed573);
+}
+
+.health-metric.status-warning .health-metric-icon {
+    background: rgba(255, 165, 2, 0.2);
+    color: var(--warning-color, #ffa502);
+}
+
+.health-metric.status-error .health-metric-icon {
+    background: rgba(255, 71, 87, 0.2);
+    color: var(--danger-color, #ff4757);
+}
+
+.health-metric-value {
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.85rem;
+}
+
+.health-metric.status-healthy .health-metric-value {
+    background: rgba(46, 213, 115, 0.2);
+    color: var(--success-color, #2ed573);
+}
+
+.health-metric.status-warning .health-metric-value {
+    background: rgba(255, 165, 2, 0.2);
+    color: var(--warning-color, #ffa502);
+}
+
+.health-metric.status-error .health-metric-value {
+    background: rgba(255, 71, 87, 0.2);
+    color: var(--danger-color, #ff4757);
+}
+
+/* Weather Widget */
+.weather-widget {
+    background: linear-gradient(135deg, #74b9ff, #0984e3);
+    color: white;
+    text-align: center;
+    padding: 25px;
+}
+
+.weather-icon {
+    font-size: 3rem;
+    margin-bottom: 10px;
+}
+
+.weather-temp {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 5px;
+}
+
+.weather-desc {
+    font-size: 1.1rem;
+    opacity: 0.9;
+    margin-bottom: 15px;
+}
+
+.weather-details {
+    display: flex;
+    justify-content: space-around;
+    font-size: 0.9rem;
+    opacity: 0.8;
+}
+
+/* Progress Widget */
+.progress-widget {
+    padding: 25px;
+}
+
+.progress-item {
+    margin-bottom: 20px;
+}
+
+.progress-item:last-child {
+    margin-bottom: 0;
+}
+
+.progress-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.progress-label {
+    font-weight: 500;
+    color: #2c3e50;
+}
+
+.progress-value {
+    font-weight: 600;
+    color: var(--primary-color, #32bdea);
+}
+
+.progress-bar-container {
+    background: #f1f2f6;
+    border-radius: 10px;
+    height: 8px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    height: 100%;
+    border-radius: 10px;
+    transition: width 0.8s ease;
+    background: linear-gradient(135deg, var(--primary-color, #32bdea), #00d2ff);
+}
+
+.progress-bar.success {
+    background: linear-gradient(135deg, var(--success-color, #2ed573), #00e676);
+}
+
+.progress-bar.warning {
+    background: linear-gradient(135deg, var(--warning-color, #ffa502), #ffca28);
+}
+
+.progress-bar.danger {
+    background: linear-gradient(135deg, var(--danger-color, #ff4757), #ff5252);
+}
+
+/* Recent Activity Widget */
+.recent-activity-list {
+    max-height: 250px;
+    overflow-y: auto;
+}
+
+.recent-activity-item {
+    display: flex;
+    align-items: flex-start;
+    padding: 12px 0;
+    border-bottom: 1px solid #f1f2f6;
+}
+
+.recent-activity-item:last-child {
+    border-bottom: none;
+}
+
+.recent-activity-icon {
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 12px;
+    font-size: 0.9rem;
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    color: var(--primary-color, #32bdea);
+    flex-shrink: 0;
+}
+
+.recent-activity-content {
+    flex: 1;
+}
+
+.recent-activity-text {
+    color: #2c3e50;
+    font-size: 0.9rem;
+    line-height: 1.4;
+    margin-bottom: 3px;
+}
+
+.recent-activity-time {
+    color: #7f8c8d;
+    font-size: 0.8rem;
+}
+
+/* Responsive Design for Widgets */
+@media (max-width: 768px) {
+    .quick-action-item {
+        padding: 12px 15px;
+    }
+    
+    .quick-action-icon {
+        width: 35px;
+        height: 35px;
+        margin-right: 12px;
+    }
+    
+    .calendar-grid {
+        font-size: 0.85rem;
+    }
+    
+    .calendar-day {
+        min-height: 35px;
+        padding: 8px 5px;
+    }
+    
+    .health-metrics {
+        gap: 8px;
+    }
+    
+    .health-metric {
+        padding: 10px 12px;
+    }
+    
+    .weather-widget {
+        padding: 20px;
+    }
+    
+    .weather-temp {
+        font-size: 2rem;
+    }
+    
+    .weather-icon {
+        font-size: 2.5rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .widget-header {
+        padding: 15px 20px;
+    }
+    
+    .widget-body {
+        padding: 15px 20px;
+    }
+    
+    .quick-action-item {
+        flex-direction: column;
+        text-align: center;
+        gap: 8px;
+    }
+    
+    .quick-action-icon {
+        margin-right: 0;
+        margin-bottom: 5px;
+    }
+    
+    .calendar-day-header,
+    .calendar-day {
+        font-size: 0.8rem;
+    }
+    
+    .weather-details {
+        flex-direction: column;
+        gap: 5px;
+    }
+}

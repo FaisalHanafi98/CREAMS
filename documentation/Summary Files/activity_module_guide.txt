@@ -1,0 +1,3469 @@
+# CREAMS ACTIVITY MODULE - COMPREHENSIVE IMPLEMENTATION GUIDE
+# Community-based REhAbilitation Management System
+# Version: 3.0 (Consolidated)
+# Last Updated: December 2024
+
+================================================================================
+## OVERVIEW
+================================================================================
+
+This guide consolidates the activity module implementations into a single, 
+optimized system that connects staff (trainers/teachers) with trainees for 
+rehabilitation activities (subjects).
+
+### Key Decisions Made:
+1. Module Name: "Activities" (not courses)
+2. Database: Single consolidated activities table
+3. Controller: One unified ActivityController
+4. Views: Role-based with shared components
+5. Routes: Simplified with clear role separation
+
+================================================================================
+## FILES TO KEEP (OPTIMIZED VERSIONS)
+================================================================================
+
+### CONTROLLERS (Keep These - Optimized)
+1. app/Http/Controllers/ActivityController.php
+2. app/Http/Controllers/ActivitySessionController.php
+3. app/Http/Controllers/AttendanceController.php
+
+### MODELS (Keep These)
+1. app/Models/Activity.php
+2. app/Models/ActivitySession.php
+3. app/Models/SessionEnrollment.php
+4. app/Models/ActivityAttendance.php
+
+### VIEWS (Keep These)
+1. resources/views/activities/
+   - index.blade.php
+   - create.blade.php
+   - show.blade.php
+   - edit.blade.php
+   - sessions/index.blade.php
+   - sessions/create.blade.php
+   - sessions/edit.blade.php
+   - attendance/mark.blade.php
+   - schedule/teacher.blade.php
+   - schedule/trainee.blade.php
+
+### ASSETS (Keep These)
+1. public/css/activities.css
+2. public/js/activities.js
+
+================================================================================
+## FILES TO DELETE (REDUNDANT/OBSOLETE)
+================================================================================
+
+### CONTROLLERS (Delete These)
+1. TeachersHomeControllerSupervisor.php
+2. TeachersHomeControllerTeacher.php
+3. TraineeActivityController.php
+4. Any old ActivityController.php versions
+
+### VIEWS (Delete These)
+1. teachershomesupervisor.blade.php
+2. teachershometeacher.blade.php
+3. Any duplicate activity views
+
+### DATABASE TABLES (After Migration)
+1. trainee_activities
+2. rehabilitation_activities
+3. rehabilitation_objectives
+4. rehabilitation_materials
+5. rehabilitation_schedules
+6. rehabilitation_participants
+
+================================================================================
+## COMPLETE IMPLEMENTATION CODE
+================================================================================
+
+### 1. DATABASE MIGRATION (Consolidation)
+--------------------------------------------------------------------------------
+File: database/migrations/2024_12_15_consolidate_activities.php
+--------------------------------------------------------------------------------
+
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
+
+return new class extends Migration
+{
+    public function up()
+    {
+        // First, backup existing data
+        DB::statement('CREATE TABLE IF NOT EXISTS activities_backup AS SELECT * FROM activities');
+        DB::statement('CREATE TABLE IF NOT EXISTS trainee_activities_backup AS SELECT * FROM trainee_activities');
+        
+        // Drop existing tables
+        Schema::dropIfExists('session_enrollments');
+        Schema::dropIfExists('activity_attendance');
+        Schema::dropIfExists('activity_sessions');
+        Schema::dropIfExists('activities');
+        
+        // Create optimized activities table
+        Schema::create('activities', function (Blueprint $table) {
+            $table->id();
+            $table->string('activity_name');
+            $table->string('activity_code')->unique();
+            $table->string('category');
+            $table->text('description');
+            $table->text('objectives')->nullable();
+            $table->text('materials_needed')->nullable();
+            $table->enum('age_group', ['3-6', '7-12', '13-18', 'All Ages']);
+            $table->enum('difficulty_level', ['Beginner', 'Intermediate', 'Advanced']);
+            $table->boolean('is_active')->default(true);
+            $table->unsignedBigInteger('created_by');
+            $table->unsignedBigInteger('updated_by')->nullable();
+            $table->timestamps();
+            
+            $table->foreign('created_by')->references('id')->on('users');
+            $table->foreign('updated_by')->references('id')->on('users');
+            $table->index(['category', 'is_active']);
+        });
+        
+        // Create activity sessions table
+        Schema::create('activity_sessions', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('activity_id');
+            $table->unsignedBigInteger('teacher_id');
+            $table->string('class_name');
+            $table->string('semester');
+            $table->enum('day_of_week', ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']);
+            $table->time('start_time');
+            $table->time('end_time');
+            $table->string('location')->nullable();
+            $table->integer('max_trainees')->default(20);
+            $table->text('notes')->nullable();
+            $table->boolean('is_active')->default(true);
+            $table->unsignedBigInteger('created_by');
+            $table->unsignedBigInteger('updated_by')->nullable();
+            $table->timestamps();
+            
+            $table->foreign('activity_id')->references('id')->on('activities')->onDelete('cascade');
+            $table->foreign('teacher_id')->references('id')->on('users');
+            $table->foreign('created_by')->references('id')->on('users');
+            $table->foreign('updated_by')->references('id')->on('users');
+            $table->index(['teacher_id', 'day_of_week', 'is_active']);
+            $table->index(['activity_id', 'semester', 'is_active']);
+        });
+        
+        // Create session enrollments table
+        Schema::create('session_enrollments', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('session_id');
+            $table->unsignedBigInteger('trainee_id');
+            $table->date('enrollment_date');
+            $table->enum('status', ['Active', 'Dropped', 'Completed']);
+            $table->text('notes')->nullable();
+            $table->unsignedBigInteger('enrolled_by');
+            $table->timestamps();
+            
+            $table->foreign('session_id')->references('id')->on('activity_sessions')->onDelete('cascade');
+            $table->foreign('trainee_id')->references('id')->on('trainees');
+            $table->foreign('enrolled_by')->references('id')->on('users');
+            $table->unique(['session_id', 'trainee_id']);
+            $table->index(['trainee_id', 'status']);
+        });
+        
+        // Create attendance table
+        Schema::create('activity_attendance', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('session_id');
+            $table->unsignedBigInteger('trainee_id');
+            $table->date('attendance_date');
+            $table->enum('status', ['Present', 'Absent', 'Late', 'Excused']);
+            $table->integer('participation_score')->nullable();
+            $table->text('notes')->nullable();
+            $table->unsignedBigInteger('marked_by');
+            $table->timestamps();
+            
+            $table->foreign('session_id')->references('id')->on('activity_sessions');
+            $table->foreign('trainee_id')->references('id')->on('trainees');
+            $table->foreign('marked_by')->references('id')->on('users');
+            $table->unique(['session_id', 'trainee_id', 'attendance_date']);
+            $table->index(['attendance_date', 'status']);
+        });
+    }
+    
+    public function down()
+    {
+        Schema::dropIfExists('activity_attendance');
+        Schema::dropIfExists('session_enrollments');
+        Schema::dropIfExists('activity_sessions');
+        Schema::dropIfExists('activities');
+        
+        // Restore from backup if needed
+        if (Schema::hasTable('activities_backup')) {
+            DB::statement('CREATE TABLE activities AS SELECT * FROM activities_backup');
+        }
+    }
+};
+
+================================================================================
+### 2. MODELS
+================================================================================
+
+--------------------------------------------------------------------------------
+File: app/Models/Activity.php
+--------------------------------------------------------------------------------
+
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+
+class Activity extends Model
+{
+    use HasFactory;
+
+    protected $fillable = [
+        'activity_name',
+        'activity_code',
+        'category',
+        'description',
+        'objectives',
+        'materials_needed',
+        'age_group',
+        'difficulty_level',
+        'is_active',
+        'created_by',
+        'updated_by'
+    ];
+
+    protected $casts = [
+        'is_active' => 'boolean'
+    ];
+
+    // Relationships
+    public function creator()
+    {
+        return $this->belongsTo(Users::class, 'created_by');
+    }
+
+    public function updater()
+    {
+        return $this->belongsTo(Users::class, 'updated_by');
+    }
+
+    public function sessions()
+    {
+        return $this->hasMany(ActivitySession::class);
+    }
+
+    public function activeSessions()
+    {
+        return $this->hasMany(ActivitySession::class)->where('is_active', true);
+    }
+
+    // Scopes
+    public function scopeActive($query)
+    {
+        return $query->where('is_active', true);
+    }
+
+    public function scopeByCategory($query, $category)
+    {
+        return $query->where('category', $category);
+    }
+
+    // Methods
+    public function hasActiveEnrollments()
+    {
+        return $this->sessions()
+            ->whereHas('enrollments', function ($query) {
+                $query->where('status', 'Active');
+            })
+            ->exists();
+    }
+
+    public function getTotalEnrollmentsAttribute()
+    {
+        return $this->sessions()
+            ->withCount(['enrollments' => function ($query) {
+                $query->where('status', 'Active');
+            }])
+            ->get()
+            ->sum('enrollments_count');
+    }
+}
+
+--------------------------------------------------------------------------------
+File: app/Models/ActivitySession.php
+--------------------------------------------------------------------------------
+
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+
+class ActivitySession extends Model
+{
+    use HasFactory;
+
+    protected $fillable = [
+        'activity_id',
+        'teacher_id',
+        'class_name',
+        'semester',
+        'day_of_week',
+        'start_time',
+        'end_time',
+        'location',
+        'max_trainees',
+        'notes',
+        'is_active',
+        'created_by',
+        'updated_by'
+    ];
+
+    protected $casts = [
+        'is_active' => 'boolean',
+        'start_time' => 'datetime:H:i',
+        'end_time' => 'datetime:H:i'
+    ];
+
+    // Relationships
+    public function activity()
+    {
+        return $this->belongsTo(Activity::class);
+    }
+
+    public function teacher()
+    {
+        return $this->belongsTo(Users::class, 'teacher_id');
+    }
+
+    public function enrollments()
+    {
+        return $this->hasMany(SessionEnrollment::class, 'session_id');
+    }
+
+    public function activeEnrollments()
+    {
+        return $this->hasMany(SessionEnrollment::class, 'session_id')
+            ->where('status', 'Active');
+    }
+
+    public function attendance()
+    {
+        return $this->hasMany(ActivityAttendance::class, 'session_id');
+    }
+
+    // Scopes
+    public function scopeActive($query)
+    {
+        return $query->where('is_active', true);
+    }
+
+    public function scopeByTeacher($query, $teacherId)
+    {
+        return $query->where('teacher_id', $teacherId);
+    }
+
+    public function scopeCurrentSemester($query)
+    {
+        $currentSemester = date('Y') . '-' . (date('n') <= 6 ? '1' : '2');
+        return $query->where('semester', $currentSemester);
+    }
+
+    // Methods
+    public function getAvailableSlotsAttribute()
+    {
+        return $this->max_trainees - $this->activeEnrollments()->count();
+    }
+
+    public function isFullAttribute()
+    {
+        return $this->available_slots <= 0;
+    }
+
+    public function canEnroll($traineeId)
+    {
+        // Check if already enrolled
+        if ($this->enrollments()->where('trainee_id', $traineeId)->exists()) {
+            return false;
+        }
+
+        // Check if session is full
+        if ($this->is_full) {
+            return false;
+        }
+
+        // Check if session is active
+        if (!$this->is_active) {
+            return false;
+        }
+
+        return true;
+    }
+}
+
+--------------------------------------------------------------------------------
+File: app/Models/SessionEnrollment.php
+--------------------------------------------------------------------------------
+
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+
+class SessionEnrollment extends Model
+{
+    use HasFactory;
+
+    protected $fillable = [
+        'session_id',
+        'trainee_id',
+        'enrollment_date',
+        'status',
+        'notes',
+        'enrolled_by'
+    ];
+
+    protected $casts = [
+        'enrollment_date' => 'date'
+    ];
+
+    // Relationships
+    public function session()
+    {
+        return $this->belongsTo(ActivitySession::class, 'session_id');
+    }
+
+    public function trainee()
+    {
+        return $this->belongsTo(Trainee::class, 'trainee_id');
+    }
+
+    public function enrolledBy()
+    {
+        return $this->belongsTo(Users::class, 'enrolled_by');
+    }
+
+    public function attendance()
+    {
+        return $this->hasMany(ActivityAttendance::class, 'trainee_id', 'trainee_id')
+            ->where('session_id', $this->session_id);
+    }
+
+    // Scopes
+    public function scopeActive($query)
+    {
+        return $query->where('status', 'Active');
+    }
+
+    // Methods
+    public function getAttendanceRate()
+    {
+        $totalClasses = $this->attendance()->count();
+        if ($totalClasses == 0) return 0;
+
+        $presentCount = $this->attendance()
+            ->whereIn('status', ['Present', 'Late'])
+            ->count();
+
+        return round(($presentCount / $totalClasses) * 100, 2);
+    }
+}
+
+--------------------------------------------------------------------------------
+File: app/Models/ActivityAttendance.php
+--------------------------------------------------------------------------------
+
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+
+class ActivityAttendance extends Model
+{
+    use HasFactory;
+
+    protected $table = 'activity_attendance';
+
+    protected $fillable = [
+        'session_id',
+        'trainee_id',
+        'attendance_date',
+        'status',
+        'participation_score',
+        'notes',
+        'marked_by'
+    ];
+
+    protected $casts = [
+        'attendance_date' => 'date',
+        'participation_score' => 'integer'
+    ];
+
+    // Relationships
+    public function session()
+    {
+        return $this->belongsTo(ActivitySession::class, 'session_id');
+    }
+
+    public function trainee()
+    {
+        return $this->belongsTo(Trainee::class, 'trainee_id');
+    }
+
+    public function markedBy()
+    {
+        return $this->belongsTo(Users::class, 'marked_by');
+    }
+
+    // Scopes
+    public function scopePresent($query)
+    {
+        return $query->whereIn('status', ['Present', 'Late']);
+    }
+
+    public function scopeAbsent($query)
+    {
+        return $query->where('status', 'Absent');
+    }
+
+    public function scopeByDate($query, $date)
+    {
+        return $query->where('attendance_date', $date);
+    }
+}
+
+================================================================================
+### 3. CONTROLLERS
+================================================================================
+
+--------------------------------------------------------------------------------
+File: app/Http/Controllers/ActivityController.php
+--------------------------------------------------------------------------------
+
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Activity;
+use App\Models\ActivitySession;
+use App\Models\SessionEnrollment;
+use App\Models\ActivityAttendance;
+use App\Models\Users;
+use App\Models\Trainee;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cache;
+use Carbon\Carbon;
+
+class ActivityController extends Controller
+{
+    /**
+     * Display activities based on user role
+     */
+    public function index()
+    {
+        try {
+            $role = session('role');
+            $userId = session('id');
+            
+            // Base query
+            $query = Activity::with(['creator', 'activeSessions'])
+                ->withCount('activeSessions');
+            
+            // Role-based filtering
+            switch ($role) {
+                case 'teacher':
+                    // Teachers see activities they teach
+                    $query->whereHas('sessions', function ($q) use ($userId) {
+                        $q->where('teacher_id', $userId)
+                          ->where('is_active', true);
+                    });
+                    break;
+                    
+                case 'trainee':
+                    // Trainees see activities they're enrolled in
+                    $traineeId = Trainee::where('user_id', $userId)->value('id');
+                    if ($traineeId) {
+                        $query->whereHas('sessions.enrollments', function ($q) use ($traineeId) {
+                            $q->where('trainee_id', $traineeId)
+                              ->where('status', 'Active');
+                        });
+                    }
+                    break;
+                    
+                // Admin, Supervisor, AJK see all activities
+                default:
+                    $query->latest();
+            }
+            
+            $activities = $query->get();
+            $categories = $this->getCategories();
+            $stats = $this->getActivityStats();
+            
+            // Different views based on role
+            $viewName = $this->getViewByRole($role);
+            
+            return view($viewName, compact('activities', 'categories', 'stats'));
+            
+        } catch (\Exception $e) {
+            Log::error('Error loading activities', [
+                'error' => $e->getMessage(),
+                'user' => session('name'),
+                'role' => session('role')
+            ]);
+            
+            return back()->with('error', 'Error loading activities. Please try again.');
+        }
+    }
+    
+    /**
+     * Show the form for creating a new activity
+     */
+    public function create()
+    {
+        // Only admin and supervisor can create
+        if (!in_array(session('role'), ['admin', 'supervisor'])) {
+            return redirect()->route('activities.index')
+                ->with('error', 'You do not have permission to create activities.');
+        }
+        
+        $categories = $this->getCategories();
+        return view('activities.create', compact('categories'));
+    }
+    
+    /**
+     * Store a newly created activity
+     */
+    public function store(Request $request)
+    {
+        if (!in_array(session('role'), ['admin', 'supervisor'])) {
+            return redirect()->route('activities.index')
+                ->with('error', 'You do not have permission to create activities.');
+        }
+        
+        $validated = $request->validate([
+            'activity_name' => 'required|string|max:255',
+            'activity_code' => 'required|string|max:50|unique:activities',
+            'category' => 'required|string',
+            'description' => 'required|string',
+            'objectives' => 'nullable|string',
+            'materials_needed' => 'nullable|string',
+            'age_group' => 'required|in:3-6,7-12,13-18,All Ages',
+            'difficulty_level' => 'required|in:Beginner,Intermediate,Advanced'
+        ]);
+        
+        try {
+            DB::beginTransaction();
+            
+            $activity = Activity::create([
+                ...$validated,
+                'created_by' => session('id'),
+                'is_active' => true
+            ]);
+            
+            DB::commit();
+            
+            Log::info('Activity created', [
+                'activity_id' => $activity->id,
+                'created_by' => session('name')
+            ]);
+            
+            Cache::forget('activity_categories');
+            Cache::forget('activity_stats');
+            
+            return redirect()->route('activities.show', $activity->id)
+                ->with('success', 'Activity created successfully!');
+                
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Failed to create activity', [
+                'error' => $e->getMessage(),
+                'user' => session('name')
+            ]);
+            
+            return back()->withInput()
+                ->with('error', 'Failed to create activity. Please try again.');
+        }
+    }
+    
+    /**
+     * Display the specified activity
+     */
+    public function show($id)
+    {
+        try {
+            $activity = Activity::with([
+                'creator',
+                'sessions' => function ($query) {
+                    $query->with(['teacher', 'activeEnrollments.trainee'])
+                          ->orderBy('day_of_week')
+                          ->orderBy('start_time');
+                }
+            ])->findOrFail($id);
+            
+            // Check access based on role
+            if (!$this->canViewActivity($activity)) {
+                return redirect()->route('activities.index')
+                    ->with('error', 'You do not have permission to view this activity.');
+            }
+            
+            $stats = [
+                'total_sessions' => $activity->sessions->count(),
+                'active_sessions' => $activity->activeSessions->count(),
+                'total_enrollments' => $activity->total_enrollments,
+                'teachers' => $activity->sessions->pluck('teacher')->unique()->count()
+            ];
+            
+            return view('activities.show', compact('activity', 'stats'));
+            
+        } catch (\Exception $e) {
+            return redirect()->route('activities.index')
+                ->with('error', 'Activity not found.');
+        }
+    }
+    
+    /**
+     * Show the form for editing the specified activity
+     */
+    public function edit($id)
+    {
+        if (!in_array(session('role'), ['admin', 'supervisor'])) {
+            return redirect()->route('activities.index')
+                ->with('error', 'You do not have permission to edit activities.');
+        }
+        
+        try {
+            $activity = Activity::findOrFail($id);
+            $categories = $this->getCategories();
+            
+            return view('activities.edit', compact('activity', 'categories'));
+        } catch (\Exception $e) {
+            return redirect()->route('activities.index')
+                ->with('error', 'Activity not found.');
+        }
+    }
+    
+    /**
+     * Update the specified activity
+     */
+    public function update(Request $request, $id)
+    {
+        if (!in_array(session('role'), ['admin', 'supervisor'])) {
+            return redirect()->route('activities.index')
+                ->with('error', 'You do not have permission to edit activities.');
+        }
+        
+        $validated = $request->validate([
+            'activity_name' => 'required|string|max:255',
+            'activity_code' => 'required|string|max:50|unique:activities,activity_code,' . $id,
+            'category' => 'required|string',
+            'description' => 'required|string',
+            'objectives' => 'nullable|string',
+            'materials_needed' => 'nullable|string',
+            'age_group' => 'required|in:3-6,7-12,13-18,All Ages',
+            'difficulty_level' => 'required|in:Beginner,Intermediate,Advanced',
+            'is_active' => 'boolean'
+        ]);
+        
+        try {
+            $activity = Activity::findOrFail($id);
+            
+            $activity->update([
+                ...$validated,
+                'updated_by' => session('id')
+            ]);
+            
+            Log::info('Activity updated', [
+                'activity_id' => $id,
+                'updated_by' => session('name')
+            ]);
+            
+            Cache::forget('activity_categories');
+            Cache::forget('activity_stats');
+            
+            return redirect()->route('activities.show', $id)
+                ->with('success', 'Activity updated successfully!');
+                
+        } catch (\Exception $e) {
+            Log::error('Failed to update activity', [
+                'activity_id' => $id,
+                'error' => $e->getMessage()
+            ]);
+            
+            return back()->withInput()
+                ->with('error', 'Failed to update activity. Please try again.');
+        }
+    }
+    
+    /**
+     * Remove the specified activity
+     */
+    public function destroy($id)
+    {
+        if (!in_array(session('role'), ['admin', 'supervisor'])) {
+            return redirect()->route('activities.index')
+                ->with('error', 'You do not have permission to delete activities.');
+        }
+        
+        try {
+            DB::beginTransaction();
+            
+            $activity = Activity::findOrFail($id);
+            
+            // Check if activity has active sessions
+            if ($activity->activeSessions()->count() > 0) {
+                return back()->with('error', 
+                    'Cannot delete activity with active sessions. Please deactivate sessions first.');
+            }
+            
+            // Soft delete by deactivating
+            $activity->update([
+                'is_active' => false,
+                'updated_by' => session('id')
+            ]);
+            
+            DB::commit();
+            
+            Log::info('Activity deactivated', [
+                'activity_id' => $id,
+                'deactivated_by' => session('name')
+            ]);
+            
+            Cache::forget('activity_categories');
+            Cache::forget('activity_stats');
+            
+            return redirect()->route('activities.index')
+                ->with('success', 'Activity deactivated successfully!');
+                
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Failed to deactivate activity', [
+                'activity_id' => $id,
+                'error' => $e->getMessage()
+            ]);
+            
+            return back()->with('error', 'Failed to deactivate activity. Please try again.');
+        }
+    }
+    
+    /**
+     * Show teacher's schedule
+     */
+    public function teacherSchedule()
+    {
+        $teacherId = session('id');
+        
+        $sessions = ActivitySession::with(['activity', 'activeEnrollments.trainee'])
+            ->where('teacher_id', $teacherId)
+            ->where('is_active', true)
+            ->currentSemester()
+            ->orderBy('day_of_week')
+            ->orderBy('start_time')
+            ->get();
+            
+        $schedule = $this->formatSchedule($sessions);
+        
+        return view('activities.schedule.teacher', compact('schedule', 'sessions'));
+    }
+    
+    /**
+     * Show form to mark attendance
+     */
+    public function markAttendance($sessionId)
+    {
+        try {
+            $session = ActivitySession::with(['activity', 'activeEnrollments.trainee'])
+                ->findOrFail($sessionId);
+                
+            // Check permission
+            if (!$this->canMarkAttendance($session)) {
+                return redirect()->back()
+                    ->with('error', 'You do not have permission to mark attendance for this session.');
+            }
+            
+            $date = request('date', now()->format('Y-m-d'));
+            
+            // Get existing attendance records
+            $attendance = ActivityAttendance::where('session_id', $sessionId)
+                ->where('attendance_date', $date)
+                ->pluck('status', 'trainee_id');
+                
+            return view('activities.attendance.mark', compact('session', 'date', 'attendance'));
+            
+        } catch (\Exception $e) {
+            return redirect()->back()
+                ->with('error', 'Session not found.');
+        }
+    }
+    
+    /**
+     * Store attendance records
+     */
+    public function storeAttendance(Request $request, $sessionId)
+    {
+        $validated = $request->validate([
+            'date' => 'required|date',
+            'attendance' => 'required|array',
+            'attendance.*' => 'required|in:Present,Absent,Late,Excused',
+            'participation' => 'array',
+            'participation.*' => 'nullable|integer|min:0|max:10',
+            'notes' => 'array',
+            'notes.*' => 'nullable|string|max:255'
+        ]);
+        
+        try {
+            DB::beginTransaction();
+            
+            $session = ActivitySession::findOrFail($sessionId);
+            
+            if (!$this->canMarkAttendance($session)) {
+                throw new \Exception('Unauthorized to mark attendance');
+            }
+            
+            foreach ($validated['attendance'] as $traineeId => $status) {
+                ActivityAttendance::updateOrCreate(
+                    [
+                        'session_id' => $sessionId,
+                        'trainee_id' => $traineeId,
+                        'attendance_date' => $validated['date']
+                    ],
+                    [
+                        'status' => $status,
+                        'participation_score' => $validated['participation'][$traineeId] ?? null,
+                        'notes' => $validated['notes'][$traineeId] ?? null,
+                        'marked_by' => session('id')
+                    ]
+                );
+            }
+            
+            DB::commit();
+            
+            Log::info('Attendance marked', [
+                'session_id' => $sessionId,
+                'date' => $validated['date'],
+                'marked_by' => session('name')
+            ]);
+            
+            return redirect()->route('activities.sessions', $session->activity_id)
+                ->with('success', 'Attendance marked successfully!');
+                
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Failed to mark attendance', [
+                'session_id' => $sessionId,
+                'error' => $e->getMessage()
+            ]);
+            
+            return back()->with('error', 'Failed to mark attendance. Please try again.');
+        }
+    }
+    
+    /**
+     * Helper: Get categories from users table
+     */
+    private function getCategories()
+    {
+        return Cache::remember('activity_categories', 900, function () {
+            $categories = collect();
+            
+            // Get unique categories from user activities
+            for ($i = 1; $i <= 5; $i++) {
+                $field = "user_activity_{$i}";
+                $cats = Users::whereNotNull($field)
+                    ->distinct()
+                    ->pluck($field);
+                $categories = $categories->merge($cats);
+            }
+            
+            return $categories->unique()->filter()->sort()->values();
+        });
+    }
+    
+    /**
+     * Helper: Get activity statistics
+     */
+    private function getActivityStats()
+    {
+        $role = session('role');
+        $userId = session('id');
+        
+        return Cache::remember("activity_stats_{$role}_{$userId}", 900, function () use ($role, $userId) {
+            $stats = [
+                'total_activities' => 0,
+                'active_activities' => 0,
+                'total_sessions' => 0,
+                'total_enrollments' => 0
+            ];
+            
+            switch ($role) {
+                case 'admin':
+                case 'supervisor':
+                    $stats['total_activities'] = Activity::count();
+                    $stats['active_activities'] = Activity::where('is_active', true)->count();
+                    $stats['total_sessions'] = ActivitySession::where('is_active', true)->count();
+                    $stats['total_enrollments'] = SessionEnrollment::where('status', 'Active')->count();
+                    break;
+                    
+                case 'teacher':
+                    $stats['total_sessions'] = ActivitySession::where('teacher_id', $userId)
+                        ->where('is_active', true)
+                        ->count();
+                    $stats['total_enrollments'] = SessionEnrollment::whereHas('session', function ($q) use ($userId) {
+                        $q->where('teacher_id', $userId);
+                    })->where('status', 'Active')->count();
+                    break;
+                    
+                case 'trainee':
+                    $traineeId = Trainee::where('user_id', $userId)->value('id');
+                    if ($traineeId) {
+                        $stats['total_activities'] = SessionEnrollment::where('trainee_id', $traineeId)
+                            ->where('status', 'Active')
+                            ->distinct('session_id')
+                            ->count();
+                    }
+                    break;
+            }
+            
+            return $stats;
+        });
+    }
+    
+    /**
+     * Helper: Get view name by role
+     */
+    private function getViewByRole($role)
+    {
+        $viewMap = [
+            'admin' => 'activities.index',
+            'supervisor' => 'activities.index',
+            'teacher' => 'activities.teacher-dashboard',
+            'trainee' => 'activities.trainee-dashboard',
+            'ajk' => 'activities.index'
+        ];
+        
+        return $viewMap[$role] ?? 'activities.index';
+    }
+    
+    /**
+     * Helper: Check if user can view activity
+     */
+    private function canViewActivity($activity)
+    {
+        $role = session('role');
+        $userId = session('id');
+        
+        switch ($role) {
+            case 'admin':
+            case 'supervisor':
+            case 'ajk':
+                return true;
+                
+            case 'teacher':
+                return $activity->sessions()->where('teacher_id', $userId)->exists();
+                
+            case 'trainee':
+                $traineeId = Trainee::where('user_id', $userId)->value('id');
+                return $traineeId && $activity->sessions()
+                    ->whereHas('enrollments', function ($q) use ($traineeId) {
+                        $q->where('trainee_id', $traineeId);
+                    })->exists();
+                    
+            default:
+                return false;
+        }
+    }
+    
+    /**
+     * Helper: Check if user can mark attendance
+     */
+    private function canMarkAttendance($session)
+    {
+        $role = session('role');
+        $userId = session('id');
+        
+        switch ($role) {
+            case 'admin':
+            case 'supervisor':
+                return true;
+                
+            case 'teacher':
+                return $session->teacher_id == $userId;
+                
+            default:
+                return false;
+        }
+    }
+    
+    /**
+     * Helper: Format sessions into weekly schedule
+     */
+    private function formatSchedule($sessions)
+    {
+        $days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+        $schedule = [];
+        
+        foreach ($days as $day) {
+            $schedule[$day] = $sessions->filter(function ($session) use ($day) {
+                return $session->day_of_week == $day;
+            })->sortBy('start_time')->values();
+        }
+        
+        return $schedule;
+    }
+}
+
+--------------------------------------------------------------------------------
+File: app/Http/Controllers/ActivitySessionController.php
+--------------------------------------------------------------------------------
+
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Activity;
+use App\Models\ActivitySession;
+use App\Models\SessionEnrollment;
+use App\Models\Users;
+use App\Models\Trainee;
+use App\Models\Centres;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Carbon\Carbon;
+
+class ActivitySessionController extends Controller
+{
+    /**
+     * Display sessions for an activity
+     */
+    public function index($activityId)
+    {
+        try {
+            $activity = Activity::findOrFail($activityId);
+            
+            $sessions = ActivitySession::where('activity_id', $activityId)
+                ->with(['teacher', 'activeEnrollments.trainee'])
+                ->orderBy('semester', 'desc')
+                ->orderBy('class_name')
+                ->orderBy('day_of_week')
+                ->orderBy('start_time')
+                ->get();
+                
+            $sessionsByClass = $sessions->groupBy('class_name');
+            
+            return view('activities.sessions.index', compact('activity', 'sessions', 'sessionsByClass'));
+            
+        } catch (\Exception $e) {
+            return redirect()->route('activities.index')
+                ->with('error', 'Activity not found.');
+        }
+    }
+    
+    /**
+     * Show form to create a new session
+     */
+    public function create($activityId)
+    {
+        if (!in_array(session('role'), ['admin', 'supervisor'])) {
+            return redirect()->route('activities.index')
+                ->with('error', 'You do not have permission to create sessions.');
+        }
+        
+        try {
+            $activity = Activity::findOrFail($activityId);
+            
+            // Get qualified teachers
+            $teachers = Users::where('role', 'teacher')
+                ->where(function ($query) use ($activity) {
+                    for ($i = 1; $i <= 5; $i++) {
+                        $query->orWhere("user_activity_{$i}", $activity->category);
+                    }
+                })
+                ->get();
+                
+            // Get classes/centres
+            $centres = Centres::all();
+            
+            $currentSemester = date('Y') . '-' . (date('n') <= 6 ? '1' : '2');
+            
+            return view('activities.sessions.create', 
+                compact('activity', 'teachers', 'centres', 'currentSemester'));
+                
+        } catch (\Exception $e) {
+            return redirect()->route('activities.index')
+                ->with('error', 'Activity not found.');
+        }
+    }
+    
+    /**
+     * Store a new session
+     */
+    public function store(Request $request, $activityId)
+    {
+        if (!in_array(session('role'), ['admin', 'supervisor'])) {
+            return redirect()->route('activities.index')
+                ->with('error', 'You do not have permission to create sessions.');
+        }
+        
+        $validated = $request->validate([
+            'teacher_id' => 'required|exists:users,id',
+            'class_name' => 'required|string|max:50',
+            'semester' => 'required|string|max:10',
+            'day_of_week' => 'required|in:Monday,Tuesday,Wednesday,Thursday,Friday,Saturday,Sunday',
+            'start_time' => 'required|date_format:H:i',
+            'end_time' => 'required|date_format:H:i|after:start_time',
+            'location' => 'nullable|string|max:100',
+            'max_trainees' => 'required|integer|min:1|max:50',
+            'notes' => 'nullable|string'
+        ]);
+        
+        try {
+            // Check for conflicts
+            $conflict = $this->checkScheduleConflict(
+                $validated['teacher_id'],
+                $validated['day_of_week'],
+                $validated['start_time'],
+                $validated['end_time'],
+                $validated['semester']
+            );
+            
+            if ($conflict) {
+                return back()->withInput()
+                    ->with('error', 'Schedule conflict: Teacher already has a session at this time.');
+            }
+            
+            // Check weekly limit (2 sessions per activity per class)
+            $existingCount = ActivitySession::where('activity_id', $activityId)
+                ->where('class_name', $validated['class_name'])
+                ->where('semester', $validated['semester'])
+                ->count();
+                
+            if ($existingCount >= 2) {
+                return back()->withInput()
+                    ->with('error', 'Weekly limit reached: Each activity can have maximum 2 sessions per class.');
+            }
+            
+            DB::beginTransaction();
+            
+            $session = ActivitySession::create([
+                'activity_id' => $activityId,
+                'teacher_id' => $validated['teacher_id'],
+                'class_name' => $validated['class_name'],
+                'semester' => $validated['semester'],
+                'day_of_week' => $validated['day_of_week'],
+                'start_time' => $validated['start_time'],
+                'end_time' => $validated['end_time'],
+                'location' => $validated['location'],
+                'max_trainees' => $validated['max_trainees'],
+                'notes' => $validated['notes'],
+                'is_active' => true,
+                'created_by' => session('id')
+            ]);
+            
+            DB::commit();
+            
+            Log::info('Session created', [
+                'session_id' => $session->id,
+                'activity_id' => $activityId,
+                'created_by' => session('name')
+            ]);
+            
+            return redirect()->route('activities.sessions', $activityId)
+                ->with('success', 'Session created successfully!');
+                
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Failed to create session', [
+                'activity_id' => $activityId,
+                'error' => $e->getMessage()
+            ]);
+            
+            return back()->withInput()
+                ->with('error', 'Failed to create session. Please try again.');
+        }
+    }
+    
+    /**
+     * Show form to edit a session
+     */
+    public function edit($activityId, $sessionId)
+    {
+        if (!in_array(session('role'), ['admin', 'supervisor'])) {
+            return redirect()->route('activities.index')
+                ->with('error', 'You do not have permission to edit sessions.');
+        }
+        
+        try {
+            $activity = Activity::findOrFail($activityId);
+            $session = ActivitySession::findOrFail($sessionId);
+            
+            // Verify session belongs to activity
+            if ($session->activity_id != $activityId) {
+                return redirect()->route('activities.sessions', $activityId)
+                    ->with('error', 'Session not found.');
+            }
+            
+            // Get qualified teachers
+            $teachers = Users::where('role', 'teacher')
+                ->where(function ($query) use ($activity) {
+                    for ($i = 1; $i <= 5; $i++) {
+                        $query->orWhere("user_activity_{$i}", $activity->category);
+                    }
+                })
+                ->get();
+                
+            $centres = Centres::all();
+            
+            return view('activities.sessions.edit', 
+                compact('activity', 'session', 'teachers', 'centres'));
+                
+        } catch (\Exception $e) {
+            return redirect()->route('activities.sessions', $activityId)
+                ->with('error', 'Session not found.');
+        }
+    }
+    
+    /**
+     * Update a session
+     */
+    public function update(Request $request, $activityId, $sessionId)
+    {
+        if (!in_array(session('role'), ['admin', 'supervisor'])) {
+            return redirect()->route('activities.index')
+                ->with('error', 'You do not have permission to edit sessions.');
+        }
+        
+        $validated = $request->validate([
+            'teacher_id' => 'required|exists:users,id',
+            'class_name' => 'required|string|max:50',
+            'day_of_week' => 'required|in:Monday,Tuesday,Wednesday,Thursday,Friday,Saturday,Sunday',
+            'start_time' => 'required|date_format:H:i',
+            'end_time' => 'required|date_format:H:i|after:start_time',
+            'location' => 'nullable|string|max:100',
+            'max_trainees' => 'required|integer|min:1|max:50',
+            'notes' => 'nullable|string',
+            'is_active' => 'boolean'
+        ]);
+        
+        try {
+            $session = ActivitySession::findOrFail($sessionId);
+            
+            // Check for conflicts (exclude current session)
+            $conflict = $this->checkScheduleConflict(
+                $validated['teacher_id'],
+                $validated['day_of_week'],
+                $validated['start_time'],
+                $validated['end_time'],
+                $session->semester,
+                $sessionId
+            );
+            
+            if ($conflict) {
+                return back()->withInput()
+                    ->with('error', 'Schedule conflict: Teacher already has a session at this time.');
+            }
+            
+            $session->update([
+                ...$validated,
+                'updated_by' => session('id')
+            ]);
+            
+            Log::info('Session updated', [
+                'session_id' => $sessionId,
+                'updated_by' => session('name')
+            ]);
+            
+            return redirect()->route('activities.sessions', $activityId)
+                ->with('success', 'Session updated successfully!');
+                
+        } catch (\Exception $e) {
+            Log::error('Failed to update session', [
+                'session_id' => $sessionId,
+                'error' => $e->getMessage()
+            ]);
+            
+            return back()->withInput()
+                ->with('error', 'Failed to update session. Please try again.');
+        }
+    }
+    
+    /**
+     * Delete a session
+     */
+    public function destroy($activityId, $sessionId)
+    {
+        if (!in_array(session('role'), ['admin', 'supervisor'])) {
+            return redirect()->route('activities.index')
+                ->with('error', 'You do not have permission to delete sessions.');
+        }
+        
+        try {
+            DB::beginTransaction();
+            
+            $session = ActivitySession::findOrFail($sessionId);
+            
+            // Check if session has attendance records
+            if ($session->attendance()->exists()) {
+                // Soft delete by deactivating
+                $session->update([
+                    'is_active' => false,
+                    'updated_by' => session('id')
+                ]);
+                
+                $message = 'Session deactivated (has attendance records).';
+            } else {
+                // Hard delete if no attendance
+                $session->enrollments()->delete();
+                $session->delete();
+                
+                $message = 'Session deleted successfully!';
+            }
+            
+            DB::commit();
+            
+            Log::info('Session removed', [
+                'session_id' => $sessionId,
+                'method' => $session->exists ? 'deactivated' : 'deleted',
+                'removed_by' => session('name')
+            ]);
+            
+            return redirect()->route('activities.sessions', $activityId)
+                ->with('success', $message);
+                
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Failed to remove session', [
+                'session_id' => $sessionId,
+                'error' => $e->getMessage()
+            ]);
+            
+            return back()->with('error', 'Failed to remove session. Please try again.');
+        }
+    }
+    
+    /**
+     * Enroll trainees in a session
+     */
+    public function enrollTrainees(Request $request, $sessionId)
+    {
+        $validated = $request->validate([
+            'trainee_ids' => 'required|array',
+            'trainee_ids.*' => 'exists:trainees,id'
+        ]);
+        
+        try {
+            DB::beginTransaction();
+            
+            $session = ActivitySession::findOrFail($sessionId);
+            $enrolled = 0;
+            $errors = [];
+            
+            foreach ($validated['trainee_ids'] as $traineeId) {
+                if ($session->canEnroll($traineeId)) {
+                    SessionEnrollment::create([
+                        'session_id' => $sessionId,
+                        'trainee_id' => $traineeId,
+                        'enrollment_date' => now(),
+                        'status' => 'Active',
+                        'enrolled_by' => session('id')
+                    ]);
+                    $enrolled++;
+                } else {
+                    $trainee = Trainee::find($traineeId);
+                    $errors[] = "{$trainee->name} cannot be enrolled (already enrolled or session full).";
+                }
+            }
+            
+            DB::commit();
+            
+            $message = "{$enrolled} trainees enrolled successfully!";
+            if (!empty($errors)) {
+                $message .= " Issues: " . implode(' ', $errors);
+            }
+            
+            return back()->with('success', $message);
+            
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Failed to enroll trainees. Please try again.');
+        }
+    }
+    
+    /**
+     * Check for schedule conflicts
+     */
+    private function checkScheduleConflict($teacherId, $dayOfWeek, $startTime, $endTime, $semester, $excludeId = null)
+    {
+        $query = ActivitySession::where('teacher_id', $teacherId)
+            ->where('day_of_week', $dayOfWeek)
+            ->where('semester', $semester)
+            ->where('is_active', true);
+            
+        if ($excludeId) {
+            $query->where('id', '!=', $excludeId);
+        }
+        
+        return $query->where(function ($q) use ($startTime, $endTime) {
+            $q->where(function ($subQ) use ($startTime, $endTime) {
+                $subQ->where('start_time', '>=', $startTime)
+                     ->where('start_time', '<', $endTime);
+            })->orWhere(function ($subQ) use ($startTime, $endTime) {
+                $subQ->where('end_time', '>', $startTime)
+                     ->where('end_time', '<=', $endTime);
+            })->orWhere(function ($subQ) use ($startTime, $endTime) {
+                $subQ->where('start_time', '<=', $startTime)
+                     ->where('end_time', '>=', $endTime);
+            });
+        })->exists();
+    }
+}
+
+================================================================================
+### 4. OPTIMIZED ROUTES (web.php)
+================================================================================
+
+Replace all existing activity-related routes with these:
+
+```php
+// Activity Module Routes
+Route::middleware(['auth'])->group(function () {
+    
+    // Common routes for all authenticated users
+    Route::get('/activities', [ActivityController::class, 'index'])->name('activities.index');
+    Route::get('/activities/{id}', [ActivityController::class, 'show'])->name('activities.show');
+    
+    // Admin and Supervisor routes
+    Route::middleware(['role:admin,supervisor'])->group(function () {
+        Route::get('/activities/create', [ActivityController::class, 'create'])->name('activities.create');
+        Route::post('/activities', [ActivityController::class, 'store'])->name('activities.store');
+        Route::get('/activities/{id}/edit', [ActivityController::class, 'edit'])->name('activities.edit');
+        Route::put('/activities/{id}', [ActivityController::class, 'update'])->name('activities.update');
+        Route::delete('/activities/{id}', [ActivityController::class, 'destroy'])->name('activities.destroy');
+        
+        // Session management
+        Route::get('/activities/{id}/sessions', [ActivitySessionController::class, 'index'])->name('activities.sessions');
+        Route::get('/activities/{id}/sessions/create', [ActivitySessionController::class, 'create'])->name('activities.sessions.create');
+        Route::post('/activities/{id}/sessions', [ActivitySessionController::class, 'store'])->name('activities.sessions.store');
+        Route::get('/activities/{activityId}/sessions/{sessionId}/edit', [ActivitySessionController::class, 'edit'])->name('activities.sessions.edit');
+        Route::put('/activities/{activityId}/sessions/{sessionId}', [ActivitySessionController::class, 'update'])->name('activities.sessions.update');
+        Route::delete('/activities/{activityId}/sessions/{sessionId}', [ActivitySessionController::class, 'destroy'])->name('activities.sessions.destroy');
+        
+        // Enrollment management
+        Route::post('/sessions/{id}/enroll', [ActivitySessionController::class, 'enrollTrainees'])->name('activities.sessions.enroll');
+    });
+    
+    // Teacher routes
+    Route::middleware(['role:teacher'])->group(function () {
+        Route::get('/teacher/schedule', [ActivityController::class, 'teacherSchedule'])->name('teacher.schedule');
+    });
+    
+    // Attendance routes (Teachers, Admin, Supervisor)
+    Route::middleware(['role:teacher,admin,supervisor'])->group(function () {
+        Route::get('/sessions/{id}/attendance', [ActivityController::class, 'markAttendance'])->name('activities.attendance.mark');
+        Route::post('/sessions/{id}/attendance', [ActivityController::class, 'storeAttendance'])->name('activities.attendance.store');
+    });
+    
+    // API routes for AJAX
+    Route::get('/api/activities/search', [ActivityController::class, 'search'])->name('api.activities.search');
+    Route::get('/api/activities/categories', [ActivityController::class, 'getCategories'])->name('api.activities.categories');
+});
+
+// Role-specific redirects for dashboard links
+Route::get('/admin/activities', function() {
+    return redirect()->route('activities.index');
+})->name('admin.activities')->middleware(['auth', 'role:admin']);
+
+Route::get('/supervisor/activities', function() {
+    return redirect()->route('activities.index');
+})->name('supervisor.activities')->middleware(['auth', 'role:supervisor']);
+
+Route::get('/teacher/activities', function() {
+    return redirect()->route('activities.index');
+})->name('teacher.activities')->middleware(['auth', 'role:teacher']);
+
+Route::get('/ajk/activities', function() {
+    return redirect()->route('activities.index');
+})->name('ajk.activities')->middleware(['auth', 'role:ajk']);
+
+================================================================================
+### 5. VIEWS
+================================================================================
+
+--------------------------------------------------------------------------------
+File: resources/views/activities/index.blade.php
+--------------------------------------------------------------------------------
+
+@extends('layouts.app')
+
+@section('title', 'Activities')
+
+@section('styles')
+<link rel="stylesheet" href="{{ asset('css/activities.css') }}">
+@endsection
+
+@section('content')
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h1 class="h3 mb-0">Activities Management</h1>
+                @if(in_array(session('role'), ['admin', 'supervisor']))
+                <a href="{{ route('activities.create') }}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Create Activity
+                </a>
+                @endif
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon bg-primary">
+                    <i class="fas fa-tasks"></i>
+                </div>
+                <div class="stat-content">
+                    <h3>{{ $stats['total_activities'] ?? 0 }}</h3>
+                    <p>Total Activities</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon bg-success">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="stat-content">
+                    <h3>{{ $stats['active_activities'] ?? 0 }}</h3>
+                    <p>Active Activities</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon bg-info">
+                    <i class="fas fa-calendar-alt"></i>
+                </div>
+                <div class="stat-content">
+                    <h3>{{ $stats['total_sessions'] ?? 0 }}</h3>
+                    <p>Total Sessions</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon bg-warning">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="stat-content">
+                    <h3>{{ $stats['total_enrollments'] ?? 0 }}</h3>
+                    <p>Total Enrollments</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="filter-card">
+                <div class="row">
+                    <div class="col-md-4">
+                        <select id="categoryFilter" class="form-control">
+                            <option value="">All Categories</option>
+                            @foreach($categories as $category)
+                            <option value="{{ $category }}">{{ $category }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <select id="statusFilter" class="form-control">
+                            <option value="">All Status</option>
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <input type="text" id="searchInput" class="form-control" placeholder="Search activities...">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Activities Grid -->
+    <div class="row" id="activitiesGrid">
+        @forelse($activities as $activity)
+        <div class="col-md-6 col-lg-4 activity-item" 
+             data-category="{{ $activity->category }}"
+             data-status="{{ $activity->is_active ? 'active' : 'inactive' }}"
+             data-name="{{ strtolower($activity->activity_name) }}">
+            <div class="activity-card">
+                <div class="activity-header">
+                    <h5 class="activity-title">{{ $activity->activity_name }}</h5>
+                    <span class="activity-code">{{ $activity->activity_code }}</span>
+                </div>
+                <div class="activity-body">
+                    <p class="activity-category">
+                        <i class="fas fa-tag"></i> {{ $activity->category }}
+                    </p>
+                    <p class="activity-description">{{ Str::limit($activity->description, 100) }}</p>
+                    <div class="activity-meta">
+                        <span class="meta-item">
+                            <i class="fas fa-child"></i> {{ $activity->age_group }}
+                        </span>
+                        <span class="meta-item">
+                            <i class="fas fa-signal"></i> {{ $activity->difficulty_level }}
+                        </span>
+                        <span class="meta-item">
+                            <i class="fas fa-users"></i> {{ $activity->active_sessions_count }} sessions
+                        </span>
+                    </div>
+                </div>
+                <div class="activity-footer">
+                    <div class="btn-group" role="group">
+                        <a href="{{ route('activities.show', $activity->id) }}" 
+                           class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-eye"></i> View
+                        </a>
+                        @if(in_array(session('role'), ['admin', 'supervisor']))
+                        <a href="{{ route('activities.edit', $activity->id) }}" 
+                           class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-edit"></i> Edit
+                        </a>
+                        <a href="{{ route('activities.sessions', $activity->id) }}" 
+                           class="btn btn-sm btn-outline-info">
+                            <i class="fas fa-calendar"></i> Sessions
+                        </a>
+                        @endif
+                    </div>
+                    <span class="status-badge badge {{ $activity->is_active ? 'badge-success' : 'badge-secondary' }}">
+                        {{ $activity->is_active ? 'Active' : 'Inactive' }}
+                    </span>
+                </div>
+            </div>
+        </div>
+        @empty
+        <div class="col-12">
+            <div class="empty-state">
+                <i class="fas fa-clipboard-list fa-4x text-muted mb-3"></i>
+                <h4>No Activities Found</h4>
+                <p class="text-muted">There are no activities matching your criteria.</p>
+                @if(in_array(session('role'), ['admin', 'supervisor']))
+                <a href="{{ route('activities.create') }}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Create First Activity
+                </a>
+                @endif
+            </div>
+        </div>
+        @endforelse
+    </div>
+</div>
+@endsection
+
+@section('scripts')
+<script src="{{ asset('js/activities.js') }}"></script>
+@endsection
+
+--------------------------------------------------------------------------------
+File: resources/views/activities/create.blade.php
+--------------------------------------------------------------------------------
+
+@extends('layouts.app')
+
+@section('title', 'Create Activity')
+
+@section('styles')
+<link rel="stylesheet" href="{{ asset('css/activities.css') }}">
+@endsection
+
+@section('content')
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">Create New Activity</h4>
+                </div>
+                <div class="card-body">
+                    <form action="{{ route('activities.store') }}" method="POST" id="createActivityForm">
+                        @csrf
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="activity_name">Activity Name <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control @error('activity_name') is-invalid @enderror" 
+                                           id="activity_name" name="activity_name" value="{{ old('activity_name') }}" required>
+                                    @error('activity_name')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="activity_code">Activity Code <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control @error('activity_code') is-invalid @enderror" 
+                                           id="activity_code" name="activity_code" value="{{ old('activity_code') }}" 
+                                           placeholder="e.g., SPCH101" required>
+                                    @error('activity_code')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="category">Category <span class="text-danger">*</span></label>
+                                    <select class="form-control @error('category') is-invalid @enderror" 
+                                            id="category" name="category" required>
+                                        <option value="">Select Category</option>
+                                        @foreach($categories as $category)
+                                        <option value="{{ $category }}" {{ old('category') == $category ? 'selected' : '' }}>
+                                            {{ $category }}
+                                        </option>
+                                        @endforeach
+                                    </select>
+                                    @error('category')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label for="age_group">Age Group <span class="text-danger">*</span></label>
+                                    <select class="form-control @error('age_group') is-invalid @enderror" 
+                                            id="age_group" name="age_group" required>
+                                        <option value="">Select Age Group</option>
+                                        <option value="3-6" {{ old('age_group') == '3-6' ? 'selected' : '' }}>3-6 years</option>
+                                        <option value="7-12" {{ old('age_group') == '7-12' ? 'selected' : '' }}>7-12 years</option>
+                                        <option value="13-18" {{ old('age_group') == '13-18' ? 'selected' : '' }}>13-18 years</option>
+                                        <option value="All Ages" {{ old('age_group') == 'All Ages' ? 'selected' : '' }}>All Ages</option>
+                                    </select>
+                                    @error('age_group')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label for="difficulty_level">Difficulty <span class="text-danger">*</span></label>
+                                    <select class="form-control @error('difficulty_level') is-invalid @enderror" 
+                                            id="difficulty_level" name="difficulty_level" required>
+                                        <option value="">Select Level</option>
+                                        <option value="Beginner" {{ old('difficulty_level') == 'Beginner' ? 'selected' : '' }}>Beginner</option>
+                                        <option value="Intermediate" {{ old('difficulty_level') == 'Intermediate' ? 'selected' : '' }}>Intermediate</option>
+                                        <option value="Advanced" {{ old('difficulty_level') == 'Advanced' ? 'selected' : '' }}>Advanced</option>
+                                    </select>
+                                    @error('difficulty_level')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="description">Description <span class="text-danger">*</span></label>
+                            <textarea class="form-control @error('description') is-invalid @enderror" 
+                                      id="description" name="description" rows="3" required>{{ old('description') }}</textarea>
+                            @error('description')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="objectives">Learning Objectives</label>
+                            <textarea class="form-control @error('objectives') is-invalid @enderror" 
+                                      id="objectives" name="objectives" rows="3" 
+                                      placeholder="Enter each objective on a new line">{{ old('objectives') }}</textarea>
+                            @error('objectives')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="materials_needed">Materials Needed</label>
+                            <textarea class="form-control @error('materials_needed') is-invalid @enderror" 
+                                      id="materials_needed" name="materials_needed" rows="2" 
+                                      placeholder="List required materials">{{ old('materials_needed') }}</textarea>
+                            @error('materials_needed')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+                        
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Create Activity
+                            </button>
+                            <a href="{{ route('activities.index') }}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@endsection
+
+@section('scripts')
+<script src="{{ asset('js/activities.js') }}"></script>
+@endsection
+
+--------------------------------------------------------------------------------
+File: resources/views/activities/show.blade.php
+--------------------------------------------------------------------------------
+
+@extends('layouts.app')
+
+@section('title', $activity->activity_name)
+
+@section('styles')
+<link rel="stylesheet" href="{{ asset('css/activities.css') }}">
+@endsection
+
+@section('content')
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-8">
+            <!-- Activity Details Card -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">{{ $activity->activity_name }}</h4>
+                    <span class="badge {{ $activity->is_active ? 'badge-success' : 'badge-secondary' }}">
+                        {{ $activity->is_active ? 'Active' : 'Inactive' }}
+                    </span>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <p><strong>Activity Code:</strong> {{ $activity->activity_code }}</p>
+                            <p><strong>Category:</strong> {{ $activity->category }}</p>
+                            <p><strong>Age Group:</strong> {{ $activity->age_group }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Difficulty Level:</strong> {{ $activity->difficulty_level }}</p>
+                            <p><strong>Created By:</strong> {{ $activity->creator->name ?? 'System' }}</p>
+                            <p><strong>Created On:</strong> {{ $activity->created_at->format('d M Y') }}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h5>Description</h5>
+                        <p>{{ $activity->description }}</p>
+                    </div>
+                    
+                    @if($activity->objectives)
+                    <div class="mb-3">
+                        <h5>Learning Objectives</h5>
+                        <ul>
+                            @foreach(explode("\n", $activity->objectives) as $objective)
+                                @if(trim($objective))
+                                <li>{{ trim($objective) }}</li>
+                                @endif
+                            @endforeach
+                        </ul>
+                    </div>
+                    @endif
+                    
+                    @if($activity->materials_needed)
+                    <div class="mb-3">
+                        <h5>Materials Needed</h5>
+                        <p>{{ $activity->materials_needed }}</p>
+                    </div>
+                    @endif
+                    
+                    <div class="mt-4">
+                        @if(in_array(session('role'), ['admin', 'supervisor']))
+                        <a href="{{ route('activities.edit', $activity->id) }}" class="btn btn-primary">
+                            <i class="fas fa-edit"></i> Edit Activity
+                        </a>
+                        <a href="{{ route('activities.sessions', $activity->id) }}" class="btn btn-info">
+                            <i class="fas fa-calendar"></i> Manage Sessions
+                        </a>
+                        @endif
+                        <a href="{{ route('activities.index') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to Activities
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Sessions Card -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Active Sessions</h5>
+                </div>
+                <div class="card-body">
+                    @if($activity->activeSessions->count() > 0)
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Class</th>
+                                    <th>Teacher</th>
+                                    <th>Schedule</th>
+                                    <th>Time</th>
+                                    <th>Enrollments</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($activity->activeSessions as $session)
+                                <tr>
+                                    <td>{{ $session->class_name }}</td>
+                                    <td>{{ $session->teacher->name ?? 'Not Assigned' }}</td>
+                                    <td>{{ $session->day_of_week }}</td>
+                                    <td>{{ Carbon\Carbon::parse($session->start_time)->format('g:i A') }} - 
+                                        {{ Carbon\Carbon::parse($session->end_time)->format('g:i A') }}</td>
+                                    <td>
+                                        {{ $session->activeEnrollments->count() }} / {{ $session->max_trainees }}
+                                    </td>
+                                    <td>
+                                        @if(in_array(session('role'), ['admin', 'supervisor', 'teacher']))
+                                        <a href="{{ route('activities.attendance.mark', $session->id) }}" 
+                                           class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-check-square"></i> Attendance
+                                        </a>
+                                        @endif
+                                    </td>
+                                </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                    @else
+                    <p class="text-muted text-center">No active sessions scheduled for this activity.</p>
+                    @endif
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <!-- Statistics Card -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Statistics</h5>
+                </div>
+                <div class="card-body">
+                    <div class="stat-item">
+                        <i class="fas fa-calendar-alt text-primary"></i>
+                        <span>Total Sessions: {{ $stats['total_sessions'] }}</span>
+                    </div>
+                    <div class="stat-item">
+                        <i class="fas fa-check-circle text-success"></i>
+                        <span>Active Sessions: {{ $stats['active_sessions'] }}</span>
+                    </div>
+                    <div class="stat-item">
+                        <i class="fas fa-users text-info"></i>
+                        <span>Total Enrollments: {{ $stats['total_enrollments'] }}</span>
+                    </div>
+                    <div class="stat-item">
+                        <i class="fas fa-chalkboard-teacher text-warning"></i>
+                        <span>Teachers: {{ $stats['teachers'] }}</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Quick Actions Card -->
+            @if(in_array(session('role'), ['admin', 'supervisor']))
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <a href="{{ route('activities.sessions.create', $activity->id) }}" 
+                       class="btn btn-block btn-primary mb-2">
+                        <i class="fas fa-plus"></i> Add New Session
+                    </a>
+                    <a href="{{ route('activities.edit', $activity->id) }}" 
+                       class="btn btn-block btn-secondary mb-2">
+                        <i class="fas fa-edit"></i> Edit Activity
+                    </a>
+                    @if(!$activity->hasActiveEnrollments())
+                    <form action="{{ route('activities.destroy', $activity->id) }}" method="POST" 
+                          onsubmit="return confirm('Are you sure you want to deactivate this activity?')">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="btn btn-block btn-danger">
+                            <i class="fas fa-times-circle"></i> Deactivate Activity
+                        </button>
+                    </form>
+                    @endif
+                </div>
+            </div>
+            @endif
+        </div>
+    </div>
+</div>
+@endsection
+
+@section('scripts')
+<script src="{{ asset('js/activities.js') }}"></script>
+@endsection
+
+================================================================================
+### 6. CSS FILE
+================================================================================
+
+--------------------------------------------------------------------------------
+File: public/css/activities.css
+--------------------------------------------------------------------------------
+
+/* Activities Module Styles */
+
+/* General Styles */
+.activity-card {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s, box-shadow 0.2s;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.activity-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.activity-header {
+    padding: 1.25rem;
+    border-bottom: 1px solid #e9ecef;
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+}
+
+.activity-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0;
+    color: #333;
+}
+
+.activity-code {
+    font-size: 0.875rem;
+    color: #6c757d;
+    font-weight: 500;
+}
+
+.activity-body {
+    padding: 1.25rem;
+    flex-grow: 1;
+}
+
+.activity-category {
+    font-size: 0.875rem;
+    color: #6c757d;
+    margin-bottom: 0.75rem;
+}
+
+.activity-category i {
+    color: #007bff;
+    margin-right: 0.25rem;
+}
+
+.activity-description {
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: #495057;
+    margin-bottom: 1rem;
+}
+
+.activity-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.meta-item {
+    font-size: 0.8rem;
+    color: #6c757d;
+    display: flex;
+    align-items: center;
+}
+
+.meta-item i {
+    margin-right: 0.25rem;
+}
+
+.activity-footer {
+    padding: 1rem 1.25rem;
+    background-color: #f8f9fa;
+    border-top: 1px solid #e9ecef;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* Statistics Cards */
+.stat-card {
+    background: #fff;
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    height: 100%;
+}
+
+.stat-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 1rem;
+    color: #fff;
+}
+
+.stat-icon i {
+    font-size: 1.5rem;
+}
+
+.stat-content h3 {
+    font-size: 1.75rem;
+    font-weight: 600;
+    margin: 0;
+    color: #333;
+}
+
+.stat-content p {
+    margin: 0;
+    color: #6c757d;
+    font-size: 0.875rem;
+}
+
+/* Filter Card */
+.filter-card {
+    background: #fff;
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 3rem;
+}
+
+.empty-state h4 {
+    color: #333;
+    margin-bottom: 0.5rem;
+}
+
+/* Status Badge */
+.status-badge {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.75rem;
+    font-weight: 500;
+}
+
+/* Form Sections */
+.form-section {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.section-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+}
+
+.section-title i {
+    margin-right: 0.5rem;
+    color: #007bff;
+}
+
+/* Session Table */
+.session-table {
+    background: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.session-table th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+    color: #333;
+    border-bottom: 2px solid #dee2e6;
+}
+
+/* Attendance Form */
+.attendance-grid {
+    display: grid;
+    gap: 1rem;
+}
+
+.attendance-item {
+    background: #fff;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.trainee-info h6 {
+    margin: 0;
+    font-size: 1rem;
+    color: #333;
+}
+
+.trainee-info small {
+    color: #6c757d;
+}
+
+.attendance-controls {
+    display: flex;
+    gap: 0.5rem;
+}
+
+/* Schedule View */
+.schedule-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1rem;
+}
+
+.day-card {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+
+.day-header {
+    background-color: #007bff;
+    color: #fff;
+    padding: 0.75rem 1rem;
+    font-weight: 600;
+}
+
+.session-item {
+    padding: 1rem;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.session-item:last-child {
+    border-bottom: none;
+}
+
+.session-time {
+    font-size: 0.875rem;
+    color: #6c757d;
+    margin-bottom: 0.25rem;
+}
+
+.session-name {
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 0.25rem;
+}
+
+.session-location {
+    font-size: 0.875rem;
+    color: #6c757d;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .activity-meta {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .stat-card {
+        margin-bottom: 1rem;
+    }
+    
+    .activity-footer {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .btn-group {
+        width: 100%;
+    }
+    
+    .btn-group .btn {
+        flex: 1;
+    }
+}
+
+/* Loading State */
+.loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.spinner-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 200px;
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.activity-item {
+    animation: fadeIn 0.3s ease-out;
+}
+
+/* Print Styles */
+@media print {
+    .btn, .btn-group, .filter-card {
+        display: none !important;
+    }
+    
+    .activity-card {
+        break-inside: avoid;
+        box-shadow: none;
+        border: 1px solid #dee2e6;
+    }
+}
+
+================================================================================
+### 7. JAVASCRIPT FILE
+================================================================================
+
+--------------------------------------------------------------------------------
+File: public/js/activities.js
+--------------------------------------------------------------------------------
+
+// Activities Module JavaScript
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize filters
+    initializeFilters();
+    
+    // Initialize form validations
+    initializeFormValidation();
+    
+    // Initialize attendance marking
+    initializeAttendance();
+    
+    // Initialize tooltips
+    initializeTooltips();
+});
+
+/**
+ * Initialize activity filters
+ */
+function initializeFilters() {
+    const categoryFilter = document.getElementById('categoryFilter');
+    const statusFilter = document.getElementById('statusFilter');
+    const searchInput = document.getElementById('searchInput');
+    const activitiesGrid = document.getElementById('activitiesGrid');
+    
+    if (!categoryFilter || !statusFilter || !searchInput) return;
+    
+    // Category filter
+    categoryFilter.addEventListener('change', filterActivities);
+    
+    // Status filter
+    statusFilter.addEventListener('change', filterActivities);
+    
+    // Search filter
+    let searchTimeout;
+    searchInput.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(filterActivities, 300);
+    });
+    
+    function filterActivities() {
+        const category = categoryFilter.value.toLowerCase();
+        const status = statusFilter.value;
+        const search = searchInput.value.toLowerCase();
+        
+        const items = activitiesGrid.querySelectorAll('.activity-item');
+        
+        items.forEach(item => {
+            const itemCategory = item.dataset.category.toLowerCase();
+            const itemStatus = item.dataset.status;
+            const itemName = item.dataset.name;
+            
+            let show = true;
+            
+            if (category && itemCategory !== category) show = false;
+            if (status && itemStatus !== status) show = false;
+            if (search && !itemName.includes(search)) show = false;
+            
+            item.style.display = show ? '' : 'none';
+        });
+        
+        // Show empty state if no items visible
+        const visibleItems = Array.from(items).filter(item => item.style.display !== 'none');
+        const emptyState = activitiesGrid.querySelector('.empty-state');
+        
+        if (visibleItems.length === 0 && !emptyState) {
+            activitiesGrid.innerHTML = `
+                <div class="col-12">
+                    <div class="empty-state">
+                        <i class="fas fa-search fa-4x text-muted mb-3"></i>
+                        <h4>No Activities Found</h4>
+                        <p class="text-muted">Try adjusting your filters or search terms.</p>
+                    </div>
+                </div>
+            `;
+        } else if (visibleItems.length > 0 && emptyState) {
+            emptyState.parentElement.remove();
+        }
+    }
+}
+
+/**
+ * Initialize form validation
+ */
+function initializeFormValidation() {
+    const forms = document.querySelectorAll('.needs-validation, #createActivityForm, #editActivityForm');
+    
+    forms.forEach(form => {
+        form.addEventListener('submit', function(event) {
+            if (!form.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            
+            form.classList.add('was-validated');
+        });
+    });
+    
+    // Activity code auto-generation
+    const activityNameInput = document.getElementById('activity_name');
+    const activityCodeInput = document.getElementById('activity_code');
+    
+    if (activityNameInput && activityCodeInput && !activityCodeInput.value) {
+        activityNameInput.addEventListener('input', function() {
+            if (!activityCodeInput.dataset.manual) {
+                const words = this.value.trim().split(' ');
+                let code = '';
+                
+                if (words.length === 1) {
+                    code = words[0].substring(0, 4).toUpperCase();
+                } else {
+                    code = words.map(word => word.charAt(0).toUpperCase()).join('');
+                }
+                
+                code += Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+                activityCodeInput.value = code;
+            }
+        });
+        
+        activityCodeInput.addEventListener('input', function() {
+            this.dataset.manual = 'true';
+        });
+    }
+}
+
+/**
+ * Initialize attendance marking functionality
+ */
+function initializeAttendance() {
+    const attendanceForm = document.getElementById('attendanceForm');
+    if (!attendanceForm) return;
+    
+    // Quick mark buttons
+    const quickMarkBtns = document.querySelectorAll('.quick-mark');
+    quickMarkBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const status = this.dataset.status;
+            const checkboxes = document.querySelectorAll(`.attendance-status[value="${status}"]`);
+            
+            checkboxes.forEach(cb => {
+                cb.checked = true;
+                updateAttendanceRow(cb);
+            });
+        });
+    });
+    
+    // Individual attendance status change
+    const statusInputs = document.querySelectorAll('.attendance-status');
+    statusInputs.forEach(input => {
+        input.addEventListener('change', function() {
+            updateAttendanceRow(this);
+        });
+    });
+    
+    function updateAttendanceRow(input) {
+        const row = input.closest('.attendance-item');
+        const participationInput = row.querySelector('.participation-score');
+        
+        if (input.value === 'Present' || input.value === 'Late') {
+            participationInput.disabled = false;
+            row.classList.add('present');
+            row.classList.remove('absent');
+        } else {
+            participationInput.disabled = true;
+            participationInput.value = '';
+            row.classList.add('absent');
+            row.classList.remove('present');
+        }
+    }
+    
+    // Form submission
+    attendanceForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const submitBtn = this.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+        
+        // Simulate API call
+        setTimeout(() => {
+            this.submit();
+        }, 500);
+    });
+}
+
+/**
+ * Initialize tooltips
+ */
+function initializeTooltips() {
+    const tooltips = document.querySelectorAll('[data-toggle="tooltip"]');
+    tooltips.forEach(tooltip => {
+        new bootstrap.Tooltip(tooltip);
+    });
+}
+
+/**
+ * Confirm delete action
+ */
+function confirmDelete(message) {
+    return confirm(message || 'Are you sure you want to delete this item?');
+}
+
+/**
+ * Format time display
+ */
+function formatTime(time) {
+    const [hours, minutes] = time.split(':');
+    const hour = parseInt(hours);
+    const ampm = hour >= 12 ? 'PM' : 'AM';
+    const displayHour = hour > 12 ? hour - 12 : (hour === 0 ? 12 : hour);
+    return `${displayHour}:${minutes} ${ampm}`;
+}
+
+/**
+ * Handle session enrollment
+ */
+function enrollTrainees(sessionId) {
+    const modal = new bootstrap.Modal(document.getElementById('enrollModal'));
+    const form = document.getElementById('enrollForm');
+    
+    // Load eligible trainees via AJAX
+    fetch(`/api/sessions/${sessionId}/eligible-trainees`)
+        .then(response => response.json())
+        .then(data => {
+            const container = document.getElementById('traineesList');
+            container.innerHTML = '';
+            
+            if (data.trainees.length === 0) {
+                container.innerHTML = '<p class="text-muted">No eligible trainees found.</p>';
+                return;
+            }
+            
+            data.trainees.forEach(trainee => {
+                const item = document.createElement('div');
+                item.className = 'form-check mb-2';
+                item.innerHTML = `
+                    <input class="form-check-input" type="checkbox" 
+                           value="${trainee.id}" id="trainee_${trainee.id}" 
+                           name="trainee_ids[]">
+                    <label class="form-check-label" for="trainee_${trainee.id}">
+                        ${trainee.name} (${trainee.centre_name})
+                    </label>
+                `;
+                container.appendChild(item);
+            });
+        })
+        .catch(error => {
+            console.error('Error loading trainees:', error);
+        });
+    
+    // Update form action
+    form.action = `/sessions/${sessionId}/enroll`;
+    
+    modal.show();
+}
+
+/**
+ * Export activities to CSV
+ */
+function exportActivities() {
+    window.location.href = '/activities/export?format=csv';
+}
+
+/**
+ * Print activity schedule
+ */
+function printSchedule() {
+    window.print();
+}
+
+// Helper functions for activity management
+const ActivityManager = {
+    /**
+     * Update activity status via AJAX
+     */
+    toggleStatus: function(activityId, currentStatus) {
+        const newStatus = !currentStatus;
+        
+        fetch(`/api/activities/${activityId}/status`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+            },
+            body: JSON.stringify({ is_active: newStatus })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Failed to update activity status.');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while updating the activity status.');
+        });
+    },
+    
+    /**
+     * Load activity statistics
+     */
+    loadStats: function(activityId) {
+        fetch(`/api/activities/${activityId}/stats`)
+            .then(response => response.json())
+            .then(data => {
+                updateStatsDisplay(data);
+            })
+            .catch(error => {
+                console.error('Error loading stats:', error);
+            });
+    },
+    
+    /**
+     * Search activities
+     */
+    search: function(query) {
+        return fetch(`/api/activities/search?q=${encodeURIComponent(query)}`)
+            .then(response => response.json());
+    }
+};
+
+/**
+ * Update statistics display
+ */
+function updateStatsDisplay(stats) {
+    Object.keys(stats).forEach(key => {
+        const element = document.getElementById(`stat-${key}`);
+        if (element) {
+            element.textContent = stats[key];
+        }
+    });
+}
+
+================================================================================
+### 8. ADDITIONAL VIEWS
+================================================================================
+
+--------------------------------------------------------------------------------
+File: resources/views/activities/edit.blade.php
+--------------------------------------------------------------------------------
+
+@extends('layouts.app')
+
+@section('title', 'Edit Activity')
+
+@section('styles')
+<link rel="stylesheet" href="{{ asset('css/activities.css') }}">
+@endsection
+
+@section('content')
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">Edit Activity</h4>
+                </div>
+                <div class="card-body">
+                    <form action="{{ route('activities.update', $activity->id) }}" method="POST" id="editActivityForm">
+                        @csrf
+                        @method('PUT')
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="activity_name">Activity Name <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control @error('activity_name') is-invalid @enderror" 
+                                           id="activity_name" name="activity_name" 
+                                           value="{{ old('activity_name', $activity->activity_name) }}" required>
+                                    @error('activity_name')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="activity_code">Activity Code <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control @error('activity_code') is-invalid @enderror" 
+                                           id="activity_code" name="activity_code" 
+                                           value="{{ old('activity_code', $activity->activity_code) }}" required>
+                                    @error('activity_code')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="category">Category <span class="text-danger">*</span></label>
+                                    <select class="form-control @error('category') is-invalid @enderror" 
+                                            id="category" name="category" required>
+                                        <option value="">Select Category</option>
+                                        @foreach($categories as $category)
+                                        <option value="{{ $category }}" 
+                                                {{ old('category', $activity->category) == $category ? 'selected' : '' }}>
+                                            {{ $category }}
+                                        </option>
+                                        @endforeach
+                                    </select>
+                                    @error('category')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label for="age_group">Age Group <span class="text-danger">*</span></label>
+                                    <select class="form-control @error('age_group') is-invalid @enderror" 
+                                            id="age_group" name="age_group" required>
+                                        <option value="">Select Age Group</option>
+                                        <option value="3-6" {{ old('age_group', $activity->age_group) == '3-6' ? 'selected' : '' }}>3-6 years</option>
+                                        <option value="7-12" {{ old('age_group', $activity->age_group) == '7-12' ? 'selected' : '' }}>7-12 years</option>
+                                        <option value="13-18" {{ old('age_group', $activity->age_group) == '13-18' ? 'selected' : '' }}>13-18 years</option>
+                                        <option value="All Ages" {{ old('age_group', $activity->age_group) == 'All Ages' ? 'selected' : '' }}>All Ages</option>
+                                    </select>
+                                    @error('age_group')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label for="difficulty_level">Difficulty <span class="text-danger">*</span></label>
+                                    <select class="form-control @error('difficulty_level') is-invalid @enderror" 
+                                            id="difficulty_level" name="difficulty_level" required>
+                                        <option value="">Select Level</option>
+                                        <option value="Beginner" {{ old('difficulty_level', $activity->difficulty_level) == 'Beginner' ? 'selected' : '' }}>Beginner</option>
+                                        <option value="Intermediate" {{ old('difficulty_level', $activity->difficulty_level) == 'Intermediate' ? 'selected' : '' }}>Intermediate</option>
+                                        <option value="Advanced" {{ old('difficulty_level', $activity->difficulty_level) == 'Advanced' ? 'selected' : '' }}>Advanced</option>
+                                    </select>
+                                    @error('difficulty_level')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="description">Description <span class="text-danger">*</span></label>
+                            <textarea class="form-control @error('description') is-invalid @enderror" 
+                                      id="description" name="description" rows="3" required>{{ old('description', $activity->description) }}</textarea>
+                            @error('description')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="objectives">Learning Objectives</label>
+                            <textarea class="form-control @error('objectives') is-invalid @enderror" 
+                                      id="objectives" name="objectives" rows="3" 
+                                      placeholder="Enter each objective on a new line">{{ old('objectives', $activity->objectives) }}</textarea>
+                            @error('objectives')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="materials_needed">Materials Needed</label>
+                            <textarea class="form-control @error('materials_needed') is-invalid @enderror" 
+                                      id="materials_needed" name="materials_needed" rows="2" 
+                                      placeholder="List required materials">{{ old('materials_needed', $activity->materials_needed) }}</textarea>
+                            @error('materials_needed')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+                        
+                        <div class="form-group">
+                            <div class="custom-control custom-switch">
+                                <input type="checkbox" class="custom-control-input" id="is_active" 
+                                       name="is_active" value="1" 
+                                       {{ old('is_active', $activity->is_active) ? 'checked' : '' }}>
+                                <label class="custom-control-label" for="is_active">
+                                    Activity is Active
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Update Activity
+                            </button>
+                            <a href="{{ route('activities.show', $activity->id) }}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@endsection
+
+@section('scripts')
+<script src="{{ asset('js/activities.js') }}"></script>
+@endsection
+
+--------------------------------------------------------------------------------
+File: resources/views/activities/sessions/index.blade.php
+--------------------------------------------------------------------------------
+
+@extends('layouts.app')
+
+@section('title', $activity->activity_name . ' - Sessions')
+
+@section('styles')
+<link rel="stylesheet" href="{{ asset('css/activities.css') }}">
+@endsection
+
+@section('content')
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3 mb-0">{{ $activity->activity_name }} - Sessions</h1>
+                    <p class="text-muted mb-0">{{ $activity->activity_code }} | {{ $activity->category }}</p>
+                </div>
+                <div>
+                    <a href="{{ route('activities.sessions.create', $activity->id) }}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Add Session
+                    </a>
+                    <a href="{{ route('activities.show', $activity->id) }}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to Activity
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sessions by Class -->
+    @forelse($sessionsByClass as $className => $sessions)
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">{{ $className }}</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Day</th>
+                            <th>Time</th>
+                            <th>Teacher</th>
+                            <th>Location</th>
+                            <th>Enrollments</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($sessions as $session)
+                        <tr>
+                            <td>{{ $session->day_of_week }}</td>
+                            <td>
+                                {{ Carbon\Carbon::parse($session->start_time)->format('g:i A') }} - 
+                                {{ Carbon\Carbon::parse($session->end_time)->format('g:i A') }}
+                            </td>
+                            <td>{{ $session->teacher->name ?? 'Not Assigned' }}</td>
+                            <td>{{ $session->location ?? '-' }}</td>
+                            <td>
+                                <span class="badge badge-info">
+                                    {{ $session->activeEnrollments->count() }} / {{ $session->max_trainees }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge {{ $session->is_active ? 'badge-success' : 'badge-secondary' }}">
+                                    {{ $session->is_active ? 'Active' : 'Inactive' }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a href="{{ route('activities.sessions.edit', [$activity->id, $session->id]) }}" 
+                                       class="btn btn-sm btn-outline-primary" title="Edit">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="{{ route('activities.attendance.mark', $session->id) }}" 
+                                       class="btn btn-sm btn-outline-info" title="Attendance">
+                                        <i class="fas fa-check-square"></i>
+                                    </a>
+                                    <button type="button" class="btn btn-sm btn-outline-success" 
+                                            onclick="enrollTrainees({{ $session->id }})" title="Enroll">
+                                        <i class="fas fa-user-plus"></i>
+                                    </button>
+                                    <form action="{{ route('activities.sessions.destroy', [$activity->id, $session->id]) }}" 
+                                          method="POST" style="display: inline-block;"
+                                          onsubmit="return confirm('Are you sure you want to delete this session?')">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    @empty
+    <div class="card">
+        <div class="card-body text-center py-5">
+            <i class="fas fa-calendar-times fa-4x text-muted mb-3"></i>
+            <h4>No Sessions Scheduled</h4>
+            <p class="text-muted">No sessions have been scheduled for this activity yet.</p>
+            <a href="{{ route('activities.sessions.create', $activity->id) }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Schedule First Session
+            </a>
+        </div>
+    </div>
+    @endforelse
+</div>
+
+<!-- Enrollment Modal -->
+<div class="modal fade" id="enrollModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Enroll Trainees</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <form id="enrollForm" method="POST">
+                @csrf
+                <div class="modal-body">
+                    <div id="traineesList">
+                        <p class="text-center">
+                            <i class="fas fa-spinner fa-spin"></i> Loading eligible trainees...
+                        </p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Enroll Selected</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+@endsection
+
+@section('scripts')
+<script src="{{ asset('js/activities.js') }}"></script>
+@endsection
+
+================================================================================
+### 9. ATTENDANCE VIEW
+================================================================================
+
+--------------------------------------------------------------------------------
+File: resources/views/activities/attendance/mark.blade.php
+--------------------------------------------------------------------------------
+
+@extends('layouts.app')
+
+@section('title', 'Mark Attendance')
+
+@section('styles')
+<link rel="stylesheet" href="{{ asset('css/activities.css') }}">
+@endsection
+
+@section('content')
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">Mark Attendance</h4>
+                    <p class="mb-0 text-muted">
+                        {{ $session->activity->activity_name }} - {{ $session->class_name }}
+                    </p>
+                </div>
+                <div class="card-body">
+                    <form action="{{ route('activities.attendance.store', $session->id) }}" 
+                          method="POST" id="attendanceForm">
+                        @csrf
+                        
+                        <div class="form-group">
+                            <label for="date">Attendance Date</label>
+                            <input type="date" class="form-control" id="date" name="date" 
+                                   value="{{ $date }}" required>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between mb-3">
+                            <h5>Trainees</h5>
+                            <div>
+                                <button type="button" class="btn btn-sm btn-success quick-mark" 
+                                        data-status="Present">
+                                    <i class="fas fa-check"></i> Mark All Present
+                                </button>
+                                <button type="button" class="btn btn-sm btn-danger quick-mark" 
+                                        data-status="Absent">
+                                    <i class="fas fa-times"></i> Mark All Absent
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="attendance-grid">
+                            @forelse($session->activeEnrollments as $enrollment)
+                            <div class="attendance-item">
+                                <div class="trainee-info">
+                                    <h6>{{ $enrollment->trainee->name }}</h6>
+                                    <small class="text-muted">ID: {{ $enrollment->trainee->trainee_id }}</small>
+                                </div>
+                                <div class="attendance-controls">
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input attendance-status" 
+                                               type="radio" 
+                                               name="attendance[{{ $enrollment->trainee_id }}]" 
+                                               id="present_{{ $enrollment->trainee_id }}" 
+                                               value="Present"
+                                               {{ ($attendance[$enrollment->trainee_id] ?? '') == 'Present' ? 'checked' : '' }}>
+                                        <label class="form-check-label" for="present_{{ $enrollment->trainee_id }}">
+                                            Present
+                                        </label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input attendance-status" 
+                                               type="radio" 
+                                               name="attendance[{{ $enrollment->trainee_id }}]" 
+                                               id="absent_{{ $enrollment->trainee_id }}" 
+                                               value="Absent"
+                                               {{ ($attendance[$enrollment->trainee_id] ?? '') == 'Absent' ? 'checked' : '' }}>
+                                        <label class="form-check-label" for="absent_{{ $enrollment->trainee_id }}">
+                                            Absent
+                                        </label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input attendance-status" 
+                                               type="radio" 
+                                               name="attendance[{{ $enrollment->trainee_id }}]" 
+                                               id="late_{{ $enrollment->trainee_id }}" 
+                                               value="Late"
+                                               {{ ($attendance[$enrollment->trainee_id] ?? '') == 'Late' ? 'checked' : '' }}>
+                                        <label class="form-check-label" for="late_{{ $enrollment->trainee_id }}">
+                                            Late
+                                        </label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input attendance-status" 
+                                               type="radio" 
+                                               name="attendance[{{ $enrollment->trainee_id }}]" 
+                                               id="excused_{{ $enrollment->trainee_id }}" 
+                                               value="Excused"
+                                               {{ ($attendance[$enrollment->trainee_id] ?? '') == 'Excused' ? 'checked' : '' }}>
+                                        <label class="form-check-label" for="excused_{{ $enrollment->trainee_id }}">
+                                            Excused
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="mt-2">
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <input type="number" 
+                                                   class="form-control form-control-sm participation-score" 
+                                                   name="participation[{{ $enrollment->trainee_id }}]" 
+                                                   placeholder="Score (0-10)" 
+                                                   min="0" max="10"
+                                                   {{ in_array($attendance[$enrollment->trainee_id] ?? '', ['Present', 'Late']) ? '' : 'disabled' }}>
+                                        </div>
+                                        <div class="col-md-8">
+                                            <input type="text" 
+                                                   class="form-control form-control-sm" 
+                                                   name="notes[{{ $enrollment->trainee_id }}]" 
+                                                   placeholder="Notes (optional)">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            @empty
+                            <p class="text-center text-muted">No trainees enrolled in this session.</p>
+                            @endforelse
+                        </div>
+                        
+                        <div class="form-group mt-4">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Save Attendance
+                            </button>
+                            <a href="{{ route('activities.sessions', $session->activity_id) }}" 
+                               class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Session Info</h5>
+                </div>
+                <div class="card-body">
+                    <dl>
+                        <dt>Day</dt>
+                        <dd>{{ $session->day_of_week }}</dd>
+                        
+                        <dt>Time</dt>
+                        <dd>
+                            {{ Carbon\Carbon::parse($session->start_time)->format('g:i A') }} - 
+                            {{ Carbon\Carbon::parse($session->end_time)->format('g:i A') }}
+                        </dd>
+                        
+                        <dt>Teacher</dt>
+                        <dd>{{ $session->teacher->name }}</dd>
+                        
+                        <dt>Location</dt>
+                        <dd>{{ $session->location ?? 'Not specified' }}</dd>
+                        
+                        <dt>Total Enrolled</dt>
+                        <dd>{{ $session->activeEnrollments->count() }} trainees</dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@endsection
+
+@section('scripts')
+<script src="{{ asset('js/activities.js') }}"></script>
+@endsection
+
+================================================================================
+### 10. NAVIGATION UPDATES
+================================================================================
+
+Add these links to your navigation based on user role:
+
+```blade
+{{-- In your navigation.blade.php or sidebar --}}
+
+@if(in_array(session('role'), ['admin', 'supervisor']))
+    <li class="nav-item">
+        <a class="nav-link" href="{{ route('activities.index') }}">
+            <i class="fas fa-tasks"></i>
+            <span>Activities</span>
+        </a>
+    </li>
+@elseif(session('role') == 'teacher')
+    <li class="nav-item">
+        <a class="nav-link" href="{{ route('teacher.schedule') }}">
+            <i class="fas fa-calendar"></i>
+            <span>My Schedule</span>
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="{{ route('activities.index') }}">
+            <i class="fas fa-tasks"></i>
+            <span>My Activities</span>
+        </a>
+    </li>
+@elseif(session('role') == 'ajk')
+    <li class="nav-item">
+        <a class="nav-link" href="{{ route('activities.index') }}">
+            <i class="fas fa-eye"></i>
+            <span>View Activities</span>
+        </a>
+    </li>
+@endif
+```
+
+================================================================================
+### 11. API ENDPOINTS (Optional)
+================================================================================
+
+Add these methods to ActivityController for AJAX functionality:
+
+```php
+/**
+ * Search activities via AJAX
+ */
+public function search(Request $request)
+{
+    $query = $request->get('q', '');
+    
+    $activities = Activity::where('activity_name', 'LIKE', "%{$query}%")
+        ->orWhere('activity_code', 'LIKE', "%{$query}%")
+        ->orWhere('category', 'LIKE', "%{$query}%")
+        ->with('creator')
+        ->limit(10)
+        ->get();
+        
+    return response()->json([
+        'results' => $activities->map(function ($activity) {
+            return [
+                'id' => $activity->id,
+                'text' => "{$activity->activity_name} ({$activity->activity_code})",
+                'category' => $activity->category
+            ];
+        })
+    ]);
+}
+
+/**
+ * Get categories for dropdown
+ */
+public function getCategoriesJson()
+{
+    $categories = $this->getCategories();
+    
+    return response()->json([
+        'categories' => $categories->map(function ($cat) {
+            return ['value' => $cat, 'text' => $cat];
+        })
+    ]);
+}
+```
+
+================================================================================
+### 12. FINAL CHECKLIST
+================================================================================
+
+1. **Database Migration**
+   - [ ] Run the consolidation migration
+   - [ ] Verify all tables are created correctly
+   - [ ] Migrate existing data if needed
+
+2. **File Management**
+   - [ ] Copy all new/updated files to their locations
+   - [ ] Delete redundant controllers and views
+   - [ ] Update CSS and JS files
+
+3. **Route Updates**
+   - [ ] Replace all activity routes with optimized ones
+   - [ ] Test all route redirects
+   - [ ] Verify role-based access
+
+4. **Testing**
+   - [ ] Test activity CRUD operations as admin
+   - [ ] Test session scheduling
+   - [ ] Test attendance marking as teacher
+   - [ ] Test enrollment management
+   - [ ] Verify role-based views work correctly
+
+5. **Cache Management**
+   ```bash
+   php artisan config:clear
+   php artisan route:clear
+   php artisan view:clear
+   php artisan cache:clear
+   php artisan optimize
+   ```
+
+6. **Production Deployment**
+   - [ ] Run migrations on production
+   - [ ] Copy assets to production
+   - [ ] Clear all caches
+   - [ ] Test critical paths
+
+================================================================================
+### TROUBLESHOOTING
+================================================================================
+
+**Issue: Old routes still being used**
+Solution: Clear route cache and restart server
+```bash
+php artisan route:clear
+php artisan route:cache
+```
+
+**Issue: Views not updating**
+Solution: Clear view cache
+```bash
+php artisan view:clear
+```
+
+**Issue: Permission errors**
+Solution: Check session role and middleware
+```php
+dd(session('role')); // Debug role
+```
+
+**Issue: Database errors**
+Solution: Check migration status
+```bash
+php artisan migrate:status
+```
+
+================================================================================
+END OF IMPLEMENTATION GUIDE
+================================================================================

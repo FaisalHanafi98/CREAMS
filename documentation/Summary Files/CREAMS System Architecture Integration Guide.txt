@@ -1,0 +1,255 @@
+# CREAMS System Architecture and Integration Guide
+
+## System Overview
+
+CREAMS (Community-based REhAbilitation Management System) is a comprehensive web application designed to manage rehabilitation centers serving children with special needs. The system has been designed with a modular architecture following role-based access control principles.
+
+## Core Architecture
+
+### Database Organization
+- The system originally used separate database tables for different user roles (`admins`, `supervisors`, `teachers`, `ajks`)
+- The database has been migrated to use a unified `users` table with a `role` field
+- Other key tables include: `trainees`, `centres`, `classes`, `activities`, `assets`, `rehabilitation_activities`
+
+### Authentication Framework
+- Custom authentication system using Laravel session management
+- Role hierarchy defined: admin (4) > supervisor (3) > ajk (2) > teacher (1)
+- Session-based storage of user identification (`id`, `role`, etc.)
+- Role-based middleware for access control
+
+### MVC Structure
+- Controllers are organized by both functionality and role
+- Views are organized by both module and role
+- Models follow the Eloquent ORM pattern with relationships
+
+## Key Modules
+
+### User Management Module
+- Central unified `Users` model with role differentiation
+- Staff directory in `teachershome` view
+- User CRUD operations handled by role-specific controllers
+- Profile management with avatar upload capabilities
+
+### Trainee Management Module
+- Trainee registration and profiles
+- Trainee activities tracking
+- Progress monitoring and attendance
+- Guardian/emergency contact management
+
+### Asset Management Module
+- Inventory tracking by center
+- Asset allocation and maintenance
+- Reporting on asset utilization
+
+### Centre Management Module
+- Multiple center support
+- Center-specific resources and staff
+- Reporting by center
+
+### Rehabilitation Activities Module (In Development)
+- Categories of rehabilitation activities
+- Scheduling activities for trainees
+- Progress tracking through activities
+- Special needs categorization and support
+
+## Fixed Issues and Improvements
+
+### Database Integration Fix
+- Resolved error: `Base table or view not found: 1146 Table 'cream.admins' doesn't exist`
+- Updated controllers to use the unified Users model instead of separate tables
+- Fixed missing `avatar` handling and standardized fields
+
+### View Structure Clarification
+- Corrected view paths in controllers
+- Fixed missing view error for `users.index` by redirecting to `teachershome`
+- Ensured consistent naming and organization of views
+
+### Route Organization Enhancement
+- Reorganized routes in web.php for better clarity and organization
+- Improved role-based route prefixes and consistent naming
+- Added proper redirects from role-specific routes to common routes
+- Fixed incomplete route definitions for AJK controller
+
+## Controllers Overview
+
+### Main Controllers
+- `MainController`: Handles authentication and main navigation
+- `DashboardController`: Manages dashboard views for all roles
+- `UserProfileController`: Handles user profile management
+
+### User Management Controllers
+- `UserController`: Central user management for all roles
+- `AdminController`: Admin-specific user management functions
+- `SupervisorController`: Supervisor-specific management functions
+- `TeacherController`: Teacher-specific functions
+- `AJKController`: AJK-specific management functions
+- `TeachersHomeController`: Central staff directory management
+
+### Trainee Management Controllers
+- `TraineeController`: API and data manipulation for trainees
+- `TraineeHomeController`: Trainee listing and management
+- `TraineeProfileController`: Individual trainee profile management
+- `TraineeRegistrationController`: Registration of new trainees
+- `TraineeActivityController`: Management of trainee activities
+
+### Activity and Resource Controllers
+- `ActivityController`: Management of activities and rehabilitation
+- `CentreController`: Centre management and reporting
+- `AssetController`: Asset inventory and management
+- `ClassController`: Class/session management
+- `EventController`: Event planning and management
+
+## Middlewares
+
+### Authentication Middlewares
+- `Authenticate`: Verifies user is logged in using session data
+- `Role`: Verifies user has appropriate role for the requested route
+- `RememberMe`: Handles persistent login via remember token
+
+## Models
+
+### Core Models
+- `Users`: Unified user model with role differentiation
+- `Centres`: Centre/location management model
+- `Trainees`: Trainee information and management
+- `Activities`: Activities for trainees and rehabilitation
+- `Classes`: Class/session organization
+- `AuditLog`: Activity tracking for security and monitoring
+
+## Integration Points for Rehabilitation Activity Module
+
+### Database Integration
+- Link to `users` table for staff assignments
+- Link to `trainees` table for participant tracking
+- Link to `centres` table for location management
+- Create `rehabilitation_activities` table for activity definitions
+- Create `rehab_schedules` table for activity scheduling
+- Create `rehab_progress` table for tracking trainee progress
+
+### Controller Integration
+- Extend `ActivityController` with rehabilitation-specific methods
+- Add schedule-specific methods to handle calendar views
+- Create association methods between trainees and activities
+
+### View Integration
+- Use common layout templates for consistent UI
+- Leverage existing user and trainee selection components
+- Implement calendar views for scheduling
+- Create progress tracking visualizations
+
+### Route Integration
+- Add rehabilitation routes to common authenticated routes
+- Add role-specific routes for admin/supervisor management functions
+- Implement API routes for calendar/scheduling AJAX functionality
+
+## Implementation Recommendations
+
+1. **Database Schema**:
+   - Ensure proper foreign key relationships
+   - Include timestamps for tracking
+   - Consider soft deletes for historical data
+
+2. **Controller Structure**:
+   - Follow role hierarchy for access control
+   - Implement proper validation and error handling
+   - Use trait sharing for common functionality
+
+3. **View Construction**:
+   - Maintain consistent UI/UX across modules
+   - Implement responsive design for mobile access
+   - Use partial views for reusable components
+
+4. **JavaScript Integration**:
+   - Use the existing `common.js` for common functionality
+   - Implement calendar functionality with a library like FullCalendar
+   - Ensure proper error handling and loading states
+
+5. **Testing Approach**:
+   - Test with different user roles for access control verification
+   - Ensure database integrity with proper transaction handling
+   - Validate all user inputs and file uploads
+
+## Staff Directory Module Details
+
+The Staff Directory (TeachersHome) module has been completely redesigned with the following improvements:
+
+- Uses the unified `Users` model instead of separate tables
+- Implements advanced filtering by role, activity, centre, and search term
+- Generates statistical data for visualization
+- Handles errors with graceful fallbacks
+- Includes permission checking for editing users
+- Supports AJAX operations for dynamic filtering
+
+### Key Components
+- `TeachersHomeController.php`: Manages staff directory functionality
+- `teachershome.blade.php`: Modern card-based design for staff profiles
+- Web routes: Unified routes for staff access across roles
+
+### User Experience Enhancements
+- Role-specific styling with different colors for different roles
+- Card hover effects and animations for better interactivity
+- Dynamic charts for visualizing staff distribution
+- Intuitive filtering system with multiple combined filters
+- Error states and loading indicators
+
+### Additional Functionality
+- Statistical dashboard showing staff distribution by role and center
+- Advanced filtering system for role, activity/specialty, center
+- Data visualization capabilities
+- Comprehensive user details with hierarchy info
+
+## Creating a Rehabilitation Activity Module
+
+When implementing the new Rehabilitation Activity Module, focus on these key integration points:
+
+1. **Trainee-Staff Connections**:
+   - Associate activities with both staff members and trainees
+   - Implement proper permissions for who can create/modify activities
+   - Ensure activities are center-specific when appropriate
+
+2. **Scheduling System**:
+   - Integrate with existing calendar components
+   - Handle scheduling conflicts and resource allocation
+   - Implement notifications for schedule changes
+
+3. **Progress Tracking**:
+   - Design clear metrics for rehabilitation progress
+   - Create reporting views for guardians and staff
+   - Implement goal-setting and achievement tracking
+
+4. **User Interface**:
+   - Maintain consistent styling with existing modules
+   - Ensure mobile responsiveness for field use
+   - Implement intuitive activity categorization
+
+5. **Permissions**:
+   - Follow existing role hierarchy for access control
+   - Create specific permissions for rehabilitation activities
+   - Handle special cases for external specialists
+
+## Implementation Roadmap
+
+1. **Database Schema Creation**:
+   - Define tables for activities, schedules, progress tracking
+   - Create migrations for new tables
+   - Update existing models with new relationships
+
+2. **Core Controllers**:
+   - Implement CRUD operations for rehabilitation activities
+   - Create scheduling controller functionality
+   - Implement progress tracking methods
+
+3. **User Interface**:
+   - Design activity management views
+   - Create scheduling calendar interface
+   - Implement progress tracking visualizations
+
+4. **Integration Testing**:
+   - Test with different user roles
+   - Verify data integrity across related modules
+   - Ensure proper error handling
+
+5. **Deployment**:
+   - Database migration
+   - Controller and view deployment
+   - User training and documentation
