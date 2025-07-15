@@ -1,0 +1,528 @@
+# CREAMS User/Staff Module Documentation
+**Community-based REhAbilitation Management System**  
+**Version:** 4.0  
+**Last Updated:** December 2024
+
+## Table of Contents
+1. [Module Overview](#module-overview)
+2. [Authentication System](#authentication-system)
+3. [User Management](#user-management)
+4. [Staff Directory](#staff-directory)
+5. [Profile Management](#profile-management)
+6. [Role-Based Dashboards](#role-based-dashboards)
+7. [Activity Specializations](#activity-specializations)
+8. [Integration Points](#integration-points)
+
+---
+
+## 1. Module Overview
+
+The User/Staff Module is the backbone of CREAMS, managing all system users who provide rehabilitation services. It implements a comprehensive role-based access control system with four distinct user types.
+
+### Core Functionality:
+- User authentication and authorization
+- Staff directory and search
+- Profile management
+- Role-based permissions
+- Activity specialization tracking
+- Performance metrics
+
+### User Roles:
+1. **Admin** - System administrators with full access
+2. **Supervisor** - Centre managers with oversight responsibilities
+3. **Teacher** - Direct service providers working with trainees
+4. **AJK** - Committee members handling events and volunteers
+
+### Database Structure:
+```sql
+users table (unified for all roles):
+- id (primary key)
+- iium_id (unique identifier, format: ABCD1234)
+- name
+- email (unique)
+- password (bcrypt hashed)
+- role (admin/supervisor/teacher/ajk)
+- status (active/inactive)
+- phone
+- address
+- position (job title)
+- centre_id (foreign key)
+- centre_location (Gombak/Kuantan/Pagoh)
+- avatar (profile picture)
+- user_activity_1 (major specialization)
+- user_activity_2 (minor specialization)
+- user_last_accessed_at
+- about (bio)
+- review (performance notes)
+- date_of_birth
+- remember_token
+- timestamps
+```
+
+---
+
+## 2. Authentication System
+
+### 2.1 Login System
+
+#### Features:
+- **Flexible Authentication**: Accept email OR IIUM ID
+- **Remember Me**: 60-day cookie-based persistence
+- **Password Visibility Toggle**: Show/hide password
+- **Auto-redirect**: Role-based dashboard routing
+- **Session Management**: Secure session handling
+
+#### Login Flow:
+```
+User Input → Validation → Database Check → Password Verification
+→ Session Creation → Role Detection → Dashboard Redirect
+```
+
+#### Session Data Structure:
+```php
+session([
+    'id' => $user->id,
+    'iium_id' => $user->iium_id,
+    'name' => $user->name,
+    'role' => $user->role,
+    'email' => $user->email,
+    'centre_id' => $user->centre_id,
+    'logged_in' => true,
+    'login_time' => now()
+]);
+```
+
+### 2.2 Registration System
+
+#### Three-Step Process:
+
+**Step 1: Account Details**
+- Email (unique validation)
+- IIUM ID (8 characters, format: ABCD1234)
+- Password (min 5 chars, must contain letter+number+special)
+- Password confirmation
+
+**Step 2: Profile Information**
+- Full name
+- Role selection (visual cards)
+- Centre location (dropdown)
+- Hidden centre_id mapping
+
+**Step 3: Confirmation**
+- Review entered information
+- Terms & conditions acceptance
+- Submit registration
+
+#### Security Features:
+- CSRF token protection
+- Input sanitization
+- Password strength meter
+- Real-time validation
+- Duplicate prevention
+
+### 2.3 Password Reset
+
+#### Process:
+1. User enters email
+2. System generates reset token
+3. Email sent with reset link (60-minute expiry)
+4. User clicks link and enters new password
+5. Password updated and token deleted
+
+---
+
+## 3. User Management
+
+### 3.1 User CRUD Operations
+
+#### Create User (Admin/Supervisor only):
+- Registration form with role assignment
+- Centre allocation
+- Activity specialization selection
+- Automatic status activation
+
+#### Read/View Users:
+- Comprehensive user listing
+- Detailed profile views
+- Activity history
+- Performance metrics
+
+#### Update Users:
+- Edit profile information
+- Change centre assignment
+- Update specializations
+- Modify status
+
+#### Delete Users (Soft Delete):
+- Status change to 'inactive'
+- Historical data preserved
+- Prevents login
+- Reversible action
+
+### 3.2 Permission Matrix
+
+| Action | Admin | Supervisor | Teacher | AJK |
+|--------|-------|------------|---------|-----|
+| Create Admin | ✓ | ✗ | ✗ | ✗ |
+| Create Supervisor | ✓ | ✗ | ✗ | ✗ |
+| Create Teacher | ✓ | ✓ | ✗ | ✗ |
+| Create AJK | ✓ | ✓ | ✗ | ✗ |
+| Edit Own Profile | ✓ | ✓ | ✓ | ✓ |
+| Edit Others | ✓ | Limited* | ✗ | ✗ |
+| View All Users | ✓ | ✓ | ✓ | ✓ |
+| Delete Users | ✓ | Limited* | ✗ | ✗ |
+
+*Supervisors cannot manage Admin accounts
+
+### 3.3 Bulk Operations
+
+#### Available Actions:
+- Mass status updates
+- Bulk centre reassignment
+- Export user lists
+- Import from CSV (planned)
+
+---
+
+## 4. Staff Directory
+
+### 4.1 Overview
+Central hub for viewing and managing all system users, accessible at `/teachershome` route despite the name.
+
+### 4.2 Features
+
+#### Statistics Dashboard:
+```
+┌─────────────────┬─────────────────┬─────────────────┬─────────────────┐
+│ Total Staff: 45 │ Teachers: 24    │ Supervisors: 8  │ AJK: 10         │
+└─────────────────┴─────────────────┴─────────────────┴─────────────────┘
+```
+
+#### Filter System:
+- **Role Filter**: All/Admin/Supervisor/Teacher/AJK
+- **Activity Filter**: By specialization
+- **Centre Filter**: By location
+- **Status Filter**: Active/Inactive
+- **Search Bar**: Real-time name/email search
+
+#### Staff Card Display:
+Each user shown as a card containing:
+- Profile picture (avatar)
+- Name and role badge
+- IIUM ID
+- Specializations (major & minor)
+- Centre assignment
+- Contact information
+- Action buttons (View/Edit based on permissions)
+
+#### View Modes:
+- **Grid View**: Card layout (default)
+- **List View**: Table format
+- **Activity Groups**: Organized by specialization
+
+### 4.3 Search Functionality
+
+#### Search Capabilities:
+- Name (partial match)
+- Email address
+- IIUM ID
+- Specialization
+- Phone number
+
+#### Advanced Search:
+- Multiple criteria combination
+- Date range filters
+- Export search results
+
+---
+
+## 5. Profile Management
+
+### 5.1 Own Profile Management
+
+#### Accessible Information:
+- Personal details (editable)
+- Contact information
+- Professional information
+- Avatar upload
+- Password change
+- Activity preferences
+
+#### Profile Sections:
+1. **Basic Information**
+   - Name, email, phone
+   - IIUM ID (read-only)
+   - Centre assignment
+
+2. **Professional Details**
+   - Position/title
+   - Specializations
+   - Years of experience
+   - Qualifications
+
+3. **Bio Section**
+   - About me
+   - Skills and expertise
+   - Languages spoken
+
+4. **Account Settings**
+   - Password change
+   - Email notifications
+   - Privacy settings
+
+### 5.2 Avatar Management
+
+#### Specifications:
+- **Formats**: JPEG, PNG, GIF
+- **Max Size**: 2MB
+- **Dimensions**: Auto-resized to 200x200
+- **Storage**: `/storage/avatars/`
+
+#### Upload Process:
+1. Click change avatar
+2. Select/crop image
+3. Preview before save
+4. Old avatar auto-deleted
+5. Cached avatar refresh
+
+### 5.3 Managing Other Users
+
+#### Admin Capabilities:
+- Full edit access to all profiles
+- Role changes
+- Status management
+- Password resets
+- Activity logs viewing
+
+#### Supervisor Capabilities:
+- Edit Teacher/AJK profiles only
+- Cannot change roles
+- Limited to their centre
+- View-only for Admin profiles
+
+---
+
+## 6. Role-Based Dashboards
+
+### 6.1 Admin Dashboard
+
+#### Key Widgets:
+- **User Statistics**: Registration trends, role distribution
+- **System Overview**: Active users, recent activities
+- **Quick Actions**: Add user, system settings
+- **Activity Summary**: Platform-wide metrics
+- **Recent Registrations**: New user list
+
+#### Exclusive Features:
+- System configuration access
+- Full user management
+- Asset inventory control
+- Advanced reporting
+- Audit logs
+
+### 6.2 Supervisor Dashboard
+
+#### Key Widgets:
+- **Centre Overview**: Staff and trainee counts
+- **Teacher Performance**: Metrics and attendance
+- **Pending Approvals**: Activities, schedules
+- **Centre Activities**: Current programs
+- **Staff Directory**: Quick access
+
+#### Management Tools:
+- Teacher assignment
+- Schedule approval
+- Performance tracking
+- Centre reports
+
+### 6.3 Teacher Dashboard
+
+#### Key Widgets:
+- **My Schedule**: Today's activities
+- **My Trainees**: Assigned students
+- **Attendance Tracker**: Quick marking
+- **Recent Activities**: Last actions
+- **Performance Metrics**: Personal stats
+
+#### Teaching Tools:
+- Activity management
+- Progress tracking
+- Resource library
+- Communication center
+
+### 6.4 AJK Dashboard
+
+#### Key Widgets:
+- **Event Calendar**: Upcoming events
+- **Volunteer Management**: Active volunteers
+- **Community Engagement**: Metrics
+- **Task List**: Assigned duties
+- **Reports**: Event summaries
+
+#### Committee Tools:
+- Event creation
+- Volunteer coordination
+- Community outreach
+- Report generation
+
+---
+
+## 7. Activity Specializations
+
+### 7.1 Specialization Categories
+
+#### Major Specializations (user_activity_1):
+- Autism Spectrum Intervention
+- Speech Therapy
+- Occupational Therapy
+- Physical Therapy
+- Special Education
+- Behavioral Therapy
+- Sensory Integration
+- Communication Skills
+- Motor Skills Development
+- Cognitive Development
+
+#### Minor Specializations (user_activity_2):
+- Art Therapy
+- Music Therapy
+- Play Therapy
+- Social Skills Training
+- Daily Living Skills
+- Vocational Training
+- Parent Training
+- Assessment & Evaluation
+
+### 7.2 Specialization Management
+
+#### Assignment Process:
+1. During registration or profile edit
+2. Select primary specialization (required)
+3. Select secondary specialization (optional)
+4. System matches teachers to activities
+
+#### Impact on System:
+- Activity assignment matching
+- Schedule optimization
+- Workload distribution
+- Expertise tracking
+
+---
+
+## 8. Integration Points
+
+### 8.1 Activity Module Integration
+- Teachers assigned to activities based on specialization
+- Automatic matching algorithm
+- Workload balancing
+- Conflict prevention
+
+### 8.2 Trainee Module Integration
+- Teacher-trainee relationships
+- Progress tracking per teacher
+- Communication channels
+- Report generation
+
+### 8.3 Centre Module Integration
+- Staff assigned to specific centres
+- Centre-based filtering
+- Capacity planning
+- Resource allocation
+
+### 8.4 Reporting Integration
+- User activity reports
+- Performance metrics
+- Attendance summaries
+- Custom report builders
+
+---
+
+## Security Measures
+
+### Authentication Security:
+- Bcrypt password hashing
+- Session timeout (2 hours)
+- Concurrent session limiting
+- Failed login tracking
+- IP-based restrictions (optional)
+
+### Authorization Security:
+- Role-based middleware
+- Resource-level permissions
+- API token management
+- Action logging
+
+### Data Protection:
+- Encrypted sensitive data
+- Secure file uploads
+- SQL injection prevention
+- XSS protection
+- CSRF tokens
+
+---
+
+## Performance Optimization
+
+### Database Optimization:
+- Indexed columns (email, iium_id, role)
+- Eager loading relationships
+- Query result caching
+- Connection pooling
+
+### Application Optimization:
+- User data caching
+- Lazy loading for lists
+- Pagination (20 items default)
+- Asynchronous operations
+
+---
+
+## API Endpoints
+
+### User Management:
+```
+GET    /api/users          - List users
+POST   /api/users          - Create user
+GET    /api/users/{id}     - Get user details
+PUT    /api/users/{id}     - Update user
+DELETE /api/users/{id}     - Soft delete user
+```
+
+### Profile Management:
+```
+GET    /api/profile        - Get own profile
+PUT    /api/profile        - Update own profile
+POST   /api/profile/avatar - Upload avatar
+PUT    /api/profile/password - Change password
+```
+
+### Search & Filter:
+```
+GET    /api/users/search   - Search users
+GET    /api/users/filter   - Filter users
+GET    /api/users/export   - Export filtered results
+```
+
+---
+
+## Common Issues & Solutions
+
+### Login Problems:
+- **Issue**: Cannot login with IIUM ID
+- **Solution**: Ensure ID is in uppercase format
+
+### Profile Updates:
+- **Issue**: Changes not saving
+- **Solution**: Check validation errors, clear cache
+
+### Permission Errors:
+- **Issue**: "Unauthorized" message
+- **Solution**: Verify role permissions, check session
+
+### Avatar Upload:
+- **Issue**: Image not updating
+- **Solution**: Clear browser cache, check file size
+
+---
+
+This comprehensive documentation covers all aspects of the User/Staff Module, providing a complete reference for understanding and maintaining this critical component of the CREAMS system.

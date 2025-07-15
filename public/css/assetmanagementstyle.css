@@ -1,0 +1,123 @@
+/* Import Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+
+* {
+  margin: 0;
+  padding: 0;
+  outline: none;
+  border: none;
+  text-decoration: none;
+  box-sizing: border-box;
+}
+
+body {
+  background: #f5f6fa;
+}
+
+nav {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  height: 100vh;
+  left: 0;
+  width: 200px;
+  background: #333;
+  color: #fff;
+  overflow: hidden;
+}
+
+
+
+.logo {
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  font-family: 'Poppins', sans-serif;
+  color: #fff;
+}
+
+.logo img {
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  margin-right: 10px;
+}
+
+ul a {
+  position: relative;
+  width: 280px;
+  font-size: 14px;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  font-family: 'Poppins', sans-serif;
+}
+
+ul a.active {
+  background-color: #555;
+}
+
+ul a i {
+  margin-right: 10px;
+}
+
+.nav-item {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  margin-left: 5px;
+}
+
+.main-top .logo {
+  color: #fff;
+  font-size: 34px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  background: -webkit-linear-gradient(-135deg, #c850c0, #32bdea);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-decoration: none;  
+
+}
+
+.small-text {
+  font-size: 10px; /* Adjust the font size to your preference */
+  background: -webkit-linear-gradient(-135deg, #c850c0, #32bdea);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-decoration: none;  
+}
+
+nav .fas {
+  position: relative;
+  width: 70px;
+  height: 40px;
+  top: 20px;
+  font-size: 20px;
+  text-align: center;
+}
+
+ul a:hover {
+  background: #555;
+}
+
+a:hover i {
+  color: #32bdea;
+  transition: color 0.5s;
+}
+
+.logout {
+  position: absolute;
+  bottom: 0;
+}
+
+.container {
+  max-width: 80%;
+  overflow-x: auto;
+  overflow-y: auto;
+  background: #fff;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}

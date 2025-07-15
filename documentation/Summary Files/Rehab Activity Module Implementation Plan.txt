@@ -1,0 +1,1355 @@
+# Rehabilitation Activity Module Implementation Plan
+
+## Overview
+
+The Rehabilitation Activity Module will integrate Teachers/Users with Trainees, providing a comprehensive system to manage rehabilitation activities, scheduling, and progress tracking. This module addresses a key need in the CREAMS system by connecting staff expertise with trainee rehabilitation needs through structured activities and scheduling.
+
+## Database Schema
+
+### Tables to Create/Modify
+
+1. **rehabilitation_activities**
+   ```sql
+   CREATE TABLE rehabilitation_activities (
+     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+     name VARCHAR(255) NOT NULL,
+     category VARCHAR(100) NOT NULL,
+     description TEXT,
+     target_condition VARCHAR(100),
+     duration_minutes INT UNSIGNED,
+     materials_needed TEXT,
+     preparation_notes TEXT,
+     created_by BIGINT UNSIGNED,
+     status ENUM('active', 'inactive', 'archived') DEFAULT 'active',
+     is_featured TINYINT(1) DEFAULT 0,
+     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+     FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
+   );
+   ```
+
+2. **rehabilitation_schedules**
+   ```sql
+   CREATE TABLE rehabilitation_schedules (
+     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+     activity_id BIGINT UNSIGNED NOT NULL,
+     teacher_id BIGINT UNSIGNED NOT NULL,
+     trainee_id BIGINT UNSIGNED,
+     centre_id VARCHAR(10) NOT NULL,
+     is_group_activity TINYINT(1) DEFAULT 0,
+     max_participants INT UNSIGNED DEFAULT 1,
+     start_time DATETIME NOT NULL,
+     end_time DATETIME NOT NULL,
+     status ENUM('scheduled', 'completed', 'cancelled', 'rescheduled') DEFAULT 'scheduled',
+     notes TEXT,
+     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+     FOREIGN KEY (activity_id) REFERENCES rehabilitation_activities(id) ON DELETE CASCADE,
+     FOREIGN KEY (teacher_id) REFERENCES users(id) ON DELETE CASCADE,
+     FOREIGN KEY (trainee_id) REFERENCES trainees(id) ON DELETE CASCADE,
+     FOREIGN KEY (centre_id) REFERENCES centres(centre_id) ON DELETE CASCADE
+   );
+   ```
+
+3. **rehabilitation_participants**
+   ```sql
+   CREATE TABLE rehabilitation_participants (
+     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+     schedule_id BIGINT UNSIGNED NOT NULL,
+     trainee_id BIGINT UNSIGNED NOT NULL,
+     attendance_status ENUM('present', 'absent', 'excused', 'late') DEFAULT NULL,
+     notes TEXT,
+     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+     FOREIGN KEY (schedule_id) REFERENCES rehabilitation_schedules(id) ON DELETE CASCADE,
+     FOREIGN KEY (trainee_id) REFERENCES trainees(id) ON DELETE CASCADE,
+     UNIQUE KEY (schedule_id, trainee_id)
+   );
+   ```
+
+4. **rehabilitation_progress**
+   ```sql
+   CREATE TABLE rehabilitation_progress (
+     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+     trainee_id BIGINT UNSIGNED NOT NULL,
+     activity_id BIGINT UNSIGNED NOT NULL,
+     schedule_id BIGINT UNSIGNED,
+     rating TINYINT UNSIGNED,
+     progress_notes TEXT,
+     assessed_by BIGINT UNSIGNED NOT NULL,
+     assessment_date DATE NOT NULL,
+     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+     FOREIGN KEY (trainee_id) REFERENCES trainees(id) ON DELETE CASCADE,
+     FOREIGN KEY (activity_id) REFERENCES rehabilitation_activities(id) ON DELETE CASCADE,
+     FOREIGN KEY (schedule_id) REFERENCES rehabilitation_schedules(id) ON DELETE SET NULL,
+     FOREIGN KEY (assessed_by) REFERENCES users(id) ON DELETE CASCADE
+   );
+   ```
+
+5. **rehabilitation_categories**
+   ```sql
+   CREATE TABLE rehabilitation_categories (
+     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+     name VARCHAR(100) NOT NULL,
+     description TEXT,
+     icon VARCHAR(50),
+     color VARCHAR(20),
+     display_order INT UNSIGNED DEFAULT 0,
+     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+     UNIQUE KEY (name)
+   );
+   ```
+
+## Models
+
+1. **RehabilitationActivity.php**
+```php
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+
+class RehabilitationActivity extends Model
+{
+    use HasFactory;
+
+    protected $fillable = [
+        'name',
+        'category',
+        'description',
+        'target_condition',
+        'duration_minutes',
+        'materials_needed',
+        'preparation_notes',
+        'created_by',
+        'status',
+        'is_featured'
+    ];
+
+    public function creator()
+    {
+        return $this->belongsTo(Users::class, 'created_by');
+    }
+
+    public function schedules()
+    {
+        return $this->hasMany(RehabilitationSchedule::class, 'activity_id');
+    }
+
+    public function progress()
+    {
+        return $this->hasMany(RehabilitationProgress::class, 'activity_id');
+    }
+
+    public function categoryObject()
+    {
+        return $this->belongsTo(RehabilitationCategory::class, 'category', 'name');
+    }
+}
+```
+
+2. **RehabilitationSchedule.php**
+```php
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+
+class RehabilitationSchedule extends Model
+{
+    use HasFactory;
+
+    protected $fillable = [
+        'activity_id',
+        'teacher_id',
+        'trainee_id',
+        'centre_id',
+        'is_group_activity',
+        'max_participants',
+        'start_time',
+        'end_time',
+        'status',
+        'notes'
+    ];
+
+    protected $casts = [
+        'start_time' => 'datetime',
+        'end_time' => 'datetime',
+        'is_group_activity' => 'boolean'
+    ];
+
+    public function activity()
+    {
+        return $this->belongsTo(RehabilitationActivity::class, 'activity_id');
+    }
+
+    public function teacher()
+    {
+        return $this->belongsTo(Users::class, 'teacher_id');
+    }
+
+    public function trainee()
+    {
+        return $this->belongsTo(Trainees::class, 'trainee_id');
+    }
+
+    public function centre()
+    {
+        return $this->belongsTo(Centres::class, 'centre_id', 'centre_id');
+    }
+
+    public function participants()
+    {
+        return $this->hasMany(RehabilitationParticipant::class, 'schedule_id');
+    }
+
+    public function trainees()
+    {
+        return $this->belongsToMany(Trainees::class, 
+                                  'rehabilitation_participants', 
+                                  'schedule_id', 
+                                  'trainee_id')
+                    ->withPivot('attendance_status', 'notes')
+                    ->withTimestamps();
+    }
+
+    public function progress()
+    {
+        return $this->hasMany(RehabilitationProgress::class, 'schedule_id');
+    }
+}
+```
+
+3. **RehabilitationParticipant.php**
+```php
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+
+class RehabilitationParticipant extends Model
+{
+    use HasFactory;
+
+    protected $fillable = [
+        'schedule_id',
+        'trainee_id',
+        'attendance_status',
+        'notes'
+    ];
+
+    public function schedule()
+    {
+        return $this->belongsTo(RehabilitationSchedule::class, 'schedule_id');
+    }
+
+    public function trainee()
+    {
+        return $this->belongsTo(Trainees::class, 'trainee_id');
+    }
+}
+```
+
+4. **RehabilitationProgress.php**
+```php
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+
+class RehabilitationProgress extends Model
+{
+    use HasFactory;
+
+    protected $fillable = [
+        'trainee_id',
+        'activity_id',
+        'schedule_id',
+        'rating',
+        'progress_notes',
+        'assessed_by',
+        'assessment_date'
+    ];
+
+    protected $casts = [
+        'assessment_date' => 'date'
+    ];
+
+    public function trainee()
+    {
+        return $this->belongsTo(Trainees::class, 'trainee_id');
+    }
+
+    public function activity()
+    {
+        return $this->belongsTo(RehabilitationActivity::class, 'activity_id');
+    }
+
+    public function schedule()
+    {
+        return $this->belongsTo(RehabilitationSchedule::class, 'schedule_id');
+    }
+
+    public function assessor()
+    {
+        return $this->belongsTo(Users::class, 'assessed_by');
+    }
+}
+```
+
+5. **RehabilitationCategory.php**
+```php
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+
+class RehabilitationCategory extends Model
+{
+    use HasFactory;
+
+    protected $fillable = [
+        'name',
+        'description',
+        'icon',
+        'color',
+        'display_order'
+    ];
+
+    public function activities()
+    {
+        return $this->hasMany(RehabilitationActivity::class, 'category', 'name');
+    }
+}
+```
+
+## Controllers
+
+1. **RehabilitationController.php**
+```php
+<?php
+
+namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
+use App\Models\RehabilitationActivity;
+use App\Models\RehabilitationCategory;
+use App\Models\RehabilitationSchedule;
+use App\Models\RehabilitationParticipant;
+use App\Models\RehabilitationProgress;
+use App\Models\Trainees;
+use App\Models\Users;
+use App\Models\Centres;
+
+class RehabilitationController extends Controller
+{
+    /**
+     * Display rehabilitation dashboard.
+     */
+    public function index()
+    {
+        $categories = RehabilitationCategory::orderBy('display_order')->get();
+        $activities = RehabilitationActivity::where('status', 'active')
+                                          ->orderBy('created_at', 'desc')
+                                          ->take(5)
+                                          ->get();
+        
+        $upcomingSchedules = RehabilitationSchedule::where('status', 'scheduled')
+                                                ->where('start_time', '>', now())
+                                                ->orderBy('start_time')
+                                                ->take(5)
+                                                ->with(['activity', 'teacher', 'centre'])
+                                                ->get();
+        
+        $activityStats = RehabilitationActivity::select('category', DB::raw('count(*) as count'))
+                                            ->groupBy('category')
+                                            ->get()
+                                            ->pluck('count', 'category')
+                                            ->toArray();
+        
+        return view('rehabilitation.index', [
+            'categories' => $categories,
+            'activities' => $activities,
+            'upcomingSchedules' => $upcomingSchedules,
+            'activityStats' => $activityStats
+        ]);
+    }
+    
+    /**
+     * Display all activities.
+     */
+    public function activities()
+    {
+        $categories = RehabilitationCategory::orderBy('display_order')->get();
+        $activities = RehabilitationActivity::with('creator')->get();
+        
+        return view('rehabilitation.activities.index', [
+            'categories' => $categories,
+            'activities' => $activities
+        ]);
+    }
+    
+    /**
+     * Show the form for creating a new activity.
+     */
+    public function createActivity()
+    {
+        $categories = RehabilitationCategory::orderBy('name')->get();
+        
+        return view('rehabilitation.activities.create', [
+            'categories' => $categories
+        ]);
+    }
+    
+    /**
+     * Store a newly created activity.
+     */
+    public function storeActivity(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255',
+            'category' => 'required|string|exists:rehabilitation_categories,name',
+            'description' => 'required|string',
+            'target_condition' => 'nullable|string|max:100',
+            'duration_minutes' => 'required|integer|min:5|max:240',
+            'materials_needed' => 'nullable|string',
+            'preparation_notes' => 'nullable|string'
+        ]);
+        
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+        
+        $activity = new RehabilitationActivity();
+        $activity->name = $request->name;
+        $activity->category = $request->category;
+        $activity->description = $request->description;
+        $activity->target_condition = $request->target_condition;
+        $activity->duration_minutes = $request->duration_minutes;
+        $activity->materials_needed = $request->materials_needed;
+        $activity->preparation_notes = $request->preparation_notes;
+        $activity->created_by = session('id');
+        $activity->status = 'active';
+        $activity->save();
+        
+        return redirect()->route('rehabilitation.activities')
+                       ->with('success', 'Activity created successfully!');
+    }
+    
+    /**
+     * Display the specified activity.
+     */
+    public function showActivity($id)
+    {
+        $activity = RehabilitationActivity::with(['creator', 'categoryObject'])
+                                        ->findOrFail($id);
+        
+        $schedules = RehabilitationSchedule::where('activity_id', $id)
+                                        ->with(['teacher', 'centre'])
+                                        ->orderBy('start_time', 'desc')
+                                        ->get();
+        
+        return view('rehabilitation.activities.show', [
+            'activity' => $activity,
+            'schedules' => $schedules
+        ]);
+    }
+    
+    /**
+     * Show the form for editing the specified activity.
+     */
+    public function editActivity($id)
+    {
+        $activity = RehabilitationActivity::findOrFail($id);
+        $categories = RehabilitationCategory::orderBy('name')->get();
+        
+        return view('rehabilitation.activities.edit', [
+            'activity' => $activity,
+            'categories' => $categories
+        ]);
+    }
+    
+    /**
+     * Update the specified activity.
+     */
+    public function updateActivity(Request $request, $id)
+    {
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255',
+            'category' => 'required|string|exists:rehabilitation_categories,name',
+            'description' => 'required|string',
+            'target_condition' => 'nullable|string|max:100',
+            'duration_minutes' => 'required|integer|min:5|max:240',
+            'materials_needed' => 'nullable|string',
+            'preparation_notes' => 'nullable|string',
+            'status' => 'required|in:active,inactive,archived'
+        ]);
+        
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+        
+        $activity = RehabilitationActivity::findOrFail($id);
+        $activity->name = $request->name;
+        $activity->category = $request->category;
+        $activity->description = $request->description;
+        $activity->target_condition = $request->target_condition;
+        $activity->duration_minutes = $request->duration_minutes;
+        $activity->materials_needed = $request->materials_needed;
+        $activity->preparation_notes = $request->preparation_notes;
+        $activity->status = $request->status;
+        $activity->save();
+        
+        return redirect()->route('rehabilitation.activities.show', ['id' => $id])
+                       ->with('success', 'Activity updated successfully!');
+    }
+    
+    /**
+     * Remove the specified activity.
+     */
+    public function destroyActivity($id)
+    {
+        $activity = RehabilitationActivity::findOrFail($id);
+        $activity->delete();
+        
+        return redirect()->route('rehabilitation.activities')
+                       ->with('success', 'Activity deleted successfully!');
+    }
+    
+    /**
+     * Display schedule calendar.
+     */
+    public function schedule()
+    {
+        $teachers = Users::where('role', 'teacher')
+                       ->where('status', 'active')
+                       ->orderBy('name')
+                       ->get();
+                       
+        $centres = Centres::where('centre_status', 'active')
+                        ->orWhere('status', 'active')
+                        ->orderBy('centre_name')
+                        ->get();
+        
+        return view('rehabilitation.schedule.index', [
+            'teachers' => $teachers,
+            'centres' => $centres
+        ]);
+    }
+    
+    /**
+     * Get schedule data for calendar (AJAX).
+     */
+    public function getScheduleData(Request $request)
+    {
+        $start = $request->input('start');
+        $end = $request->input('end');
+        $teacherId = $request->input('teacher_id');
+        $centreId = $request->input('centre_id');
+        
+        $query = RehabilitationSchedule::with(['activity', 'teacher', 'trainee', 'centre'])
+                                     ->where('start_time', '>=', $start)
+                                     ->where('end_time', '<=', $end);
+        
+        if ($teacherId) {
+            $query->where('teacher_id', $teacherId);
+        }
+        
+        if ($centreId) {
+            $query->where('centre_id', $centreId);
+        }
+        
+        $schedules = $query->get();
+        
+        $events = [];
+        foreach ($schedules as $schedule) {
+            $backgroundColor = '#3788d8'; // Default color
+            
+            // Try to get color from category if available
+            if ($schedule->activity && $schedule->activity->categoryObject) {
+                $backgroundColor = $schedule->activity->categoryObject->color ?? $backgroundColor;
+            }
+            
+            // Adjust color based on status
+            if ($schedule->status === 'cancelled') {
+                $backgroundColor = '#dc3545'; // Red for cancelled
+            } elseif ($schedule->status === 'completed') {
+                $backgroundColor = '#28a745'; // Green for completed
+            }
+            
+            $events[] = [
+                'id' => $schedule->id,
+                'title' => $schedule->activity->name,
+                'start' => $schedule->start_time->format('Y-m-d\TH:i:s'),
+                'end' => $schedule->end_time->format('Y-m-d\TH:i:s'),
+                'backgroundColor' => $backgroundColor,
+                'borderColor' => $backgroundColor,
+                'extendedProps' => [
+                    'teacher' => $schedule->teacher->name,
+                    'centre' => $schedule->centre->centre_name,
+                    'status' => $schedule->status,
+                    'isGroupActivity' => $schedule->is_group_activity,
+                    'trainee' => $schedule->trainee ? $schedule->trainee->name : null
+                ]
+            ];
+        }
+        
+        return response()->json($events);
+    }
+    
+    /**
+     * Show the form for creating a new schedule.
+     */
+    public function createSchedule(Request $request)
+    {
+        $activities = RehabilitationActivity::where('status', 'active')
+                                          ->orderBy('name')
+                                          ->get();
+                                          
+        $teachers = Users::where('role', 'teacher')
+                       ->where('status', 'active')
+                       ->orderBy('name')
+                       ->get();
+                       
+        $trainees = Trainees::orderBy('trainee_last_name')
+                          ->orderBy('trainee_first_name')
+                          ->get();
+                       
+        $centres = Centres::where('centre_status', 'active')
+                        ->orWhere('status', 'active')
+                        ->orderBy('centre_name')
+                        ->get();
+        
+        // Pre-populate values if coming from calendar
+        $date = $request->input('date');
+        $teacherId = $request->input('teacher_id');
+        $centreId = $request->input('centre_id');
+        
+        return view('rehabilitation.schedule.create', [
+            'activities' => $activities,
+            'teachers' => $teachers,
+            'trainees' => $trainees,
+            'centres' => $centres,
+            'date' => $date,
+            'teacherId' => $teacherId,
+            'centreId' => $centreId
+        ]);
+    }
+    
+    /**
+     * Store a newly created schedule.
+     */
+    public function storeSchedule(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'activity_id' => 'required|exists:rehabilitation_activities,id',
+            'teacher_id' => 'required|exists:users,id',
+            'centre_id' => 'required|exists:centres,centre_id',
+            'start_date' => 'required|date',
+            'start_time' => 'required',
+            'end_date' => 'required|date',
+            'end_time' => 'required',
+            'is_group_activity' => 'required|boolean',
+            'max_participants' => 'required_if:is_group_activity,1|integer|min:2|max:30',
+            'notes' => 'nullable|string'
+        ]);
+        
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+        
+        // Parse dates and times
+        $startDateTime = $request->start_date . ' ' . $request->start_time;
+        $endDateTime = $request->end_date . ' ' . $request->end_time;
+        
+        DB::beginTransaction();
+        
+        try {
+            $schedule = new RehabilitationSchedule();
+            $schedule->activity_id = $request->activity_id;
+            $schedule->teacher_id = $request->teacher_id;
+            $schedule->centre_id = $request->centre_id;
+            $schedule->start_time = $startDateTime;
+            $schedule->end_time = $endDateTime;
+            $schedule->is_group_activity = $request->is_group_activity;
+            
+            if ($request->is_group_activity) {
+                $schedule->max_participants = $request->max_participants;
+                $schedule->trainee_id = null; // No single trainee for group activities
+            } else {
+                $schedule->trainee_id = $request->trainee_id;
+                $schedule->max_participants = 1; // Single participant
+            }
+            
+            $schedule->notes = $request->notes;
+            $schedule->status = 'scheduled';
+            $schedule->save();
+            
+            // If it's a group activity and trainee IDs are provided, add them to participants
+            if ($request->is_group_activity && $request->has('trainee_ids')) {
+                foreach ($request->trainee_ids as $traineeId) {
+                    $participant = new RehabilitationParticipant();
+                    $participant->schedule_id = $schedule->id;
+                    $participant->trainee_id = $traineeId;
+                    $participant->save();
+                }
+            } 
+            // If it's an individual activity, add the trainee as a participant too
+            else if (!$request->is_group_activity && $request->trainee_id) {
+                $participant = new RehabilitationParticipant();
+                $participant->schedule_id = $schedule->id;
+                $participant->trainee_id = $request->trainee_id;
+                $participant->save();
+            }
+            
+            DB::commit();
+            
+            return redirect()->route('rehabilitation.schedule')
+                ->with('success', 'Activity scheduled successfully!');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error creating rehabilitation schedule', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return redirect()->back()
+                ->with('error', 'An error occurred while scheduling the activity: ' . $e->getMessage())
+                ->withInput();
+        }
+    }
+    
+    /**
+     * Display the specified schedule.
+     */
+    public function showSchedule($id)
+    {
+        $schedule = RehabilitationSchedule::with([
+            'activity', 
+            'teacher', 
+            'trainee', 
+            'centre',
+            'participants.trainee'
+        ])->findOrFail($id);
+        
+        return view('rehabilitation.schedule.show', [
+            'schedule' => $schedule
+        ]);
+    }
+    
+    /**
+     * Show the form for editing the specified schedule.
+     */
+    public function editSchedule($id)
+    {
+        $schedule = RehabilitationSchedule::with([
+            'activity', 
+            'teacher', 
+            'trainee', 
+            'centre',
+            'participants.trainee'
+        ])->findOrFail($id);
+        
+        $activities = RehabilitationActivity::where('status', 'active')
+                                          ->orderBy('name')
+                                          ->get();
+                                          
+        $teachers = Users::where('role', 'teacher')
+                       ->where('status', 'active')
+                       ->orderBy('name')
+                       ->get();
+                       
+        $trainees = Trainees::orderBy('trainee_last_name')
+                          ->orderBy('trainee_first_name')
+                          ->get();
+                       
+        $centres = Centres::where('centre_status', 'active')
+                        ->orWhere('status', 'active')
+                        ->orderBy('centre_name')
+                        ->get();
+        
+        // Get selected trainee IDs for group activities
+        $selectedTraineeIds = $schedule->participants->pluck('trainee_id')->toArray();
+        
+        return view('rehabilitation.schedule.edit', [
+            'schedule' => $schedule,
+            'activities' => $activities,
+            'teachers' => $teachers,
+            'trainees' => $trainees,
+            'centres' => $centres,
+            'selectedTraineeIds' => $selectedTraineeIds
+        ]);
+    }
+    
+    /**
+     * Update the specified schedule.
+     */
+    public function updateSchedule(Request $request, $id)
+    {
+        $validator = Validator::make($request->all(), [
+            'activity_id' => 'required|exists:rehabilitation_activities,id',
+            'teacher_id' => 'required|exists:users,id',
+            'centre_id' => 'required|exists:centres,centre_id',
+            'start_date' => 'required|date',
+            'start_time' => 'required',
+            'end_date' => 'required|date',
+            'end_time' => 'required',
+            'is_group_activity' => 'required|boolean',
+            'max_participants' => 'required_if:is_group_activity,1|integer|min:2|max:30',
+            'notes' => 'nullable|string',
+            'status' => 'required|in:scheduled,completed,cancelled,rescheduled'
+        ]);
+        
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+        
+        // Parse dates and times
+        $startDateTime = $request->start_date . ' ' . $request->start_time;
+        $endDateTime = $request->end_date . ' ' . $request->end_time;
+        
+        DB::beginTransaction();
+        
+        try {
+            $schedule = RehabilitationSchedule::findOrFail($id);
+            $schedule->activity_id = $request->activity_id;
+            $schedule->teacher_id = $request->teacher_id;
+            $schedule->centre_id = $request->centre_id;
+            $schedule->start_time = $startDateTime;
+            $schedule->end_time = $endDateTime;
+            $schedule->is_group_activity = $request->is_group_activity;
+            
+            if ($request->is_group_activity) {
+                $schedule->max_participants = $request->max_participants;
+                $schedule->trainee_id = null; // No single trainee for group activities
+            } else {
+                $schedule->trainee_id = $request->trainee_id;
+                $schedule->max_participants = 1; // Single participant
+            }
+            
+            $schedule->notes = $request->notes;
+            $schedule->status = $request->status;
+            $schedule->save();
+            
+            // Remove all existing participants
+            RehabilitationParticipant::where('schedule_id', $id)->delete();
+            
+            // If it's a group activity and trainee IDs are provided, add them to participants
+            if ($request->is_group_activity && $request->has('trainee_ids')) {
+                foreach ($request->trainee_ids as $traineeId) {
+                    $participant = new RehabilitationParticipant();
+                    $participant->schedule_id = $schedule->id;
+                    $participant->trainee_id = $traineeId;
+                    $participant->save();
+                }
+            } 
+            // If it's an individual activity, add the trainee as a participant too
+            else if (!$request->is_group_activity && $request->trainee_id) {
+                $participant = new RehabilitationParticipant();
+                $participant->schedule_id = $schedule->id;
+                $participant->trainee_id = $request->trainee_id;
+                $participant->save();
+            }
+            
+            DB::commit();
+            
+            return redirect()->route('rehabilitation.schedule.show', ['id' => $id])
+                ->with('success', 'Schedule updated successfully!');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error updating rehabilitation schedule', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return redirect()->back()
+                ->with('error', 'An error occurred while updating the schedule: ' . $e->getMessage())
+                ->withInput();
+        }
+    }
+    
+    /**
+     * Update attendance for a scheduled activity.
+     */
+    public function updateAttendance(Request $request, $id)
+    {
+        $validator = Validator::make($request->all(), [
+            'attendance' => 'required|array',
+            'attendance.*' => 'required|in:present,absent,excused,late',
+            'notes' => 'nullable|array'
+        ]);
+        
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+        
+        DB::beginTransaction();
+        
+        try {
+            $schedule = RehabilitationSchedule::findOrFail($id);
+            
+            // Update attendance for each participant
+            foreach ($request->attendance as $traineeId => $status) {
+                $participant = RehabilitationParticipant::where('schedule_id', $id)
+                                                     ->where('trainee_id', $traineeId)
+                                                     ->first();
+                
+                if ($participant) {
+                    $participant->attendance_status = $status;
+                    $participant->notes = $request->notes[$traineeId] ?? null;
+                    $participant->save();
+                }
+            }
+            
+            // If the status is not already completed, mark as completed
+            if ($schedule->status !== 'completed') {
+                $schedule->status = 'completed';
+                $schedule->save();
+            }
+            
+            DB::commit();
+            
+            return redirect()->route('rehabilitation.schedule.show', ['id' => $id])
+                ->with('success', 'Attendance recorded successfully!');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error updating rehabilitation attendance', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return redirect()->back()
+                ->with('error', 'An error occurred while recording attendance: ' . $e->getMessage())
+                ->withInput();
+        }
+    }
+    
+    /**
+     * Show form to record progress for a trainee.
+     */
+    public function recordProgress($traineeId, $activityId = null, $scheduleId = null)
+    {
+        $trainee = Trainees::findOrFail($traineeId);
+        
+        $activity = null;
+        $schedule = null;
+        
+        if ($scheduleId) {
+            $schedule = RehabilitationSchedule::with(['activity', 'teacher'])
+                                           ->findOrFail($scheduleId);
+            $activity = $schedule->activity;
+        } else if ($activityId) {
+            $activity = RehabilitationActivity::findOrFail($activityId);
+        }
+        
+        $activities = null;
+        if (!$activity) {
+            // Get activities that the trainee has participated in
+            $participatedActivities = RehabilitationActivity::whereHas('schedules', function ($query) use ($traineeId) {
+                $query->whereHas('participants', function ($q) use ($traineeId) {
+                    $q->where('trainee_id', $traineeId);
+                });
+            })->orderBy('name')->get();
+            
+            $activities = $participatedActivities;
+        }
+        
+        return view('rehabilitation.progress.create', [
+            'trainee' => $trainee,
+            'activity' => $activity,
+            'schedule' => $schedule,
+            'activities' => $activities
+        ]);
+    }
+    
+    /**
+     * Store progress record for a trainee.
+     */
+    public function storeProgress(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'trainee_id' => 'required|exists:trainees,id',
+            'activity_id' => 'required|exists:rehabilitation_activities,id',
+            'schedule_id' => 'nullable|exists:rehabilitation_schedules,id',
+            'rating' => 'required|integer|min:1|max:5',
+            'progress_notes' => 'required|string',
+            'assessment_date' => 'required|date'
+        ]);
+        
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+        
+        $progress = new RehabilitationProgress();
+        $progress->trainee_id = $request->trainee_id;
+        $progress->activity_id = $request->activity_id;
+        $progress->schedule_id = $request->schedule_id;
+        $progress->rating = $request->rating;
+        $progress->progress_notes = $request->progress_notes;
+        $progress->assessed_by = session('id');
+        $progress->assessment_date = $request->assessment_date;
+        $progress->save();
+        
+        return redirect()->route('rehabilitation.trainee.progress', ['traineeId' => $request->trainee_id])
+            ->with('success', 'Progress recorded successfully!');
+    }
+    
+    /**
+     * View progress history for a trainee.
+     */
+    public function traineeProgress($traineeId)
+    {
+        $trainee = Trainees::findOrFail($traineeId);
+        
+        $progress = RehabilitationProgress::with(['activity', 'assessor', 'schedule'])
+                                       ->where('trainee_id', $traineeId)
+                                       ->orderBy('assessment_date', 'desc')
+                                       ->get();
+        
+        // Group progress by activity for visualization
+        $progressByActivity = $progress->groupBy('activity_id')
+                                     ->map(function ($items) {
+                                         return [
+                                             'activity_name' => $items->first()->activity->name,
+                                             'ratings' => $items->pluck('rating')->toArray(),
+                                             'dates' => $items->pluck('assessment_date')->toArray(),
+                                             'average' => $items->avg('rating')
+                                         ];
+                                     });
+        
+        return view('rehabilitation.progress.trainee', [
+            'trainee' => $trainee,
+            'progress' => $progress,
+            'progressByActivity' => $progressByActivity
+        ]);
+    }
+    
+    /**
+     * View progress details for a specific progress record.
+     */
+    public function showProgress($id)
+    {
+        $progress = RehabilitationProgress::with(['trainee', 'activity', 'assessor', 'schedule'])
+                                       ->findOrFail($id);
+        
+        return view('rehabilitation.progress.show', [
+            'progress' => $progress
+        ]);
+    }
+}
+```
+
+## Routes
+
+Add the following to your web.php file within the authenticated routes section:
+
+```php
+/*
+|--------------------------------------------------------------------------
+| Rehabilitation Module Routes
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware(['auth'])->prefix('rehabilitation')->name('rehabilitation.')->group(function () {
+    // Dashboard and main entry point
+    Route::get('/', [RehabilitationController::class, 'index'])->name('index');
+    
+    // Activities management
+    Route::get('/activities', [RehabilitationController::class, 'activities'])->name('activities');
+    Route::get('/activities/create', [RehabilitationController::class, 'createActivity'])->name('activities.create');
+    Route::post('/activities', [RehabilitationController::class, 'storeActivity'])->name('activities.store');
+    Route::get('/activities/{id}', [RehabilitationController::class, 'showActivity'])->name('activities.show');
+    Route::get('/activities/{id}/edit', [RehabilitationController::class, 'editActivity'])->name('activities.edit');
+    Route::put('/activities/{id}', [RehabilitationController::class, 'updateActivity'])->name('activities.update');
+    Route::delete('/activities/{id}', [RehabilitationController::class, 'destroyActivity'])->name('activities.destroy');
+    
+    // Schedule management
+    Route::get('/schedule', [RehabilitationController::class, 'schedule'])->name('schedule');
+    Route::get('/schedule/data', [RehabilitationController::class, 'getScheduleData'])->name('schedule.data');
+    Route::get('/schedule/create', [RehabilitationController::class, 'createSchedule'])->name('schedule.create');
+    Route::post('/schedule', [RehabilitationController::class, 'storeSchedule'])->name('schedule.store');
+    Route::get('/schedule/{id}', [RehabilitationController::class, 'showSchedule'])->name('schedule.show');
+    Route::get('/schedule/{id}/edit', [RehabilitationController::class, 'editSchedule'])->name('schedule.edit');
+    Route::put('/schedule/{id}', [RehabilitationController::class, 'updateSchedule'])->name('schedule.update');
+    Route::post('/schedule/{id}/attendance', [RehabilitationController::class, 'updateAttendance'])->name('schedule.attendance');
+    
+    // Progress tracking
+    Route::get('/trainees/{traineeId}/progress', [RehabilitationController::class, 'traineeProgress'])->name('trainee.progress');
+    Route::get('/trainees/{traineeId}/progress/record/{activityId?}/{scheduleId?}', [RehabilitationController::class, 'recordProgress'])->name('progress.record');
+    Route::post('/progress', [RehabilitationController::class, 'storeProgress'])->name('progress.store');
+    Route::get('/progress/{id}', [RehabilitationController::class, 'showProgress'])->name('progress.show');
+    
+    // Categories management (admin only)
+    Route::middleware(['role:admin,supervisor'])->group(function () {
+        Route::get('/categories', [RehabilitationController::class, 'categories'])->name('categories');
+        Route::get('/categories/create', [RehabilitationController::class, 'createCategory'])->name('categories.create');
+        Route::post('/categories', [RehabilitationController::class, 'storeCategory'])->name('categories.store');
+        Route::get('/categories/{id}/edit', [RehabilitationController::class, 'editCategory'])->name('categories.edit');
+        Route::put('/categories/{id}', [RehabilitationController::class, 'updateCategory'])->name('categories.update');
+        Route::delete('/categories/{id}', [RehabilitationController::class, 'destroyCategory'])->name('categories.destroy');
+    });
+    
+    // Reports (admin and supervisor only)
+    Route::middleware(['role:admin,supervisor'])->group(function () {
+        Route::get('/reports', [RehabilitationController::class, 'reports'])->name('reports');
+        Route::get('/reports/activities', [RehabilitationController::class, 'activitiesReport'])->name('reports.activities');
+        Route::get('/reports/trainees', [RehabilitationController::class, 'traineesReport'])->name('reports.trainees');
+        Route::get('/reports/teachers', [RehabilitationController::class, 'teachersReport'])->name('reports.teachers');
+        Route::get('/reports/export/{type}', [RehabilitationController::class, 'exportReport'])->name('reports.export');
+    });
+});
+
+// Add role-specific dashboard redirects
+Route::prefix('admin')->middleware(['auth', 'role:admin'])->group(function () {
+    Route::get('/rehabilitation', function() {
+        return redirect()->route('rehabilitation.index');
+    })->name('admin.rehabilitation');
+});
+
+Route::prefix('supervisor')->middleware(['auth', 'role:supervisor'])->group(function () {
+    Route::get('/rehabilitation', function() {
+        return redirect()->route('rehabilitation.index');
+    })->name('supervisor.rehabilitation');
+});
+
+Route::prefix('teacher')->middleware(['auth', 'role:teacher'])->group(function () {
+    Route::get('/rehabilitation', function() {
+        return redirect()->route('rehabilitation.index');
+    })->name('teacher.rehabilitation');
+});
+
+Route::prefix('ajk')->middleware(['auth', 'role:ajk'])->group(function () {
+    Route::get('/rehabilitation', function() {
+        return redirect()->route('rehabilitation.index');
+    })->name('ajk.rehabilitation');
+});
+```
+
+## Views Structure
+
+Here's the folder structure for the views:
+
+```
+resources/
+└── views/
+    └── rehabilitation/
+        ├── index.blade.php                  # Main rehabilitation dashboard
+        ├── activities/
+        │   ├── index.blade.php              # List all activities
+        │   ├── create.blade.php             # Create new activity form
+        │   ├── edit.blade.php               # Edit activity form
+        │   └── show.blade.php               # View activity details
+        ├── schedule/
+        │   ├── index.blade.php              # Calendar view for scheduling
+        │   ├── create.blade.php             # Create schedule form
+        │   ├── edit.blade.php               # Edit schedule form
+        │   └── show.blade.php               # View schedule details
+        ├── progress/
+        │   ├── create.blade.php             # Record progress form
+        │   ├── trainee.blade.php            # Trainee progress history
+        │   └── show.blade.php               # View progress details
+        ├── categories/
+        │   ├── index.blade.php              # List categories
+        │   ├── create.blade.php             # Create category form
+        │   └── edit.blade.php               # Edit category form
+        └── reports/
+            ├── index.blade.php              # Reports dashboard
+            ├── activities.blade.php         # Activities report
+            ├── trainees.blade.php           # Trainees report
+            └── teachers.blade.php           # Teachers report
+```
+
+## JavaScript Requirements
+
+For the calendar functionality, you'll need to include the FullCalendar library:
+
+```html
+<!-- In your layout file or specific view -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.css">
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.js"></script>
+```
+
+The calendar initialization JavaScript:
+
+```javascript
+// For schedule/index.blade.php
+document.addEventListener('DOMContentLoaded', function() {
+    const calendarEl = document.getElementById('rehabilitation-calendar');
+    
+    if (!calendarEl) return;
+    
+    const calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'timeGridWeek',
+        headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
+        },
+        height: 'auto',
+        navLinks: true,
+        editable: false,
+        selectable: true,
+        selectMirror: true,
+        dayMaxEvents: true,
+        businessHours: {
+            daysOfWeek: [0, 1, 2, 3, 4, 5, 6], // Sunday - Saturday
+            startTime: '08:00',
+            endTime: '18:00',
+        },
+        select: function(info) {
+            // Handle date selection
+            const startDate = info.startStr.split('T')[0];
+            const url = `/rehabilitation/schedule/create?date=${startDate}`;
+            
+            // Add teacher and centre filters if set
+            const teacherId = document.getElementById('teacher-filter').value;
+            const centreId = document.getElementById('centre-filter').value;
+            
+            if (teacherId) {
+                url += `&teacher_id=${teacherId}`;
+            }
+            
+            if (centreId) {
+                url += `&centre_id=${centreId}`;
+            }
+            
+            window.location.href = url;
+        },
+        eventClick: function(info) {
+            // Navigate to event details page
+            window.location.href = `/rehabilitation/schedule/${info.event.id}`;
+        },
+        events: function(info, successCallback, failureCallback) {
+            // Get filter values
+            const teacherId = document.getElementById('teacher-filter').value;
+            const centreId = document.getElementById('centre-filter').value;
+            
+            // Build URL with filters
+            let url = `/rehabilitation/schedule/data?start=${info.startStr}&end=${info.endStr}`;
+            
+            if (teacherId) {
+                url += `&teacher_id=${teacherId}`;
+            }
+            
+            if (centreId) {
+                url += `&centre_id=${centreId}`;
+            }
+            
+            // Fetch events
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    successCallback(data);
+                })
+                .catch(error => {
+                    console.error('Error fetching calendar data:', error);
+                    failureCallback(error);
+                });
+        },
+        eventTimeFormat: {
+            hour: '2-digit',
+            minute: '2-digit',
+            meridiem: 'short'
+        }
+    });
+    
+    calendar.render();
+    
+    // Handle filter changes
+    document.getElementById('teacher-filter').addEventListener('change', function() {
+        calendar.refetchEvents();
+    });
+    
+    document.getElementById('centre-filter').addEventListener('change', function() {
+        calendar.refetchEvents();
+    });
+});
+```
+
+## Implementation Steps
+
+1. **Database Setup**:
+   - Create the migration files for the new tables
+   - Run the migrations
+
+2. **Models**:
+   - Create the model files with proper relationships
+   - Ensure relationships with existing User and Trainee models are properly defined
+
+3. **Controller**:
+   - Implement the RehabilitationController with all necessary methods
+   - Add validation rules for form submissions
+
+4. **Routes**:
+   - Add the rehabilitation routes to web.php
+   - Create role-specific redirects
+
+5. **Views**:
+   - Create the view folder structure
+   - Implement the dashboard, activity, schedule, and progress views
+   - Add calendar functionality for scheduling
+
+6. **JavaScript**:
+   - Add FullCalendar library for scheduling
+   - Implement AJAX for calendar data loading
+   - Add form handling for group/individual activities
+
+7. **Testing**:
+   - Test with different user roles
+   - Verify scheduling functionality
+   - Test progress tracking features
+
+## Integration with Existing Modules
+
+1. **User Module Integration**:
+   - Use the unified Users model for teacher assignment
+   - Implement role-based access control for features
+
+2. **Trainee Module Integration**:
+   - Link activities and progress to trainee profiles
+   - Add rehabilitation progress to trainee dashboards
+
+3. **Centre Module Integration**:
+   - Assign activities to specific centres
+   - Filter schedules by centre
+
+4. **Dashboard Integration**:
+   - Add rehabilitation statistics to role-specific dashboards
+   - Show upcoming activities on main dashboard
+
+5. **Navbar Integration**:
+   - Add rehabilitation links to the main navigation
+   - Include role-specific sub-navigation
+
+## Security Considerations
+
+1. **Access Control**:
+   - Use middleware to enforce role-based access
+   - Ensure only authorized users can view/edit progress records
+
+2. **Data Validation**:
+   - Implement proper form validation
+   - Sanitize user inputs to prevent SQL injection
+
+3. **Audit Logging**:
+   - Log important actions like schedule changes
+   - Track progress record modifications
+
+4. **Error Handling**:
+   - Use try-catch blocks for database operations
+   - Display user-friendly error messages

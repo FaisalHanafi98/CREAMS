@@ -1,0 +1,101 @@
+.section {
+    opacity: 1 !important;
+    transform: translateY(0) !important;
+}
+
+/* Hide preloader by default after 3 seconds */
+.preloader {
+    animation: fadeOutPreloader 1s ease 3s forwards;
+}
+
+@keyframes fadeOutPreloader {
+    to {
+        opacity: 0;
+        visibility: hidden;
+    }
+}
+
+.page-banner {
+    height: 300px;
+    background: linear-gradient(
+            135deg,
+            rgba(30, 136, 229, 0.8),
+            rgba(67, 160, 71, 0.8)
+        ),
+        url("../images/trademark-banner.jpg") center/cover;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: white;
+    margin-top: 90px;
+}
+
+.page-banner h1 {
+    font-size: 40px;
+    font-weight: 700;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.breadcrumbs {
+    margin-top: 15px;
+}
+
+.breadcrumbs a {
+    color: rgba(255, 255, 255, 0.8);
+    transition: var(--transition);
+}
+
+.breadcrumbs a:hover {
+    color: white;
+    text-decoration: none;
+}
+
+.breadcrumbs span {
+    color: white;
+    margin: 0 10px;
+}
+
+/* Trademark specific styles */
+.trademark-container {
+    padding: 30px;
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+}
+
+.trademark-section {
+    margin-bottom: 40px;
+}
+
+.trademark-section h2 {
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--dark-text);
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--primary-color);
+}
+
+.trademark-section p {
+    margin-bottom: 15px;
+    color: var(--text-color);
+}
+
+.trademark-logo {
+    margin: 30px 0;
+    padding: 20px;
+    background: var(--light-bg);
+    border-radius: 10px;
+    text-align: center;
+}
+
+.trademark-logo img {
+    max-height: 100px;
+    margin-bottom: 15px;
+}
+
+.trademark-logo p {
+    font-size: 14px;
+    margin-bottom: 0;
+}
