@@ -174,18 +174,19 @@ class ActivityController extends Controller
 
         $validated = $request->validate([
             'activity_name' => 'required|string|max:255',
-            'activity_code' => 'required|string|max:20|unique:activities',
-            'description' => 'required|string',
-            'category_id' => 'required|exists:categories,id',
-            'activity_type' => 'required|in:Individual,Group,Both',
-            'objectives' => 'nullable|string',
-            'materials_needed' => 'nullable|string',
-            'age_group' => 'required|string',
-            'difficulty_level' => 'required|in:Beginner,Intermediate,Advanced',
-            'min_participants' => 'required|integer|min:1',
-            'max_participants' => 'required|integer|gte:min_participants',
-            'duration_minutes' => 'required|integer|min:30|max:120', // GPT suggestion: 30-120 min
-            'is_active' => 'boolean'
+            'activity_id' => 'required|string|max:20|unique:activities',
+            'activity_description' => 'required|string',
+            'category_id' => 'nullable|exists:categories,id',
+            'activity_type' => 'required|in:Individual,Group,Both,Education,Therapy,Training',
+            'activity_date' => 'required|date|after_or_equal:today',
+            'activity_start_time' => 'required|date_format:H:i',
+            'activity_end_time' => 'required|date_format:H:i|after:activity_start_time',
+            'activity_location' => 'required|string|max:255',
+            'max_participants' => 'required|integer|min:1|max:100',
+            'activity_goals' => 'nullable|string',
+            'activity_outcomes' => 'nullable|string',
+            'required_resources' => 'nullable|string',
+            'activity_image' => 'nullable|string'
         ]);
 
         try {
@@ -193,20 +194,24 @@ class ActivityController extends Controller
 
             $activity = Activity::create([
                 'activity_name' => $validated['activity_name'],
-                'activity_code' => strtoupper($validated['activity_code']),
-                'description' => $validated['description'],
+                'activity_id' => strtoupper($validated['activity_id']),
+                'activity_description' => $validated['activity_description'],
                 'category_id' => $validated['category_id'],
                 'activity_type' => $validated['activity_type'],
-                'objectives' => $validated['objectives'],
-                'materials_needed' => $validated['materials_needed'],
-                'age_group' => $validated['age_group'],
-                'difficulty_level' => $validated['difficulty_level'],
-                'min_participants' => $validated['min_participants'],
+                'activity_date' => $validated['activity_date'],
+                'activity_start_time' => $validated['activity_start_time'],
+                'activity_end_time' => $validated['activity_end_time'],
+                'activity_location' => $validated['activity_location'],
                 'max_participants' => $validated['max_participants'],
-                'duration_minutes' => $validated['duration_minutes'],
-                'is_active' => $request->has('is_active'),
+                'current_participants' => 0,
+                'activity_goals' => $validated['activity_goals'],
+                'activity_outcomes' => $validated['activity_outcomes'],
+                'required_resources' => $validated['required_resources'],
+                'activity_image' => $validated['activity_image'],
+                'activity_status' => 'scheduled',
                 'created_by' => session('id'),
-                'centre_id' => session('centre_id')
+                'centre_id' => session('centre_id'),
+                'instructor_id' => session('id')
             ]);
 
             DB::commit();
@@ -337,34 +342,36 @@ class ActivityController extends Controller
 
             $validated = $request->validate([
                 'activity_name' => 'required|string|max:255',
-                'activity_code' => 'required|string|max:20|unique:activities,activity_code,' . $id,
-                'description' => 'required|string',
-                'category_id' => 'required|exists:categories,id',
-                'activity_type' => 'required|in:Individual,Group,Both',
-                'objectives' => 'nullable|string',
-                'materials_needed' => 'nullable|string',
-                'age_group' => 'required|string',
-                'difficulty_level' => 'required|in:Beginner,Intermediate,Advanced',
-                'min_participants' => 'required|integer|min:1',
-                'max_participants' => 'required|integer|gte:min_participants',
-                'duration_minutes' => 'required|integer|min:30|max:120',
-                'is_active' => 'boolean'
+                'activity_id' => 'required|string|max:20|unique:activities,activity_id,' . $id,
+                'activity_description' => 'required|string',
+                'category_id' => 'nullable|exists:categories,id',
+                'activity_type' => 'required|in:Individual,Group,Both,Education,Therapy,Training',
+                'activity_date' => 'required|date|after_or_equal:today',
+                'activity_start_time' => 'required|date_format:H:i',
+                'activity_end_time' => 'required|date_format:H:i|after:activity_start_time',
+                'activity_location' => 'required|string|max:255',
+                'max_participants' => 'required|integer|min:1|max:100',
+                'activity_goals' => 'nullable|string',
+                'activity_outcomes' => 'nullable|string',
+                'required_resources' => 'nullable|string',
+                'activity_image' => 'nullable|string'
             ]);
 
             $activity->update([
                 'activity_name' => $validated['activity_name'],
-                'activity_code' => strtoupper($validated['activity_code']),
-                'description' => $validated['description'],
+                'activity_id' => strtoupper($validated['activity_id']),
+                'activity_description' => $validated['activity_description'],
                 'category_id' => $validated['category_id'],
                 'activity_type' => $validated['activity_type'],
-                'objectives' => $validated['objectives'],
-                'materials_needed' => $validated['materials_needed'],
-                'age_group' => $validated['age_group'],
-                'difficulty_level' => $validated['difficulty_level'],
-                'min_participants' => $validated['min_participants'],
+                'activity_date' => $validated['activity_date'],
+                'activity_start_time' => $validated['activity_start_time'],
+                'activity_end_time' => $validated['activity_end_time'],
+                'activity_location' => $validated['activity_location'],
                 'max_participants' => $validated['max_participants'],
-                'duration_minutes' => $validated['duration_minutes'],
-                'is_active' => $request->has('is_active')
+                'activity_goals' => $validated['activity_goals'],
+                'activity_outcomes' => $validated['activity_outcomes'],
+                'required_resources' => $validated['required_resources'],
+                'activity_image' => $validated['activity_image']
             ]);
 
             return redirect()->route('activities.show', $activity->id)
@@ -836,11 +843,11 @@ class ActivityController extends Controller
                 $query->where(function ($q) use ($search) {
                     $q->where('activity_name', 'LIKE', "%{$search}%")
                       ->orWhere('description', 'LIKE', "%{$search}%")
-                      ->orWhere('activity_code', 'LIKE', "%{$search}%");
+                      ->orWhere('activity_id', 'LIKE', "%{$search}%");
                 });
             }
 
-            $activities = $query->where('is_active', true)->get();
+            $activities = $query->whereIn('activity_status', ['scheduled', 'ongoing'])->get();
 
             return response()->json([
                 'success' => true,

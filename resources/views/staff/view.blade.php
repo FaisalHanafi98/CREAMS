@@ -308,12 +308,12 @@
                     <div class="info-value">{{ $staffMember->address ?? 'Not provided' }}</div>
                 </div>
                 
-                @if($staffMember->bio)
+                @if($staffMember->about)
                 <div class="info-item">
                     <div class="info-label">
-                        <i class="fas fa-info-circle"></i>Bio
+                        <i class="fas fa-info-circle"></i>About
                     </div>
-                    <div class="info-value">{{ $staffMember->bio }}</div>
+                    <div class="info-value">{{ $staffMember->about }}</div>
                 </div>
                 @endif
             </div>

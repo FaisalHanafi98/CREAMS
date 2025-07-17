@@ -189,7 +189,7 @@ class TraineeRegistrationController extends Controller
             $trainee->trainee_date_of_birth = $request->input('trainee_date_of_birth');
             $trainee->centre_name = $request->input('centre_name'); // Just store the centre_name
             $trainee->trainee_condition = $request->input('trainee_condition');
-            $trainee->trainee_attendance = 0; // Default attendance value
+            // Note: trainee_attendance field removed as it doesn't exist in database
             
             // Add guardian information
             $trainee->guardian_name = $request->input('guardian_name');

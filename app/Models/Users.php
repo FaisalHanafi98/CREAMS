@@ -20,6 +20,7 @@ class Users extends Authenticatable
         'iium_id',
         'name', 
         'email',
+        'password',
         'phone',
         'address',
         'position',
@@ -29,6 +30,12 @@ class Users extends Authenticatable
         'avatar',
         'about',
         'date_of_birth',
+        'role',
+        'status',
+        'centre_id',
+        'centre_location',
+        'review',
+        'updated_by',
     ];
     
     /**

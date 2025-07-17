@@ -17,15 +17,35 @@ class Asset extends Model
     protected $primaryKey = 'asset_id';
 
     protected $fillable = [
-        'asset_name', 'asset_type', 'asset_brand', 'asset_avatar',
-        'asset_price', 'asset_quantity', 'asset_last_updated',
-        'centre_name', 'asset_note'
+        'asset_id',
+        'asset_name',
+        'asset_description',
+        'asset_type_id',
+        'asset_model',
+        'asset_brand',
+        'asset_serial_number',
+        'asset_value',
+        'purchase_date',
+        'supplier',
+        'warranty_info',
+        'asset_condition',
+        'asset_status',
+        'asset_location',
+        'centre_id',
+        'assigned_to',
+        'maintenance_notes',
+        'last_maintenance_date',
+        'next_maintenance_date',
+        'asset_image',
+        'asset_attributes'
     ];
 
     protected $casts = [
-        'asset_price' => 'decimal:2',
-        'asset_quantity' => 'integer',
-        'asset_last_updated' => 'datetime',
+        'asset_value' => 'decimal:2',
+        'purchase_date' => 'date',
+        'last_maintenance_date' => 'date',
+        'next_maintenance_date' => 'date',
+        'asset_attributes' => 'array',
     ];
 
     /**
@@ -33,15 +53,15 @@ class Asset extends Model
      */
     public function centre(): BelongsTo
     {
-        return $this->belongsTo(Centres::class, 'centre_name', 'centre_name');
+        return $this->belongsTo(Centres::class, 'centre_id', 'centre_id');
     }
 
     /**
-     * Get formatted asset price
+     * Get formatted asset value
      */
-    public function getFormattedPriceAttribute(): string
+    public function getFormattedValueAttribute(): string
     {
-        return 'RM ' . number_format($this->asset_price, 2);
+        return 'RM ' . number_format($this->asset_value, 2);
     }
 
     /**
@@ -49,8 +69,8 @@ class Asset extends Model
      */
     public function getImageUrlAttribute(): string
     {
-        if ($this->asset_avatar) {
-            return asset('storage/assets/' . $this->asset_avatar);
+        if ($this->asset_image) {
+            return asset('storage/assets/' . $this->asset_image);
         }
         return asset('images/default-asset.png');
     }
@@ -62,25 +82,34 @@ class Asset extends Model
     {
         return $query->where(function ($q) use ($search) {
             $q->where('asset_name', 'LIKE', "%{$search}%")
-              ->orWhere('asset_type', 'LIKE', "%{$search}%")
+              ->orWhere('asset_model', 'LIKE', "%{$search}%")
               ->orWhere('asset_brand', 'LIKE', "%{$search}%")
-              ->orWhere('centre_name', 'LIKE', "%{$search}%");
+              ->orWhere('asset_serial_number', 'LIKE', "%{$search}%")
+              ->orWhere('asset_location', 'LIKE', "%{$search}%");
         });
     }
 
     /**
      * Scope to filter by centre
      */
-    public function scopeForCentre($query, string $centreName)
+    public function scopeForCentre($query, string $centreId)
     {
-        return $query->where('centre_name', $centreName);
+        return $query->where('centre_id', $centreId);
     }
 
     /**
-     * Scope to filter by type
+     * Scope to filter by status
      */
-    public function scopeOfType($query, string $assetType)
+    public function scopeByStatus($query, string $status)
     {
-        return $query->where('asset_type', $assetType);
+        return $query->where('asset_status', $status);
+    }
+
+    /**
+     * Scope to filter by condition
+     */
+    public function scopeByCondition($query, string $condition)
+    {
+        return $query->where('asset_condition', $condition);
     }
 }

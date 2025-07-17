@@ -11,23 +11,25 @@ class Letter extends Model
     use HasFactory;
 
     protected $fillable = [
-        'reference_number',
+        'letter_reference',      // Updated to match database
         'letter_date',
-        'recipient_name',
-        'recipient_address',
-        'subject',
-        'content',
+        'letter_subject',        // Updated to match database  
+        'letter_content',        // Updated to match database
+        'letter_type',           // Updated to match database
+        'recipient_id',          // Updated to match database
+        'recipient_type',        // Updated to match database
         'template_id',
-        'generated_by',
-        'generated_by_name',
-        'generated_by_position',
-        'pdf_path',
-        'metadata'
+        'letter_status',         // Updated to match database
+        'sent_date',             // Updated to match database
+        'letter_file_path',      // Updated to match database
+        'letter_data',           // Updated to match database
+        'created_by'             // Updated to match database
     ];
 
     protected $casts = [
         'letter_date' => 'date',
-        'metadata' => 'array'
+        'sent_date' => 'date',
+        'letter_data' => 'array'    // Updated to match database
     ];
 
     protected static function boot()
@@ -36,8 +38,8 @@ class Letter extends Model
         
         static::creating(function ($letter) {
             // Generate reference number if not provided
-            if (empty($letter->reference_number)) {
-                $letter->reference_number = self::generateReferenceNumber();
+            if (empty($letter->letter_reference)) {
+                $letter->letter_reference = self::generateReferenceNumber();
             }
         });
     }
@@ -58,7 +60,7 @@ class Letter extends Model
                               ->latest()
                               ->first();
             
-            $sequence = $lastLetter ? (intval(substr($lastLetter->reference_number, -4)) + 1) : 1;
+            $sequence = $lastLetter ? (intval(substr($lastLetter->letter_reference, -4)) + 1) : 1;
             
         } catch (\Exception $e) {
             // If database query fails, use random sequence
@@ -89,8 +91,8 @@ class Letter extends Model
      */
     public function getPdfUrlAttribute()
     {
-        if ($this->pdf_path && Storage::exists('public/' . $this->pdf_path)) {
-            return Storage::url($this->pdf_path);
+        if ($this->letter_file_path && Storage::exists('public/' . $this->letter_file_path)) {
+            return Storage::url($this->letter_file_path);
         }
         return null;
     }
@@ -100,7 +102,7 @@ class Letter extends Model
      */
     public function hasPdf()
     {
-        return $this->pdf_path && Storage::exists('public/' . $this->pdf_path);
+        return $this->letter_file_path && Storage::exists('public/' . $this->letter_file_path);
     }
 
     /**
@@ -116,7 +118,7 @@ class Letter extends Model
      */
     public function getTruncatedSubjectAttribute()
     {
-        return \Str::limit($this->subject, 50);
+        return \Str::limit($this->letter_subject, 50);
     }
 
     /**
@@ -124,7 +126,7 @@ class Letter extends Model
      */
     public function getTruncatedContentAttribute()
     {
-        return \Str::limit(strip_tags($this->content), 100);
+        return \Str::limit(strip_tags($this->letter_content), 100);
     }
 
     /**
@@ -140,7 +142,7 @@ class Letter extends Model
      */
     public function scopeByGenerator($query, $userId)
     {
-        return $query->where('generated_by', $userId);
+        return $query->where('created_by', $userId);
     }
 
     /**
@@ -149,9 +151,9 @@ class Letter extends Model
     public function scopeSearch($query, $term)
     {
         return $query->where(function ($q) use ($term) {
-            $q->where('recipient_name', 'like', "%{$term}%")
-              ->orWhere('subject', 'like', "%{$term}%")
-              ->orWhere('reference_number', 'like', "%{$term}%");
+            $q->where('letter_subject', 'like', "%{$term}%")
+              ->orWhere('letter_reference', 'like', "%{$term}%")
+              ->orWhere('letter_content', 'like', "%{$term}%");
         });
     }
 }

@@ -199,9 +199,7 @@ class TraineeController extends Controller
                 // Medical and additional information
                 'medical_history' => $validated['medical_history'],
                 'additional_notes' => $validated['additional_notes'],
-                'trainee_attendance' => 0,
                 'status' => 'active',
-                'registered_by' => $userId,
             ]);
             
             DB::commit();

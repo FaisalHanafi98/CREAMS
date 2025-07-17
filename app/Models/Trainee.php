@@ -16,6 +16,7 @@ class Trainee extends Model
      * @var array<int, string>
      */
     protected $fillable = [
+        'trainee_id',
         'trainee_first_name',
         'trainee_last_name',
         'trainee_email',
@@ -26,6 +27,10 @@ class Trainee extends Model
         'avatar',
         'trainee_condition',
         'centre_name',
+        'centre_id',
+        'ic_number',
+        'status',
+        'course_id',
         // Guardian information
         'guardian_name',
         'guardian_phone',
@@ -52,7 +57,7 @@ class Trainee extends Model
      */
     protected $guarded = [
         'trainee_last_accessed_at', // System-managed field
-        'trainee_attendance',       // System-calculated field
+        // 'trainee_attendance' field removed - doesn't exist in database
         'course_id',               // Requires enrollment process
         'status',                  // Status changes require approval
         'created_at',
@@ -67,7 +72,7 @@ class Trainee extends Model
     protected $casts = [
         'trainee_date_of_birth' => 'date',
         'trainee_last_accessed_at' => 'datetime',
-        'trainee_attendance' => 'integer',
+        // 'trainee_attendance' cast removed - field doesn't exist in database
     ];
 
     /**

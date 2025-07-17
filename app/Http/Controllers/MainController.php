@@ -125,7 +125,7 @@ class MainController extends Controller
                 'password' => [
                     'required',
                     'min:5',
-                    'regex:/^(?=.*[a-zA-Z])(?=.*\d)(?=.*[\W_]).{5,}$/',
+                    'regex:/^(?=.*[a-zA-Z])(?=.*\d).{5,}$/',
                 ],
                 'password_confirmation' => 'required|same:password',
                 'centre_id' => 'required|exists:centres,centre_id',
@@ -208,17 +208,18 @@ class MainController extends Controller
                     return back()->with('fail', 'Something went wrong, try again later');
                 }
 
-                // Create welcome notification using standard Laravel notification structure
+                // Create welcome notification using custom notification structure
                 $notification = new Notifications();
-                $notification->type = 'App\Notifications\WelcomeNotification';
-                $notification->notifiable_type = 'App\Models\Users';
-                $notification->notifiable_id = $user->id;
-                $notification->data = json_encode([
-                    'title' => 'Welcome to CREAMS',
-                    'message' => 'Welcome to the Community-based REhAbilitation Management System. Your account has been created successfully.',
-                    'type' => 'success',
-                    'user_role' => $user->role
+                $notification->user_id = $user->id;
+                $notification->user_type = 'App\Models\Users';
+                $notification->notification_type = 'success';
+                $notification->notification_title = 'Welcome to CREAMS';
+                $notification->notification_message = 'Welcome to the Community-based REhAbilitation Management System. Your account has been created successfully.';
+                $notification->notification_data = json_encode([
+                    'user_role' => $user->role,
+                    'registration_date' => now()->format('Y-m-d H:i:s')
                 ]);
+                $notification->is_read = false;
                 $notification->save();
 
                 DB::commit();

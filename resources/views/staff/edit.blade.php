@@ -374,11 +374,11 @@
                         </div>
 
                         <div class="form-floating">
-                            <textarea class="form-control @error('bio') is-invalid @enderror" 
-                                      id="bio" name="bio" placeholder="Bio / Qualifications" 
-                                      style="height: 120px;">{{ old('bio', $staffMember->bio) }}</textarea>
-                            <label for="bio">Bio / Qualifications</label>
-                            @error('bio')
+                            <textarea class="form-control @error('about') is-invalid @enderror" 
+                                      id="about" name="about" placeholder="About / Qualifications" 
+                                      style="height: 120px;">{{ old('about', $staffMember->about) }}</textarea>
+                            <label for="about">About / Qualifications</label>
+                            @error('about')
                             <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>

@@ -8,187 +8,93 @@ class Volunteers extends Model
 {
     use HasFactory;
 
-    protected $table = 'volunteer_applications';
+    protected $table = 'volunteers';
 
     protected $fillable = [
         // Personal Information
-        'name',
-        'first_name',
-        'last_name',
-        'email',
-        'phone',
-        'address',
-        'city',
-        'postcode',
-        
-        // Volunteer Preferences
-        'interest',
-        'other_interest',
-        'skills',
-        'availability',
-        'commitment',
-        
-        // Additional Information
-        'motivation',
-        'experience',
-        'referral',
-        
-        // System fields
-        'status',
-        'centre_id',
-        'ip_address',
-        'user_agent',
-        'submitted_at',
-        
-        // Admin fields
-        'admin_notes',
-        'reviewed_by',
-        'reviewed_at',
+        'volunteer_name',
+        'volunteer_email',
+        'volunteer_phone',
+        'volunteer_address',
+        'volunteer_birth_date',
+        'volunteer_gender',
+        'volunteer_skills',
+        'volunteer_experience',
+        'volunteer_availability',
+        'volunteer_status',
+        'volunteer_start_date',
+        'emergency_contact_name',
+        'emergency_contact_phone',
     ];
 
     protected $casts = [
-        'availability' => 'array',
-        'submitted_at' => 'datetime',
-        'reviewed_at' => 'datetime',
+        'volunteer_availability' => 'array',
+        'volunteer_birth_date' => 'date',
+        'volunteer_start_date' => 'date',
     ];
 
-    protected $hidden = [
-        'ip_address',
-        'user_agent',
-    ];
+    protected $hidden = [];
 
-    public function centre()
-    {
-        return $this->belongsTo(Centres::class, 'centre_id');
-    }
+    // Relationships can be added later if needed
 
-    public function reviewer()
-    {
-        return $this->belongsTo(Users::class, 'reviewed_by');
-    }
 
     public function scopePending($query)
     {
-        return $query->where('status', 'pending');
+        return $query->where('volunteer_status', 'pending');
     }
 
     public function scopeApproved($query)
     {
-        return $query->where('status', 'approved');
+        return $query->where('volunteer_status', 'active');
     }
 
     public function scopeRejected($query)
     {
-        return $query->where('status', 'rejected');
+        return $query->where('volunteer_status', 'inactive');
     }
 
-    public function scopeByInterest($query, $interest)
+    // Scope methods can be added later if needed
+
+    public function setVolunteerNameAttribute($value)
     {
-        return $query->where('interest', $interest);
+        $this->attributes['volunteer_name'] = ucwords(strtolower($value));
     }
 
-    public function setNameAttribute($value)
-    {
-        $this->attributes['name'] = ucwords(strtolower($value));
-    }
 
-    public function setFirstNameAttribute($value)
-    {
-        $this->attributes['first_name'] = ucfirst(strtolower($value));
-    }
-
-    public function setLastNameAttribute($value)
-    {
-        $this->attributes['last_name'] = ucfirst(strtolower($value));
-    }
 
     public function getFormattedAvailabilityAttribute()
     {
-        if (!$this->availability) {
+        if (!$this->volunteer_availability) {
             return 'Not specified';
         }
 
-        $availabilityMap = [
-            'weekday' => 'Weekdays (9am-5pm)',
-            'evening' => 'Evenings (5pm-9pm)',
-            'weekend' => 'Weekends'
-        ];
-
-        $availability = is_string($this->availability) ? json_decode($this->availability, true) : $this->availability;
-
-        $formatted = array_map(function($item) use ($availabilityMap) {
-            return $availabilityMap[$item] ?? $item;
-        }, $availability ?: []);
-
-        return implode(', ', $formatted);
+        return $this->volunteer_availability;
     }
 
-    public function getFormattedInterestAttribute()
-    {
-        $interestMap = [
-            'direct-support' => 'Direct Support',
-            'skills-sharing' => 'Skills Sharing',
-            'event-support' => 'Event Support',
-            'creative-arts' => 'Creative Arts',
-            'administrative' => 'Administrative Support',
-            'advocacy' => 'Advocacy & Outreach',
-            'other' => 'Other'
-        ];
+    // Accessor methods can be added later if needed
 
-        $interest = $interestMap[$this->interest] ?? $this->interest;
-
-        if ($this->interest === 'other' && $this->other_interest) {
-            $interest .= ' (' . $this->other_interest . ')';
-        }
-
-        return $interest;
-    }
-
-    public function getFormattedCommitmentAttribute()
-    {
-        $commitmentMap = [
-            '1-3' => '1-3 hours per week',
-            '4-6' => '4-6 hours per week',
-            '7-10' => '7-10 hours per week',
-            'flexible' => 'Flexible/As needed'
-        ];
-
-        return $commitmentMap[$this->commitment] ?? $this->commitment;
-    }
 
     public function approve()
     {
-        $this->status = 'approved';
-        $this->reviewed_at = now();
-        $this->reviewed_by = session('id');
+        $this->volunteer_status = 'active';
         return $this->save();
     }
 
     public function reject()
     {
-        $this->status = 'rejected';
-        $this->reviewed_at = now();
-        $this->reviewed_by = session('id');
+        $this->volunteer_status = 'inactive';
         return $this->save();
     }
 
-    public function markAsContacted()
-    {
-        $this->status = 'contacted';
-        $this->reviewed_at = now();
-        $this->reviewed_by = session('id');
-        return $this->save();
-    }
 
     public function getStatusBadgeColorAttribute()
     {
         $colors = [
             'pending' => 'warning',
-            'approved' => 'success',
-            'rejected' => 'danger',
-            'contacted' => 'info'
+            'active' => 'success',
+            'inactive' => 'danger'
         ];
 
-        return $colors[$this->status] ?? 'secondary';
+        return $colors[$this->volunteer_status] ?? 'secondary';
     }
 }

@@ -71,48 +71,39 @@ public function submit(Request $request)
 
         // Save application to database
         $application = Volunteers::create([
-            'name' => $validatedData['first_name'] . ' ' . $validatedData['last_name'],
-            'first_name' => $validatedData['first_name'],
-            'last_name' => $validatedData['last_name'],
-            'email' => strtolower(trim($validatedData['email'])),
-            'phone' => $validatedData['phone'],
-            'address' => $request->address,
-            'city' => $request->city,
-            'postcode' => $request->postcode,
-            'interest' => $validatedData['interest'],
-            'other_interest' => $request->other_interest,
-            'skills' => $request->skills,
-            'availability' => $validatedData['availability'],
-            'commitment' => $validatedData['commitment'],
-            'motivation' => $validatedData['motivation'],
-            'experience' => $request->experience,
-            'referral' => $request->referral,
-            'status' => 'pending',
-            'ip_address' => $request->ip(),
-            'user_agent' => $request->userAgent(),
-            'submitted_at' => now()
+            'volunteer_name' => $validatedData['first_name'] . ' ' . $validatedData['last_name'],
+            'volunteer_email' => strtolower(trim($validatedData['email'])),
+            'volunteer_phone' => $validatedData['phone'],
+            'volunteer_address' => $request->address ?: '',
+            'volunteer_birth_date' => $request->birth_date ?: '1990-01-01',
+            'volunteer_gender' => $request->gender ?: 'Other',
+            'volunteer_skills' => $request->skills ?: '',
+            'volunteer_experience' => $request->experience ?: '',
+            'volunteer_availability' => implode(', ', $validatedData['availability']),
+            'volunteer_status' => 'pending',
+            'volunteer_start_date' => now()->format('Y-m-d'),
+            'emergency_contact_name' => $request->emergency_contact_name ?: '',
+            'emergency_contact_phone' => $request->emergency_contact_phone ?: '',
         ]);
 
         Log::info('Volunteer application saved successfully', [
             'id' => $application->id,
-            'email' => $application->email
+            'email' => $application->volunteer_email
         ]);
 
         // Send confirmation email to volunteer (will be logged with log driver)
         try {
             Mail::raw(
-                "Dear {$application->first_name},\n\n" .
+                "Dear {$application->volunteer_name},\n\n" .
                 "Thank you for your interest in volunteering with IIUM PD-CARE!\n\n" .
                 "We have successfully received your volunteer application and are excited about your willingness to support children with special needs in our community.\n\n" .
                 "Application Summary:\n" .
-                "- Name: {$application->name}\n" .
-                "- Email: {$application->email}\n" .
-                "- Phone: {$application->phone}\n" .
-                "- Area of Interest: " . ucwords(str_replace('-', ' ', $application->interest)) . "\n" .
-                "- Availability: " . implode(', ', array_map(function($item) {
-                    return ucfirst($item);
-                }, $application->availability)) . "\n" .
-                "- Time Commitment: {$application->commitment} hours per week\n" .
+                "- Name: {$application->volunteer_name}\n" .
+                "- Email: {$application->volunteer_email}\n" .
+                "- Phone: {$application->volunteer_phone}\n" .
+                "- Area of Interest: Volunteer Work\n" .
+                "- Availability: {$application->volunteer_availability}\n" .
+                "- Skills: {$application->volunteer_skills}\n" .
                 "- Application ID: #VA" . str_pad($application->id, 6, '0', STR_PAD_LEFT) . "\n\n" .
                 "What happens next?\n" .
                 "1. Our volunteer coordinator will review your application\n" .
@@ -124,17 +115,17 @@ public function submit(Request $request)
                 "Best regards,\n" .
                 "IIUM PD-CARE Volunteer Coordination Team", 
                 function ($message) use ($application) {
-                    $message->to($application->email, $application->name)
+                    $message->to($application->volunteer_email, $application->volunteer_name)
                             ->from(config('mail.from.address'), config('mail.from.name'))
                             ->subject('Volunteer Application Received - IIUM PD-CARE');
                 }
             );
             
-            Log::info('Volunteer confirmation email sent', ['email' => $application->email]);
+            Log::info('Volunteer confirmation email sent', ['email' => $application->volunteer_email]);
         } catch (\Exception $e) {
             Log::error('Failed to send volunteer confirmation email', [
                 'error' => $e->getMessage(),
-                'email' => $application->email
+                'email' => $application->volunteer_email
             ]);
         }
 
@@ -146,38 +137,34 @@ public function submit(Request $request)
                 "New volunteer application received!\n\n" .
                 "APPLICANT DETAILS:\n" .
                 "==================\n" .
-                "Name: {$application->name}\n" .
-                "Email: {$application->email}\n" .
-                "Phone: {$application->phone}\n" .
-                "Address: " . ($application->address ?: 'Not provided') . "\n" .
-                "City: " . ($application->city ?: 'Not provided') . "\n" .
-                "Postcode: " . ($application->postcode ?: 'Not provided') . "\n\n" .
+                "Name: {$application->volunteer_name}\n" .
+                "Email: {$application->volunteer_email}\n" .
+                "Phone: {$application->volunteer_phone}\n" .
+                "Address: " . ($application->volunteer_address ?: 'Not provided') . "\n" .
+                "" .
+                "" .
                 "VOLUNTEER PREFERENCES:\n" .
                 "=====================\n" .
-                "Area of Interest: " . ucwords(str_replace('-', ' ', $application->interest)) . "\n" .
-                ($application->other_interest ? "Other Interest: {$application->other_interest}\n" : "") .
-                "Availability: " . implode(', ', array_map(function($item) {
-                    return ucfirst($item);
-                }, $application->availability)) . "\n" .
-                "Time Commitment: {$application->commitment} hours per week\n" .
-                "Skills: " . ($application->skills ?: 'Not specified') . "\n\n" .
-                "MOTIVATION:\n" .
-                "===========\n" .
-                "{$application->motivation}\n\n" .
+                "Area of Interest: Volunteer Work\n" .
+                "" .
+                "Availability: {$application->volunteer_availability}\n" .
+                "" .
+                "Skills: " . ($application->volunteer_skills ?: 'Not specified') . "\n\n" .
+                "" .
                 "EXPERIENCE:\n" .
                 "===========\n" . 
-                ($application->experience ?: 'No previous experience specified') . "\n\n" .
+                ($application->volunteer_experience ?: 'No previous experience specified') . "\n\n" .
                 "ADDITIONAL INFO:\n" .
                 "===============\n" .
-                "How they heard about us: " . ($application->referral ?: 'Not specified') . "\n" .
+                "" .
                 "Application ID: #VA" . str_pad($application->id, 6, '0', STR_PAD_LEFT) . "\n" .
                 "Submitted: " . $application->created_at->format('F j, Y \a\t g:i A') . "\n" .
-                "IP Address: {$application->ip_address}\n\n" .
+                "" .
                 "Please log in to the admin panel to review this application.",
                 function ($message) use ($adminEmail, $application) {
                     $message->to($adminEmail)
                             ->from(config('mail.from.address'), config('mail.from.name'))
-                            ->subject('🆕 New Volunteer Application - ' . $application->name);
+                            ->subject('🆕 New Volunteer Application - ' . $application->volunteer_name);
                 }
             );
             
@@ -188,7 +175,7 @@ public function submit(Request $request)
 
         // Redirect back with success message
         return redirect()->route('volunteer')
-            ->with('success', 'Thank you for your volunteer application! We have received your submission and sent a confirmation email to ' . $application->email . '. We will contact you within 7-10 business days regarding the next steps.');
+            ->with('success', 'Thank you for your volunteer application! We have received your submission and sent a confirmation email to ' . $application->volunteer_email . '. We will contact you within 7-10 business days regarding the next steps.');
         
     } catch (\Exception $e) {
         Log::error('Error in volunteer submission', [
@@ -210,8 +197,7 @@ public function submit(Request $request)
 public function getApplications()
 {
     try {
-        $applications = Volunteers::with('reviewer')
-            ->orderBy('created_at', 'desc')
+        $applications = Volunteers::orderBy('created_at', 'desc')
             ->paginate(15);
 
         return response()->json([
@@ -261,7 +247,7 @@ public function updateStatus(Request $request, $id)
         $application = Volunteers::findOrFail($id);
         
         $validator = Validator::make($request->all(), [
-            'status' => 'required|in:pending,approved,rejected,contacted',
+            'status' => 'required|in:pending,active,inactive',
             'notes' => 'nullable|string|max:1000'
         ]);
 
@@ -272,12 +258,8 @@ public function updateStatus(Request $request, $id)
             ], 422);
         }
 
-        $application->status = $request->status;
-        if ($request->notes) {
-            $application->admin_notes = $request->notes;
-        }
-        $application->reviewed_by = session('id');
-        $application->reviewed_at = now();
+        $application->volunteer_status = $request->status;
+        // Admin notes functionality would require additional table columns
         $application->save();
 
         Log::info('Volunteer application status updated', [

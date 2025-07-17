@@ -16,22 +16,24 @@ class Trainees extends Model
      * @var array<int, string>
      */
     protected $fillable = [
-        // Basic trainee information
+        // Basic trainee information  
+        'trainee_id',              // Fixed: Added required database field
         'trainee_first_name',
         'trainee_last_name',
         'trainee_email',
+        'ic_number',              // Fixed: Added required database field
         'trainee_phone_number',
         'trainee_date_of_birth',
-        'trainee_last_accessed_at',
         'gender',
-        'address',
+        'trainee_address',        // Fixed: Using correct database field name
         'centre_name',
+        'centre_id',              // Fixed: Added existing database field
         'avatar',
-        'trainee_attendance',
         'trainee_condition',
         'course_id',
         'status',
-        'registered_by',
+        'photo_consent',          // Fixed: Added required database field
+        'services_consent',       // Fixed: Added required database field
         
         // Guardian information
         'guardian_name',
@@ -57,8 +59,8 @@ class Trainees extends Model
      */
     protected $casts = [
         'trainee_date_of_birth' => 'date',
-        'trainee_last_accessed_at' => 'datetime',
-        'trainee_attendance' => 'integer',
+        'photo_consent' => 'boolean',      // Fixed: Added cast for boolean field
+        'services_consent' => 'boolean',   // Fixed: Added cast for boolean field
     ];
 
     /**
@@ -145,7 +147,7 @@ class Trainees extends Model
     public function activities()
     {
         return $this->belongsToMany(Activity::class, 'activity_enrollments', 'trainee_id', 'activity_id')
-                    ->withPivot(['enrollment_date', 'status', 'notes'])
+                    ->withPivot(['enrollment_date', 'enrollment_status', 'enrollment_notes', 'progress_percentage', 'attendance_count'])
                     ->withTimestamps();
     }
 
@@ -162,7 +164,7 @@ class Trainees extends Model
      */
     public function attendances()
     {
-        return $this->hasMany(ActivityAttendance::class, 'trainee_id');
+        return $this->hasMany(Attendance::class, 'trainee_id');
     }
 
     /**

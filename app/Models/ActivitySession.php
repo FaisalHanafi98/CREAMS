@@ -4,18 +4,17 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Carbon\Carbon;
 
 class ActivitySession extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
 
     protected $fillable = [
         'activity_id',
         'teacher_id',
         'session_code',
-        'scheduled_date',
+        'session_date',
         'date',
         'start_time',
         'end_time',
@@ -37,7 +36,7 @@ class ActivitySession extends Model
     ];
 
     protected $casts = [
-        'scheduled_date' => 'datetime',
+        'session_date' => 'datetime',
         'date' => 'datetime',
         'actual_start' => 'datetime',
         'actual_end' => 'datetime',
@@ -80,14 +79,14 @@ class ActivitySession extends Model
     // Scopes
     public function scopeUpcoming($query)
     {
-        return $query->where('scheduled_date', '>=', now())
+        return $query->where('session_date', '>=', now())
             ->where('status', 'scheduled')
-            ->orderBy('scheduled_date');
+            ->orderBy('session_date');
     }
 
     public function scopeToday($query)
     {
-        return $query->whereDate('scheduled_date', today());
+        return $query->whereDate('session_date', today());
     }
 
     public function scopeByTeacher($query, $teacherId)
@@ -108,12 +107,12 @@ class ActivitySession extends Model
 
     public function getFormattedScheduleAttribute()
     {
-        if (!$this->scheduled_date || !$this->start_time || !$this->end_time) {
+        if (!$this->session_date || !$this->start_time || !$this->end_time) {
             return 'Schedule not set';
         }
         
         try {
-            return Carbon::parse($this->scheduled_date)->format('M d, Y') . ' at ' . 
+            return Carbon::parse($this->session_date)->format('M d, Y') . ' at ' . 
                    Carbon::parse($this->start_time)->format('g:i A') . ' - ' . 
                    Carbon::parse($this->end_time)->format('g:i A');
         } catch (\Exception $e) {
@@ -124,7 +123,7 @@ class ActivitySession extends Model
     // Methods
     public function canEnroll()
     {
-        return $this->status === 'scheduled' && !$this->is_full && $this->scheduled_date > now();
+        return $this->status === 'scheduled' && !$this->is_full && $this->session_date > now();
     }
 
     public function markAttendance($traineeId, $status)

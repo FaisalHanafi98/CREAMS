@@ -140,7 +140,7 @@ class AssetManagementService
                 });
             })
             ->when($filters['status'] ?? null, function ($query, $status) {
-                $query->where('status', $status);
+                $query->where('asset_status', $status);
             })
             ->when($filters['centre_id'] ?? null, function ($query, $centreId) {
                 $query->where('centre_id', $centreId);
@@ -149,7 +149,7 @@ class AssetManagementService
                 $query->where('asset_type_id', $typeId);
             })
             ->when($filters['location_id'] ?? null, function ($query, $locationId) {
-                $query->where('location_id', $locationId);
+                $query->where('asset_location', $locationId);
             })
             ->when($filters['value_range'] ?? null, function ($query, $range) {
                 // $query->whereBetween('current_value', [$range['min'], $range['max']]); // Column not available
@@ -172,10 +172,10 @@ class AssetManagementService
         return [
             'total_assets' => $query->count(),
             'total_value' => 0, // current_value column not available
-            'available_assets' => $query->where('status', 'available')->count(),
-            'in_use_assets' => $query->where('status', 'in-use')->count(),
-            'maintenance_assets' => $query->where('status', 'maintenance')->count(),
-            'retired_assets' => $query->where('status', 'retired')->count(),
+            'available_assets' => $query->where('asset_status', 'available')->count(),
+            'in_use_assets' => $query->where('asset_status', 'in_use')->count(),
+            'maintenance_assets' => $query->where('asset_status', 'maintenance')->count(),
+            'retired_assets' => $query->where('asset_status', 'disposed')->count(),
             'average_age' => $this->calculateAverageAge($query),
             'maintenance_cost_mtd' => $this->getMaintenanceCostMTD($centreId),
         ];
@@ -198,13 +198,12 @@ class AssetManagementService
                 ->with('assetType:id,name')
                 ->get()
                 ->toArray(),
-            'by_location' => $query->selectRaw('location_id, COUNT(*) as count')
-                ->groupBy('location_id')
-                ->with('location:id,name')
+            'by_location' => $query->selectRaw('asset_location, COUNT(*) as count')
+                ->groupBy('asset_location')
                 ->get()
                 ->toArray(),
-            'by_status' => $query->selectRaw('status, COUNT(*) as count')
-                ->groupBy('status')
+            'by_status' => $query->selectRaw('asset_status, COUNT(*) as count')
+                ->groupBy('asset_status')
                 ->get()
                 ->toArray(),
         ];
@@ -223,12 +222,12 @@ class AssetManagementService
 
         $overdueAssets = $query->whereRaw('
             last_maintenance_date IS NOT NULL 
-            AND DATE_ADD(last_maintenance_date, INTERVAL COALESCE(maintenance_interval, 365) DAY) < NOW()
+            AND DATE_ADD(last_maintenance_date, INTERVAL 365 DAY) < NOW()
         ')->get();
 
         $upcomingAssets = $query->whereRaw('
             last_maintenance_date IS NOT NULL 
-            AND DATE_ADD(last_maintenance_date, INTERVAL COALESCE(maintenance_interval, 365) DAY) BETWEEN NOW() AND DATE_ADD(NOW(), INTERVAL 30 DAY)
+            AND DATE_ADD(last_maintenance_date, INTERVAL 365 DAY) BETWEEN NOW() AND DATE_ADD(NOW(), INTERVAL 30 DAY)
         ')->get();
 
         return [
@@ -250,7 +249,7 @@ class AssetManagementService
             $query->where('centre_id', $centreId);
         }
 
-        $totalPurchaseValue = $query->sum('purchase_price');
+        $totalPurchaseValue = $query->sum('asset_value');
         $totalCurrentValue = 0; // current_value column not available
 
         return [
@@ -269,17 +268,9 @@ class AssetManagementService
      */
     private function getRecentMovements(?int $centreId = null): array
     {
-        $query = AssetMovement::with(['asset', 'fromLocation', 'toLocation', 'movedBy'])
-            ->latest()
-            ->limit(10);
-
-        if ($centreId) {
-            $query->whereHas('asset', function ($q) use ($centreId) {
-                $q->where('centre_id', $centreId);
-            });
-        }
-
-        return $query->get()->toArray();
+        // AssetMovement table doesn't exist in current database
+        // Return empty array as placeholder
+        return [];
     }
 
     /**
@@ -293,10 +284,10 @@ class AssetManagementService
             $query->where('centre_id', $centreId);
         }
 
-        return $query->selectRaw('status, COUNT(*) as count, 0 as total_value') // current_value column not available
-            ->groupBy('status')
+        return $query->selectRaw('asset_status, COUNT(*) as count, 0 as total_value') // current_value column not available
+            ->groupBy('asset_status')
             ->get()
-            ->keyBy('status')
+            ->keyBy('asset_status')
             ->toArray();
     }
 
@@ -312,12 +303,12 @@ class AssetManagementService
         }
 
         $totalAssets = $query->count();
-        $inUseAssets = $query->where('status', 'in-use')->count();
+        $inUseAssets = $query->where('asset_status', 'in_use')->count();
         
         return [
             'overall_utilization' => $totalAssets > 0 ? ($inUseAssets / $totalAssets) * 100 : 0,
-            'available_rate' => $totalAssets > 0 ? ($query->where('status', 'available')->count() / $totalAssets) * 100 : 0,
-            'maintenance_rate' => $totalAssets > 0 ? ($query->where('status', 'maintenance')->count() / $totalAssets) * 100 : 0,
+            'available_rate' => $totalAssets > 0 ? ($query->where('asset_status', 'available')->count() / $totalAssets) * 100 : 0,
+            'maintenance_rate' => $totalAssets > 0 ? ($query->where('asset_status', 'maintenance')->count() / $totalAssets) * 100 : 0,
         ];
     }
 

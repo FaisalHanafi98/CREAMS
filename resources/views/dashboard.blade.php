@@ -281,7 +281,7 @@
                                     'activities.id',
                                     'activities.activity_name as name',
                                     'activities.created_at',
-                                    'activities.is_active as status',
+                                    'activities.activity_status as status',
                                     'users.name as creator_name',
                                     'centres.name as centre_name'
                                 )
@@ -311,7 +311,7 @@
                                     'activities.id',
                                     'activities.activity_name as name',
                                     'activities.created_at',
-                                    'activities.is_active as status',
+                                    'activities.activity_status as status',
                                     'users.name as creator_name',
                                     'centres.name as centre_name'
                                 );

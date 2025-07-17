@@ -19,20 +19,20 @@ protected $table = 'contact_messages';
  */
 protected $fillable = [
     // Contact Information
-    'name',
-    'email',    
-    'phone',
+    'sender_name',
+    'sender_email',    
+    'sender_phone',
     'organization',
     
     // Message Details
-    'reason',
-    'subject',
-    'message',
+    'message_category',
+    'message_subject',
+    'message_body',
     'urgency',
     'preferred_contact_method',
     
     // System fields
-    'status',
+    'message_status',
     'ip_address',
     'user_agent',
     'referrer',
@@ -85,7 +85,7 @@ public function assignedUser()
  */
 public function scopeNew($query)
 {
-    return $query->where('status', 'new');
+    return $query->where('message_status', 'new');
 }
 
 /**
@@ -107,7 +107,7 @@ public function scopeUrgent($query)
  */
 public function scopeResolved($query)
 {
-    return $query->where('status', 'resolved');
+    return $query->where('message_status', 'resolved');
 }
 
 /**
@@ -119,7 +119,7 @@ public function scopeResolved($query)
  */
 public function scopeByReason($query, $reason)
 {
-    return $query->where('reason', $reason);
+    return $query->where('message_category', $reason);
 }
 
 /**
@@ -140,9 +140,9 @@ public function scopeByUrgency($query, $urgency)
  * @param  string  $value
  * @return void
  */
-public function setNameAttribute($value)
+public function setSenderNameAttribute($value)
 {
-    $this->attributes['name'] = ucwords(strtolower(trim($value)));
+    $this->attributes['sender_name'] = ucwords(strtolower(trim($value)));
 }
 
 /**
@@ -151,9 +151,9 @@ public function setNameAttribute($value)
  * @param  string  $value
  * @return void
  */
-public function setEmailAttribute($value)
+public function setSenderEmailAttribute($value)
 {
-    $this->attributes['email'] = strtolower(trim($value));
+    $this->attributes['sender_email'] = strtolower(trim($value));
 }
 
 /**
@@ -175,7 +175,7 @@ public function getFormattedReasonAttribute()
         'other' => 'Other'
     ];
 
-    return $reasonMap[$this->reason] ?? ucfirst($this->reason);
+    return $reasonMap[$this->message_category] ?? ucfirst($this->message_category);
 }
 
 /**
@@ -203,7 +203,7 @@ public function getStatusBadgeColorAttribute()
         'closed' => 'secondary'
     ];
 
-    return $colors[$this->status] ?? 'secondary';
+    return $colors[$this->message_status] ?? 'secondary';
 }
 
 /**
@@ -251,7 +251,7 @@ public function isUrgent()
 public function isOverdue()
 {
     $hours = $this->isUrgent() ? 24 : 72; // 24 hours for urgent, 72 for others
-    return $this->created_at->diffInHours(now()) > $hours && !in_array($this->status, ['resolved', 'closed']);
+    return $this->created_at->diffInHours(now()) > $hours && !in_array($this->message_status, ['resolved', 'closed']);
 }
 
 /**
@@ -261,8 +261,8 @@ public function isOverdue()
  */
 public function markAsRead()
 {
-    if ($this->status === 'new') {
-        $this->status = 'read';
+    if ($this->message_status === 'new') {
+        $this->message_status = 'read';
         return $this->save();
     }
     return true;
@@ -275,7 +275,7 @@ public function markAsRead()
  */
 public function markAsInProgress()
 {
-    $this->status = 'in_progress';
+    $this->message_status = 'in_progress';
     return $this->save();
 }
 
@@ -286,7 +286,7 @@ public function markAsInProgress()
  */
 public function markAsResolved()
 {
-    $this->status = 'resolved';
+    $this->message_status = 'resolved';
     $this->resolved_at = now();
     return $this->save();
 }
@@ -311,8 +311,8 @@ public function markResponseSent()
 public function assignTo($userId)
 {
     $this->assigned_to = $userId;
-    if ($this->status === 'new') {
-        $this->status = 'read';
+    if ($this->message_status === 'new') {
+        $this->message_status = 'read';
     }
     return $this->save();
 }

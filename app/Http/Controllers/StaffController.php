@@ -183,7 +183,7 @@ class StaffController extends Controller
                 ],
                 'phone' => 'nullable|string|max:20',
                 'address' => 'nullable|string|max:500',
-                'bio' => 'nullable|string|max:1000',
+                'about' => 'nullable|string|max:1000',
                 'date_of_birth' => 'nullable|date|before:today',
                 'centre_id' => 'required|string|exists:centres,centre_id',
                 'role' => 'required|in:admin,supervisor,teacher,ajk',
@@ -337,7 +337,7 @@ class StaffController extends Controller
             // Get activities created by this staff member with relationships
             $activities = Activity::with(['sessions', 'enrollments.trainee'])
                 ->where('created_by', $staffMember->id)
-                ->where('is_active', true)
+                ->whereIn('activity_status', ['scheduled', 'ongoing'])
                 ->get();
                 
             $activitiesCreated = $activities->count();
@@ -419,7 +419,7 @@ class StaffController extends Controller
             if (\Schema::hasTable('activities')) {
                 $activities = \DB::table('activities')
                     ->where('created_by', $staffMember->id)
-                    ->where('is_active', true)
+                    ->whereIn('activity_status', ['scheduled', 'ongoing'])
                     ->get();
             }
 
@@ -492,17 +492,17 @@ class StaffController extends Controller
             if (\Schema::hasTable('activities')) {
                 $activitiesQuery = \DB::table('activities')
                     ->where('created_by', $staffMember->id)
-                    ->where('is_active', true);
+                    ->whereIn('activity_status', ['scheduled', 'ongoing']);
                 
                 // Add enrollment counts if table exists
                 if (\Schema::hasTable('activity_enrollments')) {
                     $activities = $activitiesQuery
                         ->leftJoin('activity_enrollments', function($join) {
                             $join->on('activities.id', '=', 'activity_enrollments.activity_id')
-                                 ->whereIn('activity_enrollments.status', ['enrolled', 'active']);
+                                 ->whereIn('activity_enrollments.enrollment_status', ['enrolled', 'active']);
                         })
                         ->withCount(['enrollments as enrollment_count' => function($query) {
-                            $query->whereIn('status', ['enrolled', 'active']);
+                            $query->whereIn('enrollment_status', ['enrolled', 'active']);
                         }])
                         ->select('activities.*')
                         ->groupBy('activities.id')
@@ -551,8 +551,8 @@ class StaffController extends Controller
                         ->join('activity_enrollments', 'trainees.id', '=', 'activity_enrollments.trainee_id')
                         ->join('activities', 'activity_enrollments.activity_id', '=', 'activities.id')
                         ->where('activities.created_by', $staffMember->id)
-                        ->whereIn('activity_enrollments.status', ['enrolled', 'active'])
-                        ->select('trainees.*', 'activities.activity_name', 'activity_enrollments.enrollment_date', 'activity_enrollments.status as enrollment_status')
+                        ->whereIn('activity_enrollments.enrollment_status', ['enrolled', 'active'])
+                        ->select('trainees.*', 'activities.activity_name', 'activity_enrollments.enrollment_date', 'activity_enrollments.enrollment_status')
                         ->distinct()
                         ->get();
                 } else {

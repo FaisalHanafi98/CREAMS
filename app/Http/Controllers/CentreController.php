@@ -69,32 +69,30 @@ class CentreController extends Controller
         $validated = $request->validate([
             'centre_id' => 'required|string|max:10|unique:centres',
             'centre_name' => 'required|string|max:255|unique:centres',
-            'address' => 'required|string|max:255',
-            'city' => 'required|string|max:100',
-            'state' => 'required|string|max:100',
-            'postcode' => 'required|string|max:10',
-            'phone' => 'nullable|string|max:20',
-            'email' => 'nullable|email|max:255',
-            'capacity' => 'required|integer|min:1',
-            'description' => 'nullable|string',
-            'opening_time' => 'required|date_format:H:i',
-            'closing_time' => 'required|date_format:H:i|after:opening_time'
+            'centre_address' => 'required|string',
+            'centre_phone' => 'nullable|string|max:20',
+            'centre_email' => 'nullable|email|max:255',
+            'centre_capacity' => 'required|string|max:10',
+            'centre_manager' => 'nullable|string|max:255',
+            'centre_manager_contact' => 'nullable|string|max:20',
+            'centre_status' => 'required|in:active,inactive,maintenance',
+            'centre_description' => 'nullable|string',
+            'centre_facilities' => 'nullable|string'
         ]);
 
         try {
             $centre = Centres::create([
                 'centre_id' => strtoupper($validated['centre_id']),
                 'centre_name' => $validated['centre_name'],
-                'address' => $validated['address'],
-                'city' => $validated['city'],
-                'state' => $validated['state'],
-                'postcode' => $validated['postcode'],
-                'phone' => $validated['phone'],
-                'email' => $validated['email'],
-                'capacity' => $validated['capacity'],
-                'description' => $validated['description'],
-                'opening_time' => $validated['opening_time'],
-                'closing_time' => $validated['closing_time'],
+                'centre_address' => $validated['centre_address'],
+                'centre_phone' => $validated['centre_phone'],
+                'centre_email' => $validated['centre_email'],
+                'centre_capacity' => $validated['centre_capacity'],
+                'centre_manager' => $validated['centre_manager'],
+                'centre_manager_contact' => $validated['centre_manager_contact'],
+                'centre_status' => $validated['centre_status'],
+                'centre_description' => $validated['centre_description'],
+                'centre_facilities' => $validated['centre_facilities'],
                 'is_active' => true
             ]);
 
@@ -192,16 +190,15 @@ class CentreController extends Controller
 
             $validated = $request->validate([
                 'centre_name' => 'required|string|max:255|unique:centres,centre_name,' . $centre->centre_id . ',centre_id',
-                'address' => 'required|string|max:255',
-                'city' => 'required|string|max:100',
-                'state' => 'required|string|max:100',
-                'postcode' => 'required|string|max:10',
-                'phone' => 'nullable|string|max:20',
-                'email' => 'nullable|email|max:255',
-                'capacity' => 'required|integer|min:1',
-                'description' => 'nullable|string',
-                'opening_time' => 'required|date_format:H:i',
-                'closing_time' => 'required|date_format:H:i|after:opening_time',
+                'centre_address' => 'required|string',
+                'centre_phone' => 'nullable|string|max:20',
+                'centre_email' => 'nullable|email|max:255',
+                'centre_capacity' => 'required|string|max:10',
+                'centre_manager' => 'nullable|string|max:255',
+                'centre_manager_contact' => 'nullable|string|max:20',
+                'centre_status' => 'required|in:active,inactive,maintenance',
+                'centre_description' => 'nullable|string',
+                'centre_facilities' => 'nullable|string',
                 'is_active' => 'boolean'
             ]);
 

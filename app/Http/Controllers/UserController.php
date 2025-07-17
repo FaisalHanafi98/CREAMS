@@ -365,7 +365,7 @@ class UserController extends Controller
             'centre_id' => 'required|exists:centres,id',
             'phone' => 'nullable|string|max:20',
             'address' => 'nullable|string',
-            'bio' => 'nullable|string',
+            'about' => 'nullable|string',
         ]);
         
         if ($validator->fails()) {
@@ -383,7 +383,7 @@ class UserController extends Controller
             'centre_id' => $user->centre_id,
             'phone' => $user->phone ?? null,
             'address' => $user->address ?? null,
-            'bio' => $user->bio ?? null,
+            'about' => $user->about ?? null,
         ];
         
         // Update user
@@ -401,8 +401,8 @@ class UserController extends Controller
             $user->address = $validatedData['address'];
         }
         
-        if (isset($validatedData['bio'])) {
-            $user->bio = $validatedData['bio'];
+        if (isset($validatedData['about'])) {
+            $user->about = $validatedData['about'];
         }
         
         $saved = $user->save();
@@ -419,7 +419,7 @@ class UserController extends Controller
             'centre_id' => $user->centre_id,
             'phone' => $user->phone ?? null,
             'address' => $user->address ?? null,
-            'bio' => $user->bio ?? null,
+            'about' => $user->about ?? null,
         ];
         
         $changes = array_diff_assoc($newData, $originalData);

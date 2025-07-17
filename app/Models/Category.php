@@ -11,18 +11,16 @@ class Category extends Model
     use HasFactory;
 
     protected $fillable = [
-        'name',
-        'slug',
-        'type',
-        'icon',
-        'color',
-        'description',
-        'is_active',
+        'category_name',
+        'category_description',
+        'category_color',
+        'category_icon',
+        'category_status',
         'sort_order'
     ];
 
     protected $casts = [
-        'is_active' => 'boolean',
+        'category_status' => 'string',
         'sort_order' => 'integer'
     ];
 
@@ -32,20 +30,6 @@ class Category extends Model
     protected static function boot()
     {
         parent::boot();
-
-        // Auto-generate slug when creating
-        static::creating(function ($category) {
-            if (empty($category->slug)) {
-                $category->slug = Str::slug($category->name);
-            }
-        });
-
-        // Update slug when name changes
-        static::updating(function ($category) {
-            if ($category->isDirty('name')) {
-                $category->slug = Str::slug($category->name);
-            }
-        });
     }
 
     // Relationships
@@ -56,13 +40,13 @@ class Category extends Model
 
     public function activeActivities()
     {
-        return $this->activities()->where('is_active', true);
+        return $this->activities()->whereIn('activity_status', ['scheduled', 'ongoing']);
     }
 
     // Scopes
     public function scopeActive($query)
     {
-        return $query->where('is_active', true);
+        return $query->where('category_status', 'active');
     }
 
     public function scopeRehabilitation($query)
@@ -77,7 +61,7 @@ class Category extends Model
 
     public function scopeOrdered($query)
     {
-        return $query->orderBy('sort_order')->orderBy('name');
+        return $query->orderBy('sort_order')->orderBy('category_name');
     }
 
     // Accessors

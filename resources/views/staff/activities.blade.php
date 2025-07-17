@@ -208,7 +208,7 @@
             </div>
             <div class="stat-card">
                 <div class="stat-number">
-                    {{ collect($activities)->where('is_active', true)->count() }}
+                    {{ collect($activities)->whereIn('activity_status', ['scheduled', 'ongoing'])->count() }}
                 </div>
                 <div class="stat-label">Active Activities</div>
             </div>
@@ -278,10 +278,10 @@
                             @endif
                             
                             <div>
-                                @if($activity->is_active)
+                                @if(in_array($activity->activity_status, ['scheduled', 'ongoing']))
                                     <span class="badge bg-success">Active</span>
                                 @else
-                                    <span class="badge bg-secondary">Inactive</span>
+                                    <span class="badge bg-secondary">{{ ucfirst($activity->activity_status) }}</span>
                                 @endif
                                 
                                 @if($activity->requires_equipment)

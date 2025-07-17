@@ -128,20 +128,13 @@ public function submit(Request $request)
 
         // Prepare enhanced data for database storage
         $contactData = [
-            'name' => $this->formatName($validatedData['name']),
-            'email' => strtolower(trim($validatedData['email'])),
-            'phone' => $this->formatPhone($validatedData['phone'] ?? null),
-            'reason' => $validatedData['reason'],
-            'message' => trim($validatedData['message']),
-            'subject' => $validatedData['subject'] ?? $this->generateSubject($validatedData['reason']),
-            'organization' => $validatedData['organization'] ?? null,
-            'preferred_contact_method' => $validatedData['preferred_contact_method'] ?? 'email',
-            'urgency' => $validatedData['urgency'] ?? 'medium',
-            'status' => 'new',
-            'ip_address' => $request->ip(),
-            'user_agent' => $request->userAgent(),
-            'referrer' => $request->header('referer'),
-            'submitted_at' => now(),
+            'sender_name' => $this->formatName($validatedData['name']),
+            'sender_email' => strtolower(trim($validatedData['email'])),
+            'sender_phone' => $this->formatPhone($validatedData['phone'] ?? null),
+            'message_category' => $this->mapReasonToCategory($validatedData['reason']),
+            'message_body' => trim($validatedData['message']),
+            'message_subject' => $validatedData['subject'] ?? $this->generateSubject($validatedData['reason']),
+            'message_status' => 'new',
         ];
 
         // Save to database with enhanced error handling
@@ -149,9 +142,9 @@ public function submit(Request $request)
 
         Log::info('Contact message saved to database', [
             'contact_id' => $contact->id,
-            'email' => $contact->email,
-            'reason' => $contact->reason,
-            'urgency' => $contact->urgency
+            'email' => $contact->sender_email,
+            'category' => $contact->message_category,
+            'status' => $contact->message_status
         ]);
 
         // Send notification emails
@@ -160,12 +153,12 @@ public function submit(Request $request)
         // Log successful submission
         Log::info('Contact form submission completed successfully', [
             'contact_id' => $contact->id,
-            'email' => $contact->email,
-            'reason' => $contact->reason
+            'email' => $contact->sender_email,
+            'category' => $contact->message_category
         ]);
 
-        // Redirect with success message based on urgency
-        $successMessage = $this->getSuccessMessage($contact->urgency, $contact->reason);
+        // Redirect with success message based on category
+        $successMessage = $this->getSuccessMessage($validatedData['urgency'] ?? 'medium', $validatedData['reason']);
         
         return redirect()->back()->with('success', $successMessage);
 
@@ -197,7 +190,7 @@ private function sendNotificationEmails($contact, $validatedData)
             'contact' => $contact,
             'data' => $validatedData
         ], function ($message) use ($contact) {
-            $message->to($contact->email, $contact->name)
+            $message->to($contact->sender_email, $contact->sender_name)
                     ->from(config('mail.from.address'), config('mail.from.name'))
                     ->subject('Message Received - IIUM PD-CARE')
                     ->replyTo(config('mail.from.address'));
@@ -205,7 +198,7 @@ private function sendNotificationEmails($contact, $validatedData)
 
         Log::info('Confirmation email sent to user', [
             'contact_id' => $contact->id,
-            'email' => $contact->email
+            'email' => $contact->sender_email
         ]);
 
         // Send notification email to admin with urgency handling
@@ -219,10 +212,10 @@ private function sendNotificationEmails($contact, $validatedData)
             $message->to($adminEmail)
                     ->from(config('mail.from.address'), config('mail.from.name'))
                     ->subject($subject)
-                    ->replyTo($contact->email, $contact->name);
+                    ->replyTo($contact->sender_email, $contact->sender_name);
                     
             // Set priority for urgent messages
-            if ($contact->urgency === 'urgent') {
+            if (($validatedData['urgency'] ?? 'medium') === 'urgent') {
                 $message->priority(1);
             }
         });
@@ -230,7 +223,7 @@ private function sendNotificationEmails($contact, $validatedData)
         Log::info('Admin notification email sent', [
             'contact_id' => $contact->id,
             'admin_email' => $adminEmail,
-            'urgency' => $contact->urgency
+            'urgency' => $validatedData['urgency'] ?? 'medium'
         ]);
 
     } catch (\Exception $e) {
@@ -324,6 +317,29 @@ private function getSuccessMessage($urgency, $reason)
 }
 
 /**
+ * Map reason to category for database storage
+ *
+ * @param string $reason
+ * @return string
+ */
+private function mapReasonToCategory($reason)
+{
+    $categoryMap = [
+        'services' => 'general',
+        'support' => 'support',
+        'volunteer' => 'general',
+        'partnership' => 'general',
+        'complaint' => 'complaint',
+        'admission' => 'general',
+        'feedback' => 'suggestion',
+        'general' => 'general',
+        'other' => 'general'
+    ];
+
+    return $categoryMap[$reason] ?? 'general';
+}
+
+/**
  * Get admin email subject with urgency and type
  *
  * @param ContactMessages $contact
@@ -344,9 +360,9 @@ private function getAdminEmailSubject($contact)
         'other' => 'Contact Form'
     ];
 
-    $type = $typeMap[$contact->reason] ?? 'Contact Form';
+    $type = $typeMap[$contact->message_category] ?? 'Contact Form';
     
-    return $prefix . 'New ' . $type . ' - ' . $contact->name;
+    return $prefix . 'New ' . $type . ' - ' . $contact->sender_name;
 }
 
 /**
@@ -403,7 +419,7 @@ public function updateStatus(Request $request, $id)
             ], 422);
         }
 
-        $message->status = $request->status;
+        $message->message_status = $request->status;
         if ($request->notes) {
             $message->admin_notes = $request->notes;
         }

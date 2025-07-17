@@ -11,17 +11,16 @@ class LetterTemplate extends Model
 
     protected $fillable = [
         'template_name',
-        'header_image',
-        'footer_image',
-        'header_content',
-        'footer_content',
+        'template_content',
+        'template_type',
+        'template_variables',
         'is_active',
-        'created_by',
-        'updated_by'
+        'created_by'
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
+        'template_variables' => 'array',
     ];
 
     /**
@@ -32,13 +31,6 @@ class LetterTemplate extends Model
         return $this->belongsTo(Users::class, 'created_by');
     }
 
-    /**
-     * Get the user who last updated this template.
-     */
-    public function updater()
-    {
-        return $this->belongsTo(Users::class, 'updated_by');
-    }
 
     /**
      * Get letters that used this template.
@@ -56,8 +48,46 @@ class LetterTemplate extends Model
         return self::where('is_active', true)->latest()->first();
     }
 
+
+
     /**
-     * Get the header image URL.
+     * Get header content from template variables.
+     */
+    public function getHeaderContentAttribute()
+    {
+        $variables = $this->template_variables;
+        return is_array($variables) ? ($variables['header_content'] ?? '') : '';
+    }
+
+    /**
+     * Get footer content from template variables.
+     */
+    public function getFooterContentAttribute()
+    {
+        $variables = $this->template_variables;
+        return is_array($variables) ? ($variables['footer_content'] ?? '') : '';
+    }
+
+    /**
+     * Get header image path from template variables.
+     */
+    public function getHeaderImageAttribute()
+    {
+        $variables = $this->template_variables;
+        return is_array($variables) ? ($variables['header_image'] ?? null) : null;
+    }
+
+    /**
+     * Get footer image path from template variables.
+     */
+    public function getFooterImageAttribute()
+    {
+        $variables = $this->template_variables;
+        return is_array($variables) ? ($variables['footer_image'] ?? null) : null;
+    }
+
+    /**
+     * Get header image URL for display.
      */
     public function getHeaderImageUrlAttribute()
     {
@@ -68,7 +98,7 @@ class LetterTemplate extends Model
     }
 
     /**
-     * Get the footer image URL.
+     * Get footer image URL for display.
      */
     public function getFooterImageUrlAttribute()
     {

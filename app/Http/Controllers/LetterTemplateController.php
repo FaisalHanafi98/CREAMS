@@ -29,32 +29,59 @@ class LetterTemplateController extends Controller
             // Validate input
             $validated = $request->validate([
                 'template_name' => 'required|string|max:255',
-                'header_image' => 'nullable|image|max:2048|mimes:jpeg,png,jpg,gif',
-                'footer_image' => 'nullable|image|max:2048|mimes:jpeg,png,jpg,gif',
+                'template_content' => 'nullable|string',
                 'header_content' => 'nullable|string|max:1000',
                 'footer_content' => 'nullable|string|max:1000',
+                'header_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+                'footer_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             ], [
                 'template_name.required' => 'Template name is required.',
                 'header_image.image' => 'Header image must be a valid image file.',
-                'header_image.max' => 'Header image must not exceed 2MB.',
+                'header_image.mimes' => 'Header image must be JPEG, PNG, JPG, or GIF.',
+                'header_image.max' => 'Header image size must not exceed 2MB.',
                 'footer_image.image' => 'Footer image must be a valid image file.',
-                'footer_image.max' => 'Footer image must not exceed 2MB.',
+                'footer_image.mimes' => 'Footer image must be JPEG, PNG, JPG, or GIF.',
+                'footer_image.max' => 'Footer image size must not exceed 2MB.',
             ]);
 
             DB::beginTransaction();
 
-            // Handle file uploads
+            // Handle image uploads
             $headerImagePath = null;
             $footerImagePath = null;
-
+            
             if ($request->hasFile('header_image')) {
-                $headerImagePath = $request->file('header_image')->store('letter-templates/headers', 'public');
-                Log::info('Header image uploaded', ['path' => $headerImagePath]);
+                $headerImage = $request->file('header_image');
+                $headerImageName = 'header_' . time() . '_' . uniqid() . '.' . $headerImage->getClientOriginalExtension();
+                $headerImagePath = $headerImage->storeAs('template_images', $headerImageName, 'public');
+                
+                Log::info('Header image uploaded', [
+                    'original_name' => $headerImage->getClientOriginalName(),
+                    'stored_path' => $headerImagePath,
+                    'user_id' => session('id')
+                ]);
+            }
+            
+            if ($request->hasFile('footer_image')) {
+                $footerImage = $request->file('footer_image');
+                $footerImageName = 'footer_' . time() . '_' . uniqid() . '.' . $footerImage->getClientOriginalExtension();
+                $footerImagePath = $footerImage->storeAs('template_images', $footerImageName, 'public');
+                
+                Log::info('Footer image uploaded', [
+                    'original_name' => $footerImage->getClientOriginalName(),
+                    'stored_path' => $footerImagePath,
+                    'user_id' => session('id')
+                ]);
             }
 
-            if ($request->hasFile('footer_image')) {
-                $footerImagePath = $request->file('footer_image')->store('letter-templates/footers', 'public');
-                Log::info('Footer image uploaded', ['path' => $footerImagePath]);
+            // Build template content from header and footer content
+            $templateContent = '';
+            if (!empty($validated['header_content'])) {
+                $templateContent .= '<div class="header-content">' . $validated['header_content'] . '</div>';
+            }
+            $templateContent .= '<div class="main-content">[CONTENT]</div>';
+            if (!empty($validated['footer_content'])) {
+                $templateContent .= '<div class="footer-content">' . $validated['footer_content'] . '</div>';
             }
 
             // Deactivate previous templates
@@ -63,10 +90,14 @@ class LetterTemplateController extends Controller
             // Create new template
             $template = LetterTemplate::create([
                 'template_name' => $validated['template_name'],
-                'header_image' => $headerImagePath,
-                'footer_image' => $footerImagePath,
-                'header_content' => $validated['header_content'],
-                'footer_content' => $validated['footer_content'],
+                'template_content' => $templateContent ?: '<div class="main-content">[CONTENT]</div>',
+                'template_type' => 'letter',
+                'template_variables' => [
+                    'header_content' => $validated['header_content'] ?? '',
+                    'footer_content' => $validated['footer_content'] ?? '',
+                    'header_image' => $headerImagePath,
+                    'footer_image' => $footerImagePath,
+                ],
                 'created_by' => session('id'),
                 'is_active' => true,
             ]);
@@ -118,12 +149,14 @@ class LetterTemplateController extends Controller
             ]);
 
             $validated = $request->validate([
-                'reference_number' => 'required|string|max:50|unique:letters',
+                'reference_number' => 'required|string|max:50|unique:letters,letter_reference',
                 'letter_date' => 'required|date',
-                'recipient_name' => 'required|string|max:255',
-                'recipient_address' => 'nullable|string|max:500',
                 'subject' => 'required|string|max:255',
                 'content' => 'required|string',
+                'recipient_name' => 'nullable|string|max:255',
+                'recipient_address' => 'nullable|string',
+                'recipient_id' => 'nullable|integer',
+                'recipient_type' => 'nullable|string|max:255',
             ]);
 
             DB::beginTransaction();
@@ -142,28 +175,32 @@ class LetterTemplateController extends Controller
 
             // Create letter record
             $letter = Letter::create([
-                'reference_number' => $validated['reference_number'],
+                'letter_reference' => $validated['reference_number'],
                 'letter_date' => $validated['letter_date'],
-                'recipient_name' => $validated['recipient_name'],
-                'recipient_address' => $validated['recipient_address'],
-                'subject' => $validated['subject'],
-                'content' => $validated['content'],
-                'generated_by' => session('id'),
-                'generated_by_name' => session('name') ?? $user->name,
-                'generated_by_position' => $user->position ?? ucfirst(session('role')),
+                'letter_subject' => $validated['subject'],
+                'letter_content' => $validated['content'],
+                'letter_type' => 'official',
+                'recipient_id' => $validated['recipient_id'],
+                'recipient_type' => $validated['recipient_type'] ?? 'external',
                 'template_id' => $template->id,
+                'letter_status' => 'draft',
+                'created_by' => session('id'),
+                'letter_data' => [
+                    'generated_by_name' => session('name') ?? $user->name,
+                    'generated_by_position' => $user->position ?? ucfirst(session('role')),
+                ]
             ]);
 
             // Generate PDF
             $pdfPath = $this->generatePDF($letter, $template);
-            $letter->update(['pdf_path' => $pdfPath]);
+            $letter->update(['letter_file_path' => $pdfPath]);
 
             DB::commit();
 
             Log::info('Letter generated successfully with PDF', [
                 'letter_id' => $letter->id,
-                'reference' => $letter->reference_number,
-                'pdf_path' => $pdfPath
+                'reference' => $letter->letter_reference,
+                'letter_file_path' => $pdfPath
             ]);
 
             // Generate URLs for the PDF
@@ -177,7 +214,7 @@ class LetterTemplateController extends Controller
                 // Return the PDF file directly for immediate download
                 $publicPdfPath = public_path('letters/' . basename($pdfPath));
                 if (file_exists($publicPdfPath)) {
-                    return response()->download($publicPdfPath, $letter->reference_number . '.pdf', [
+                    return response()->download($publicPdfPath, $letter->letter_reference . '.pdf', [
                         'Content-Type' => 'application/pdf'
                     ]);
                 }
@@ -186,7 +223,7 @@ class LetterTemplateController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Letter generated successfully with PDF',
-                'reference_number' => $letter->reference_number,
+                'reference_number' => $letter->letter_reference,
                 'letter_id' => $letter->id,
                 'pdf_url' => $publicPdfUrl,
                 'download_url' => $downloadUrl,
@@ -215,22 +252,22 @@ class LetterTemplateController extends Controller
     {
         try {
             $validated = $request->validate([
-                'recipient_name' => 'required|string|max:255',
-                'recipient_address' => 'nullable|string|max:500',
                 'subject' => 'required|string|max:255',
                 'content' => 'required|string',
-                'letter_date' => 'required|date'
+                'letter_date' => 'required|date',
+                'recipient_name' => 'nullable|string|max:255',
+                'recipient_address' => 'nullable|string'
             ]);
 
             $template = LetterTemplate::getActive();
             
             $html = view('letters.preview', [
                 'template' => $template,
-                'recipient_name' => $validated['recipient_name'],
-                'recipient_address' => $validated['recipient_address'],
                 'subject' => $validated['subject'],
                 'content' => $validated['content'],
-                'letter_date' => \Carbon\Carbon::parse($validated['letter_date'])->format('d F Y')
+                'letter_date' => \Carbon\Carbon::parse($validated['letter_date'])->format('d F Y'),
+                'recipient_name' => $validated['recipient_name'] ?? 'Recipient Name',
+                'recipient_address' => $validated['recipient_address'] ?? ''
             ])->render();
 
             return response()->json([
@@ -317,7 +354,7 @@ class LetterTemplateController extends Controller
             
             // Create filename with requested format: LTR_YYYY_MM_<reference>_<timestamp>.pdf
             $date = Carbon::parse($letter->letter_date);
-            $cleanReference = str_replace(['/', ' ', '-'], '_', $letter->reference_number);
+            $cleanReference = str_replace(['/', ' ', '-'], '_', $letter->letter_reference);
             $timestamp = time();
             $filename = "LTR_{$date->format('Y')}_{$date->format('m')}_{$cleanReference}_{$timestamp}.pdf";
             
@@ -372,7 +409,7 @@ class LetterTemplateController extends Controller
     {
         try {
             $date = Carbon::parse($letter->letter_date);
-            $cleanReference = str_replace(['/', ' ', '-'], '_', $letter->reference_number);
+            $cleanReference = str_replace(['/', ' ', '-'], '_', $letter->letter_reference);
             $timestamp = time();
             $filename = "LTR_{$date->format('Y')}_{$date->format('m')}_{$cleanReference}_{$timestamp}.html";
             
@@ -389,7 +426,7 @@ class LetterTemplateController extends Controller
 <html>
 <head>
     <meta charset='UTF-8'>
-    <title>Letter - {$letter->reference_number}</title>
+    <title>Letter - {$letter->letter_reference}</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 20px; }
         .letter-container { max-width: 800px; margin: 0 auto; }
@@ -439,12 +476,12 @@ class LetterTemplateController extends Controller
                 return redirect()->back()->with('error', 'Access denied to this letter.');
             }
             
-            if (!$letter->pdf_path) {
+            if (!$letter->letter_file_path) {
                 return redirect()->back()->with('error', 'PDF not found for this letter.');
             }
             
             // Get the public PDF path
-            $publicPdfPath = public_path('letters/' . basename($letter->pdf_path));
+            $publicPdfPath = public_path('letters/' . basename($letter->letter_file_path));
             
             if (!file_exists($publicPdfPath)) {
                 return redirect()->back()->with('error', 'PDF file not found.');
@@ -453,7 +490,7 @@ class LetterTemplateController extends Controller
             // Return the PDF file
             return response()->file($publicPdfPath, [
                 'Content-Type' => 'application/pdf',
-                'Content-Disposition' => 'inline; filename="' . basename($letter->pdf_path) . '"'
+                'Content-Disposition' => 'inline; filename="' . basename($letter->letter_file_path) . '"'
             ]);
             
         } catch (\Exception $e) {
@@ -480,12 +517,12 @@ class LetterTemplateController extends Controller
                 return redirect()->back()->with('error', 'Access denied to this letter.');
             }
             
-            if (!$letter->pdf_path) {
+            if (!$letter->letter_file_path) {
                 return redirect()->back()->with('error', 'PDF not found for this letter.');
             }
             
             // Get the public PDF path
-            $publicPdfPath = public_path('letters/' . basename($letter->pdf_path));
+            $publicPdfPath = public_path('letters/' . basename($letter->letter_file_path));
             
             if (!file_exists($publicPdfPath)) {
                 return redirect()->back()->with('error', 'PDF file not found.');
@@ -494,12 +531,12 @@ class LetterTemplateController extends Controller
             // Log the download
             Log::info('Letter PDF downloaded', [
                 'letter_id' => $letter->id,
-                'reference' => $letter->reference_number,
+                'reference' => $letter->letter_reference,
                 'downloaded_by' => session('id')
             ]);
             
             // Return the PDF as download
-            return response()->download($publicPdfPath, basename($letter->pdf_path), [
+            return response()->download($publicPdfPath, basename($letter->letter_file_path), [
                 'Content-Type' => 'application/pdf'
             ]);
             
@@ -581,14 +618,14 @@ class LetterTemplateController extends Controller
             }
             
             // Delete PDF files if they exist
-            if ($letter->pdf_path) {
+            if ($letter->letter_file_path) {
                 // Delete from storage
-                if (Storage::exists('public/' . $letter->pdf_path)) {
-                    Storage::delete('public/' . $letter->pdf_path);
+                if (Storage::exists('public/' . $letter->letter_file_path)) {
+                    Storage::delete('public/' . $letter->letter_file_path);
                 }
                 
                 // Delete from public directory
-                $publicPdfPath = public_path('letters/' . basename($letter->pdf_path));
+                $publicPdfPath = public_path('letters/' . basename($letter->letter_file_path));
                 if (file_exists($publicPdfPath)) {
                     unlink($publicPdfPath);
                 }
@@ -597,7 +634,7 @@ class LetterTemplateController extends Controller
             // Log the deletion
             Log::info('Letter deleted', [
                 'letter_id' => $letter->id,
-                'reference' => $letter->reference_number,
+                'reference' => $letter->letter_reference,
                 'deleted_by' => session('id')
             ]);
             
@@ -653,7 +690,7 @@ class LetterTemplateController extends Controller
             
             Log::info('Letter viewed', [
                 'letter_id' => $letter->id,
-                'reference' => $letter->reference_number,
+                'reference' => $letter->letter_reference,
                 'viewed_by' => session('id')
             ]);
             
@@ -739,7 +776,7 @@ class LetterTemplateController extends Controller
 
             Log::info('Letter updated', [
                 'letter_id' => $letter->id,
-                'reference' => $letter->reference_number,
+                'reference' => $letter->letter_reference,
                 'updated_by' => session('id')
             ]);
 

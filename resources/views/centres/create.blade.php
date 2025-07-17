@@ -91,11 +91,11 @@
                             </div>
 
                             <div class="form-group">
-                                <label for="description">Description</label>
-                                <textarea class="form-control @error('description') is-invalid @enderror" 
-                                          id="description" name="description" rows="3"
-                                          placeholder="Brief description of the centre and its specializations">{{ old('description') }}</textarea>
-                                @error('description')
+                                <label for="centre_description">Description</label>
+                                <textarea class="form-control @error('centre_description') is-invalid @enderror" 
+                                          id="centre_description" name="centre_description" rows="3"
+                                          placeholder="Brief description of the centre and its specializations">{{ old('centre_description') }}</textarea>
+                                @error('centre_description')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
@@ -109,70 +109,13 @@
                         </div>
                         <div class="form-card-body">
                             <div class="form-group">
-                                <label for="address">Street Address <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control @error('address') is-invalid @enderror" 
-                                       id="address" name="address" 
-                                       value="{{ old('address') }}" 
-                                       placeholder="Enter street address" required>
-                                @error('address')
+                                <label for="centre_address">Centre Address <span class="text-danger">*</span></label>
+                                <textarea class="form-control @error('centre_address') is-invalid @enderror" 
+                                          id="centre_address" name="centre_address" rows="3"
+                                          placeholder="Enter complete address including street, city, state, and postcode" required>{{ old('centre_address') }}</textarea>
+                                @error('centre_address')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
-                            </div>
-
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label for="city">City <span class="text-danger">*</span></label>
-                                        <input type="text" class="form-control @error('city') is-invalid @enderror" 
-                                               id="city" name="city" 
-                                               value="{{ old('city') }}" 
-                                               placeholder="Enter city" required>
-                                        @error('city')
-                                            <div class="invalid-feedback">{{ $message }}</div>
-                                        @enderror
-                                    </div>
-                                </div>
-                                <div class="col-md-3">
-                                    <div class="form-group">
-                                        <label for="state">State <span class="text-danger">*</span></label>
-                                        <select class="form-control @error('state') is-invalid @enderror" 
-                                                id="state" name="state" required>
-                                            <option value="">Select State</option>
-                                            <option value="Johor" {{ old('state') == 'Johor' ? 'selected' : '' }}>Johor</option>
-                                            <option value="Kedah" {{ old('state') == 'Kedah' ? 'selected' : '' }}>Kedah</option>
-                                            <option value="Kelantan" {{ old('state') == 'Kelantan' ? 'selected' : '' }}>Kelantan</option>
-                                            <option value="Kuala Lumpur" {{ old('state') == 'Kuala Lumpur' ? 'selected' : '' }}>Kuala Lumpur</option>
-                                            <option value="Labuan" {{ old('state') == 'Labuan' ? 'selected' : '' }}>Labuan</option>
-                                            <option value="Melaka" {{ old('state') == 'Melaka' ? 'selected' : '' }}>Melaka</option>
-                                            <option value="Negeri Sembilan" {{ old('state') == 'Negeri Sembilan' ? 'selected' : '' }}>Negeri Sembilan</option>
-                                            <option value="Pahang" {{ old('state') == 'Pahang' ? 'selected' : '' }}>Pahang</option>
-                                            <option value="Perak" {{ old('state') == 'Perak' ? 'selected' : '' }}>Perak</option>
-                                            <option value="Perlis" {{ old('state') == 'Perlis' ? 'selected' : '' }}>Perlis</option>
-                                            <option value="Penang" {{ old('state') == 'Penang' ? 'selected' : '' }}>Penang</option>
-                                            <option value="Putrajaya" {{ old('state') == 'Putrajaya' ? 'selected' : '' }}>Putrajaya</option>
-                                            <option value="Sabah" {{ old('state') == 'Sabah' ? 'selected' : '' }}>Sabah</option>
-                                            <option value="Sarawak" {{ old('state') == 'Sarawak' ? 'selected' : '' }}>Sarawak</option>
-                                            <option value="Selangor" {{ old('state') == 'Selangor' ? 'selected' : '' }}>Selangor</option>
-                                            <option value="Terengganu" {{ old('state') == 'Terengganu' ? 'selected' : '' }}>Terengganu</option>
-                                        </select>
-                                        @error('state')
-                                            <div class="invalid-feedback">{{ $message }}</div>
-                                        @enderror
-                                    </div>
-                                </div>
-                                <div class="col-md-3">
-                                    <div class="form-group">
-                                        <label for="postcode">Postcode <span class="text-danger">*</span></label>
-                                        <input type="text" class="form-control @error('postcode') is-invalid @enderror" 
-                                               id="postcode" name="postcode" 
-                                               value="{{ old('postcode') }}" 
-                                               placeholder="12345" 
-                                               maxlength="10" required>
-                                        @error('postcode')
-                                            <div class="invalid-feedback">{{ $message }}</div>
-                                        @enderror
-                                    </div>
-                                </div>
                             </div>
                         </div>
                     </div>
@@ -186,24 +129,51 @@
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="form-group">
-                                        <label for="phone">Phone Number</label>
-                                        <input type="text" class="form-control @error('phone') is-invalid @enderror" 
-                                               id="phone" name="phone" 
-                                               value="{{ old('phone') }}" 
+                                        <label for="centre_phone">Phone Number</label>
+                                        <input type="text" class="form-control @error('centre_phone') is-invalid @enderror" 
+                                               id="centre_phone" name="centre_phone" 
+                                               value="{{ old('centre_phone') }}" 
                                                placeholder="+60123456789">
-                                        @error('phone')
+                                        @error('centre_phone')
                                             <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror
                                     </div>
                                 </div>
                                 <div class="col-md-6">
                                     <div class="form-group">
-                                        <label for="email">Email Address</label>
-                                        <input type="email" class="form-control @error('email') is-invalid @enderror" 
-                                               id="email" name="email" 
-                                               value="{{ old('email') }}" 
+                                        <label for="centre_email">Email Address</label>
+                                        <input type="email" class="form-control @error('centre_email') is-invalid @enderror" 
+                                               id="centre_email" name="centre_email" 
+                                               value="{{ old('centre_email') }}" 
                                                placeholder="centre@example.com">
-                                        @error('email')
+                                        @error('centre_email')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="centre_manager">Centre Manager</label>
+                                        <input type="text" class="form-control @error('centre_manager') is-invalid @enderror" 
+                                               id="centre_manager" name="centre_manager" 
+                                               value="{{ old('centre_manager') }}" 
+                                               placeholder="Manager Name">
+                                        @error('centre_manager')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="centre_manager_contact">Manager Contact</label>
+                                        <input type="text" class="form-control @error('centre_manager_contact') is-invalid @enderror" 
+                                               id="centre_manager_contact" name="centre_manager_contact" 
+                                               value="{{ old('centre_manager_contact') }}" 
+                                               placeholder="+60123456789">
+                                        @error('centre_manager_contact')
                                             <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror
                                     </div>
@@ -221,33 +191,37 @@
                         </div>
                         <div class="form-card-body">
                             <div class="form-group">
-                                <label for="capacity">Capacity <span class="text-danger">*</span></label>
-                                <input type="number" class="form-control @error('capacity') is-invalid @enderror" 
-                                       id="capacity" name="capacity" 
-                                       value="{{ old('capacity') }}" 
-                                       min="1" max="1000" required>
-                                @error('capacity')
+                                <label for="centre_capacity">Capacity <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control @error('centre_capacity') is-invalid @enderror" 
+                                       id="centre_capacity" name="centre_capacity" 
+                                       value="{{ old('centre_capacity') }}" 
+                                       placeholder="e.g., 100 trainees" required>
+                                @error('centre_capacity')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                                 <small class="form-text text-muted">Maximum number of trainees</small>
                             </div>
 
                             <div class="form-group">
-                                <label for="opening_time">Opening Time <span class="text-danger">*</span></label>
-                                <input type="time" class="form-control @error('opening_time') is-invalid @enderror" 
-                                       id="opening_time" name="opening_time" 
-                                       value="{{ old('opening_time', '08:00') }}" required>
-                                @error('opening_time')
+                                <label for="centre_status">Centre Status <span class="text-danger">*</span></label>
+                                <select class="form-control @error('centre_status') is-invalid @enderror" 
+                                        id="centre_status" name="centre_status" required>
+                                    <option value="">Select Status</option>
+                                    <option value="active" {{ old('centre_status') == 'active' ? 'selected' : '' }}>Active</option>
+                                    <option value="inactive" {{ old('centre_status') == 'inactive' ? 'selected' : '' }}>Inactive</option>
+                                    <option value="maintenance" {{ old('centre_status') == 'maintenance' ? 'selected' : '' }}>Maintenance</option>
+                                </select>
+                                @error('centre_status')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
 
                             <div class="form-group">
-                                <label for="closing_time">Closing Time <span class="text-danger">*</span></label>
-                                <input type="time" class="form-control @error('closing_time') is-invalid @enderror" 
-                                       id="closing_time" name="closing_time" 
-                                       value="{{ old('closing_time', '17:00') }}" required>
-                                @error('closing_time')
+                                <label for="centre_facilities">Facilities</label>
+                                <textarea class="form-control @error('centre_facilities') is-invalid @enderror" 
+                                          id="centre_facilities" name="centre_facilities" rows="3"
+                                          placeholder="List available facilities">{{ old('centre_facilities') }}</textarea>
+                                @error('centre_facilities')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>

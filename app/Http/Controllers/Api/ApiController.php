@@ -28,7 +28,7 @@ class ApiController extends Controller
                 ],
                 'activities' => [
                     'total' => Activity::count(),
-                    'active' => Activity::where('is_active', true)->count()
+                    'active' => Activity::whereIn('activity_status', ['scheduled', 'ongoing'])->count()
                 ],
                 'trainees' => [
                     'total' => Trainees::count(),
@@ -38,11 +38,11 @@ class ApiController extends Controller
                 ],
                 'contact_messages' => [
                     'total' => ContactMessages::count(),
-                    'pending' => ContactMessages::where('status', 'new')->count()
+                    'pending' => ContactMessages::where('message_status', 'new')->count()
                 ],
                 'volunteers' => [
                     'total' => Volunteers::count(),
-                    'pending' => Volunteers::where('status', 'pending')->count()
+                    'pending' => Volunteers::where('volunteer_status', 'pending')->count()
                 ]
             ];
 
@@ -88,9 +88,9 @@ class ApiController extends Controller
 
             if ($type === 'all' || $type === 'activities') {
                 $results['activities'] = Activity::where('activity_name', 'LIKE', "%{$query}%")
-                    ->orWhere('activity_code', 'LIKE', "%{$query}%")
-                    ->orWhere('category', 'LIKE', "%{$query}%")
-                    ->select('id', 'activity_name', 'activity_code', 'category', 'is_active')
+                    ->orWhere('activity_id', 'LIKE', "%{$query}%")
+                    ->orWhere('activity_type', 'LIKE', "%{$query}%")
+                    ->select('id', 'activity_name', 'activity_id', 'activity_type', 'activity_status')
                     ->limit(10)
                     ->get();
             }
@@ -189,7 +189,7 @@ class ApiController extends Controller
                         'total_users' => Users::count(),
                         'total_activities' => Activity::count(),
                         'total_trainees' => Trainees::count(),
-                        'pending_messages' => ContactMessages::where('status', 'new')->count()
+                        'pending_messages' => ContactMessages::where('message_status', 'new')->count()
                     ];
                     break;
 
@@ -205,7 +205,7 @@ class ApiController extends Controller
 
                 default:
                     $data['stats'] = [
-                        'activities_count' => Activity::where('is_active', true)->count(),
+                        'activities_count' => Activity::whereIn('activity_status', ['scheduled', 'ongoing'])->count(),
                         'trainees_count' => Trainees::count()
                     ];
             }

@@ -77,13 +77,13 @@ class AdminDashboardService extends BaseDashboardService
                 'total_activities' => $actualActivityCount,
                 
                 // Active sessions from database
-                'active_sessions' => ActivitySession::where('status', 'active')->count(),
+                'active_sessions' => ActivitySession::where('session_status', 'active')->count(),
                 
                 // Other actual stats from database
-                'pending_volunteers' => Volunteers::where('status', 'pending')->count(),
-                'unread_messages' => ContactMessages::where('status', 'unread')->count(),
+                'pending_volunteers' => Volunteers::where('volunteer_status', 'pending')->count(),
+                'unread_messages' => ContactMessages::where('message_status', 'unread')->count(),
                 'total_centres' => Centres::count(),
-                'active_centres' => Centres::where('status', 'active')->count(),
+                'active_centres' => Centres::where('centre_status', 'active')->count(),
                 'total_assets' => Asset::count(),
                 'asset_value' => 0, // Asset values not available in current table structure
             ];
@@ -135,10 +135,10 @@ class AdminDashboardService extends BaseDashboardService
                     'administrators' => Users::where('role', 'admin')->count(),
                     'supervisors' => Users::where('role', 'supervisor')->count(),
                     'teachers' => Users::where('role', 'teacher')->count(),
-                    'pending_volunteers' => Volunteers::where('status', 'pending')->count(),
-                    'unread_messages' => ContactMessages::where('status', 'unread')->count(),
+                    'pending_volunteers' => Volunteers::where('volunteer_status', 'pending')->count(),
+                    'unread_messages' => ContactMessages::where('message_status', 'unread')->count(),
                     'total_centres' => Centres::count(),
-                    'active_centres' => Centres::where('status', 'active')->count(),
+                    'active_centres' => Centres::where('centre_status', 'active')->count(),
                     'total_assets' => Asset::count(),
                     'asset_value' => 0, // Asset values not available in current table structure
                     'active_today' => 0,
@@ -446,14 +446,14 @@ class AdminDashboardService extends BaseDashboardService
                 'icon' => 'fas fa-envelope',
                 'url' => '/admin/messages',
                 'color' => 'secondary',
-                'badge' => ContactMessages::where('status', 'unread')->count(),
+                'badge' => ContactMessages::where('message_status', 'unread')->count(),
             ],
             [
                 'title' => 'Review Volunteers',
                 'icon' => 'fas fa-hands-helping',
                 'url' => '/admin/volunteers',
                 'color' => 'danger',
-                'badge' => Volunteers::where('status', 'pending')->count(),
+                'badge' => Volunteers::where('volunteer_status', 'pending')->count(),
             ],
         ];
     }
@@ -465,7 +465,7 @@ class AdminDashboardService extends BaseDashboardService
     {
         try {
             return [
-                'volunteers' => Volunteers::where('status', 'pending')
+                'volunteers' => Volunteers::where('volunteer_status', 'pending')
                     ->limit(5)
                     ->get()
                     ->map(function ($volunteer) {
@@ -508,7 +508,7 @@ class AdminDashboardService extends BaseDashboardService
             }
 
             // Check for inactive centres
-            $inactiveCentres = Centres::where('status', '!=', 'active')->count();
+            $inactiveCentres = Centres::where('centre_status', '!=', 'active')->count();
             if ($inactiveCentres > 0) {
                 $alerts[] = [
                     'type' => 'warning',
@@ -519,7 +519,7 @@ class AdminDashboardService extends BaseDashboardService
             }
 
             // Check for old unread messages
-            $oldMessages = ContactMessages::where('status', 'unread')
+            $oldMessages = ContactMessages::where('message_status', 'unread')
                 ->where('created_at', '<', Carbon::now()->subDays(7))
                 ->count();
             
