@@ -7,56 +7,39 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Carbon\Carbon;
 
-/**
- * Asset Movement Model
- * 
- * This model tracks all asset movements between locations,
- * providing a comprehensive audit trail for asset location history.
- */
 class AssetMovement extends Model
 {
     use HasFactory;
 
     protected $fillable = [
-        'asset_id', 'from_location_id', 'to_location_id',
-        'moved_by_id', 'movement_reason', 'movement_date',
-        'movement_type', 'approved_by_id', 'approval_date',
-        'status', 'notes', 'estimated_return_date',
-        'actual_return_date', 'condition_before', 'condition_after'
+        'asset_id',
+        'type',
+        'from_user',
+        'to_user',
+        'from_location',
+        'to_location',
+        'reason',
+        'performed_by',
+        'movement_date'
     ];
 
     protected $casts = [
-        'movement_date' => 'datetime',
-        'approval_date' => 'datetime',
-        'estimated_return_date' => 'datetime',
-        'actual_return_date' => 'datetime',
+        'movement_date' => 'datetime'
     ];
 
     protected $appends = [
-        'movement_duration', 'is_return_overdue', 'movement_type_label',
-        'status_badge_class', 'distance_traveled'
+        'type_badge_class',
+        'formatted_movement_date'
     ];
 
     /**
      * Movement type constants
      */
-    const TYPE_TRANSFER = 'transfer';
     const TYPE_ASSIGNMENT = 'assignment';
     const TYPE_RETURN = 'return';
+    const TYPE_TRANSFER = 'transfer';
     const TYPE_MAINTENANCE = 'maintenance';
-    const TYPE_LOAN = 'loan';
     const TYPE_DISPOSAL = 'disposal';
-    const TYPE_AUDIT = 'audit';
-    const TYPE_EMERGENCY = 'emergency';
-
-    /**
-     * Movement status constants
-     */
-    const STATUS_PENDING = 'pending';
-    const STATUS_IN_TRANSIT = 'in_transit';
-    const STATUS_COMPLETED = 'completed';
-    const STATUS_CANCELLED = 'cancelled';
-    const STATUS_FAILED = 'failed';
 
     /**
      * Get all movement types
@@ -64,28 +47,11 @@ class AssetMovement extends Model
     public static function getMovementTypes(): array
     {
         return [
-            self::TYPE_TRANSFER => 'Transfer',
             self::TYPE_ASSIGNMENT => 'Assignment',
             self::TYPE_RETURN => 'Return',
+            self::TYPE_TRANSFER => 'Transfer',
             self::TYPE_MAINTENANCE => 'Maintenance',
-            self::TYPE_LOAN => 'Loan',
             self::TYPE_DISPOSAL => 'Disposal',
-            self::TYPE_AUDIT => 'Audit Check',
-            self::TYPE_EMERGENCY => 'Emergency Move',
-        ];
-    }
-
-    /**
-     * Get all movement statuses
-     */
-    public static function getMovementStatuses(): array
-    {
-        return [
-            self::STATUS_PENDING => 'Pending',
-            self::STATUS_IN_TRANSIT => 'In Transit',
-            self::STATUS_COMPLETED => 'Completed',
-            self::STATUS_CANCELLED => 'Cancelled',
-            self::STATUS_FAILED => 'Failed',
         ];
     }
 
@@ -94,7 +60,7 @@ class AssetMovement extends Model
     // =============================================
 
     /**
-     * Get the asset that was moved
+     * Get the asset this movement belongs to
      */
     public function asset(): BelongsTo
     {
@@ -102,35 +68,27 @@ class AssetMovement extends Model
     }
 
     /**
-     * Get the source location
+     * Get the user who the asset was moved from
      */
-    public function fromLocation(): BelongsTo
+    public function fromUser(): BelongsTo
     {
-        return $this->belongsTo(AssetLocation::class, 'from_location_id');
+        return $this->belongsTo(Users::class, 'from_user');
     }
 
     /**
-     * Get the destination location
+     * Get the user who the asset was moved to
      */
-    public function toLocation(): BelongsTo
+    public function toUser(): BelongsTo
     {
-        return $this->belongsTo(AssetLocation::class, 'to_location_id');
+        return $this->belongsTo(Users::class, 'to_user');
     }
 
     /**
-     * Get the user who moved the asset
+     * Get the user who performed the movement
      */
-    public function movedBy(): BelongsTo
+    public function performedBy(): BelongsTo
     {
-        return $this->belongsTo(Users::class, 'moved_by_id');
-    }
-
-    /**
-     * Get the user who approved the movement
-     */
-    public function approvedBy(): BelongsTo
-    {
-        return $this->belongsTo(Users::class, 'approved_by_id');
+        return $this->belongsTo(Users::class, 'performed_by');
     }
 
     // =============================================
@@ -150,15 +108,18 @@ class AssetMovement extends Model
      */
     public function scopeOfType($query, string $type)
     {
-        return $query->where('movement_type', $type);
+        return $query->where('type', $type);
     }
 
     /**
-     * Scope a query to filter by status
+     * Scope a query to filter by user (from or to)
      */
-    public function scopeWithStatus($query, string $status)
+    public function scopeForUser($query, int $userId)
     {
-        return $query->where('status', $status);
+        return $query->where(function($q) use ($userId) {
+            $q->where('from_user', $userId)
+              ->orWhere('to_user', $userId);
+        });
     }
 
     /**
@@ -170,60 +131,35 @@ class AssetMovement extends Model
     }
 
     /**
-     * Scope a query to find movements in current month
+     * Scope a query to find assignments
      */
-    public function scopeThisMonth($query)
+    public function scopeAssignments($query)
     {
-        return $query->whereBetween('movement_date', [
-            now()->startOfMonth(),
-            now()->endOfMonth()
-        ]);
+        return $query->where('type', self::TYPE_ASSIGNMENT);
     }
 
     /**
-     * Scope a query to find pending movements
+     * Scope a query to find returns
      */
-    public function scopePending($query)
+    public function scopeReturns($query)
     {
-        return $query->where('status', self::STATUS_PENDING);
+        return $query->where('type', self::TYPE_RETURN);
     }
 
     /**
-     * Scope a query to find completed movements
+     * Scope a query to find transfers
      */
-    public function scopeCompleted($query)
+    public function scopeTransfers($query)
     {
-        return $query->where('status', self::STATUS_COMPLETED);
+        return $query->where('type', self::TYPE_TRANSFER);
     }
 
     /**
-     * Scope a query to find overdue returns
+     * Scope a query to find recent movements
      */
-    public function scopeOverdueReturns($query)
+    public function scopeRecent($query, int $days = 30)
     {
-        return $query->where('movement_type', self::TYPE_LOAN)
-                     ->whereNotNull('estimated_return_date')
-                     ->where('estimated_return_date', '<', now())
-                     ->whereNull('actual_return_date');
-    }
-
-    /**
-     * Scope a query to find movements involving a specific location
-     */
-    public function scopeInvolvingLocation($query, int $locationId)
-    {
-        return $query->where(function ($q) use ($locationId) {
-            $q->where('from_location_id', $locationId)
-              ->orWhere('to_location_id', $locationId);
-        });
-    }
-
-    /**
-     * Scope a query to find movements by user
-     */
-    public function scopeByUser($query, int $userId)
-    {
-        return $query->where('moved_by_id', $userId);
+        return $query->where('movement_date', '>=', now()->subDays($days));
     }
 
     // =============================================
@@ -231,27 +167,26 @@ class AssetMovement extends Model
     // =============================================
 
     /**
-     * Get movement duration in hours
+     * Get type badge class for UI
      */
-    public function getMovementDurationAttribute(): ?float
+    public function getTypeBadgeClassAttribute(): string
     {
-        if (!$this->movement_date) {
-            return null;
-        }
-
-        $endDate = $this->actual_return_date ?? now();
-        return $this->movement_date->diffInHours($endDate, true);
+        return match($this->type) {
+            self::TYPE_ASSIGNMENT => 'badge-primary',
+            self::TYPE_RETURN => 'badge-info',
+            self::TYPE_TRANSFER => 'badge-warning',
+            self::TYPE_MAINTENANCE => 'badge-secondary',
+            self::TYPE_DISPOSAL => 'badge-danger',
+            default => 'badge-secondary',
+        };
     }
 
     /**
-     * Check if return is overdue
+     * Get formatted movement date
      */
-    public function getIsReturnOverdueAttribute(): bool
+    public function getFormattedMovementDateAttribute(): string
     {
-        return $this->movement_type === self::TYPE_LOAN &&
-               $this->estimated_return_date &&
-               $this->estimated_return_date->isPast() &&
-               is_null($this->actual_return_date);
+        return $this->movement_date ? $this->movement_date->format('M d, Y H:i') : '';
     }
 
     /**
@@ -260,162 +195,108 @@ class AssetMovement extends Model
     public function getMovementTypeLabelAttribute(): string
     {
         $types = self::getMovementTypes();
-        return $types[$this->movement_type] ?? 'Unknown';
+        return $types[$this->type] ?? 'Unknown';
     }
 
     /**
-     * Get status badge class for UI
+     * Get movement description for display
      */
-    public function getStatusBadgeClassAttribute(): string
+    public function getMovementDescriptionAttribute(): string
     {
-        return match($this->status) {
-            self::STATUS_PENDING => 'badge-warning',
-            self::STATUS_IN_TRANSIT => 'badge-info',
-            self::STATUS_COMPLETED => 'badge-success',
-            self::STATUS_CANCELLED => 'badge-secondary',
-            self::STATUS_FAILED => 'badge-danger',
-            default => 'badge-secondary',
-        };
-    }
-
-    /**
-     * Get estimated distance traveled (placeholder for future GPS integration)
-     */
-    public function getDistanceTraveledAttribute(): ?float
-    {
-        // Placeholder for future implementation with GPS coordinates
-        return null;
-    }
-
-    /**
-     * Get formatted movement details
-     */
-    public function getMovementSummaryAttribute(): string
-    {
-        $from = $this->fromLocation ? $this->fromLocation->name : 'Unknown';
-        $to = $this->toLocation ? $this->toLocation->name : 'Unknown';
-        
-        return "From: {$from} → To: {$to}";
-    }
-
-    /**
-     * Get days since movement
-     */
-    public function getDaysSinceMovementAttribute(): int
-    {
-        return $this->movement_date ? $this->movement_date->diffInDays(now()) : 0;
-    }
-
-    /**
-     * Check if movement requires approval
-     */
-    public function getRequiresApprovalAttribute(): bool
-    {
-        // High-value assets or certain movement types might require approval
-        return in_array($this->movement_type, [
-            self::TYPE_DISPOSAL,
-            self::TYPE_TRANSFER,
-            self::TYPE_EMERGENCY
-        ]);
-    }
-
-    // =============================================
-    // BUSINESS LOGIC METHODS
-    // =============================================
-
-    /**
-     * Mark movement as completed
-     */
-    public function markCompleted(string $notes = null): bool
-    {
-        $this->status = self::STATUS_COMPLETED;
-        $this->actual_return_date = now();
-        
-        if ($notes) {
-            $this->notes = $this->notes ? $this->notes . "\n" . $notes : $notes;
+        switch ($this->type) {
+            case self::TYPE_ASSIGNMENT:
+                $toUser = $this->toUser ? $this->toUser->name : 'Unknown User';
+                $location = $this->to_location ? " at {$this->to_location}" : '';
+                return "Assigned to {$toUser}{$location}";
+                
+            case self::TYPE_RETURN:
+                $fromUser = $this->fromUser ? $this->fromUser->name : 'Unknown User';
+                return "Returned from {$fromUser}";
+                
+            case self::TYPE_TRANSFER:
+                $from = $this->from_location ?: ($this->fromUser ? $this->fromUser->name : 'Unknown');
+                $to = $this->to_location ?: ($this->toUser ? $this->toUser->name : 'Unknown');
+                return "Transferred from {$from} to {$to}";
+                
+            case self::TYPE_MAINTENANCE:
+                return "Moved for maintenance";
+                
+            case self::TYPE_DISPOSAL:
+                return "Disposed";
+                
+            default:
+                return $this->reason ?: 'Asset movement';
         }
-        
-        $success = $this->save();
-        
-        if ($success) {
-            \Log::info('Asset movement completed', [
-                'movement_id' => $this->id,
-                'asset_id' => $this->asset_id,
-                'from_location' => $this->fromLocation?->name,
-                'to_location' => $this->toLocation?->name
-            ]);
-        }
-        
-        return $success;
-    }
-
-    /**
-     * Cancel movement
-     */
-    public function cancel(string $reason): bool
-    {
-        $this->status = self::STATUS_CANCELLED;
-        $this->notes = $this->notes ? $this->notes . "\nCancelled: " . $reason : "Cancelled: " . $reason;
-        
-        $success = $this->save();
-        
-        if ($success) {
-            \Log::info('Asset movement cancelled', [
-                'movement_id' => $this->id,
-                'asset_id' => $this->asset_id,
-                'reason' => $reason
-            ]);
-        }
-        
-        return $success;
-    }
-
-    /**
-     * Approve movement
-     */
-    public function approve(int $approvedById, string $notes = null): bool
-    {
-        $this->approved_by_id = $approvedById;
-        $this->approval_date = now();
-        $this->status = self::STATUS_IN_TRANSIT;
-        
-        if ($notes) {
-            $this->notes = $this->notes ? $this->notes . "\nApproval notes: " . $notes : $notes;
-        }
-        
-        $success = $this->save();
-        
-        if ($success) {
-            \Log::info('Asset movement approved', [
-                'movement_id' => $this->id,
-                'asset_id' => $this->asset_id,
-                'approved_by' => $approvedById
-            ]);
-        }
-        
-        return $success;
-    }
-
-    /**
-     * Create return movement
-     */
-    public function createReturnMovement(string $reason = 'Return from loan'): self
-    {
-        return self::create([
-            'asset_id' => $this->asset_id,
-            'from_location_id' => $this->to_location_id,
-            'to_location_id' => $this->from_location_id,
-            'moved_by_id' => auth()->id() ?? session('id'),
-            'movement_reason' => $reason,
-            'movement_date' => now(),
-            'movement_type' => self::TYPE_RETURN,
-            'status' => self::STATUS_COMPLETED,
-        ]);
     }
 
     // =============================================
     // STATIC UTILITY METHODS
     // =============================================
+
+    /**
+     * Create assignment record
+     */
+    public static function createAssignment(
+        int $assetId, 
+        int $toUserId, 
+        ?string $location = null, 
+        ?string $reason = null,
+        ?int $performedBy = null
+    ): self {
+        return self::create([
+            'asset_id' => $assetId,
+            'type' => self::TYPE_ASSIGNMENT,
+            'to_user' => $toUserId,
+            'to_location' => $location,
+            'reason' => $reason ?: 'Asset assignment',
+            'performed_by' => $performedBy ?: session('id'),
+            'movement_date' => now()
+        ]);
+    }
+
+    /**
+     * Create return record
+     */
+    public static function createReturn(
+        int $assetId, 
+        int $fromUserId, 
+        ?string $reason = null,
+        ?int $performedBy = null
+    ): self {
+        return self::create([
+            'asset_id' => $assetId,
+            'type' => self::TYPE_RETURN,
+            'from_user' => $fromUserId,
+            'reason' => $reason ?: 'Asset return',
+            'performed_by' => $performedBy ?: session('id'),
+            'movement_date' => now()
+        ]);
+    }
+
+    /**
+     * Create transfer record
+     */
+    public static function createTransfer(
+        int $assetId,
+        ?int $fromUserId = null,
+        ?int $toUserId = null,
+        ?string $fromLocation = null,
+        ?string $toLocation = null,
+        ?string $reason = null,
+        ?int $performedBy = null
+    ): self {
+        return self::create([
+            'asset_id' => $assetId,
+            'type' => self::TYPE_TRANSFER,
+            'from_user' => $fromUserId,
+            'to_user' => $toUserId,
+            'from_location' => $fromLocation,
+            'to_location' => $toLocation,
+            'reason' => $reason ?: 'Asset transfer',
+            'performed_by' => $performedBy ?: session('id'),
+            'movement_date' => now()
+        ]);
+    }
 
     /**
      * Get movement statistics
@@ -436,102 +317,29 @@ class AssetMovement extends Model
         
         return [
             'total_movements' => $query->count(),
-            'by_type' => $query->selectRaw('movement_type, COUNT(*) as count')
-                              ->groupBy('movement_type')
-                              ->pluck('count', 'movement_type')
+            'assignments' => $query->clone()->assignments()->count(),
+            'returns' => $query->clone()->returns()->count(),
+            'transfers' => $query->clone()->transfers()->count(),
+            'by_type' => $query->selectRaw('type, COUNT(*) as count')
+                              ->groupBy('type')
+                              ->pluck('count', 'type')
                               ->toArray(),
-            'by_status' => $query->selectRaw('status, COUNT(*) as count')
-                                ->groupBy('status')
-                                ->pluck('count', 'status')
-                                ->toArray(),
-            'pending_count' => $query->where('status', self::STATUS_PENDING)->count(),
-            'overdue_returns' => $query->overdueReturns()->count(),
-            'movements_this_week' => self::whereBetween('movement_date', [
-                now()->startOfWeek(),
-                now()->endOfWeek()
-            ])->count(),
+            'recent_activity' => self::with(['asset', 'fromUser', 'toUser', 'performedBy'])
+                                    ->recent(7)
+                                    ->orderBy('movement_date', 'desc')
+                                    ->limit(10)
+                                    ->get()
         ];
     }
 
     /**
-     * Get recent movements
+     * Get asset history
      */
-    public static function getRecent(int $limit = 10, ?int $centreId = null): \Illuminate\Database\Eloquent\Collection
+    public static function getAssetHistory(int $assetId): \Illuminate\Database\Eloquent\Collection
     {
-        $query = self::with(['asset', 'fromLocation', 'toLocation', 'movedBy'])
-                     ->latest('movement_date');
-        
-        if ($centreId) {
-            $query->whereHas('asset', function ($q) use ($centreId) {
-                $q->where('centre_id', $centreId);
-            });
-        }
-        
-        return $query->limit($limit)->get();
-    }
-
-    /**
-     * Get movements requiring attention
-     */
-    public static function getRequiringAttention(?int $centreId = null): array
-    {
-        $baseQuery = self::query();
-        
-        if ($centreId) {
-            $baseQuery->whereHas('asset', function ($q) use ($centreId) {
-                $q->where('centre_id', $centreId);
-            });
-        }
-        
-        return [
-            'pending_approval' => $baseQuery->pending()
-                                           ->where('requires_approval', true)
-                                           ->with(['asset', 'fromLocation', 'toLocation', 'movedBy'])
-                                           ->get(),
-            'overdue_returns' => $baseQuery->overdueReturns()
-                                          ->with(['asset', 'fromLocation', 'toLocation', 'movedBy'])
-                                          ->get(),
-            'in_transit_long' => $baseQuery->where('status', self::STATUS_IN_TRANSIT)
-                                          ->where('movement_date', '<', now()->subDays(7))
-                                          ->with(['asset', 'fromLocation', 'toLocation', 'movedBy'])
-                                          ->get(),
-        ];
-    }
-
-    /**
-     * Generate movement report
-     */
-    public static function generateReport(?int $centreId = null, ?Carbon $startDate = null, ?Carbon $endDate = null): array
-    {
-        $startDate = $startDate ?? now()->startOfMonth();
-        $endDate = $endDate ?? now()->endOfMonth();
-        
-        $query = self::betweenDates($startDate, $endDate);
-        
-        if ($centreId) {
-            $query->whereHas('asset', function ($q) use ($centreId) {
-                $q->where('centre_id', $centreId);
-            });
-        }
-        
-        $movements = $query->with(['asset', 'fromLocation', 'toLocation', 'movedBy'])->get();
-        
-        return [
-            'period' => [
-                'start_date' => $startDate->format('Y-m-d'),
-                'end_date' => $endDate->format('Y-m-d'),
-            ],
-            'summary' => [
-                'total_movements' => $movements->count(),
-                'unique_assets' => $movements->pluck('asset_id')->unique()->count(),
-                'active_users' => $movements->pluck('moved_by_id')->unique()->count(),
-            ],
-            'by_type' => $movements->groupBy('movement_type')->map->count(),
-            'by_status' => $movements->groupBy('status')->map->count(),
-            'busiest_locations' => $movements->flatMap(function ($movement) {
-                return [$movement->from_location_id, $movement->to_location_id];
-            })->filter()->countBy()->sort()->reverse()->take(10),
-            'most_moved_assets' => $movements->groupBy('asset_id')->map->count()->sort()->reverse()->take(10),
-        ];
+        return self::forAsset($assetId)
+                   ->with(['fromUser', 'toUser', 'performedBy'])
+                   ->orderBy('movement_date', 'desc')
+                   ->get();
     }
 }

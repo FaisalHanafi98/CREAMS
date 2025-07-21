@@ -1,0 +1,96 @@
+{
+    "name": "CREAMS Dashboard",
+    "short_name": "CREAMS",
+    "description": "Community-based REhAbilitation Management System - Optimized Dashboard",
+    "start_url": "/dashboard",
+    "display": "standalone",
+    "background_color": "#667eea",
+    "theme_color": "#764ba2",
+    "orientation": "portrait-primary",
+    "lang": "en",
+    "scope": "/",
+    "icons": [
+        {
+            "src": "/android-chrome-192x192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "maskable any"
+        },
+        {
+            "src": "/android-chrome-512x512.png", 
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "maskable any"
+        },
+        {
+            "src": "/apple-touch-icon.png",
+            "sizes": "180x180",
+            "type": "image/png",
+            "purpose": "any"
+        }
+    ],
+    "screenshots": [
+        {
+            "src": "/screenshots/mobile-dashboard.png",
+            "sizes": "390x844",
+            "type": "image/png",
+            "form_factor": "narrow"
+        },
+        {
+            "src": "/screenshots/desktop-dashboard.png", 
+            "sizes": "1920x1080",
+            "type": "image/png",
+            "form_factor": "wide"
+        }
+    ],
+    "categories": ["education", "medical", "productivity"],
+    "related_applications": [],
+    "prefer_related_applications": false,
+    "shortcuts": [
+        {
+            "name": "View Trainees",
+            "short_name": "Trainees",
+            "description": "Quick access to trainee management",
+            "url": "/traineeshome",
+            "icons": [
+                {
+                    "src": "/icons/trainees-shortcut.png",
+                    "sizes": "96x96",
+                    "type": "image/png"
+                }
+            ]
+        },
+        {
+            "name": "Activities",
+            "short_name": "Activities",
+            "description": "Manage rehabilitation activities",
+            "url": "/activities",
+            "icons": [
+                {
+                    "src": "/icons/activities-shortcut.png",
+                    "sizes": "96x96", 
+                    "type": "image/png"
+                }
+            ]
+        },
+        {
+            "name": "Mobile Dashboard",
+            "short_name": "Mobile",
+            "description": "Mobile-optimized dashboard view",
+            "url": "/dashboard/mobile",
+            "icons": [
+                {
+                    "src": "/icons/mobile-shortcut.png",
+                    "sizes": "96x96",
+                    "type": "image/png"
+                }
+            ]
+        }
+    ],
+    "features": [
+        "real-time-updates",
+        "offline-support",
+        "push-notifications",
+        "background-sync"
+    ]
+}

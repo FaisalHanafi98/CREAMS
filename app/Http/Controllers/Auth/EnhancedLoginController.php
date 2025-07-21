@@ -3,155 +3,242 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Models\Users;
+use App\Services\SessionManager;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\RateLimiter;
-use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Validator;
+use App\Models\Users;
+use App\Models\Admins;
+use App\Models\Supervisors;
+use App\Models\Teachers;
+use App\Models\AJKs;
 
 class EnhancedLoginController extends Controller
 {
     /**
-     * Show enhanced login form
+     * Show the login form
      */
-    public function showLogin()
+    public function showLoginForm()
     {
+        // If already logged in, redirect to dashboard
+        if (SessionManager::check()) {
+            return redirect()->route($this->getRedirectRoute(session('role')));
+        }
+        
         return view('auth.enhanced-login');
     }
-
+    
     /**
-     * Enhanced login with better UX and security
+     * Handle a login request with enhanced session management
      */
     public function login(Request $request)
     {
-        // Rate limiting
-        $key = 'login.' . $request->ip();
-        
-        if (RateLimiter::tooManyAttempts($key, 5)) {
-            $seconds = RateLimiter::availableIn($key);
-            return response()->json([
-                'success' => false,
-                'message' => "Too many login attempts. Please try again in {$seconds} seconds.",
-                'lockout_time' => $seconds
-            ], 429);
-        }
-
-        $request->validate([
-            'identifier' => 'required|string',
-            'password' => 'required|string',
-            'remember' => 'boolean'
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|email',
+            'password' => 'required|min:6'
+        ], [
+            'email.required' => 'Email address is required',
+            'email.email' => 'Please enter a valid email address',
+            'password.required' => 'Password is required',
+            'password.min' => 'Password must be at least 6 characters'
         ]);
 
+        if ($validator->fails()) {
+            return back()->withErrors($validator)->withInput($request->except('password'));
+        }
+
         try {
-            // Find user by email or IIUM ID
-            $user = Users::where('email', $request->identifier)
-                ->orWhere('iium_id', strtoupper($request->identifier))
-                ->first();
-
-            if (!$user || !Hash::check($request->password, $user->password)) {
-                RateLimiter::hit($key, 300); // 5 minutes lockout
-                
-                // Log failed attempt
-                Log::warning('Failed login attempt', [
-                    'identifier' => $request->identifier,
-                    'ip' => $request->ip(),
-                    'user_agent' => $request->userAgent()
+            // Find user across all user models
+            $user = $this->findUserByEmail($request->email);
+            
+            if (!$user) {
+                Log::warning('Login attempt with non-existent email', [
+                    'email' => $request->email,
+                    'ip' => $request->ip()
                 ]);
-
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Invalid credentials. Please check your email/IIUM ID and password.'
-                ], 401);
+                
+                return back()->with('error', 'No account found with that email address')
+                    ->withInput($request->except('password'));
             }
-
+            
+            // Verify password
+            if (!Hash::check($request->password, $user->password)) {
+                Log::warning('Login attempt with incorrect password', [
+                    'email' => $request->email,
+                    'user_id' => $user->id,
+                    'ip' => $request->ip()
+                ]);
+                
+                return back()->with('error', 'The password you entered is incorrect')
+                    ->withInput($request->except('password'));
+            }
+            
             // Check if user is active
-            if (isset($user->status) && $user->status === 'inactive') {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Your account has been deactivated. Please contact the administrator.'
-                ], 403);
+            if ($user->status !== 'active') {
+                Log::warning('Login attempt with inactive account', [
+                    'email' => $request->email,
+                    'user_id' => $user->id,
+                    'status' => $user->status,
+                    'ip' => $request->ip()
+                ]);
+                
+                return back()->with('error', 'Your account is currently inactive. Please contact administrator')
+                    ->withInput($request->except('password'));
             }
-
-            // Clear rate limiting on successful login
-            RateLimiter::clear($key);
-
-            // Set session data
-            Session::regenerate();
-            Session::put([
-                'id' => $user->id,
-                'iium_id' => $user->iium_id,
-                'name' => $user->name,
-                'role' => $user->role,
-                'email' => $user->email,
-                'centre_id' => $user->centre_id,
-                'avatar' => $user->avatar ?? null,
-                'user_avatar' => $user->avatar ?? null,
-                'phone' => $user->phone ?? null,
-                'address' => $user->address ?? null,
-                'bio' => $user->bio ?? $user->about ?? null,
-                'date_of_birth' => $user->date_of_birth ?? null,
-                'logged_in' => true,
-                'login_time' => now()->toDateTimeString()
-            ]);
-
-            // Handle remember me
-            if ($request->remember) {
-                $token = bin2hex(random_bytes(32));
-                $user->update(['remember_token' => $token]);
-                cookie()->queue('remember_token', $token, 60 * 24 * 30); // 30 days
+            
+            // Login user with enhanced session management
+            SessionManager::login($user, $request->has('remember'));
+            
+            // Get intended URL or default redirect
+            $intendedUrl = session('intended_url', null);
+            if ($intendedUrl) {
+                session()->forget('intended_url');
+                return redirect($intendedUrl)->with('success', 'Welcome back, ' . $user->name);
             }
-
-            // Update last login
-            $user->update(['last_login' => now()]);
-
-            // Log successful login
-            Log::info('Successful login', [
-                'user_id' => $user->id,
-                'email' => $user->email,
-                'role' => $user->role,
-                'ip' => $request->ip()
-            ]);
-
-            // Return JSON response for AJAX
-            return response()->json([
-                'success' => true,
-                'message' => 'Login successful!',
-                'redirect_url' => $this->getRedirectUrl($user->role),
-                'user' => [
-                    'name' => $user->name,
-                    'role' => $user->role,
-                    'centre' => $user->centre->centre_name ?? 'N/A'
-                ]
-            ]);
-
+            
+            // Redirect based on role
+            $redirectRoute = $this->getRedirectRoute($user->role);
+            return redirect()->route($redirectRoute)
+                ->with('success', 'Welcome back, ' . $user->name);
+                
         } catch (\Exception $e) {
             Log::error('Login error', [
                 'error' => $e->getMessage(),
-                'identifier' => $request->identifier,
+                'trace' => $e->getTraceAsString(),
+                'email' => $request->email,
                 'ip' => $request->ip()
             ]);
-
-            return response()->json([
-                'success' => false,
-                'message' => 'An error occurred during login. Please try again.'
-            ], 500);
+            
+            return back()->with('error', 'Login failed. Please try again or contact support')
+                ->withInput($request->except('password'));
         }
     }
 
     /**
-     * Get redirect URL based on role
+     * Handle logout with enhanced session cleanup
      */
-    private function getRedirectUrl($role)
+    public function logout(Request $request)
     {
-        $redirects = [
-            'admin' => route('admin.dashboard'),
-            'supervisor' => route('supervisor.dashboard'),
-            'teacher' => route('teacher.dashboard'),
-            'ajk' => route('ajk.dashboard')
-        ];
+        $userName = session('name', 'User');
+        
+        SessionManager::logout();
+        
+        if ($request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Logged out successfully',
+                'redirect' => route('login')
+            ]);
+        }
+        
+        return redirect()->route('login')
+            ->with('success', 'Goodbye ' . $userName . '. You have been logged out successfully');
+    }
+    
+    /**
+     * Check authentication status (AJAX endpoint)
+     */
+    public function checkAuth(Request $request)
+    {
+        $isAuthenticated = SessionManager::check();
+        $isAboutToExpire = SessionManager::isAboutToExpire();
+        
+        return response()->json([
+            'authenticated' => $isAuthenticated,
+            'about_to_expire' => $isAboutToExpire,
+            'user' => $isAuthenticated ? [
+                'id' => session('id'),
+                'name' => session('name'),
+                'role' => session('role'),
+                'email' => session('email')
+            ] : null,
+            'session_timeout' => SessionManager::getTimeoutMinutes()
+        ]);
+    }
+    
+    /**
+     * Extend session (AJAX endpoint)
+     */
+    public function extendSession(Request $request)
+    {
+        if (SessionManager::extend()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Session extended successfully'
+            ]);
+        }
+        
+        return response()->json([
+            'success' => false,
+            'message' => 'Unable to extend session'
+        ], 401);
+    }
+    
+    /**
+     * Refresh session data
+     */
+    public function refreshSession(Request $request)
+    {
+        if (SessionManager::refresh()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Session refreshed successfully',
+                'user' => [
+                    'id' => session('id'),
+                    'name' => session('name'),
+                    'role' => session('role'),
+                    'email' => session('email')
+                ]
+            ]);
+        }
+        
+        return response()->json([
+            'success' => false,
+            'message' => 'Unable to refresh session'
+        ], 401);
+    }
 
-        return $redirects[$role] ?? route('dashboard');
+    /**
+     * Find user by email across all user models
+     */
+    private function findUserByEmail($email)
+    {
+        // Define user models with their roles
+        $userModels = [
+            ['model' => Users::class, 'role' => null], // Universal users table
+            ['model' => Admins::class, 'role' => 'admin'],
+            ['model' => Supervisors::class, 'role' => 'supervisor'],
+            ['model' => Teachers::class, 'role' => 'teacher'],
+            ['model' => AJKs::class, 'role' => 'ajk']
+        ];
+        
+        foreach ($userModels as $userModel) {
+            $user = $userModel['model']::where('email', $email)->first();
+            if ($user) {
+                // If role is not set in the user record, use the model-specific role
+                if (!isset($user->role) && $userModel['role']) {
+                    $user->role = $userModel['role'];
+                }
+                return $user;
+            }
+        }
+        
+        return null;
+    }
+
+    /**
+     * Get redirect route based on role
+     */
+    private function getRedirectRoute($role)
+    {
+        $routes = [
+            'admin' => 'dashboard',
+            'supervisor' => 'dashboard', 
+            'teacher' => 'dashboard',
+            'ajk' => 'dashboard'
+        ];
+        
+        return $routes[$role] ?? 'dashboard';
     }
 }

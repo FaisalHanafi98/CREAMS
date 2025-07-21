@@ -26,11 +26,13 @@ use App\Http\Controllers\TraineeHomeController;
 use App\Http\Controllers\TraineeProfileController;
 use App\Http\Controllers\TraineeRegistrationController;
 use App\Http\Controllers\TraineeManagementController;
+use App\Http\Controllers\EnhancedTraineeController;
 
 // Activity and Resource Controllers
 use App\Http\Controllers\ActivityController;
 use App\Http\Controllers\CentreController;
 use App\Http\Controllers\AssetController;
+use App\Http\Controllers\EnhancedAssetController;
 use App\Http\Controllers\ClassController;
 use App\Http\Controllers\EventController;
 
@@ -44,12 +46,14 @@ use App\Http\Controllers\MessageController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\LetterController;
 use App\Http\Controllers\LetterTemplateController;
+use App\Http\Controllers\NewLetterController;
 use App\Http\Controllers\QuickAttendanceController;
 
 // Auth Controllers
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\ResetPasswordController;
+use App\Http\Controllers\Auth\EnhancedLoginController;
 
 /*
 |--------------------------------------------------------------------------
@@ -82,10 +86,14 @@ Route::get('/trademark', function () {
 */
 
 Route::middleware('guest')->group(function () {
-    // Login routes
+    // Standard login routes
     Route::get('/auth/login', [MainController::class, 'login'])->name('auth.loginpage');
     Route::get('/login', [MainController::class, 'login'])->name('login');
     Route::post('/auth/check', [MainController::class, 'check'])->name('auth.check');
+    
+    // Enhanced login routes
+    Route::get('/enhanced-login', [EnhancedLoginController::class, 'showLoginForm'])->name('enhanced.login.form');
+    Route::post('/enhanced-login', [EnhancedLoginController::class, 'login'])->name('enhanced.login');
 
     // Registration routes
     Route::get('/auth/register', [MainController::class, 'registration'])->name('auth.registerpage');
@@ -103,6 +111,16 @@ Route::middleware('guest')->group(function () {
 Route::middleware(['auth'])->group(function () {
     Route::get('/logout', [MainController::class, 'logout'])->name('logout');
     Route::post('/logout', [MainController::class, 'logout'])->name('logout.post');
+    
+    // Enhanced logout route
+    Route::post('/enhanced-logout', [EnhancedLoginController::class, 'logout'])->name('enhanced.logout');
+});
+
+// Enhanced authentication API routes
+Route::middleware(['web'])->group(function () {
+    Route::get('/auth/check-status', [EnhancedLoginController::class, 'checkAuth'])->name('auth.check');
+    Route::post('/auth/extend-session', [EnhancedLoginController::class, 'extendSession'])->name('auth.extend');
+    Route::post('/auth/refresh-session', [EnhancedLoginController::class, 'refreshSession'])->name('auth.refresh');
 });
 
 /*
@@ -112,8 +130,50 @@ Route::middleware(['auth'])->group(function () {
 */
 
 Route::middleware(['auth', 'validate.params'])->group(function () {
-    // Dashboard
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    // Dashboard - Legacy route (redirect to optimized)
+    Route::get('/dashboard', function() {
+        $role = session('role', 'user');
+        return redirect()->route('dashboard.optimized');
+    })->name('dashboard');
+    
+    // Optimized Dashboard Routes
+    // Optimized Dashboard System Routes with Enhanced Middleware
+    Route::prefix('dashboard')->name('dashboard.')->middleware(['throttle:dashboard'])->group(function () {
+        // Main dashboard with caching
+        Route::get('/', [App\Http\Controllers\OptimizedDashboardController::class, 'index'])
+            ->name('optimized')
+            ->middleware('cache.headers:public;max_age=300;etag');
+            
+        // Real-time updates (higher rate limit for AJAX)
+        Route::get('/updates', [App\Http\Controllers\OptimizedDashboardController::class, 'getUpdates'])
+            ->name('updates')
+            ->middleware(['throttle:dashboard-updates', 'cache.headers:no-cache']);
+            
+        // Stats refresh (moderate rate limit)
+        Route::post('/refresh-stats', [App\Http\Controllers\OptimizedDashboardController::class, 'refreshStats'])
+            ->name('refresh-stats')
+            ->middleware(['throttle:dashboard-refresh', 'cache.headers:no-cache']);
+            
+        // Widget loading (cached for performance)
+        Route::get('/widget/{widget}', [App\Http\Controllers\OptimizedDashboardController::class, 'getWidget'])
+            ->name('widget')
+            ->middleware('cache.headers:public;max_age=60;etag');
+            
+        // Export functionality (rate limited for resource protection)
+        Route::get('/export/{format?}', [App\Http\Controllers\OptimizedDashboardController::class, 'export'])
+            ->name('export')
+            ->middleware(['throttle:export']);
+            
+        // Admin-only cache clearing
+        Route::post('/clear-cache', [App\Http\Controllers\OptimizedDashboardController::class, 'clearCache'])
+            ->name('clear-cache')
+            ->middleware(['role:admin', 'throttle:admin-actions']);
+            
+        // Mobile optimized view
+        Route::get('/mobile', [App\Http\Controllers\OptimizedDashboardController::class, 'mobile'])
+            ->name('mobile')
+            ->middleware('cache.headers:public;max_age=300;etag');
+    });
     
     // Profile management
     // Profile management routes
@@ -130,6 +190,11 @@ Route::middleware(['auth', 'validate.params'])->group(function () {
         Route::get('/profile/letter-new-reference', [LetterTemplateController::class, 'newReference'])->name('profile.letter.newReference');
         Route::get('/profile/letter-download/{id}', [LetterTemplateController::class, 'downloadLetter'])->name('profile.letter.download');
     });
+
+    // Profile Letter Generation Routes (All authenticated users)
+    Route::post('/profile/letters/generate', [LetterController::class, 'store'])->name('profile.letters.generate');
+    Route::get('/profile/letters/{letter}/preview', [LetterController::class, 'show'])->name('profile.letters.preview');
+    Route::get('/profile/letters/{letter}/download', [LetterController::class, 'download'])->name('profile.letters.download');
 
 
     // Activity Management
@@ -173,6 +238,53 @@ Route::middleware(['auth', 'validate.params'])->group(function () {
         Route::get('/schedule/teacher/{teacherId}', [ActivityController::class, 'teacherSchedule'])->name('schedule.teacher');
     });
 
+    // NEW ENHANCED ACTIVITY MANAGEMENT SYSTEM - COMMENTED OUT FOR NOW
+    /*
+    Route::prefix('new-activities')->name('new-activities.')->middleware(['enhanced.auth'])->group(function () {
+        // Main dashboard (role-based views)
+        Route::get('/', [NewActivityController::class, 'index'])->name('index');
+        
+        // Admin and Supervisor routes
+        Route::middleware(['enhanced.role:admin,supervisor'])->group(function () {
+            Route::post('/', [NewActivityController::class, 'store'])->name('store');
+            Route::post('/{id}/schedule-session', [NewActivityController::class, 'scheduleSession'])->name('schedule-session');
+            Route::post('/{id}/enroll-trainee', [NewActivityController::class, 'enrollTrainee'])->name('enroll-trainee');
+        });
+        
+        // Teacher, Admin, Supervisor routes
+        Route::middleware(['enhanced.role:teacher,admin,supervisor'])->group(function () {
+            Route::post('/sessions/{id}/attendance', [NewActivityController::class, 'markAttendance'])->name('mark-attendance');
+        });
+        
+        // Show activity details (all authenticated users)
+        Route::get('/{id}', [NewActivityController::class, 'show'])->name('show');
+    });
+    */
+
+    // ENHANCED ASSET MANAGEMENT SYSTEM
+    Route::prefix('enhanced-assets')->name('assets.')->middleware(['auth'])->group(function () {
+        // Main dashboard (role-based views)
+        Route::get('/', [EnhancedAssetController::class, 'index'])->name('index');
+        
+        // Asset viewing (all authenticated users)
+        Route::get('/{asset}', [EnhancedAssetController::class, 'show'])->name('show');
+        
+        // Admin and Supervisor routes
+        Route::middleware(['role:admin,supervisor'])->group(function () {
+            Route::get('/create', [EnhancedAssetController::class, 'create'])->name('create');
+            Route::post('/', [EnhancedAssetController::class, 'store'])->name('store');
+            Route::get('/{asset}/edit', [EnhancedAssetController::class, 'edit'])->name('edit');
+            Route::put('/{asset}', [EnhancedAssetController::class, 'update'])->name('update');
+            Route::post('/{asset}/schedule-maintenance', [EnhancedAssetController::class, 'scheduleMaintenance'])->name('schedule-maintenance');
+            Route::post('/bulk-update', [EnhancedAssetController::class, 'bulkUpdate'])->name('bulk-update');
+        });
+        
+        // Admin only routes
+        Route::middleware(['role:admin'])->group(function () {
+            Route::delete('/{asset}', [EnhancedAssetController::class, 'destroy'])->name('destroy');
+        });
+    });
+
 
     // Rehabilitation Routes
     Route::prefix('rehabilitation')->name('rehabilitation.')->group(function () {
@@ -205,6 +317,10 @@ Route::middleware(['auth', 'validate.params'])->group(function () {
         Route::put('/{id}', [CentreController::class, 'update'])->name('update');
         Route::delete('/{id}', [CentreController::class, 'destroy'])->name('destroy');
         Route::get('/{id}/assets', [CentreController::class, 'assets'])->name('assets');
+        
+        // Enhanced centre management routes
+        Route::get('/{id}/metrics', [CentreController::class, 'getMetrics'])->name('metrics');
+        Route::post('/{id}/statistics/refresh', [CentreController::class, 'refreshStatistics'])->name('statistics.refresh');
     });
 
     // Assets
@@ -260,6 +376,14 @@ Route::middleware(['auth', 'validate.params'])->group(function () {
         })->name('trainee');
     });
 
+    // Enhanced Attendance Management
+    Route::prefix('enhanced-attendance')->name('enhanced-attendance.')->group(function () {
+        Route::get('/', [App\Http\Controllers\EnhancedAttendanceController::class, 'index'])->name('index');
+        Route::post('/', [App\Http\Controllers\EnhancedAttendanceController::class, 'store'])->name('store');
+        Route::get('/stats/today', [App\Http\Controllers\EnhancedAttendanceController::class, 'getTodayStats'])->name('stats.today');
+        Route::post('/export', [App\Http\Controllers\EnhancedAttendanceController::class, 'export'])->name('export');
+    });
+
     // Quick Attendance
     Route::prefix('quick-attendance')->name('quick-attendance.')->group(function () {
         Route::get('/', [App\Http\Controllers\QuickAttendanceController::class, 'index'])->name('index');
@@ -267,18 +391,103 @@ Route::middleware(['auth', 'validate.params'])->group(function () {
         Route::get('/summary', [App\Http\Controllers\QuickAttendanceController::class, 'summary'])->name('summary');
     });
 
-    // Letter management routes
-    Route::prefix('letters')->name('letters.')->middleware(['role:admin,supervisor,teacher'])->group(function () {
-        Route::get('/', [LetterTemplateController::class, 'index'])->name('index');
-        Route::get('/create', [LetterTemplateController::class, 'create'])->name('create');
-        Route::post('/', [LetterTemplateController::class, 'store'])->name('store');
-        Route::get('/{id}', [LetterTemplateController::class, 'show'])->name('show');
-        Route::get('/{id}/edit', [LetterTemplateController::class, 'edit'])->name('edit');
-        Route::put('/{id}', [LetterTemplateController::class, 'update'])->name('update');
-        Route::get('/{id}/view', [LetterTemplateController::class, 'viewLetter'])->name('view');
-        Route::get('/{id}/download', [LetterTemplateController::class, 'downloadLetter'])->name('download');
-        Route::delete('/{id}', [LetterTemplateController::class, 'destroy'])->name('destroy');
+    // New Letter Management System - Complete Rewrite
+    Route::prefix('letters')->name('letters.')->group(function () {
+        Route::get('/', [NewLetterController::class, 'dashboard'])->name('dashboard');
+        Route::post('/generate', [NewLetterController::class, 'generate'])->name('generate');
+        Route::post('/preview', [NewLetterController::class, 'preview'])->name('preview');
+        Route::get('/{id}/view', [NewLetterController::class, 'view'])->name('view');
+        Route::get('/{id}/download', [NewLetterController::class, 'download'])->name('download');
+        Route::delete('/{id}', [NewLetterController::class, 'destroy'])->name('destroy');
     });
+    
+    // Legacy Letter Routes (for backward compatibility)
+    Route::get('/letters-old', [LetterController::class, 'index'])->name('letters.old.index');
+    Route::get('/letters-old/create', [LetterController::class, 'create'])->name('letters.old.create');
+    
+    // Letter Archive with inline HTML (Direct Fix)
+    Route::get('/letters-archive', function() {
+        $letters = \App\Models\Letter::where(function($query) {
+            if (session('role') !== 'admin') {
+                $query->where('created_by', session('id'));
+            }
+        })->orderBy('created_at', 'desc')->limit(50)->get();
+        
+        return response('<!DOCTYPE html>
+<html>
+<head>
+    <title>Letters Archive - CREAMS</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center mb-4 mt-3">
+                    <h2><i class="fas fa-archive"></i> Letters Archive</h2>
+                    <div>
+                        <a href="' . route('profile') . '#letters-tab" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> Generate New Letter
+                        </a>
+                        <a href="' . route('dashboard') . '" class="btn btn-secondary">
+                            <i class="fas fa-home"></i> Dashboard
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="table table-hover table-striped">
+                        <thead class="table-dark">
+                            <tr>
+                                <th><i class="fas fa-hashtag"></i> Reference</th>
+                                <th><i class="fas fa-calendar"></i> Date</th>
+                                <th><i class="fas fa-user"></i> Recipient</th>
+                                <th><i class="fas fa-tag"></i> Subject</th>
+                                <th><i class="fas fa-user-tie"></i> Generated By</th>
+                                <th><i class="fas fa-cogs"></i> Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>' . 
+                        collect($letters)->map(function($letter) {
+                            $letterData = is_array($letter->letter_data) ? $letter->letter_data : json_decode($letter->letter_data, true);
+                            return '<tr>
+                                <td><code>' . $letter->letter_reference . '</code></td>
+                                <td>' . \Carbon\Carbon::parse($letter->letter_date)->format('d M Y') . '</td>
+                                <td>' . ($letterData['recipient_name'] ?? 'Unknown') . '</td>
+                                <td>' . \Str::limit($letter->letter_subject, 50) . '</td>
+                                <td>' . ($letterData['generated_by_name'] ?? 'Unknown') . '</td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <a href="' . route('profile.letter.download', $letter->id) . '" 
+                                           class="btn btn-sm btn-primary" 
+                                           target="_blank" 
+                                           title="Download PDF">
+                                            <i class="fas fa-download"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>';
+                        })->join('') . 
+                        '</tbody>
+                    </table>
+                </div>
+                
+                <div class="mt-4">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Total Letters:</strong> ' . count($letters) . ' 
+                        | <strong>User:</strong> ' . session('name') . ' 
+                        | <strong>Role:</strong> ' . ucfirst(session('role')) . '
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>');
+    })->name('letters.archive');
 });
 
 /*
@@ -295,6 +504,19 @@ Route::middleware(['auth', 'centre.access:trainee'])->prefix('trainees')->name('
     Route::get('/{id}/edit', [TraineeProfileController::class, 'edit'])->name('edit');
     Route::put('/{id}', [TraineeProfileController::class, 'update'])->name('update');
     Route::delete('/{id}', [TraineeProfileController::class, 'destroy'])->name('destroy');
+});
+
+// Enhanced Trainee Management Routes
+Route::middleware(['auth', 'centre.access:trainee'])->prefix('enhanced-trainees')->name('enhanced-trainees.')->group(function () {
+    Route::get('/', [EnhancedTraineeController::class, 'index'])->name('index');
+    Route::get('/create', [EnhancedTraineeController::class, 'create'])->name('create');
+    Route::post('/', [EnhancedTraineeController::class, 'store'])->name('store');
+    Route::post('/force-create', [EnhancedTraineeController::class, 'forceCreate'])->name('force-create');
+    Route::get('/{id}', [EnhancedTraineeController::class, 'show'])->name('show');
+    Route::post('/bulk-operation', [EnhancedTraineeController::class, 'bulkOperation'])->name('bulk-operation');
+    Route::get('/search', [EnhancedTraineeController::class, 'search'])->name('search');
+    Route::get('/statistics', [EnhancedTraineeController::class, 'getStatistics'])->name('statistics');
+    Route::post('/export', [EnhancedTraineeController::class, 'exportTrainees'])->name('export');
 });
 
 // Legacy trainee routes (backward compatibility)
@@ -333,7 +555,7 @@ Route::middleware(['auth'])->group(function () {
 
 // Admin Routes
 Route::prefix('admin')->middleware(['auth', 'role:admin'])->group(function () {
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
+    Route::get('/dashboard', [App\Http\Controllers\OptimizedDashboardController::class, 'index'])->name('admin.dashboard');
     
     // Admin notifications
     Route::get('/notifications', [NotificationController::class, 'index'])->name('admin.notifications');
@@ -374,6 +596,13 @@ Route::prefix('admin')->middleware(['auth', 'role:admin'])->group(function () {
     });
 
     // Letter Management Routes (Admin Only)
+    // Letter template management routes (admin only)
+    Route::prefix('admin/letter-templates')->name('admin.letter-templates.')->group(function () {
+        Route::get('/', [LetterTemplateController::class, 'index'])->name('index');
+        Route::post('/update', [LetterTemplateController::class, 'store'])->name('update');
+    });
+    
+    // Legacy letter routes for backward compatibility
     Route::prefix('admin/letters')->name('admin.letters.')->group(function () {
         Route::get('/', [LetterController::class, 'index'])->name('index');
         Route::post('/template', [LetterController::class, 'updateTemplate'])->name('template');
@@ -395,7 +624,7 @@ Route::prefix('admin')->middleware(['auth', 'role:admin'])->group(function () {
 
 // Supervisor Routes
 Route::prefix('supervisor')->middleware(['auth', 'role:supervisor'])->group(function () {
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('supervisor.dashboard');
+    Route::get('/dashboard', [App\Http\Controllers\OptimizedDashboardController::class, 'index'])->name('supervisor.dashboard');
     Route::get('/notifications', [NotificationController::class, 'index'])->name('supervisor.notifications');
     Route::get('/centres', function() { return redirect()->route('centres.index'); })->name('supervisor.centres');
     Route::get('/activities', function() { return redirect()->route('activities.index'); })->name('supervisor.activities');
@@ -405,7 +634,7 @@ Route::prefix('supervisor')->middleware(['auth', 'role:supervisor'])->group(func
 
 // Teacher Routes
 Route::prefix('teacher')->middleware(['auth', 'role:teacher'])->group(function () {
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('teacher.dashboard');
+    Route::get('/dashboard', [App\Http\Controllers\OptimizedDashboardController::class, 'index'])->name('teacher.dashboard');
     Route::get('/notifications', [NotificationController::class, 'index'])->name('teacher.notifications');
     Route::get('/centres', function() { return redirect()->route('centres.index'); })->name('teacher.centres');
     Route::get('/activities', function() { return redirect()->route('activities.index'); })->name('teacher.activities');
@@ -415,7 +644,7 @@ Route::prefix('teacher')->middleware(['auth', 'role:teacher'])->group(function (
 
 // AJK Routes
 Route::prefix('ajk')->middleware(['auth', 'role:ajk'])->group(function () {
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('ajk.dashboard');
+    Route::get('/dashboard', [App\Http\Controllers\OptimizedDashboardController::class, 'index'])->name('ajk.dashboard');
     Route::get('/notifications', [NotificationController::class, 'index'])->name('ajk.notifications');
     Route::get('/centres', function() { return redirect()->route('centres.index'); })->name('ajk.centres');
     Route::get('/activities', function() { return redirect()->route('activities.index'); })->name('ajk.activities');

@@ -7,8 +7,15 @@ use App\Models\Centres;
 use App\Models\Asset;
 use App\Models\Users;
 use App\Models\Trainee;
+use App\Models\Activity;
+use App\Models\CentreAuditLog;
+use App\Models\CentreStatistics;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
+use Carbon\Carbon;
 use Exception;
 
 class CentreController extends Controller
@@ -329,5 +336,136 @@ class CentreController extends Controller
             ->orderBy('created_at', 'desc')
             ->limit(5)
             ->get();
+    }
+    
+    /**
+     * Get centre performance metrics API endpoint
+     */
+    public function getMetrics($id)
+    {
+        try {
+            // Check authentication and authorization
+            if (!session()->has('id')) {
+                return response()->json(['message' => 'Unauthorized'], 401);
+            }
+
+            $user = (object) [
+                'id' => session('id'),
+                'role' => session('role'),
+                'centre_id' => session('centre_id')
+            ];
+
+            // Centre access validation
+            if (!in_array($user->role, ['admin']) && $user->centre_id != $id) {
+                return response()->json(['message' => 'Access denied'], 403);
+            }
+
+            $centre = Centres::findOrFail($id);
+            $stats = $this->getCachedCentreStats($id, true);
+            
+            // Get historical data for trends
+            $historicalStats = $this->getHistoricalStats($id);
+            
+            return response()->json([
+                'success' => true,
+                'centre' => [
+                    'id' => $centre->id,
+                    'name' => $centre->centre_name,
+                    'status' => $centre->centre_status
+                ],
+                'current_stats' => $stats,
+                'historical_stats' => $historicalStats,
+                'generated_at' => now()->toISOString()
+            ]);
+
+        } catch (Exception $e) {
+            Log::error('Error getting centre metrics', [
+                'centre_id' => $id,
+                'error' => $e->getMessage()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to retrieve metrics'
+            ], 500);
+        }
+    }
+    
+    /**
+     * Get historical statistics for trends
+     */
+    private function getHistoricalStats($centreId)
+    {
+        $thirtyDaysAgo = Carbon::now()->subDays(30);
+        
+        return CentreStatistics::where('centre_id', $centreId)
+            ->where('last_calculated', '>=', $thirtyDaysAgo)
+            ->orderBy('last_calculated')
+            ->get()
+            ->map(function ($record) {
+                return [
+                    'date' => $record->last_calculated->toDateString(),
+                    'utilization_rate' => $record->utilization_rate,
+                    'attendance_rate' => $record->attendance_rate,
+                    'total_users' => $record->total_users,
+                    'total_trainees' => $record->total_trainees,
+                    'total_activities' => $record->total_activities
+                ];
+            });
+    }
+    
+    /**
+     * Refresh centre statistics on demand
+     */
+    public function refreshStatistics($id)
+    {
+        try {
+            // Check authentication and authorization
+            if (!session()->has('id')) {
+                return response()->json(['message' => 'Unauthorized'], 401);
+            }
+
+            $user = (object) [
+                'id' => session('id'),
+                'role' => session('role'),
+                'centre_id' => session('centre_id')
+            ];
+
+            // Centre access validation
+            if (!in_array($user->role, ['admin', 'supervisor']) && $user->centre_id != $id) {
+                return response()->json(['message' => 'Access denied'], 403);
+            }
+
+            $centre = Centres::findOrFail($id);
+            
+            // Force refresh statistics
+            $stats = $this->getCachedCentreStats($id, true);
+            
+            // Clear all related caches
+            Cache::forget("centre_details_{$id}");
+            Cache::forget("centres_summary_{$user->id}_{$user->role}");
+            
+            Log::info('Centre statistics refreshed', [
+                'centre_id' => $id,
+                'refreshed_by' => $user->id
+            ]);
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Statistics refreshed successfully',
+                'stats' => $stats
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error refreshing centre statistics', [
+                'centre_id' => $id,
+                'error' => $e->getMessage()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to refresh statistics'
+            ], 500);
+        }
     }
 }

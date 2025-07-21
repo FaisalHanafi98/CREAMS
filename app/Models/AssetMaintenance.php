@@ -5,52 +5,37 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Carbon\Carbon;
 
-/**
- * Asset Maintenance Model
- * 
- * This model handles all aspects of asset maintenance including
- * scheduling, tracking, cost management, and compliance monitoring.
- */
 class AssetMaintenance extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
 
     protected $table = 'asset_maintenance';
 
     protected $fillable = [
-        'asset_id', 'maintenance_type', 'scheduled_date', 'completed_date',
-        'performed_by_id', 'vendor_id', 'status', 'priority',
-        'description', 'cost', 'parts_cost', 'labor_cost',
-        'downtime_start', 'downtime_end', 'next_maintenance_date',
-        'certification_required', 'certification_obtained',
-        'warranty_work', 'work_order_number', 'notes',
-        'preventive_maintenance', 'compliance_check'
+        'asset_id',
+        'type',
+        'scheduled_date',
+        'completed_date',
+        'status',
+        'performed_by',
+        'cost',
+        'description',
+        'notes',
+        'created_by'
     ];
 
     protected $casts = [
-        'scheduled_date' => 'datetime',
-        'completed_date' => 'datetime',
-        'downtime_start' => 'datetime',
-        'downtime_end' => 'datetime',
-        'next_maintenance_date' => 'datetime',
-        'cost' => 'decimal:2',
-        'parts_cost' => 'decimal:2',
-        'labor_cost' => 'decimal:2',
-        'certification_required' => 'boolean',
-        'certification_obtained' => 'boolean',
-        'warranty_work' => 'boolean',
-        'preventive_maintenance' => 'boolean',
-        'compliance_check' => 'boolean',
+        'scheduled_date' => 'date',
+        'completed_date' => 'date',
+        'cost' => 'decimal:2'
     ];
 
-    protected $dates = ['deleted_at'];
-
     protected $appends = [
-        'total_cost', 'downtime_hours', 'is_overdue', 'days_until_due',
-        'status_badge_class', 'priority_badge_class', 'efficiency_score'
+        'status_badge_class',
+        'type_badge_class',
+        'is_overdue'
     ];
 
     /**
@@ -145,15 +130,15 @@ class AssetMaintenance extends Model
      */
     public function performedBy(): BelongsTo
     {
-        return $this->belongsTo(Users::class, 'performed_by_id');
+        return $this->belongsTo(Users::class, 'performed_by');
     }
 
     /**
-     * Get the vendor who performed the maintenance
+     * Get the user who created this maintenance record
      */
-    public function vendor(): BelongsTo
+    public function creator(): BelongsTo
     {
-        return $this->belongsTo(Vendor::class, 'vendor_id');
+        return $this->belongsTo(Users::class, 'created_by');
     }
 
     // =============================================
@@ -173,7 +158,7 @@ class AssetMaintenance extends Model
      */
     public function scopeOfType($query, string $type)
     {
-        return $query->where('maintenance_type', $type);
+        return $query->where('type', $type);
     }
 
     /**
@@ -185,11 +170,12 @@ class AssetMaintenance extends Model
     }
 
     /**
-     * Scope a query to filter by priority
+     * Scope a query to filter by priority (note: priority not in current schema)
      */
     public function scopeWithPriority($query, string $priority)
     {
-        return $query->where('priority', $priority);
+        // Priority field not in current schema, skip or add to migration
+        return $query;
     }
 
     /**
@@ -400,7 +386,7 @@ class AssetMaintenance extends Model
     /**
      * Start maintenance work
      */
-    public function start(int $performedById = null): bool
+    public function start(?int $performedById = null): bool
     {
         $this->status = self::STATUS_IN_PROGRESS;
         $this->downtime_start = now();

@@ -32,10 +32,12 @@ class QuickAttendanceController extends Controller
         try {
             $userId = session('id');
             $role = session('role');
+            $centreId = session('centre_id');
             
             Log::info('Quick attendance accessed', [
                 'user_id' => $userId,
-                'role' => $role
+                'role' => $role,
+                'centre_id' => $centreId
             ]);
             
             if (!$userId || !$role) {
@@ -45,40 +47,48 @@ class QuickAttendanceController extends Controller
                 ], 401);
             }
             
-            $today = Carbon::today();
-            $sessions = collect();
-            
-            // Get today's sessions based on user role
-            if ($role === 'teacher') {
-                // Teachers see only their assigned sessions
-                $sessions = ActivitySession::with(['activity', 'enrollments.trainee'])
-                    ->where('session_date', $today->format('Y-m-d'))
-                    ->where('teacher_id', $userId)
-                    ->where('status', 'active')
-                    ->orderBy('start_time')
-                    ->get();
-            } elseif (in_array($role, ['admin', 'supervisor'])) {
-                // Admin and supervisors see all sessions
-                $sessions = ActivitySession::with(['activity', 'enrollments.trainee', 'teacher'])
-                    ->where('session_date', $today->format('Y-m-d'))
-                    ->where('status', 'active')
-                    ->orderBy('start_time')
-                    ->get();
+            // Permission check: AJK cannot mark attendance
+            if ($role === 'ajk') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized: AJK role cannot mark attendance'
+                ], 403);
             }
+            
+            $today = Carbon::today()->format('Y-m-d');
+            
+            // Build sessions query with proper permission filtering
+            $sessionsQuery = ActivitySession::with([
+                'activity:id,activity_name,centre_id',
+                'sessionEnrollments.trainee:id,trainee_first_name,trainee_last_name,unique_identifier'
+            ])
+            ->where('session_date', $today)
+            ->where('status', 'scheduled');
+            
+            // Teachers only see their assigned sessions
+            if ($role === 'teacher') {
+                $sessionsQuery->where('teacher_id', $userId);
+            } elseif (!in_array($role, ['admin', 'supervisor'])) {
+                // Other roles see sessions from their centre only
+                $sessionsQuery->whereHas('activity', function ($q) use ($centreId) {
+                    $q->where('centre_id', $centreId);
+                });
+            }
+            
+            $sessions = $sessionsQuery->orderBy('start_time')->get();
             
             // Format sessions for frontend
             $formattedSessions = [];
             foreach ($sessions as $session) {
-                $enrolledTrainees = $session->enrollments->map(function($enrollment) {
+                $enrolledTrainees = $session->sessionEnrollments->map(function($enrollment) {
                     return [
                         'id' => $enrollment->trainee->id,
-                        'name' => $enrollment->trainee->name,
-                        'enrollment_id' => $enrollment->id
+                        'name' => $enrollment->trainee->trainee_first_name . ' ' . $enrollment->trainee->trainee_last_name,
+                        'unique_identifier' => $enrollment->trainee->unique_identifier,
+                        'enrollment_id' => $enrollment->id,
+                        'current_status' => $enrollment->attendance_status
                     ];
                 });
-                
-                // Check if attendance already exists for this session
-                $existingAttendance = Attendance::where('session_id', $session->id)->exists();
                 
                 $formattedSessions[] = [
                     'id' => $session->id,
@@ -86,10 +96,11 @@ class QuickAttendanceController extends Controller
                     'session_date' => $session->session_date,
                     'start_time' => $session->start_time,
                     'end_time' => $session->end_time,
-                    'location' => $session->location,
+                    'venue' => $session->venue,
                     'teacher_name' => $role === 'teacher' ? null : ($session->teacher->name ?? 'Unassigned'),
                     'enrolled_trainees' => $enrolledTrainees,
-                    'attendance_marked' => $existingAttendance
+                    'attendance_marked' => $session->attendance_marked,
+                    'can_mark_attendance' => $session->canMarkAttendance()
                 ];
             }
             

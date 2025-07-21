@@ -16,7 +16,11 @@
       "Bash(git push:*)",
       "Bash(curl:*)",
       "Bash(grep:*)",
-      "Bash(mv:*)"
+      "Bash(mv:*)",
+      "Bash(find:*)",
+      "Bash(tail:*)",
+      "Bash(touch:*)",
+      "Bash(true)"
     ],
     "deny": []
   }

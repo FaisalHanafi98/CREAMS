@@ -31,6 +31,47 @@ class RouteServiceProvider extends ServiceProvider
             return Limit::perMinute(60)->by($request->user()?->id ?: $request->ip());
         });
 
+        // Dashboard-specific rate limiters for optimized performance
+        RateLimiter::for('dashboard', function (Request $request) {
+            $userId = session('id') ?: $request->ip();
+            return [
+                Limit::perMinute(120)->by($userId), // 120 requests per minute for dashboard
+                Limit::perHour(1000)->by($userId),  // 1000 requests per hour
+            ];
+        });
+
+        RateLimiter::for('dashboard-updates', function (Request $request) {
+            $userId = session('id') ?: $request->ip();
+            return [
+                Limit::perMinute(30)->by($userId),  // 30 AJAX updates per minute
+                Limit::perHour(600)->by($userId),   // 600 updates per hour
+            ];
+        });
+
+        RateLimiter::for('dashboard-refresh', function (Request $request) {
+            $userId = session('id') ?: $request->ip();
+            return [
+                Limit::perMinute(10)->by($userId),  // 10 manual refreshes per minute
+                Limit::perHour(120)->by($userId),   // 120 refreshes per hour
+            ];
+        });
+
+        RateLimiter::for('export', function (Request $request) {
+            $userId = session('id') ?: $request->ip();
+            return [
+                Limit::perMinute(5)->by($userId),   // 5 exports per minute
+                Limit::perHour(50)->by($userId),    // 50 exports per hour
+            ];
+        });
+
+        RateLimiter::for('admin-actions', function (Request $request) {
+            $userId = session('id') ?: $request->ip();
+            return [
+                Limit::perMinute(20)->by($userId),  // 20 admin actions per minute
+                Limit::perHour(200)->by($userId),   // 200 admin actions per hour
+            ];
+        });
+
         // Register routes
         $this->routes(function () {
             Route::middleware('api')

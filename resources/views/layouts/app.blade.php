@@ -2,8 +2,24 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0, minimal-ui">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="CREAMS">
+    <meta name="theme-color" content="#764ba2">
+    <meta name="msapplication-TileColor" content="#667eea">
+    <meta name="description" content="CREAMS - Community-based REhAbilitation Management System Dashboard">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json">
+    
+    <!-- iOS Icons -->
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    
     <title>@yield('title', ucfirst(session('role')) . ' Dashboard - CREAMS')</title>
     
     <!-- External CSS -->
@@ -1688,6 +1704,60 @@
             // Run avatar fix only once on page load
             fixAvatarImages();
         });
+        
+        // PWA Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(function(registration) {
+                        console.log('CREAMS SW: Registration successful', registration.scope);
+                        
+                        // Check for updates
+                        registration.addEventListener('updatefound', function() {
+                            const newWorker = registration.installing;
+                            newWorker.addEventListener('statechange', function() {
+                                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                    // New version available
+                                    if (confirm('New version available! Reload to update?')) {
+                                        newWorker.postMessage({ type: 'SKIP_WAITING' });
+                                        window.location.reload();
+                                    }
+                                }
+                            });
+                        });
+                    })
+                    .catch(function(error) {
+                        console.log('CREAMS SW: Registration failed', error);
+                    });
+            });
+        }
+        
+        // Mobile-specific optimizations
+        if (window.innerWidth <= 768) {
+            // Add mobile class for styling
+            document.body.classList.add('mobile-device');
+            
+            // Disable zoom on form inputs (iOS)
+            document.addEventListener('touchstart', function() {
+                const viewport = document.querySelector('meta[name=viewport]');
+                if (viewport) {
+                    viewport.content = 'width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0';
+                }
+            });
+            
+            // Enable pull-to-refresh on mobile
+            let startY = 0;
+            document.addEventListener('touchstart', function(e) {
+                startY = e.touches[0].clientY;
+            });
+            
+            document.addEventListener('touchmove', function(e) {
+                if (window.scrollY === 0 && e.touches[0].clientY > startY + 50) {
+                    // Trigger refresh
+                    location.reload();
+                }
+            });
+        }
     </script>
     
     @yield('scripts')

@@ -180,7 +180,7 @@ class LetterTemplateController extends Controller
                 'letter_subject' => $validated['subject'],
                 'letter_content' => $validated['content'],
                 'letter_type' => 'official',
-                'recipient_id' => $validated['recipient_id'],
+                'recipient_id' => $validated['recipient_id'] ?? 0, // Default to 0 if not provided
                 'recipient_type' => $validated['recipient_type'] ?? 'external',
                 'template_id' => $template->id,
                 'letter_status' => 'draft',
@@ -188,6 +188,8 @@ class LetterTemplateController extends Controller
                 'letter_data' => [
                     'generated_by_name' => session('name') ?? $user->name,
                     'generated_by_position' => $user->position ?? ucfirst(session('role')),
+                    'recipient_name' => $validated['recipient_name'] ?? 'Unknown',
+                    'recipient_address' => $validated['recipient_address'] ?? '',
                 ]
             ]);
 
@@ -342,12 +344,17 @@ class LetterTemplateController extends Controller
                 'isHtml5ParserEnabled' => true,
                 'isPhpEnabled' => true,
                 'defaultFont' => 'DejaVu Sans',
-                'dpi' => 96,
-                'fontHeightRatio' => 1.1,
+                'dpi' => 150,
+                'fontHeightRatio' => 1.0,
                 'isRemoteEnabled' => false, // Disable remote content to avoid GD dependency
                 'chroot' => public_path(), // Restrict file access
-                'logOutputFile' => storage_path('logs/dompdf.log'),
-                'tempDir' => storage_path('app/temp'),
+                'debugKeepTemp' => false,
+                'debugCss' => false,
+                'debugLayout' => false,
+                'debugLayoutLines' => false,
+                'debugLayoutBlocks' => false,
+                'debugLayoutInline' => false,
+                'debugLayoutPaddingBox' => false,
                 'enableCssFloat' => true,
                 'enableHtml5Parser' => true
             ]);

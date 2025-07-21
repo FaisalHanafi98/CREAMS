@@ -10,164 +10,235 @@ class ActivityEnrollment extends Model
 {
     use HasFactory;
 
+    protected $table = 'activity_enrollments_new';
+
     protected $fillable = [
-        'activity_id',
         'trainee_id',
-        'enrollment_date',
+        'activity_id',
+        'session_id',
         'enrollment_status',
-        'enrollment_notes',
-        'progress_percentage',
-        'attendance_count',
-        'completion_date',
-        'completion_notes',
-        'enrolled_by'
+        'enrollment_date',
+        'attendance_marked',
+        'participation_score',
+        'progress_notes',
+        'assessment_data'
     ];
 
     protected $casts = [
         'enrollment_date' => 'date',
-        'completion_date' => 'date',
-        'progress_percentage' => 'decimal:2',
-        'attendance_count' => 'integer'
+        'attendance_marked' => 'boolean',
+        'assessment_data' => 'array'
     ];
 
-    // Relationships
-    public function activity()
-    {
-        return $this->belongsTo(Activity::class);
-    }
+    protected $appends = ['status_badge_class', 'participation_level'];
 
+    /**
+     * Get the trainee for this enrollment
+     */
     public function trainee()
     {
         return $this->belongsTo(Trainee::class);
     }
 
-    public function enrolledBy()
-    {
-        return $this->belongsTo(Users::class, 'enrolled_by');
-    }
-
     /**
-     * Get the session enrollments for this activity enrollment
-     * This provides access to session-level data when needed
+     * Get the activity for this enrollment
      */
-    public function sessionEnrollments()
+    public function activity()
     {
-        return $this->hasMany(SessionEnrollment::class, 'trainee_id', 'trainee_id')
-                    ->whereHas('session', function($query) {
-                        $query->where('activity_id', $this->activity_id);
-                    });
+        return $this->belongsTo(Activity::class);
     }
 
     /**
-     * Get the latest session enrollment for this activity enrollment
-     * This provides a "session" relationship for backward compatibility
+     * Get the session for this enrollment
      */
     public function session()
     {
-        return $this->hasOneThrough(
-            ActivitySession::class,
-            SessionEnrollment::class,
-            'trainee_id', // Foreign key on SessionEnrollment table
-            'id', // Foreign key on ActivitySession table
-            'trainee_id', // Local key on ActivityEnrollment table
-            'session_id' // Local key on SessionEnrollment table
-        )->where('activity_sessions.activity_id', $this->activity_id)
-         ->latest('activity_sessions.scheduled_date');
+        return $this->belongsTo(ActivitySession::class, 'session_id');
     }
 
-    // Scopes
-    public function scopeActive($query)
+    /**
+     * Scope for enrolled trainees
+     */
+    public function scopeEnrolled($query)
     {
-        return $query->whereIn('enrollment_status', ['enrolled', 'active']);
+        return $query->where('enrollment_status', 'enrolled');
     }
 
+    /**
+     * Scope for completed enrollments
+     */
     public function scopeCompleted($query)
     {
         return $query->where('enrollment_status', 'completed');
     }
 
-    public function scopeForActivity($query, $activityId)
+    /**
+     * Scope for dropped enrollments
+     */
+    public function scopeDropped($query)
     {
-        return $query->where('activity_id', $activityId);
+        return $query->where('enrollment_status', 'dropped');
     }
 
-    public function scopeForTrainee($query, $traineeId)
+    /**
+     * Scope for absent enrollments
+     */
+    public function scopeAbsent($query)
+    {
+        return $query->where('enrollment_status', 'absent');
+    }
+
+    /**
+     * Scope for enrollments with marked attendance
+     */
+    public function scopeAttendanceMarked($query)
+    {
+        return $query->where('attendance_marked', true);
+    }
+
+    /**
+     * Scope for enrollments by trainee
+     */
+    public function scopeByTrainee($query, $traineeId)
     {
         return $query->where('trainee_id', $traineeId);
     }
 
-    public function scopeRecent($query, $days = 30)
+    /**
+     * Scope for enrollments by activity
+     */
+    public function scopeByActivity($query, $activityId)
     {
-        return $query->where('enrollment_date', '>=', Carbon::now()->subDays($days));
+        return $query->where('activity_id', $activityId);
     }
 
-    // Accessors
+    /**
+     * Scope for enrollments by session
+     */
+    public function scopeBySession($query, $sessionId)
+    {
+        return $query->where('session_id', $sessionId);
+    }
+
+    /**
+     * Get status badge class for display
+     */
     public function getStatusBadgeClassAttribute()
     {
-        return match($this->enrollment_status) {
+        $classes = [
             'enrolled' => 'badge-primary',
-            'active' => 'badge-success',
-            'completed' => 'badge-info',
-            'dropped' => 'badge-danger',
-            'pending' => 'badge-warning',
-            default => 'badge-secondary'
-        };
+            'completed' => 'badge-success',
+            'dropped' => 'badge-warning',
+            'absent' => 'badge-danger'
+        ];
+
+        return $classes[$this->enrollment_status] ?? 'badge-secondary';
     }
 
-    public function getStatusDisplayAttribute()
+    /**
+     * Get participation level based on score
+     */
+    public function getParticipationLevelAttribute()
     {
-        return match($this->enrollment_status) {
-            'enrolled' => 'Enrolled',
-            'active' => 'Active',
-            'completed' => 'Completed',
-            'dropped' => 'Dropped',
-            'pending' => 'Pending',
-            default => 'Unknown'
-        };
+        if ($this->participation_score === null) {
+            return 'Not Scored';
+        }
+
+        if ($this->participation_score >= 8) {
+            return 'Excellent';
+        } elseif ($this->participation_score >= 6) {
+            return 'Good';
+        } elseif ($this->participation_score >= 4) {
+            return 'Average';
+        } else {
+            return 'Needs Improvement';
+        }
     }
 
-    public function getDaysEnrolledAttribute()
+    /**
+     * Check if enrollment can be marked as present
+     */
+    public function canMarkPresent()
     {
-        $startDate = $this->enrollment_date;
-        $endDate = $this->completion_date ?? Carbon::now();
-        
-        return $startDate->diffInDays($endDate);
+        return $this->enrollment_status === 'enrolled' && !$this->attendance_marked;
     }
 
-    // Helper methods
-    public function isActive()
+    /**
+     * Check if enrollment can be marked as absent
+     */
+    public function canMarkAbsent()
     {
-        return in_array($this->enrollment_status, ['enrolled', 'active']);
+        return $this->enrollment_status === 'enrolled' && !$this->attendance_marked;
     }
 
+    /**
+     * Mark attendance as present
+     */
+    public function markPresent($participationScore = null, $notes = null)
+    {
+        if (!$this->canMarkPresent()) {
+            return false;
+        }
+
+        $this->update([
+            'enrollment_status' => 'completed',
+            'attendance_marked' => true,
+            'participation_score' => $participationScore,
+            'progress_notes' => $notes
+        ]);
+
+        return true;
+    }
+
+    /**
+     * Mark attendance as absent
+     */
+    public function markAbsent($notes = null)
+    {
+        if (!$this->canMarkAbsent()) {
+            return false;
+        }
+
+        $this->update([
+            'enrollment_status' => 'absent',
+            'attendance_marked' => true,
+            'progress_notes' => $notes
+        ]);
+
+        return true;
+    }
+
+    /**
+     * Check if trainee has completed the activity
+     */
     public function isCompleted()
     {
-        return $this->enrollment_status === 'completed';
+        return $this->enrollment_status === 'completed' && $this->attendance_marked;
     }
 
-    public function canAttend()
+    /**
+     * Check if trainee is currently enrolled
+     */
+    public function isActive()
     {
-        return $this->isActive() && !$this->isOnHold();
+        return $this->enrollment_status === 'enrolled';
     }
 
-    public function isOnHold()
+    /**
+     * Static method to get enrollment statistics for an activity
+     */
+    public static function getActivityStatistics($activityId)
     {
-        return $this->enrollment_status === 'pending';
-    }
+        $enrollments = static::where('activity_id', $activityId);
 
-    public function markAttended()
-    {
-        $this->increment('attendance_count');
-    }
-
-    public function addProgressNote($note)
-    {
-        $timestamp = Carbon::now()->format('Y-m-d H:i');
-        $currentNotes = $this->enrollment_notes ?? '';
-        $newNote = "[{$timestamp}] {$note}";
-        
-        $this->update([
-            'enrollment_notes' => $currentNotes ? $currentNotes . "\n" . $newNote : $newNote
-        ]);
+        return [
+            'total' => $enrollments->count(),
+            'enrolled' => $enrollments->where('enrollment_status', 'enrolled')->count(),
+            'completed' => $enrollments->where('enrollment_status', 'completed')->count(),
+            'dropped' => $enrollments->where('enrollment_status', 'dropped')->count(),
+            'absent' => $enrollments->where('enrollment_status', 'absent')->count(),
+            'attendance_marked' => $enrollments->where('attendance_marked', true)->count(),
+            'average_participation' => $enrollments->whereNotNull('participation_score')->avg('participation_score')
+        ];
     }
 }

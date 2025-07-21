@@ -47,6 +47,23 @@ class Trainee extends Model
         // Consent fields
         'photo_consent',
         'services_consent',
+        // Enhanced fields for data integrity
+        'unique_identifier',
+        'admission_date',
+        'graduation_date',
+        'medical_info',
+        'assessment_data',
+        'tags',
+        'guardian_info',
+        'emergency_contact',
+        'last_updated_by',
+        // Backwards compatibility aliases
+        'name', // Maps to full name
+        'email', // Maps to trainee_email
+        'phone', // Maps to trainee_phone_number
+        'date_of_birth', // Maps to trainee_date_of_birth
+        'address', // Maps to trainee_address
+        'condition', // Maps to trainee_condition
     ];
     
     /**
@@ -72,7 +89,17 @@ class Trainee extends Model
     protected $casts = [
         'trainee_date_of_birth' => 'date',
         'trainee_last_accessed_at' => 'datetime',
-        // 'trainee_attendance' cast removed - field doesn't exist in database
+        // Enhanced casts for new fields
+        'admission_date' => 'date',
+        'graduation_date' => 'date',
+        'medical_info' => 'array',
+        'assessment_data' => 'array',
+        'tags' => 'array',
+        'guardian_info' => 'array',
+        'emergency_contact' => 'array',
+        'photo_consent' => 'boolean',
+        'services_consent' => 'boolean',
+        'date_of_birth' => 'date', // Compatibility
     ];
 
     /**
@@ -262,5 +289,289 @@ class Trainee extends Model
     public function scopeByCondition($query, $condition)
     {
         return $query->where('trainee_condition', $condition);
+    }
+
+    // =============================================
+    // ENHANCED RELATIONSHIPS
+    // =============================================
+
+    /**
+     * Get the audit logs for the trainee
+     */
+    public function auditLogs()
+    {
+        return $this->hasMany(TraineeAuditLog::class);
+    }
+
+    /**
+     * Get the documents for the trainee
+     */
+    public function documents()
+    {
+        return $this->hasMany(TraineeDocument::class);
+    }
+
+    /**
+     * Get the progress records for the trainee
+     */
+    public function progress()
+    {
+        return $this->hasMany(TraineeProgress::class);
+    }
+
+    /**
+     * Get the user who last updated this trainee
+     */
+    public function lastUpdatedBy()
+    {
+        return $this->belongsTo(Users::class, 'last_updated_by');
+    }
+
+    // =============================================
+    // ENHANCED ATTRIBUTES & ACCESSORS
+    // =============================================
+
+    /**
+     * Get the trainee's name (compatibility accessor)
+     */
+    public function getNameAttribute()
+    {
+        return $this->full_name;
+    }
+
+    /**
+     * Set the name attribute (compatibility mutator)
+     */
+    public function setNameAttribute($value)
+    {
+        // Split name into first and last name
+        $nameParts = explode(' ', $value, 2);
+        $this->trainee_first_name = $nameParts[0];
+        $this->trainee_last_name = $nameParts[1] ?? '';
+    }
+
+    /**
+     * Get email attribute (compatibility)
+     */
+    public function getEmailAttribute()
+    {
+        return $this->trainee_email;
+    }
+
+    /**
+     * Set email attribute (compatibility)
+     */
+    public function setEmailAttribute($value)
+    {
+        $this->trainee_email = $value;
+    }
+
+    /**
+     * Get phone attribute (compatibility)
+     */
+    public function getPhoneAttribute()
+    {
+        return $this->trainee_phone_number;
+    }
+
+    /**
+     * Set phone attribute (compatibility)
+     */
+    public function setPhoneAttribute($value)
+    {
+        $this->trainee_phone_number = $value;
+    }
+
+    /**
+     * Get date of birth attribute (compatibility)
+     */
+    public function getDateOfBirthAttribute()
+    {
+        return $this->trainee_date_of_birth;
+    }
+
+    /**
+     * Set date of birth attribute (compatibility)
+     */
+    public function setDateOfBirthAttribute($value)
+    {
+        $this->trainee_date_of_birth = $value;
+    }
+
+    /**
+     * Get address attribute (compatibility)
+     */
+    public function getAddressAttribute()
+    {
+        return $this->trainee_address;
+    }
+
+    /**
+     * Set address attribute (compatibility)
+     */
+    public function setAddressAttribute($value)
+    {
+        $this->trainee_address = $value;
+    }
+
+    /**
+     * Get condition attribute (compatibility)
+     */
+    public function getConditionAttribute()
+    {
+        return $this->trainee_condition;
+    }
+
+    /**
+     * Set condition attribute (compatibility)
+     */
+    public function setConditionAttribute($value)
+    {
+        $this->trainee_condition = $value;
+    }
+
+    /**
+     * Get the latest progress assessment
+     */
+    public function getLatestProgressAttribute()
+    {
+        return $this->progress()->latest('assessment_date')->first();
+    }
+
+    /**
+     * Get average progress percentage
+     */
+    public function getAverageProgressAttribute()
+    {
+        return TraineeProgress::getAverageProgress($this->id);
+    }
+
+    /**
+     * Check if trainee has expired documents
+     */
+    public function getHasExpiredDocumentsAttribute()
+    {
+        return $this->documents()->expired()->exists();
+    }
+
+    /**
+     * Get documents expiring soon
+     */
+    public function getExpiringDocumentsAttribute()
+    {
+        return $this->documents()->expiringSoon()->get();
+    }
+
+    /**
+     * Get guardian phone (from guardian_info or legacy field)
+     */
+    public function getGuardianPhoneAttribute()
+    {
+        if ($this->guardian_info && isset($this->guardian_info['guardian_phone'])) {
+            return $this->guardian_info['guardian_phone'];
+        }
+        return $this->attributes['guardian_phone'] ?? null;
+    }
+
+    // =============================================
+    // ENHANCED SCOPES
+    // =============================================
+
+    /**
+     * Scope for trainees with upcoming birthdays
+     */
+    public function scopeUpcomingBirthdays($query, $days = 30)
+    {
+        return $query->whereRaw("
+            DATE_ADD(
+                DATE(CONCAT(YEAR(CURDATE()), '-', MONTH(trainee_date_of_birth), '-', DAY(trainee_date_of_birth))),
+                INTERVAL IF(
+                    DATE(CONCAT(YEAR(CURDATE()), '-', MONTH(trainee_date_of_birth), '-', DAY(trainee_date_of_birth))) < CURDATE(),
+                    1,
+                    0
+                ) YEAR
+            ) BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL ? DAY)
+        ", [$days]);
+    }
+
+    /**
+     * Scope for trainees by status
+     */
+    public function scopeByStatus($query, $status)
+    {
+        return $query->where('status', $status);
+    }
+
+    /**
+     * Scope for search functionality
+     */
+    public function scopeSearch($query, $search)
+    {
+        return $query->where(function($q) use ($search) {
+            $q->where('trainee_first_name', 'LIKE', "%{$search}%")
+              ->orWhere('trainee_last_name', 'LIKE', "%{$search}%")
+              ->orWhere('trainee_email', 'LIKE', "%{$search}%")
+              ->orWhere('trainee_phone_number', 'LIKE', "%{$search}%")
+              ->orWhere('unique_identifier', 'LIKE', "%{$search}%")
+              ->orWhere('guardian_name', 'LIKE', "%{$search}%")
+              ->orWhere('guardian_phone', 'LIKE', "%{$search}%")
+              ->orWhere('guardian_email', 'LIKE', "%{$search}%")
+              ->orWhere('emergency_contact_name', 'LIKE', "%{$search}%")
+              ->orWhere('emergency_contact_phone', 'LIKE', "%{$search}%");
+        });
+    }
+
+    /**
+     * Scope for trainees needing progress assessment
+     */
+    public function scopeNeedsAssessment($query, $months = 3)
+    {
+        return $query->whereDoesntHave('progress', function($q) use ($months) {
+            $q->where('assessment_date', '>', now()->subMonths($months));
+        });
+    }
+
+    // =============================================
+    // MODEL EVENTS & AUDIT TRAIL
+    // =============================================
+
+    /**
+     * Boot method to add model events
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        // Auto-generate unique identifier on creation
+        static::creating(function ($trainee) {
+            if (!$trainee->unique_identifier) {
+                $service = new \App\Services\TraineeService();
+                $trainee->unique_identifier = $service->generateUniqueIdentifier();
+            }
+        });
+
+        // Log updates
+        static::updating(function ($trainee) {
+            if ($trainee->isDirty()) {
+                TraineeAuditLog::logAction(
+                    $trainee->id,
+                    'updated',
+                    $trainee->getOriginal(),
+                    $trainee->getDirty(),
+                    'Trainee record updated'
+                );
+            }
+        });
+
+        // Log deletions
+        static::deleting(function ($trainee) {
+            TraineeAuditLog::logAction(
+                $trainee->id,
+                'deleted',
+                $trainee->toArray(),
+                null,
+                'Trainee record deleted'
+            );
+        });
     }
 }

@@ -1,113 +1,107 @@
-<div class="letter-preview" style="max-width: 800px; margin: 0 auto; padding: 20px; font-family: 'Times New Roman', serif; background: white; border: 1px solid #ddd;">
-    <!-- Reference Number -->
-    <div style="text-align: right; font-size: 12px; color: #666; margin-bottom: 20px; font-weight: bold;">
-        Ref: {{ $letter->reference_number }}
-    </div>
-    
-    <!-- Header Section -->
-    @if($template && $template->header_image)
-        <div style="text-align: center; margin-bottom: 25px; border-bottom: 2px solid #000; padding-bottom: 15px;">
-            <img src="{{ $template->header_image_url }}" alt="Header" style="max-width: 100%; max-height: 120px;">
+{{-- Simple Letter Preview Template --}}
+<div class="letter-preview p-4" style="font-family: 'Times New Roman', serif; line-height: 1.6;">
+    @if(isset($letter))
+        {{-- Letter Header Section --}}
+        <div class="text-center mb-4">
+            @if(isset($template) && $template && $template->template_variables)
+                @php
+                    $variables = is_string($template->template_variables) 
+                        ? json_decode($template->template_variables, true) 
+                        : $template->template_variables;
+                @endphp
+                
+                @if(isset($variables['header_image']) && Storage::exists('public/template_images/' . $variables['header_image']))
+                    <img src="{{ asset('storage/template_images/' . $variables['header_image']) }}" 
+                         alt="Header" 
+                         style="max-width: 100%; height: auto; max-height: 150px;">
+                @endif
+            @endif
         </div>
-    @endif
-    
-    @if($template && $template->header_content)
-        <div style="text-align: center; font-size: 11px; margin-bottom: 20px; color: #333;">
-            {!! nl2br(e($template->header_content)) !!}
+
+        {{-- Letter Date and Reference --}}
+        <div class="text-right mb-3">
+            <strong>Date:</strong> 
+            @if(isset($letter->letter_date))
+                @if($letter->letter_date instanceof \Carbon\Carbon)
+                    {{ $letter->letter_date->format('d F Y') }}
+                @else
+                    {{ date('d F Y', strtotime($letter->letter_date)) }}
+                @endif
+            @else
+                {{ date('d F Y') }}
+            @endif
         </div>
-    @endif
-    
-    <!-- Letter Date -->
-    <div style="text-align: right; margin-bottom: 25px; font-size: 12px;">
-        {{ \Carbon\Carbon::parse($letter->letter_date)->format('d F Y') }}
-    </div>
-    
-    <!-- Recipient Information -->
-    <div style="margin-bottom: 25px; line-height: 1.4;">
-        <div style="font-weight: bold; font-size: 13px; margin-bottom: 5px;">
-            {{ $letter->recipient_name }}
+
+        <div class="mb-3">
+            <strong>Ref:</strong> {{ $letter->letter_reference ?? 'PREVIEW' }}
         </div>
-        @if($letter->recipient_address)
-            <div style="font-size: 12px; color: #333;">
-                {!! nl2br(e($letter->recipient_address)) !!}
+
+        {{-- Recipient Section --}}
+        <div class="mb-4">
+            @php
+                $letterData = [];
+                if (isset($letter->letter_data)) {
+                    if (is_array($letter->letter_data)) {
+                        $letterData = $letter->letter_data;
+                    } elseif (is_string($letter->letter_data)) {
+                        $letterData = json_decode($letter->letter_data, true) ?: [];
+                    }
+                }
+            @endphp
+            
+            <strong>{{ $letterData['recipient_name'] ?? 'Recipient Name' }}</strong><br>
+            @if(!empty($letterData['recipient_address']))
+                {!! nl2br(e($letterData['recipient_address'])) !!}
+            @endif
+        </div>
+
+        {{-- Subject --}}
+        <div class="mb-4">
+            <strong>RE: {{ $letter->letter_subject ?? 'Letter Subject' }}</strong>
+        </div>
+
+        {{-- Letter Content --}}
+        <div class="mb-5" style="text-align: justify;">
+            @if(isset($letter->letter_content))
+                {!! nl2br(e($letter->letter_content)) !!}
+            @else
+                <p>Letter content will appear here.</p>
+            @endif
+        </div>
+
+        {{-- Signature Section --}}
+        <div class="mt-5">
+            <p>Thank you.</p>
+            <br><br>
+            <div>
+                <strong>{{ $letterData['generated_by_name'] ?? session('name') ?? 'Administrator' }}</strong><br>
+                {{ $letterData['generated_by_position'] ?? ucfirst(session('role')) ?? 'Position' }}<br>
+                CREAMS System
+            </div>
+        </div>
+
+        {{-- Footer Section --}}
+        @if(isset($template) && isset($variables['footer_image']) && Storage::exists('public/template_images/' . $variables['footer_image']))
+            <div class="text-center mt-5">
+                <img src="{{ asset('storage/template_images/' . $variables['footer_image']) }}" 
+                     alt="Footer" 
+                     style="max-width: 100%; height: auto; max-height: 100px;">
             </div>
         @endif
-    </div>
-    
-    <!-- Subject Line -->
-    <div style="font-weight: bold; margin: 25px 0; font-size: 13px; text-decoration: underline;">
-        Subject: {{ $letter->subject }}
-    </div>
-    
-    <!-- Greeting -->
-    <div style="margin-bottom: 20px; font-size: 12px;">
-        Dear {{ $letter->recipient_name }},
-    </div>
-    
-    <!-- Letter Content -->
-    <div style="text-align: justify; margin: 25px 0; white-space: pre-wrap; line-height: 1.6; font-size: 12px;">
-        {!! nl2br(e($letter->content)) !!}
-    </div>
-    
-    <!-- Signature Section -->
-    <div style="margin-top: 40px; font-size: 12px;">
-        <div style="margin-bottom: 15px;">
-            Yours sincerely,
-        </div>
-        
-        <div style="margin: 30px 0 10px 0;">
-            <!-- Space for signature -->
-            <div style="height: 40px;"></div>
-        </div>
-        
-        <div>
-            <div style="font-weight: bold; border-top: 1px solid #000; padding-top: 5px; display: inline-block; min-width: 200px;">
-                {{ $letter->generated_by_name }}
-            </div>
-            <div style="font-size: 11px; margin-top: 5px;">
-                {{ $letter->generated_by_position }}
-            </div>
-            <div style="font-size: 11px; margin-top: 2px; font-style: italic;">
-                {{ config('app.name', 'CREAMS') }}
-            </div>
-        </div>
-    </div>
-    
-    <!-- Footer Section -->
-    @if($template && ($template->footer_image || $template->footer_content))
-        <div style="text-align: center; margin-top: 40px; padding-top: 15px; border-top: 1px solid #ccc; font-size: 10px; color: #666;">
-            @if($template->footer_image)
-                <img src="{{ $template->footer_image_url }}" alt="Footer" style="max-width: 100%; max-height: 60px; margin-bottom: 5px;">
-            @endif
-            
-            @if($template->footer_content)
-                <div style="margin-top: 5px;">
-                    {!! nl2br(e($template->footer_content)) !!}
-                </div>
-            @endif
+    @else
+        {{-- Error State --}}
+        <div class="alert alert-warning">
+            <i class="fas fa-exclamation-triangle mr-2"></i>
+            Unable to generate preview. Please ensure all required fields are filled.
         </div>
     @endif
-    
-    <!-- Preview Notice -->
-    <div style="position: fixed; top: 10px; right: 10px; background: #ff9800; color: white; padding: 5px 10px; border-radius: 4px; font-size: 11px; font-weight: bold; z-index: 1000;">
-        PREVIEW
-    </div>
 </div>
 
 <style>
-/* Additional styles for the preview */
 .letter-preview {
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    border-radius: 5px;
-}
-
-/* Print styles for preview */
-@media print {
-    .letter-preview {
-        border: none;
-        box-shadow: none;
-        margin: 0;
-        padding: 0;
-    }
+    background: white;
+    min-height: 400px;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
 }
 </style>

@@ -516,22 +516,46 @@
 
             <!-- Login Form -->
             <div class="login-form">
-                <form id="loginForm">
+                <form id="loginForm" action="{{ route('enhanced.login') }}" method="POST">
                     @csrf
                     
                     <!-- Alert Container -->
-                    <div id="alertContainer"></div>
+                    <div id="alertContainer">
+                        @if(session('error'))
+                            <div class="alert alert-danger">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                {{ session('error') }}
+                            </div>
+                        @endif
+                        
+                        @if(session('success'))
+                            <div class="alert alert-success">
+                                <i class="fas fa-check-circle me-2"></i>
+                                {{ session('success') }}
+                            </div>
+                        @endif
+                        
+                        @if($errors->any())
+                            <div class="alert alert-danger">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                @foreach($errors->all() as $error)
+                                    {{ $error }}<br>
+                                @endforeach
+                            </div>
+                        @endif
+                    </div>
 
-                    <!-- Email/IIUM ID Field -->
+                    <!-- Email Field -->
                     <div class="form-floating">
-                        <input type="text" 
+                        <input type="email" 
                                class="form-control" 
-                               id="identifier" 
-                               name="identifier" 
-                               placeholder="Email or IIUM ID"
+                               id="email" 
+                               name="email" 
+                               placeholder="Email"
+                               value="{{ old('email') }}"
                                required>
-                        <label for="identifier">
-                            <i class="fas fa-user me-2"></i>Email or IIUM ID
+                        <label for="email">
+                            <i class="fas fa-envelope me-2"></i>Email Address
                         </label>
                     </div>
 
@@ -563,7 +587,7 @@
                                 Remember me
                             </label>
                         </div>
-                        <a href="{{ route('auth.forgotpassword') }}" class="forgot-link">
+                        <a href="#" class="forgot-link">
                             Forgot Password?
                         </a>
                     </div>
@@ -582,7 +606,7 @@
                 <!-- Register Section -->
                 <div class="register-section">
                     <p class="register-text">Don't have an account?</p>
-                    <a href="{{ route('auth.registerpage') }}" class="register-btn">
+                    <a href="#" class="register-btn">
                         <i class="fas fa-user-plus me-2"></i>Create Account
                     </a>
                 </div>
@@ -636,7 +660,7 @@
                 const formData = new FormData(this);
                 
                 try {
-                    const response = await fetch('{{ route("auth.enhanced-login") }}', {
+                    const response = await fetch('{{ route("enhanced.login") }}', {
                         method: 'POST',
                         body: formData,
                         headers: {
@@ -748,7 +772,7 @@
             });
 
             // Auto-focus first input
-            document.getElementById('identifier').focus();
+            document.getElementById('email').focus();
         });
     </script>
 </body>
