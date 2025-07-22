@@ -40,7 +40,7 @@
                                 </span>
                             </div>
                             <div class="text-center">
-                                <a href="{{ route('rehabilitation.categories.show', $category->slug) }}" 
+                                <a href="{{ route('rehabilitation.categories.show', $category->slug ?? str_replace(' ', '-', strtolower($category->name))) }}" 
                                    class="btn btn-sm" 
                                    style="background-color: {{ $category->color_code }}; border-color: {{ $category->color_code }}; color: white;"
                                    onmouseover="this.style.opacity='0.8'"

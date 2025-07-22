@@ -118,7 +118,7 @@ Route::middleware(['auth'])->group(function () {
 
 // Enhanced authentication API routes
 Route::middleware(['web'])->group(function () {
-    Route::get('/auth/check-status', [EnhancedLoginController::class, 'checkAuth'])->name('auth.check');
+    Route::get('/auth/check-status', [EnhancedLoginController::class, 'checkAuth'])->name('auth.check-status');
     Route::post('/auth/extend-session', [EnhancedLoginController::class, 'extendSession'])->name('auth.extend');
     Route::post('/auth/refresh-session', [EnhancedLoginController::class, 'refreshSession'])->name('auth.refresh');
 });
@@ -130,17 +130,24 @@ Route::middleware(['web'])->group(function () {
 */
 
 Route::middleware(['auth', 'validate.params'])->group(function () {
-    // Dashboard - Legacy route (redirect to optimized)
+    // Dashboard - Legacy route (redirect to role-based dashboard)
     Route::get('/dashboard', function() {
-        $role = session('role', 'user');
+        $role = session('role');
+        
+        // Redirect to role-based dashboard if user is authenticated
+        if ($role) {
+            return redirect()->route("{$role}.dashboard");
+        }
+        
+        // Fallback to optimized dashboard for backwards compatibility
         return redirect()->route('dashboard.optimized');
     })->name('dashboard');
     
     // Optimized Dashboard Routes
     // Optimized Dashboard System Routes with Enhanced Middleware
     Route::prefix('dashboard')->name('dashboard.')->middleware(['throttle:dashboard'])->group(function () {
-        // Main dashboard with caching
-        Route::get('/', [App\Http\Controllers\OptimizedDashboardController::class, 'index'])
+        // Main dashboard with caching - Note: This route is accessed via the dashboard redirect above
+        Route::get('/main', [App\Http\Controllers\OptimizedDashboardController::class, 'index'])
             ->name('optimized')
             ->middleware('cache.headers:public;max_age=300;etag');
             
@@ -289,7 +296,7 @@ Route::middleware(['auth', 'validate.params'])->group(function () {
     // Rehabilitation Routes
     Route::prefix('rehabilitation')->name('rehabilitation.')->group(function () {
         Route::get('/categories', [ActivityController::class, 'categories'])->name('categories');
-        Route::get('/categories/{category}', [ActivityController::class, 'categoryShow'])->name('categories.show');
+        Route::get('/categories/{categorySlug}', [ActivityController::class, 'categoryShow'])->name('categories.show');
     });
 
     // Teachers/Staff Directory
@@ -649,6 +656,20 @@ Route::prefix('ajk')->middleware(['auth', 'role:ajk'])->group(function () {
     Route::get('/centres', function() { return redirect()->route('centres.index'); })->name('ajk.centres');
     Route::get('/activities', function() { return redirect()->route('activities.index'); })->name('ajk.activities');
     Route::get('/trainees', function() { return redirect()->route('traineeshome'); })->name('ajk.trainees');
+});
+
+// Trainee Routes
+Route::prefix('trainee')->middleware(['auth', 'role:trainee'])->group(function () {
+    Route::get('/dashboard', [App\Http\Controllers\OptimizedDashboardController::class, 'index'])->name('trainee.dashboard');
+    Route::get('/notifications', [NotificationController::class, 'index'])->name('trainee.notifications');
+    Route::get('/centres', function() { return redirect()->route('centres.index'); })->name('trainee.centres');
+    Route::get('/activities', function() { return redirect()->route('activities.index'); })->name('trainee.activities');
+});
+
+// Parent Routes
+Route::prefix('parent')->middleware(['auth', 'role:parent'])->group(function () {
+    Route::get('/dashboard', [App\Http\Controllers\ParentPortalController::class, 'dashboard'])->name('parent.dashboard');
+    Route::get('/notifications', [NotificationController::class, 'index'])->name('parent.notifications');
 });
 
 /*

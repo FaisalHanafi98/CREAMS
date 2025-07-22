@@ -940,7 +940,7 @@
         </div>
         
         <div class="topbar-logo">
-            <a href="{{ route('dashboard') }}">
+            <a href="{{ session('role') ? route(session('role') . '.dashboard') : route('home') }}">
                 <i class="fas fa-clinic-medical"></i>
                 <span>CREAMS</span>
             </a>
@@ -1079,7 +1079,7 @@
     <div class="sidebar">
         <ul class="sidebar-menu">
             <li class="sidebar-item">
-                <a href="{{ route('dashboard') }}" class="sidebar-link {{ Route::currentRouteName() == 'dashboard' ? 'active' : '' }}">
+                <a href="{{ session('role') ? route(session('role') . '.dashboard') : route('home') }}" class="sidebar-link {{ strpos(Route::currentRouteName(), 'dashboard') !== false ? 'active' : '' }}">
                     <span class="sidebar-icon"><i class="fas fa-home"></i></span>
                     <span class="sidebar-text">Dashboard</span>
                 </a>
@@ -1196,15 +1196,9 @@
                         @endif
                     </li>
                     <li>
-                        @if(Route::has(session('role') . '.assets'))
-                            <a href="{{ route(session('role') . '.assets') }}" class="sidebar-submenu-link {{ Route::currentRouteName() == session('role') . '.assets' ? 'active' : '' }}">
-                                Assets
-                            </a>
-                        @else
-                            <a href="#" class="sidebar-submenu-link" onclick="alert('Assets feature coming soon')">
-                                Assets
-                            </a>
-                        @endif
+                        <a href="{{ route('assets.index') }}" class="sidebar-submenu-link {{ strpos(Route::currentRouteName(), 'assets.') === 0 ? 'active' : '' }}">
+                            Assets
+                        </a>
                     </li>
                 </ul>
             </li>
