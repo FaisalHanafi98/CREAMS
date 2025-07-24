@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Trainee;
 
+use App\Http\Controllers\Controller;
 use App\Models\Trainee;
 use App\Models\Guardian;
 use App\Models\SessionEnrollment;

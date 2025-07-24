@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Activity;
 
+use App\Http\Controllers\Controller;
 use App\Models\Activity;
 use App\Models\ActivitySession;
 use App\Models\SessionEnrollment;

@@ -4,7 +4,7 @@ namespace App\Services;
 
 use App\Models\Notifications;
 use App\Models\Users;
-use App\Models\EnhancedMessage;
+use App\Models\Messages;
 use App\Models\MessageTemplate;
 use App\Models\MessageRecipient;
 use Illuminate\Support\Facades\Cache;

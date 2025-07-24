@@ -5,12 +5,24 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Artisan;
+use App\Models\Users;
 use App\Models\Admins;
 use App\Models\Supervisors;
 use App\Models\Teachers;
 use App\Models\AJKs;
 use App\Models\Trainees;
 use App\Models\Activities;
+use App\Models\Centres;
+use App\Models\Asset;
+use App\Models\Messages;
+use App\Models\Notifications;
+use Carbon\Carbon;
+use Exception;
 
 class AdminController extends Controller
 {
@@ -21,73 +33,565 @@ class AdminController extends Controller
      */
     public function __construct()
     {
-        // Only allow authenticated users
         $this->middleware('auth');
+        $this->middleware('role:admin');
     }
 
     /**
-     * Show the admin dashboard.
+     * Show the comprehensive admin dashboard with system-wide statistics
      *
      * @return \Illuminate\Contracts\Support\Renderable
      */
     public function index()
     {
-        // Log the dashboard access
-        Log::info('Admin dashboard accessed', [
-            'user_id' => Auth::id() ?? session('id'),
-            'user_name' => Auth::user()->name ?? session('name'),
-            'timestamp' => now()
-        ]);
-        
-        // Get counts for dashboard cards
-        $userCounts = $this->getUserCounts();
-        
-        // Pass data to the view
-        return view('admin.dashboard', [
-            'name' => Auth::user()->name ?? session('name'),
-            'role' => 'admin',
-            'userCounts' => $userCounts
-        ]);
+        try {
+            // Log the dashboard access
+            Log::info('Admin dashboard accessed', [
+                'user_id' => session('id'),
+                'user_name' => session('name'),
+                'timestamp' => now(),
+                'ip_address' => request()->ip()
+            ]);
+            
+            // Get comprehensive system statistics
+            $systemStats = $this->getSystemStatistics();
+            $recentActivity = $this->getRecentSystemActivity();
+            $systemHealth = $this->getSystemHealthMetrics();
+            $alerts = $this->getSystemAlerts();
+            
+            return view('admin.dashboard', [
+                'name' => session('name'),
+                'role' => 'admin',
+                'systemStats' => $systemStats,
+                'recentActivity' => $recentActivity,
+                'systemHealth' => $systemHealth,
+                'alerts' => $alerts
+            ]);
+            
+        } catch (Exception $e) {
+            Log::error('Admin dashboard error', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'user_id' => session('id')
+            ]);
+            
+            return view('admin.dashboard', [
+                'name' => session('name'),
+                'role' => 'admin',
+                'error' => 'Dashboard temporarily unavailable'
+            ]);
+        }
     }
     
     /**
-     * Get counts of different user types for dashboard stats
-     *
-     * @return array
+     * Get comprehensive system statistics
      */
-    private function getUserCounts()
+    private function getSystemStatistics()
     {
-        // Get counts from each model if they exist
-        $counts = [
-            'admins' => class_exists('App\Models\Admins') ? Admins::count() : 1,
-            'supervisors' => class_exists('App\Models\Supervisors') ? Supervisors::count() : 5,
-            'teachers' => class_exists('App\Models\Teachers') ? Teachers::count() : 12,
-            'ajks' => class_exists('App\Models\AJKs') ? AJKs::count() : 3,
-            'trainees' => class_exists('App\Models\Trainees') ? Trainees::count() : 50
-        ];
-        
-        return $counts;
+        try {
+            $stats = [
+                // User Statistics
+                'users' => [
+                    'total' => Users::count(),
+                    'admins' => Users::where('role', 'admin')->count(),
+                    'supervisors' => Users::where('role', 'supervisor')->count(),
+                    'teachers' => Users::where('role', 'teacher')->count(),
+                    'ajks' => Users::where('role', 'ajk')->count(),
+                    'active_today' => Users::whereDate('last_login', today())->count(),
+                    'new_this_month' => Users::whereMonth('created_at', now()->month)->count()
+                ],
+                
+                // Trainee Statistics
+                'trainees' => [
+                    'total' => Trainees::count(),
+                    'active' => Trainees::where('status', 'active')->count(),
+                    'enrolled_activities' => DB::table('session_enrollments')->where('status', 'Active')->count(),
+                    'new_this_month' => Trainees::whereMonth('created_at', now()->month)->count()
+                ],
+                
+                // Centre Statistics
+                'centres' => [
+                    'total' => Centres::count(),
+                    'active' => Centres::where('is_active', true)->count(),
+                    'assets_total' => Asset::count(),
+                    'activities_total' => Activities::count()
+                ],
+                
+                // System Activity
+                'activity' => [
+                    'messages_today' => Messages::whereDate('created_at', today())->count(),
+                    'logins_today' => Users::whereDate('last_login', today())->count(),
+                    'activities_this_week' => Activities::whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()])->count()
+                ]
+            ];
+            
+            return $stats;
+            
+        } catch (Exception $e) {
+            Log::error('Error getting system statistics', ['error' => $e->getMessage()]);
+            return [];
+        }
     }
     
     /**
-     * Show the user management page.
-     *
-     * @return \Illuminate\Contracts\Support\Renderable
+     * Get recent system activity
      */
-    public function manageUsers()
+    private function getRecentSystemActivity()
     {
-        $admins = class_exists('App\Models\Admins') ? Admins::all() : collect();
-        $supervisors = class_exists('App\Models\Supervisors') ? Supervisors::all() : collect();
-        $teachers = class_exists('App\Models\Teachers') ? Teachers::all() : collect();
-        $ajks = class_exists('App\Models\AJKs') ? AJKs::all() : collect();
+        try {
+            return [
+                'recent_users' => Users::latest()->limit(5)->get(['id', 'name', 'email', 'role', 'created_at']),
+                'recent_trainees' => Trainees::latest()->limit(5)->get(['id', 'trainee_first_name', 'trainee_last_name', 'created_at']),
+                'recent_activities' => Activities::latest()->limit(5)->get(['id', 'activity_name', 'created_at']),
+                'recent_messages' => Messages::with('sender')->latest()->limit(5)->get(['id', 'message_subject', 'sender_id', 'created_at'])
+            ];
+        } catch (Exception $e) {
+            Log::error('Error getting recent activity', ['error' => $e->getMessage()]);
+            return [];
+        }
+    }
+    
+    /**
+     * Get system health metrics
+     */
+    private function getSystemHealthMetrics()
+    {
+        try {
+            return [
+                'database_status' => DB::connection()->getPdo() ? 'Connected' : 'Disconnected',
+                'storage_usage' => $this->getStorageUsage(),
+                'cache_status' => cache()->has('health_check') ? 'Active' : 'Inactive',
+                'queue_jobs' => DB::table('jobs')->count(),
+                'failed_jobs' => DB::table('failed_jobs')->count(),
+                'log_size' => $this->getLogFileSize()
+            ];
+        } catch (Exception $e) {
+            Log::error('Error getting system health', ['error' => $e->getMessage()]);
+            return ['status' => 'Error checking system health'];
+        }
+    }
+    
+    /**
+     * Get system alerts and warnings
+     */
+    private function getSystemAlerts()
+    {
+        $alerts = [];
         
-        return view('admin.users', [
-            'name' => Auth::user()->name ?? session('name'),
-            'admins' => $admins,
-            'supervisors' => $supervisors,
-            'teachers' => $teachers,
-            'ajks' => $ajks
-        ]);
+        try {
+            // Check for failed jobs
+            $failedJobs = DB::table('failed_jobs')->count();
+            if ($failedJobs > 0) {
+                $alerts[] = [
+                    'type' => 'warning',
+                    'message' => "{$failedJobs} failed job(s) require attention",
+                    'action' => 'View Failed Jobs'
+                ];
+            }
+            
+            // Check for inactive centres
+            $inactiveCentres = Centres::where('is_active', false)->count();
+            if ($inactiveCentres > 0) {
+                $alerts[] = [
+                    'type' => 'info',
+                    'message' => "{$inactiveCentres} centre(s) are inactive",
+                    'action' => 'Manage Centres'
+                ];
+            }
+            
+            // Check for overdue maintenance
+            $overdueAssets = Asset::whereHas('maintenance', function($q) {
+                $q->where('scheduled_date', '<', now())->where('status', 'scheduled');
+            })->count();
+            
+            if ($overdueAssets > 0) {
+                $alerts[] = [
+                    'type' => 'warning',
+                    'message' => "{$overdueAssets} asset(s) have overdue maintenance",
+                    'action' => 'View Assets'
+                ];
+            }
+            
+        } catch (Exception $e) {
+            Log::error('Error getting system alerts', ['error' => $e->getMessage()]);
+        }
+        
+        return $alerts;
+    }
+    
+    /**
+     * Get storage usage information
+     */
+    private function getStorageUsage()
+    {
+        try {
+            $path = storage_path();
+            $bytes = disk_total_space($path);
+            $free = disk_free_space($path);
+            $used = $bytes - $free;
+            
+            return [
+                'total' => $this->formatBytes($bytes),
+                'used' => $this->formatBytes($used),
+                'free' => $this->formatBytes($free),
+                'percentage' => round(($used / $bytes) * 100, 2)
+            ];
+        } catch (Exception $e) {
+            return ['error' => 'Unable to get storage info'];
+        }
+    }
+    
+    /**
+     * Get log file size
+     */
+    private function getLogFileSize()
+    {
+        try {
+            $logPath = storage_path('logs/laravel.log');
+            if (file_exists($logPath)) {
+                return $this->formatBytes(filesize($logPath));
+            }
+            return 'No log file';
+        } catch (Exception $e) {
+            return 'Error reading log';
+        }
+    }
+    
+    /**
+     * Format bytes to human readable format
+     */
+    private function formatBytes($size, $precision = 2)
+    {
+        $units = ['B', 'KB', 'MB', 'GB', 'TB'];
+        
+        for ($i = 0; $size > 1024 && $i < count($units) - 1; $i++) {
+            $size /= 1024;
+        }
+        
+        return round($size, $precision) . ' ' . $units[$i];
+    }
+    
+    /**
+     * Show comprehensive user management with filtering and search
+     */
+    public function manageUsers(Request $request)
+    {
+        try {
+            $search = $request->get('search');
+            $role = $request->get('role');
+            $centre = $request->get('centre');
+            $status = $request->get('status', 'all');
+            
+            // Build user query
+            $usersQuery = Users::with(['centre']);
+            
+            // Apply filters
+            if ($search) {
+                $usersQuery->where(function($q) use ($search) {
+                    $q->where('name', 'LIKE', "%{$search}%")
+                      ->orWhere('email', 'LIKE', "%{$search}%")
+                      ->orWhere('phone', 'LIKE', "%{$search}%");
+                });
+            }
+            
+            if ($role) {
+                $usersQuery->where('role', $role);
+            }
+            
+            if ($centre) {
+                $usersQuery->where('centre_id', $centre);
+            }
+            
+            if ($status !== 'all') {
+                $usersQuery->where('is_active', $status === 'active');
+            }
+            
+            $users = $usersQuery->orderBy('created_at', 'desc')->paginate(20);
+            
+            // Get filter options
+            $centres = Centres::all(['id', 'centre_name']);
+            $roles = ['admin', 'supervisor', 'teacher', 'ajk', 'trainee'];
+            
+            // Get user statistics
+            $userStats = [
+                'total' => Users::count(),
+                'active' => Users::where('is_active', true)->count(),
+                'inactive' => Users::where('is_active', false)->count(),
+                'by_role' => Users::select('role', DB::raw('count(*) as count'))
+                    ->groupBy('role')->get()->pluck('count', 'role')
+            ];
+            
+            return view('admin.users.index', compact(
+                'users', 'centres', 'roles', 'userStats',
+                'search', 'role', 'centre', 'status'
+            ));
+            
+        } catch (Exception $e) {
+            Log::error('Error in user management', [
+                'error' => $e->getMessage(),
+                'user_id' => session('id')
+            ]);
+            
+            return back()->with('error', 'Error loading user management page');
+        }
+    }
+    
+    /**
+     * Show user creation form
+     */
+    public function createUser()
+    {
+        $centres = Centres::where('is_active', true)->get(['id', 'centre_name']);
+        $roles = ['admin', 'supervisor', 'teacher', 'ajk'];
+        
+        return view('admin.users.create', compact('centres', 'roles'));
+    }
+    
+    /**
+     * Store new user
+     */
+    public function storeUser(Request $request)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'name' => 'required|string|max:255',
+                'email' => 'required|email|unique:users,email',
+                'phone' => 'nullable|string|max:20',
+                'role' => 'required|in:admin,supervisor,teacher,ajk',
+                'centre_id' => 'required|exists:centres,id',
+                'password' => 'required|string|min:8|confirmed',
+                'is_active' => 'boolean'
+            ]);
+            
+            if ($validator->fails()) {
+                return back()->withErrors($validator)->withInput();
+            }
+            
+            $user = Users::create([
+                'name' => $request->name,
+                'email' => $request->email,
+                'phone' => $request->phone,
+                'role' => $request->role,
+                'centre_id' => $request->centre_id,
+                'password' => Hash::make($request->password),
+                'is_active' => $request->has('is_active'),
+                'created_by' => session('id')
+            ]);
+            
+            Log::info('User created by admin', [
+                'created_user_id' => $user->id,
+                'created_by' => session('id'),
+                'role' => $request->role
+            ]);
+            
+            return redirect()->route('admin.users.show', $user->id)
+                ->with('success', 'User created successfully');
+                
+        } catch (Exception $e) {
+            Log::error('Error creating user', [
+                'error' => $e->getMessage(),
+                'admin_id' => session('id')
+            ]);
+            
+            return back()->with('error', 'Error creating user')->withInput();
+        }
+    }
+    
+    /**
+     * Show specific user details
+     */
+    public function showUser(Users $user)
+    {
+        try {
+            $user->load(['centre']);
+            
+            // Get user activity stats
+            $userStats = [
+                'login_count' => DB::table('user_login_logs')->where('user_id', $user->id)->count(),
+                'last_login' => $user->last_login,
+                'messages_sent' => Messages::where('sender_id', $user->id)->count(),
+                'activities_created' => Activities::where('created_by', $user->id)->count()
+            ];
+            
+            return view('admin.users.show', compact('user', 'userStats'));
+            
+        } catch (Exception $e) {
+            Log::error('Error showing user', [
+                'error' => $e->getMessage(),
+                'user_id' => $user->id
+            ]);
+            
+            return back()->with('error', 'Error loading user details');
+        }
+    }
+    
+    /**
+     * Show user edit form
+     */
+    public function editUser(Users $user)
+    {
+        $centres = Centres::where('is_active', true)->get(['id', 'centre_name']);
+        $roles = ['admin', 'supervisor', 'teacher', 'ajk'];
+        
+        return view('admin.users.edit', compact('user', 'centres', 'roles'));
+    }
+    
+    /**
+     * Update user
+     */
+    public function updateUser(Request $request, Users $user)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'name' => 'required|string|max:255',
+                'email' => 'required|email|unique:users,email,' . $user->id,
+                'phone' => 'nullable|string|max:20',
+                'role' => 'required|in:admin,supervisor,teacher,ajk',
+                'centre_id' => 'required|exists:centres,id',
+                'password' => 'nullable|string|min:8|confirmed',
+                'is_active' => 'boolean'
+            ]);
+            
+            if ($validator->fails()) {
+                return back()->withErrors($validator)->withInput();
+            }
+            
+            $updateData = [
+                'name' => $request->name,
+                'email' => $request->email,
+                'phone' => $request->phone,
+                'role' => $request->role,
+                'centre_id' => $request->centre_id,
+                'is_active' => $request->has('is_active'),
+                'updated_by' => session('id')
+            ];
+            
+            if ($request->filled('password')) {
+                $updateData['password'] = Hash::make($request->password);
+            }
+            
+            $user->update($updateData);
+            
+            Log::info('User updated by admin', [
+                'updated_user_id' => $user->id,
+                'updated_by' => session('id'),
+                'changes' => $request->only(['name', 'email', 'role', 'centre_id', 'is_active'])
+            ]);
+            
+            return redirect()->route('admin.users.show', $user->id)
+                ->with('success', 'User updated successfully');
+                
+        } catch (Exception $e) {
+            Log::error('Error updating user', [
+                'error' => $e->getMessage(),
+                'user_id' => $user->id,
+                'admin_id' => session('id')
+            ]);
+            
+            return back()->with('error', 'Error updating user')->withInput();
+        }
+    }
+    
+    /**
+     * Deactivate user (soft delete)
+     */
+    public function deactivateUser(Users $user)
+    {
+        try {
+            // Prevent admins from deactivating themselves
+            if ($user->id == session('id')) {
+                return back()->with('error', 'You cannot deactivate your own account');
+            }
+            
+            $user->update([
+                'is_active' => false,
+                'deactivated_by' => session('id'),
+                'deactivated_at' => now()
+            ]);
+            
+            Log::warning('User deactivated by admin', [
+                'deactivated_user_id' => $user->id,
+                'deactivated_by' => session('id')
+            ]);
+            
+            return back()->with('success', 'User deactivated successfully');
+            
+        } catch (Exception $e) {
+            Log::error('Error deactivating user', [
+                'error' => $e->getMessage(),
+                'user_id' => $user->id
+            ]);
+            
+            return back()->with('error', 'Error deactivating user');
+        }
+    }
+    
+    /**
+     * Bulk user operations
+     */
+    public function bulkUserAction(Request $request)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'user_ids' => 'required|array',
+                'user_ids.*' => 'exists:users,id',
+                'action' => 'required|in:activate,deactivate,change_centre,delete'
+            ]);
+            
+            if ($validator->fails()) {
+                return back()->withErrors($validator);
+            }
+            
+            $userIds = $request->user_ids;
+            $action = $request->action;
+            $affectedCount = 0;
+            
+            // Prevent admin from affecting their own account in bulk operations
+            $currentUserId = session('id');
+            $userIds = array_filter($userIds, function($id) use ($currentUserId) {
+                return $id != $currentUserId;
+            });
+            
+            switch ($action) {
+                case 'activate':
+                    Users::whereIn('id', $userIds)->update(['is_active' => true]);
+                    $affectedCount = count($userIds);
+                    break;
+                    
+                case 'deactivate':
+                    Users::whereIn('id', $userIds)->update([
+                        'is_active' => false,
+                        'deactivated_by' => session('id'),
+                        'deactivated_at' => now()
+                    ]);
+                    $affectedCount = count($userIds);
+                    break;
+                    
+                case 'change_centre':
+                    if ($request->filled('centre_id')) {
+                        Users::whereIn('id', $userIds)->update(['centre_id' => $request->centre_id]);
+                        $affectedCount = count($userIds);
+                    }
+                    break;
+            }
+            
+            Log::info('Bulk user action performed', [
+                'action' => $action,
+                'affected_count' => $affectedCount,
+                'user_ids' => $userIds,
+                'performed_by' => session('id')
+            ]);
+            
+            return back()->with('success', "Successfully {$action}d {$affectedCount} user(s)");
+            
+        } catch (Exception $e) {
+            Log::error('Error in bulk user action', [
+                'error' => $e->getMessage(),
+                'admin_id' => session('id')
+            ]);
+            
+            return back()->with('error', 'Error performing bulk action');
+        }
     }
     
     /**

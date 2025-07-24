@@ -14,7 +14,7 @@ class VolunteerController extends Controller
 */
 public function index()
 {
-return view('volunteer');
+return view('volunteers.index');
 }
 /**
  * Handle volunteer form submission

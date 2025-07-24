@@ -4,141 +4,485 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 
 class Messages extends Model
 {
     use HasFactory;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
-     */
+    protected $table = 'messages';
+
     protected $fillable = [
         'sender_id',
-        'sender_type',
         'recipient_id',
-        'recipient_type',
-        'subject',
-        'content',
-        'read',
+        'message_subject',
+        'message_body',
+        'message_type',
+        'message_priority',
+        'centre_id',
+        'parent_message_id',
+        'message_category_id',
+        'is_read',
         'read_at',
+        'scheduled_at',
+        'delivered_at',
+        'expires_at',
+        'is_deleted',
+        'deleted_at',
+        'attachments',
+        'metadata'
     ];
 
-    /**
-     * The attributes that should be cast.
-     *
-     * @var array<string, string>
-     */
     protected $casts = [
-        'read' => 'boolean',
+        'is_read' => 'boolean',
+        'is_deleted' => 'boolean',
         'read_at' => 'datetime',
+        'scheduled_at' => 'datetime',
+        'delivered_at' => 'datetime',
+        'expires_at' => 'datetime',
+        'deleted_at' => 'datetime',
+        'attachments' => 'array',
+        'metadata' => 'array'
     ];
 
     /**
-     * Get the sender.
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\MorphTo
+     * Get the sender user
      */
     public function sender()
     {
-        return $this->morphTo('sender', 'sender_type', 'sender_id');
+        return $this->belongsTo(Users::class, 'sender_id');
     }
 
     /**
-     * Get the recipient.
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\MorphTo
+     * Get the primary recipient user (for direct messages)
      */
     public function recipient()
     {
-        return $this->morphTo('recipient', 'recipient_type', 'recipient_id');
+        return $this->belongsTo(Users::class, 'recipient_id');
+    }
+    
+    /**
+     * Get all recipients (polymorphic relationship)
+     */
+    public function recipients()
+    {
+        return $this->hasMany(MessageRecipient::class, 'message_id');
+    }
+    
+    /**
+     * Get the centre this message belongs to
+     */
+    public function centre()
+    {
+        return $this->belongsTo(Centres::class, 'centre_id');
+    }
+    
+    /**
+     * Get the parent message (for replies)
+     */
+    public function parent()
+    {
+        return $this->belongsTo(Messages::class, 'parent_message_id');
+    }
+    
+    /**
+     * Get child messages (replies)
+     */
+    public function replies()
+    {
+        return $this->hasMany(Messages::class, 'parent_message_id');
+    }
+    
+    /**
+     * Get the message category
+     */
+    public function category()
+    {
+        return $this->belongsTo(MessageCategory::class, 'message_category_id');
     }
 
     /**
-     * Scope a query to only include unread messages.
-     *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @return \Illuminate\Database\Eloquent\Builder
+     * Scope for unread messages
      */
     public function scopeUnread($query)
     {
-        return $query->where('read', false);
+        return $query->where('is_read', false);
+    }
+    
+    /**
+     * Scope for read messages
+     */
+    public function scopeRead($query)
+    {
+        return $query->where('is_read', true);
+    }
+    
+    /**
+     * Scope for non-deleted messages
+     */
+    public function scopeNotDeleted($query)
+    {
+        return $query->where('is_deleted', false);
+    }
+    
+    /**
+     * Scope for messages by type
+     */
+    public function scopeByType($query, $type)
+    {
+        return $query->where('message_type', $type);
+    }
+    
+    /**
+     * Scope for messages by priority
+     */
+    public function scopeByPriority($query, $priority)
+    {
+        return $query->where('message_priority', $priority);
+    }
+    
+    /**
+     * Scope for scheduled messages
+     */
+    public function scopeScheduled($query)
+    {
+        return $query->whereNotNull('scheduled_at')
+                    ->where('scheduled_at', '>', now());
+    }
+    
+    /**
+     * Scope for delivered messages
+     */
+    public function scopeDelivered($query)
+    {
+        return $query->whereNotNull('delivered_at');
+    }
+    
+    /**
+     * Scope for expired messages
+     */
+    public function scopeExpired($query)
+    {
+        return $query->whereNotNull('expires_at')
+                    ->where('expires_at', '<', now());
+    }
+    
+    /**
+     * Scope for centre-specific messages
+     */
+    public function scopeForCentre($query, $centreId)
+    {
+        return $query->where('centre_id', $centreId);
     }
 
     /**
-     * Mark the message as read.
-     *
-     * @return void
+     * Scope for messages involving a specific user
+     */
+    public function scopeForUser($query, $userId)
+    {
+        return $query->where(function($q) use ($userId) {
+            $q->where('sender_id', $userId)
+              ->orWhere('recipient_id', $userId)
+              ->orWhereHas('recipients', function($subQ) use ($userId) {
+                  $subQ->where('recipient_type', 'App\\Models\\Users')
+                       ->where('recipient_id', $userId);
+              });
+        });
+    }
+
+    /**
+     * Mark the message as read
      */
     public function markAsRead()
     {
-        $this->read = true;
-        $this->read_at = now();
-        $this->save();
+        $this->update([
+            'is_read' => true,
+            'read_at' => now()
+        ]);
+    }
+    
+    /**
+     * Mark the message as delivered
+     */
+    public function markAsDelivered()
+    {
+        $this->update([
+            'delivered_at' => now()
+        ]);
+    }
+    
+    /**
+     * Soft delete the message
+     */
+    public function softDelete()
+    {
+        $this->update([
+            'is_deleted' => true,
+            'deleted_at' => now()
+        ]);
     }
 
     /**
-     * Determine if the message is read.
-     *
-     * @return bool
+     * Determine if the message is read
      */
     public function isRead()
     {
-        return $this->read;
+        return $this->is_read;
+    }
+    
+    /**
+     * Determine if the message is scheduled
+     */
+    public function isScheduled()
+    {
+        return $this->scheduled_at && $this->scheduled_at > now();
+    }
+    
+    /**
+     * Determine if the message is delivered
+     */
+    public function isDelivered()
+    {
+        return !is_null($this->delivered_at);
+    }
+    
+    /**
+     * Determine if the message is expired
+     */
+    public function isExpired()
+    {
+        return $this->expires_at && $this->expires_at < now();
+    }
+    
+    /**
+     * Determine if the message is deleted
+     */
+    public function isDeleted()
+    {
+        return $this->is_deleted;
+    }
+    
+    /**
+     * Get the message priority label
+     */
+    public function getPriorityLabelAttribute()
+    {
+        $labels = [
+            'low' => 'Low',
+            'normal' => 'Normal',
+            'high' => 'High',
+            'urgent' => 'Urgent'
+        ];
+        
+        return $labels[$this->message_priority] ?? 'Normal';
+    }
+    
+    /**
+     * Get the message type label
+     */
+    public function getTypeLabelAttribute()
+    {
+        $labels = [
+            'direct' => 'Direct Message',
+            'broadcast' => 'Broadcast',
+            'announcement' => 'Announcement',
+            'system' => 'System Message'
+        ];
+        
+        return $labels[$this->message_type] ?? 'Direct Message';
     }
 
     /**
-     * Get the sender name.
-     *
-     * @return string
+     * Get the sender name
      */
     public function getSenderNameAttribute()
     {
-        switch ($this->sender_type) {
-            case 'admin':
-                $user = Admins::find($this->sender_id);
-                break;
-            case 'supervisor':
-                $user = Supervisors::find($this->sender_id);
-                break;
-            case 'teacher':
-                $user = Teachers::find($this->sender_id);
-                break;
-            case 'ajk':
-                $user = AJKs::find($this->sender_id);
-                break;
-            default:
-                return 'Unknown User';
-        }
-
-        return $user ? $user->name : 'Unknown User';
+        return $this->sender ? $this->sender->name : 'System';
     }
 
     /**
-     * Get the recipient name.
-     *
-     * @return string
+     * Get the recipient name
      */
     public function getRecipientNameAttribute()
     {
-        switch ($this->recipient_type) {
-            case 'admin':
-                $user = Admins::find($this->recipient_id);
-                break;
-            case 'supervisor':
-                $user = Supervisors::find($this->recipient_id);
-                break;
-            case 'teacher':
-                $user = Teachers::find($this->recipient_id);
-                break;
-            case 'ajk':
-                $user = AJKs::find($this->recipient_id);
-                break;
-            default:
-                return 'Unknown User';
+        return $this->recipient ? $this->recipient->name : 'Unknown';
+    }
+    
+    /**
+     * Get formatted created date
+     */
+    public function getFormattedDateAttribute()
+    {
+        return $this->created_at->format('M j, Y g:i A');
+    }
+    
+    /**
+     * Get short preview of message body
+     */
+    public function getPreviewAttribute()
+    {
+        return Str::limit(strip_tags($this->message_body), 100);
+    }
+    
+    /**
+     * Get recipient count for broadcast messages
+     */
+    public function getRecipientCountAttribute()
+    {
+        return $this->recipients()->count();
+    }
+    
+    /**
+     * Get unread recipient count
+     */
+    public function getUnreadCountAttribute()
+    {
+        return $this->recipients()->unread()->count();
+    }
+    
+    /**
+     * Check if message has attachments
+     */
+    public function hasAttachments()
+    {
+        return !empty($this->attachments);
+    }
+    
+    /**
+     * Get attachment count
+     */
+    public function getAttachmentCountAttribute()
+    {
+        return is_array($this->attachments) ? count($this->attachments) : 0;
+    }
+    
+    /**
+     * Create a broadcast message to multiple recipients
+     */
+    public static function createBroadcast($senderId, $centreId, $subject, $body, $recipients, $options = [])
+    {
+        $message = static::create([
+            'sender_id' => $senderId,
+            'message_subject' => $subject,
+            'message_body' => $body,
+            'message_type' => 'broadcast',
+            'message_priority' => $options['priority'] ?? 'normal',
+            'centre_id' => $centreId,
+            'message_category_id' => $options['category_id'] ?? null,
+            'scheduled_at' => $options['scheduled_at'] ?? null,
+            'expires_at' => $options['expires_at'] ?? null,
+            'attachments' => $options['attachments'] ?? null,
+            'metadata' => $options['metadata'] ?? null
+        ]);
+        
+        // Create recipient records
+        foreach ($recipients as $recipient) {
+            MessageRecipient::create([
+                'message_id' => $message->id,
+                'recipient_type' => $recipient['type'],
+                'recipient_id' => $recipient['id'],
+                'recipient_type_specific' => $recipient['specific_type'] ?? 'user'
+            ]);
         }
-
-        return $user ? $user->name : 'Unknown User';
+        
+        return $message;
+    }
+    
+    /**
+     * Create a reply to this message
+     */
+    public function createReply($senderId, $subject, $body, $options = [])
+    {
+        return static::create([
+            'sender_id' => $senderId,
+            'recipient_id' => $this->sender_id,
+            'message_subject' => $subject,
+            'message_body' => $body,
+            'message_type' => 'direct',
+            'message_priority' => $options['priority'] ?? $this->message_priority,
+            'centre_id' => $this->centre_id,
+            'parent_message_id' => $this->id,
+            'message_category_id' => $this->message_category_id,
+            'attachments' => $options['attachments'] ?? null,
+            'metadata' => $options['metadata'] ?? null
+        ]);
+    }
+    
+    /**
+     * Get conversation thread
+     */
+    public function getConversationThread()
+    {
+        $rootMessage = $this->parent_message_id ? $this->parent : $this;
+        
+        return static::where(function($q) use ($rootMessage) {
+            $q->where('id', $rootMessage->id)
+              ->orWhere('parent_message_id', $rootMessage->id);
+        })->orderBy('created_at')->get();
+    }
+    
+    /**
+     * Send the message (mark as delivered and create notifications)
+     */
+    public function send()
+    {
+        $this->markAsDelivered();
+        
+        // Create notifications for recipients
+        if ($this->message_type === 'broadcast') {
+            foreach ($this->recipients as $recipient) {
+                $this->createNotificationForRecipient($recipient);
+            }
+        } elseif ($this->recipient_id) {
+            $this->createNotificationForUser($this->recipient_id);
+        }
+        
+        return $this;
+    }
+    
+    /**
+     * Create notification for a specific recipient
+     */
+    protected function createNotificationForRecipient($recipient)
+    {
+        Notifications::create([
+            'notification_title' => 'New Message: ' . $this->message_subject,
+            'notification_message' => 'You have received a new message from ' . $this->sender_name,
+            'notification_type' => 'info',
+            'notification_channel' => 'database',
+            'user_id' => $recipient->recipient_id,
+            'notifiable_type' => $recipient->recipient_type,
+            'notifiable_id' => $recipient->recipient_id,
+            'centre_id' => $this->centre_id,
+            'priority' => $this->message_priority,
+            'notification_data' => [
+                'message_id' => $this->id,
+                'sender_name' => $this->sender_name,
+                'subject' => $this->message_subject
+            ]
+        ]);
+    }
+    
+    /**
+     * Create notification for a specific user
+     */
+    protected function createNotificationForUser($userId)
+    {
+        Notifications::create([
+            'notification_title' => 'New Message: ' . $this->message_subject,
+            'notification_message' => 'You have received a new message from ' . $this->sender_name,
+            'notification_type' => 'info',
+            'notification_channel' => 'database',
+            'user_id' => $userId,
+            'notifiable_type' => 'App\\Models\\Users',
+            'notifiable_id' => $userId,
+            'centre_id' => $this->centre_id,
+            'priority' => $this->message_priority,
+            'notification_data' => [
+                'message_id' => $this->id,
+                'sender_name' => $this->sender_name,
+                'subject' => $this->message_subject
+            ]
+        ]);
     }
 }

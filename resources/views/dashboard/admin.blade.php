@@ -518,7 +518,7 @@
         <div class="quick-actions">
             <h3 class="chart-title mb-4">Quick Actions</h3>
             <div class="action-grid">
-                <a href="{{ route('users.create') }}" class="action-btn">
+                <a href="{{ route('staffs.register') }}" class="action-btn">
                     <div class="action-icon">
                         <i class="fas fa-user-plus"></i>
                     </div>

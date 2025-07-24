@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Activity;
 
 use App\Http\Controllers\Controller;
-use App\Models\Courses;
+use App\Models\Activity;
 use App\Models\Users;
 use App\Models\Trainees;
 use App\Models\Centres;
@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\DB;
 
-class CourseRegistrationController extends Controller
+class ActivityRegistrationController extends Controller
 {
     /**
      * Available course types

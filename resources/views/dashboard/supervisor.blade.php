@@ -656,7 +656,7 @@
                         <h3 class="section-title">Quick Actions</h3>
                     </div>
                     <div class="quick-actions">
-                        <a href="{{ route('users.create') }}" class="action-btn">
+                        <a href="{{ route('staffs.register') }}" class="action-btn">
                             <div class="action-icon">
                                 <i class="fas fa-user-plus"></i>
                             </div>
