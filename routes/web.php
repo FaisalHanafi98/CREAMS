@@ -95,8 +95,8 @@ Route::middleware('guest')->group(function () {
     Route::get('/enhanced-login', [EnhancedLoginController::class, 'showLoginForm'])->name('enhanced.login.form');
     Route::post('/enhanced-login', [EnhancedLoginController::class, 'login'])->name('enhanced.login');
 
-    // Registration routes
-    Route::get('/auth/register', [MainController::class, 'registration'])->name('auth.registerpage');
+    // Registration routes - legacy auth/register now redirects to staffs/register
+    Route::get('/auth/register', function() { return redirect()->route('staffs.register'); });
     Route::get('/registration', [MainController::class, 'registration'])->name('registration');
     Route::post('/auth/save', [MainController::class, 'save'])->name('auth.save');
 
@@ -206,7 +206,8 @@ Route::middleware(['auth', 'validate.params'])->group(function () {
 
     // Activity Management
     Route::prefix('activities')->name('activities.')->middleware(['centre.access:activity'])->group(function () {
-        Route::get('/', [ActivityController::class, 'index'])->name('index');
+        Route::get('/', function() { return redirect()->route('activities.home'); }); // Legacy redirect
+        Route::get('/home', [ActivityController::class, 'index'])->name('home'); // New structure
         Route::get('/schedule', [ActivityController::class, 'scheduleIndex'])->name('schedule');
         
         // Admin and Supervisor routes
@@ -269,7 +270,7 @@ Route::middleware(['auth', 'validate.params'])->group(function () {
     */
 
     // ENHANCED ASSET MANAGEMENT SYSTEM
-    Route::prefix('enhanced-assets')->name('assets.')->middleware(['auth'])->group(function () {
+    Route::prefix('enhanced-assets')->name('assets.')->group(function () {
         // Main dashboard (role-based views)
         Route::get('/', [EnhancedAssetController::class, 'index'])->name('index');
         
@@ -293,25 +294,40 @@ Route::middleware(['auth', 'validate.params'])->group(function () {
     });
 
 
-    // Rehabilitation Routes
-    Route::prefix('rehabilitation')->name('rehabilitation.')->group(function () {
+    // Activities Routes (updated structure)
+    Route::prefix('activities')->name('activities.')->group(function () {
+        Route::get('/home', [ActivityController::class, 'index'])->name('home');
         Route::get('/categories', [ActivityController::class, 'categories'])->name('categories');
         Route::get('/categories/{categorySlug}', [ActivityController::class, 'categoryShow'])->name('categories.show');
     });
+    
+    // Legacy rehabilitation routes (redirect to new structure)
+    Route::prefix('rehabilitation')->name('rehabilitation.')->group(function () {
+        Route::get('/categories', function() { return redirect()->route('activities.categories'); });
+        Route::get('/categories/{categorySlug}', function($categorySlug) { return redirect()->route('activities.categories.show', $categorySlug); });
+    });
 
-    // Teachers/Staff Directory
-    Route::get('/teachershome', [TeachersHomeController::class, 'index'])->name('teachershome');
+    // Staffs Management Routes (updated structure)
+    Route::prefix('staffs')->name('staffs.')->group(function () {
+        Route::get('/home', [TeachersHomeController::class, 'index'])->name('home');
+        Route::get('/register', [MainController::class, 'registration'])->name('register');
+        Route::get('/profile/{encrypted_id}', [App\Http\Controllers\StaffController::class, 'viewProfile'])->name('profile');
+        Route::get('/edit/{encrypted_id}', [App\Http\Controllers\StaffController::class, 'editProfile'])->name('edit');
+        Route::put('/update/{encrypted_id}', [App\Http\Controllers\StaffController::class, 'updateProfile'])->name('update');
+        Route::get('/schedule/{encrypted_id}', [App\Http\Controllers\StaffController::class, 'showSchedule'])->name('schedule');
+        Route::get('/activities/{encrypted_id}', [App\Http\Controllers\StaffController::class, 'showActivities'])->name('activities');
+        Route::get('/trainees/{encrypted_id}', [App\Http\Controllers\StaffController::class, 'showTrainees'])->name('trainees');
+    });
+    
+    // Legacy teachershome route (redirect to new structure)
+    Route::get('/teachershome', function() { return redirect()->route('staffs.home'); });
     Route::get('/updateuser/{id}', [TeachersHomeController::class, 'updateuserpage'])->name('updateuser');
     Route::post('/updateuser/{id}', [TeachersHomeController::class, 'updateuser'])->name('updateuser.post');
     
-    // NEW STAFF PROFILE MANAGEMENT SYSTEM
+    // Legacy staff routes (redirect to new encrypted structure)
     Route::prefix('staff')->name('staff.')->group(function () {
-        Route::get('/view/{id}', [App\Http\Controllers\StaffController::class, 'viewProfile'])->name('view');
-        Route::get('/edit/{id}', [App\Http\Controllers\StaffController::class, 'editProfile'])->name('edit');
-        Route::put('/update/{id}', [App\Http\Controllers\StaffController::class, 'updateProfile'])->name('update');
-        Route::get('/schedule/{id}', [App\Http\Controllers\StaffController::class, 'showSchedule'])->name('schedule');
-        Route::get('/activities/{id}', [App\Http\Controllers\StaffController::class, 'showActivities'])->name('activities');
-        Route::get('/trainees/{id}', [App\Http\Controllers\StaffController::class, 'showTrainees'])->name('trainees');
+        Route::get('/view/{id}', function($id) { return redirect()->route('staffs.profile', ['encrypted_id' => app('App\Traits\HandlesEncryptedIds')->generateEncryptedId($id)]); })->name('view');
+        Route::get('/edit/{id}', function($id) { return redirect()->route('staffs.edit', ['encrypted_id' => app('App\Traits\HandlesEncryptedIds')->generateEncryptedId($id)]); })->name('edit');
     });
 
     // Centres
@@ -526,9 +542,15 @@ Route::middleware(['auth', 'centre.access:trainee'])->prefix('enhanced-trainees'
     Route::post('/export', [EnhancedTraineeController::class, 'exportTrainees'])->name('export');
 });
 
+// Trainees Management Routes (updated structure)
+Route::prefix('trainees')->name('trainees.')->group(function () {
+    Route::get('/home', [TraineeHomeController::class, 'index'])->name('home');
+    Route::get('/register', [TraineeRegistrationController::class, 'index'])->name('register');
+});
+
 // Legacy trainee routes (backward compatibility)
 Route::middleware(['auth', 'centre.access:trainee'])->group(function () {
-    Route::get('/traineeshome', [TraineeHomeController::class, 'index'])->name('traineeshome');
+    Route::get('/traineeshome', function() { return redirect()->route('trainees.home'); });
     
     // Trainee Profile Routes
     Route::get('/traineeprofile/{id}', [TraineeProfileController::class, 'index'])->name('traineeprofile');
@@ -624,9 +646,9 @@ Route::prefix('admin')->middleware(['auth', 'role:admin'])->group(function () {
     // Redirect routes to common routes
     Route::get('/centres', function() { return redirect()->route('centres.index'); })->name('admin.centres');
     Route::get('/assets', function() { return redirect()->route('assets'); })->name('admin.assets');
-    Route::get('/activities', function() { return redirect()->route('activities.index'); })->name('admin.activities');
-    Route::get('/trainees', function() { return redirect()->route('traineeshome'); })->name('admin.trainees');
-    Route::get('/users', function() { return redirect()->route('teachershome'); })->name('admin.users');
+    Route::get('/activities', function() { return redirect()->route('activities.home'); })->name('admin.activities');
+    Route::get('/trainees', function() { return redirect()->route('trainees.home'); })->name('admin.trainees');
+    Route::get('/users', function() { return redirect()->route('staffs.home'); })->name('admin.users');
 });
 
 // Supervisor Routes
@@ -634,9 +656,9 @@ Route::prefix('supervisor')->middleware(['auth', 'role:supervisor'])->group(func
     Route::get('/dashboard', [App\Http\Controllers\OptimizedDashboardController::class, 'index'])->name('supervisor.dashboard');
     Route::get('/notifications', [NotificationController::class, 'index'])->name('supervisor.notifications');
     Route::get('/centres', function() { return redirect()->route('centres.index'); })->name('supervisor.centres');
-    Route::get('/activities', function() { return redirect()->route('activities.index'); })->name('supervisor.activities');
-    Route::get('/trainees', function() { return redirect()->route('traineeshome'); })->name('supervisor.trainees');
-    Route::get('/users', function() { return redirect()->route('teachershome'); })->name('supervisor.users');
+    Route::get('/activities', function() { return redirect()->route('activities.home'); })->name('supervisor.activities');
+    Route::get('/trainees', function() { return redirect()->route('trainees.home'); })->name('supervisor.trainees');
+    Route::get('/users', function() { return redirect()->route('staffs.home'); })->name('supervisor.users');
 });
 
 // Teacher Routes
@@ -644,8 +666,8 @@ Route::prefix('teacher')->middleware(['auth', 'role:teacher'])->group(function (
     Route::get('/dashboard', [App\Http\Controllers\OptimizedDashboardController::class, 'index'])->name('teacher.dashboard');
     Route::get('/notifications', [NotificationController::class, 'index'])->name('teacher.notifications');
     Route::get('/centres', function() { return redirect()->route('centres.index'); })->name('teacher.centres');
-    Route::get('/activities', function() { return redirect()->route('activities.index'); })->name('teacher.activities');
-    Route::get('/trainees', function() { return redirect()->route('traineeshome'); })->name('teacher.trainees');
+    Route::get('/activities', function() { return redirect()->route('activities.home'); })->name('teacher.activities');
+    Route::get('/trainees', function() { return redirect()->route('trainees.home'); })->name('teacher.trainees');
     Route::get('/schedule', [ClassController::class, 'schedule'])->name('teacher.schedule');
 });
 
@@ -654,8 +676,8 @@ Route::prefix('ajk')->middleware(['auth', 'role:ajk'])->group(function () {
     Route::get('/dashboard', [App\Http\Controllers\OptimizedDashboardController::class, 'index'])->name('ajk.dashboard');
     Route::get('/notifications', [NotificationController::class, 'index'])->name('ajk.notifications');
     Route::get('/centres', function() { return redirect()->route('centres.index'); })->name('ajk.centres');
-    Route::get('/activities', function() { return redirect()->route('activities.index'); })->name('ajk.activities');
-    Route::get('/trainees', function() { return redirect()->route('traineeshome'); })->name('ajk.trainees');
+    Route::get('/activities', function() { return redirect()->route('activities.home'); })->name('ajk.activities');
+    Route::get('/trainees', function() { return redirect()->route('trainees.home'); })->name('ajk.trainees');
 });
 
 // Trainee Routes
@@ -663,7 +685,7 @@ Route::prefix('trainee')->middleware(['auth', 'role:trainee'])->group(function (
     Route::get('/dashboard', [App\Http\Controllers\OptimizedDashboardController::class, 'index'])->name('trainee.dashboard');
     Route::get('/notifications', [NotificationController::class, 'index'])->name('trainee.notifications');
     Route::get('/centres', function() { return redirect()->route('centres.index'); })->name('trainee.centres');
-    Route::get('/activities', function() { return redirect()->route('activities.index'); })->name('trainee.activities');
+    Route::get('/activities', function() { return redirect()->route('activities.home'); })->name('trainee.activities');
 });
 
 // Parent Routes

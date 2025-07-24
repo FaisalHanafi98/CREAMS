@@ -13,7 +13,7 @@ use App\Models\Teachers;
 use App\Models\AJKs;
 use App\Models\Messages;
 
-class MessagesSeeder extends Seeder
+class CREAMSMessageSeeder extends Seeder
 {
     /**
      * Run the database seeds.

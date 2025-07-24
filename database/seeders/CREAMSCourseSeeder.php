@@ -6,7 +6,7 @@ use Illuminate\Database\Seeder;
 use App\Models\Courses;
 use App\Models\Users;
 
-class CoursesSeeder extends Seeder
+class CREAMSCourseSeeder extends Seeder
 {
     /**
      * Malaysian rehabilitation courses

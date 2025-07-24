@@ -90,7 +90,7 @@ class Centres extends Model
      */
     public function assets()
     {
-        return $this->hasMany(Asset::class, 'centre_name', 'centre_name');
+        return $this->hasMany(Asset::class, 'centre_id', 'centre_id');
     }
 
     /**

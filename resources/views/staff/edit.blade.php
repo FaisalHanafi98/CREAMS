@@ -255,8 +255,8 @@
     <nav aria-label="breadcrumb">
         <ol class="breadcrumb">
             <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Dashboard</a></li>
-            <li class="breadcrumb-item"><a href="{{ route('teachershome') }}">Staff Directory</a></li>
-            <li class="breadcrumb-item"><a href="{{ route('staff.view', $staffMember->id) }}">{{ $staffMember->name }}</a></li>
+            <li class="breadcrumb-item"><a href="{{ route('staffs.home') }}">Staff Directory</a></li>
+            <li class="breadcrumb-item"><a href="{{ route('staffs.view', $staffMember->encrypted_id ?? ->id) }}">{{ $staffMember->name }}</a></li>
             <li class="breadcrumb-item active">Edit Profile</li>
         </ol>
     </nav>
@@ -299,7 +299,7 @@
     </div>
     @endif
 
-    <form action="{{ route('staff.update', $staffMember->id) }}" method="POST" enctype="multipart/form-data">
+    <form action="{{ route('staffs.update', $staffMember->encrypted_id ?? ->id) }}" method="POST" enctype="multipart/form-data">
         @csrf
         @method('PUT')
         
@@ -445,10 +445,10 @@
                         <button type="submit" class="action-btn btn-save">
                             <i class="fas fa-save me-2"></i>Save Changes
                         </button>
-                        <a href="{{ route('staff.view', $staffMember->id) }}" class="action-btn btn-view">
+                        <a href="{{ route('staffs.view', $staffMember->encrypted_id ?? ->id) }}" class="action-btn btn-view">
                             <i class="fas fa-eye me-2"></i>View Profile
                         </a>
-                        <a href="{{ route('teachershome') }}" class="action-btn btn-cancel">
+                        <a href="{{ route('staffs.home') }}" class="action-btn btn-cancel">
                             <i class="fas fa-times me-2"></i>Cancel
                         </a>
                     </div>

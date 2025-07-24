@@ -111,8 +111,8 @@
     <nav aria-label="breadcrumb">
         <ol class="breadcrumb">
             <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Dashboard</a></li>
-            <li class="breadcrumb-item"><a href="{{ route('teachershome') }}">Staff Directory</a></li>
-            <li class="breadcrumb-item"><a href="{{ route('staff.view', $staffMember->id) }}">{{ $staffMember->name }}</a></li>
+            <li class="breadcrumb-item"><a href="{{ route('staffs.home') }}">Staff Directory</a></li>
+            <li class="breadcrumb-item"><a href="{{ route('staffs.view', $staffMember->encrypted_id ?? ->id) }}">{{ $staffMember->name }}</a></li>
             <li class="breadcrumb-item active">Schedule</li>
         </ol>
     </nav>
@@ -142,7 +142,7 @@
                 <p class="mb-0 opacity-75">Weekly activity schedule and commitments</p>
             </div>
             <div class="col-md-4 text-end">
-                <a href="{{ route('staff.view', $staffMember->id) }}" class="btn btn-light">
+                <a href="{{ route('staffs.view', $staffMember->encrypted_id ?? ->id) }}" class="btn btn-light">
                     <i class="fas fa-arrow-left me-2"></i>Back to Profile
                 </a>
             </div>

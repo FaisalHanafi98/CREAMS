@@ -13,7 +13,7 @@ use App\Models\Users;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
-class ActivitySessionsAndEnrollmentsSeeder extends Seeder
+class CREAMSActivitySeeder extends Seeder
 {
     /**
      * Days of the week for scheduling

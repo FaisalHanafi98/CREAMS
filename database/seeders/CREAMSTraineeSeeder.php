@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use Faker\Factory as Faker;
 
-class RefactoredTraineesSeeder extends Seeder
+class CREAMSTraineeSeeder extends Seeder
 {
     /**
      * Run the database seeds with realistic Malaysian data and correct field mappings.
@@ -140,7 +140,7 @@ class RefactoredTraineesSeeder extends Seeder
                 $icYear = substr($birthYear, -2);
                 $placeOfBirth = sprintf('%02d', rand(1, 16)); // Malaysian state codes
                 $sequence = sprintf('%03d', rand(1, 999));
-                $genderCode = ($gender === 'Male') ? rand(1, 9, 2) : rand(0, 8, 2); // Odd for male, even for female
+                $genderCode = ($gender === 'Male') ? rand(1, 4) * 2 - 1 : rand(1, 5) * 2 - 2; // Odd for male, even for female
                 $icNumber = "{$icYear}{$birthMonth}{$birthDay}-{$placeOfBirth}-{$sequence}{$genderCode}";
                 
                 // Select random centre

@@ -8,7 +8,7 @@
         <h1 class="page-title">
             <i class="fas fa-plus-circle"></i> Create New Activity
         </h1>
-        <a href="{{ route('activities.index') }}" class="btn btn-outline-secondary">
+        <a href="{{ route('activities.home') }}" class="btn btn-outline-secondary">
             <i class="fas fa-arrow-left"></i> Back to Activities
         </a>
     </div>
@@ -183,7 +183,7 @@
             <button type="submit" class="btn btn-primary btn-lg">
                 <i class="fas fa-save"></i> Create Activity
             </button>
-            <a href="{{ route('activities.index') }}" class="btn btn-outline-secondary btn-lg">
+            <a href="{{ route('activities.home') }}" class="btn btn-outline-secondary btn-lg">
                 Cancel
             </a>
         </div>

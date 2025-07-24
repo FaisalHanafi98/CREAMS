@@ -36,9 +36,9 @@
                             <ul class="list-unstyled">
                                 @if(session('role'))
                                     @if(in_array(session('role'), ['admin', 'supervisor', 'teacher']))
-                                        <li><a href="{{ route('activities.index') }}">Activities</a></li>
-                                        <li><a href="{{ route('teachershome') }}">Staff Directory</a></li>
-                                        <li><a href="{{ route('traineeshome') }}">Trainees</a></li>
+                                        <li><a href="{{ route('activities.home') }}">Activities</a></li>
+                                        <li><a href="{{ route('staffs.home') }}">Staff Directory</a></li>
+                                        <li><a href="{{ route('trainees.home') }}">Trainees</a></li>
                                     @endif
                                 @else
                                     <li><a href="{{ route('contact') }}">Contact Us</a></li>

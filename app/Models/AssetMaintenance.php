@@ -16,6 +16,7 @@ class AssetMaintenance extends Model
     protected $fillable = [
         'asset_id',
         'type',
+        'priority',
         'scheduled_date',
         'completed_date',
         'status',

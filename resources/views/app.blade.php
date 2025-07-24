@@ -289,7 +289,7 @@
                         
                         <li class="nav-item">
                             <a class="nav-link {{ request()->routeIs('activities.*') ? 'active' : '' }}" 
-                               href="{{ route('activities.index') }}">
+                               href="{{ route('activities.home') }}">
                                 <i class="fas fa-tasks"></i> Activities
                             </a>
                         </li>

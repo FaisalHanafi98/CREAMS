@@ -60,7 +60,7 @@
             @if(Route::has('traineeactivity'))
                 <a href="{{ route('traineeactivity') }}" class="inline-btn">View Activity</a>
             @else
-                <a href="{{ route('activities.index') }}" class="inline-btn">View Activities</a>
+                <a href="{{ route('activities.home') }}" class="inline-btn">View Activities</a>
             @endif
          </div>
    
@@ -126,14 +126,14 @@
                         <span class="nav-item">Register</span>
                     </a>
                 </li>
-                <li class="{{ strpos($currentRoute, route('teachershome')) !== false ? 'active' : '' }}">
-                    <a href="{{ route('teachershome') }}">
+                <li class="{{ strpos($currentRoute, route('staffs.home')) !== false ? 'active' : '' }}">
+                    <a href="{{ route('staffs.home') }}">
                         <i class="fas fa-person-chalkboard"></i>
                         <span class="nav-item">Staff</span>
                     </a>
                 </li>
-                <li class="{{ strpos($currentRoute, route('traineeshome')) !== false ? 'active' : '' }}">
-                    <a href="{{ route('traineeshome') }}">
+                <li class="{{ strpos($currentRoute, route('trainees.home')) !== false ? 'active' : '' }}">
+                    <a href="{{ route('trainees.home') }}">
                         <i class="fas fa-address-card"></i>
                         <span class="nav-item">Trainee</span>
                     </a>

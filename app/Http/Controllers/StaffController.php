@@ -11,22 +11,29 @@ use App\Models\Centres;
 use App\Models\Activity;
 use App\Models\Trainee;
 use App\Traits\HandlesErrors;
+use App\Traits\HandlesEncryptedIds;
 
 class StaffController extends Controller
 {
-    use HandlesErrors;
+    use HandlesErrors, HandlesEncryptedIds;
     /**
      * Display staff profile in view-only mode
      *
-     * @param int $id
+     * @param string $encrypted_id
      * @return \Illuminate\View\View
      */
-    public function viewProfile($id)
+    public function viewProfile($encrypted_id)
     {
         try {
+            // Decrypt the ID
+            $id = $this->decryptId($encrypted_id);
+            if (!$id) {
+                return redirect()->route('staffs.home')->with('error', 'Invalid or expired link.');
+            }
+            
             // Debug: Log what ID we're trying to fetch
             Log::info('StaffController@viewProfile called', [
-                'requested_id' => $id,
+                'decrypted_id' => $id,
                 'session_id' => session('id'),
                 'current_user' => session('name')
             ]);
@@ -57,7 +64,7 @@ class StaffController extends Controller
                     'target_id' => $id
                 ]);
                 
-                return redirect()->route('teachershome')
+                return redirect()->route('staffs.home')
                     ->with('error', 'You do not have permission to view this profile.');
             }
 
@@ -74,7 +81,7 @@ class StaffController extends Controller
         } catch (\Exception $e) {
             Log::error('Error in StaffController@viewProfile: ' . $e->getMessage());
             
-            return redirect()->route('teachershome')
+            return redirect()->route('staffs.home')
                 ->with('error', 'Unable to find staff member with ID: ' . $id);
         }
     }
@@ -85,12 +92,18 @@ class StaffController extends Controller
      * @param int $id
      * @return \Illuminate\View\View
      */
-    public function editProfile($id)
+    public function editProfile($encrypted_id)
     {
         try {
+            // Decrypt the ID
+            $id = $this->decryptId($encrypted_id);
+            if (!$id) {
+                return redirect()->route('staffs.home')->with('error', 'Invalid or expired link.');
+            }
+            
             // Debug: Log what ID we're trying to edit
             Log::info('StaffController@editProfile called', [
-                'requested_id' => $id,
+                'decrypted_id' => $id,
                 'session_id' => session('id'),
                 'current_user' => session('name')
             ]);
@@ -129,7 +142,7 @@ class StaffController extends Controller
                     'target_id' => $id
                 ]);
                 
-                return redirect()->route('staff.view', $id)
+                return redirect()->route('staffs.profile', ['encrypted_id' => $this->generateEncryptedId($id)])
                     ->with('error', 'You do not have permission to edit this profile.');
             }
 
@@ -142,7 +155,7 @@ class StaffController extends Controller
         } catch (\Exception $e) {
             Log::error('Error in StaffController@editProfile: ' . $e->getMessage());
             
-            return redirect()->route('teachershome')
+            return redirect()->route('staffs.home')
                 ->with('error', 'Unable to find staff member with ID: ' . $id);
         }
     }
@@ -154,15 +167,21 @@ class StaffController extends Controller
      * @param int $id
      * @return \Illuminate\Http\RedirectResponse
      */
-    public function updateProfile(Request $request, $id)
+    public function updateProfile(Request $request, $encrypted_id)
     {
         try {
+            // Decrypt the ID
+            $id = $this->decryptId($encrypted_id);
+            if (!$id) {
+                return redirect()->route('staffs.home')->with('error', 'Invalid or expired link.');
+            }
+            
             // Get staff member with ID
             $user = Users::findOrFail($id);
             
             // Check if current user has permission to edit this profile
             if (!$this->checkEditPermission($user)) {
-                return redirect()->route('staff.view', $id)
+                return redirect()->route('staffs.profile', ['encrypted_id' => $this->generateEncryptedId($id)])
                     ->with('error', 'You do not have permission to edit this profile.');
             }
 
@@ -227,7 +246,7 @@ class StaffController extends Controller
                 'updated_fields' => array_keys($validatedData)
             ]);
 
-            return redirect()->route('staff.view', $id)
+            return redirect()->route('staffs.profile', ['encrypted_id' => $this->generateEncryptedId($id)])
                 ->with('success', 'Profile updated successfully!');
 
         } catch (\Illuminate\Validation\ValidationException $e) {
@@ -407,7 +426,7 @@ class StaffController extends Controller
             
             // Check permission
             if (!$this->checkViewPermission($staffMember)) {
-                return redirect()->route('teachershome')
+                return redirect()->route('staffs.home')
                     ->with('error', 'You do not have permission to view this schedule.');
             }
 
@@ -464,7 +483,7 @@ class StaffController extends Controller
 
         } catch (\Exception $e) {
             Log::error('Error showing staff schedule: ' . $e->getMessage());
-            return redirect()->route('staff.view', $id)
+            return redirect()->route('staffs.profile', ['encrypted_id' => $this->generateEncryptedId($id)])
                 ->with('error', 'Unable to load schedule.');
         }
     }
@@ -482,7 +501,7 @@ class StaffController extends Controller
             
             // Check permission
             if (!$this->checkViewPermission($staffMember)) {
-                return redirect()->route('teachershome')
+                return redirect()->route('staffs.home')
                     ->with('error', 'You do not have permission to view these activities.');
             }
 
@@ -519,7 +538,7 @@ class StaffController extends Controller
 
         } catch (\Exception $e) {
             Log::error('Error showing staff activities: ' . $e->getMessage());
-            return redirect()->route('staff.view', $id)
+            return redirect()->route('staffs.profile', ['encrypted_id' => $this->generateEncryptedId($id)])
                 ->with('error', 'Unable to load activities.');
         }
     }
@@ -537,7 +556,7 @@ class StaffController extends Controller
             
             // Check permission
             if (!$this->checkViewPermission($staffMember)) {
-                return redirect()->route('teachershome')
+                return redirect()->route('staffs.home')
                     ->with('error', 'You do not have permission to view these trainees.');
             }
 
@@ -570,7 +589,7 @@ class StaffController extends Controller
 
         } catch (\Exception $e) {
             Log::error('Error showing staff trainees: ' . $e->getMessage());
-            return redirect()->route('staff.view', $id)
+            return redirect()->route('staffs.profile', ['encrypted_id' => $this->generateEncryptedId($id)])
                 ->with('error', 'Unable to load assigned trainees.');
         }
     }

@@ -49,8 +49,8 @@
                     <div class="tooltip-sidebar">Dashboard</div>
                 </a>
             </li>
-            <li class="{{ request()->routeIs('traineeshome') || request()->routeIs('traineeprofile') || request()->routeIs('traineesregistrationpage') ? 'active' : '' }}">
-                <a href="{{ route('traineeshome') }}">
+            <li class="{{ request()->routeIs('trainees.home') || request()->routeIs('traineeprofile') || request()->routeIs('traineesregistrationpage') ? 'active' : '' }}">
+                <a href="{{ route('trainees.home') }}">
                     <i class="fas fa-user-graduate"></i>
                     <span>Trainees</span>
                     <div class="tooltip-sidebar">Trainees</div>
@@ -66,15 +66,15 @@
             </li>
             @else
             <li class="{{ request()->routeIs('activities.*') ? 'active' : '' }}">
-                <a href="{{ route('activities.index') }}">
+                <a href="{{ route('activities.home') }}">
                     <i class="fas fa-clipboard-list"></i>
                     <span>Activities</span>
                     <div class="tooltip-sidebar">Activities</div>
                 </a>
             </li>
             @endif
-            <li class="{{ request()->routeIs('teachershome') ? 'active' : '' }}">
-                <a href="{{ route('teachershome') }}">
+            <li class="{{ request()->routeIs('staffs.home') ? 'active' : '' }}">
+                <a href="{{ route('staffs.home') }}">
                     <i class="fas fa-chalkboard-teacher"></i>
                     <span>Staff</span>
                     <div class="tooltip-sidebar">Staff</div>
@@ -122,7 +122,7 @@
                     <div class="breadcrumb">
                         <a href="{{ route('dashboard') }}">Dashboard</a>
                         <span class="separator">/</span>
-                        <a href="{{ route('traineeshome') }}">Trainees</a>
+                        <a href="{{ route('trainees.home') }}">Trainees</a>
                         <span class="separator">/</span>
                         <span class="current">Register New Trainee</span>
                     </div>
@@ -178,7 +178,7 @@
             </div>
             
             <div class="page-actions">
-                <a href="{{ route('traineeshome') }}" class="action-btn">
+                <a href="{{ route('trainees.home') }}" class="action-btn">
                     <i class="fas fa-arrow-left"></i> Back to Trainees
                 </a>
             </div>

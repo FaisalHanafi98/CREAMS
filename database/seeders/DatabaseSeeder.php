@@ -42,34 +42,34 @@ class DatabaseSeeder extends Seeder
             // Phase 3: Courses and Programs
             $this->command->info("\n📚 PHASE 3: Setting up courses and programs...");
             $this->call([
-                CoursesSeeder::class,                  // Create courses first
+                CREAMSCourseSeeder::class,             // Create courses first
             ]);
 
             // Phase 4: Trainees
             $this->command->info("\n🧒 PHASE 4: Creating diverse Malaysian trainees...");
             $this->call([
-                EnhancedMalaysianTraineesSeeder::class, // Enhanced trainees with realistic conditions
+                CREAMSTraineeSeeder::class,            // Enterprise trainee seeder with realistic Malaysian data
             ]);
 
             // Phase 5: Activities and Programs
             $this->command->info("\n🎯 PHASE 5: Setting up rehabilitation activities and academic programs...");
             $this->call([
-                CategorySeeder::class,                        // Activity categories with metadata
+                CREAMSCategorySeeder::class,                  // Activity categories with metadata
                 CREAMSRehabilitationActivitiesSeeder::class, // Comprehensive bilingual activities
-                EnhancedActivitySeeder::class,               // Enhanced activities with Category model integration
+                // Enhanced activities moved to archive - using comprehensive activity seeder
             ]);
 
             // Phase 6: Sessions and Enrollments
             $this->command->info("\n📅 PHASE 6: Creating activity sessions and trainee enrollments...");
             $this->call([
-                ActivitySessionsAndEnrollmentsSeeder::class, // Sessions with realistic scheduling
+                CREAMSActivitySeeder::class,                  // Comprehensive activity sessions and enrollments
             ]);
 
             // Phase 7: Additional Data (Optional)
             $this->command->info("\n📝 PHASE 7: Adding supplementary data...");
             $this->call([
-                MessagesSeeder::class,            // Sample messages between staff
-                NotificationsSeeder::class,       // System notifications
+                CREAMSMessageSeeder::class,       // Sample messages between staff
+                CREAMSNotificationSeeder::class,  // System notifications
             ]);
 
             // Post-seeding operations

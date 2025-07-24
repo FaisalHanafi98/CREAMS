@@ -334,14 +334,14 @@
                 </a>
             @endforeach
         @else
-            <a href="{{ route('traineeshome') }}" class="mobile-action-btn">
+            <a href="{{ route('trainees.home') }}" class="mobile-action-btn">
                 <div class="mobile-action-icon">
                     <i class="fas fa-user-graduate"></i>
                 </div>
                 <div class="mobile-action-label">Trainees</div>
             </a>
             
-            <a href="{{ route('activities.index') }}" class="mobile-action-btn">
+            <a href="{{ route('activities.home') }}" class="mobile-action-btn">
                 <div class="mobile-action-icon">
                     <i class="fas fa-calendar-alt"></i>
                 </div>

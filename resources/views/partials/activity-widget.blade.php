@@ -3,7 +3,7 @@
         <h5 class="m-0 font-weight-bold text-primary">
             <i class="fas fa-tasks mr-1"></i> Activity Overview
         </h5>
-        <a href="{{ route('activities.index') }}" class="btn btn-sm btn-primary">
+        <a href="{{ route('activities.home') }}" class="btn btn-sm btn-primary">
             View All
         </a>
     </div>

@@ -7,7 +7,7 @@
 
 @section('page-actions')
 <div class="page-actions">
-    <a href="{{ route('traineeshome') }}" class="action-btn">
+    <a href="{{ route('trainees.home') }}" class="action-btn">
         <i class="fas fa-arrow-left"></i> Back to Trainees
     </a>
     <button id="addActivityBtn" class="action-btn primary">

@@ -358,7 +358,7 @@
         <h1 class="h3 mb-0 text-gray-800">Staff Directory</h1>
         <div>
             @if(in_array($currentUserRole, ['admin', 'supervisor']))
-            <a href="{{ route('auth.registerpage') }}" class="btn btn-primary btn-sm">
+            <a href="{{ route('staffs.register') }}" class="btn btn-primary btn-sm">
                 <i class="fas fa-user-plus fa-sm"></i> Add Staff
             </a>
             @endif
@@ -449,7 +449,7 @@
             </h6>
         </div>
         <div class="card-body">
-            <form id="filter-form" action="{{ route('teachershome') }}" method="GET">
+            <form id="filter-form" action="{{ route('staffs.home') }}" method="GET">
                 <div class="row">
                     <div class="col-md-3 mb-3">
                         <label for="role-filter">Role</label>
@@ -512,7 +512,7 @@
                         <button type="submit" class="btn btn-primary">
                             <i class="fas fa-filter mr-1"></i> Apply Filters
                         </button>
-                        <a href="{{ route('teachershome') }}" class="btn btn-secondary ml-2">
+                        <a href="{{ route('staffs.home') }}" class="btn btn-secondary ml-2">
                             <i class="fas fa-sync-alt mr-1"></i> Reset Filters
                         </a>
                     </div>
@@ -591,12 +591,12 @@
                                         </ul>
                                     </div>
                                     <div class="teacher-footer">
-                                        <a href="{{ route('staff.view', ['id' => $user->id]) }}" class="btn btn-primary btn-sm">
+                                        <a href="{{ route('staffs.profile', ['id' => $user->encrypted_id ?? $user->id]) }}" class="btn btn-primary btn-sm">
                                             <i class="fas fa-user mr-1"></i> View Profile
                                         </a>
                                         @if(in_array($currentUserRole, ['admin', 'supervisor']) && 
                                             ($currentUserRole == 'admin' || $user->role != 'admin'))
-                                            <a href="{{ route('staff.edit', ['id' => $user->id]) }}" class="btn btn-info btn-sm ml-2">
+                                            <a href="{{ route('staffs.edit', ['id' => $user->encrypted_id ?? $user->id]) }}" class="btn btn-info btn-sm ml-2">
                                                 <i class="fas fa-edit mr-1"></i> Edit
                                             </a>
                                         @endif
@@ -611,7 +611,7 @@
                                     </div>
                                     <h3 class="empty-title">No Staff Found</h3>
                                     <p class="empty-description">No staff members match your current filters.</p>
-                                    <a href="{{ route('teachershome') }}" class="btn btn-primary">
+                                    <a href="{{ route('staffs.home') }}" class="btn btn-primary">
                                         <i class="fas fa-sync-alt mr-1"></i> Reset Filters
                                     </a>
                                 </div>
@@ -671,12 +671,12 @@
                                             </ul>
                                         </div>
                                         <div class="teacher-footer">
-                                            <a href="{{ route('staff.view', ['id' => $user->id]) }}" class="btn btn-primary btn-sm">
+                                            <a href="{{ route('staffs.profile', ['id' => $user->encrypted_id ?? $user->id]) }}" class="btn btn-primary btn-sm">
                                                 <i class="fas fa-user mr-1"></i> View Profile
                                             </a>
                                             @if(in_array($currentUserRole, ['admin', 'supervisor']) && 
                                                 ($currentUserRole == 'admin' || $user->role != 'admin'))
-                                                <a href="{{ route('staff.edit', ['id' => $user->id]) }}" class="btn btn-info btn-sm ml-2">
+                                                <a href="{{ route('staffs.edit', ['id' => $user->encrypted_id ?? $user->id]) }}" class="btn btn-info btn-sm ml-2">
                                                     <i class="fas fa-edit mr-1"></i> Edit
                                                 </a>
                                             @endif

@@ -464,13 +464,13 @@
                 <div class="breadcrumb">
                     <a href="{{ route('dashboard') }}">Dashboard</a>
                     <span class="separator">/</span>
-                    <a href="{{ route('teachershome') }}">Staff Management</a>
+                    <a href="{{ route('staffs.home') }}">Staff Management</a>
                     <span class="separator">/</span>
                     <span class="current">Registration</span>
                 </div>
             </div>
             <div class="col-auto">
-                <a href="{{ route('teachershome') }}" class="btn btn-secondary">
+                <a href="{{ route('staffs.home') }}" class="btn btn-secondary">
                     <i class="fas fa-arrow-left"></i> Back to Staff Directory
                 </a>
             </div>

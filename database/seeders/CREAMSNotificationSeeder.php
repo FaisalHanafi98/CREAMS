@@ -14,7 +14,7 @@ use App\Models\AJKs;
 use App\Models\Notifications;
 use Illuminate\Support\Facades\Schema;
 
-class NotificationsSeeder extends Seeder
+class CREAMSNotificationSeeder extends Seeder
 {
     /**
      * Run the database seeds.

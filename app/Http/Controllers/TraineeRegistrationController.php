@@ -75,7 +75,7 @@ class TraineeRegistrationController extends Controller
             ]);
         } catch (\Exception $e) {
             return $this->handleException($e, 'loading trainee registration page', [
-                'redirect_route' => 'traineeshome'
+                'redirect_route' => 'trainees.home'
             ]);
         }
     }
@@ -267,7 +267,7 @@ class TraineeRegistrationController extends Controller
             return $this->successResponse(
                 'Trainee registered successfully.',
                 null,
-                'traineeshome'
+                'trainees.home'
             );
                 
         } catch (\Exception $e) {
@@ -410,7 +410,7 @@ class TraineeRegistrationController extends Controller
             ]);
             
             // For now return with a placeholder message
-            return redirect()->route('traineeshome')
+            return redirect()->route('trainees.home')
                 ->with('info', 'Import functionality is under development.');
                 
         } catch (\Exception $e) {

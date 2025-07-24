@@ -91,7 +91,7 @@
             <div class="detail-card mt-4">
                 <div class="detail-card-header">
                     <h3>Recent Activities</h3>
-                    <a href="{{ route('activities.index') }}?centre={{ $centre->centre_id }}" class="btn btn-sm btn-outline-light">
+                    <a href="{{ route('activities.home') }}?centre={{ $centre->centre_id }}" class="btn btn-sm btn-outline-light">
                         View All
                     </a>
                 </div>

@@ -200,7 +200,7 @@ class CentreStatistics extends Model
             'total_users' => Users::where('centre_id', $centreId)->where('is_active', true)->count(),
             'total_trainees' => Trainee::where('centre_id', $centreId)->where('is_active', true)->count(),
             'total_activities' => Activity::where('centre_id', $centreId)->where('is_active', true)->count(),
-            'total_assets' => Asset::where('centre_name', $centre->centre_name)->count(),
+            'total_assets' => Asset::where('centre_id', $centreId)->count(),
             'utilization_rate' => 0, // Will be calculated based on capacity
             'attendance_rate' => 0,  // Will be calculated based on recent sessions
             'last_calculated' => now()

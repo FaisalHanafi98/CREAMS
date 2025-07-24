@@ -255,7 +255,7 @@
         <!-- Navigation Grid -->
         <div class="navigation-grid">
             @if(in_array(session('role'), ['admin', 'supervisor']))
-                <a href="{{ route('users.index') }}" class="nav-card">
+                <a href="{{ route('staffs.home') }}" class="nav-card">
                     <div class="nav-icon">
                         <i class="fas fa-users"></i>
                     </div>
@@ -264,7 +264,7 @@
                 </a>
             @endif
             
-            <a href="{{ route('traineeshome') }}" class="nav-card">
+            <a href="{{ route('trainees.home') }}" class="nav-card">
                 <div class="nav-icon">
                     <i class="fas fa-user-graduate"></i>
                 </div>
@@ -272,7 +272,7 @@
                 <div class="nav-description">View and manage trainee information</div>
             </a>
             
-            <a href="{{ route('activities.index') }}" class="nav-card">
+            <a href="{{ route('activities.home') }}" class="nav-card">
                 <div class="nav-icon">
                     <i class="fas fa-calendar-alt"></i>
                 </div>

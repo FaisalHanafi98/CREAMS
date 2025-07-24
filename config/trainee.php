@@ -51,6 +51,19 @@ return [
         'Other'
     ],
 
+    'guardian_relationships' => [
+        'Parent',
+        'Guardian',
+        'Grandparent',
+        'Sibling',
+        'Uncle/Aunt',
+        'Cousin',
+        'Family Friend',
+        'Legal Guardian',
+        'Foster Parent',
+        'Other'
+    ],
+
     'document_types' => [
         'birth_certificate' => 'Birth Certificate',
         'ic_copy' => 'IC Copy',

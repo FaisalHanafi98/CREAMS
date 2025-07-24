@@ -12,7 +12,7 @@ use App\Models\Trainees;
 use App\Models\Centres;
 use Carbon\Carbon;
 
-class ActivityScheduleSeeder extends Seeder
+class CREAMSScheduleSeeder extends Seeder
 {
     /**
      * Run the database seeds.

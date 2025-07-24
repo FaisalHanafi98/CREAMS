@@ -8,9 +8,11 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Models\Users;
 use App\Models\Centres;
+use App\Traits\HandlesEncryptedIds;
 
 class TeachersHomeController extends Controller
 {
+    use HandlesEncryptedIds;
     /**
      * Display the main teachers/staff home page with filtering capabilities
      *
@@ -95,6 +97,9 @@ class TeachersHomeController extends Controller
                 if (empty($user->centre_name)) {
                     $user->centre_name = 'Not Assigned';
                 }
+                
+                // Add encrypted ID for secure URL generation
+                $user->encrypted_id = $this->generateEncryptedId($user->id);
                 
                 return $user;
             });

@@ -173,7 +173,7 @@
             </h6>
         </div>
         <div class="card-body">
-            <form action="{{ route('traineeshome') }}" method="GET" class="form-inline">
+            <form action="{{ route('trainees.home') }}" method="GET" class="form-inline">
                 <div class="form-group mb-2 flex-grow-1">
                     <div class="input-group w-100">
                         <div class="input-group-prepend">
@@ -186,7 +186,7 @@
                     <i class="fas fa-search mr-1"></i>Search
                 </button>
                 @if(request()->has('search') || request()->has('centre') || request()->has('condition'))
-                    <a href="{{ route('traineeshome') }}" class="btn btn-secondary mb-2 ml-2">
+                    <a href="{{ route('trainees.home') }}" class="btn btn-secondary mb-2 ml-2">
                         <i class="fas fa-times mr-1"></i>Clear
                     </a>
                 @endif
@@ -207,7 +207,7 @@
                     @if(request('search'))
                         <span class="badge badge-info filter-badge m-1 p-2">
                             <i class="fas fa-search mr-1"></i>Search: {{ request('search') }}
-                            <a href="{{ route('traineeshome', array_merge(request()->except('search'), [])) }}" class="text-white ml-1">
+                            <a href="{{ route('trainees.home', array_merge(request()->except('search'), [])) }}" class="text-white ml-1">
                                 <i class="fas fa-times"></i>
                             </a>
                         </span>
@@ -216,7 +216,7 @@
                     @if(request('centre'))
                         <span class="badge badge-primary filter-badge m-1 p-2">
                             <i class="fas fa-building mr-1"></i>Center: {{ request('centre') }}
-                            <a href="{{ route('traineeshome', array_merge(request()->except('centre'), [])) }}" class="text-white ml-1">
+                            <a href="{{ route('trainees.home', array_merge(request()->except('centre'), [])) }}" class="text-white ml-1">
                                 <i class="fas fa-times"></i>
                             </a>
                         </span>
@@ -225,13 +225,13 @@
                     @if(request('condition'))
                         <span class="badge badge-success filter-badge m-1 p-2">
                             <i class="fas fa-heartbeat mr-1"></i>Condition: {{ request('condition') }}
-                            <a href="{{ route('traineeshome', array_merge(request()->except('condition'), [])) }}" class="text-white ml-1">
+                            <a href="{{ route('trainees.home', array_merge(request()->except('condition'), [])) }}" class="text-white ml-1">
                                 <i class="fas fa-times"></i>
                             </a>
                         </span>
                     @endif
                     
-                    <a href="{{ route('traineeshome') }}" class="btn btn-sm btn-outline-secondary ml-auto">
+                    <a href="{{ route('trainees.home') }}" class="btn btn-sm btn-outline-secondary ml-auto">
                         <i class="fas fa-broom mr-1"></i>Clear All Filters
                     </a>
                 </div>
@@ -254,7 +254,7 @@
                         </a>
                         <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in" aria-labelledby="dropdownMenuLink-{{ Str::slug($centreName) }}">
                             <div class="dropdown-header">Center Actions:</div>
-                            <a class="dropdown-item" href="{{ route('traineeshome', ['centre' => $centreName]) }}">
+                            <a class="dropdown-item" href="{{ route('trainees.home', ['centre' => $centreName]) }}">
                                 <i class="fas fa-filter mr-2"></i>Filter by Center
                             </a>
                             <div class="dropdown-divider"></div>
@@ -330,7 +330,7 @@
 <div class="modal fade" id="filterModal" tabindex="-1" role="dialog" aria-labelledby="filterModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
-            <form action="{{ route('traineeshome') }}" method="GET">
+            <form action="{{ route('trainees.home') }}" method="GET">
                 <div class="modal-header">
                     <h5 class="modal-title" id="filterModalLabel">
                         <i class="fas fa-filter mr-2"></i>Filter Trainees
@@ -382,7 +382,7 @@
                         <i class="fas fa-filter mr-1"></i>Apply Filters
                     </button>
                     @if(request()->has('search') || request()->has('centre') || request()->has('condition'))
-                        <a href="{{ route('traineeshome') }}" class="btn btn-outline-secondary">
+                        <a href="{{ route('trainees.home') }}" class="btn btn-outline-secondary">
                             <i class="fas fa-broom mr-1"></i>Clear Filters
                         </a>
                     @endif

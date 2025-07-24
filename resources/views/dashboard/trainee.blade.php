@@ -395,7 +395,7 @@
                 <div class="card-section">
                     <div class="section-header">
                         <h3 class="section-title">My Recent Activities</h3>
-                        <a href="{{ route('activities.index') }}" class="btn btn-sm btn-outline-success">View All Activities</a>
+                        <a href="{{ route('activities.home') }}" class="btn btn-sm btn-outline-success">View All Activities</a>
                     </div>
                     
                     @if(isset($recent_activities) && count($recent_activities) > 0)

@@ -65,7 +65,7 @@
                 <ul class="list-unstyled">
                     <li><a href="{{ url('/admins/dashboard') }}">Home</a></li>
                     <li><a href="{{ route('auth.loginpage') }}">Login</a></li>
-                    <li><a href="{{ route('auth.registerpage') }}">Register</a></li>
+                    <li><a href="{{ route('staffs.register') }}">Register</a></li>
                 </ul>
             </div>
             <div class="col-lg-4 col-sm-6">

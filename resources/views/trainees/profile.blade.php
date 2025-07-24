@@ -403,7 +403,7 @@
     <nav aria-label="breadcrumb">
         <ol class="breadcrumb">
             <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Dashboard</a></li>
-            <li class="breadcrumb-item"><a href="{{ route('traineeshome') }}">Trainees</a></li>
+            <li class="breadcrumb-item"><a href="{{ route('trainees.home') }}">Trainees</a></li>
             <li class="breadcrumb-item active">{{ $trainee->full_name ?? 'Profile' }}</li>
         </ol>
     </nav>
@@ -570,8 +570,8 @@
                                 @if(isset($activity->pivot->enrollment_date))
                                     <span><i class="fas fa-calendar me-1"></i>Enrolled: {{ date('M j, Y', strtotime($activity->pivot->enrollment_date)) }}</span>
                                 @endif
-                                @if(isset($activity->pivot->status))
-                                    <span><i class="fas fa-info-circle me-1"></i>Status: {{ ucfirst($activity->pivot->status) }}</span>
+                                @if(isset($activity->pivot->enrollment_status))
+                                    <span><i class="fas fa-info-circle me-1"></i>Status: {{ ucfirst($activity->pivot->enrollment_status) }}</span>
                                 @endif
                                 @if(isset($activity->category))
                                     <span><i class="fas fa-tag me-1"></i>{{ $activity->category }}</span>

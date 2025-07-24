@@ -345,7 +345,7 @@
 
         <!-- Filters Section -->
         <div class="activity-filters">
-            <form method="GET" action="{{ route('activities.index') }}" class="filter-group">
+            <form method="GET" action="{{ route('activities.home') }}" class="filter-group">
                 <div class="form-group">
                     <label>Category</label>
                     <select name="category" class="form-control" onchange="this.form.submit()">
@@ -381,7 +381,7 @@
                 @if(request()->hasAny(['category', 'search']))
                     <div class="form-group">
                         <label>&nbsp;</label>
-                        <a href="{{ route('activities.index') }}" class="btn btn-secondary btn-block">
+                        <a href="{{ route('activities.home') }}" class="btn btn-secondary btn-block">
                             <i class="fas fa-times mr-2"></i>Clear
                         </a>
                     </div>

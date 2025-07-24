@@ -548,7 +548,7 @@
                         <h3 class="section-title">Quick Actions</h3>
                     </div>
                     <div class="quick-actions">
-                        <a href="{{ route('activities.index') }}" class="action-btn">
+                        <a href="{{ route('activities.home') }}" class="action-btn">
                             <div class="action-icon">
                                 <i class="fas fa-clipboard-check"></i>
                             </div>

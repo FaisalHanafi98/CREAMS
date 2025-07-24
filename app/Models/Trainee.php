@@ -191,7 +191,7 @@ class Trainee extends Model
     public function activities()
     {
         return $this->belongsToMany(Activity::class, 'activity_enrollments', 'trainee_id', 'activity_id')
-                    ->withPivot(['enrollment_date', 'status', 'notes'])
+                    ->withPivot(['enrollment_date', 'enrollment_status', 'enrollment_notes', 'progress_percentage', 'attendance_count', 'completion_date', 'completion_notes', 'enrolled_by'])
                     ->withTimestamps();
     }
 

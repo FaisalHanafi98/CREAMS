@@ -467,7 +467,7 @@
                 <div class="recent-section">
                     <div class="recent-header">
                         <h3 class="chart-title">Recent Users</h3>
-                        <a href="{{ route('users.index') }}" class="btn btn-sm btn-outline-primary">View All</a>
+                        <a href="{{ route('staffs.home') }}" class="btn btn-sm btn-outline-primary">View All</a>
                     </div>
                     <ul class="recent-list">
                         @foreach($recent['users'] ?? [] as $user)

@@ -252,7 +252,7 @@
                     <i class="fas fa-sync-alt"></i>
                 </button>
                 @if(session('role') === 'admin' || session('role') === 'supervisor')
-                    <a href="{{ route('activities.index') }}" class="section-action">View All</a>
+                    <a href="{{ route('activities.home') }}" class="section-action">View All</a>
                 @endif
             </div>
         </div>
@@ -528,7 +528,7 @@
                     <h5 class="m-0 font-weight-bold text-primary">
                         <i class="fas fa-user-graduate mr-1"></i> Trainee Management
                     </h5>
-                    <a href="{{ route('traineeshome') }}" class="btn btn-sm btn-primary">
+                    <a href="{{ route('trainees.home') }}" class="btn btn-sm btn-primary">
                         View All
                     </a>
                 </div>
@@ -602,7 +602,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <a href="{{ route('rehabilitation.categories') }}" class="btn btn-sm btn-primary">View All Categories</a>
+                            <a href="{{ route('activities.categories') }}" class="btn btn-sm btn-primary">View All Categories</a>
                         </div>
                     </div>
                     
@@ -610,7 +610,7 @@
                     <div class="card mt-3">
                         <div class="card-header d-flex justify-content-between align-items-center">
                             <h5 class="mb-0">Recent Activities</h5>
-                            <a href="{{ route('activities.index') }}" class="btn btn-sm btn-outline-primary">View All</a>
+                            <a href="{{ route('activities.home') }}" class="btn btn-sm btn-outline-primary">View All</a>
                         </div>
                         <div class="table-responsive">
                             <table class="table table-hover">
@@ -715,7 +715,7 @@
                                     <i class="fas fa-calendar-times fa-2x text-muted mb-2"></i>
                                     <p class="text-muted mb-0">No sessions scheduled today</p>
                                     @if(session('role') !== 'ajk')
-                                        <a href="{{ route('activities.index') }}" class="btn btn-sm btn-outline-primary mt-2">
+                                        <a href="{{ route('activities.home') }}" class="btn btn-sm btn-outline-primary mt-2">
                                             Schedule Activities
                                         </a>
                                     @endif
@@ -855,7 +855,7 @@
                                     </a>
                                 </div>
                                 <div class="col-6 mb-2">
-                                    <a href="{{ route('rehabilitation.categories') }}" class="btn btn-outline-success btn-block">
+                                    <a href="{{ route('activities.categories') }}" class="btn btn-outline-success btn-block">
                                         <i class="fas fa-heartbeat"></i> Activities
                                     </a>
                                 </div>

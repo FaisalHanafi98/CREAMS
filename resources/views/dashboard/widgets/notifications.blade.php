@@ -35,7 +35,7 @@
                                 $notificationData[] = [
                                     'type' => 'success',
                                     'message' => "{$recentTraineeCount} new trainees enrolled this week",
-                                    'action' => route('traineeshome'),
+                                    'action' => route('trainees.home'),
                                     'created_at' => \Carbon\Carbon::now()->subHours(4),
                                     'read' => false,
                                     'icon' => 'fas fa-user-graduate'
@@ -46,7 +46,7 @@
                                 $notificationData[] = [
                                     'type' => 'warning',
                                     'message' => "{$activeSessionsCount} active sessions running",
-                                    'action' => route('activities.index'),
+                                    'action' => route('activities.home'),
                                     'created_at' => \Carbon\Carbon::now()->subMinutes(30),
                                     'read' => true,
                                     'icon' => 'fas fa-play-circle'

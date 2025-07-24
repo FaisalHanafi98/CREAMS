@@ -577,7 +577,7 @@
                 <div class="card-section">
                     <div class="section-header">
                         <h3 class="section-title">Team Performance</h3>
-                        <a href="{{ route('users.index') }}" class="btn btn-sm btn-outline-warning">Manage Team</a>
+                        <a href="{{ route('staffs.home') }}" class="btn btn-sm btn-outline-warning">Manage Team</a>
                     </div>
                     
                     <div class="team-grid">
@@ -618,7 +618,7 @@
                 <div class="card-section">
                     <div class="section-header">
                         <h3 class="section-title">Today's Activities</h3>
-                        <a href="{{ route('activities.index') }}" class="btn btn-sm btn-outline-warning">View All</a>
+                        <a href="{{ route('activities.home') }}" class="btn btn-sm btn-outline-warning">View All</a>
                     </div>
                     
                     @if(isset($schedule['today']) && count($schedule['today']) > 0)

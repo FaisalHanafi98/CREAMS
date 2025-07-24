@@ -948,9 +948,9 @@
         
         <div class="topbar-title">
             <!-- Dynamic title based on current page -->
-            @if(Route::currentRouteName() == 'traineeshome' || strpos(Route::currentRouteName(), 'trainee') !== false)
+            @if(Route::currentRouteName() == 'trainees.home' || strpos(Route::currentRouteName(), 'trainee') !== false)
                 Trainees Management
-            @elseif(Route::currentRouteName() == 'rehabilitation.categories' || strpos(Route::currentRouteName(), 'rehabilitation') !== false)
+            @elseif(Route::currentRouteName() == 'activities.categories' || strpos(Route::currentRouteName(), 'rehabilitation') !== false)
                 Rehabilitation Categories
             @else
                 {{ ucfirst(session('role')) }} Dashboard
@@ -1123,8 +1123,8 @@
                         @endif
                     </li>
                     <li>
-                        @if(Route::has('auth.registerpage'))
-                            <a href="{{ route('auth.registerpage') }}" class="sidebar-submenu-link {{ Route::currentRouteName() == 'auth.registerpage' ? 'active' : '' }}">
+                        @if(Route::has('staffs.register'))
+                            <a href="{{ route('staffs.register') }}" class="sidebar-submenu-link {{ Route::currentRouteName() == 'staffs.register' ? 'active' : '' }}">
                                 Registration
                             </a>
                         @else
@@ -1145,7 +1145,7 @@
                 </a>
                 <ul class="sidebar-submenu">
                     <li>
-                        <a href="{{ route('traineeshome') }}" class="sidebar-submenu-link {{ Route::currentRouteName() == 'traineeshome' ? 'active' : '' }}">
+                        <a href="{{ route('trainees.home') }}" class="sidebar-submenu-link {{ Route::currentRouteName() == 'trainees.home' ? 'active' : '' }}">
                             Home
                         </a>
                     </li>
@@ -1165,12 +1165,12 @@
                 </a>
                 <ul class="sidebar-submenu">
                     <li>
-                        <a href="{{ route('activities.index') }}" class="sidebar-submenu-link {{ Route::currentRouteName() == 'activities.index' ? 'active' : '' }}">
+                        <a href="{{ route('activities.home') }}" class="sidebar-submenu-link {{ Route::currentRouteName() == 'activities.home' ? 'active' : '' }}">
                             Home
                         </a>
                     </li>
                     <li>
-                        <a href="{{ route('rehabilitation.categories') }}" class="sidebar-submenu-link {{ Route::currentRouteName() == 'rehabilitation.categories' ? 'active' : '' }}">
+                        <a href="{{ route('activities.categories') }}" class="sidebar-submenu-link {{ Route::currentRouteName() == 'activities.categories' ? 'active' : '' }}">
                             Categories
                         </a>
                     </li>

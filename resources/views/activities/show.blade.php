@@ -20,7 +20,7 @@
             <a href="{{ route('activities.sessions', $activity->id) }}" class="btn btn-primary">
                 <i class="fas fa-calendar"></i> Manage Sessions
             </a>
-            <a href="{{ route('activities.index') }}" class="btn btn-outline-secondary">
+            <a href="{{ route('activities.home') }}" class="btn btn-outline-secondary">
                 <i class="fas fa-arrow-left"></i> Back
             </a>
         </div>

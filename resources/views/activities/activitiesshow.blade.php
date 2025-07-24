@@ -66,7 +66,7 @@
                             <i class="fas fa-calendar"></i> Manage Sessions
                         </a>
                         @endif
-                        <a href="{{ route('activities.index') }}" class="btn btn-secondary">
+                        <a href="{{ route('activities.home') }}" class="btn btn-secondary">
                             <i class="fas fa-arrow-left"></i> Back to Activities
                         </a>
                     </div>

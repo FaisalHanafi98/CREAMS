@@ -20,7 +20,15 @@
       "Bash(find:*)",
       "Bash(tail:*)",
       "Bash(touch:*)",
-      "Bash(true)"
+      "Bash(true)",
+      "Bash(cd \"C:\\laragon\\www\\CREAMS\\resources\\views\\staff\")",
+      "Bash(sed -i 's/teachershome/staffs.home/g' edit.blade.php schedule.blade.php trainees.blade.php)",
+      "Bash(for file in edit.blade.php schedule.blade.php trainees.blade.php)",
+      "Bash(do echo \"Updating encrypted IDs in: $file\")",
+      "Bash(sed -i 's/\\$staffMember->id/\\$staffMember->encrypted_id ?? \\$staffMember->id/g' \"$file\")",
+      "Bash(done)",
+      "Bash(cd \"C:\\laragon\\www\\CREAMS\\resources\\views\")",
+      "Bash(find . -name \"*.blade.php\" -exec grep -l \"teachershome\\|traineeshome\\|auth\\.registerpage\\|activities\\.index\\|rehabilitation\\.categories\\|staff\\.view\\|staff\\.edit\" {} ;)"
     ],
     "deny": []
   }

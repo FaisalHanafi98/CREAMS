@@ -155,7 +155,7 @@ class CentreService
             'total_users' => Users::where('centre_id', $centreId)->where('is_active', true)->count(),
             'total_trainees' => Trainee::where('centre_id', $centreId)->where('is_active', true)->count(),
             'total_activities' => Activity::where('centre_id', $centreId)->where('is_active', true)->count(),
-            'total_assets' => Asset::where('centre_name', $centre->centre_name)->count(),
+            'total_assets' => Asset::where('centre_id', $centreId)->count(),
             'active_sessions_today' => $this->getTodayActiveSessions($centreId),
             'completed_sessions_today' => $this->getTodayCompletedSessions($centreId),
             'scheduled_sessions_upcoming' => $this->getUpcomingSessions($centreId),

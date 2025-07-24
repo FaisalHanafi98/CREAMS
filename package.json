@@ -23,10 +23,16 @@
         "vite": "^6.2.0"
     },
     "dependencies": {
+        "anthropic": "^0.0.0",
         "bootstrap": "^5.3.3",
         "jquery": "^3.7.1"
     },
-    "keywords": ["laravel", "rehabilitation", "management", "healthcare"],
+    "keywords": [
+        "laravel",
+        "rehabilitation",
+        "management",
+        "healthcare"
+    ],
     "author": "",
     "license": "ISC"
 }

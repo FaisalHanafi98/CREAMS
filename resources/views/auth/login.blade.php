@@ -115,7 +115,7 @@
                     <li><a href="{{ route('volunteer') }}"><i class="fas fa-user-plus"></i> Volunteer</a></li>
                     <li><a href="{{ route('contact') }}"><i class="fas fa-envelope"></i> Contact Us</a></li>
                     <li><a href="{{ route('auth.loginpage') }}"><i class="fas fa-sign-in-alt"></i> Login</a></li>
-                    <li><a href="{{ route('auth.registerpage') }}"><i class="fas fa-user-plus"></i> Register</a></li>
+                    <li><a href="{{ route('staffs.register') }}"><i class="fas fa-user-plus"></i> Register</a></li>
                 </ul>
             </div>
             

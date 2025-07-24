@@ -357,7 +357,7 @@
                 <div class="breadcrumb">
                     <a href="{{ route('dashboard') }}">Dashboard</a>
                     <span class="separator">/</span>
-                    <a href="{{ route('traineeshome') }}">Trainees</a>
+                    <a href="{{ route('trainees.home') }}">Trainees</a>
                     <span class="separator">/</span>
                     <a href="{{ route('traineeprofile', ['id' => $trainee->id]) }}">{{ $trainee->trainee_first_name }} {{ $trainee->trainee_last_name }}</a>
                     <span class="separator">/</span>

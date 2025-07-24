@@ -49,8 +49,8 @@
                     <div class="tooltip-sidebar">Dashboard</div>
                 </a>
             </li>
-            <li class="{{ request()->routeIs('traineeshome') || request()->routeIs('traineeprofile') || request()->routeIs('traineesregistrationpage') ? 'active' : '' }}">
-                <a href="{{ route('traineeshome') }}">
+            <li class="{{ request()->routeIs('trainees.home') || request()->routeIs('traineeprofile') || request()->routeIs('traineesregistrationpage') ? 'active' : '' }}">
+                <a href="{{ route('trainees.home') }}">
                     <i class="fas fa-user-graduate"></i>
                     <span>Trainees</span>
                     <div class="tooltip-sidebar">Trainees</div>
@@ -66,15 +66,15 @@
             </li>
             @else
             <li class="{{ request()->routeIs('activities.*') ? 'active' : '' }}">
-                <a href="{{ route('activities.index') }}">
+                <a href="{{ route('activities.home') }}">
                     <i class="fas fa-clipboard-list"></i>
                     <span>Activities</span>
                     <div class="tooltip-sidebar">Activities</div>
                 </a>
             </li>
             @endif
-            <li class="{{ request()->routeIs('teachershome') ? 'active' : '' }}">
-                <a href="{{ route('teachershome') }}">
+            <li class="{{ request()->routeIs('staffs.home') ? 'active' : '' }}">
+                <a href="{{ route('staffs.home') }}">
                     <i class="fas fa-chalkboard-teacher"></i>
                     <span>Staff</span>
                     <div class="tooltip-sidebar">Staff</div>
@@ -122,7 +122,7 @@
                     <div class="breadcrumb">
                         <a href="{{ route('dashboard') }}">Dashboard</a>
                         <span class="separator">/</span>
-                        <a href="{{ route('traineeshome') }}">Trainees</a>
+                        <a href="{{ route('trainees.home') }}">Trainees</a>
                         <span class="separator">/</span>
                         <span class="current">Register New Trainee</span>
                     </div>
@@ -178,7 +178,7 @@
             </div>
             
             <div class="page-actions">
-                <a href="{{ route('traineeshome') }}" class="action-btn">
+                <a href="{{ route('trainees.home') }}" class="action-btn">
                     <i class="fas fa-arrow-left"></i> Back to Trainees
                 </a>
             </div>
@@ -349,16 +349,24 @@
                                     <div class="col-md-6">
                                         <div class="form-group">
                                             <label for="trainee_avatar">Profile Picture</label>
-                                            <div class="custom-file">
-                                                <input type="file" class="custom-file-input @error('trainee_avatar') is-invalid @enderror" id="trainee_avatar" name="trainee_avatar" accept="image/*">
-                                                <label class="custom-file-label" for="trainee_avatar">Choose file</label>
+                                            <div class="enhanced-file-upload">
+                                                <input type="file" class="form-control-file @error('trainee_avatar') is-invalid @enderror" id="trainee_avatar" name="trainee_avatar" accept="image/*" style="width: 100%; padding: 15px; border: 2px dashed #e9ecef; border-radius: 8px; background: #f8f9fa; font-size: 14px; color: #6c757d; cursor: pointer; transition: all 0.3s ease;">
+                                                <div class="file-upload-text" style="text-align: center; padding: 20px 0; color: #6c757d;">
+                                                    <i class="fas fa-cloud-upload-alt" style="font-size: 2rem; margin-bottom: 10px; display: block;"></i>
+                                                    <span class="upload-label">Click here to upload profile picture or drag and drop</span>
+                                                </div>
                                             </div>
                                             <small class="form-text text-muted">Maximum file size: 2MB. Accepted formats: JPEG, PNG, JPG, GIF.</small>
                                             @error('trainee_avatar')
                                                 <div class="invalid-feedback">{{ $message }}</div>
                                             @enderror
-                                            <div id="avatar-preview" class="mt-2 text-center d-none">
-                                                <img src="" class="img-thumbnail" style="max-height: 150px;" alt="Avatar Preview">
+                                            <div id="avatar-preview" class="mt-3 text-center d-none">
+                                                <img src="" class="img-thumbnail" style="max-height: 200px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);" alt="Avatar Preview">
+                                                <div class="mt-2">
+                                                    <button type="button" class="btn btn-sm btn-outline-danger" id="remove-avatar" style="display: none;">
+                                                        <i class="fas fa-trash"></i> Remove Image
+                                                    </button>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -510,24 +518,65 @@
                 }
             });
             
-            // File input change event for image preview
+            // Enhanced file input change event for image preview
             $('#trainee_avatar').change(function() {
                 if (this.files && this.files[0]) {
+                    var file = this.files[0];
+                    var fileName = file.name;
+                    var fileSize = (file.size / 1024 / 1024).toFixed(2); // Size in MB
+                    
+                    // Validate file size (2MB limit)
+                    if (file.size > 2 * 1024 * 1024) {
+                        alert('File size must be less than 2MB');
+                        $(this).val('');
+                        return;
+                    }
+                    
                     var reader = new FileReader();
                     reader.onload = function(e) {
                         $('#avatar-preview').removeClass('d-none');
                         $('#avatar-preview img').attr('src', e.target.result);
+                        $('#remove-avatar').show();
+                        
+                        // Update upload text
+                        $('.upload-label').text(fileName + ' (' + fileSize + ' MB)');
+                        $('.file-upload-text i').removeClass('fa-cloud-upload-alt').addClass('fa-check-circle').css('color', '#28a745');
                     }
-                    reader.readAsDataURL(this.files[0]);
-                    
-                    // Update custom file label with file name
-                    var fileName = $(this).val().split('\\').pop();
-                    $(this).next('.custom-file-label').html(fileName);
+                    reader.readAsDataURL(file);
                 } else {
-                    $('#avatar-preview').addClass('d-none');
-                    $(this).next('.custom-file-label').html('Choose file');
+                    resetFileUpload();
                 }
             });
+            
+            // Remove avatar functionality
+            $('#remove-avatar').click(function() {
+                $('#trainee_avatar').val('');
+                resetFileUpload();
+            });
+            
+            // Function to reset file upload UI
+            function resetFileUpload() {
+                $('#avatar-preview').addClass('d-none');
+                $('#remove-avatar').hide();
+                $('.upload-label').text('Click here to upload profile picture or drag and drop');
+                $('.file-upload-text i').removeClass('fa-check-circle').addClass('fa-cloud-upload-alt').css('color', '#6c757d');
+            }
+            
+            // Enhanced file upload hover effects
+            $('#trainee_avatar').hover(
+                function() {
+                    $(this).css({
+                        'border-color': '#007bff',
+                        'background': '#f0f8ff'
+                    });
+                },
+                function() {
+                    $(this).css({
+                        'border-color': '#e9ecef',
+                        'background': '#f8f9fa'
+                    });
+                }
+            );
             
             // Age calculation on date of birth change
             $('#trainee_date_of_birth').change(function() {

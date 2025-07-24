@@ -10,7 +10,7 @@
             {{ $category->name }} Activities
         </h1>
         <div>
-            <a href="{{ route('rehabilitation.categories') }}" class="btn btn-secondary btn-sm">
+            <a href="{{ route('activities.categories') }}" class="btn btn-secondary btn-sm">
                 <i class="fas fa-arrow-left"></i> Back to Categories
             </a>
             @if(in_array(session('role'), ['admin', 'supervisor']))

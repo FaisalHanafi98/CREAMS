@@ -35,7 +35,7 @@ class Category extends Model
     // Relationships
     public function activities()
     {
-        return $this->hasMany(Activity::class);
+        return $this->hasMany(Activity::class, 'category', 'category_name');
     }
 
     public function activeActivities()

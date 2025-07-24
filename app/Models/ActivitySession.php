@@ -14,25 +14,66 @@ class ActivitySession extends Model
 
     protected $fillable = [
         'activity_id',
+        'session_code',
         'session_name',
+        'session_description',
         'session_date',
+        'scheduled_date',
         'start_time',
         'end_time',
         'venue',
-        'teacher_id',
-        'status',
+        'max_participants',
+        'current_participants',
         'attendance_marked',
-        'notes'
+        'teacher_id',
+        'supervisor_id',
+        'status',
+        'session_objectives',
+        'notes',
+        'session_materials'
     ];
 
     protected $casts = [
         'session_date' => 'date',
+        'scheduled_date' => 'date',
         'start_time' => 'datetime:H:i',
         'end_time' => 'datetime:H:i',
-        'session_data' => 'array'
+        'session_materials' => 'array',
+        'attendance_marked' => 'boolean'
     ];
 
     protected $appends = ['formatted_time', 'duration_minutes', 'is_current'];
+
+    /**
+     * Boot method to sync scheduled_date with session_date
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        // Sync scheduled_date with session_date and generate session_code on create/update
+        static::creating(function ($session) {
+            // Generate unique session code
+            if (!$session->session_code) {
+                $session->session_code = static::generateSessionCode();
+            }
+            
+            // Sync dates
+            if (!$session->scheduled_date && $session->session_date) {
+                $session->scheduled_date = $session->session_date;
+            } elseif (!$session->session_date && $session->scheduled_date) {
+                $session->session_date = $session->scheduled_date;
+            }
+        });
+
+        static::updating(function ($session) {
+            if ($session->isDirty('session_date') && !$session->isDirty('scheduled_date')) {
+                $session->scheduled_date = $session->session_date;
+            } elseif ($session->isDirty('scheduled_date') && !$session->isDirty('session_date')) {
+                $session->session_date = $session->scheduled_date;
+            }
+        });
+    }
 
     /**
      * Get the activity this session belongs to
@@ -48,6 +89,14 @@ class ActivitySession extends Model
     public function teacher()
     {
         return $this->belongsTo(Users::class, 'teacher_id');
+    }
+
+    /**
+     * Get the supervisor for this session
+     */
+    public function supervisor()
+    {
+        return $this->belongsTo(Users::class, 'supervisor_id');
     }
 
     /**
@@ -280,6 +329,130 @@ class ActivitySession extends Model
         }
 
         return $query->exists();
+    }
+
+    /**
+     * Check for venue conflicts (same room and time)
+     */
+    public function hasVenueConflict($excludeSessionId = null)
+    {
+        if (!$this->venue) return false;
+
+        $query = static::where('venue', $this->venue)
+            ->where('session_date', $this->session_date)
+            ->where('status', '!=', 'cancelled')
+            ->where(function($q) {
+                $q->whereBetween('start_time', [$this->start_time, $this->end_time])
+                  ->orWhereBetween('end_time', [$this->start_time, $this->end_time])
+                  ->orWhere(function($q2) {
+                      $q2->where('start_time', '<=', $this->start_time)
+                         ->where('end_time', '>=', $this->end_time);
+                  });
+            });
+
+        if ($excludeSessionId) {
+            $query->where('id', '!=', $excludeSessionId);
+        }
+
+        return $query->exists();
+    }
+
+    /**
+     * Check for supervisor conflicts (same supervisor double-booked)
+     */
+    public function hasSupervisorConflict($excludeSessionId = null)
+    {
+        if (!$this->supervisor_id) return false;
+
+        $query = static::where('supervisor_id', $this->supervisor_id)
+            ->where('session_date', $this->session_date)
+            ->where('status', '!=', 'cancelled')
+            ->where(function($q) {
+                $q->whereBetween('start_time', [$this->start_time, $this->end_time])
+                  ->orWhereBetween('end_time', [$this->start_time, $this->end_time])
+                  ->orWhere(function($q2) {
+                      $q2->where('start_time', '<=', $this->start_time)
+                         ->where('end_time', '>=', $this->end_time);
+                  });
+            });
+
+        if ($excludeSessionId) {
+            $query->where('id', '!=', $excludeSessionId);
+        }
+
+        return $query->exists();
+    }
+
+    /**
+     * Check for all types of conflicts
+     */
+    public function hasAnyConflict($excludeSessionId = null)
+    {
+        return $this->hasTimeConflict($excludeSessionId) ||
+               $this->hasVenueConflict($excludeSessionId) ||
+               $this->hasSupervisorConflict($excludeSessionId);
+    }
+
+    /**
+     * Get detailed conflict information
+     */
+    public function getConflictDetails($excludeSessionId = null)
+    {
+        $conflicts = [];
+
+        if ($this->hasTimeConflict($excludeSessionId)) {
+            $conflicts['teacher'] = 'Teacher is already assigned to another session at this time';
+        }
+
+        if ($this->hasVenueConflict($excludeSessionId)) {
+            $conflicts['venue'] = 'Venue is already booked for another session at this time';
+        }
+
+        if ($this->hasSupervisorConflict($excludeSessionId)) {
+            $conflicts['supervisor'] = 'Supervisor is already assigned to another session at this time';
+        }
+
+        return $conflicts;
+    }
+
+    /**
+     * Generate unique session code
+     */
+    public static function generateSessionCode($activityId = null)
+    {
+        do {
+            // Generate code format: SES-YYYYMM-XXXX (e.g., SES-202501-0001)
+            $yearMonth = date('Ym');
+            $sequence = static::where('session_code', 'like', "SES-{$yearMonth}-%")->count() + 1;
+            $code = sprintf("SES-%s-%04d", $yearMonth, $sequence);
+        } while (static::where('session_code', $code)->exists());
+
+        return $code;
+    }
+
+    /**
+     * Check if session is full
+     */
+    public function isFull()
+    {
+        return $this->current_participants >= $this->max_participants;
+    }
+
+    /**
+     * Get available spots
+     */
+    public function getAvailableSpotsAttribute()
+    {
+        return max(0, $this->max_participants - $this->current_participants);
+    }
+
+    /**
+     * Get capacity percentage
+     */
+    public function getCapacityPercentageAttribute()
+    {
+        if ($this->max_participants == 0) return 0;
+        return round(($this->current_participants / $this->max_participants) * 100, 1);
     }
 
     /**

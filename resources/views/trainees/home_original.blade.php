@@ -32,8 +32,8 @@
             </a>
         </li>
 
-        <li class="nav-item {{ request()->routeIs('traineeshome') || request()->routeIs('trainees.*') ? 'active' : '' }}">
-            <a class="nav-link" href="{{ route('traineeshome') }}">
+        <li class="nav-item {{ request()->routeIs('trainees.home') || request()->routeIs('trainees.*') ? 'active' : '' }}">
+            <a class="nav-link" href="{{ route('trainees.home') }}">
                 <i class="fas fa-fw fa-user-graduate"></i>
                 <span>Trainees</span>
             </a>
@@ -48,15 +48,15 @@
         </li>
         @else
         <li class="nav-item {{ request()->routeIs('activities.*') ? 'active' : '' }}">
-            <a class="nav-link" href="{{ route('activities.index') }}">
+            <a class="nav-link" href="{{ route('activities.home') }}">
                 <i class="fas fa-fw fa-clipboard-list"></i>
                 <span>Activities</span>
             </a>
         </li>
         @endif
 
-        <li class="nav-item {{ request()->routeIs('teachershome') ? 'active' : '' }}">
-            <a class="nav-link" href="{{ route('teachershome') }}">
+        <li class="nav-item {{ request()->routeIs('staffs.home') ? 'active' : '' }}">
+            <a class="nav-link" href="{{ route('staffs.home') }}">
                 <i class="fas fa-fw fa-chalkboard-teacher"></i>
                 <span>Staff</span>
             </a>
@@ -287,13 +287,13 @@
                     <h6 class="m-0 font-weight-bold text-primary">Search Trainees</h6>
                 </div>
                 <div class="card-body">
-                    <form action="{{ route('traineeshome') }}" method="GET" class="form-inline">
+                    <form action="{{ route('trainees.home') }}" method="GET" class="form-inline">
                         <div class="form-group mb-2 flex-grow-1">
                             <input type="text" name="search" class="form-control w-100" placeholder="Search by name or email..." value="{{ request('search') }}">
                         </div>
                         <button type="submit" class="btn btn-primary mb-2 ml-2">Search</button>
                         @if(request()->has('search') || request()->has('centre') || request()->has('condition'))
-                            <a href="{{ route('traineeshome') }}" class="btn btn-secondary mb-2 ml-2">Clear</a>
+                            <a href="{{ route('trainees.home') }}" class="btn btn-secondary mb-2 ml-2">Clear</a>
                         @endif
                     </form>
                 </div>
@@ -310,7 +310,7 @@
                             @if(request('search'))
                                 <div class="badge badge-info m-1 p-2">
                                     Search: {{ request('search') }}
-                                    <a href="{{ route('traineeshome', array_merge(request()->except('search'), [])) }}" class="text-white ml-1">
+                                    <a href="{{ route('trainees.home', array_merge(request()->except('search'), [])) }}" class="text-white ml-1">
                                         <i class="fas fa-times"></i>
                                     </a>
                                 </div>
@@ -319,7 +319,7 @@
                             @if(request('centre'))
                                 <div class="badge badge-primary m-1 p-2">
                                     Center: {{ request('centre') }}
-                                    <a href="{{ route('traineeshome', array_merge(request()->except('centre'), [])) }}" class="text-white ml-1">
+                                    <a href="{{ route('trainees.home', array_merge(request()->except('centre'), [])) }}" class="text-white ml-1">
                                         <i class="fas fa-times"></i>
                                     </a>
                                 </div>
@@ -328,13 +328,13 @@
                             @if(request('condition'))
                                 <div class="badge badge-success m-1 p-2">
                                     Condition: {{ request('condition') }}
-                                    <a href="{{ route('traineeshome', array_merge(request()->except('condition'), [])) }}" class="text-white ml-1">
+                                    <a href="{{ route('trainees.home', array_merge(request()->except('condition'), [])) }}" class="text-white ml-1">
                                         <i class="fas fa-times"></i>
                                     </a>
                                 </div>
                             @endif
                             
-                            <a href="{{ route('traineeshome') }}" class="btn btn-sm btn-outline-secondary ml-auto">
+                            <a href="{{ route('trainees.home') }}" class="btn btn-sm btn-outline-secondary ml-auto">
                                 Clear All Filters
                             </a>
                         </div>
@@ -354,7 +354,7 @@
                                 </a>
                                 <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in" aria-labelledby="dropdownMenuLink-{{ Str::slug($centreName) }}">
                                     <div class="dropdown-header">Center Actions:</div>
-                                    <a class="dropdown-item" href="{{ route('traineeshome', ['centre' => $centreName]) }}">Filter by Center</a>
+                                    <a class="dropdown-item" href="{{ route('trainees.home', ['centre' => $centreName]) }}">Filter by Center</a>
                                     <div class="dropdown-divider"></div>
                                     <a class="dropdown-item" href="{{ route('traineesregistrationpage', ['centre' => $centreName]) }}">Add Trainee to Center</a>
                                 </div>
@@ -428,7 +428,7 @@
     <div class="modal fade" id="filterModal" tabindex="-1" role="dialog" aria-labelledby="filterModalLabel" aria-hidden="true">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
-                <form action="{{ route('traineeshome') }}" method="GET">
+                <form action="{{ route('trainees.home') }}" method="GET">
                     <div class="modal-header">
                         <h5 class="modal-title" id="filterModalLabel">Filter Trainees</h5>
                         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
@@ -474,7 +474,7 @@
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
                         <button type="submit" class="btn btn-primary">Apply Filters</button>
                         @if(request()->has('search') || request()->has('centre') || request()->has('condition'))
-                            <a href="{{ route('traineeshome') }}" class="btn btn-outline-secondary">Clear Filters</a>
+                            <a href="{{ route('trainees.home') }}" class="btn btn-outline-secondary">Clear Filters</a>
                         @endif
                     </div>
                 </form>

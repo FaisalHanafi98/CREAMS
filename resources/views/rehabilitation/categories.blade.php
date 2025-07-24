@@ -6,7 +6,7 @@
 <div class="container-fluid">
     <div class="d-sm-flex align-items-center justify-content-between mb-4">
         <h1 class="h3 mb-0 text-gray-800">Rehabilitation Categories</h1>
-        <a href="{{ route('activities.index') }}" class="btn btn-secondary btn-sm">
+        <a href="{{ route('activities.home') }}" class="btn btn-secondary btn-sm">
             <i class="fas fa-arrow-left"></i> Back to Activities
         </a>
     </div>
@@ -40,7 +40,7 @@
                                 </span>
                             </div>
                             <div class="text-center">
-                                <a href="{{ route('rehabilitation.categories.show', $category->slug ?? str_replace(' ', '-', strtolower($category->name))) }}" 
+                                <a href="{{ route('activities.categories.show', $category->slug ?? str_replace(' ', '-', strtolower($category->name))) }}" 
                                    class="btn btn-sm" 
                                    style="background-color: {{ $category->color_code }}; border-color: {{ $category->color_code }}; color: white;"
                                    onmouseover="this.style.opacity='0.8'"

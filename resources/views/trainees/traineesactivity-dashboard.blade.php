@@ -284,7 +284,7 @@
                     <a href="{{ route('trainee.progress') }}" class="btn btn-info btn-block mb-2">
                         <i class="fas fa-chart-line"></i> View Progress Report
                     </a>
-                    <a href="{{ route('activities.index') }}" class="btn btn-secondary btn-block">
+                    <a href="{{ route('activities.home') }}" class="btn btn-secondary btn-block">
                         <i class="fas fa-search"></i> Browse Activities
                     </a>
                 </div>

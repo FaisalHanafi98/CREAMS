@@ -11,7 +11,7 @@
             <i class="fas fa-calendar-alt"></i> Schedule Sessions
         </h1>
         <div class="page-actions">
-            <a href="{{ route('activities.index') }}" class="btn btn-outline-secondary">
+            <a href="{{ route('activities.home') }}" class="btn btn-outline-secondary">
                 <i class="fas fa-list"></i> Activities List
             </a>
             @if(in_array(session('role'), ['admin', 'supervisor']))
@@ -191,7 +191,7 @@
                     <h5>No Sessions Found</h5>
                     <p class="text-muted">No sessions match the current filters or no sessions are scheduled.</p>
                     @if(in_array(session('role'), ['admin', 'supervisor']))
-                        <a href="{{ route('activities.index') }}" class="btn btn-primary">
+                        <a href="{{ route('activities.home') }}" class="btn btn-primary">
                             <i class="fas fa-plus"></i> Create Activities & Sessions
                         </a>
                     @endif

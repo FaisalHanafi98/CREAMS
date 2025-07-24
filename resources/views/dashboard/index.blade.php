@@ -115,7 +115,7 @@
                         <h2 class="card-title">
                             <i class="fas fa-clock"></i> Recent Activities
                         </h2>
-                        <a href="{{ route('activities.index') }}" class="btn btn-sm btn-outline-primary">
+                        <a href="{{ route('activities.home') }}" class="btn btn-sm btn-outline-primary">
                             View All
                         </a>
                     </div>

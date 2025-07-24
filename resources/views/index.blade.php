@@ -27,7 +27,7 @@
                         <ul class="nav-menu">
                             <li><a href="{{ url('/') }}">Home</a></li>
                             <li><a href="{{ route('auth.loginpage') }}">Login</a></li>
-                            <li><a href="{{ route('auth.registerpage') }}">Register</a></li>
+                            <li><a href="{{ route('staffs.register') }}">Register</a></li>
                         </ul>
                     </nav><!-- #nav-menu-container -->    
                 </div>
@@ -61,7 +61,7 @@
                     <ul class="list-unstyled">
                         <li><a href="{{ url('/') }}">Home</a></li>
                         <li><a href="{{ route('auth.loginpage') }}">Login</a></li>
-                        <li><a href="{{ route('auth.registerpage') }}">Register</a></li>
+                        <li><a href="{{ route('staffs.register') }}">Register</a></li>
                     </ul>
                 </div>
                 <div class="col-lg-4 col-sm-6">

@@ -9,7 +9,7 @@
             <div class="card">
                 <div class="card-header">
                     <h2><i class="fas fa-plus-circle"></i> Create New Activity</h2>
-                    <a href="{{ route('activities.index') }}" class="btn btn-outline-secondary btn-sm float-right">
+                    <a href="{{ route('activities.home') }}" class="btn btn-outline-secondary btn-sm float-right">
                         <i class="fas fa-arrow-left"></i> Back to Activities
                     </a>
                 </div>
@@ -240,7 +240,7 @@
                             <button type="submit" class="btn btn-primary">
                                 <i class="fas fa-save"></i> Create Activity
                             </button>
-                            <a href="{{ route('activities.index') }}" class="btn btn-secondary">
+                            <a href="{{ route('activities.home') }}" class="btn btn-secondary">
                                 <i class="fas fa-times"></i> Cancel
                             </a>
                         </div>

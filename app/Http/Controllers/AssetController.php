@@ -39,9 +39,9 @@ class AssetController extends Controller
             $stats = [
                 'total' => Asset::count(),
                 'types' => Asset::distinct('asset_type')->count('asset_type'),
-                'centres' => Asset::distinct('centre_name')->count('centre_name'),
-                'total_quantity' => Asset::sum('asset_quantity'),
-                'total_value' => Asset::sum('asset_price')
+                'centres' => Asset::distinct('centre_id')->count('centre_id'),
+                'total_quantity' => Asset::count(), // assets_enhanced doesn't have quantity field
+                'total_value' => Asset::sum('purchase_price')
             ];
 
             $centres = Centres::all();
@@ -315,7 +315,7 @@ class AssetController extends Controller
             // Basic Analytics
             $analytics = [
                 'total_assets' => Asset::count(),
-                'total_value' => Asset::sum('asset_price'),
+                'total_value' => Asset::sum('purchase_price'),
                 'utilization_rate' => $this->calculateUtilizationRate(),
                 'maintenance_due' => Asset::where('asset_quantity', '<=', 5)->count(),
                 'active_centres' => Centres::count(),
@@ -330,18 +330,18 @@ class AssetController extends Controller
                     'maintenance' => Asset::whereBetween('asset_quantity', [1, 5])->count(),
                     'retired' => Asset::where('asset_quantity', 0)->count()
                 ],
-                'centres' => Asset::selectRaw('centre_name, COUNT(*) as count')
-                                  ->groupBy('centre_name')
-                                  ->pluck('count', 'centre_name')
+                'centres' => Asset::selectRaw('centre_id, COUNT(*) as count')
+                                  ->groupBy('centre_id')
+                                  ->pluck('count', 'centre_id')
                                   ->toArray(),
                 'types' => Asset::selectRaw('asset_type, COUNT(*) as count')
                                 ->whereNotNull('asset_type')
                                 ->groupBy('asset_type')
                                 ->pluck('count', 'asset_type')
                                 ->toArray(),
-                'values' => Asset::selectRaw('centre_name, SUM(asset_price) as total_value')
-                                 ->groupBy('centre_name')
-                                 ->pluck('total_value', 'centre_name')
+                'values' => Asset::selectRaw('centre_id, SUM(purchase_price) as total_value')
+                                 ->groupBy('centre_id')
+                                 ->pluck('total_value', 'centre_id')
                                  ->toArray()
             ];
 
@@ -507,7 +507,7 @@ class AssetController extends Controller
         $centres = Centres::all();
 
         foreach ($centres as $centre) {
-            $assets = Asset::where('centre_name', $centre->centre_name);
+            $assets = Asset::where('centre_id', $centre->centre_id);
             
             $report[] = [
                 'name' => $centre->centre_name,

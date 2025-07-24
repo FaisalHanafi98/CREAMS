@@ -493,7 +493,7 @@
                 <div class="card-section">
                     <div class="section-header">
                         <h3 class="section-title">Upcoming Activities</h3>
-                        <a href="{{ route('activities.index') }}" class="btn btn-sm btn-outline-purple">View All Activities</a>
+                        <a href="{{ route('activities.home') }}" class="btn btn-sm btn-outline-purple">View All Activities</a>
                     </div>
                     
                     @if(isset($upcoming_activities) && count($upcoming_activities) > 0)
@@ -569,7 +569,7 @@
                             <div class="action-label">Progress Reports</div>
                         </a>
                         
-                        <a href="{{ route('activities.index') }}" class="action-btn">
+                        <a href="{{ route('activities.home') }}" class="action-btn">
                             <div class="action-icon">
                                 <i class="fas fa-calendar"></i>
                             </div>

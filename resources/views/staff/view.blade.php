@@ -208,7 +208,7 @@
     <nav aria-label="breadcrumb">
         <ol class="breadcrumb">
             <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Dashboard</a></li>
-            <li class="breadcrumb-item"><a href="{{ route('teachershome') }}">Staff Directory</a></li>
+            <li class="breadcrumb-item"><a href="{{ route('staffs.home') }}">Staff Directory</a></li>
             <li class="breadcrumb-item active">{{ $staffMember->name }}</li>
         </ol>
     </nav>
@@ -252,10 +252,10 @@
                     </p>
                 </div>
                 <div class="col-md-3 text-center">
-                    <a href="{{ route('staff.edit', $staffMember->id) }}" class="action-btn btn-edit">
+                    <a href="{{ route('staffs.edit', $staffMember->encrypted_id ?? $staffMember->id) }}" class="action-btn btn-edit">
                         <i class="fas fa-edit me-2"></i>Edit Profile
                     </a>
-                    <a href="{{ route('teachershome') }}" class="action-btn btn-back">
+                    <a href="{{ route('staffs.home') }}" class="action-btn btn-back">
                         <i class="fas fa-arrow-left me-2"></i>Back to List
                     </a>
                 </div>
@@ -423,17 +423,17 @@
                 </h3>
                 
                 <div class="d-grid gap-2">
-                    <a href="{{ route('staff.edit', $staffMember->id) }}" class="btn btn-outline-primary">
+                    <a href="{{ route('staffs.edit', $staffMember->encrypted_id ?? $staffMember->id) }}" class="btn btn-outline-primary">
                         <i class="fas fa-edit me-2"></i>Edit Profile
                     </a>
-                    <a href="{{ route('staff.schedule', $staffMember->id) }}" class="btn btn-outline-success">
+                    <a href="{{ route('staffs.schedule', $staffMember->encrypted_id ?? $staffMember->id) }}" class="btn btn-outline-success">
                         <i class="fas fa-calendar me-2"></i>View Schedule
                     </a>
-                    <a href="{{ route('staff.activities', $staffMember->id) }}" class="btn btn-outline-info">
+                    <a href="{{ route('staffs.activities', $staffMember->encrypted_id ?? $staffMember->id) }}" class="btn btn-outline-info">
                         <i class="fas fa-tasks me-2"></i>View Activities
                     </a>
                     @if($staffMember->role === 'teacher')
-                    <a href="{{ route('staff.trainees', $staffMember->id) }}" class="btn btn-outline-warning">
+                    <a href="{{ route('staffs.trainees', $staffMember->encrypted_id ?? $staffMember->id) }}" class="btn btn-outline-warning">
                         <i class="fas fa-users me-2"></i>Assigned Trainees
                     </a>
                     @endif
