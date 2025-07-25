@@ -5,17 +5,19 @@
 @push('styles')
 <style>
     .teacher-dashboard {
-        background: #f8f9fa;
+        background: var(--light-bg);
         min-height: 100vh;
     }
     
     .dashboard-header {
-        background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
         color: white;
         padding: 30px 0;
         margin-bottom: 30px;
         position: relative;
         overflow: hidden;
+        border-radius: 15px;
+        box-shadow: 0 5px 20px rgba(200, 80, 192, 0.3);
     }
     
     .dashboard-header::before {

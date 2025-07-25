@@ -137,7 +137,7 @@ class TraineeProfileController extends Controller
                 'user_id' => session('id')
             ]);
             
-            return redirect()->route('traineeshome')
+            return redirect()->route('trainees.home')
                 ->with('error', 'Unable to access trainee profile. ' . $e->getMessage());
         }
     }
@@ -516,7 +516,7 @@ class TraineeProfileController extends Controller
                 'deleted_by' => session('id')
             ]);
             
-            return redirect()->route('traineeshome')
+            return redirect()->route('trainees.home')
                 ->with('success', 'Trainee deleted successfully');
         } catch (Exception $e) {
             Log::error('Error deleting trainee', [

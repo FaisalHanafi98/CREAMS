@@ -6,31 +6,52 @@
 
 @section('styles')
 <style>
+    :root {
+        --primary-color: #c850c0;
+        --secondary-color: #32bdea;
+        --success-color: #28a745;
+        --warning-color: #ffc107;
+        --danger-color: #dc3545;
+        --dark-color: #2c3e50;
+        --light-bg: #f8f9fc;
+        --border-color: #e3e6f0;
+    }
+
     /* Dashboard-specific styles */
     .dashboard-header {
         margin-bottom: 20px;
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        color: white;
+        border-radius: 15px;
+        padding: 30px;
+        box-shadow: 0 5px 20px rgba(200, 80, 192, 0.3);
     }
     
     .dashboard-title {
-        font-size: 24px;
-        font-weight: 600;
-        margin-bottom: 5px;
-        color: var(--dark-color);
+        font-size: 28px;
+        font-weight: 700;
+        margin-bottom: 8px;
+        color: white;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
     
     .dashboard-subtitle {
-        color: #6c757d;
-        font-size: 14px;
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 16px;
+        opacity: 0.9;
+        font-weight: 300;
     }
     
     .date-display {
         display: inline-flex;
         align-items: center;
-        background: var(--light-color);
+        background: rgba(255, 255, 255, 0.2);
         border-radius: 20px;
         padding: 8px 15px;
-        color: #6c757d;
+        color: white;
         font-size: 14px;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
     }
     
     .date-display i {

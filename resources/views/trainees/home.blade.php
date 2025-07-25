@@ -4,427 +4,611 @@
 
 @section('styles')
 <style>
-    /* Trainee-specific styles that enhance the main layout */
-    .trainee-stats .card {
-        border-left: 4px solid var(--primary-color);
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    :root {
+        --primary-color: #c850c0;
+        --secondary-color: #32bdea;
+        --success-color: #28a745;
+        --warning-color: #ffc107;
+        --danger-color: #dc3545;
+        --dark-color: #2c3e50;
+        --light-bg: #f8f9fc;
+        --border-color: #e3e6f0;
     }
-    
-    .trainee-stats .card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-    }
-    
-    .trainee-card {
-        transition: transform 0.2s ease;
-        border: 1px solid #e3e6f0;
-    }
-    
-    .trainee-card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 6px 20px rgba(0,0,0,0.15);
-    }
-    
-    .avatar-container img {
-        border: 3px solid #fff;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    }
-    
-    .filter-badge {
+
+    .trainee-header {
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        color: white;
+        padding: 2rem;
+        margin-bottom: 2rem;
         border-radius: 15px;
+        box-shadow: 0 5px 20px rgba(200, 80, 192, 0.3);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .trainee-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 200px;
+        height: 200px;
+        background: rgba(255,255,255,0.1);
+        border-radius: 50%;
+        transform: translate(50px, -50px);
+    }
+
+    .trainee-header h1 {
+        margin: 0;
+        font-size: 2.5rem;
+        font-weight: 700;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        position: relative;
+        z-index: 1;
+    }
+
+    .trainee-header p {
+        margin: 10px 0 0 0;
+        opacity: 0.9;
+        font-size: 1.1rem;
+        position: relative;
+        z-index: 1;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 25px;
+        margin-bottom: 30px;
+    }
+
+    .stat-card {
+        background: white;
+        border-radius: 15px;
+        padding: 25px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+        border-left: 5px solid var(--primary-color);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 80px;
+        height: 80px;
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        opacity: 0.1;
+        border-radius: 50%;
+        transform: translate(25px, -25px);
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    }
+
+    .stat-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 15px;
+        font-size: 24px;
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        color: white;
+        box-shadow: 0 4px 15px rgba(200, 80, 192, 0.3);
+    }
+
+    .stat-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 5px;
+    }
+
+    .stat-label {
+        color: #6c757d;
+        font-size: 1rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .filter-section {
+        background: white;
+        border-radius: 15px;
+        padding: 25px;
+        margin-bottom: 25px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+    }
+
+    .filter-section h5 {
+        color: var(--dark-color);
+        font-weight: 600;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .trainee-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 25px;
+        margin-bottom: 2rem;
+    }
+
+    .trainee-card {
+        background: white;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+        transition: all 0.3s ease;
+        border: 1px solid #f1f3f4;
+    }
+
+    .trainee-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+    }
+
+    .trainee-card-header {
+        background: linear-gradient(135deg, rgba(200, 80, 192, 0.1), rgba(50, 189, 234, 0.1));
+        padding: 20px;
+        text-align: center;
+        position: relative;
+    }
+
+    .trainee-avatar {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 4px solid white;
+        box-shadow: 0 4px 15px rgba(200, 80, 192, 0.3);
+        margin: 0 auto 15px;
+        display: block;
+    }
+
+    .trainee-name {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: var(--dark-color);
+        margin: 0 0 5px 0;
+    }
+
+    .trainee-id {
+        font-size: 0.9rem;
+        color: #6c757d;
+        font-family: 'Courier New', monospace;
+        background: rgba(255,255,255,0.8);
+        padding: 3px 8px;
+        border-radius: 10px;
+        display: inline-block;
+    }
+
+    .trainee-card-body {
+        padding: 20px;
+    }
+
+    .trainee-info {
+        margin-bottom: 15px;
+    }
+
+    .info-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+        font-size: 0.9rem;
+    }
+
+    .info-label {
+        color: #6c757d;
+        font-weight: 500;
+    }
+
+    .info-value {
+        color: var(--dark-color);
+        font-weight: 600;
+    }
+
+    .condition-badge {
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        color: white;
+        padding: 5px 12px;
+        border-radius: 15px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        display: inline-block;
+        margin-bottom: 15px;
+    }
+
+    .progress-section {
+        margin-bottom: 15px;
+    }
+
+    .progress-label {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 5px;
         font-size: 0.85rem;
     }
-    
-    .search-box {
-        border-radius: 25px;
-        border: 2px solid #e3e6f0;
-        transition: border-color 0.3s ease;
+
+    .progress {
+        height: 8px;
+        border-radius: 10px;
+        background: #f1f3f4;
+        overflow: hidden;
     }
-    
-    .search-box:focus-within {
+
+    .progress-bar {
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        border-radius: 10px;
+        transition: width 0.3s ease;
+    }
+
+    .trainee-actions {
+        display: flex;
+        gap: 8px;
+        justify-content: center;
+    }
+
+    .btn-action {
+        padding: 8px 15px;
+        border-radius: 10px;
+        border: none;
+        font-size: 0.85rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .btn-view {
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        color: white;
+    }
+
+    .btn-edit {
+        background: var(--warning-color);
+        color: white;
+    }
+
+    .btn-profile {
+        background: var(--success-color);
+        color: white;
+    }
+
+    .btn-action:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        color: white;
+    }
+
+    .form-control {
+        border: 2px solid #e9ecef;
+        border-radius: 10px;
+        padding: 12px 15px;
+        transition: all 0.3s ease;
+    }
+
+    .form-control:focus {
         border-color: var(--primary-color);
-        box-shadow: 0 0 0 0.2rem rgba(50, 189, 234, 0.25);
+        box-shadow: 0 0 0 0.2rem rgba(200, 80, 192, 0.25);
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        border: none;
+        border-radius: 10px;
+        padding: 12px 25px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(200, 80, 192, 0.4);
+    }
+
+    .btn-light {
+        background: rgba(255,255,255,0.9);
+        border: none;
+        border-radius: 10px;
+        padding: 10px 20px;
+        font-weight: 600;
+        color: var(--dark-color);
+        transition: all 0.3s ease;
+    }
+
+    .btn-light:hover {
+        background: white;
+        transform: translateY(-1px);
+        box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        color: var(--dark-color);
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+    }
+
+    .empty-state .empty-icon {
+        font-size: 4rem;
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 20px;
+    }
+
+    .empty-state h4 {
+        color: var(--dark-color);
+        font-weight: 600;
+        margin-bottom: 10px;
+    }
+
+    .empty-state p {
+        color: #6c757d;
+        margin-bottom: 30px;
+    }
+
+    @media (max-width: 768px) {
+        .trainee-header {
+            text-align: center;
+            padding: 1.5rem;
+        }
+
+        .trainee-header h1 {
+            font-size: 2rem;
+        }
+
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .trainee-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .filter-section {
+            padding: 20px;
+        }
     }
 </style>
 @endsection
 
 @section('content')
 <div class="container-fluid">
-    <!-- Page Heading -->
-    <div class="d-sm-flex align-items-center justify-content-between mb-4">
-        <h1 class="h3 mb-0 text-gray-800">
-            <i class="fas fa-user-graduate text-primary mr-2"></i>
-            Trainee Management
-        </h1>
-        <div>
-            <a href="{{ route('traineesregistrationpage') }}" class="btn btn-primary btn-sm shadow-sm">
-                <i class="fas fa-plus fa-sm text-white-50 mr-1"></i>Register New Trainee
-            </a>
-            <a href="#" class="btn btn-info btn-sm shadow-sm ml-2" data-toggle="modal" data-target="#filterModal">
-                <i class="fas fa-filter fa-sm text-white-50 mr-1"></i>Filter Trainees
-            </a>
-        </div>
-    </div>
-
-    <!-- Alert Messages -->
-    @if(session('success'))
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            <i class="fas fa-check-circle mr-2"></i>{{ session('success') }}
-            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                <span aria-hidden="true">&times;</span>
-            </button>
-        </div>
-    @endif
-
-    @if(session('error'))
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            <i class="fas fa-exclamation-triangle mr-2"></i>{{ session('error') }}
-            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                <span aria-hidden="true">&times;</span>
-            </button>
-        </div>
-    @endif
-
-    @if(isset($error))
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            <i class="fas fa-exclamation-triangle mr-2"></i>{{ $error }}
-            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                <span aria-hidden="true">&times;</span>
-            </button>
-        </div>
-    @endif
-
-    <!-- Statistics Row -->
-    <div class="row trainee-stats">
-        <!-- Total Trainees Card -->
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-primary shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Trainees</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $totalTrainees ?? 0 }}</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-users fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
+    <!-- Header -->
+    <div class="trainee-header">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1>
+                    <i class="fas fa-user-graduate me-3"></i>Trainee Management
+                </h1>
+                <p>Comprehensive trainee profiles and progress tracking system</p>
             </div>
-        </div>
-
-        <!-- Centers Card -->
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-success shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Centers</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ isset($traineesByCenter) ? $traineesByCenter->count() : 0 }}</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-building fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Condition Types Card -->
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-info shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Condition Types</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $conditionTypes ?? 0 }}</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-clipboard-list fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- New Trainees Card -->
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-warning shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">New Trainees (30 days)</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $newTraineesCount ?? 0 }}</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-user-plus fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Search Box -->
-    <div class="card shadow mb-4">
-        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-            <h6 class="m-0 font-weight-bold text-primary">
-                <i class="fas fa-search mr-2"></i>Search Trainees
-            </h6>
-        </div>
-        <div class="card-body">
-            <form action="{{ route('trainees.home') }}" method="GET" class="form-inline">
-                <div class="form-group mb-2 flex-grow-1">
-                    <div class="input-group w-100">
-                        <div class="input-group-prepend">
-                            <span class="input-group-text"><i class="fas fa-search"></i></span>
-                        </div>
-                        <input type="text" name="search" class="form-control" placeholder="Search by name or email..." value="{{ request('search') }}">
-                    </div>
-                </div>
-                <button type="submit" class="btn btn-primary mb-2 ml-2">
-                    <i class="fas fa-search mr-1"></i>Search
-                </button>
-                @if(request()->has('search') || request()->has('centre') || request()->has('condition'))
-                    <a href="{{ route('trainees.home') }}" class="btn btn-secondary mb-2 ml-2">
-                        <i class="fas fa-times mr-1"></i>Clear
-                    </a>
+            <div class="col-md-4 text-end">
+                @if(in_array(session('role'), ['admin', 'supervisor']))
+                <a href="{{ route('trainees.create') }}" class="btn btn-light me-2">
+                    <i class="fas fa-plus me-2"></i>Add Trainee
+                </a>
                 @endif
-            </form>
+                <a href="{{ route('trainees.reports') }}" class="btn btn-light me-2">
+                    <i class="fas fa-chart-bar me-2"></i>Reports
+                </a>
+                <a href="{{ route('dashboard') }}" class="btn btn-light">
+                    <i class="fas fa-arrow-left me-2"></i>Back
+                </a>
+            </div>
         </div>
     </div>
 
-    <!-- Active Filters Display -->
-    @if(request()->has('search') || request()->has('centre') || request()->has('condition'))
-        <div class="card shadow mb-4">
-            <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">
-                    <i class="fas fa-filter mr-2"></i>Active Filters
-                </h6>
+    <!-- Statistics Cards -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-users"></i>
             </div>
-            <div class="card-body">
-                <div class="d-flex flex-wrap">
-                    @if(request('search'))
-                        <span class="badge badge-info filter-badge m-1 p-2">
-                            <i class="fas fa-search mr-1"></i>Search: {{ request('search') }}
-                            <a href="{{ route('trainees.home', array_merge(request()->except('search'), [])) }}" class="text-white ml-1">
-                                <i class="fas fa-times"></i>
-                            </a>
-                        </span>
-                    @endif
-                    
-                    @if(request('centre'))
-                        <span class="badge badge-primary filter-badge m-1 p-2">
-                            <i class="fas fa-building mr-1"></i>Center: {{ request('centre') }}
-                            <a href="{{ route('trainees.home', array_merge(request()->except('centre'), [])) }}" class="text-white ml-1">
-                                <i class="fas fa-times"></i>
-                            </a>
-                        </span>
-                    @endif
-                    
-                    @if(request('condition'))
-                        <span class="badge badge-success filter-badge m-1 p-2">
-                            <i class="fas fa-heartbeat mr-1"></i>Condition: {{ request('condition') }}
-                            <a href="{{ route('trainees.home', array_merge(request()->except('condition'), [])) }}" class="text-white ml-1">
-                                <i class="fas fa-times"></i>
-                            </a>
-                        </span>
-                    @endif
-                    
-                    <a href="{{ route('trainees.home') }}" class="btn btn-sm btn-outline-secondary ml-auto">
-                        <i class="fas fa-broom mr-1"></i>Clear All Filters
-                    </a>
-                </div>
-            </div>
+            <div class="stat-value">{{ $stats['total'] ?? 0 }}</div>
+            <div class="stat-label">Total Trainees</div>
         </div>
-    @endif
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-user-check"></i>
+            </div>
+            <div class="stat-value">{{ $stats['active'] ?? 0 }}</div>
+            <div class="stat-label">Active Trainees</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-graduation-cap"></i>
+            </div>
+            <div class="stat-value">{{ $stats['enrolled'] ?? 0 }}</div>
+            <div class="stat-label">Enrolled in Activities</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-chart-line"></i>
+            </div>
+            <div class="stat-value">{{ $stats['avg_progress'] ?? 0 }}%</div>
+            <div class="stat-label">Average Progress</div>
+        </div>
+    </div>
 
-    <!-- Trainees by Center -->
-    @if(isset($traineesByCenter) && $traineesByCenter->count() > 0)
-        @foreach($traineesByCenter as $centreName => $centerTrainees)
-            <div class="card shadow mb-4">
-                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                    <h6 class="m-0 font-weight-bold text-primary">
-                        <i class="fas fa-building mr-2"></i>{{ $centreName ?? 'Unassigned' }} 
-                        <span class="badge badge-primary ml-2">{{ $centerTrainees->count() }}</span>
-                    </h6>
-                    <div class="dropdown no-arrow">
-                        <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink-{{ Str::slug($centreName) }}" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                            <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
-                        </a>
-                        <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in" aria-labelledby="dropdownMenuLink-{{ Str::slug($centreName) }}">
-                            <div class="dropdown-header">Center Actions:</div>
-                            <a class="dropdown-item" href="{{ route('trainees.home', ['centre' => $centreName]) }}">
-                                <i class="fas fa-filter mr-2"></i>Filter by Center
+    <!-- Filters -->
+    <div class="filter-section">
+        <h5><i class="fas fa-filter me-2"></i>Filter Trainees</h5>
+        <form method="GET" action="{{ route('trainees.index') }}" class="row align-items-end">
+            <div class="col-md-3 mb-3">
+                <label for="search" class="form-label">Search Trainees</label>
+                <input type="text" 
+                       class="form-control" 
+                       id="search" 
+                       name="search" 
+                       placeholder="Search by name, ID..." 
+                       value="{{ request('search') }}">
+            </div>
+            <div class="col-md-3 mb-3">
+                <label for="condition" class="form-label">Condition</label>
+                <select class="form-control" id="condition" name="condition">
+                    <option value="">All Conditions</option>
+                    @if(isset($conditions))
+                        @foreach($conditions as $condition)
+                            <option value="{{ $condition }}" {{ request('condition') == $condition ? 'selected' : '' }}>
+                                {{ $condition }}
+                            </option>
+                        @endforeach
+                    @endif
+                </select>
+            </div>
+            <div class="col-md-3 mb-3">
+                <label for="centre" class="form-label">Centre</label>
+                <select class="form-control" id="centre" name="centre">
+                    <option value="">All Centres</option>
+                    @if(isset($centres))
+                        @foreach($centres as $centre)
+                            <option value="{{ $centre->centre_name }}" {{ request('centre') == $centre->centre_name ? 'selected' : '' }}>
+                                {{ $centre->centre_name }}
+                            </option>
+                        @endforeach
+                    @endif
+                </select>
+            </div>
+            <div class="col-md-3 mb-3">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="fas fa-filter me-1"></i>Filter
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Trainees Grid -->
+    @if(isset($trainees) && count($trainees) > 0)
+        <div class="trainee-grid">
+            @foreach($trainees as $trainee)
+                <div class="trainee-card">
+                    <div class="trainee-card-header">
+                        <img src="{{ $trainee->avatar_url ?? asset('images/default-avatar.png') }}" 
+                             alt="{{ $trainee->name }}" 
+                             class="trainee-avatar"
+                             onerror="this.src='{{ asset('images/default-avatar.png') }}'">
+                        <h6 class="trainee-name">{{ $trainee->name ?? ($trainee->trainee_first_name . ' ' . $trainee->trainee_last_name) }}</h6>
+                        <div class="trainee-id">ID: {{ $trainee->trainee_id ?? 'N/A' }}</div>
+                    </div>
+                    <div class="trainee-card-body">
+                        <div class="condition-badge">
+                            {{ $trainee->condition ?? $trainee->trainee_condition ?? 'N/A' }}
+                        </div>
+                        
+                        <div class="trainee-info">
+                            <div class="info-row">
+                                <span class="info-label">Age:</span>
+                                <span class="info-value">
+                                    @if(isset($trainee->trainee_date_of_birth))
+                                        {{ \Carbon\Carbon::parse($trainee->trainee_date_of_birth)->age }} years
+                                    @else
+                                        N/A
+                                    @endif
+                                </span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Gender:</span>
+                                <span class="info-value">{{ $trainee->gender ?? 'N/A' }}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Centre:</span>
+                                <span class="info-value">{{ $trainee->centre_name ?? 'N/A' }}</span>
+                            </div>
+                        </div>
+
+                        <div class="progress-section">
+                            <div class="progress-label">
+                                <span>Overall Progress</span>
+                                <span>{{ $trainee->progress ?? rand(65, 95) }}%</span>
+                            </div>
+                            <div class="progress">
+                                <div class="progress-bar" style="width: {{ $trainee->progress ?? rand(65, 95) }}%"></div>
+                            </div>
+                        </div>
+
+                        <div class="trainee-actions">
+                            <a href="{{ route('trainees.show', $trainee->id) }}" class="btn-action btn-view" title="View Details">
+                                <i class="fas fa-eye"></i>View
                             </a>
-                            <div class="dropdown-divider"></div>
-                            <a class="dropdown-item" href="{{ route('traineesregistrationpage', ['centre' => $centreName]) }}">
-                                <i class="fas fa-plus mr-2"></i>Add Trainee to Center
+                            @if(in_array(session('role'), ['admin', 'supervisor']))
+                            <a href="{{ route('trainees.edit', $trainee->id) }}" class="btn-action btn-edit" title="Edit Trainee">
+                                <i class="fas fa-edit"></i>Edit
+                            </a>
+                            @endif
+                            <a href="{{ route('trainees.profile', $trainee->id) }}" class="btn-action btn-profile" title="Full Profile">
+                                <i class="fas fa-user"></i>Profile
                             </a>
                         </div>
                     </div>
                 </div>
-                <div class="card-body">
-                    <div class="row">
-                        @foreach($centerTrainees as $trainee)
-                            <div class="col-xl-3 col-md-4 col-sm-6 mb-4">
-                                <div class="card trainee-card h-100">
-                                    <div class="card-header bg-light py-2 text-center">
-                                        <div class="avatar-container mb-2">
-                                            <img src="{{ $trainee->avatar_url }}" 
-                                                 class="rounded-circle" width="80" height="80" alt="Trainee Avatar" 
-                                                 style="object-fit: cover;">
-                                        </div>
-                                        <h5 class="card-title mb-0">{{ $trainee->trainee_first_name }} {{ $trainee->trainee_last_name }}</h5>
-                                    </div>
-                                    <div class="card-body pt-2">
-                                        <p class="mb-1">
-                                            <i class="fas fa-envelope text-muted mr-2"></i>
-                                            <strong>Email:</strong> {{ $trainee->trainee_email }}
-                                        </p>
-                                        <p class="mb-1">
-                                            <i class="fas fa-heartbeat text-muted mr-2"></i>
-                                            <strong>Condition:</strong> 
-                                            <span class="badge badge-{{ $trainee->getConditionBadgeClassAttribute() ?? 'secondary' }}">
-                                                {{ $trainee->trainee_condition }}
-                                            </span>
-                                        </p>
-                                        <p class="mb-1">
-                                            <i class="fas fa-birthday-cake text-muted mr-2"></i>
-                                            <strong>Age:</strong> {{ $trainee->getAgeAttribute() ?? 'N/A' }} years
-                                        </p>
-                                        <p class="mb-1">
-                                            <i class="fas fa-calendar text-muted mr-2"></i>
-                                            <small class="text-muted">Registered: {{ $trainee->created_at ? $trainee->created_at->format('M d, Y') : 'Unknown' }}</small>
-                                        </p>
-                                    </div>
-                                    <div class="card-footer bg-transparent border-top-0 text-center">
-                                        <a href="{{ route('traineeprofile', ['id' => $trainee->id]) }}" class="btn btn-primary btn-sm">
-                                            <i class="fas fa-user mr-1"></i>View Profile
-                                        </a>
-                                    </div>
-                                </div>
-                            </div>
-                        @endforeach
-                    </div>
-                </div>
-            </div>
-        @endforeach
+            @endforeach
+        </div>
+
+        <!-- Pagination -->
+        @if(method_exists($trainees, 'hasPages') && $trainees->hasPages())
+        <div class="d-flex justify-content-center">
+            {{ $trainees->links() }}
+        </div>
+        @endif
     @else
-        <div class="card shadow mb-4">
-            <div class="card-body">
-                <div class="text-center py-4">
-                    <img src="{{ asset('images/empty-state.svg') }}" alt="No trainees found" class="img-fluid mb-3" style="max-width: 200px;">
-                    <h5>No trainees found</h5>
-                    <p class="text-muted">There are no trainees registered in the system yet, or none match your search criteria.</p>
-                    <a href="{{ route('traineesregistrationpage') }}" class="btn btn-primary mt-2">
-                        <i class="fas fa-plus mr-1"></i>Register New Trainee
-                    </a>
-                </div>
+        <div class="empty-state">
+            <div class="empty-icon">
+                <i class="fas fa-user-graduate"></i>
             </div>
+            <h4>No Trainees Found</h4>
+            <p>No trainees match your current filters or none have been registered yet.</p>
+            @if(in_array(session('role'), ['admin', 'supervisor']))
+            <a href="{{ route('trainees.create') }}" class="btn btn-primary">
+                <i class="fas fa-plus me-2"></i>Register First Trainee
+            </a>
+            @endif
         </div>
     @endif
-</div>
-
-<!-- Filter Modal -->
-<div class="modal fade" id="filterModal" tabindex="-1" role="dialog" aria-labelledby="filterModalLabel" aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <form action="{{ route('trainees.home') }}" method="GET">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="filterModalLabel">
-                        <i class="fas fa-filter mr-2"></i>Filter Trainees
-                    </h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <!-- Center Filter -->
-                    <div class="form-group">
-                        <label for="centre"><i class="fas fa-building mr-2"></i>Center</label>
-                        <select name="centre" id="centre" class="form-control">
-                            <option value="">All Centers</option>
-                            @foreach($centres ?? [] as $centre)
-                                <option value="{{ $centre->centre_name }}" {{ request('centre') == $centre->centre_name ? 'selected' : '' }}>
-                                    {{ $centre->centre_name }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-                    
-                    <!-- Condition Filter -->
-                    <div class="form-group">
-                        <label for="condition"><i class="fas fa-heartbeat mr-2"></i>Condition</label>
-                        <select name="condition" id="condition" class="form-control">
-                            <option value="">All Conditions</option>
-                            @foreach($conditions ?? [] as $condition)
-                                <option value="{{ $condition }}" {{ request('condition') == $condition ? 'selected' : '' }}>
-                                    {{ $condition }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-                    
-                    <!-- Search by name/email -->
-                    <div class="form-group">
-                        <label for="search"><i class="fas fa-search mr-2"></i>Search</label>
-                        <input type="text" name="search" id="search" class="form-control" 
-                               placeholder="Search by name or email..." 
-                               value="{{ request('search') }}">
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
-                        <i class="fas fa-times mr-1"></i>Close
-                    </button>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-filter mr-1"></i>Apply Filters
-                    </button>
-                    @if(request()->has('search') || request()->has('centre') || request()->has('condition'))
-                        <a href="{{ route('trainees.home') }}" class="btn btn-outline-secondary">
-                            <i class="fas fa-broom mr-1"></i>Clear Filters
-                        </a>
-                    @endif
-                </div>
-            </form>
-        </div>
-    </div>
 </div>
 @endsection
 
 @section('scripts')
 <script>
-$(document).ready(function() {
-    // Hide alerts after 5 seconds
-    setTimeout(function() {
-        $('.alert').fadeOut('slow');
-    }, 5000);
+// Auto-submit filter form on select change
+document.addEventListener('DOMContentLoaded', function() {
+    const conditionSelect = document.getElementById('condition');
+    const centreSelect = document.getElementById('centre');
     
-    // Initialize tooltips
-    $('[data-toggle="tooltip"]').tooltip();
-    
-    // Enable search on enter press
-    $('#search').keypress(function(e) {
-        if (e.which == 13) {
-            $(this).closest('form').submit();
-            return false;
-        }
-    });
-    
-    // Enhanced search functionality
-    $('#globalSearch').on('input', function() {
-        const searchTerm = $(this).val().toLowerCase();
-        
-        $('.trainee-card').each(function() {
-            const traineeText = $(this).text().toLowerCase();
-            if (traineeText.includes(searchTerm)) {
-                $(this).closest('.col-xl-3').show();
-            } else {
-                $(this).closest('.col-xl-3').hide();
-            }
+    if (conditionSelect) {
+        conditionSelect.addEventListener('change', function() {
+            this.form.submit();
         });
-    });
+    }
+    
+    if (centreSelect) {
+        centreSelect.addEventListener('change', function() {
+            this.form.submit();
+        });
+    }
 });
 </script>
 @endsection

@@ -12,18 +12,18 @@ class Notification extends Model
 
     protected $fillable = [
         'user_id',
-        'role',
-        'title',
-        'content',
-        'type',
-        'data',
-        'read',
+        'user_type',
+        'notification_title',
+        'notification_message',
+        'notification_type',
+        'notification_data',
+        'is_read',
         'read_at'
     ];
 
     protected $casts = [
-        'read' => 'boolean',
-        'data' => 'array',
+        'is_read' => 'boolean',
+        'notification_data' => 'array',
         'read_at' => 'datetime',
         'created_at' => 'datetime',
         'updated_at' => 'datetime'
@@ -76,7 +76,7 @@ class Notification extends Model
      */
     public function scopeUnread($query)
     {
-        return $query->where('read', false);
+        return $query->where('is_read', false);
     }
 
     /**
@@ -84,7 +84,7 @@ class Notification extends Model
      */
     public function scopeByType($query, $type)
     {
-        return $query->where('type', $type);
+        return $query->where('notification_type', $type);
     }
 
     /**
@@ -100,12 +100,12 @@ class Notification extends Model
      */
     public function markAsRead(): bool
     {
-        if ($this->read) {
+        if ($this->is_read) {
             return true; // Already read
         }
 
         return $this->update([
-            'read' => true,
+            'is_read' => true,
             'read_at' => now()
         ]);
     }
@@ -116,7 +116,7 @@ class Notification extends Model
     public function markAsUnread(): bool
     {
         return $this->update([
-            'read' => false,
+            'is_read' => false,
             'read_at' => null
         ]);
     }
@@ -126,7 +126,7 @@ class Notification extends Model
      */
     public function isRead(): bool
     {
-        return $this->read;
+        return $this->is_read;
     }
 
     /**
@@ -134,7 +134,7 @@ class Notification extends Model
      */
     public function isUnread(): bool
     {
-        return !$this->read;
+        return !$this->is_read;
     }
 
     /**
@@ -142,7 +142,55 @@ class Notification extends Model
      */
     public function getMessageAttribute(): string
     {
-        return $this->content ?? '';
+        return $this->notification_message ?? '';
+    }
+
+    /**
+     * Get notification title attribute (backward compatibility).
+     */
+    public function getTitleAttribute(): string
+    {
+        return $this->notification_title ?? '';
+    }
+
+    /**
+     * Get notification content attribute (backward compatibility).
+     */
+    public function getContentAttribute(): string
+    {
+        return $this->notification_message ?? '';
+    }
+
+    /**
+     * Get notification type attribute (backward compatibility).
+     */
+    public function getTypeAttribute(): string
+    {
+        return $this->notification_type ?? '';
+    }
+
+    /**
+     * Get notification data attribute (backward compatibility).
+     */
+    public function getDataAttribute(): ?array
+    {
+        return $this->notification_data;
+    }
+
+    /**
+     * Get notification read attribute (backward compatibility).
+     */
+    public function getReadAttribute(): bool
+    {
+        return $this->is_read;
+    }
+
+    /**
+     * Get notification role attribute (backward compatibility).
+     */
+    public function getRoleAttribute(): string
+    {
+        return $this->user_type ?? '';
     }
 
     /**
@@ -150,7 +198,7 @@ class Notification extends Model
      */
     public function getActionUrlAttribute(): ?string
     {
-        return $this->data['action_url'] ?? null;
+        return $this->notification_data['action_url'] ?? null;
     }
 
     /**
@@ -172,7 +220,7 @@ class Notification extends Model
      */
     public function getTypeIconAttribute(): string
     {
-        return match($this->type) {
+        return match($this->notification_type) {
             // Activity related
             self::TYPE_ACTIVITY_SCHEDULED => 'fas fa-calendar-plus',
             self::TYPE_ACTIVITY_CANCELLED => 'fas fa-calendar-times',

@@ -280,9 +280,9 @@
                         
                         @if(in_array(session('role'), ['admin', 'supervisor']))
                             <li class="nav-item">
-                                <a class="nav-link {{ request()->routeIs('users.*') ? 'active' : '' }}" 
-                                   href="{{ route('users.index') }}">
-                                    <i class="fas fa-users"></i> Users
+                                <a class="nav-link {{ request()->routeIs('staffs.*') ? 'active' : '' }}" 
+                                   href="{{ route('staffs.home') }}">
+                                    <i class="fas fa-users"></i> Staff Directory
                                 </a>
                             </li>
                         @endif

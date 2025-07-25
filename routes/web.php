@@ -27,7 +27,7 @@ use App\Http\Controllers\Trainee\TraineeHomeController;
 use App\Http\Controllers\Trainee\TraineeProfileController;
 use App\Http\Controllers\Trainee\TraineeRegistrationController;
 use App\Http\Controllers\Trainee\TraineeManagementController;
-use App\Http\Controllers\Trainee\EnhancedTraineeController;
+// Legacy enhanced controller - functionality moved to main TraineeController
 
 // Activity and Resource Controllers
 use App\Http\Controllers\Activity\ActivityController;
@@ -206,6 +206,8 @@ Route::middleware(['auth', 'validate.params'])->group(function () {
     Route::prefix('activities')->name('activities.')->middleware(['centre.access:activity'])->group(function () {
         Route::get('/', function() { return redirect()->route('activities.home'); }); // Legacy redirect
         Route::get('/home', [ActivityController::class, 'index'])->name('home'); // New structure
+        Route::get('/categories', [ActivityController::class, 'categories'])->name('categories');
+        Route::get('/categories/{categorySlug}', [ActivityController::class, 'categoryShow'])->name('categories.show');
         Route::get('/schedule', [ActivityController::class, 'scheduleIndex'])->name('schedule');
         
         // Admin and Supervisor routes
@@ -267,37 +269,10 @@ Route::middleware(['auth', 'validate.params'])->group(function () {
     });
     */
 
-    // ENHANCED ASSET MANAGEMENT SYSTEM
-    Route::prefix('enhanced-assets')->name('assets.')->group(function () {
-        // Main dashboard (role-based views)
-        Route::get('/', [AssetController::class, 'index'])->name('index');
-        
-        // Asset viewing (all authenticated users)
-        Route::get('/{asset}', [AssetController::class, 'show'])->name('show');
-        
-        // Admin and Supervisor routes
-        Route::middleware(['role:admin,supervisor'])->group(function () {
-            Route::get('/create', [AssetController::class, 'create'])->name('create');
-            Route::post('/', [AssetController::class, 'store'])->name('store');
-            Route::get('/{asset}/edit', [AssetController::class, 'edit'])->name('edit');
-            Route::put('/{asset}', [AssetController::class, 'update'])->name('update');
-            Route::post('/{asset}/schedule-maintenance', [AssetController::class, 'scheduleMaintenance'])->name('schedule-maintenance');
-            Route::post('/bulk-update', [AssetController::class, 'bulkUpdate'])->name('bulk-update');
-        });
-        
-        // Admin only routes
-        Route::middleware(['role:admin'])->group(function () {
-            Route::delete('/{asset}', [AssetController::class, 'destroy'])->name('destroy');
-        });
-    });
+    // ENHANCED ASSET MANAGEMENT SYSTEM - Removed duplicate, using main assets route group below
 
 
-    // Activities Routes (updated structure)
-    Route::prefix('activities')->name('activities.')->group(function () {
-        Route::get('/home', [ActivityController::class, 'index'])->name('home');
-        Route::get('/categories', [ActivityController::class, 'categories'])->name('categories');
-        Route::get('/categories/{categorySlug}', [ActivityController::class, 'categoryShow'])->name('categories.show');
-    });
+    // Activities Routes moved to main Activity Management section above
     
     // Legacy rehabilitation routes (redirect to new structure)
     Route::prefix('rehabilitation')->name('rehabilitation.')->group(function () {
@@ -318,7 +293,7 @@ Route::middleware(['auth', 'validate.params'])->group(function () {
     });
     
     // Legacy teachershome route (redirect to new structure)
-    Route::get('/teachershome', function() { return redirect()->route('staffs.home'); });
+    Route::get('/teachershome', function() { return redirect()->route('staffs.home'); })->name('teachershome');
     Route::get('/updateuser/{id}', [StaffsHomeController::class, 'updateuserpage'])->name('updateuser');
     Route::post('/updateuser/{id}', [StaffsHomeController::class, 'updateuser'])->name('updateuser.post');
     
@@ -328,9 +303,12 @@ Route::middleware(['auth', 'validate.params'])->group(function () {
         Route::get('/edit/{id}', function($id) { return redirect()->route('staffs.edit', ['encrypted_id' => app('App\Traits\HandlesEncryptedIds')->generateEncryptedId($id)]); })->name('edit');
     });
 
+    // Legacy centres redirect
+    Route::get('/centres', function() { return redirect()->route('centres.index'); })->middleware(['centre.access:centre']);
+    
     // Centres
     Route::prefix('centres')->name('centres.')->middleware(['centre.access:centre'])->group(function () {
-        Route::get('/', [CentreController::class, 'index'])->name('index');
+        Route::get('/home', [CentreController::class, 'index'])->name('index');
         Route::get('/create', [CentreController::class, 'create'])->name('create');
         Route::post('/', [CentreController::class, 'store'])->name('store');
         Route::get('/{id}', [CentreController::class, 'show'])->name('show');
@@ -365,6 +343,10 @@ Route::middleware(['auth', 'validate.params'])->group(function () {
         Route::get('/{id}/edit', [AssetController::class, 'edit'])->name('edit');
         Route::put('/{id}', [AssetController::class, 'update'])->name('update');
         Route::delete('/{id}', [AssetController::class, 'destroy'])->name('destroy');
+        
+        // Asset rental/usage routes
+        Route::post('/{id}/rent', [AssetController::class, 'rentAsset'])->name('rent');
+        Route::post('/{id}/return', [AssetController::class, 'returnAsset'])->name('return');
     });
 
     // Messages
@@ -387,11 +369,11 @@ Route::middleware(['auth', 'validate.params'])->group(function () {
         Route::delete('/{id}', [NotificationController::class, 'destroy'])->name('destroy');
     });
 
-    // Attendance Management
+    // Attendance Management  
     Route::prefix('attendance')->name('attendance.')->group(function () {
-        Route::get('/', [App\Http\Controllers\AttendanceController::class, 'index'])->name('index');
-        Route::post('/', [App\Http\Controllers\AttendanceController::class, 'store'])->name('store');
-        Route::get('/report', [App\Http\Controllers\AttendanceController::class, 'report'])->name('report');
+        Route::get('/', [App\Http\Controllers\Activity\AttendanceController::class, 'index'])->name('index');
+        Route::post('/', [App\Http\Controllers\Activity\AttendanceController::class, 'store'])->name('store');
+        Route::get('/report', [App\Http\Controllers\Activity\AttendanceController::class, 'report'])->name('report');
         Route::get('/trainee/{id}', function($id) { 
             return view('attendance.trainee', compact('id')); 
         })->name('trainee');
@@ -511,40 +493,16 @@ Route::middleware(['auth', 'validate.params'])->group(function () {
 |--------------------------------------------------------------------------
 */
 
-Route::middleware(['auth', 'centre.access:trainee'])->prefix('trainees')->name('trainees.')->group(function () {
-    Route::get('/', [TraineeHomeController::class, 'index'])->name('index');
-    Route::get('/create', [TraineeRegistrationController::class, 'index'])->name('create');
-    Route::post('/', [TraineeRegistrationController::class, 'store'])->name('store');
-    Route::get('/{id}', [TraineeProfileController::class, 'index'])->name('show');
-    Route::get('/{id}/edit', [TraineeProfileController::class, 'edit'])->name('edit');
-    Route::put('/{id}', [TraineeProfileController::class, 'update'])->name('update');
-    Route::delete('/{id}', [TraineeProfileController::class, 'destroy'])->name('destroy');
-});
+// Consolidated Trainees Management Routes - moved to avoid conflicts with /trainees/home
 
-// Enhanced Trainee Management Routes
-Route::middleware(['auth', 'centre.access:trainee'])->prefix('enhanced-trainees')->name('enhanced-trainees.')->group(function () {
-    Route::get('/', [EnhancedTraineeController::class, 'index'])->name('index');
-    Route::get('/create', [EnhancedTraineeController::class, 'create'])->name('create');
-    Route::post('/', [EnhancedTraineeController::class, 'store'])->name('store');
-    Route::post('/force-create', [EnhancedTraineeController::class, 'forceCreate'])->name('force-create');
-    Route::get('/{id}', [EnhancedTraineeController::class, 'show'])->name('show');
-    Route::post('/bulk-operation', [EnhancedTraineeController::class, 'bulkOperation'])->name('bulk-operation');
-    Route::get('/search', [EnhancedTraineeController::class, 'search'])->name('search');
-    Route::get('/statistics', [EnhancedTraineeController::class, 'getStatistics'])->name('statistics');
-    Route::post('/export', [EnhancedTraineeController::class, 'exportTrainees'])->name('export');
-});
+// Enhanced Trainee Management Routes - Functionality moved to main trainee routes
+// Legacy routes disabled - use main /trainees/* routes instead
 
-// Trainees Management Routes (updated structure)
-Route::prefix('trainees')->name('trainees.')->group(function () {
-    Route::get('/home', [TraineeHomeController::class, 'index'])->name('home');
-    Route::get('/register', [TraineeRegistrationController::class, 'index'])->name('register');
-});
-
-// Legacy trainee routes (backward compatibility)
+// Legacy trainee routes (backward compatibility) - MUST come before dynamic routes
 Route::middleware(['auth', 'centre.access:trainee'])->group(function () {
     Route::get('/traineeshome', function() { return redirect()->route('trainees.home'); });
     
-    // Trainee Profile Routes
+    // Trainee Profile Routes - specific routes first to avoid conflicts
     Route::get('/traineeprofile/{id}', [TraineeProfileController::class, 'index'])->name('traineeprofile');
     Route::get('/traineeprofile/{id}/edit', [TraineeProfileController::class, 'edit'])->name('traineeprofile.edit');
     Route::put('/traineeprofile/{id}', [TraineeProfileController::class, 'update'])->name('traineeprofile.update');
@@ -560,9 +518,19 @@ Route::middleware(['auth', 'centre.access:trainee'])->group(function () {
     Route::post('/validateEmail', [TraineeRegistrationController::class, 'validateEmail'])->name('validateEmail');
 });
 
+// Trainees Management Routes (updated structure) - AFTER legacy routes to avoid conflicts
+Route::middleware(['auth', 'centre.access:trainee'])->prefix('trainees')->name('trainees.')->group(function () {
+    Route::get('/home', [TraineeHomeController::class, 'index'])->name('home');
+    Route::get('/index', [TraineeHomeController::class, 'index'])->name('index'); // Alternative route
+    Route::get('/create', [TraineeRegistrationController::class, 'index'])->name('create');
+    Route::get('/register', [TraineeRegistrationController::class, 'index'])->name('register');
+    Route::post('/', [TraineeRegistrationController::class, 'store'])->name('store');
+    // Note: Profile routes use /traineeprofile/{id} for backward compatibility
+});
+
 // Legacy asset route
 Route::middleware(['auth'])->group(function () {
-    Route::get('/assets', [AssetController::class, 'index'])->name('assets');
+    // Asset routes moved to main assets prefix group below
     Route::get('/assetmanagementpage', [AssetController::class, 'index'])->name('assetmanagementpage');
     Route::get('/schedulehomepage', function () { return view('schedulehome'); })->name('schedulehomepage');
     Route::get('/aboutus', function () { return view('aboutus'); })->name('aboutus');

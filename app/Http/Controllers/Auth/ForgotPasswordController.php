@@ -24,7 +24,7 @@ class ForgotPasswordController extends Controller
     public function showForgotPasswordForm()
     {
         Log::info('Forgot password form accessed');
-        return view('auth.forgot-password');
+        return view('auth.forgotpassword');
     }
 
     /**

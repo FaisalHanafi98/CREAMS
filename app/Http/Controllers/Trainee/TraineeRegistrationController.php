@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Trainee;
 
+use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Trainees;
 use App\Models\Centres;

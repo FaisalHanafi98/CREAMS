@@ -3,211 +3,588 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Login - CREAMS</title>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     
-    <!-- Favicon -->
-    <link rel="shortcut icon" href="{{ asset('images/favicon.png') }}" type="image/x-icon">
-    
-    <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <!-- CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
-    <!-- Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- CSS Libraries -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <style>
+        :root {
+            --primary-color: #32bdea;
+            --secondary-color: #c850c0;
+            --primary-gradient: linear-gradient(135deg, #32bdea, #c850c0);
+            --success-color: #28a745;
+            --error-color: #dc3545;
+            --warning-color: #ffc107;
+            --dark-color: #2c3e50;
+            --light-color: #f8f9fa;
+        }
 
-    <link rel="stylesheet" href="{{ asset('css/loginstyle.css') }}">
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: url('{{ asset('images/pexels-iqwan-alif-493640-1206101.jpg') }}') center center;
+            background-size: cover;
+            background-attachment: fixed;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Animated Background Elements */
+        .bg-animation {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: 0;
+        }
+
+        .bg-animation::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: repeating-linear-gradient(
+                45deg,
+                transparent,
+                transparent 2px,
+                rgba(255,255,255,0.03) 2px,
+                rgba(255,255,255,0.03) 4px
+            );
+            animation: bg-move 20s linear infinite;
+        }
+
+        @keyframes bg-move {
+            0% { transform: translate(-50%, -50%) rotate(0deg); }
+            100% { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+
+        /* Background Overlay */
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.3);
+            z-index: 1;
+        }
+
+        /* Main Container */
+        .login-container {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+            max-width: 420px;
+            padding: 15px;
+        }
+
+        .login-card {
+            background: rgba(255, 255, 255, 0.96);
+            backdrop-filter: blur(20px);
+            border-radius: 25px;
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            overflow: visible;
+            animation: slideInUp 0.8s ease-out;
+            max-height: none;
+            margin: 10px 0;
+        }
+
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .login-header {
+            text-align: center;
+            padding: 30px 25px 20px;
+            background: var(--primary-gradient);
+            color: white;
+            position: relative;
+        }
+
+        .logo-container {
+            margin-bottom: 20px;
+        }
+
+        .logo {
+            width: 80px;
+            height: 80px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto;
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .logo i {
+            font-size: 32px;
+            color: white;
+        }
+
+        .login-title {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .login-subtitle {
+            font-size: 16px;
+            opacity: 0.9;
+            font-weight: 300;
+        }
+
+        /* Form Styles */
+        .login-form {
+            padding: 30px 25px 25px;
+        }
+
+        .form-floating {
+            margin-bottom: 24px;
+            position: relative;
+        }
+
+        .form-control {
+            height: 58px;
+            border: 2px solid #e9ecef;
+            border-radius: 16px;
+            font-size: 16px;
+            font-weight: 400;
+            background: rgba(248, 249, 250, 0.8);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            padding-top: 1.625rem;
+            padding-bottom: 0.625rem;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.25rem rgba(50, 189, 234, 0.15);
+            background: white;
+            transform: translateY(-2px);
+        }
+
+        .form-control.is-invalid {
+            border-color: var(--error-color);
+            animation: shake 0.5s ease-in-out;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        .form-floating > label {
+            color: #6c757d;
+            font-weight: 400;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus ~ label,
+        .form-control:not(:placeholder-shown) ~ label {
+            color: var(--primary-color);
+            font-weight: 500;
+        }
+
+        /* Password Toggle */
+        .password-toggle {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #6c757d;
+            font-size: 18px;
+            cursor: pointer;
+            z-index: 5;
+            transition: all 0.3s ease;
+            padding: 5px;
+            border-radius: 50%;
+        }
+
+        .password-toggle:hover {
+            color: var(--primary-color);
+            background: rgba(50, 189, 234, 0.1);
+        }
+
+        /* Remember Me */
+        .remember-section {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 30px;
+        }
+
+        .form-check {
+            display: flex;
+            align-items: center;
+        }
+
+        .form-check-input {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #dee2e6;
+            border-radius: 6px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .form-check-input:checked {
+            background: var(--primary-gradient);
+            border-color: var(--primary-color);
+        }
+
+        .form-check-label {
+            font-size: 14px;
+            color: #6c757d;
+            cursor: pointer;
+            margin-left: 8px;
+        }
+
+        .forgot-link {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .forgot-link:hover {
+            color: var(--secondary-color);
+            text-decoration: underline;
+        }
+
+        /* Login Button */
+        .login-btn {
+            width: 100%;
+            height: 58px;
+            background: var(--primary-gradient);
+            border: none;
+            border-radius: 16px;
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(50, 189, 234, 0.3);
+        }
+
+        .login-btn:active {
+            transform: translateY(0);
+        }
+
+        .login-btn.loading {
+            pointer-events: none;
+        }
+
+        .btn-text {
+            transition: all 0.3s ease;
+        }
+
+        .btn-spinner {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .login-btn.loading .btn-text {
+            opacity: 0;
+        }
+
+        .login-btn.loading .btn-spinner {
+            opacity: 1;
+        }
+
+        /* Alert Styles */
+        .alert {
+            border-radius: 12px;
+            border: none;
+            margin-bottom: 20px;
+            animation: slideInDown 0.5s ease-out;
+        }
+
+        @keyframes slideInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .alert-success {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+        }
+
+        .alert-danger {
+            background: linear-gradient(135deg, #dc3545, #fd7e14);
+            color: white;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 576px) {
+            body {
+                padding: 10px;
+            }
+            
+            .login-container {
+                padding: 10px;
+                max-width: 100%;
+            }
+            
+            .login-header {
+                padding: 25px 20px 15px;
+            }
+            
+            .login-form {
+                padding: 25px 20px 20px;
+            }
+            
+            .login-title {
+                font-size: 24px;
+            }
+            
+            .form-floating {
+                margin-bottom: 20px;
+            }
+        }
+    </style>
 </head>
 <body>
-    <div class="logo-container">
-        <a href="{{ url('/') }}">
-            <img src="{{ asset('images/logo.png') }}" alt="CREAMS Logo" onerror="this.style.display='none'">
-            CREAMS
-        </a>
-    </div>
-    
-    <div class="main-container" style="background-image: url('{{ asset('images/pexels-iqwan-alif-493640-1206101.jpg') }}'); background-size: cover; background-position: center;">
+    <!-- Animated Background -->
+    <div class="bg-animation"></div>
+
+    <!-- Main Login Container -->
+    <div class="login-container">
         <div class="login-card">
-            <!-- Login Icon at Top -->
-            <div class="login-icon">
-                <div class="login-icon-circle">
-                    <i class="fas fa-sign-in-alt"></i>
-                </div>
-            </div>
-            
+            <!-- Header -->
             <div class="login-header">
-                <h3>Welcome Back</h3>
-                <p>Sign in to your account to continue</p>
+                <div class="logo-container">
+                    <div class="logo">
+                        <i class="fas fa-hands-helping"></i>
+                    </div>
+                </div>
+                <h1 class="login-title">Welcome Back</h1>
+                <p class="login-subtitle">Sign in to your CREAMS account</p>
             </div>
-            
-            <!-- Flash Messages -->
-            @if (session('success'))
-                <div class="alert alert-success">
-                    <i class="fas fa-check-circle"></i> {{ session('success') }}
-                </div>
-            @endif
-            
-            @if (session('error'))
-                <div class="alert alert-danger">
-                    <i class="fas fa-exclamation-circle"></i> {{ session('error') }}
-                </div>
-            @endif
-            
-            <!-- In login.blade.php -->
-                <form action="{{ route('auth.check') }}" method="POST" id="login-form" class="login-form">
+
+            <!-- Login Form -->
+            <div class="login-form">
+                <form id="loginForm" action="{{ route('auth.check') }}" method="POST">
                     @csrf
                     
-                    <div class="form-group">
-                        <input type="text" class="form-control @error('identifier') is-invalid @enderror" 
-                            id="identifier" name="identifier" placeholder="Email Address or IIUM ID" 
-                            value="{{ old('identifier') }}" required>
-                        @error('identifier')
-                            <span class="error-feedback">{{ $message }}</span>
-                        @enderror
+                    <!-- Alert Container -->
+                    <div id="alertContainer">
+                        @if(session('error'))
+                            <div class="alert alert-danger">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                {{ session('error') }}
+                            </div>
+                        @endif
+                        
+                        @if(session('success'))
+                            <div class="alert alert-success">
+                                <i class="fas fa-check-circle me-2"></i>
+                                {{ session('success') }}
+                            </div>
+                        @endif
+                        
+                        @if($errors->any())
+                            <div class="alert alert-danger">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                @foreach($errors->all() as $error)
+                                    {{ $error }}<br>
+                                @endforeach
+                            </div>
+                        @endif
                     </div>
-                <div class="form-group password-field">
-                    <input type="password" class="form-control
-                    @error('password') is-invalid @enderror" id="password" name="password" placeholder="Password" required>
-                    <button type="button" class="toggle-password" id="togglePassword">
-                        <i class="fas fa-eye-slash"></i>
+
+                    <!-- Email/Identifier Field -->
+                    <div class="form-floating">
+                        <input type="text" 
+                               class="form-control @error('identifier') is-invalid @enderror" 
+                               id="identifier" 
+                               name="identifier" 
+                               placeholder="Email or IIUM ID"
+                               value="{{ old('identifier') }}"
+                               required>
+                        <label for="identifier">
+                            <i class="fas fa-envelope me-2"></i>Email Address or IIUM ID
+                        </label>
+                    </div>
+
+                    <!-- Password Field -->
+                    <div class="form-floating">
+                        <input type="password" 
+                               class="form-control @error('password') is-invalid @enderror" 
+                               id="password" 
+                               name="password" 
+                               placeholder="Password"
+                               required>
+                        <label for="password">
+                            <i class="fas fa-lock me-2"></i>Password
+                        </label>
+                        <button type="button" class="password-toggle" id="passwordToggle">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+
+                    <!-- Remember Me & Forgot Password -->
+                    <div class="remember-section">
+                        <div class="form-check">
+                            <input class="form-check-input" 
+                                   type="checkbox" 
+                                   id="remember" 
+                                   name="remember"
+                                   value="1"
+                                   {{ old('remember') ? 'checked' : '' }}>
+                            <label class="form-check-label" for="remember">
+                                Remember me
+                            </label>
+                        </div>
+                        <a href="{{ route('password.request') }}" class="forgot-link">
+                            Forgot Password?
+                        </a>
+                    </div>
+
+                    <!-- Login Button -->
+                    <button type="submit" class="login-btn" id="loginButton">
+                        <span class="btn-text">
+                            <i class="fas fa-sign-in-alt me-2"></i>Sign In
+                        </span>
+                        <div class="btn-spinner">
+                            <i class="fas fa-spinner fa-spin"></i>
+                        </div>
                     </button>
-                    @error('password')
-                        <span class="error-feedback">{{ $message }}</span>
-                    @enderror
-                </div>
-                
-                <div class="form-options">
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" id="remember" name="remember" {{ old('remember') ? 'checked' : '' }}>
-                        <label class="form  -check-label" for="remember">Remember me</label>
-                    </div>
-                    <a href="{{ route('password.request') }}" class="forgot-link">Forgot password?</a>
-                </div>
-                
-                <button type="submit" class="login-button" id="loginButton">
-                    Sign In
-                </button>
-                
-                
-            </form>
+                </form>
+            </div>
         </div>
     </div>
-    
-    <!-- Hidden Footer that appears on scroll -->
-    <footer id="footer">
-        <div class="footer-content">
-            <div class="footer-column">
-                <h4>About CREAMS</h4>
-                <ul>
-                    <li><a href="{{ url('/') }}"><i class="fas fa-home"></i> Home</a></li>
-                    <li><a href="{{ url('/#about') }}"><i class="fas fa-info-circle"></i> About Us</a></li>
-                    <li><a href="{{ url('/#support') }}"><i class="fas fa-hands-helping"></i> Our Services</a></li>
-                    <li><a href="{{ url('/#team') }}"><i class="fas fa-users"></i> Our Team</a></li>
-                </ul>
-            </div>
-            
-            <div class="footer-column">
-                <h4>Quick Links</h4>
-                <ul>
-                    <li><a href="{{ route('volunteer') }}"><i class="fas fa-user-plus"></i> Volunteer</a></li>
-                    <li><a href="{{ route('contact') }}"><i class="fas fa-envelope"></i> Contact Us</a></li>
-                    <li><a href="{{ route('auth.loginpage') }}"><i class="fas fa-sign-in-alt"></i> Login</a></li>
-                    <li><a href="{{ route('staffs.register') }}"><i class="fas fa-user-plus"></i> Register</a></li>
-                </ul>
-            </div>
-            
-            <div class="footer-column">
-                <h4>Legal</h4>
-                <ul>
-                    <li><a href="{{ route('trademark') }}"><i class="fas fa-trademark"></i> Trademarks</a></li>
-                    <li><a href="#"><i class="fas fa-shield-alt"></i> Privacy Policy</a></li>
-                    <li><a href="#"><i class="fas fa-gavel"></i> Terms of Service</a></li>
-                    <li><a href="#"><i class="fas fa-universal-access"></i> Accessibility</a></li>
-                </ul>
-            </div>
-            
-            <div class="footer-column footer-info">
-                <h4>Contact Us</h4>
-                <p><i class="fas fa-map-marker-alt"></i> Disability Services Unit (DSU), IIUM, 53100 Kuala Lumpur</p>
-                <p><i class="fas fa-phone-alt"></i> (+60) 3642 1633 5</p>
-                <p><i class="fas fa-envelope"></i> dsu-creams@iium.edu.my</p>
-                <div class="footer-social">
-                    <a href="#"><i class="fab fa-facebook-f"></i></a>
-                    <a href="#"><i class="fab fa-twitter"></i></a>
-                    <a href="#"><i class="fab fa-instagram"></i></a>
-                    <a href="#"><i class="fab fa-linkedin-in"></i></a>
-                </div>
-            </div>
-        </div>
-        
-        <div class="footer-bottom">
-            <p>&copy; {{ date('Y') }} CREAMS - Community-based REhAbilitation Management System. All rights reserved.</p>
-        </div>
-    </footer>
-    
-    <!-- JavaScript Libraries -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <!-- JavaScript -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Password visibility toggle
-            const togglePassword = document.getElementById('togglePassword');
+            // Elements
+            const loginForm = document.getElementById('loginForm');
+            const loginButton = document.getElementById('loginButton');
+            const passwordToggle = document.getElementById('passwordToggle');
             const passwordInput = document.getElementById('password');
-            
-            if (togglePassword && passwordInput) {
-                togglePassword.addEventListener('click', function() {
-                    if (passwordInput.type === 'password') {
-                        passwordInput.type = 'text';
-                        togglePassword.innerHTML = '<i class="fas fa-eye"></i>';
-                    } else {
-                        passwordInput.type = 'password';
-                        togglePassword.innerHTML = '<i class="fas fa-eye-slash"></i>';
+            const alertContainer = document.getElementById('alertContainer');
+
+            // CSRF Token Setup
+            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+            // Password Toggle
+            passwordToggle.addEventListener('click', function() {
+                const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                passwordInput.setAttribute('type', type);
+                
+                const icon = this.querySelector('i');
+                icon.classList.toggle('fa-eye');
+                icon.classList.toggle('fa-eye-slash');
+                
+                // Add rotation animation
+                icon.style.transform = 'rotateY(180deg)';
+                setTimeout(() => {
+                    icon.style.transform = 'rotateY(0deg)';
+                }, 200);
+            });
+
+            // Form Submission
+            loginForm.addEventListener('submit', function(e) {
+                // Show loading state
+                loginButton.classList.add('loading');
+                
+                // Let the form submit normally for now
+                // You can enhance this later with AJAX if needed
+            });
+
+            // Input Animations
+            const inputs = document.querySelectorAll('.form-control');
+            inputs.forEach(input => {
+                input.addEventListener('focus', function() {
+                    this.parentElement.style.transform = 'translateY(-2px)';
+                });
+                
+                input.addEventListener('blur', function() {
+                    this.parentElement.style.transform = 'translateY(0)';
+                });
+                
+                // Real-time validation
+                input.addEventListener('input', function() {
+                    if (this.validity.valid) {
+                        this.classList.remove('is-invalid');
                     }
                 });
-            }
-            
-            // Animated form submission
-            const loginForm = document.getElementById('login-form');
-            const loginButton = document.getElementById('loginButton');
-            
-            if (loginForm && loginButton) {
-                loginForm.addEventListener('submit', function() {
-                    loginButton.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Signing In...';
-                    loginButton.disabled = true;
-                });
-            }
-            
+            });
+
+            // Auto-focus first input
+            document.getElementById('identifier').focus();
+
             // Auto-hide alerts after 5 seconds
             setTimeout(function() {
                 const alerts = document.querySelectorAll('.alert');
                 alerts.forEach(function(alert) {
-                    alert.style.opacity = '0';
-                    alert.style.transition = 'opacity 0.5s ease';
+                    alert.style.animation = 'slideInUp 0.5s ease-out reverse';
                     setTimeout(function() {
-                        alert.style.display = 'none';
+                        if (alert.parentNode) {
+                            alert.remove();
+                        }
                     }, 500);
                 });
             }, 5000);
-            
-            // Show footer on scroll
-            const footer = document.getElementById('footer');
-            
-            window.addEventListener('scroll', function() {
-                const scrollHeight = document.documentElement.scrollHeight;
-                const scrollTop = window.scrollY;
-                const clientHeight = document.documentElement.clientHeight;
-                
-                // Show footer when user scrolls to bottom
-                if (scrollTop + clientHeight >= scrollHeight - 50) {
-                    footer.classList.add('visible');
-                } else {
-                    footer.classList.remove('visible');
-                }
-            });
         });
     </script>
 </body>

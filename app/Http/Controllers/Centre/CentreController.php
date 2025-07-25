@@ -36,7 +36,7 @@ class CentreController extends Controller
             
             Log::info('Successfully loaded centres', ['count' => $centres->count()]);
             
-            return view('centres.index', compact('centres'));
+            return view('centres.home', compact('centres'));
 
         } catch (Exception $e) {
             Log::error('Error loading centres: ' . $e->getMessage(), [
@@ -199,17 +199,21 @@ class CentreController extends Controller
 
             $validated = $request->validate([
                 'centre_name' => 'required|string|max:255|unique:centres,centre_name,' . $centre->centre_id . ',centre_id',
-                'centre_address' => 'required|string',
-                'centre_phone' => 'nullable|string|max:20',
-                'centre_email' => 'nullable|email|max:255',
-                'centre_capacity' => 'required|string|max:10',
-                'centre_manager' => 'nullable|string|max:255',
-                'centre_manager_contact' => 'nullable|string|max:20',
-                'centre_status' => 'required|in:active,inactive,maintenance',
-                'centre_description' => 'nullable|string',
-                'centre_facilities' => 'nullable|string',
+                'description' => 'nullable|string',
+                'address' => 'required|string',
+                'city' => 'required|string|max:100',
+                'state' => 'required|string|max:100',
+                'postcode' => 'required|string|max:10',
+                'phone' => 'nullable|string|max:20',
+                'email' => 'nullable|email|max:255',
+                'capacity' => 'required|integer|min:1|max:1000',
+                'opening_time' => 'required|date_format:H:i',
+                'closing_time' => 'required|date_format:H:i',
                 'is_active' => 'boolean'
             ]);
+
+            // Handle checkbox value
+            $validated['is_active'] = $request->has('is_active') ? 1 : 0;
 
             $centre->update($validated);
 

@@ -51,7 +51,7 @@ class TraineeController extends Controller
                 'centres_count' => Centres::count()
             ];
             
-            return view('trainees.index', compact('trainees', 'stats', 'role'));
+            return view('trainees.home', compact('trainees', 'stats', 'role'));
             
         } catch (\Exception $e) {
             Log::error('Error loading trainees index', [

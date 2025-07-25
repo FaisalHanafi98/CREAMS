@@ -14,7 +14,7 @@ class VolunteerController extends Controller
 */
 public function index()
 {
-return view('volunteers.index');
+return view('volunteers.home');
 }
 /**
  * Handle volunteer form submission
@@ -36,6 +36,10 @@ public function submit(Request $request)
             'last_name' => 'required|string|max:255',
             'email' => 'required|email|max:255',
             'phone' => 'required|string|max:20',
+            'birth_date' => 'nullable|date|before:today',
+            'gender' => 'nullable|in:Male,Female,Other',
+            'emergency_contact_name' => 'nullable|string|max:255',
+            'emergency_contact_phone' => 'nullable|string|max:20',
             'interest' => 'required|string',
             'availability' => 'required|array|min:1',
             'commitment' => 'required|string',
@@ -47,6 +51,11 @@ public function submit(Request $request)
             'email.required' => 'Email is required',
             'email.email' => 'Please provide a valid email',
             'phone.required' => 'Phone number is required',
+            'birth_date.date' => 'Please provide a valid birth date',
+            'birth_date.before' => 'Birth date must be before today',
+            'gender.in' => 'Please select a valid gender option',
+            'emergency_contact_name.max' => 'Emergency contact name cannot exceed 255 characters',
+            'emergency_contact_phone.max' => 'Emergency contact phone cannot exceed 20 characters',
             'interest.required' => 'Please select an area of interest',
             'availability.required' => 'Please select at least one availability option',
             'availability.min' => 'Please select at least one availability option',
@@ -75,15 +84,15 @@ public function submit(Request $request)
             'volunteer_email' => strtolower(trim($validatedData['email'])),
             'volunteer_phone' => $validatedData['phone'],
             'volunteer_address' => $request->address ?: '',
-            'volunteer_birth_date' => $request->birth_date ?: '1990-01-01',
-            'volunteer_gender' => $request->gender ?: 'Other',
+            'volunteer_birth_date' => $validatedData['birth_date'] ?: '1990-01-01',
+            'volunteer_gender' => $validatedData['gender'] ?: 'Other',
             'volunteer_skills' => $request->skills ?: '',
             'volunteer_experience' => $request->experience ?: '',
             'volunteer_availability' => implode(', ', $validatedData['availability']),
             'volunteer_status' => 'pending',
             'volunteer_start_date' => now()->format('Y-m-d'),
-            'emergency_contact_name' => $request->emergency_contact_name ?: '',
-            'emergency_contact_phone' => $request->emergency_contact_phone ?: '',
+            'emergency_contact_name' => $validatedData['emergency_contact_name'] ?: '',
+            'emergency_contact_phone' => $validatedData['emergency_contact_phone'] ?: '',
         ]);
 
         Log::info('Volunteer application saved successfully', [

@@ -350,8 +350,8 @@
                                         <div class="form-group">
                                             <label for="trainee_avatar">Profile Picture</label>
                                             <div class="enhanced-file-upload">
-                                                <input type="file" class="form-control-file @error('trainee_avatar') is-invalid @enderror" id="trainee_avatar" name="trainee_avatar" accept="image/*" style="width: 100%; padding: 15px; border: 2px dashed #e9ecef; border-radius: 8px; background: #f8f9fa; font-size: 14px; color: #6c757d; cursor: pointer; transition: all 0.3s ease;">
-                                                <div class="file-upload-text" style="text-align: center; padding: 20px 0; color: #6c757d;">
+                                                <input type="file" class="form-control-file @error('trainee_avatar') is-invalid @enderror" id="trainee_avatar" name="trainee_avatar" accept="image/*" style="width: 100%; padding: 25px 15px; min-height: 120px; border: 2px dashed #e9ecef; border-radius: 8px; background: #f8f9fa; font-size: 14px; color: #6c757d; cursor: pointer; transition: all 0.3s ease;">
+                                                <div class="file-upload-text" style="text-align: center; padding: 30px 0; color: #6c757d;">
                                                     <i class="fas fa-cloud-upload-alt" style="font-size: 2rem; margin-bottom: 10px; display: block;"></i>
                                                     <span class="upload-label">Click here to upload profile picture or drag and drop</span>
                                                 </div>

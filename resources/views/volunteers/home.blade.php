@@ -327,6 +327,30 @@
                                 </div>
                             </div>
                             
+                            <div class="form-row">
+                                <div class="form-group col-md-6">
+                                    <label for="birth_date">Date of Birth</label>
+                                    <input type="date" class="form-control @error('birth_date') is-invalid @enderror" 
+                                           id="birth_date" name="birth_date" value="{{ old('birth_date') }}">
+                                    @error('birth_date')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                                <div class="form-group col-md-6">
+                                    <label for="gender">Gender</label>
+                                    <select class="form-control @error('gender') is-invalid @enderror" 
+                                            id="gender" name="gender">
+                                        <option value="">Select gender</option>
+                                        <option value="Male" {{ old('gender') == 'Male' ? 'selected' : '' }}>Male</option>
+                                        <option value="Female" {{ old('gender') == 'Female' ? 'selected' : '' }}>Female</option>
+                                        <option value="Other" {{ old('gender') == 'Other' ? 'selected' : '' }}>Other</option>
+                                    </select>
+                                    @error('gender')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            </div>
+                            
                             <div class="form-group">
                                 <label for="address">Address</label>
                                 <input type="text" class="form-control @error('address') is-invalid @enderror" 
@@ -350,6 +374,26 @@
                                     <input type="text" class="form-control @error('postcode') is-invalid @enderror" 
                                            id="postcode" name="postcode" value="{{ old('postcode') }}">
                                     @error('postcode')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group col-md-6">
+                                    <label for="emergency_contact_name">Emergency Contact Name</label>
+                                    <input type="text" class="form-control @error('emergency_contact_name') is-invalid @enderror" 
+                                           id="emergency_contact_name" name="emergency_contact_name" value="{{ old('emergency_contact_name') }}">
+                                    @error('emergency_contact_name')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                                <div class="form-group col-md-6">
+                                    <label for="emergency_contact_phone">Emergency Contact Phone</label>
+                                    <input type="tel" class="form-control @error('emergency_contact_phone') is-invalid @enderror" 
+                                           id="emergency_contact_phone" name="emergency_contact_phone" value="{{ old('emergency_contact_phone') }}"
+                                           placeholder="+60123456789">
+                                    @error('emergency_contact_phone')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>

@@ -269,12 +269,12 @@ class AssetMaintenance extends Model
     }
 
     /**
-     * Get downtime in hours
+     * Get downtime in hours (calculated from scheduled vs completed date)
      */
     public function getDowntimeHoursAttribute(): ?float
     {
-        if ($this->downtime_start && $this->downtime_end) {
-            return $this->downtime_start->diffInHours($this->downtime_end, true);
+        if ($this->scheduled_date && $this->completed_date) {
+            return $this->scheduled_date->diffInHours($this->completed_date, true);
         }
         return null;
     }
@@ -390,10 +390,9 @@ class AssetMaintenance extends Model
     public function start(?int $performedById = null): bool
     {
         $this->status = self::STATUS_IN_PROGRESS;
-        $this->downtime_start = now();
         
         if ($performedById) {
-            $this->performed_by_id = $performedById;
+            $this->performed_by = $performedById;
         }
         
         $success = $this->save();
@@ -405,7 +404,7 @@ class AssetMaintenance extends Model
             \Log::info('Maintenance started', [
                 'maintenance_id' => $this->id,
                 'asset_id' => $this->asset_id,
-                'performed_by' => $this->performed_by_id
+                'performed_by' => $this->performed_by
             ]);
         }
         
@@ -419,7 +418,6 @@ class AssetMaintenance extends Model
     {
         $this->status = self::STATUS_COMPLETED;
         $this->completed_date = now();
-        $this->downtime_end = now();
         
         // Update fields from data array
         if (isset($data['cost'])) {
@@ -582,8 +580,8 @@ class AssetMaintenance extends Model
             'total_cost' => $query->completed()->sum('cost'),
             'average_cost' => $query->completed()->avg('cost'),
             'average_downtime' => $query->completed()
-                                       ->whereNotNull('downtime_start')
-                                       ->whereNotNull('downtime_end')
+                                       ->whereNotNull('scheduled_date')
+                                       ->whereNotNull('completed_date')
                                        ->get()
                                        ->avg('downtime_hours'),
             'by_type' => $query->selectRaw('maintenance_type, COUNT(*) as count')
@@ -625,7 +623,7 @@ class AssetMaintenance extends Model
                                         ->orderBy('scheduled_date')
                                         ->get(),
             'long_running' => $baseQuery->inProgress()
-                                       ->where('downtime_start', '<', now()->subDays(3))
+                                       ->where('scheduled_date', '<', now()->subDays(3))
                                        ->with(['asset', 'performedBy'])
                                        ->get(),
         ];

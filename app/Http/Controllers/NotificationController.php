@@ -35,13 +35,13 @@ class NotificationController extends Controller
             ]);
             
             $notifications = Notification::where('user_id', $id)
-                ->where('role', $role)
+                ->where('user_type', $role)
                 ->orderBy('created_at', 'desc')
                 ->paginate(15);
                 
             $unreadCount = Notification::where('user_id', $id)
-                ->where('role', $role)
-                ->where('read', false)
+                ->where('user_type', $role)
+                ->where('is_read', false)
                 ->count();
                 
             return view('notifications.index', compact('notifications', 'unreadCount'));
@@ -76,7 +76,7 @@ class NotificationController extends Controller
             ]);
             
             // Check if the user is authorized to view this notification
-            if ($notification->user_id != $userId || $notification->role != $role) {
+            if ($notification->user_id != $userId || $notification->user_type != $role) {
                 Log::warning('Unauthorized notification access attempt', [
                     'notification_id' => $id,
                     'user_id' => $userId,
@@ -88,8 +88,8 @@ class NotificationController extends Controller
             }
             
             // Mark as read if not already
-            if (!$notification->read) {
-                $notification->read = true;
+            if (!$notification->is_read) {
+                $notification->is_read = true;
                 $notification->read_at = now();
                 $notification->save();
                 
@@ -132,7 +132,7 @@ class NotificationController extends Controller
             ]);
             
             // Check if the user is authorized to mark this notification as read
-            if ($notification->user_id != $userId || $notification->role != $role) {
+            if ($notification->user_id != $userId || $notification->user_type != $role) {
                 Log::warning('Unauthorized attempt to mark notification as read', [
                     'notification_id' => $id,
                     'user_id' => $userId,
@@ -143,7 +143,7 @@ class NotificationController extends Controller
                     ->with('error', 'You are not authorized to mark this notification as read');
             }
             
-            $notification->read = true;
+            $notification->is_read = true;
             $notification->read_at = now();
             $notification->save();
             
@@ -185,10 +185,10 @@ class NotificationController extends Controller
             ]);
             
             $count = Notification::where('user_id', $userId)
-                ->where('role', $role)
-                ->where('read', false)
+                ->where('user_type', $role)
+                ->where('is_read', false)
                 ->update([
-                    'read' => true,
+                    'is_read' => true,
                     'read_at' => now()
                 ]);
                 
@@ -247,7 +247,7 @@ class NotificationController extends Controller
             ]);
             
             // Check if the user is authorized to delete this notification
-            if ($notification->user_id != $userId || $notification->role != $role) {
+            if ($notification->user_id != $userId || $notification->user_type != $role) {
                 Log::warning('Unauthorized notification delete attempt', [
                     'notification_id' => $id,
                     'user_id' => $userId,
@@ -296,7 +296,7 @@ class NotificationController extends Controller
             ]);
             
             $count = Notification::where('user_id', $userId)
-                                ->where('read', true)
+                                ->where('is_read', true)
                 ->delete();
                 
             Log::info('Read notifications cleared', [
@@ -334,8 +334,8 @@ class NotificationController extends Controller
             ]);
             
             $notifications = Notification::where('user_id', $userId)
-                ->where('role', $role)
-                ->where('read', false)
+                ->where('user_type', $role)
+                ->where('is_read', false)
                 ->orderBy('created_at', 'desc')
                 ->take(5)
                 ->get();
@@ -347,13 +347,13 @@ class NotificationController extends Controller
             foreach ($notifications as $notification) {
                 $formattedNotifications[] = [
                     'id' => $notification->id,
-                    'title' => $notification->title,
-                    'message' => $notification->content, // Use content field
+                    'title' => $notification->notification_title,
+                    'message' => $notification->notification_message,
                     'icon' => $notification->type_icon,
                     'priority_color' => $notification->priority_color ?? 'text-info',
                     'time_ago' => $notification->time_ago,
                     'action_url' => $notification->action_url,
-                    'read' => $notification->read
+                    'read' => $notification->is_read
                 ];
             }
             

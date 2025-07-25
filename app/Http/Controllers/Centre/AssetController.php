@@ -95,9 +95,18 @@ class AssetController extends Controller
             // Get maintenance alerts
             $maintenanceAlerts = AssetMaintenance::getRequiringAttention($centreId);
 
+            // Prepare stats for the dashboard view
+            $stats = [
+                'total' => $statistics['total_assets'] ?? 0,
+                'available' => $statistics['available_assets'] ?? 0,
+                'rented' => $statistics['rented_assets'] ?? 0,
+                'maintenance' => $statistics['maintenance_assets'] ?? 0
+            ];
+
             return view('assets.dashboard', compact(
                 'assets',
                 'statistics',
+                'stats',
                 'categories',
                 'recentActivity',
                 'maintenanceAlerts',
@@ -643,6 +652,87 @@ class AssetController extends Controller
             ]);
 
             return back()->with('error', 'Error performing bulk operation');
+        }
+    }
+
+    /**
+     * Rent/Use an asset
+     */
+    public function rentAsset(Request $request, $id)
+    {
+        try {
+            $asset = Asset::findOrFail($id);
+            
+            $validated = $request->validate([
+                'user_name' => 'required|string|max:255',
+                'quantity' => 'required|integer|min:1',
+                'expected_return_date' => 'nullable|date|after:today',
+                'purpose' => 'nullable|string|max:500'
+            ]);
+
+            // Check if enough quantity is available
+            $availableQuantity = $asset->quantity - ($asset->rented_quantity ?? 0);
+            if ($validated['quantity'] > $availableQuantity) {
+                return back()->with('error', "Only {$availableQuantity} units available for use.");
+            }
+
+            // Update asset rental status
+            $asset->rented_quantity = ($asset->rented_quantity ?? 0) + $validated['quantity'];
+            $asset->current_user = $validated['user_name'];
+            $asset->status = $asset->rented_quantity >= $asset->quantity ? 'rented' : 'partially_rented';
+            $asset->save();
+
+            // Log the rental activity
+            Log::info('Asset rented', [
+                'asset_id' => $asset->id,
+                'user_name' => $validated['user_name'],
+                'quantity' => $validated['quantity'],
+                'rented_by' => session('id')
+            ]);
+
+            return back()->with('success', "Asset successfully assigned to {$validated['user_name']}");
+
+        } catch (Exception $e) {
+            Log::error('Error renting asset', [
+                'asset_id' => $id,
+                'error' => $e->getMessage(),
+                'user_id' => session('id')
+            ]);
+
+            return back()->with('error', 'Failed to assign asset: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Return an asset
+     */
+    public function returnAsset(Request $request, $id)
+    {
+        try {
+            $asset = Asset::findOrFail($id);
+            
+            // Reset rental status
+            $asset->rented_quantity = 0;
+            $asset->current_user = null;
+            $asset->status = 'available';
+            $asset->save();
+
+            // Log the return activity
+            Log::info('Asset returned', [
+                'asset_id' => $asset->id,
+                'returned_by' => session('id')
+            ]);
+
+            return back()->with('success', 'Asset marked as returned and available for use');
+
+        } catch (Exception $e) {
+            Log::error('Error returning asset', [
+                'asset_id' => $id,
+                'error' => $e->getMessage(),
+                'user_id' => session('id')
+            ]);
+
+            return back()->with('error', 'Failed to return asset: ' . $e->getMessage());
         }
     }
 }

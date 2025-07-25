@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Activity;
 
+use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Activity;
 use App\Models\Category;
@@ -49,6 +50,9 @@ class ActivityController extends Controller
 
             // Get statistics
             $stats = $this->getActivityStats($role, $userId);
+            
+            // Get categories for the view
+            $categories = $this->getActivityCategories();
 
             Log::info('Successfully loaded activities', [
                 'user_id' => $userId,
@@ -57,7 +61,7 @@ class ActivityController extends Controller
                 'stats' => $stats
             ]);
 
-            return view('activities.index', compact('activities', 'stats', 'role'));
+            return view('activities.home', compact('activities', 'stats', 'role', 'categories'));
 
         } catch (Exception $e) {
             Log::error('Error loading activities index: ' . $e->getMessage());
@@ -754,8 +758,10 @@ class ActivityController extends Controller
             }
 
             return [
-                'total' => $query->count(),
-                'active' => $query->where('is_active', true)->count(),
+                'total_activities' => $query->count(),
+                'active_activities' => $query->where('is_active', true)->count(),
+                'total' => $query->count(), // Backward compatibility
+                'active' => $query->where('is_active', true)->count(), // Backward compatibility
                 'rehabilitation' => $query->whereIn('category', [
                     'Physical Therapy', 'Occupational Therapy', 
                     'Speech Therapy', 'Sensory Integration'

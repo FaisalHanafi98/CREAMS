@@ -4,18 +4,31 @@
 
 @push('styles')
 <style>
+    :root {
+        --primary-color: #c850c0;
+        --secondary-color: #32bdea;
+        --success-color: #28a745;
+        --warning-color: #ffc107;
+        --danger-color: #dc3545;
+        --dark-color: #2c3e50;
+        --light-bg: #f8f9fc;
+        --border-color: #e3e6f0;
+    }
+
     .admin-dashboard {
-        background: #f8f9fa;
+        background: var(--light-bg);
         min-height: 100vh;
     }
     
     .dashboard-header {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
         color: white;
         padding: 30px 0;
         margin-bottom: 30px;
         position: relative;
         overflow: hidden;
+        border-radius: 15px;
+        box-shadow: 0 5px 20px rgba(200, 80, 192, 0.3);
     }
     
     .dashboard-header::before {
@@ -457,6 +470,53 @@
                 </div>
                 <div class="chart-container">
                     <canvas id="activityChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Current Activities In Progress -->
+        <div class="row">
+            <div class="col-md-12">
+                <div class="recent-section">
+                    <div class="recent-header">
+                        <h3 class="chart-title">Current Activities In Progress</h3>
+                        <a href="{{ route('activities.home') }}" class="btn btn-sm btn-outline-primary">View All Activities</a>
+                    </div>
+                    <div class="activity-progress-list">
+                        <div class="schedule-item">
+                            <div class="recent-avatar" style="background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));">
+                                CS
+                            </div>
+                            <div class="recent-info">
+                                <div class="recent-name">Communication Skills Development</div>
+                                <div class="recent-meta">
+                                    <span><i class="fas fa-user-tie"></i> Dr. Nurul Hafizah</span>
+                                    <span><i class="fas fa-users"></i> 15 Trainees</span>
+                                    <span><i class="fas fa-calendar-alt"></i> Mon, Wed, Fri</span>
+                                </div>
+                                <div class="progress mt-2">
+                                    <div class="progress-bar" role="progressbar" style="width: 65%; background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));" aria-valuenow="65" aria-valuemin="0" aria-valuemax="100">65%</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="schedule-item">
+                            <div class="recent-avatar" style="background: linear-gradient(135deg, var(--success-color), #68d391);">
+                                MS
+                            </div>
+                            <div class="recent-info">
+                                <div class="recent-name">Motor Skills Training</div>
+                                <div class="recent-meta">
+                                    <span><i class="fas fa-user-tie"></i> Mr. Ismail Rahman</span>
+                                    <span><i class="fas fa-users"></i> 12 Trainees</span>
+                                    <span><i class="fas fa-calendar-alt"></i> Tue, Thu</span>
+                                </div>
+                                <div class="progress mt-2">
+                                    <div class="progress-bar" role="progressbar" style="width: 42%; background: linear-gradient(135deg, var(--success-color), #68d391);" aria-valuenow="42" aria-valuemin="0" aria-valuemax="100">42%</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
