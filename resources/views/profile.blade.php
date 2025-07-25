@@ -1,509 +1,726 @@
-```php
 @extends('layouts.app')
 
-@section('title', 'User Profile - CREAMS')
+@section('title', 'My Profile - CREAMS')
 
-@section('styles')
+@push('styles')
 <style>
-    /* Profile styles */
-    .profile-container {
-        background: #fff;
-        border-radius: 10px;
-        box-shadow: 0 0 15px rgba(0,0,0,0.05);
-        margin-bottom: 30px;
-        overflow: hidden;
+    /* Custom animations and transitions */
+    .tab-content {
+        animation: fadeIn 0.3s ease-in-out;
     }
-    
-    .profile-header {
-        padding: 25px;
-        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-        color: #fff;
-        position: relative;
-        display: flex;
-        align-items: center;
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
     }
-    
-    .profile-avatar {
-        width: 120px;
-        height: 120px;
-        border-radius: 50%;
-        overflow: hidden;
-        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-        position: relative;
-        background: #fff;
-        margin-right: 30px;
-    }
-    
-    .profile-avatar img {
+
+    .form-input-animated {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         width: 100%;
-        height: 100%;
-        object-fit: cover;
+        padding: 12px 16px;
+        border: 2px solid #e3e6f0;
+        border-radius: 10px;
+        font-size: 14px;
+        background: #fafafa;
     }
-    
-    .avatar-overlay {
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        height: 40px;
-        background: rgba(0,0,0,0.5);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
+
+    .form-input-animated:focus {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        border-color: var(--primary-color);
+        background: white;
+        outline: none;
+    }
+
+    .form-input-animated:disabled {
+        background: #f5f5f5;
+        color: #6c757d;
+        cursor: not-allowed;
+    }
+
+    /* Password strength indicator */
+    .password-strength {
+        height: 4px;
         transition: all 0.3s ease;
-        opacity: 0;
+        border-radius: 2px;
+        margin-top: 8px;
     }
-    
-    .profile-avatar:hover .avatar-overlay {
-        opacity: 1;
+
+    .strength-weak { background-color: #ef4444; width: 33%; }
+    .strength-medium { background-color: #f59e0b; width: 66%; }
+    .strength-strong { background-color: #10b981; width: 100%; }
+
+    /* Letter preview card hover effect */
+    .letter-card {
+        transition: all 0.2s ease;
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 16px;
+        margin-bottom: 12px;
+        cursor: pointer;
+        border: 1px solid #e9ecef;
     }
-    
-    .avatar-loading {
+
+    .letter-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        border-color: var(--primary-color);
+    }
+
+    /* Loading spinner */
+    .spinner {
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+
+    /* Profile specific styles with CREAMS theming */
+    .profile-page {
+        background: var(--light-color);
+        min-height: calc(100vh - 60px);
+    }
+
+    .profile-header {
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        color: white;
+        padding: 30px 0;
+        margin-bottom: 30px;
+        border-radius: 15px;
+        box-shadow: 0 5px 20px rgba(50, 189, 234, 0.3);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .profile-header::before {
+        content: '';
         position: absolute;
         top: 0;
         left: 0;
         right: 0;
         bottom: 0;
-        background: rgba(0,0,0,0.5);
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+        opacity: 0.1;
+    }
+
+    .profile-header .container-fluid {
+        position: relative;
+        z-index: 1;
+    }
+
+    /* Tab Navigation */
+    .tab-navigation {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.07);
+        margin-bottom: 30px;
+        overflow: hidden;
+    }
+
+    .nav-tabs {
+        border: none;
+        padding: 0;
+        display: flex;
+        flex-wrap: wrap;
+    }
+
+    .nav-tabs .nav-item {
+        flex: 1;
+        min-width: 200px;
+    }
+
+    .nav-tabs .nav-link {
+        border: none;
+        padding: 20px 15px;
+        text-align: center;
+        color: #6c757d;
+        background: transparent;
+        transition: all 0.3s ease;
+        font-weight: 500;
+        font-size: 14px;
+        border-radius: 0;
         display: flex;
         align-items: center;
         justify-content: center;
+        gap: 8px;
+        text-decoration: none;
+        border-bottom: 3px solid transparent;
     }
-    
-    .profile-info {
-        flex-grow: 1;
+
+    .nav-tabs .nav-link:hover {
+        color: var(--primary-color);
+        background: rgba(50, 189, 234, 0.05);
+        border-bottom-color: rgba(50, 189, 234, 0.3);
     }
-    
-    .profile-info h2 {
-        font-size: 24px;
+
+    .nav-tabs .nav-link.active {
+        color: var(--primary-color);
+        background: rgba(50, 189, 234, 0.1);
+        border-bottom-color: var(--primary-color);
         font-weight: 600;
-        margin-bottom: 5px;
     }
-    
-    .profile-role {
+
+    /* Content Sections */
+    .content-section {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.07);
+        padding: 30px;
+        margin-bottom: 0;
+        transition: all 0.3s ease;
+    }
+
+    .content-section:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    }
+
+    /* Form styling */
+    .form-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 20px;
+        margin-bottom: 20px;
+    }
+
+    .form-group-modern {
+        margin-bottom: 20px;
+    }
+
+    .form-label-modern {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: var(--dark-color);
         font-size: 14px;
-        opacity: 0.9;
-        margin-bottom: 15px;
-        display: inline-block;
-        padding: 4px 10px;
-        background: rgba(255,255,255,0.2);
-        border-radius: 20px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
     }
-    
-    .profile-meta {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 15px;
-    }
-    
-    .meta-item {
-        display: flex;
-        align-items: center;
-        font-size: 14px;
-    }
-    
-    .meta-item i {
-        margin-right: 8px;
-        opacity: 0.8;
-    }
-    
-    .edit-profile-btn {
-        position: absolute;
-        top: 25px;
-        right: 25px;
-        padding: 8px 20px;
-        border-radius: 50px;
-        background: rgba(255,255,255,0.2);
-        color: #fff;
+
+    /* Button styling */
+    .btn-modern {
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        color: white;
         border: none;
+        padding: 12px 24px;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 14px;
         cursor: pointer;
         transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        text-decoration: none;
+    }
+
+    .btn-modern:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(50, 189, 234, 0.3);
+        color: white;
+        text-decoration: none;
+    }
+
+    .btn-modern:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+    }
+
+    .btn-secondary {
+        background: linear-gradient(135deg, #6c757d, #495057);
+    }
+
+    .btn-secondary:hover {
+        box-shadow: 0 8px 25px rgba(108, 117, 125, 0.3);
+    }
+
+    /* Avatar styling */
+    .profile-avatar-section {
         display: flex;
         align-items: center;
-    }
-    
-    .edit-profile-btn:hover {
-        background: rgba(255,255,255,0.3);
-    }
-    
-    .edit-profile-btn i {
-        margin-right: 8px;
-    }
-    
-    .edit-profile-btn.active {
-        background: rgba(255,0,0,0.2);
-    }
-    
-    .profile-tabs {
-        padding: 25px;
-    }
-    
-    .profile-tabs .nav-pills {
-        border-bottom: 1px solid #eee;
-        padding-bottom: 15px;
-    }
-    
-    .profile-tabs .nav-link {
-        border-radius: 50px;
-        padding: 8px 20px;
-        font-weight: 500;
-        color: #555;
-    }
-    
-    .profile-tabs .nav-link.active {
-        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-        color: #fff;
-    }
-    
-    .profile-tabs .nav-link i {
-        margin-right: 8px;
-    }
-    
-    .tab-content {
-        padding-top: 25px;
-    }
-    
-    .form-actions {
-        margin-top: 20px;
-        padding-top: 20px;
-        border-top: 1px solid #eee;
-        display: flex;
-        justify-content: flex-end;
-        gap: 10px;
+        gap: 20px;
+        padding: 20px 0;
+        border-bottom: 1px solid #e9ecef;
+        margin-bottom: 30px;
     }
 
-    .password-strength {
-        margin-top: 20px;
+    .profile-avatar {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        border: 4px solid rgba(50, 189, 234, 0.2);
+        overflow: hidden;
+        position: relative;
+        background: rgba(50, 189, 234, 0.1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2.5rem;
+        color: var(--primary-color);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
     }
-    
-    .password-strength .progress {
-        height: 10px;
-        margin-top: 8px;
-        margin-bottom: 8px;
+
+    .profile-avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .avatar-upload-btn {
+        position: absolute;
+        bottom: -5px;
+        right: -5px;
+        width: 35px;
+        height: 35px;
+        border-radius: 50%;
+        background: var(--primary-color);
+        color: white;
+        border: 3px solid white;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        transition: all 0.3s ease;
+    }
+
+    .avatar-upload-btn:hover {
+        background: var(--secondary-color);
+        transform: scale(1.1);
+    }
+
+    .avatar-upload-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    /* Alert styling */
+    .alert-modern {
+        border: none;
+        border-radius: 10px;
+        padding: 15px 20px;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 500;
+    }
+
+    .alert-success {
+        background: linear-gradient(135deg, #d4edda, #c3e6cb);
+        color: #155724;
+        border-left: 4px solid #28a745;
+    }
+
+    .alert-danger {
+        background: linear-gradient(135deg, #f8d7da, #f5c6cb);
+        color: #721c24;
+        border-left: 4px solid #dc3545;
+    }
+
+    /* File upload area */
+    .file-upload-area {
+        border: 2px dashed #e9ecef;
+        border-radius: 10px;
+        padding: 30px;
+        text-align: center;
+        background: #fafafa;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+
+    .file-upload-area:hover {
+        border-color: var(--primary-color);
+        background: rgba(50, 189, 234, 0.05);
+    }
+
+    .file-upload-area.dragover {
+        border-color: var(--primary-color);
+        background: rgba(50, 189, 234, 0.1);
+    }
+
+    /* Mobile responsive */
+    @media (max-width: 768px) {
+        .form-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .profile-avatar-section {
+            flex-direction: column;
+            text-align: center;
+        }
+        
+        .nav-tabs {
+            flex-direction: column;
+        }
+        
+        .nav-tabs .nav-item {
+            min-width: auto;
+        }
     }
 </style>
-@endsection
+@endpush
 
 @section('content')
-<div class="container-fluid">
-    <!-- Page Header -->
-    <div class="dashboard-header mb-4">
-        <div class="row align-items-center">
-            <div class="col">
-                <h1 class="dashboard-title">My Profile</h1>
-                <div class="breadcrumb">
-                    <a href="{{ route('dashboard') }}">Dashboard</a>
-                    <span class="separator">/</span>
-                    <span class="current">My Profile</span>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Avatar upload error alert -->
-    <div id="avatar-error" class="alert alert-danger mb-4" style="display: none;">
-        <i class="fas fa-exclamation-circle mr-2"></i>
-        <span id="avatar-error-text"></span>
-        <button type="button" class="close" onclick="$('#avatar-error').hide()">
-            <span aria-hidden="true">&times;</span>
-        </button>
-    </div>
-    
-    <!-- Alerts -->
-    @if(session('success'))
-    <div class="alert alert-success alert-dismissible fade show mb-4" role="alert">
-        <i class="fas fa-check-circle mr-2"></i> {{ session('success') }}
-        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-        </button>
-    </div>
-    @endif
-    
-    @if(session('error'))
-    <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
-        <i class="fas fa-exclamation-circle mr-2"></i> {{ session('error') }}
-        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-        </button>
-    </div>
-    @endif
-    
-    @if ($errors->any())
-    <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
-        <ul class="mb-0">
-            @foreach ($errors->all() as $error)
-            <li>{{ $error }}</li>
-            @endforeach
-        </ul>
-        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-        </button>
-    </div>
-    @endif
-    
-    
-    <!-- Profile Container -->
-    <div class="profile-container">
+<div class="profile-page" x-data="profilePage()">
+    <div class="container-fluid">
+        <!-- Profile Header -->
         <div class="profile-header">
-            <div class="profile-avatar" id="avatar-container">
-                @if(isset($user['avatar']) && $user['avatar'])
-                    <img src="{{ asset('storage/avatars/' . $user['avatar']) }}" alt="{{ $user['name'] ?? 'User' }}" id="avatar-preview" onerror="this.src='{{ asset('images/default-avatar.svg') }}'">
-                @else
-                    <img src="{{ asset('images/default-avatar.svg') }}" alt="{{ $user['name'] ?? 'User' }}" id="avatar-preview">
-                @endif
-                <div class="avatar-overlay" id="avatar-upload-btn" title="Change Profile Photo">
-                    <i class="fas fa-camera"></i>
-                </div>
-                <div id="avatar-loading" class="avatar-loading" style="display: none;">
-                    <div class="spinner-border text-light" role="status">
-                        <span class="sr-only">Loading...</span>
+            <div class="container-fluid">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <div class="d-flex align-items-center">
+                            <div class="profile-avatar">
+                                @if(!empty($user['avatar']) && file_exists(public_path('storage/avatars/' . $user['avatar'])))
+                                    <img src="{{ asset('storage/avatars/' . $user['avatar']) }}" alt="Profile Avatar">
+                                @else
+                                    <i class="fas fa-user"></i>
+                                @endif
+                            </div>
+                            <div class="ml-4">
+                                <h1 class="mb-2" style="font-size: 2.5rem; font-weight: 600;">{{ $user['name'] ?? 'User' }}</h1>
+                                <div style="font-size: 1.2rem; opacity: 0.9; background: rgba(255, 255, 255, 0.2); padding: 8px 20px; border-radius: 25px; display: inline-block;">
+                                    {{ ucfirst($role ?? 'User') }} • Member since {{ \Carbon\Carbon::parse($user['created_at'] ?? now())->format('M Y') }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 text-right">
+                        <div style="background: rgba(255,255,255,0.2); padding: 8px 15px; border-radius: 20px; font-size: 12px; display: inline-block;">
+                            <i class="fas fa-user-cog"></i> Last updated: {{ \Carbon\Carbon::parse($user['updated_at'] ?? now())->format('M d, Y') }}
+                        </div>
                     </div>
                 </div>
             </div>
-            <div class="profile-info">
-                <h2>{{ $user['name'] ?? 'User' }}</h2>
-                @php
-                    $roleDisplayNames = [
-                        'admin' => 'Administration',
-                        'supervisor' => 'Supervisor', 
-                        'teacher' => 'Teacher',
-                        'ajk' => 'AJK'
-                    ];
-                    $roleDisplay = $roleDisplayNames[$role] ?? ucfirst($role);
-                @endphp
-                <div class="profile-role">{{ $roleDisplay }}</div>
-                <div class="profile-meta">
-                    <div class="meta-item">
-                        <i class="fas fa-envelope"></i>
-                        <span>{{ $user['email'] ?? 'No email' }}</span>
-                    </div>
-                    @if(isset($user['phone']) && $user['phone'])
-                    <div class="meta-item">
-                        <i class="fas fa-phone"></i>
-                        <span>{{ $user['phone'] }}</span>
-                    </div>
-                    @endif
-                    @if(isset($user['iium_id']) && $user['iium_id'])
-                    <div class="meta-item">
-                        <i class="fas fa-id-card"></i>
-                        <span>{{ $user['iium_id'] }}</span>
-                    </div>
-                    @endif
-                </div>
-            </div>
-            
-            <button class="edit-profile-btn" id="edit-profile-toggle">
-                <i class="fas fa-edit"></i> Edit Profile
-            </button>
         </div>
-        
-        <!-- Hidden file input for avatar upload -->
-        <form id="avatarForm" action="{{ route('profile.avatar') }}" method="POST" enctype="multipart/form-data" style="display: none;">
-            @csrf
-            <input type="file" id="avatarInput" name="avatar" accept="image/jpeg,image/png,image/jpg,image/gif">
-        </form>
-        
-        
-        <!-- Profile Tabs -->
-        <div class="profile-tabs">
-            <ul class="nav nav-pills mb-3" id="pills-tab" role="tablist">
-                <li class="nav-item" role="presentation">
-                    <a class="nav-link active" id="pills-edit-tab" data-toggle="pill" href="#pills-edit" role="tab" aria-controls="pills-edit" aria-selected="true">
-                        <i class="fas fa-user-edit"></i> Personal Information
+
+        <!-- Tab Navigation -->
+        <div class="tab-navigation">
+            <ul class="nav nav-tabs" role="tablist">
+                <li class="nav-item">
+                    <a class="nav-link active" @click="activeTab = 'profile'" 
+                       :class="{'active': activeTab === 'profile'}" 
+                       href="#" role="tab">
+                        <i class="fas fa-user"></i>
+                        Profile Information
                     </a>
                 </li>
-                <li class="nav-item" role="presentation">
-                    <a class="nav-link" id="pills-password-tab" data-toggle="pill" href="#pills-password" role="tab" aria-controls="pills-password" aria-selected="false">
-                        <i class="fas fa-key"></i> Change Password
+                <li class="nav-item">
+                    <a class="nav-link" @click="activeTab = 'password'" 
+                       :class="{'active': activeTab === 'password'}" 
+                       href="#" role="tab">
+                        <i class="fas fa-lock"></i>
+                        Change Password
                     </a>
                 </li>
-                <li class="nav-item" role="presentation">
-                    <a class="nav-link" id="pills-preferences-tab" data-toggle="pill" href="#pills-preferences" role="tab" aria-controls="pills-preferences" aria-selected="false">
-                        <i class="fas fa-cog"></i> Preferences
+                <li class="nav-item">
+                    <a class="nav-link" @click="activeTab = 'settings'" 
+                       :class="{'active': activeTab === 'settings'}" 
+                       href="#" role="tab">
+                        <i class="fas fa-cog"></i>
+                        Settings
                     </a>
                 </li>
-                @if(session('role') === 'admin')
-                <li class="nav-item" role="presentation">
-                    <a class="nav-link" id="pills-letters-tab" data-toggle="pill" href="#pills-letters" role="tab" aria-controls="pills-letters" aria-selected="false">
-                        <i class="fas fa-file-alt"></i> Letter Generator
+                <li class="nav-item">
+                    <a class="nav-link" @click="activeTab = 'letters'" 
+                       :class="{'active': activeTab === 'letters'}" 
+                       href="#" role="tab">
+                        <i class="fas fa-envelope"></i>
+                        Letter Generator
                     </a>
                 </li>
-                @endif
             </ul>
-            <div class="tab-content" id="pills-tabContent">
-                <!-- Edit Profile Tab -->
-                <div class="tab-pane fade show active" id="pills-edit" role="tabpanel" aria-labelledby="pills-edit-tab">
-                    <form id="profile-form" action="{{ route('profile.update') }}" method="POST">
-                        @csrf
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="name">Full Name</label>
-                                    <input type="text" class="form-control" id="name" name="name" value="{{ $user['name'] ?? '' }}" readonly>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="email">Email Address</label>
-                                    <input type="email" class="form-control" id="email" name="email" value="{{ $user['email'] ?? '' }}" readonly>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="phone">Phone Number</label>
-                                    <input type="text" class="form-control editable-field" id="phone" name="phone" value="{{ $user['phone'] ?? '' }}" readonly>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="date_of_birth">Date of Birth</label>
-                                    <input type="date" class="form-control editable-field" id="date_of_birth" name="date_of_birth" value="{{ $user['date_of_birth'] ?? '' }}" readonly>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label for="address">Address</label>
-                            <textarea class="form-control editable-field" id="address" name="address" rows="3" readonly>{{ trim($user['address'] ?? '') }}</textarea>
-                        </div>
-                        
-                        <!-- Education Information Section -->
-                        <h5 class="mt-4 mb-3">Education & Specialization</h5>
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="education_level">Education Level</label>
-                                    <select class="form-control editable-field" id="education_level" name="education_level" disabled>
-                                        <option value="">Select Education Level</option>
-                                        <option value="Diploma" {{ ($user['education_level'] ?? '') == 'Diploma' ? 'selected' : '' }}>Diploma</option>
-                                        <option value="Bachelor's" {{ ($user['education_level'] ?? '') == "Bachelor's" ? 'selected' : '' }}>Bachelor's Degree</option>
-                                        <option value="Master's" {{ ($user['education_level'] ?? '') == "Master's" ? 'selected' : '' }}>Master's Degree</option>
-                                        <option value="PhD" {{ ($user['education_level'] ?? '') == 'PhD' ? 'selected' : '' }}>PhD</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="education_specialization">Education Specialization</label>
-                                    <input type="text" class="form-control editable-field" id="education_specialization" name="education_specialization" value="{{ $user['education_specialization'] ?? '' }}" readonly placeholder="e.g., Computer Science, Psychology">
-                                </div>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="teaching_specialization">Teaching Specialization</label>
-                                    <input type="text" class="form-control editable-field" id="teaching_specialization" name="teaching_specialization" value="{{ $user['teaching_specialization'] ?? '' }}" readonly placeholder="e.g., Special Education, Counseling">
-                                    <small class="form-text text-muted">Areas you can teach or specialize in</small>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="position">Position/Title</label>
-                                    <input type="text" class="form-control editable-field" id="position" name="position" value="{{ $user['position'] ?? '' }}" readonly placeholder="e.g., Senior Teacher, Coordinator">
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="about">Bio</label>
-                            <textarea class="form-control editable-field" id="about" name="about" rows="5" readonly>{{ trim($user['bio'] ?? $user['about'] ?? '') }}</textarea>
-                        </div>
-                        <div class="form-actions" id="profile-actions" style="display: none;">
-                            <button type="button" class="btn btn-outline-secondary" id="cancel-edit">Cancel</button>
-                            <button type="submit" class="btn btn-primary">Save Changes</button>
-                        </div>
-                    </form>
-                </div>
-                
-                <!-- Change Password Tab -->
-                <div class="tab-pane fade" id="pills-password" role="tabpanel" aria-labelledby="pills-password-tab">
-                    <form action="{{ route('profile.password') }}" method="POST">
-                        @csrf
-                        <div class="form-group">
-                            <label for="current_password">Current Password</label>
-                            <input type="password" class="form-control" id="current_password" name="current_password" required>
-                            <small class="form-text text-muted">Enter your current password to verify your identity.</small>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="new_password">New Password</label>
-                                    <input type="password" class="form-control" id="new_password" name="new_password" required>
-                                    <small class="form-text text-muted">Password must be at least 8 characters and include at least one uppercase letter, one lowercase letter, one number, and one special character.</small>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="new_password_confirmation">Confirm New Password</label>
-                                    <input type="password" class="form-control" id="new_password_confirmation" name="new_password_confirmation" required>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="password-strength mt-3 mb-4" id="password-strength-meter">
-                            <label>Password Strength:</label>
-                            <div class="progress">
-                                <div class="progress-bar" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
-                            </div>
-                            <small class="text-muted" id="password-strength-text">Enter a new password</small>
-                        </div>
-                        <div class="form-actions">
-                            <button type="submit" class="btn btn-primary">Change Password</button>
-                        </div>
-                    </form>
-                </div>
-                
-                @if(session('role') === 'admin')
-                <!-- Letter Generator Tab -->
-                <div class="tab-pane fade" id="pills-letters" role="tabpanel" aria-labelledby="pills-letters-tab">
-                    @include('profile.letters-tab')
-                </div>
+        </div>
+
+        <!-- Tab Content -->
+        <div class="content-section">
+            <!-- Profile Information Tab -->
+            <div x-show="activeTab === 'profile'" x-transition:enter="transition ease-out duration-200" class="tab-content">
+                @if(session('success'))
+                    <div class="alert-modern alert-success">
+                        <i class="fas fa-check-circle"></i>{{ session('success') }}
+                    </div>
                 @endif
-                
-                <!-- Preferences Tab (Placeholder for future development) -->
-                <div class="tab-pane fade" id="pills-preferences" role="tabpanel" aria-labelledby="pills-preferences-tab">
-                    <div class="alert alert-info">
-                        <i class="fas fa-info-circle mr-2"></i> Preferences management is coming soon. This feature will allow you to customize your CREAMS experience.
+
+                @if(session('error'))
+                    <div class="alert-modern alert-danger">
+                        <i class="fas fa-exclamation-circle"></i>{{ session('error') }}
                     </div>
-                    
-                    <h4 class="mt-4 mb-3">Future Preference Options</h4>
-                    
-                    <div class="card mb-3">
-                        <div class="card-header">
-                            <h5 class="mb-0">Notification Settings</h5>
-                        </div>
-                        <div class="card-body">
-                            <p class="text-muted">Control which notifications you receive and how they are delivered.</p>
-                            <div class="form-group">
-                                <div class="custom-control custom-switch">
-                                    <input type="checkbox" class="custom-control-input" id="emailNotifications" disabled>
-                                    <label class="custom-control-label" for="emailNotifications">Email Notifications</label>
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <div class="custom-control custom-switch">
-                                    <input type="checkbox" class="custom-control-input" id="systemNotifications" disabled>
-                                    <label class="custom-control-label" for="systemNotifications">System Notifications</label>
-                                </div>
-                            </div>
+                @endif
+
+                @if($errors->any())
+                    <div class="alert-modern alert-danger">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <div>
+                            Please correct the following errors:
+                            <ul class="mb-0 mt-2">
+                                @foreach($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
                         </div>
                     </div>
-                    
-                    <div class="card">
-                        <div class="card-header">
-                            <h5 class="mb-0">Display Preferences</h5>
+                @endif
+
+                <form @submit.prevent="saveProfile">
+                    <!-- Profile Header with Avatar -->
+                    <div class="profile-avatar-section">
+                        <div class="profile-avatar">
+                            @if(!empty($user['avatar']) && file_exists(public_path('storage/avatars/' . $user['avatar'])))
+                                <img src="{{ asset('storage/avatars/' . $user['avatar']) }}" alt="{{ $user['name'] ?? 'User' }}">
+                            @else
+                                <i class="fas fa-user"></i>
+                            @endif
+                            <button type="button" :disabled="!isEditing" class="avatar-upload-btn"
+                                    onclick="document.getElementById('avatarUpload').click()">
+                                <i class="fas fa-camera"></i>
+                            </button>
+                            <input type="file" id="avatarUpload" accept="image/*" style="display: none;">
                         </div>
-                        <div class="card-body">
-                            <p class="text-muted">Customize your dashboard and interface preferences.</p>
-                            <div class="form-group">
-                                <label for="theme">Theme</label>
-                                <select class="form-control" id="theme" disabled>
-                                    <option>Light</option>
-                                    <option>Dark</option>
-                                    <option>System Default</option>
-                                </select>
+                        <div>
+                            <h2 style="font-size: 1.8rem; font-weight: 700; color: var(--dark-color); margin-bottom: 5px;">
+                                {{ $user['name'] ?? 'User' }}
+                            </h2>
+                            <p style="color: #6c757d; margin: 0;">
+                                {{ ucfirst($role ?? 'User') }} • {{ $user['email'] ?? 'No email provided' }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Form Fields -->
+                    <div class="form-grid">
+                        <div class="form-group-modern">
+                            <label class="form-label-modern">Full Name</label>
+                            <input type="text" x-model="profileData.name" :disabled="!isEditing" 
+                                   class="form-input-animated" required>
+                        </div>
+
+                        <div class="form-group-modern">
+                            <label class="form-label-modern">Email Address</label>
+                            <input type="email" x-model="profileData.email" :disabled="!isEditing" 
+                                   class="form-input-animated" required>
+                        </div>
+
+                        <div class="form-group-modern">
+                            <label class="form-label-modern">Phone Number</label>
+                            <input type="tel" x-model="profileData.phone" :disabled="!isEditing" 
+                                   class="form-input-animated">
+                        </div>
+
+                        <div class="form-group-modern">
+                            <label class="form-label-modern">Role</label>
+                            <input type="text" value="{{ ucfirst($role ?? 'User') }}" disabled 
+                                   class="form-input-animated">
+                        </div>
+
+                        <div class="form-group-modern">
+                            <label class="form-label-modern">Department</label>
+                            <input type="text" x-model="profileData.department" :disabled="!isEditing" 
+                                   class="form-input-animated">
+                        </div>
+
+                        <div class="form-group-modern">
+                            <label class="form-label-modern">Location</label>
+                            <input type="text" x-model="profileData.location" :disabled="!isEditing" 
+                                   class="form-input-animated">
+                        </div>
+                    </div>
+
+                    <div class="form-group-modern">
+                        <label class="form-label-modern">Bio / About</label>
+                        <textarea x-model="profileData.bio" :disabled="!isEditing" rows="4" 
+                                  class="form-input-animated" 
+                                  placeholder="Tell us about yourself..."></textarea>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="d-flex justify-content-end gap-3 pt-4" style="border-top: 1px solid #e9ecef;">
+                        <button x-show="!isEditing" @click="isEditing = true" type="button" 
+                                class="btn-modern">
+                            <i class="fas fa-edit"></i>Edit Profile
+                        </button>
+
+                        <template x-if="isEditing">
+                            <div class="d-flex gap-3">
+                                <button @click="cancelEdit" type="button" class="btn-modern btn-secondary">
+                                    <i class="fas fa-times"></i>Cancel
+                                </button>
+                                <button type="submit" class="btn-modern">
+                                    <i class="fas fa-save"></i>Save Changes
+                                </button>
+                            </div>
+                        </template>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Change Password Tab -->
+            <div x-show="activeTab === 'password'" x-transition:enter="transition ease-out duration-200" class="tab-content">
+                <form @submit.prevent="changePassword" style="max-width: 500px; margin: 0 auto;">
+                    <h3 style="text-align: center; margin-bottom: 30px; color: var(--dark-color);">
+                        <i class="fas fa-shield-alt mr-2"></i>Change Your Password
+                    </h3>
+                    
+                    <div class="form-group-modern">
+                        <label class="form-label-modern">Current Password</label>
+                        <input type="password" x-model="passwordData.current" required class="form-input-animated">
+                    </div>
+
+                    <div class="form-group-modern">
+                        <label class="form-label-modern">New Password</label>
+                        <input type="password" x-model="passwordData.new" @input="checkPasswordStrength" 
+                               required class="form-input-animated">
+                        <div style="margin-top: 8px;">
+                            <div style="background: #e9ecef; border-radius: 4px; height: 4px; overflow: hidden;">
+                                <div class="password-strength" :class="passwordStrengthClass"></div>
+                            </div>
+                            <p style="font-size: 12px; color: #6c757d; margin-top: 4px;" x-text="passwordStrengthText"></p>
+                        </div>
+                    </div>
+
+                    <div class="form-group-modern">
+                        <label class="form-label-modern">Confirm New Password</label>
+                        <input type="password" x-model="passwordData.confirm" required class="form-input-animated">
+                        <p x-show="passwordData.new && passwordData.confirm && passwordData.new !== passwordData.confirm"
+                           style="color: #dc3545; font-size: 12px; margin-top: 4px;">Passwords do not match</p>
+                    </div>
+
+                    <div class="pt-4">
+                        <button type="submit" :disabled="!passwordValid" class="btn-modern w-100">
+                            <i class="fas fa-key"></i>Change Password
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Settings Tab -->
+            <div x-show="activeTab === 'settings'" x-transition:enter="transition ease-out duration-200" class="tab-content">
+                <div class="text-center py-5">
+                    <div class="mb-4">
+                        <i class="fas fa-cog fa-4x text-muted spinner"></i>
+                    </div>
+                    <h3 style="color: var(--dark-color); margin-bottom: 10px;">Settings Module Under Development</h3>
+                    <p style="color: #6c757d;">Settings module is currently under development (KIV).</p>
+                    <p style="color: #6c757d; font-size: 14px;">We're working hard to bring you new features!</p>
+                </div>
+            </div>
+
+            <!-- Letter Generator Tab -->
+            <div x-show="activeTab === 'letters'" x-transition:enter="transition ease-out duration-200" class="tab-content">
+                <!-- Letter Form -->
+                <form @submit.prevent="generateLetter">
+                    <h3 style="color: var(--dark-color); margin-bottom: 30px; text-align: center;">
+                        <i class="fas fa-envelope-open-text mr-2"></i>Create New Letter
+                    </h3>
+
+                    <div class="form-grid">
+                        <div class="form-group-modern">
+                            <label class="form-label-modern">Letter ID</label>
+                            <input type="text" x-model="letterData.id" disabled class="form-input-animated">
+                        </div>
+
+                        <div class="form-group-modern">
+                            <label class="form-label-modern">Date</label>
+                            <input type="date" x-model="letterData.date" required class="form-input-animated">
+                        </div>
+
+                        <div class="form-group-modern">
+                            <label class="form-label-modern">To (Recipient Name)</label>
+                            <input type="text" x-model="letterData.recipientName" required class="form-input-animated">
+                        </div>
+
+                        <div class="form-group-modern">
+                            <label class="form-label-modern">Recipient Email</label>
+                            <input type="email" x-model="letterData.recipientEmail" required class="form-input-animated">
+                        </div>
+
+                        <div class="form-group-modern">
+                            <label class="form-label-modern">Sender Email</label>
+                            <input type="email" value="{{ $user['email'] ?? '' }}" disabled class="form-input-animated">
+                        </div>
+
+                        <div class="form-group-modern">
+                            <label class="form-label-modern">Letter Type</label>
+                            <select x-model="letterData.type" class="form-input-animated">
+                                <option value="formal">Formal Letter</option>
+                                <option value="invitation">Invitation</option>
+                                <option value="announcement">Announcement</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group-modern">
+                        <label class="form-label-modern">Letter Content</label>
+                        <textarea x-model="letterData.content" rows="6" required class="form-input-animated"></textarea>
+                    </div>
+
+                    <div class="form-grid">
+                        <div class="form-group-modern">
+                            <label class="form-label-modern">Upload Header Image</label>
+                            <div class="file-upload-area">
+                                <i class="fas fa-cloud-upload-alt fa-2x mb-3" style="color: var(--primary-color);"></i>
+                                <p style="margin: 0; color: #6c757d;">
+                                    <strong>Click to upload</strong> or drag and drop<br>
+                                    <small>PNG, JPG, GIF up to 10MB</small>
+                                </p>
+                                <input type="file" accept="image/*" style="display: none;">
+                            </div>
+                        </div>
+
+                        <div class="form-group-modern">
+                            <label class="form-label-modern">Upload Footer Image</label>
+                            <div class="file-upload-area">
+                                <i class="fas fa-cloud-upload-alt fa-2x mb-3" style="color: var(--primary-color);"></i>
+                                <p style="margin: 0; color: #6c757d;">
+                                    <strong>Click to upload</strong> or drag and drop<br>
+                                    <small>PNG, JPG, GIF up to 10MB</small>
+                                </p>
+                                <input type="file" accept="image/*" style="display: none;">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="text-center pt-4">
+                        <button type="submit" class="btn-modern">
+                            <i class="fas fa-magic"></i>Generate Letter
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Recent Letters Section -->
+                <div style="margin-top: 50px; padding-top: 30px; border-top: 1px solid #e9ecef;">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h3 style="color: var(--dark-color); margin: 0;">
+                            <i class="fas fa-history mr-2"></i>Recent Letters
+                        </h3>
+                        <a href="#" class="text-decoration-none" style="color: var(--primary-color);">
+                            View All →
+                        </a>
+                    </div>
+
+                    <!-- Sample recent letters -->
+                    <div class="letter-card">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <div class="d-flex align-items-center mb-2" style="gap: 15px;">
+                                    <span style="font-weight: 600; color: var(--dark-color);">#LTR-2025-001</span>
+                                    <span style="color: #6c757d; font-size: 13px;">Jul 20, 2025</span>
+                                </div>
+                                <h5 style="color: var(--dark-color); margin-bottom: 5px;">To: John Doe</h5>
+                                <p style="color: #6c757d; margin: 0; font-size: 14px;">
+                                    Dear Mr. Doe, I am writing to inform you about the upcoming changes to our policy regarding...
+                                </p>
+                            </div>
+                            <div style="margin-left: 15px;">
+                                <span style="background: #d4edda; color: #155724; padding: 4px 10px; border-radius: 15px; font-size: 12px; font-weight: 600;">
+                                    Sent
+                                </span>
                             </div>
                         </div>
                     </div>
@@ -514,288 +731,190 @@
 </div>
 @endsection
 
-@section('scripts')
-<script src="https://cdnjs.cloudflare.com/ajax/libs/zxcvbn/4.4.2/zxcvbn.js"></script>
+@push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
 <script>
-    $(document).ready(function() {
-        // Fix for Topbar Avatar and Search Bar
-        // This ensures the topbar components work correctly
-        $(document).on('click', '#userProfileToggle', function(e) {
-            e.stopPropagation();
-            $('#userDropdown').toggleClass('show');
+function profilePage() {
+    return {
+        activeTab: 'profile',
+        isEditing: false,
+        profileData: {
+            name: '{{ $user["name"] ?? "" }}',
+            email: '{{ $user["email"] ?? "" }}',
+            phone: '{{ $user["phone"] ?? "" }}',
+            department: '{{ $user["department"] ?? "" }}',
+            location: '{{ $user["location"] ?? "" }}',
+            bio: '{{ $user["bio"] ?? $user["about"] ?? "" }}'
+        },
+        originalData: {},
+        passwordData: {
+            current: '',
+            new: '',
+            confirm: ''
+        },
+        letterData: {
+            id: 'LTR-' + new Date().getFullYear() + '-' + Math.floor(Math.random() * 1000).toString().padStart(3, '0'),
+            date: new Date().toISOString().split('T')[0],
+            recipientName: '',
+            recipientEmail: '',
+            content: '',
+            type: 'formal'
+        },
+        passwordStrength: 0,
+        passwordStrengthClass: '',
+        passwordStrengthText: '',
+
+        init() {
+            this.originalData = {...this.profileData};
+        },
+
+        cancelEdit() {
+            this.profileData = {...this.originalData};
+            this.isEditing = false;
+        },
+
+        saveProfile() {
+            // Create form data for submission
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '{{ route("profile.update") }}';
             
-            // Close notification menu if open
-            const notificationMenu = document.getElementById('notificationMenu');
-            if (notificationMenu) notificationMenu.classList.remove('show');
-        });
-        
-        // Fix dropdown placement
-        $('#userDropdown').css('position', 'absolute');
-        $('#userDropdown').css('z-index', '9999');
-        
-        // Stop propagation on dropdown
-        $(document).on('click', '#userDropdown', function(e) {
-            e.stopPropagation();
-        });
-        
-        // Close dropdowns when clicking outside
-        $(document).on('click', function() {
-            $('#userDropdown').removeClass('show');
-            $('#notificationMenu').removeClass('show');
-        });
-        
-        // Fix search bar functionality
-        $('#globalSearch').on('keypress', function(e) {
-            if (e.which == 13) {
-                $(this).closest('form').submit();
-                return false;
-            }
-        });
-        
-        // Fix for the "Recently accessed" continuously loading
-        // This stops the initialization of recent items if it's already done
-        if (window.recentItemsInitialized !== true) {
-            // Only initialize once
-            window.recentItemsInitialized = true;
+            // Add CSRF token
+            const csrfInput = document.createElement('input');
+            csrfInput.type = 'hidden';
+            csrfInput.name = '_token';
+            csrfInput.value = '{{ csrf_token() }}';
+            form.appendChild(csrfInput);
             
-            // Load recent items once on page load
-            if (typeof loadRecentItems === 'function') {
-                loadRecentItems();
-            }
-        }
-        
-        
-        // Avatar upload functionality
-        $('#avatar-upload-btn').click(function(e) {
-            e.preventDefault();
-            $('#avatarInput').click();
-        });
-        
-        // File size validation before upload
-        $('#avatarInput').change(function() {
-            const file = this.files[0];
-            
-            if (!file) {
-                return;
-            }
-            
-            // Check file size (2MB max)
-            const maxSize = 2 * 1024 * 1024; // 2MB in bytes
-            if (file.size > maxSize) {
-                // Show error message
-                $('#avatar-error-text').text('File size exceeds 2MB limit. Please choose a smaller image.');
-                $('#avatar-error').show();
-                // Clear file input
-                $(this).val('');
-                return;
-            }
-            
-            // Check file type
-            const acceptedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif'];
-            if (!acceptedTypes.includes(file.type)) {
-                $('#avatar-error-text').text('Please select a valid image file (JPEG, PNG, JPG, or GIF).');
-                $('#avatar-error').show();
-                $(this).val('');
-                return;
-            }
-            
-            // Hide any error message
-            $('#avatar-error').hide();
-            
-            // Show preview
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                $('#avatar-preview').attr('src', e.target.result);
-            };
-            reader.readAsDataURL(file);
-            
-            // Show loading indicator
-            $('#avatar-loading').show();
-            
-            // Submit form
-            $('#avatarForm').submit();
-        });
-        
-        // Edit profile toggle button
-        $('#edit-profile-toggle').click(function() {
-            const isEditing = $(this).hasClass('active');
-            
-            if (isEditing) {
-                // Disable editing
-                $(this).removeClass('active');
-                $(this).html('<i class="fas fa-edit"></i> Edit Profile');
-                
-                // Make specific fields readonly individually
-                $('#phone').prop('readonly', true);
-                $('#date_of_birth').prop('readonly', true);
-                $('#address').prop('readonly', true);
-                $('#about').prop('readonly', true);
-                $('#education_level').prop('disabled', true);
-                $('#education_specialization').prop('readonly', true);
-                $('#teaching_specialization').prop('readonly', true);
-                $('#position').prop('readonly', true);
-                
-                $('#profile-actions').hide();
-                
-                // Update visual styles
-                $('.editable-field').css('background-color', '#f8f9fa');
-            } else {
-                // Enable editing
-                $(this).addClass('active');
-                $(this).html('<i class="fas fa-times"></i> Cancel');
-                
-                // Make specific fields editable individually
-                $('#phone').prop('readonly', false);
-                $('#date_of_birth').prop('readonly', false);
-                $('#address').prop('readonly', false);
-                $('#about').prop('readonly', false);
-                $('#education_level').prop('disabled', false);
-                $('#education_specialization').prop('readonly', false);
-                $('#teaching_specialization').prop('readonly', false);
-                $('#position').prop('readonly', false);
-                
-                $('#profile-actions').show();
-                
-                // Update visual styles
-                $('.editable-field').css('background-color', '#fff');
-                
-                // Focus on the first editable field
-                $('#phone').focus();
-            }
-        });
-        
-        // Store original values for reset functionality
-        const originalValues = {
-            phone: '{{ $user['phone'] ?? '' }}',
-            date_of_birth: '{{ $user['date_of_birth'] ?? '' }}',
-            address: `{{ $user['address'] ?? '' }}`,
-            about: `{{ $user['bio'] ?? $user['about'] ?? '' }}`,
-            education_level: '{{ $user['education_level'] ?? '' }}',
-            education_specialization: '{{ $user['education_specialization'] ?? '' }}',
-            teaching_specialization: '{{ $user['teaching_specialization'] ?? '' }}',
-            position: '{{ $user['position'] ?? '' }}'
-        };
-        
-        // Cancel edit button
-        $('#cancel-edit').click(function() {
-            // Reset form fields with original values manually
-            $('#phone').val(originalValues.phone);
-            $('#date_of_birth').val(originalValues.date_of_birth);
-            $('#address').val(originalValues.address);
-            $('#about').val(originalValues.about);
-            $('#education_level').val(originalValues.education_level);
-            $('#education_specialization').val(originalValues.education_specialization);
-            $('#teaching_specialization').val(originalValues.teaching_specialization);
-            $('#position').val(originalValues.position);
-            
-            // Disable editing
-            $('#edit-profile-toggle').removeClass('active');
-            $('#edit-profile-toggle').html('<i class="fas fa-edit"></i> Edit Profile');
-            
-            // Make fields readonly
-            $('#phone').prop('readonly', true);
-            $('#date_of_birth').prop('readonly', true);
-            $('#address').prop('readonly', true);
-            $('#about').prop('readonly', true);
-            $('#education_level').prop('disabled', true);
-            $('#education_specialization').prop('readonly', true);
-            $('#teaching_specialization').prop('readonly', true);
-            $('#position').prop('readonly', true);
-            
-            $('#profile-actions').hide();
-            
-            // Update visual styles
-            $('.editable-field').css('background-color', '#f8f9fa');
-        });
-        
-        // Password strength meter
-        $('#new_password').on('input', function() {
-            const password = $(this).val();
-            
-            if (password.length === 0) {
-                updateStrengthMeter(0, 'Enter a new password');
-                return;
-            }
-            
-            // Use zxcvbn to evaluate password strength
-            const result = zxcvbn(password);
-            const score = result.score;
-            
-            // Update UI based on score (0-4)
-            let message = '';
-            let progressClass = '';
-            
-            switch(score) {
-                case 0:
-                    message = 'Very weak password';
-                    progressClass = 'bg-danger';
-                    break;
-                case 1:
-                    message = 'Weak password';
-                    progressClass = 'bg-danger';
-                    break;
-                case 2:
-                    message = 'Fair password';
-                    progressClass = 'bg-warning';
-                    break;
-                case 3:
-                    message = 'Good password';
-                    progressClass = 'bg-info';
-                    break;
-                case 4:
-                    message = 'Strong password';
-                    progressClass = 'bg-success';
-                    break;
-            }
-            
-            // If there are specific suggestions, add them to the message
-            if (result.feedback.suggestions.length > 0) {
-                message += ': ' + result.feedback.suggestions[0];
-            }
-            
-            // Update the progress bar
-            updateStrengthMeter((score + 1) * 20, message, progressClass);
-        });
-        
-        function updateStrengthMeter(percentage, message, cssClass) {
-            const progressBar = $('#password-strength-meter .progress-bar');
-            const messageEl = $('#password-strength-text');
-            
-            progressBar.css('width', percentage + '%');
-            progressBar.attr('aria-valuenow', percentage);
-            
-            // Remove all color classes and add the appropriate one
-            progressBar.removeClass('bg-danger bg-warning bg-info bg-success');
-            if (cssClass) {
-                progressBar.addClass(cssClass);
-            }
-            
-            // Update message
-            messageEl.text(message);
-        }
-        
-        // Auto-hide alerts after 5 seconds
-        setTimeout(function() {
-            $('.alert-dismissible').alert('close');
-        }, 5000);
-        
-        // Helper function to check if field is editable and apply styling
-        function checkEditableFields() {
-            $('.editable-field').each(function() {
-                if (!$(this).prop('readonly')) {
-                    $(this).css('background-color', '#fff');
-                    $(this).css('border-color', '#32bdea');
-                } else {
-                    $(this).css('background-color', '#f8f9fa');
-                    $(this).css('border-color', '#ced4da');
-                }
+            // Add form data
+            Object.keys(this.profileData).forEach(key => {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = key;
+                input.value = this.profileData[key] || '';
+                form.appendChild(input);
             });
+            
+            document.body.appendChild(form);
+            form.submit();
+        },
+
+        checkPasswordStrength() {
+            const password = this.passwordData.new;
+            let strength = 0;
+
+            if (password.length >= 8) strength++;
+            if (password.match(/[a-z]+/)) strength++;
+            if (password.match(/[A-Z]+/)) strength++;
+            if (password.match(/[0-9]+/)) strength++;
+            if (password.match(/[$@#&!]+/)) strength++;
+
+            this.passwordStrength = strength;
+
+            if (strength <= 2) {
+                this.passwordStrengthClass = 'strength-weak';
+                this.passwordStrengthText = 'Weak password';
+            } else if (strength <= 4) {
+                this.passwordStrengthClass = 'strength-medium';
+                this.passwordStrengthText = 'Medium strength';
+            } else {
+                this.passwordStrengthClass = 'strength-strong';
+                this.passwordStrengthText = 'Strong password';
+            }
+        },
+
+        get passwordValid() {
+            return this.passwordData.current &&
+                   this.passwordData.new &&
+                   this.passwordData.confirm &&
+                   this.passwordData.new === this.passwordData.confirm &&
+                   this.passwordStrength >= 3;
+        },
+
+        changePassword() {
+            if (this.passwordValid) {
+                // Create form for password change
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '{{ route("profile.password") }}';
+                
+                // Add CSRF token
+                const csrfInput = document.createElement('input');
+                csrfInput.type = 'hidden';
+                csrfInput.name = '_token';
+                csrfInput.value = '{{ csrf_token() }}';
+                form.appendChild(csrfInput);
+                
+                // Add password data
+                ['current', 'new', 'confirm'].forEach(field => {
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = field === 'current' ? 'current_password' : 
+                                 field === 'new' ? 'new_password' : 'new_password_confirmation';
+                    input.value = this.passwordData[field];
+                    form.appendChild(input);
+                });
+                
+                document.body.appendChild(form);
+                form.submit();
+            }
+        },
+
+        generateLetter() {
+            // Create form for letter generation
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '{{ route("profile.letters.generate") }}';
+            
+            // Add CSRF token
+            const csrfInput = document.createElement('input');
+            csrfInput.type = 'hidden';
+            csrfInput.name = '_token';
+            csrfInput.value = '{{ csrf_token() }}';
+            form.appendChild(csrfInput);
+            
+            // Add letter data
+            Object.keys(this.letterData).forEach(key => {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = key;
+                input.value = this.letterData[key] || '';
+                form.appendChild(input);
+            });
+            
+            document.body.appendChild(form);
+            form.submit();
         }
+    }
+}
+
+// Handle file upload areas
+document.addEventListener('DOMContentLoaded', function() {
+    const uploadAreas = document.querySelectorAll('.file-upload-area');
+    uploadAreas.forEach(area => {
+        area.addEventListener('click', function() {
+            const input = this.querySelector('input[type="file"]');
+            if (input) input.click();
+        });
         
-        // Run initially and on any change
-        checkEditableFields();
-        $('.editable-field').on('change focus blur', checkEditableFields);
+        area.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            this.classList.add('dragover');
+        });
+        
+        area.addEventListener('dragleave', function() {
+            this.classList.remove('dragover');
+        });
+        
+        area.addEventListener('drop', function(e) {
+            e.preventDefault();
+            this.classList.remove('dragover');
+            const input = this.querySelector('input[type="file"]');
+            if (input && e.dataTransfer.files.length > 0) {
+                input.files = e.dataTransfer.files;
+            }
+        });
     });
+});
 </script>
-@endsection
-```
+@endpush
