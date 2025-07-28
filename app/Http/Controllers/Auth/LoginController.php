@@ -1,14 +1,14 @@
 <?php
+
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Services\SessionManager;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
-use App\Models\Admin;
-use App\Models\Supervisor;
-use App\Models\Teacher;
-use App\Models\AJK;
+use Illuminate\Support\Facades\Validator;
+use App\Models\User;
 
 class LoginController extends Controller
 {
@@ -17,98 +17,220 @@ class LoginController extends Controller
      */
     public function showLoginForm()
     {
+        // If already logged in, redirect to dashboard
+        if (SessionManager::check()) {
+            return redirect()->route($this->getRedirectRoute(session('role')));
+        }
+        
         return view('auth.login');
     }
     
     /**
-     * Handle a login request
+     * Handle a login request with enhanced session management
      */
     public function login(Request $request)
     {
-        $credentials = $request->validate([
+        $validator = Validator::make($request->all(), [
             'email' => 'required|email',
-            'password' => 'required'
+            'password' => 'required|min:6'
+        ], [
+            'email.required' => 'Email address is required',
+            'email.email' => 'Please enter a valid email address',
+            'password.required' => 'Password is required',
+            'password.min' => 'Password must be at least 6 characters'
         ]);
-        
-        // Try to authenticate user with each user type
-        $userTypes = [
-            ['model' => Admin::class, 'guard' => 'admin', 'role' => 'admin'],
-            ['model' => Supervisor::class, 'guard' => 'supervisor', 'role' => 'supervisor'],
-            ['model' => Teacher::class, 'guard' => 'teacher', 'role' => 'teacher'],
-            ['model' => AJK::class, 'guard' => 'ajk', 'role' => 'ajk']
-        ];
-        
-        foreach ($userTypes as $userType) {
-            $user = $userType['model']::where('email', $credentials['email'])->first();
+
+        if ($validator->fails()) {
+            return back()->withErrors($validator)->withInput($request->except('password'));
+        }
+
+        try {
+            // Find user across all user models
+            $user = $this->findUserByEmail($request->email);
             
-            if ($user) {
-                // We found a user, now check password
-                if (Auth::guard($userType['guard'])->attempt([
-                    'email' => $credentials['email'],
-                    'password' => $credentials['password']
-                ])) {
-                    // Authentication successful
-                    $request->session()->regenerate();
-                    
-                    // Store complete user data in session
-                    session([
-                        'id' => $user->id,
-                        'iium_id' => $user->iium_id ?? null,
-                        'name' => $user->name,
-                        'role' => $userType['role'],
-                        'email' => $user->email,
-                        'centre_id' => $user->centre_id ?? null,
-                        'avatar' => $user->avatar ?? null,
-                        'user_avatar' => $user->avatar ?? null,
-                        'phone' => $user->phone ?? null,
-                        'address' => $user->address ?? null,
-                        'bio' => $user->bio ?? $user->about ?? null,
-                        'date_of_birth' => $user->date_of_birth ?? null,
-                        'logged_in' => true,
-                        'login_time' => now()->toDateTimeString()
-                    ]);
-                    
-                    Log::info('User login successful', [
-                        'email' => $credentials['email'],
-                        'user_type' => $userType['role']
-                    ]);
-                    
-                    return redirect()->route($userType['role'] . '.dashboard');
-                }
-                
-                // If we found the user but password failed, no need to check other models
-                Log::warning('Login failed: Invalid password', [
-                    'email' => $credentials['email']
+            if (!$user) {
+                Log::warning('Login attempt with non-existent email', [
+                    'email' => $request->email,
+                    'ip' => $request->ip()
                 ]);
                 
-                return back()->withErrors([
-                    'password' => 'The provided password is incorrect.'
-                ])->withInput($request->except('password'));
+                return back()->with('error', 'No account found with that email address')
+                    ->withInput($request->except('password'));
             }
+            
+            // Verify password
+            if (!Hash::check($request->password, $user->password)) {
+                Log::warning('Login attempt with incorrect password', [
+                    'email' => $request->email,
+                    'user_id' => $user->id,
+                    'ip' => $request->ip()
+                ]);
+                
+                return back()->with('error', 'The password you entered is incorrect')
+                    ->withInput($request->except('password'));
+            }
+            
+            // Check if user is active
+            if ($user->status !== 'active') {
+                Log::warning('Login attempt with inactive account', [
+                    'email' => $request->email,
+                    'user_id' => $user->id,
+                    'status' => $user->status,
+                    'ip' => $request->ip()
+                ]);
+                
+                return back()->with('error', 'Your account is currently inactive. Please contact administrator')
+                    ->withInput($request->except('password'));
+            }
+            
+            // Login user with enhanced session management
+            SessionManager::login($user, $request->has('remember'));
+            
+            // Get intended URL or default redirect
+            $intendedUrl = session('intended_url', null);
+            if ($intendedUrl) {
+                session()->forget('intended_url');
+                return redirect($intendedUrl)->with('success', 'Welcome back, ' . $user->name);
+            }
+            
+            // Redirect based on role
+            $redirectRoute = $this->getRedirectRoute($user->role);
+            return redirect()->route($redirectRoute)
+                ->with('success', 'Welcome back, ' . $user->name);
+                
+        } catch (\Exception $e) {
+            Log::error('Login error', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'email' => $request->email,
+                'ip' => $request->ip()
+            ]);
+            
+            return back()->with('error', 'Login failed. Please try again or contact support')
+                ->withInput($request->except('password'));
         }
-        
-        // If we got here, no user was found with that email
-        Log::warning('Login failed: User not found', [
-            'email' => $credentials['email']
-        ]);
-        
-        return back()->withErrors([
-            'email' => 'No account found with that email address.'
-        ])->withInput($request->except('password'));
     }
-    
+
     /**
-     * Log the user out
+     * Handle logout with enhanced session cleanup
      */
     public function logout(Request $request)
     {
-        // Determine which guard to use based on the user's role
-        $role = session('role') ?: 'web';
-        Auth::guard($role)->logout();
+        $userName = session('name', 'User');
         
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
+        SessionManager::logout();
         
-        return redirect('/');
+        if ($request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Logged out successfully',
+                'redirect' => route('login')
+            ]);
+        }
+        
+        return redirect()->route('login')
+            ->with('success', 'Goodbye ' . $userName . '. You have been logged out successfully');
+    }
+    
+    /**
+     * Check authentication status (AJAX endpoint)
+     */
+    public function checkAuth(Request $request)
+    {
+        $isAuthenticated = SessionManager::check();
+        $isAboutToExpire = SessionManager::isAboutToExpire();
+        
+        return response()->json([
+            'authenticated' => $isAuthenticated,
+            'about_to_expire' => $isAboutToExpire,
+            'user' => $isAuthenticated ? [
+                'id' => session('id'),
+                'name' => session('name'),
+                'role' => session('role'),
+                'email' => session('email')
+            ] : null,
+            'session_timeout' => SessionManager::getTimeoutMinutes()
+        ]);
+    }
+    
+    /**
+     * Extend session (AJAX endpoint)
+     */
+    public function extendSession(Request $request)
+    {
+        if (SessionManager::extend()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Session extended successfully'
+            ]);
+        }
+        
+        return response()->json([
+            'success' => false,
+            'message' => 'Unable to extend session'
+        ], 401);
+    }
+    
+    /**
+     * Refresh session data
+     */
+    public function refreshSession(Request $request)
+    {
+        if (SessionManager::refresh()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Session refreshed successfully',
+                'user' => [
+                    'id' => session('id'),
+                    'name' => session('name'),
+                    'role' => session('role'),
+                    'email' => session('email')
+                ]
+            ]);
+        }
+        
+        return response()->json([
+            'success' => false,
+            'message' => 'Unable to refresh session'
+        ], 401);
+    }
+
+    /**
+     * Find user by email across all user models
+     */
+    private function findUserByEmail($email)
+    {
+        // Define user models with their roles
+        $userModels = [
+            ['model' => User::class, 'role' => null], // Universal users table
+        ];
+        
+        foreach ($userModels as $userModel) {
+            $user = $userModel['model']::where('email', $email)->first();
+            if ($user) {
+                // If role is not set in the user record, use the model-specific role
+                if (!isset($user->role) && $userModel['role']) {
+                    $user->role = $userModel['role'];
+                }
+                return $user;
+            }
+        }
+        
+        return null;
+    }
+
+    /**
+     * Get redirect route based on role
+     */
+    private function getRedirectRoute($role)
+    {
+        $routes = [
+            'admin' => 'dashboard',
+            'supervisor' => 'dashboard', 
+            'teacher' => 'dashboard',
+            'ajk' => 'dashboard'
+        ];
+        
+        return $routes[$role] ?? 'dashboard';
     }
 }

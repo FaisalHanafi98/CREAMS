@@ -61,7 +61,7 @@ class StaffAttendanceController extends Controller
             // Get attendance statistics
             $stats = $this->getAttendanceStatistics($centreId, $userRole);
 
-            return view('attendance.staff-dashboard', compact('users', 'todayAttendance', 'stats'));
+            return view('attendance.staffdashboard', compact('users', 'todayAttendance', 'stats'));
 
         } catch (\Exception $e) {
             Log::error('Error loading staff attendance dashboard', [

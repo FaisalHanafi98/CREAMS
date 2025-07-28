@@ -45,7 +45,43 @@ class DashboardController extends Controller
             return view('dashboard.modern', [
                 'error' => 'Unable to load dashboard data',
                 'role' => $role ?? 'unknown',
-                'user_name' => session('name', 'User')
+                'user_name' => session('name', 'User'),
+                'current_time' => now()->format('l, F j, Y - g:i A')
+            ]);
+        }
+    }
+
+    /**
+     * Display new modern dashboard design
+     */
+    public function modernNew(Request $request)
+    {
+        try {
+            // Check authentication
+            if (!session()->has('id')) {
+                return redirect()->route('login');
+            }
+
+            $userId = session('id');
+            $role = session('role');
+            $centreId = session('centre_id');
+            
+            // Get dashboard data based on role
+            $dashboardData = $this->getDashboardData($role, $userId, $centreId);
+            
+            return view('dashboard.modernnew', $dashboardData);
+            
+        } catch (\Exception $e) {
+            Log::error('Modern new dashboard error', [
+                'user_id' => $userId ?? 'unknown',
+                'error' => $e->getMessage()
+            ]);
+            
+            return view('dashboard.modernnew', [
+                'error' => 'Unable to load dashboard data',
+                'role' => $role ?? 'unknown',
+                'user_name' => session('name', 'User'),
+                'current_time' => now()->format('l, F j, Y - g:i A')
             ]);
         }
     }

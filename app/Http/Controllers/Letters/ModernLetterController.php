@@ -35,7 +35,7 @@ class ModernLetterController extends Controller
                 ->limit(5)
                 ->get();
 
-            return view('letters.modern-dashboard', compact('templates', 'recentLetters'));
+            return view('letters.moderndashboard', compact('templates', 'recentLetters'));
 
         } catch (Exception $e) {
             Log::error('Letter dashboard error', ['error' => $e->getMessage()]);

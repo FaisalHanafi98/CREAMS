@@ -71,6 +71,155 @@ class ActivityController extends Controller
     }
 
     /**
+     * Display modern activities homepage
+     */
+    public function modernHome()
+    {
+        try {
+            $role = session('role');
+            $userId = session('id');
+            $centreId = session('centre_id');
+
+            Log::info('Loading modern activities home', ['user_id' => $userId, 'role' => $role]);
+
+            // Get activities with enhanced data for modern view
+            $query = Activity::with(['sessions.teacher', 'enrollments.trainee', 'creator', 'centre']);
+
+            // Role-based filtering
+            if ($role === 'teacher') {
+                $query->whereHas('sessions', function ($q) use ($userId) {
+                    $q->where('teacher_id', $userId);
+                });
+            } elseif (in_array($role, ['supervisor', 'ajk'])) {
+                $query->where('centre_id', $centreId);
+            }
+
+            $activities = $query->orderBy('created_at', 'desc')->get();
+
+            // Transform activities for modern view
+            $activitiesData = $activities->map(function($activity) {
+                $latestSession = $activity->sessions->sortByDesc('scheduled_date')->first();
+                $teacher = $latestSession ? $latestSession->teacher : $activity->creator;
+                
+                return [
+                    'id' => $activity->id,
+                    'name' => $activity->activity_name ?? $activity->name,
+                    'description' => $activity->activity_description ?? $activity->description,
+                    'status' => $this->getActivityStatus($activity),
+                    'status_color' => $this->getStatusColor($this->getActivityStatus($activity)),
+                    'status_text_color' => $this->getStatusTextColor($this->getActivityStatus($activity)),
+                    'status_bg_color' => $this->getStatusBgColor($this->getActivityStatus($activity)),
+                    'teacher_name' => $teacher ? $teacher->name : 'Not assigned',
+                    'participant_count' => $activity->enrollments->count(),
+                    'schedule_time' => $latestSession ? 
+                        Carbon::parse($latestSession->start_time)->format('g:i A') . ' - ' . 
+                        Carbon::parse($latestSession->end_time)->format('g:i A') : 'Time TBA',
+                    'next_session_info' => $this->getNextSessionInfo($activity)
+                ];
+            });
+
+            // Get activity statistics
+            $activity_stats = [
+                [
+                    'title' => 'Total Activities',
+                    'value' => $activities->count(),
+                    'color_class' => 'text-gray-800',
+                    'bg_class' => 'bg-blue-100',
+                    'icon' => 'fas fa-clipboard-list',
+                    'icon_color' => 'text-blue-600'
+                ],
+                [
+                    'title' => 'Ongoing',
+                    'value' => $activities->where('activity_status', 'ongoing')->count(),
+                    'color_class' => 'text-green-600',
+                    'bg_class' => 'bg-green-100',
+                    'icon' => 'fas fa-play-circle',
+                    'icon_color' => 'text-green-600'
+                ],
+                [
+                    'title' => 'Completed Today',
+                    'value' => $this->getTodayCompletedCount($activities),
+                    'color_class' => 'text-purple-600',
+                    'bg_class' => 'bg-purple-100',
+                    'icon' => 'fas fa-check-circle',
+                    'icon_color' => 'text-purple-600'
+                ],
+                [
+                    'title' => 'Scheduled',
+                    'value' => $activities->where('activity_status', 'scheduled')->count(),
+                    'color_class' => 'text-orange-600',
+                    'bg_class' => 'bg-orange-100',
+                    'icon' => 'fas fa-calendar-alt',
+                    'icon_color' => 'text-orange-600'
+                ]
+            ];
+
+            // Get teachers and trainees for modal
+            $teachers = [];
+            $trainees = [];
+            
+            if (in_array($role, ['admin', 'supervisor', 'teacher'])) {
+                $teachersQuery = User::where('role', 'teacher')->where('status', 'active');
+                $traineesQuery = Trainee::where('status', 'active');
+                
+                if ($role !== 'admin') {
+                    $teachersQuery->where('centre_id', $centreId);
+                    $traineesQuery->where('centre_id', $centreId);
+                }
+                
+                $teachers = $teachersQuery->get(['id', 'name']);
+                $trainees = $traineesQuery->get(['id', 'trainee_first_name as first_name', 'trainee_last_name as last_name'])
+                    ->map(function($trainee) {
+                        return [
+                            'id' => $trainee->id,
+                            'name' => trim($trainee->first_name . ' ' . $trainee->last_name)
+                        ];
+                    });
+            }
+
+            // Get categories
+            $categories = $this->getActivityCategories();
+
+            // Calendar events (simplified for now)
+            $calendar_events = [];
+
+            Log::info('Successfully loaded modern activities home', [
+                'user_id' => $userId,
+                'role' => $role,
+                'activities_count' => $activities->count()
+            ]);
+
+            // Pass the transformed activities data
+            $activities = $activitiesData;
+            
+            // Individual stats for backward compatibility
+            $total_activities = $activities->count();
+            $ongoing_activities = $activities->where('status', 'ongoing')->count();
+            $completed_today = $this->getTodayCompletedCount(collect($activities));
+            $scheduled_activities = $activities->where('status', 'scheduled')->count();
+
+            return view('activities.modernhome', compact(
+                'activities', 
+                'activity_stats', 
+                'role', 
+                'categories', 
+                'teachers', 
+                'trainees',
+                'calendar_events',
+                'total_activities',
+                'ongoing_activities', 
+                'completed_today',
+                'scheduled_activities'
+            ));
+
+        } catch (Exception $e) {
+            Log::error('Error loading modern activities home: ' . $e->getMessage());
+            return redirect()->route('dashboard')
+                ->with('error', 'Unable to load activities. Please try again.');
+        }
+    }
+
+    /**
      * Display activity categories for rehabilitation module
      */
     public function categories()
@@ -209,7 +358,7 @@ class ActivityController extends Controller
                     ->paginate(12);
             }
 
-            return view('rehabilitation.category-show', compact('category', 'activities'));
+            return view('rehabilitation.categoryshow', compact('category', 'activities'));
 
         } catch (Exception $e) {
             return $this->handleException($e, 'loading category activities', [
@@ -1836,5 +1985,111 @@ class ActivityController extends Controller
             'Computer Skills' => 'fas fa-laptop'
         ];
         return $icons[$category] ?? 'fas fa-tasks';
+    }
+
+    // Helper methods for modern home view
+    private function getActivityStatus($activity)
+    {
+        // Check if activity has ongoing sessions today
+        $ongoingSessions = $activity->sessions()
+            ->where('status', 'ongoing')
+            ->whereDate('scheduled_date', today())
+            ->count();
+            
+        if ($ongoingSessions > 0) {
+            return 'ongoing';
+        }
+        
+        // Check if activity has upcoming sessions
+        $upcomingSessions = $activity->sessions()
+            ->where('status', 'scheduled')
+            ->where('scheduled_date', '>=', today())
+            ->count();
+            
+        if ($upcomingSessions > 0) {
+            return 'scheduled';
+        }
+        
+        // Check activity status field if it exists
+        if (isset($activity->activity_status)) {
+            return $activity->activity_status;
+        }
+        
+        return 'completed';
+    }
+    
+    private function getStatusColor($status)
+    {
+        $colors = [
+            'ongoing' => 'gradient-bg',
+            'scheduled' => 'bg-orange-500',
+            'completed' => 'bg-blue-500',
+            'cancelled' => 'bg-red-500'
+        ];
+        return $colors[$status] ?? 'bg-gray-500';
+    }
+    
+    private function getStatusTextColor($status)
+    {
+        $colors = [
+            'ongoing' => 'text-green-600',
+            'scheduled' => 'text-orange-600',  
+            'completed' => 'text-blue-600',
+            'cancelled' => 'text-red-600'
+        ];
+        return $colors[$status] ?? 'text-gray-600';
+    }
+    
+    private function getStatusBgColor($status)
+    {
+        $colors = [
+            'ongoing' => 'bg-green-100',
+            'scheduled' => 'bg-orange-100',
+            'completed' => 'bg-blue-100', 
+            'cancelled' => 'bg-red-100'
+        ];
+        return $colors[$status] ?? 'bg-gray-100';
+    }
+    
+    private function getNextSessionInfo($activity)
+    {
+        $nextSession = $activity->sessions()
+            ->where('status', 'scheduled')
+            ->where('scheduled_date', '>=', today())
+            ->orderBy('scheduled_date')
+            ->orderBy('start_time')
+            ->first();
+            
+        if (!$nextSession) {
+            return null;
+        }
+        
+        $sessionDate = Carbon::parse($nextSession->scheduled_date);
+        $now = Carbon::now();
+        
+        if ($sessionDate->isToday()) {
+            $sessionTime = Carbon::parse($nextSession->start_time);
+            $minutesUntil = $now->diffInMinutes($sessionTime);
+            
+            if ($minutesUntil < 60) {
+                return "Starts in {$minutesUntil} minutes";
+            } else {
+                return "Starts at " . $sessionTime->format('g:i A');
+            }
+        } elseif ($sessionDate->isTomorrow()) {
+            return "Next session tomorrow at " . Carbon::parse($nextSession->start_time)->format('g:i A');
+        } else {
+            return "Next session " . $sessionDate->format('M j') . " at " . Carbon::parse($nextSession->start_time)->format('g:i A');
+        }
+    }
+    
+    private function getTodayCompletedCount($activities)
+    {
+        return $activities->filter(function($activity) {
+            return $activity->sessions()
+                ->where('status', 'completed')
+                ->whereDate('scheduled_date', today())
+                ->count() > 0;
+        })->count();
     }
 }

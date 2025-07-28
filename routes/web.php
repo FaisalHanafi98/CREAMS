@@ -54,7 +54,6 @@ use App\Http\Controllers\Letters\ModernLetterController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\ResetPasswordController;
-use App\Http\Controllers\Auth\EnhancedLoginController;
 
 /*
 |--------------------------------------------------------------------------
@@ -93,8 +92,8 @@ Route::middleware('guest')->group(function () {
     Route::post('/auth/check', [MainController::class, 'check'])->name('auth.check');
     
     // Enhanced login routes
-    Route::get('/enhanced-login', [EnhancedLoginController::class, 'showLoginForm'])->name('enhanced.login.form');
-    Route::post('/enhanced-login', [EnhancedLoginController::class, 'login'])->name('enhanced.login');
+    Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
+    Route::post('/login', [LoginController::class, 'login']);
 
     // Registration routes - legacy auth/register now redirects to staffs/register
     Route::get('/auth/register', function() { return redirect()->route('staffs.register'); });
@@ -115,14 +114,14 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/logout', [MainController::class, 'logout'])->name('logout.post');
     
     // Enhanced logout route
-    Route::post('/enhanced-logout', [EnhancedLoginController::class, 'logout'])->name('enhanced.logout');
+    Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 });
 
 // Enhanced authentication API routes
 Route::middleware(['web'])->group(function () {
-    Route::get('/auth/check-status', [EnhancedLoginController::class, 'checkAuth'])->name('auth.check-status');
-    Route::post('/auth/extend-session', [EnhancedLoginController::class, 'extendSession'])->name('auth.extend');
-    Route::post('/auth/refresh-session', [EnhancedLoginController::class, 'refreshSession'])->name('auth.refresh');
+    Route::get('/auth/check-status', [LoginController::class, 'checkAuth'])->name('auth.check-status');
+    Route::post('/auth/extend-session', [LoginController::class, 'extendSession'])->name('auth.extend');
+    Route::post('/auth/refresh-session', [LoginController::class, 'refreshSession'])->name('auth.refresh');
 });
 
 /*
@@ -134,6 +133,9 @@ Route::middleware(['web'])->group(function () {
 Route::middleware(['auth', 'validate.params'])->group(function () {
     // Modern Dashboard - Main route
     Route::get('/dashboard', [App\Http\Controllers\Dashboard\DashboardController::class, 'index'])->name('dashboard');
+    
+    // New Modern Dashboard Template
+    Route::get('/dashboard/modern-new', [App\Http\Controllers\Dashboard\DashboardController::class, 'modernNew'])->name('dashboard.modern-new');
     
     // Optimized Dashboard Routes
     // Optimized Dashboard System Routes with Enhanced Middleware
@@ -181,6 +183,7 @@ Route::middleware(['auth', 'validate.params'])->group(function () {
     Route::prefix('activities')->name('activities.')->middleware(['centre.access:activity'])->group(function () {
         Route::get('/', function() { return redirect()->route('activities.home'); }); // Legacy redirect
         Route::get('/home', [ActivityController::class, 'index'])->name('home'); // New structure
+        Route::get('/modern-home', [ActivityController::class, 'modernHome'])->name('modern-home'); // Modern activities homepage
         Route::get('/categories', [ActivityController::class, 'categories'])->name('categories');
         Route::get('/categories/{categorySlug}', [ActivityController::class, 'categoryShow'])->name('categories.show');
         Route::get('/schedule', [ActivityController::class, 'scheduleIndex'])->name('schedule');
@@ -694,8 +697,7 @@ Route::middleware(['auth'])->prefix('api')->name('api.')->group(function () {
 |--------------------------------------------------------------------------
 */
 
-Route::get('/api/safe-stats', 'App\Http\Controllers\Dashboard\SafeDashboardController@getStats')
-    ->name('safe.dashboard.stats');
+// Removed SafeDashboardController reference - functionality moved to main DashboardController
 
 /*
 |--------------------------------------------------------------------------
