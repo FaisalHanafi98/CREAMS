@@ -4,279 +4,151 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Notification extends Model
 {
     use HasFactory;
 
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<int, string>
+     */
     protected $fillable = [
         'user_id',
         'user_type',
-        'notification_title',
-        'notification_message',
-        'notification_type',
-        'notification_data',
-        'is_read',
-        'read_at'
+        'type',
+        'title',
+        'content',
+        'data',
+        'read',
+        'read_at',
     ];
 
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array<string, string>
+     */
     protected $casts = [
-        'is_read' => 'boolean',
-        'notification_data' => 'array',
+        'data' => 'array',
+        'read' => 'boolean',
         'read_at' => 'datetime',
-        'created_at' => 'datetime',
-        'updated_at' => 'datetime'
     ];
 
-    // Notification types constants
-    const TYPE_ACTIVITY_SCHEDULED = 'activity_scheduled';
-    const TYPE_ACTIVITY_CANCELLED = 'activity_cancelled';
-    const TYPE_ACTIVITY_RESCHEDULED = 'activity_rescheduled';
-    const TYPE_LOW_ENROLLMENT = 'low_enrollment';
-    const TYPE_SESSION_REMINDER = 'session_reminder';
-    const TYPE_ATTENDANCE_MISSING = 'attendance_missing';
-    const TYPE_TRAINEE_ENROLLED = 'trainee_enrolled';
-    const TYPE_TRAINEE_WITHDRAWN = 'trainee_withdrawn';
-    const TYPE_TRAINEE_PROFILE_UPDATED = 'trainee_profile_updated';
-    const TYPE_PROGRESS_REPORT_DUE = 'progress_report_due';
-    const TYPE_BIRTHDAY_REMINDER = 'birthday_reminder';
-    const TYPE_NEW_STAFF_MEMBER = 'new_staff_member';
-    const TYPE_ASSET_ASSIGNED = 'asset_assigned';
-    const TYPE_SCHEDULE_CONFLICT = 'schedule_conflict';
-    const TYPE_SYSTEM_ANNOUNCEMENT = 'system_announcement';
-    const TYPE_ACTIVITY_APPROVAL_PENDING = 'activity_approval_pending';
-    const TYPE_PROFILE_UPDATE_REQUEST = 'profile_update_request';
-    const TYPE_LEAVE_REQUEST = 'leave_request';
-
-    // Priority levels
-    const PRIORITY_LOW = 'low';
-    const PRIORITY_MEDIUM = 'medium';
-    const PRIORITY_HIGH = 'high';
-    const PRIORITY_URGENT = 'urgent';
-
     /**
-     * Get the user that owns the notification.
+     * Get the user.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\MorphTo
      */
-    public function user(): BelongsTo
+    public function user()
     {
-        return $this->belongsTo(Users::class, 'user_id');
+        return $this->morphTo('user', 'user_type', 'user_id');
     }
 
     /**
-     * Get the centre that the notification belongs to.
-     */
-    public function centre(): BelongsTo
-    {
-        return $this->belongsTo(Centres::class, 'centre_id', 'centre_id');
-    }
-
-    /**
-     * Scope to get unread notifications.
+     * Scope a query to only include unread notifications.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeUnread($query)
     {
-        return $query->where('is_read', false);
+        return $query->where('read', false);
     }
 
     /**
-     * Scope to get notifications by type.
+     * Mark the notification as read.
+     *
+     * @return void
      */
-    public function scopeByType($query, $type)
+    public function markAsRead()
     {
-        return $query->where('notification_type', $type);
+        $this->read = true;
+        $this->read_at = now();
+        $this->save();
     }
 
     /**
-     * Scope to get recent notifications.
+     * Determine if the notification is read.
+     *
+     * @return bool
      */
-    public function scopeRecent($query, $days = 30)
+    public function isRead()
     {
-        return $query->where('created_at', '>=', now()->subDays($days));
+        return $this->read;
     }
 
     /**
-     * Mark notification as read.
+     * Get the user's name.
+     *
+     * @return string
      */
-    public function markAsRead(): bool
+    public function getUserNameAttribute()
     {
-        if ($this->is_read) {
-            return true; // Already read
+        switch ($this->user_type) {
+            case 'admin':
+                $user = Admin::find($this->user_id);
+                break;
+            case 'supervisor':
+                $user = Supervisor::find($this->user_id);
+                break;
+            case 'teacher':
+                $user = Teacher::find($this->user_id);
+                break;
+            case 'ajk':
+                $user = AJK::find($this->user_id);
+                break;
+            default:
+                return 'Unknown User';
         }
 
-        return $this->update([
-            'is_read' => true,
-            'read_at' => now()
-        ]);
+        return $user ? $user->name : 'Unknown User';
     }
 
     /**
-     * Mark notification as unread.
+     * Get the notification icon.
+     *
+     * @return string
      */
-    public function markAsUnread(): bool
+    public function getIconAttribute()
     {
-        return $this->update([
-            'is_read' => false,
-            'read_at' => null
-        ]);
+        switch ($this->type) {
+            case 'message':
+                return 'fas fa-envelope';
+            case 'activity':
+                return 'fas fa-calendar-alt';
+            case 'trainee':
+                return 'fas fa-user-graduate';
+            case 'asset':
+                return 'fas fa-boxes';
+            case 'system':
+                return 'fas fa-cog';
+            default:
+                return 'fas fa-bell';
+        }
     }
 
     /**
-     * Check if notification is read.
+     * Get the notification color.
+     *
+     * @return string
      */
-    public function isRead(): bool
+    public function getColorAttribute()
     {
-        return $this->is_read;
-    }
-
-    /**
-     * Check if notification is unread.
-     */
-    public function isUnread(): bool
-    {
-        return !$this->is_read;
-    }
-
-    /**
-     * Get notification message attribute (backward compatibility).
-     */
-    public function getMessageAttribute(): string
-    {
-        return $this->notification_message ?? '';
-    }
-
-    /**
-     * Get notification title attribute (backward compatibility).
-     */
-    public function getTitleAttribute(): string
-    {
-        return $this->notification_title ?? '';
-    }
-
-    /**
-     * Get notification content attribute (backward compatibility).
-     */
-    public function getContentAttribute(): string
-    {
-        return $this->notification_message ?? '';
-    }
-
-    /**
-     * Get notification type attribute (backward compatibility).
-     */
-    public function getTypeAttribute(): string
-    {
-        return $this->notification_type ?? '';
-    }
-
-    /**
-     * Get notification data attribute (backward compatibility).
-     */
-    public function getDataAttribute(): ?array
-    {
-        return $this->notification_data;
-    }
-
-    /**
-     * Get notification read attribute (backward compatibility).
-     */
-    public function getReadAttribute(): bool
-    {
-        return $this->is_read;
-    }
-
-    /**
-     * Get notification role attribute (backward compatibility).
-     */
-    public function getRoleAttribute(): string
-    {
-        return $this->user_type ?? '';
-    }
-
-    /**
-     * Get notification action URL from data.
-     */
-    public function getActionUrlAttribute(): ?string
-    {
-        return $this->notification_data['action_url'] ?? null;
-    }
-
-    /**
-     * Get priority color for UI.
-     */
-    public function getPriorityColorAttribute(): string
-    {
-        return match($this->priority) {
-            self::PRIORITY_LOW => 'text-success',
-            self::PRIORITY_MEDIUM => 'text-info',
-            self::PRIORITY_HIGH => 'text-warning',
-            self::PRIORITY_URGENT => 'text-danger',
-            default => 'text-info'
-        };
-    }
-
-    /**
-     * Get type icon for UI with comprehensive mapping.
-     */
-    public function getTypeIconAttribute(): string
-    {
-        return match($this->notification_type) {
-            // Activity related
-            self::TYPE_ACTIVITY_SCHEDULED => 'fas fa-calendar-plus',
-            self::TYPE_ACTIVITY_CANCELLED => 'fas fa-calendar-times',
-            self::TYPE_ACTIVITY_RESCHEDULED => 'fas fa-calendar-alt',
-            self::TYPE_LOW_ENROLLMENT => 'fas fa-exclamation-triangle',
-            self::TYPE_SESSION_REMINDER => 'fas fa-clock',
-            self::TYPE_ATTENDANCE_MISSING => 'fas fa-user-clock',
-            self::TYPE_ACTIVITY_APPROVAL_PENDING => 'fas fa-hourglass-half',
-            
-            // Trainee related
-            self::TYPE_TRAINEE_ENROLLED => 'fas fa-user-plus',
-            self::TYPE_TRAINEE_WITHDRAWN => 'fas fa-user-minus',
-            self::TYPE_TRAINEE_PROFILE_UPDATED => 'fas fa-user-edit',
-            self::TYPE_PROGRESS_REPORT_DUE => 'fas fa-file-alt',
-            self::TYPE_BIRTHDAY_REMINDER => 'fas fa-birthday-cake',
-            
-            // Staff related
-            self::TYPE_NEW_STAFF_MEMBER => 'fas fa-users',
-            self::TYPE_PROFILE_UPDATE_REQUEST => 'fas fa-edit',
-            self::TYPE_LEAVE_REQUEST => 'fas fa-calendar-minus',
-            
-            // System related
-            self::TYPE_ASSET_ASSIGNED => 'fas fa-box',
-            self::TYPE_SCHEDULE_CONFLICT => 'fas fa-exclamation-circle',
-            self::TYPE_SYSTEM_ANNOUNCEMENT => 'fas fa-bullhorn',
-            
-            // Legacy types for backward compatibility
-            'activity' => 'fas fa-calendar-alt',
-            'staff' => 'fas fa-users',
-            'trainee' => 'fas fa-user-graduate',
-            'system' => 'fas fa-cog',
-            'general' => 'fas fa-info-circle',
-            
-            default => 'fas fa-bell'
-        };
-    }
-
-    /**
-     * Get time ago formatted string.
-     */
-    public function getTimeAgoAttribute(): string
-    {
-        return $this->created_at->diffForHumans();
-    }
-
-    /**
-     * Get priority badge class for UI.
-     */
-    public function getPriorityBadgeAttribute(): string
-    {
-        return match($this->priority) {
-            self::PRIORITY_LOW => 'badge-success',
-            self::PRIORITY_MEDIUM => 'badge-info',
-            self::PRIORITY_HIGH => 'badge-warning',
-            self::PRIORITY_URGENT => 'badge-danger',
-            default => 'badge-info'
-        };
+        switch ($this->type) {
+            case 'message':
+                return 'primary'; // Blue
+            case 'activity':
+                return 'success'; // Green
+            case 'trainee':
+                return 'info'; // Light blue
+            case 'asset':
+                return 'warning'; // Yellow
+            case 'system':
+                return 'danger'; // Red
+            default:
+                return 'secondary'; // Gray
+        }
     }
 }

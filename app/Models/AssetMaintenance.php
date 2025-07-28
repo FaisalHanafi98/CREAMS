@@ -131,7 +131,7 @@ class AssetMaintenance extends Model
      */
     public function performedBy(): BelongsTo
     {
-        return $this->belongsTo(Users::class, 'performed_by');
+        return $this->belongsTo(User::class, 'performed_by');
     }
 
     /**
@@ -139,7 +139,7 @@ class AssetMaintenance extends Model
      */
     public function creator(): BelongsTo
     {
-        return $this->belongsTo(Users::class, 'created_by');
+        return $this->belongsTo(User::class, 'created_by');
     }
 
     // =============================================

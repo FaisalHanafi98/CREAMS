@@ -3,8 +3,8 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use App\Models\Trainees;
-use App\Models\Centres;
+use App\Models\Trainee;
+use App\Models\Centre;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use Faker\Factory as Faker;
@@ -19,7 +19,7 @@ class CREAMSTraineeSeeder extends Seeder
      */
     public function run()
     {
-        $this->command->info('🇲🇾 Starting Malaysian Trainees Seeder with corrected field mappings...');
+        $this->command->info('🇲🇾 Starting Malaysian Trainee Seeder with corrected field mappings...');
         
         try {
             // Safely delete existing trainees with foreign key consideration
@@ -30,12 +30,12 @@ class CREAMSTraineeSeeder extends Seeder
             $faker = Faker::create('en_MY'); // Malaysian locale faker
             
             // Get available centres with their IDs
-            $centres = Centres::select('centre_id', 'centre_name')->get();
+            $centres = Centre::select('centre_id', 'centre_name')->get();
             
             if ($centres->isEmpty()) {
                 $this->command->error('No centres found! Creating default centre...');
                 
-                $defaultCentre = Centres::create([
+                $defaultCentre = Centre::create([
                     'centre_id' => '99',
                     'centre_name' => 'Default Centre',
                     'centre_status' => 'active'
@@ -225,19 +225,19 @@ class CREAMSTraineeSeeder extends Seeder
                 // - trainee_last_accessed_at (doesn't exist in database) 
                 // - registered_by (doesn't exist in database)
                 
-                $trainee = Trainees::create($traineeData);
+                $trainee = Trainee::create($traineeData);
                 
                 $this->command->info("✅ Created: {$firstName} {$lastName} (ID: {$traineeId}) at {$selectedCentre->centre_name}");
             }
             
-            $this->command->info('🎉 Malaysian Trainees Seeder completed successfully!');
+            $this->command->info('🎉 Malaysian Trainee Seeder completed successfully!');
             $this->command->info('📊 Created 50 trainees with realistic Malaysian data and correct field mappings');
             
         } catch (\Exception $e) {
             // Ensure foreign key checks are re-enabled even on error
             DB::statement('SET FOREIGN_KEY_CHECKS=1');
             
-            $this->command->error('❌ Error in Malaysian Trainees Seeder: ' . $e->getMessage());
+            $this->command->error('❌ Error in Malaysian Trainee Seeder: ' . $e->getMessage());
             $this->command->error('Stack trace: ' . $e->getTraceAsString());
             throw $e;
         }

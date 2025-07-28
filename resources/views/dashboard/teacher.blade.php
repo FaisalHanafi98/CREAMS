@@ -411,7 +411,7 @@
                     </div>
                 </div>
                 <div class="stat-value">{{ $stats['total_trainees'] ?? 0 }}</div>
-                <div class="stat-label">Active Trainees</div>
+                <div class="stat-label">Active Trainee</div>
                 <div class="stat-change positive">
                     <i class="fas fa-users"></i>
                     Across all sessions
@@ -515,11 +515,11 @@
                     @endif
                 </div>
 
-                <!-- Recent Trainees Performance -->
+                <!-- Recent Trainee Performance -->
                 <div class="card-section">
                     <div class="section-header">
                         <h3 class="section-title">Trainee Progress Overview</h3>
-                        <a href="{{ route('trainees.index') }}" class="btn btn-sm btn-outline-success">View All Trainees</a>
+                        <a href="{{ route('trainees.index') }}" class="btn btn-sm btn-outline-success">View All Trainee</a>
                     </div>
                     
                     @if(isset($trainees['progress_alerts']) && count($trainees['progress_alerts']) > 0)
@@ -568,7 +568,7 @@
                             <div class="action-icon">
                                 <i class="fas fa-user-graduate"></i>
                             </div>
-                            <div class="action-label">View Trainees</div>
+                            <div class="action-label">View Trainee</div>
                         </a>
                         
                         <a href="{{ route('reports.teacher') }}" class="action-btn">

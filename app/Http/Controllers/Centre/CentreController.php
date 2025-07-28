@@ -5,9 +5,9 @@ namespace App\Http\Controllers\Centre;
 use App\Http\Controllers\Controller;
 
 use Illuminate\Http\Request;
-use App\Models\Centres;
+use App\Models\Centre;
 use App\Models\Asset;
-use App\Models\Users;
+use App\Models\User;
 use App\Models\Trainee;
 use App\Models\Activity;
 use App\Models\CentreAuditLog;
@@ -30,7 +30,7 @@ class CentreController extends Controller
         try {
             Log::info('Loading centres index page', ['user_id' => session('id')]);
             
-            $centres = Centres::withCount(['users', 'trainees', 'assets'])
+            $centres = Centre::withCount(['users', 'trainees', 'assets'])
                 ->orderBy('centre_name')
                 ->get();
             
@@ -90,7 +90,7 @@ class CentreController extends Controller
         ]);
 
         try {
-            $centre = Centres::create([
+            $centre = Centre::create([
                 'centre_id' => strtoupper($validated['centre_id']),
                 'centre_name' => $validated['centre_name'],
                 'centre_address' => $validated['centre_address'],
@@ -124,7 +124,7 @@ class CentreController extends Controller
         try {
             Log::info('Loading centre details', ['centre_id' => $id, 'user_id' => session('id')]);
             
-            $centre = Centres::withCount(['users', 'trainees', 'assets'])
+            $centre = Centre::withCount(['users', 'trainees', 'assets'])
                 ->where('centre_id', $id)
                 ->firstOrFail();
 
@@ -172,7 +172,7 @@ class CentreController extends Controller
         }
 
         try {
-            $centre = Centres::where('centre_id', $id)->firstOrFail();
+            $centre = Centre::where('centre_id', $id)->firstOrFail();
             return view('centres.edit', compact('centre'));
 
         } catch (Exception $e) {
@@ -195,25 +195,20 @@ class CentreController extends Controller
         }
 
         try {
-            $centre = Centres::where('centre_id', $id)->firstOrFail();
+            $centre = Centre::where('centre_id', $id)->firstOrFail();
 
             $validated = $request->validate([
                 'centre_name' => 'required|string|max:255|unique:centres,centre_name,' . $centre->centre_id . ',centre_id',
-                'description' => 'nullable|string',
-                'address' => 'required|string',
-                'city' => 'required|string|max:100',
-                'state' => 'required|string|max:100',
-                'postcode' => 'required|string|max:10',
-                'phone' => 'nullable|string|max:20',
-                'email' => 'nullable|email|max:255',
-                'capacity' => 'required|integer|min:1|max:1000',
-                'opening_time' => 'required|date_format:H:i',
-                'closing_time' => 'required|date_format:H:i',
-                'is_active' => 'boolean'
+                'centre_description' => 'nullable|string',
+                'centre_address' => 'required|string',
+                'centre_phone' => 'nullable|string|max:20',
+                'centre_email' => 'nullable|email|max:255',
+                'centre_capacity' => 'required|string|max:10',
+                'centre_manager' => 'nullable|string|max:255',
+                'centre_manager_contact' => 'nullable|string|max:20',
+                'centre_status' => 'required|in:active,inactive,maintenance',
+                'centre_facilities' => 'nullable|string'
             ]);
-
-            // Handle checkbox value
-            $validated['is_active'] = $request->has('is_active') ? 1 : 0;
 
             $centre->update($validated);
 
@@ -241,7 +236,7 @@ class CentreController extends Controller
         }
 
         try {
-            $centre = Centres::where('centre_id', $id)->firstOrFail();
+            $centre = Centre::where('centre_id', $id)->firstOrFail();
 
             // Check if centre has users or trainees
             if ($centre->users()->count() > 0 || $centre->trainees()->count() > 0) {
@@ -269,7 +264,7 @@ class CentreController extends Controller
         try {
             Log::info('Loading centre assets', ['centre_id' => $id, 'user_id' => session('id')]);
             
-            $centre = Centres::where('centre_id', $id)->firstOrFail();
+            $centre = Centre::where('centre_id', $id)->firstOrFail();
             
             $assets = Asset::where('centre_id', $centre->centre_id)
                 ->orderBy('name')
@@ -323,11 +318,43 @@ class CentreController extends Controller
      */
     private function calculateUtilization($centre)
     {
-        if ($centre->capacity == 0) {
+        $capacity = is_numeric($centre->centre_capacity) ? (int)$centre->centre_capacity : 0;
+        
+        if ($capacity == 0) {
             return 0;
         }
 
-        return round(($centre->trainees_count / $centre->capacity) * 100, 2);
+        return round(($centre->trainees_count / $capacity) * 100, 2);
+    }
+
+    /**
+     * Get cached centre statistics
+     */
+    private function getCachedCentreStats($centreId, $forceRefresh = false)
+    {
+        $cacheKey = "centre_stats_{$centreId}";
+        
+        if ($forceRefresh) {
+            Cache::forget($cacheKey);
+        }
+        
+        return Cache::remember($cacheKey, 300, function () use ($centreId) {
+            $centre = Centre::withCount(['users', 'trainees', 'assets'])->find($centreId);
+            
+            if (!$centre) {
+                return [];
+            }
+            
+            return [
+                'total_staff' => $centre->users_count,
+                'total_trainees' => $centre->trainees_count,
+                'total_assets' => $centre->assets_count,
+                'active_sessions' => $this->getActiveSessions($centreId),
+                'utilization_rate' => $this->calculateUtilization($centre),
+                'capacity' => $centre->centre_capacity ?? 0,
+                'available_capacity' => max(0, ($centre->centre_capacity ?? 0) - $centre->trainees_count)
+            ];
+        });
     }
 
     /**
@@ -335,13 +362,18 @@ class CentreController extends Controller
      */
     private function getRecentActivities($centreId)
     {
-        return DB::table('activities')
-            ->select('id', 'activity_name as name', 'created_at as date', 'is_active')
-            ->where('centre_id', $centreId)
-            ->where('is_active', true)
-            ->orderBy('created_at', 'desc')
-            ->limit(5)
-            ->get();
+        try {
+            return DB::table('activities')
+                ->select('id', 'activity_name as name', 'created_at as date', 'status')
+                ->where('centre_id', $centreId)
+                ->whereIn('status', ['active', 'published']) // Use status instead of is_active
+                ->orderBy('created_at', 'desc')
+                ->limit(5)
+                ->get();
+        } catch (Exception $e) {
+            Log::warning('Error getting recent activities: ' . $e->getMessage());
+            return collect([]); // Return empty collection on error
+        }
     }
     
     /**
@@ -366,7 +398,7 @@ class CentreController extends Controller
                 return response()->json(['message' => 'Access denied'], 403);
             }
 
-            $centre = Centres::findOrFail($id);
+            $centre = Centre::findOrFail($id);
             $stats = $this->getCachedCentreStats($id, true);
             
             // Get historical data for trends
@@ -442,7 +474,7 @@ class CentreController extends Controller
                 return response()->json(['message' => 'Access denied'], 403);
             }
 
-            $centre = Centres::findOrFail($id);
+            $centre = Centre::findOrFail($id);
             
             // Force refresh statistics
             $stats = $this->getCachedCentreStats($id, true);

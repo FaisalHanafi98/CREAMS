@@ -9,24 +9,24 @@ echo "=== TESTING ASSET MANAGEMENT MODULE ===" . PHP_EOL;
 echo "Testing assets table structure..." . PHP_EOL;
 try {
     $columns = DB::select('DESCRIBE assets');
-    echo "✅ Assets table columns:" . PHP_EOL;
+    echo "✅ Asset table columns:" . PHP_EOL;
     foreach ($columns as $column) {
         echo "  - {$column->Field} ({$column->Type})" . PHP_EOL;
     }
 } catch (Exception $e) {
-    echo "❌ Assets table structure error: " . $e->getMessage() . PHP_EOL;
+    echo "❌ Asset table structure error: " . $e->getMessage() . PHP_EOL;
 }
 
 // Test assets data
 echo PHP_EOL . "Testing assets data..." . PHP_EOL;
 try {
     $assets = App\Models\Asset::all();
-    echo "✅ Assets retrieved: " . $assets->count() . " assets" . PHP_EOL;
+    echo "✅ Asset retrieved: " . $assets->count() . " assets" . PHP_EOL;
     foreach ($assets->take(5) as $asset) {
         echo "  - {$asset->asset_name} (ID: {$asset->asset_id})" . PHP_EOL;
     }
 } catch (Exception $e) {
-    echo "❌ Assets data error: " . $e->getMessage() . PHP_EOL;
+    echo "❌ Asset data error: " . $e->getMessage() . PHP_EOL;
 }
 
 // Test if AssetController can be instantiated

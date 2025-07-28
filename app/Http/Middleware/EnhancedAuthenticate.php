@@ -56,7 +56,7 @@ class EnhancedAuthenticate
         
         // Check if user still exists and is active
         if (session('id')) {
-            $user = \App\Models\Users::find(session('id'));
+            $user = \App\Models\User::find(session('id'));
             if (!$user || $user->status !== 'active') {
                 $this->logInactiveUser($request, session('id'));
                 SessionManager::logout();

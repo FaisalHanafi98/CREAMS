@@ -11,12 +11,12 @@
         </div>
         <div class="page-actions">
             <a href="{{ route('centres.index') }}" class="btn btn-outline-secondary">
-                <i class="fas fa-arrow-left"></i> Back to Centres
+                <i class="fas fa-arrow-left"></i> Back to Centre
             </a>
         </div>
     </div>
 
-    {{-- Flash Messages --}}
+    {{-- Flash Message --}}
     @if(session('success'))
         <div class="alert alert-success alert-dismissible fade show" role="alert">
             <i class="fas fa-check-circle mr-2"></i> {{ session('success') }}

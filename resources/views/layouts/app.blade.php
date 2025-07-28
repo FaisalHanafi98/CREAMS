@@ -251,7 +251,7 @@
             display: block;
         }
         
-        /* Notifications dropdown */
+        /* Notification dropdown */
         .notifications-dropdown {
             position: relative;
         }
@@ -949,9 +949,9 @@
         <div class="topbar-title">
             <!-- Dynamic title based on current page -->
             @if(Route::currentRouteName() == 'trainees.home' || strpos(Route::currentRouteName(), 'trainee') !== false)
-                Trainees Management
+                Trainee Management
             @elseif(Route::currentRouteName() == 'activities.categories' || strpos(Route::currentRouteName(), 'rehabilitation') !== false)
-                Rehabilitation Categories
+                Rehabilitation Category
             @else
                 {{ ucfirst(session('role')) }} Dashboard
             @endif
@@ -997,7 +997,7 @@
                     @endif
                 </div>
                 <div class="notification-menu" id="notificationMenu">
-                    <!-- Notifications will be loaded via JavaScript -->
+                    <!-- Notification will be loaded via JavaScript -->
                 </div>
             </div>
             
@@ -1049,11 +1049,11 @@
                     @endif
                     @if(Route::has('notifications.index'))
                         <a href="{{ route('notifications.index') }}" class="dropdown-item">
-                            <i class="fas fa-bell"></i> Notifications
+                            <i class="fas fa-bell"></i> Notification
                         </a>
                     @else
-                        <a href="#" class="dropdown-item" onclick="alert('Notifications feature coming soon')">
-                            <i class="fas fa-bell"></i> Notifications
+                        <a href="#" class="dropdown-item" onclick="alert('Notification feature coming soon')">
+                            <i class="fas fa-bell"></i> Notification
                         </a>
                     @endif
                     @if(Route::has(session('role') . '.settings'))
@@ -1117,7 +1117,7 @@
                                 Home
                             </a>
                         @else
-                            <a href="#" class="sidebar-submenu-link" onclick="alert('Users feature coming soon')">
+                            <a href="#" class="sidebar-submenu-link" onclick="alert('User feature coming soon')">
                                 Home
                             </a>
                         @endif
@@ -1140,7 +1140,7 @@
             <li class="sidebar-item {{ strpos(Route::currentRouteName(), 'trainee') !== false ? 'submenu-open' : '' }}">
                 <a href="#" class="sidebar-link">
                     <span class="sidebar-icon"><i class="fas fa-user-graduate"></i></span>
-                    <span class="sidebar-text">Trainees</span>
+                    <span class="sidebar-text">Trainee</span>
                     <i class="fas fa-chevron-right sidebar-toggle-submenu"></i>
                 </a>
                 <ul class="sidebar-submenu">
@@ -1160,7 +1160,7 @@
             <li class="sidebar-item {{ strpos(Route::currentRouteName(), 'activities') !== false || strpos(Route::currentRouteName(), 'rehabilitation') !== false ? 'submenu-open' : '' }}">
                 <a href="#" class="sidebar-link">
                     <span class="sidebar-icon"><i class="fas fa-heartbeat"></i></span>
-                    <span class="sidebar-text">Activities</span>
+                    <span class="sidebar-text">Activity</span>
                     <i class="fas fa-chevron-right sidebar-toggle-submenu"></i>
                 </a>
                 <ul class="sidebar-submenu">
@@ -1171,16 +1171,21 @@
                     </li>
                     <li>
                         <a href="{{ route('activities.categories') }}" class="sidebar-submenu-link {{ Route::currentRouteName() == 'activities.categories' ? 'active' : '' }}">
-                            Categories
+                            Category
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('activities.schedule') }}" class="sidebar-submenu-link {{ strpos(Route::currentRouteName(), 'activities.schedule') !== false ? 'active' : '' }}">
+                            Schedule
                         </a>
                     </li>
                 </ul>
             </li>
 
-            <li class="sidebar-item {{ strpos(Route::currentRouteName(), '.centres') !== false || strpos(Route::currentRouteName(), '.assets') !== false ? 'submenu-open' : '' }}">
+            <li class="sidebar-item {{ strpos(Route::currentRouteName(), '.centres') !== false ? 'submenu-open' : '' }}">
                 <a href="#" class="sidebar-link">
                     <span class="sidebar-icon"><i class="fas fa-building"></i></span>
-                    <span class="sidebar-text">Centres</span>
+                    <span class="sidebar-text">Centre</span>
                     <i class="fas fa-chevron-right sidebar-toggle-submenu"></i>
                 </a>
                 <ul class="sidebar-submenu">
@@ -1190,16 +1195,23 @@
                                 Home
                             </a>
                         @else
-                            <a href="#" class="sidebar-submenu-link" onclick="alert('Centres feature coming soon')">
+                            <a href="#" class="sidebar-submenu-link" onclick="alert('Centre feature coming soon')">
                                 Home
                             </a>
                         @endif
                     </li>
                     <li>
-                        <a href="{{ route('assets.index') }}" class="sidebar-submenu-link {{ strpos(Route::currentRouteName(), 'assets.') === 0 ? 'active' : '' }}">
-                            Assets
+                        <a href="{{ route('centre.assets') }}" class="sidebar-submenu-link {{ strpos(Route::currentRouteName(), 'centre.assets') !== false ? 'active' : '' }}">
+                            Asset
                         </a>
                     </li>
+                    @if(in_array(session('role'), ['admin', 'supervisor']))
+                    <li>
+                        <a href="{{ route('staff-attendance.index') }}" class="sidebar-submenu-link {{ strpos(Route::currentRouteName(), 'staff-attendance') !== false ? 'active' : '' }}">
+                            Attendance
+                        </a>
+                    </li>
+                    @endif
                 </ul>
             </li>
 
@@ -1513,7 +1525,7 @@
                 let notificationsHtml = `
                     <div class="p-3 border-bottom">
                         <div class="d-flex justify-content-between align-items-center">
-                            <h6 class="m-0">Notifications</h6>
+                            <h6 class="m-0">Notification</h6>
                             ${count > 0 ? '<a href="#" class="text-muted small" id="mark-all-read">Mark all as read</a>' : ''}
                         </div>
                     </div>
@@ -1549,7 +1561,7 @@
                 notificationsHtml += `
                     <div class="p-2 text-center border-top">
                         <a href="{{ route('notifications.index') }}" class="btn btn-sm btn-light w-100">
-                            View All Notifications
+                            View All Notification
                         </a>
                     </div>
                 `;

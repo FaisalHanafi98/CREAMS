@@ -72,7 +72,7 @@ class AssetMovement extends Model
      */
     public function fromUser(): BelongsTo
     {
-        return $this->belongsTo(Users::class, 'from_user');
+        return $this->belongsTo(User::class, 'from_user');
     }
 
     /**
@@ -80,15 +80,15 @@ class AssetMovement extends Model
      */
     public function toUser(): BelongsTo
     {
-        return $this->belongsTo(Users::class, 'to_user');
+        return $this->belongsTo(User::class, 'to_user');
+    
     }
-
     /**
      * Get the user who performed the movement
      */
     public function performedBy(): BelongsTo
     {
-        return $this->belongsTo(Users::class, 'performed_by');
+        return $this->belongsTo(User::class, 'performed_by');
     }
 
     // =============================================

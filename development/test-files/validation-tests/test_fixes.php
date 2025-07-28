@@ -10,14 +10,14 @@ echo "=== CREAMS SYSTEM FIXES VALIDATION ===\n\n";
 
 try {
     // Test 1: Trainee activities relationship (Fix #1)
-    echo "1. Testing Trainee Activities Relationship:\n";
+    echo "1. Testing Trainee Activity Relationship:\n";
     $trainee = App\Models\Trainee::first();
     if ($trainee) {
         echo "   ✓ Trainee found: {$trainee->trainee_first_name}\n";
         $activities = $trainee->activities()->limit(1)->get();
         if ($activities->count() > 0) {
             $activity = $activities->first();
-            echo "   ✓ Activities relationship working\n";
+            echo "   ✓ Activity relationship working\n";
             if ($activity->pivot && property_exists($activity->pivot, 'enrollment_status')) {
                 echo "   ✓ Pivot enrollment_status field accessible\n";
             } else {
@@ -69,14 +69,14 @@ try {
     
     // Test 4: Asset-Centre relationship (Fix #4)
     echo "\n4. Testing Asset-Centre Relationship:\n";
-    $centre = App\Models\Centres::first();
+    $centre = App\Models\Centre::first();
     if ($centre) {
         echo "   ✓ Centre found: {$centre->centre_name} (ID: {$centre->centre_id})\n";
         try {
             $assetsCount = $centre->assets()->count();
-            echo "   ✓ Centre-Assets relationship working, count: {$assetsCount}\n";
+            echo "   ✓ Centre-Asset relationship working, count: {$assetsCount}\n";
         } catch (Exception $e) {
-            echo "   ✗ Centre-Assets relationship error: {$e->getMessage()}\n";
+            echo "   ✗ Centre-Asset relationship error: {$e->getMessage()}\n";
         }
     } else {
         echo "   - No centres found\n";

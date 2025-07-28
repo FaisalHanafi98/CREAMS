@@ -62,7 +62,7 @@
                                         </li>
                                         <li class="nav-item">
                                             <a class="nav-link" id="activities-tab" data-toggle="tab" href="#activities" role="tab" aria-controls="activities" aria-selected="false">
-                                                <i class="fas fa-tasks"></i> Activities
+                                                <i class="fas fa-tasks"></i> Activity
                                             </a>
                                         </li>
                                     </ul>
@@ -130,7 +130,7 @@
                                                         $startDate = date('Y-m-01');
                                                         $endDate = date('Y-m-t');
                                                         
-                                                        $attendanceStats = App\Models\Attendances::where('trainee_id', $trainee->id)
+                                                        $attendanceStats = App\Models\Attendance::where('trainee_id', $trainee->id)
                                                             ->whereBetween('date', [$startDate, $endDate])
                                                             ->get();
                                                         
@@ -187,7 +187,7 @@
                                                                 </thead>
                                                                 <tbody>
                                                                     @php
-                                                                        $recentAttendance = App\Models\Attendances::where('trainee_id', $trainee->id)
+                                                                        $recentAttendance = App\Models\Attendance::where('trainee_id', $trainee->id)
                                                                             ->orderBy('date', 'desc')
                                                                             ->limit(10)
                                                                             ->get();
@@ -225,11 +225,11 @@
                                             </div>
                                         </div>
 
-                                        <!-- Activities Tab -->
+                                        <!-- Activity Tab -->
                                         <div class="tab-pane fade" id="activities" role="tabpanel" aria-labelledby="activities-tab">
                                             <div class="card shadow-sm">
                                                 <div class="card-header bg-transparent border-0">
-                                                    <h3 class="mb-0"><i class="fas fa-tasks pr-1"></i>Trainee Activities</h3>
+                                                    <h3 class="mb-0"><i class="fas fa-tasks pr-1"></i>Trainee Activity</h3>
                                                 </div>
                                                 <div class="card-body">
                                                     <!-- Add activities content here -->

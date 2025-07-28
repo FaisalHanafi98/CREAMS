@@ -224,7 +224,7 @@ class Trainee extends Model
      */
     public function course()
     {
-        return $this->belongsTo(Courses::class, 'course_id');
+        return $this->belongsTo(Course::class, 'course_id');
     }
 
     /**
@@ -232,7 +232,7 @@ class Trainee extends Model
      */
     public function centre()
     {
-        return $this->belongsTo(Centres::class, 'centre_name', 'centre_name');
+        return $this->belongsTo(Centre::class, 'centre_name', 'centre_name');
     }
 
     /**
@@ -240,7 +240,7 @@ class Trainee extends Model
      */
     public function classes()
     {
-        return $this->belongsToMany(Classes::class, 'class_trainee', 'trainee_id', 'class_id')
+        return $this->belongsToMany(ClassModel::class, 'class_trainee', 'trainee_id', 'class_id')
                     ->withTimestamps();
     }
 
@@ -324,7 +324,7 @@ class Trainee extends Model
      */
     public function lastUpdatedBy()
     {
-        return $this->belongsTo(Users::class, 'last_updated_by');
+        return $this->belongsTo(User::class, 'last_updated_by');
     }
 
     // =============================================

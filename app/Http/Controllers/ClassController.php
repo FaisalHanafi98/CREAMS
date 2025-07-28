@@ -5,9 +5,9 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
-use App\Models\Classes;
-use App\Models\Trainees;
-use App\Models\Attendances;
+use App\Models\ClassModel;
+use App\Models\Trainee;
+use App\Models\Attendance;
 
 class ClassController extends Controller
 {
@@ -18,7 +18,7 @@ class ClassController extends Controller
     {
         $teacherId = session('id');
         
-        $classes = Classes::where('teacher_id', $teacherId)
+        $classes = ClassModel::where('teacher_id', $teacherId)
                  ->orderBy('start_date', 'desc')
                  ->paginate(10);
         
@@ -32,7 +32,7 @@ class ClassController extends Controller
     {
         $teacherId = session('id');
         
-        $classes = Classes::where('teacher_id', $teacherId)
+        $classes = ClassModel::where('teacher_id', $teacherId)
                  ->where('status', 'active')
                  ->get();
         
@@ -67,13 +67,13 @@ class ClassController extends Controller
     {
         $teacherId = session('id');
         
-        $class = Classes::where('id', $id)
+        $class = ClassModel::where('id', $id)
                ->where('teacher_id', $teacherId)
                ->firstOrFail();
         
         $trainees = $class->trainees;
         
-        $recentAttendance = Attendances::where('class_id', $id)
+        $recentAttendance = Attendance::where('class_id', $id)
                           ->orderBy('date', 'desc')
                           ->limit(10)
                           ->get()
@@ -90,7 +90,7 @@ class ClassController extends Controller
         $teacherId = session('id');
         
         // Verify teacher has access to this class
-        $class = Classes::where('id', $id)
+        $class = ClassModel::where('id', $id)
                 ->where('teacher_id', $teacherId)
                 ->firstOrFail();
         
@@ -105,13 +105,13 @@ class ClassController extends Controller
         
         try {
             // Delete existing attendance records for this date
-            Attendances::where('class_id', $id)
+            Attendance::where('class_id', $id)
                      ->where('date', $validated['date'])
                      ->delete();
             
             // Create new attendance records
             foreach ($validated['attendance'] as $traineeId => $status) {
-                $attendance = new Attendances();
+                $attendance = new Attendance();
                 $attendance->trainee_id = $traineeId;
                 $attendance->class_id = $id;
                 $attendance->date = $validated['date'];

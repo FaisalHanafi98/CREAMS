@@ -4,8 +4,8 @@ namespace App\Http\Controllers\Trainee;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\Trainees;
-use App\Models\Centres;
+use App\Models\Trainee;
+use App\Models\Centre;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
@@ -31,10 +31,10 @@ class TraineeRegistrationController extends Controller
             // Get centres for dropdown - only retrieve centre_name
             // Get centres with safe query
             try {
-                $centres = Centres::where('is_active', 1)->get();
+                $centres = Centre::where('is_active', 1)->get();
             } catch (\Exception $e) {
                 // If is_active column doesn't exist, get all centres
-                $centres = Centres::all();
+                $centres = Centre::all();
             }
             
             // Get conditions for dropdown (could be from a separate model/table in the future)
@@ -56,7 +56,7 @@ class TraineeRegistrationController extends Controller
             $selectedCentre = null;
             if (request()->has('centre')) {
                 $centreName = request()->get('centre');
-                $selectedCentre = Centres::where('centre_name', $centreName)->first();
+                $selectedCentre = Centre::where('centre_name', $centreName)->first();
                 if (!$selectedCentre) {
                     Log::warning('Invalid centre specified in trainee registration', [
                         'centre' => $centreName,
@@ -182,7 +182,7 @@ class TraineeRegistrationController extends Controller
             }
             
             // Create new trainee record
-            $trainee = new Trainees();
+            $trainee = new Trainee();
             $trainee->trainee_first_name = $request->input('trainee_first_name');
             $trainee->trainee_last_name = $request->input('trainee_last_name');
             $trainee->trainee_email = $request->input('trainee_email');
@@ -283,11 +283,11 @@ class TraineeRegistrationController extends Controller
     /**
      * Generate a unique filename for the trainee avatar
      *
-     * @param Trainees $trainee
+     * @param Trainee $trainee
      * @param \Illuminate\Http\UploadedFile $file
      * @return string
      */
-    private function generateAvatarFilename(Trainees $trainee, $file)
+    private function generateAvatarFilename(Trainee $trainee, $file)
     {
         // Extract the file extension
         $extension = $file->getClientOriginalExtension();
@@ -319,10 +319,10 @@ class TraineeRegistrationController extends Controller
      *
      * @param \Illuminate\Http\UploadedFile $file
      * @param string $filename
-     * @param Trainees $trainee
+     * @param Trainee $trainee
      * @return void
      */
-    private function processAndStoreAvatar($file, $filename, Trainees &$trainee)
+    private function processAndStoreAvatar($file, $filename, Trainee &$trainee)
     {
         // Create storage directory if it doesn't exist
         $storagePath = public_path('storage/trainee_avatars');
@@ -368,7 +368,7 @@ class TraineeRegistrationController extends Controller
             $email = $request->input('email');
             
             // Check if email exists
-            $exists = Trainees::where('trainee_email', $email)->exists();
+            $exists = Trainee::where('trainee_email', $email)->exists();
             
             return response()->json([
                 'valid' => !$exists,
@@ -405,7 +405,7 @@ class TraineeRegistrationController extends Controller
             // This would typically use a package like maatwebsite/excel
             // For now, we'll just log that the import was attempted
             
-            Log::info('Trainees import initiated', [
+            Log::info('Trainee import initiated', [
                 'user_id' => session('id'),
                 'filename' => $request->file('trainees_file')->getClientOriginalName()
             ]);

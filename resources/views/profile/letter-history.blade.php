@@ -70,11 +70,11 @@
         </div>
     </div>
 
-    <!-- Letters Table -->
+    <!-- Letter Table -->
     <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center">
             <h5 class="mb-0">
-                <i class="fas fa-file-alt"></i> Letters 
+                <i class="fas fa-file-alt"></i> Letter 
                 <span class="badge badge-secondary">{{ $letters->total() }}</span>
             </h5>
             <a href="{{ route('admin.letters.index') }}" class="btn btn-success btn-sm">
@@ -173,7 +173,7 @@
             @else
                 <div class="text-center py-5">
                     <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
-                    <h5 class="text-muted">No Letters Found</h5>
+                    <h5 class="text-muted">No Letter Found</h5>
                     <p class="text-muted">
                         @if(request()->hasAny(['search', 'start_date', 'end_date']))
                             No letters match your current filters.

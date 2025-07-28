@@ -98,7 +98,7 @@ class AssetLocation extends Model
      */
     public function centre(): BelongsTo
     {
-        return $this->belongsTo(Centres::class);
+        return $this->belongsTo(Centre::class);
     }
 
     /**

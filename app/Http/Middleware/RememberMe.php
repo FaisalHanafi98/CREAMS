@@ -4,11 +4,11 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
-use App\Models\Users;
-use App\Models\Admins;
-use App\Models\Supervisors;
-use App\Models\Teachers;
-use App\Models\AJKs;
+use App\Models\User;
+use App\Models\Admin;
+use App\Models\Supervisor;
+use App\Models\Teacher;
+use App\Models\AJK;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cookie;
 
@@ -55,7 +55,7 @@ class RememberMe
             ]);
             
             // Try to find user with this remember token
-            $user = Users::where('remember_token', $token)
+            $user = User::where('remember_token', $token)
                         ->where('status', 'active')
                         ->first();
             
@@ -119,13 +119,13 @@ class RememberMe
     {
         $className = get_class($user);
         
-        if ($className === Admins::class) {
+        if ($className === Admin::class) {
             return 'admin';
-        } elseif ($className === Supervisors::class) {
+        } elseif ($className === Supervisor::class) {
             return 'supervisor';
-        } elseif ($className === Teachers::class) {
+        } elseif ($className === Teacher::class) {
             return 'teacher';
-        } elseif ($className === AJKs::class) {
+        } elseif ($className === AJK::class) {
             return 'ajk';
         }
         

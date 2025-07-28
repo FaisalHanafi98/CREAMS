@@ -178,13 +178,13 @@
       <li>
         <a href="{{ route('admin.centres') }}">
           <i class="fas fa-building"></i>
-          <span>Centres</span>
+          <span>Centre</span>
         </a>
       </li>
       <li>
         <a href="{{ route('admin.assets') }}">
           <i class="fas fa-boxes"></i>
-          <span>Assets</span>
+          <span>Asset</span>
         </a>
       </li>
       <li class="active">
@@ -391,7 +391,7 @@
               <div class="card-body">
                 <div class="setting-group">
                   <div class="d-flex justify-content-between align-items-center">
-                    <label for="email_notifications">Email Notifications</label>
+                    <label for="email_notifications">Email Notification</label>
                     <label class="switch">
                       <input type="checkbox" id="email_notifications" name="email_notifications" {{ $settings['notifications']['email_notifications'] ? 'checked' : '' }}>
                       <span class="slider"></span>
@@ -400,7 +400,7 @@
                 </div>
                 <div class="setting-group">
                   <div class="d-flex justify-content-between align-items-center">
-                    <label for="system_notifications">System Notifications</label>
+                    <label for="system_notifications">System Notification</label>
                     <label class="switch">
                       <input type="checkbox" id="system_notifications" name="system_notifications" {{ $settings['notifications']['system_notifications'] ? 'checked' : '' }}>
                       <span class="slider"></span>
@@ -409,7 +409,7 @@
                 </div>
                 <div class="setting-group">
                   <div class="d-flex justify-content-between align-items-center">
-                    <label for="sms_notifications">SMS Notifications</label>
+                    <label for="sms_notifications">SMS Notification</label>
                     <label class="switch">
                       <input type="checkbox" id="sms_notifications" name="sms_notifications" {{ $settings['notifications']['sms_notifications'] ? 'checked' : '' }}>
                       <span class="slider"></span>

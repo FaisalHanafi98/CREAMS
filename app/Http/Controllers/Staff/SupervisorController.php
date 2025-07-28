@@ -6,11 +6,11 @@ use App\Http\Controllers\Controller;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use App\Models\Teachers;
-use App\Models\Trainees;
-use App\Models\Activities;
-use App\Models\Centres;
-use App\Models\Assets;
+use App\Models\Teacher;
+use App\Models\Trainee;
+use App\Models\Activity;
+use App\Models\Centre;
+use App\Models\Asset;
 
 class SupervisorController extends Controller
 {
@@ -36,7 +36,7 @@ class SupervisorController extends Controller
         Log::info('Supervisor accessed users list', ['supervisor_id' => $supervisorId, 'centre_id' => $centreId]);
         
         // Get teachers that belong to the same centre as the supervisor
-        $teachers = Teachers::where('centre_id', $centreId)->get();
+        $teachers = Teacher::where('centre_id', $centreId)->get();
         
         return view('supervisor.users', [
             'teachers' => $teachers
@@ -55,7 +55,7 @@ class SupervisorController extends Controller
         Log::info('Supervisor accessed trainees list', ['supervisor_id' => $supervisorId, 'centre_id' => $centreId]);
         
         // Get trainees for this centre
-        $trainees = Trainees::where('centre_id', $centreId)->get();
+        $trainees = Trainee::where('centre_id', $centreId)->get();
         
         return view('supervisor.trainees', [
             'trainees' => $trainees
@@ -75,7 +75,7 @@ class SupervisorController extends Controller
         
         // Get centres managed by this supervisor
         // In most cases, this will just be their assigned centre
-        $centres = Centres::where('centre_id', $centreId)->get();
+        $centres = Centre::where('centre_id', $centreId)->get();
         
         return view('supervisor.centres', [
             'centres' => $centres
@@ -94,7 +94,7 @@ class SupervisorController extends Controller
         Log::info('Supervisor accessed assets list', ['supervisor_id' => $supervisorId, 'centre_id' => $centreId]);
         
         // Get assets for the supervisor's centre
-        $assets = Assets::where('centre_id', $centreId)->get();
+        $assets = Asset::where('centre_id', $centreId)->get();
         
         return view('supervisor.assets', [
             'assets' => $assets
@@ -141,7 +141,7 @@ class SupervisorController extends Controller
         Log::info('Supervisor accessed activities list', ['supervisor_id' => $supervisorId, 'centre_id' => $centreId]);
         
         // Get activities for this centre
-        $activities = Activities::where('centre_id', $centreId)->get();
+        $activities = Activity::where('centre_id', $centreId)->get();
         
         return view('supervisor.activities', [
             'activities' => $activities
@@ -160,7 +160,7 @@ class SupervisorController extends Controller
         Log::info('Supervisor managing teachers', ['supervisor_id' => $supervisorId, 'centre_id' => $centreId]);
         
         // Get teachers for this centre
-        $teachers = Teachers::where('centre_id', $centreId)->get();
+        $teachers = Teacher::where('centre_id', $centreId)->get();
         
         return view('supervisor.teachers', [
             'teachers' => $teachers
@@ -180,7 +180,7 @@ class SupervisorController extends Controller
         Log::info('Supervisor viewing teacher', ['supervisor_id' => $supervisorId, 'teacher_id' => $id]);
         
         // Get teacher
-        $teacher = Teachers::findOrFail($id);
+        $teacher = Teacher::findOrFail($id);
         
         // Check if this supervisor has access to this teacher
         if ($teacher->centre_id != $centreId) {
@@ -213,7 +213,7 @@ class SupervisorController extends Controller
         Log::info('Supervisor editing teacher', ['supervisor_id' => $supervisorId, 'teacher_id' => $id]);
         
         // Get teacher
-        $teacher = Teachers::findOrFail($id);
+        $teacher = Teacher::findOrFail($id);
         
         // Check if this supervisor has access to this teacher
         if ($teacher->centre_id != $centreId) {
@@ -240,7 +240,7 @@ class SupervisorController extends Controller
         Log::info('Supervisor updating teacher', ['supervisor_id' => $supervisorId, 'teacher_id' => $id]);
         
         // Get teacher
-        $teacher = Teachers::findOrFail($id);
+        $teacher = Teacher::findOrFail($id);
         
         // Check if this supervisor has access to this teacher
         if ($teacher->centre_id != $centreId) {
@@ -278,7 +278,7 @@ class SupervisorController extends Controller
         Log::info('Supervisor changing teacher status', ['supervisor_id' => $supervisorId, 'teacher_id' => $id]);
         
         // Get teacher
-        $teacher = Teachers::findOrFail($id);
+        $teacher = Teacher::findOrFail($id);
         
         // Check if this supervisor has access to this teacher
         if ($teacher->centre_id != $centreId) {
@@ -312,7 +312,7 @@ class SupervisorController extends Controller
         Log::info('Supervisor viewing trainee', ['supervisor_id' => $supervisorId, 'trainee_id' => $id]);
         
         // Get trainee
-        $trainee = Trainees::findOrFail($id);
+        $trainee = Trainee::findOrFail($id);
         
         // Check if this supervisor has access to this trainee
         if ($trainee->centre_id != $centreId) {
@@ -338,7 +338,7 @@ class SupervisorController extends Controller
         Log::info('Supervisor editing trainee', ['supervisor_id' => $supervisorId, 'trainee_id' => $id]);
         
         // Get trainee
-        $trainee = Trainees::findOrFail($id);
+        $trainee = Trainee::findOrFail($id);
         
         // Check if this supervisor has access to this trainee
         if ($trainee->centre_id != $centreId) {
@@ -365,7 +365,7 @@ class SupervisorController extends Controller
         Log::info('Supervisor updating trainee', ['supervisor_id' => $supervisorId, 'trainee_id' => $id]);
         
         // Get trainee
-        $trainee = Trainees::findOrFail($id);
+        $trainee = Trainee::findOrFail($id);
         
         // Check if this supervisor has access to this trainee
         if ($trainee->centre_id != $centreId) {
@@ -403,7 +403,7 @@ class SupervisorController extends Controller
         Log::info('Supervisor viewing activity', ['supervisor_id' => $supervisorId, 'activity_id' => $id]);
         
         // Get activity
-        $activity = Activities::findOrFail($id);
+        $activity = Activity::findOrFail($id);
         
         // Check if this supervisor has access to this activity
         if ($activity->centre_id != $centreId) {
@@ -429,7 +429,7 @@ class SupervisorController extends Controller
         Log::info('Supervisor editing activity', ['supervisor_id' => $supervisorId, 'activity_id' => $id]);
         
         // Get activity
-        $activity = Activities::findOrFail($id);
+        $activity = Activity::findOrFail($id);
         
         // Check if this supervisor has access to this activity
         if ($activity->centre_id != $centreId) {
@@ -456,7 +456,7 @@ class SupervisorController extends Controller
         Log::info('Supervisor updating activity', ['supervisor_id' => $supervisorId, 'activity_id' => $id]);
         
         // Get activity
-        $activity = Activities::findOrFail($id);
+        $activity = Activity::findOrFail($id);
         
         // Check if this supervisor has access to this activity
         if ($activity->centre_id != $centreId) {
@@ -513,6 +513,6 @@ class SupervisorController extends Controller
         // Mark notifications as read logic would go here
         // This would depend on your notification model
         
-        return redirect()->back()->with('success', 'Notifications marked as read');
+        return redirect()->back()->with('success', 'Notification marked as read');
     }
 }

@@ -10,9 +10,9 @@ use App\Models\ActivitySession;
 use App\Models\ActivitySchedule;
 use App\Models\ActivityEnrollment;
 use App\Models\SessionEnrollment;
-use App\Models\Users;
+use App\Models\User;
 use App\Models\Trainee;
-use App\Models\Centres;
+use App\Models\Centre;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Traits\HandlesErrors;
@@ -43,7 +43,7 @@ class ActivityController extends Controller
                 });
             } elseif ($role === 'ajk') {
                 // AJK can only view activities
-                $query->where('is_active', true);
+                $query->whereIn('activity_status', ['scheduled', 'ongoing']);
             }
 
             $activities = $query->orderBy('created_at', 'desc')->paginate(12);
@@ -76,17 +76,88 @@ class ActivityController extends Controller
     public function categories()
     {
         try {
-            $categories = Category::active()
-                ->ordered()
-                ->withCount('activities')
-                ->get()
-                ->groupBy('type');
+            // Check if we have any activities at all
+            $totalActivities = Activity::count();
+            Log::info('Categories debug: total activities', ['total' => $totalActivities]);
+            
+            // Get all activity types for debugging
+            $allTypes = Activity::select('activity_type')->distinct()->pluck('activity_type')->toArray();
+            Log::info('Categories debug: all activity types', ['types' => $allTypes]);
+            
+            // Get unique categories from activities with their counts
+            $allActivities = Activity::all();
+            $categoryNames = $allActivities->pluck('category')->unique()->filter();
+            
+            $activityCategories = $categoryNames->map(function($categoryName) use ($allActivities) {
+                $count = $allActivities->where('category', $categoryName)->count();
+                return (object)[
+                    'name' => $categoryName,
+                    'slug' => \Illuminate\Support\Str::slug($categoryName),
+                    'description' => "Activities in the {$categoryName} category",
+                    'activities_count' => $count,
+                    'color_code' => $this->getCategoryColor($categoryName),
+                    'icon_class' => $this->getCategoryIcon($categoryName)
+                ];
+            });
+            
+            Log::info('Categories debug: found categories', ['count' => $activityCategories->count()]);
 
-            return view('rehabilitation.categories', compact('categories'));
+            // Group categories by type
+            $rehabilitationCategories = ['Physical Therapy', 'Occupational Therapy', 'Speech Therapy', 'Sensory Integration'];
+            $academicCategories = ['Mathematics', 'Literacy', 'Science', 'Computer Skills'];
+            
+            // If no activities found, create default categories
+            if ($activityCategories->isEmpty()) {
+                $defaultCategories = collect();
+                
+                // Add rehabilitation categories
+                foreach ($rehabilitationCategories as $category) {
+                    $defaultCategories->push((object)[
+                        'name' => $category,
+                        'slug' => \Illuminate\Support\Str::slug($category),
+                        'description' => "Activities in the {$category} category",
+                        'activities_count' => 0,
+                        'color_code' => $this->getCategoryColor($category),
+                        'icon_class' => $this->getCategoryIcon($category)
+                    ]);
+                }
+                
+                // Add academic categories
+                foreach ($academicCategories as $category) {
+                    $defaultCategories->push((object)[
+                        'name' => $category,
+                        'slug' => \Illuminate\Support\Str::slug($category),
+                        'description' => "Activities in the {$category} category",
+                        'activities_count' => 0,
+                        'color_code' => $this->getCategoryColor($category),
+                        'icon_class' => $this->getCategoryIcon($category)
+                    ]);
+                }
+                
+                $categoriesGrouped = [
+                    'rehabilitation' => $defaultCategories->filter(function($cat) use ($rehabilitationCategories) {
+                        return in_array($cat->name, $rehabilitationCategories);
+                    }),
+                    'academic' => $defaultCategories->filter(function($cat) use ($academicCategories) {
+                        return in_array($cat->name, $academicCategories);
+                    })
+                ];
+            } else {
+                $categoriesGrouped = [
+                    'rehabilitation' => $activityCategories->filter(function($cat) use ($rehabilitationCategories) {
+                        return in_array($cat->name, $rehabilitationCategories);
+                    }),
+                    'academic' => $activityCategories->filter(function($cat) use ($academicCategories) {
+                        return in_array($cat->name, $academicCategories);
+                    })
+                ];
+            }
+
+            return view('rehabilitation.categories', ['categories' => $categoriesGrouped]);
 
         } catch (Exception $e) {
             Log::error('Error loading rehabilitation categories: ' . $e->getMessage());
-            return redirect()->route('activities.index')
+            return redirect()->route('activities.home')
                 ->with('error', 'Unable to load categories.');
         }
     }
@@ -108,7 +179,7 @@ class ActivityController extends Controller
                 $categoryName = ucwords($categoryName);
                 
                 // Check if activities exist with this category directly (for ENUM-based categories)
-                $activities = Activity::where('category', $categoryName)
+                $activities = Activity::where('activity_type', $categoryName)
                     ->where('is_active', true)
                     ->where('centre_id', session('centre_id'))
                     ->with(['sessions', 'creator'])
@@ -120,7 +191,7 @@ class ActivityController extends Controller
                         'id' => null,
                         'name' => $categoryName,
                         'slug' => $categorySlug,
-                        'description' => "Activities in the {$categoryName} category",
+                        'description' => "Activity in the {$categoryName} category",
                         'type' => 'rehabilitation',
                         'icon_class' => 'fas fa-tasks',
                         'color_code' => '#8B5CF6'
@@ -134,7 +205,7 @@ class ActivityController extends Controller
                 $activities = Activity::where('category_id', $category->id)
                     ->where('is_active', true)
                     ->where('centre_id', session('centre_id'))
-                    ->with(['sessions', 'creator', 'category'])
+                    ->with(['sessions', 'creator'])
                     ->paginate(12);
             }
 
@@ -154,14 +225,16 @@ class ActivityController extends Controller
     {
         $role = session('role');
         
-        if (!in_array($role, ['admin', 'supervisor'])) {
-            return redirect()->route('activities.index')
-                ->with('error', 'You do not have permission to create activities.');
+        // Admin-only restriction as per new requirements
+        if ($role !== 'admin') {
+            return redirect()->route('activities.home')
+                ->with('error', 'Only administrators can create activities.');
         }
 
-        $categories = Category::active()->ordered()->get();
+        // Get centres for the form
+        $centres = Centre::active()->get();
         
-        return view('activities.create', compact('categories'));
+        return view('activities.create', compact('centres'));
     }
 
     /**
@@ -171,64 +244,91 @@ class ActivityController extends Controller
     {
         $role = session('role');
         
-        if (!in_array($role, ['admin', 'supervisor'])) {
-            return redirect()->route('activities.index')
-                ->with('error', 'You do not have permission to create activities.');
+        // Admin-only restriction as per new requirements
+        if ($role !== 'admin') {
+            return redirect()->route('activities.home')
+                ->with('error', 'Only administrators can create activities.');
         }
 
         $validated = $request->validate([
+            // Basic Information
             'activity_name' => 'required|string|max:255',
             'activity_id' => 'required|string|max:20|unique:activities',
-            'activity_description' => 'required|string',
-            'category_id' => 'nullable|exists:categories,id',
-            'activity_type' => 'required|in:Individual,Group,Both,Education,Therapy,Training',
-            'activity_date' => 'required|date|after_or_equal:today',
-            'activity_start_time' => 'required|date_format:H:i',
-            'activity_end_time' => 'required|date_format:H:i|after:activity_start_time',
-            'activity_location' => 'required|string|max:255',
-            'max_participants' => 'required|integer|min:1|max:100',
-            'activity_goals' => 'nullable|string',
-            'activity_outcomes' => 'nullable|string',
-            'required_resources' => 'nullable|string',
-            'activity_image' => 'nullable|string'
+            'category' => 'required|string|max:100',
+            'difficulty_level' => 'required|in:Beginner,Intermediate,Advanced',
+            'description' => 'required|string',
+            
+            // Location & Centre
+            'centre_id' => 'required|exists:centres,centre_id',
+            'location' => 'required|string|max:255',
+            
+            // Instructor
+            'instructor_id' => 'required|exists:users,id',
+            
+            // Participants
+            'max_participants' => 'required|integer|min:1|max:50',
+            'min_participants' => 'required|integer|min:1|max:50',
+            'participants' => 'nullable|string', // Comma-separated trainee IDs
+            
+            // Schedule
+            'sessions_per_week' => 'required|integer|min:1|max:5',
+            'duration_hours' => 'required|numeric|min:0.5|max:3',
+            'start_date' => 'required|date|after_or_equal:today',
+            'start_time' => 'required|date_format:H:i',
+            'schedule_days' => 'required|array|min:1',
+            'schedule_days.*' => 'in:Monday,Tuesday,Wednesday,Thursday,Friday,Saturday,Sunday'
         ]);
 
         try {
             DB::beginTransaction();
 
+            // Calculate end time based on duration
+            $startTime = Carbon::parse($validated['start_time']);
+            $endTime = $startTime->copy()->addHours($validated['duration_hours']);
+
             $activity = Activity::create([
-                'activity_name' => $validated['activity_name'],
-                'activity_id' => strtoupper($validated['activity_id']),
-                'activity_description' => $validated['activity_description'],
-                'category_id' => $validated['category_id'],
-                'activity_type' => $validated['activity_type'],
-                'activity_date' => $validated['activity_date'],
-                'activity_start_time' => $validated['activity_start_time'],
-                'activity_end_time' => $validated['activity_end_time'],
-                'activity_location' => $validated['activity_location'],
+                'name' => $validated['activity_name'],
+                'activity_code' => strtoupper($validated['activity_id']),
+                'description' => $validated['description'],
+                'category' => $validated['category'],
+                'difficulty_level' => $validated['difficulty_level'],
                 'max_participants' => $validated['max_participants'],
-                'current_participants' => 0,
-                'activity_goals' => $validated['activity_goals'],
-                'activity_outcomes' => $validated['activity_outcomes'],
-                'required_resources' => $validated['required_resources'],
-                'activity_image' => $validated['activity_image'],
-                'activity_status' => 'scheduled',
+                'min_participants' => $validated['min_participants'],
+                'duration_minutes' => $validated['duration_hours'] * 60, // Convert hours to minutes
+                'is_active' => true,
                 'created_by' => session('id'),
-                'centre_id' => session('centre_id'),
-                'instructor_id' => session('id')
+                'centre_id' => $validated['centre_id']
             ]);
+
+            // Create activity sessions based on schedule
+            $this->createActivitySessions($activity, $validated);
+
+            // Enroll selected participants if any
+            if (!empty($validated['participants'])) {
+                $participantIds = explode(',', $validated['participants']);
+                $this->enrollParticipants($activity, $participantIds, $validated['start_date']);
+            }
 
             DB::commit();
 
+            Log::info('Activity created successfully', [
+                'activity_id' => $activity->id,
+                'activity_name' => $activity->name,
+                'created_by' => session('id')
+            ]);
+
             return redirect()->route('activities.show', $activity->id)
-                ->with('success', 'Activity created successfully!');
+                ->with('success', 'Activity created successfully with scheduled sessions!');
 
         } catch (Exception $e) {
             DB::rollBack();
-            Log::error('Error creating activity: ' . $e->getMessage());
+            Log::error('Error creating activity: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+                'input' => $request->except(['participants'])
+            ]);
             return redirect()->back()
                 ->withInput()
-                ->with('error', 'An error occurred while creating the activity.');
+                ->with('error', 'An error occurred while creating the activity: ' . $e->getMessage());
         }
     }
 
@@ -254,7 +354,7 @@ class ActivityController extends Controller
                         'teacher_id' => $userId,
                         'activity_id' => $id
                     ]);
-                    return redirect()->route('activities.index')
+                    return redirect()->route('activities.home')
                         ->with('error', 'You do not have access to this activity.');
                 }
             }
@@ -283,7 +383,7 @@ class ActivityController extends Controller
                 'user_id' => session('id'),
                 'error' => $e->getTraceAsString()
             ]);
-            return redirect()->route('activities.index')
+            return redirect()->route('activities.home')
                 ->with('error', 'Activity not found or access denied.');
         }
     }
@@ -301,7 +401,7 @@ class ActivityController extends Controller
                 'role' => $role,
                 'activity_id' => $id
             ]);
-            return redirect()->route('activities.index')
+            return redirect()->route('activities.home')
                 ->with('error', 'You do not have permission to edit activities.');
         }
 
@@ -324,7 +424,7 @@ class ActivityController extends Controller
                 'user_id' => session('id'),
                 'error' => $e->getTraceAsString()
             ]);
-            return redirect()->route('activities.index')
+            return redirect()->route('activities.home')
                 ->with('error', 'Activity not found or access denied.');
         }
     }
@@ -337,7 +437,7 @@ class ActivityController extends Controller
         $role = session('role');
         
         if (!in_array($role, ['admin', 'supervisor'])) {
-            return redirect()->route('activities.index')
+            return redirect()->route('activities.home')
                 ->with('error', 'You do not have permission to update activities.');
         }
 
@@ -397,7 +497,7 @@ class ActivityController extends Controller
         $role = session('role');
         
         if (!in_array($role, ['admin', 'supervisor'])) {
-            return redirect()->route('activities.index')
+            return redirect()->route('activities.home')
                 ->with('error', 'You do not have permission to delete activities.');
         }
 
@@ -412,7 +512,7 @@ class ActivityController extends Controller
 
             $activity->delete();
 
-            return redirect()->route('activities.index')
+            return redirect()->route('activities.home')
                 ->with('success', 'Activity deleted successfully!');
 
         } catch (Exception $e) {
@@ -444,7 +544,7 @@ class ActivityController extends Controller
             $sessions = $sessions->orderBy('scheduled_date', 'desc')->orderBy('start_time', 'desc')->paginate(10);
 
             // Get available teachers for session creation
-            $teachers = Users::where('role', 'teacher')
+            $teachers = User::where('role', 'teacher')
                 ->where('status', 'active')
                 ->where('centre_id', session('centre_id'))
                 ->get(['id', 'name']);
@@ -759,18 +859,123 @@ class ActivityController extends Controller
 
             return [
                 'total_activities' => $query->count(),
-                'active_activities' => $query->where('is_active', true)->count(),
+                'active_activities' => $query->whereIn('activity_status', ['scheduled', 'ongoing'])->count(),
                 'total' => $query->count(), // Backward compatibility
-                'active' => $query->where('is_active', true)->count(), // Backward compatibility
-                'rehabilitation' => $query->whereIn('category', [
-                    'Physical Therapy', 'Occupational Therapy', 
-                    'Speech Therapy', 'Sensory Integration'
-                ])->count(),
-                'academic' => $query->whereIn('category', [
-                    'Mathematics', 'Literacy', 'Science', 'Computer Skills'
-                ])->count()
+                'active' => $query->whereIn('activity_status', ['scheduled', 'ongoing'])->count(), // Backward compatibility
+                'rehabilitation' => $query->get()->filter(function($activity) {
+                    return in_array($activity->category, ['Physical Therapy', 'Occupational Therapy', 'Speech Therapy', 'Sensory Integration']);
+                })->count(),
+                'academic' => $query->get()->filter(function($activity) {
+                    return in_array($activity->category, ['Mathematics', 'Literacy', 'Science', 'Computer Skills']);
+                })->count()
             ];
         });
+    }
+
+    /**
+     * Create activity sessions based on schedule
+     */
+    private function createActivitySessions($activity, $validated)
+    {
+        $startDate = Carbon::parse($validated['start_date']);
+        $scheduleDays = $validated['schedule_days'];
+        $sessionsPerWeek = $validated['sessions_per_week'];
+        $duration = $validated['duration_hours'];
+        $startTime = $validated['start_time'];
+        
+        // Create sessions for the next 12 weeks (3 months)
+        $currentDate = $startDate->copy();
+        $endDate = $startDate->copy()->addWeeks(12);
+        $sessionCount = 0;
+        
+        while ($currentDate->lte($endDate) && $sessionCount < ($sessionsPerWeek * 12)) {
+            $dayName = $currentDate->format('l'); // Full day name
+            
+            if (in_array($dayName, $scheduleDays)) {
+                // Calculate end time
+                $sessionStart = Carbon::parse($currentDate->format('Y-m-d') . ' ' . $startTime);
+                $sessionEnd = $sessionStart->copy()->addHours($duration);
+                
+                ActivitySession::create([
+                    'activity_id' => $activity->id,
+                    'teacher_id' => $validated['instructor_id'],
+                    'scheduled_date' => $currentDate->format('Y-m-d'),
+                    'date' => $currentDate->format('Y-m-d'),
+                    'start_time' => $startTime,
+                    'end_time' => $sessionEnd->format('H:i:s'),
+                    'duration' => $duration * 60, // Convert to minutes
+                    'duration_minutes' => $duration * 60,
+                    'location' => $validated['location'],
+                    'venue' => $validated['location'],
+                    'max_capacity' => $activity->max_participants,
+                    'max_participants' => $activity->max_participants,
+                    'enrolled_count' => 0,
+                    'status' => 'scheduled'
+                ]);
+                
+                $sessionCount++;
+            }
+            
+            $currentDate->addDay();
+        }
+        
+        Log::info('Created activity sessions', [
+            'activity_id' => $activity->id,
+            'session_count' => $sessionCount,
+            'schedule_days' => $scheduleDays
+        ]);
+    }
+
+    /**
+     * Enroll participants in an activity
+     */
+    private function enrollParticipants($activity, $participantIds, $enrollmentDate)
+    {
+        $enrolledCount = 0;
+        
+        foreach ($participantIds as $traineeId) {
+            if (empty($traineeId)) continue;
+            
+            try {
+                // Check if trainee exists and is active
+                $trainee = Trainee::where('id', $traineeId)
+                    ->where('status', 'active')
+                    ->first();
+                    
+                if (!$trainee) {
+                    Log::warning('Trainee not found or inactive', ['trainee_id' => $traineeId]);
+                    continue;
+                }
+                
+                // Create activity enrollment
+                ActivityEnrollment::create([
+                    'activity_id' => $activity->id,
+                    'trainee_id' => $traineeId,
+                    'enrollment_date' => $enrollmentDate,
+                    'start_date' => $enrollmentDate,
+                    'status' => 'enrolled',
+                    'enrolled_by' => session('id')
+                ]);
+                
+                $enrolledCount++;
+                
+            } catch (Exception $e) {
+                Log::error('Error enrolling participant', [
+                    'trainee_id' => $traineeId,
+                    'activity_id' => $activity->id,
+                    'error' => $e->getMessage()
+                ]);
+            }
+        }
+        
+        // Update activity current participant count if this field exists in the model
+        // Note: The current Activity model doesn't have current_participants field
+        
+        Log::info('Enrolled participants in activity', [
+            'activity_id' => $activity->id,
+            'enrolled_count' => $enrolledCount,
+            'total_requested' => count($participantIds)
+        ]);
     }
 
     /**
@@ -841,7 +1046,7 @@ class ActivityController extends Controller
             $query = Activity::with(['sessions', 'creator']);
 
             if ($request->has('category')) {
-                $query->where('category', $request->category);
+                $query->where('activity_type', $request->category);
             }
 
             if ($request->has('search')) {
@@ -897,6 +1102,56 @@ class ActivityController extends Controller
     public function filterActivities(Request $request)
     {
         return $this->apiIndex($request);
+    }
+
+    /**
+     * API: Get instructors for a specific centre
+     */
+    public function getInstructors($centreId)
+    {
+        try {
+            $instructors = User::where('centre_id', $centreId)
+                ->whereIn('role', ['supervisor', 'teacher'])
+                ->where('status', 'active')
+                ->select('id', 'name', 'role')
+                ->orderBy('name')
+                ->get();
+
+            return response()->json($instructors);
+
+        } catch (Exception $e) {
+            Log::error('Error fetching instructors: ' . $e->getMessage());
+            return response()->json([], 500);
+        }
+    }
+
+    /**
+     * API: Get trainees for a specific centre
+     */
+    public function getTrainees($centreId)
+    {
+        try {
+            $trainees = Trainee::where('centre_id', $centreId)
+                ->where('status', 'active')
+                ->select('id', 'trainee_first_name as first_name', 'trainee_last_name as last_name', 'condition')
+                ->orderBy('trainee_first_name')
+                ->get();
+
+            // Format the response to include full name
+            $trainees = $trainees->map(function ($trainee) {
+                return [
+                    'id' => $trainee->id,
+                    'name' => trim($trainee->first_name . ' ' . $trainee->last_name),
+                    'condition' => $trainee->condition
+                ];
+            });
+
+            return response()->json($trainees);
+
+        } catch (Exception $e) {
+            Log::error('Error fetching trainees: ' . $e->getMessage());
+            return response()->json([], 500);
+        }
     }
 
     /**
@@ -960,7 +1215,7 @@ class ActivityController extends Controller
             $userId = session('id');
             
             if (!$this->canManageActivity($activity, $role, $userId)) {
-                return redirect()->route('activities.index')
+                return redirect()->route('activities.home')
                     ->with('error', 'You do not have permission to manage this activity schedule.');
             }
 
@@ -968,7 +1223,7 @@ class ActivityController extends Controller
 
         } catch (Exception $e) {
             Log::error('Error loading activity schedule: ' . $e->getMessage());
-            return redirect()->route('activities.index')
+            return redirect()->route('activities.home')
                 ->with('error', 'Unable to load activity schedule.');
         }
     }
@@ -991,7 +1246,7 @@ class ActivityController extends Controller
 
         } catch (Exception $e) {
             Log::error('Error loading weekly schedule: ' . $e->getMessage());
-            return redirect()->route('activities.index')
+            return redirect()->route('activities.home')
                 ->with('error', 'Unable to load weekly schedule.');
         }
     }
@@ -1002,14 +1257,14 @@ class ActivityController extends Controller
     public function teacherSchedule($teacherId)
     {
         try {
-            $teacher = Users::findOrFail($teacherId);
+            $teacher = User::findOrFail($teacherId);
             
             // Check permissions - users can only view their own schedule unless admin/supervisor
             $role = session('role');
             $currentUserId = session('id');
             
             if (!in_array($role, ['admin', 'supervisor']) && $currentUserId != $teacherId) {
-                return redirect()->route('activities.index')
+                return redirect()->route('activities.home')
                     ->with('error', 'You can only view your own schedule.');
             }
 
@@ -1030,7 +1285,7 @@ class ActivityController extends Controller
 
         } catch (Exception $e) {
             Log::error('Error loading teacher schedule: ' . $e->getMessage());
-            return redirect()->route('activities.index')
+            return redirect()->route('activities.home')
                 ->with('error', 'Unable to load teacher schedule.');
         }
     }
@@ -1470,7 +1725,7 @@ class ActivityController extends Controller
             $teacherFilter = $request->get('teacher');
 
             // Base query for sessions with role-based access
-            $query = ActivitySession::with(['activity.centre', 'activity.category', 'teacher', 'enrollments.trainee']);
+            $query = ActivitySession::with(['activity.centre', 'teacher', 'enrollments.trainee']);
 
             // Role-based filtering
             if ($role === 'admin') {
@@ -1507,7 +1762,7 @@ class ActivityController extends Controller
 
             if ($categoryFilter) {
                 $query->whereHas('activity', function($q) use ($categoryFilter) {
-                    $q->where('category', $categoryFilter);
+                    $q->where('activity_type', $categoryFilter);
                 });
             }
 
@@ -1529,15 +1784,15 @@ class ActivityController extends Controller
 
             // Get filter options based on role
             if ($role === 'admin') {
-                $centres = Centres::where('status', 'active')->get();
+                $centres = Centre::active()->get();
             } else {
-                $centres = Centres::where('centre_id', $userCentreId)->where('status', 'active')->get();
+                $centres = Centre::where('centre_id', $userCentreId)->active()->get();
             }
 
             // Get teachers for filter (admin/supervisor only)
             $teachers = [];
             if (in_array($role, ['admin', 'supervisor'])) {
-                $teachersQuery = Users::where('role', 'teacher')->where('status', 'active');
+                $teachersQuery = User::where('role', 'teacher')->where('status', 'active');
                 if ($role === 'supervisor') {
                     $teachersQuery->where('centre_id', $userCentreId);
                 }
@@ -1551,5 +1806,35 @@ class ActivityController extends Controller
                 'filters' => $request->all()
             ]);
         }
+    }
+
+    private function getCategoryColor($category)
+    {
+        $colors = [
+            'Physical Therapy' => '#e74c3c',
+            'Occupational Therapy' => '#3498db',
+            'Speech Therapy' => '#2ecc71',
+            'Sensory Integration' => '#f39c12',
+            'Mathematics' => '#9b59b6',
+            'Literacy' => '#1abc9c',
+            'Science' => '#34495e',
+            'Computer Skills' => '#16a085'
+        ];
+        return $colors[$category] ?? '#7f8c8d';
+    }
+
+    private function getCategoryIcon($category)
+    {
+        $icons = [
+            'Physical Therapy' => 'fas fa-dumbbell',
+            'Occupational Therapy' => 'fas fa-hands',
+            'Speech Therapy' => 'fas fa-comments',
+            'Sensory Integration' => 'fas fa-brain',
+            'Mathematics' => 'fas fa-calculator',
+            'Literacy' => 'fas fa-book',
+            'Science' => 'fas fa-flask',
+            'Computer Skills' => 'fas fa-laptop'
+        ];
+        return $icons[$category] ?? 'fas fa-tasks';
     }
 }

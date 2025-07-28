@@ -7,12 +7,12 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
-use App\Models\Users;
-use App\Models\Trainees;
+use App\Models\User;
+use App\Models\Trainee;
 use App\Models\Classes;
-use App\Models\Activities;
-use App\Models\Attendances;
-use App\Models\Notifications;
+use App\Models\Activity;
+use App\Models\Attendance;
+use App\Models\Notification;
 
 class TeacherController extends Controller
 {
@@ -43,12 +43,12 @@ class TeacherController extends Controller
         ]);
         
         // Get classes for this teacher
-        $classes = Classes::where('teacher_id', $teacherId)
+        $classes = ClassModel::where('teacher_id', $teacherId)
                 ->orderBy('name')
                 ->get();
         
         // Get upcoming classes for this teacher
-        $upcomingClasses = Classes::where('teacher_id', $teacherId)
+        $upcomingClasses = ClassModel::where('teacher_id', $teacherId)
                         ->where('status', 'active')
                         ->orderBy('start_date')
                         ->take(5)
@@ -62,13 +62,13 @@ class TeacherController extends Controller
         $attendanceStats = $this->getAttendanceStats($teacherId);
         
         // Get recent activities
-        $recentActivities = Activities::where('teacher_id', $teacherId)
+        $recentActivities = Activity::where('teacher_id', $teacherId)
                            ->orderBy('created_at', 'desc')
                            ->take(5)
                            ->get();
         
         // Get unread notifications
-        $unreadNotifications = Notifications::where('user_id', $teacherId)
+        $unreadNotifications = Notification::where('user_id', $teacherId)
                               ->where('read', false)
                               ->orderBy('created_at', 'desc')
                               ->take(5)
@@ -96,7 +96,7 @@ class TeacherController extends Controller
         $dayOfWeek = strtolower(date('l')); // e.g., 'monday', 'tuesday', etc.
         
         // If schedule is stored as JSON in the classes table
-        $classes = Classes::where('teacher_id', $teacherId)
+        $classes = ClassModel::where('teacher_id', $teacherId)
                 ->where('status', 'active')
                 ->get()
                 ->filter(function($class) use ($dayOfWeek) {
@@ -117,7 +117,7 @@ class TeacherController extends Controller
     private function getTraineesCount($teacherId)
     {
         // Get class IDs for this teacher
-        $classIds = Classes::where('teacher_id', $teacherId)
+        $classIds = ClassModel::where('teacher_id', $teacherId)
                     ->pluck('id')
                     ->toArray();
         
@@ -132,7 +132,7 @@ class TeacherController extends Controller
         }
         
         // Get active classes count
-        $activeClasses = Classes::where('teacher_id', $teacherId)
+        $activeClasses = ClassModel::where('teacher_id', $teacherId)
                         ->where('status', 'active')
                         ->count();
         
@@ -151,7 +151,7 @@ class TeacherController extends Controller
     private function getAttendanceStats($teacherId)
     {
         // Get class IDs for this teacher
-        $classIds = Classes::where('teacher_id', $teacherId)
+        $classIds = ClassModel::where('teacher_id', $teacherId)
                     ->pluck('id')
                     ->toArray();
         
@@ -168,7 +168,7 @@ class TeacherController extends Controller
         // Get attendance records for the last 30 days
         $startDate = now()->subDays(30);
         
-        $attendanceStats = Attendances::whereIn('class_id', $classIds)
+        $attendanceStats = Attendance::whereIn('class_id', $classIds)
                         ->where('date', '>=', $startDate)
                         ->selectRaw('status, count(*) as count')
                         ->groupBy('status')
@@ -209,7 +209,7 @@ class TeacherController extends Controller
         $teacherId = session('id');
         
         // Get classes for this teacher
-        $classes = Classes::where('teacher_id', $teacherId)->get();
+        $classes = ClassModel::where('teacher_id', $teacherId)->get();
         $classIds = $classes->pluck('id')->toArray();
         
         // Get trainees in these classes
@@ -221,7 +221,7 @@ class TeacherController extends Controller
                         ->toArray();
             
             if (!empty($traineeIds)) {
-                $trainees = Trainees::whereIn('id', $traineeIds)->get();
+                $trainees = Trainee::whereIn('id', $traineeIds)->get();
             }
         }
         
@@ -252,7 +252,7 @@ class TeacherController extends Controller
         $teacherId = session('id');
         
         // Get all classes for this teacher
-        $classes = Classes::where('teacher_id', $teacherId)
+        $classes = ClassModel::where('teacher_id', $teacherId)
                 ->orderBy('name')
                 ->get();
         
@@ -280,7 +280,7 @@ class TeacherController extends Controller
         $teacherId = session('id');
         
         // Get class and verify teacher has access
-        $class = Classes::where('id', $id)
+        $class = ClassModel::where('id', $id)
                 ->where('teacher_id', $teacherId)
                 ->firstOrFail();
         
@@ -288,7 +288,7 @@ class TeacherController extends Controller
         $trainees = $class->trainees;
         
         // Get recent attendance records
-        $recentAttendance = Attendances::where('class_id', $id)
+        $recentAttendance = Attendance::where('class_id', $id)
                 ->orderBy('date', 'desc')
                 ->limit(10)
                 ->get()
@@ -316,7 +316,7 @@ class TeacherController extends Controller
         $teacherId = session('id');
         
         // Verify teacher has access to this class
-        $class = Classes::where('id', $classId)
+        $class = ClassModel::where('id', $classId)
                 ->where('teacher_id', $teacherId)
                 ->firstOrFail();
         
@@ -327,12 +327,12 @@ class TeacherController extends Controller
         $today = now()->format('Y-m-d');
         
         // Check if attendance has already been recorded for today
-        $existingAttendance = Attendances::where('class_id', $classId)
+        $existingAttendance = Attendance::where('class_id', $classId)
                             ->where('date', $today)
                             ->exists();
         
         // Get recent attendance records for this class
-        $recentAttendance = Attendances::where('class_id', $classId)
+        $recentAttendance = Attendance::where('class_id', $classId)
                             ->orderBy('date', 'desc')
                             ->limit(10)
                             ->get()
@@ -359,7 +359,7 @@ class TeacherController extends Controller
         $teacherId = session('id');
         
         // Verify teacher has access to this class
-        $class = Classes::where('id', $classId)
+        $class = ClassModel::where('id', $classId)
                 ->where('teacher_id', $teacherId)
                 ->firstOrFail();
         
@@ -378,13 +378,13 @@ class TeacherController extends Controller
         
         try {
             // Delete any existing attendance records for this date
-            Attendances::where('class_id', $classId)
+            Attendance::where('class_id', $classId)
                     ->where('date', $date)
                     ->delete();
             
             // Create new attendance records
             foreach ($attendanceData as $traineeId => $status) {
-                $attendance = new Attendances();
+                $attendance = new Attendance();
                 $attendance->trainee_id = $traineeId;
                 $attendance->class_id = $classId;
                 $attendance->date = $date;
@@ -422,7 +422,7 @@ class TeacherController extends Controller
         $teacherId = session('id');
         
         // Get trainee
-        $trainee = Trainees::findOrFail($id);
+        $trainee = Trainee::findOrFail($id);
         
         // Check if this teacher has access to this trainee
         $hasAccess = $this->teacherHasAccessToTrainee($teacherId, $id);
@@ -433,14 +433,14 @@ class TeacherController extends Controller
         }
         
         // Get trainee's classes
-        $classes = Classes::where('teacher_id', $teacherId)
+        $classes = ClassModel::where('teacher_id', $teacherId)
                     ->whereHas('trainees', function($query) use ($id) {
                         $query->where('trainees.id', $id);
                     })
                     ->get();
         
         // Get attendance records
-        $attendance = Attendances::where('trainee_id', $id)
+        $attendance = Attendance::where('trainee_id', $id)
                     ->whereIn('class_id', $classes->pluck('id')->toArray())
                     ->orderBy('date', 'desc')
                     ->take(30)
@@ -477,7 +477,7 @@ class TeacherController extends Controller
     private function teacherHasAccessToTrainee($teacherId, $traineeId)
     {
         // Get class IDs for this teacher
-        $classIds = Classes::where('teacher_id', $teacherId)
+        $classIds = ClassModel::where('teacher_id', $teacherId)
                     ->pluck('id')
                     ->toArray();
         
@@ -505,7 +505,7 @@ class TeacherController extends Controller
         // Get attendance records for the last 30 days
         $startDate = now()->subDays(30);
         
-        $attendanceStats = Attendances::where('class_id', $classId)
+        $attendanceStats = Attendance::where('class_id', $classId)
                         ->where('date', '>=', $startDate)
                         ->selectRaw('status, count(*) as count')
                         ->groupBy('status')

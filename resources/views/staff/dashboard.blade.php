@@ -25,7 +25,7 @@
           <div class="class-details">
             <h5>{{ $class->name }}</h5>
             <div class="class-info">
-              <span><i class="fas fa-users"></i> {{ $class->trainees()->count() }} Trainees</span>
+              <span><i class="fas fa-users"></i> {{ $class->trainees()->count() }} Trainee</span>
               <span><i class="fas fa-map-marker-alt"></i> {{ $class->location }}</span>
             </div>
           </div>

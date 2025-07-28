@@ -59,7 +59,7 @@ class AssetCategories extends Model
      */
     public function assets()
     {
-        return $this->belongsToMany(Assets::class, 'asset_category', 'category_id', 'asset_id');
+        return $this->belongsToMany(Asset::class, 'asset_category', 'category_id', 'asset_id');
     }
 
     /**

@@ -61,22 +61,22 @@
       <li>
         <a href="{{ route('admin.activities') }}">
           <i class="fas fa-calendar-alt"></i>
-          <span>Activities</span>
-          <div class="tooltip-sidebar">Activities</div>
+          <span>Activity</span>
+          <div class="tooltip-sidebar">Activity</div>
         </a>
       </li>
       <li>
         <a href="{{ route('admin.centers') }}">
           <i class="fas fa-building"></i>
-          <span>Centres</span>
-          <div class="tooltip-sidebar">Centres</div>
+          <span>Centre</span>
+          <div class="tooltip-sidebar">Centre</div>
         </a>
       </li>
       <li>
         <a href="{{ route('admin.assets') }}">
           <i class="fas fa-boxes"></i>
-          <span>Assets</span>
-          <div class="tooltip-sidebar">Assets</div>
+          <span>Asset</span>
+          <div class="tooltip-sidebar">Asset</div>
         </a>
       </li>
       <li>
@@ -159,7 +159,7 @@
       
       <div class="page-actions">
         <a href="{{ route('admin.users') }}" class="action-btn">
-          <i class="fas fa-arrow-left"></i> Back to Users
+          <i class="fas fa-arrow-left"></i> Back to User
         </a>
         <div class="action-group">
           <a href="{{ route('admin.user.view', 2) }}" class="action-btn">

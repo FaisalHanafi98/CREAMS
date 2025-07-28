@@ -5,14 +5,14 @@ $app->make('Illuminate\Contracts\Console\Kernel')->bootstrap();
 
 echo "=== TESTING FIXED TRAINEE MODULE ===" . PHP_EOL;
 
-use App\Models\Trainees;
+use App\Models\Trainee;
 use Illuminate\Support\Facades\Schema;
 
 try {
     echo "1. Testing fixed model fillable fields vs database columns..." . PHP_EOL;
     
     // Get model fillable fields
-    $trainee = new Trainees();
+    $trainee = new Trainee();
     $fillableFields = $trainee->getFillable();
     
     // Get database columns
@@ -60,7 +60,7 @@ try {
         'additional_notes' => 'Test notes for fixed trainee'
     ];
     
-    $fixedTrainee = Trainees::create($testTraineeData);
+    $fixedTrainee = Trainee::create($testTraineeData);
     echo "   ✓ Trainee created successfully with ID: " . $fixedTrainee->id . PHP_EOL;
     echo "   ✓ Full name: " . $fixedTrainee->full_name . PHP_EOL;
     echo "   ✓ Age: " . $fixedTrainee->age . " years" . PHP_EOL;
@@ -80,13 +80,13 @@ try {
     
     try {
         $activities = $fixedTrainee->activities;
-        echo "   ✓ Activities relationship works, count: " . $activities->count() . PHP_EOL;
+        echo "   ✓ Activity relationship works, count: " . $activities->count() . PHP_EOL;
     } catch (Exception $e) {
-        echo "   ❌ Activities relationship failed: " . $e->getMessage() . PHP_EOL;
+        echo "   ❌ Activity relationship failed: " . $e->getMessage() . PHP_EOL;
     }
     
     // Test with real trainee that might have data
-    $realTrainee = Trainees::first();
+    $realTrainee = Trainee::first();
     if ($realTrainee && $realTrainee->id !== $fixedTrainee->id) {
         echo "   Testing relationships with existing trainee: " . $realTrainee->full_name . PHP_EOL;
         
@@ -107,13 +107,13 @@ try {
     
     echo PHP_EOL . "4. Testing model scopes..." . PHP_EOL;
     
-    $activeTrainees = Trainees::active()->count();
+    $activeTrainees = Trainee::active()->count();
     echo "   ✓ Active scope works, count: " . $activeTrainees . PHP_EOL;
     
-    $gombakTrainees = Trainees::byCentre('Gombak')->count();
+    $gombakTrainees = Trainee::byCentre('Gombak')->count();
     echo "   ✓ ByCentre scope works, Gombak count: " . $gombakTrainees . PHP_EOL;
     
-    $downSyndromeTrainees = Trainees::byCondition('Down Syndrome')->count();
+    $downSyndromeTrainees = Trainee::byCondition('Down Syndrome')->count();
     echo "   ✓ ByCondition scope works, Down Syndrome count: " . $downSyndromeTrainees . PHP_EOL;
     
     echo PHP_EOL . "5. Cleanup test data..." . PHP_EOL;

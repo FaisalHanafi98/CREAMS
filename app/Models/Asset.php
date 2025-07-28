@@ -66,7 +66,7 @@ class Asset extends Model
      */
     public function centre(): BelongsTo
     {
-        return $this->belongsTo(Centres::class, 'centre_id');
+        return $this->belongsTo(Centre::class, 'centre_id');
     }
 
     /**
@@ -82,7 +82,7 @@ class Asset extends Model
      */
     public function assignedTo(): BelongsTo
     {
-        return $this->belongsTo(Users::class, 'assigned_to');
+        return $this->belongsTo(User::class, 'assigned_to');
     }
 
     /**
@@ -90,7 +90,7 @@ class Asset extends Model
      */
     public function creator(): BelongsTo
     {
-        return $this->belongsTo(Users::class, 'created_by');
+        return $this->belongsTo(User::class, 'created_by');
     }
 
     /**

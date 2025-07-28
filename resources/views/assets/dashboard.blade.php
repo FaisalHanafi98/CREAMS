@@ -165,7 +165,7 @@
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
                             <h3 class="text-primary">{{ $stats['total'] ?? 0 }}</h3>
-                            <p class="mb-0">Total Assets</p>
+                            <p class="mb-0">Total Asset</p>
                         </div>
                         <i class="fas fa-boxes fa-2x text-primary opacity-50"></i>
                     </div>
@@ -210,13 +210,13 @@
         <div class="filter-card">
             <form method="GET" class="row align-items-end">
                 <div class="col-md-3">
-                    <label>Search Assets</label>
+                    <label>Search Asset</label>
                     <input type="text" name="search" class="form-control" placeholder="Search by name or ID..." value="{{ request('search') }}">
                 </div>
                 <div class="col-md-2">
                     <label>Category</label>
                     <select name="category" class="form-control">
-                        <option value="">All Categories</option>
+                        <option value="">All Category</option>
                         <option value="equipment" {{ request('category') == 'equipment' ? 'selected' : '' }}>Equipment</option>
                         <option value="tools" {{ request('category') == 'tools' ? 'selected' : '' }}>Tools</option>
                         <option value="furniture" {{ request('category') == 'furniture' ? 'selected' : '' }}>Furniture</option>
@@ -245,7 +245,7 @@
             </form>
         </div>
 
-        <!-- Assets Table -->
+        <!-- Asset Table -->
         <div class="card">
             <div class="card-body p-0">
                 <div class="table-responsive">

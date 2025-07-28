@@ -6,8 +6,8 @@ use App\Http\Controllers\Controller;
 
 use App\Models\Letter;
 use App\Models\LetterTemplate;
-use App\Models\Users;
-use App\Models\Trainees;
+use App\Models\User;
+use App\Models\Trainee;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -48,7 +48,7 @@ class LetterController extends Controller
             }
 
             $templates = LetterTemplate::where('is_active', 1)->get();
-            $trainees = Trainees::where('centre_id', session('centre_id'))
+            $trainees = Trainee::where('centre_id', session('centre_id'))
                 ->select('id', 'trainee_first_name', 'trainee_last_name', 'trainee_email')
                 ->orderBy('trainee_first_name')
                 ->get();

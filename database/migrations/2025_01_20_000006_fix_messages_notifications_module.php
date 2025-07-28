@@ -237,7 +237,7 @@ class FixMessagesNotificationsModule extends Migration
     protected function addPerformanceIndexes()
     {
         try {
-            // Messages table indexes
+            // Message table indexes
             if (Schema::hasTable('messages')) {
                 Schema::table('messages', function (Blueprint $table) {
                     $existingIndexes = $this->getExistingIndexes('messages');
@@ -264,7 +264,7 @@ class FixMessagesNotificationsModule extends Migration
                 });
             }
             
-            // Notifications table indexes
+            // Notification table indexes
             if (Schema::hasTable('notifications')) {
                 Schema::table('notifications', function (Blueprint $table) {
                     $existingIndexes = $this->getExistingIndexes('notifications');

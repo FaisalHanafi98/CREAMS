@@ -53,11 +53,11 @@ try {
     }
     
     echo "2. Testing database insertion..." . PHP_EOL;
-    $volunteer = \App\Models\Volunteers::create($volunteerData);
+    $volunteer = \App\Models\Volunteer::create($volunteerData);
     echo "✓ Volunteer created with ID: " . $volunteer->id . PHP_EOL;
     
     echo "3. Testing data retrieval..." . PHP_EOL;
-    $retrieved = \App\Models\Volunteers::find($volunteer->id);
+    $retrieved = \App\Models\Volunteer::find($volunteer->id);
     echo "✓ Retrieved volunteer: " . $retrieved->volunteer_name . " (" . $retrieved->volunteer_email . ")" . PHP_EOL;
     echo "   - Status: " . $retrieved->volunteer_status . PHP_EOL;
     echo "   - Availability: " . $retrieved->volunteer_availability . PHP_EOL;

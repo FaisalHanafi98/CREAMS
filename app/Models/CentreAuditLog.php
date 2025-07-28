@@ -33,7 +33,7 @@ class CentreAuditLog extends Model
      */
     public function centre()
     {
-        return $this->belongsTo(Centres::class, 'centre_id');
+        return $this->belongsTo(Centre::class, 'centre_id');
     }
 
     /**
@@ -41,7 +41,7 @@ class CentreAuditLog extends Model
      */
     public function user()
     {
-        return $this->belongsTo(Users::class, 'user_id');
+        return $this->belongsTo(User::class, 'user_id');
     }
 
     /**

@@ -80,7 +80,7 @@ class AssetEnhanced extends Model
      */
     public function centre(): BelongsTo
     {
-        return $this->belongsTo(Centres::class, 'centre_id', 'centre_id');
+        return $this->belongsTo(Centre::class, 'centre_id', 'centre_id');
     }
 
     /**
@@ -96,7 +96,7 @@ class AssetEnhanced extends Model
      */
     public function assignedTo(): BelongsTo
     {
-        return $this->belongsTo(Users::class, 'assigned_to_id');
+        return $this->belongsTo(User::class, 'assigned_to_id');
     }
 
     /**

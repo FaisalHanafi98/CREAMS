@@ -5,11 +5,11 @@ namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use App\Models\Users;
+use App\Models\User;
 use App\Models\Trainee;
 use App\Models\Activity;
 use App\Models\Asset;
-use App\Models\Centres;
+use App\Models\Centre;
 
 class ValidateRouteParameters
 {
@@ -87,6 +87,9 @@ class ValidateRouteParameters
             case 'categorySlug':
                 return $this->validateCategorySlug($value);
                 
+            case 'encrypted_id':
+                return $this->validateEncryptedId($value);
+                
             default:
                 return $this->validateGenericId($value);
         }
@@ -132,7 +135,7 @@ class ValidateRouteParameters
             return false;
         }
         
-        return Users::where('id', $value)->exists();
+        return User::where('id', $value)->exists();
     }
     
     /**
@@ -180,7 +183,7 @@ class ValidateRouteParameters
         // [ClaudeFix: 2025-07-07] Simplified and robust centre ID validation
         try {
             // First try exact match (handles '01', '02', etc.)
-            $exists = Centres::where('centre_id', $value)->exists();
+            $exists = Centre::where('centre_id', $value)->exists();
             if ($exists) {
                 return true;
             }
@@ -188,7 +191,7 @@ class ValidateRouteParameters
             // Also try as integer for backwards compatibility (handles 1, 2, etc.)
             if (is_numeric($value)) {
                 $intValue = (int)$value;
-                return Centres::where('centre_id', $intValue)->exists();
+                return Centre::where('centre_id', $intValue)->exists();
             }
             
             return false;
@@ -197,6 +200,46 @@ class ValidateRouteParameters
                 'value' => $value,
                 'error' => $e->getMessage()
             ]);
+            return false;
+        }
+    }
+    
+    /**
+     * Validate encrypted ID parameter.
+     */
+    private function validateEncryptedId($value)
+    {
+        // Basic format validation for encrypted IDs
+        // They should be base64-encoded JSON strings
+        if (empty($value) || !is_string($value)) {
+            return false;
+        }
+        
+        // Check if it looks like a base64 encoded string
+        if (!preg_match('/^[A-Za-z0-9+\/]+=*$/', $value)) {
+            return false;
+        }
+        
+        // Try to decode and validate structure
+        try {
+            $decoded = base64_decode($value, true);
+            if ($decoded === false) {
+                return false;
+            }
+            
+            // Should be valid JSON
+            $json = json_decode($decoded, true);
+            if ($json === null) {
+                return false;
+            }
+            
+            // Should have the expected structure (iv, value, mac)
+            if (!isset($json['iv'], $json['value'], $json['mac'])) {
+                return false;
+            }
+            
+            return true;
+        } catch (\Exception $e) {
             return false;
         }
     }

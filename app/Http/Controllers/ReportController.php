@@ -86,7 +86,7 @@ class ReportController extends Controller
             'financial' => 'Financial Report'
         ];
         
-        // Centres
+        // Centre
         $centres = [
             1 => 'IIUM Gombak Centre',
             2 => 'IIUM Kuantan Centre',
@@ -175,7 +175,7 @@ class ReportController extends Controller
             ],
             [
                 'id' => 3,
-                'name' => 'Class Activities',
+                'name' => 'Class Activity',
                 'description' => 'Reports on class activities and curriculum progress.',
                 'icon' => 'fa-book'
             ]

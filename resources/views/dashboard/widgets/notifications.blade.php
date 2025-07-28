@@ -1,7 +1,7 @@
 <div class="widget-card">
     <div class="widget-header">
         <h3 class="widget-title">
-            <i class="fas fa-bell"></i> Notifications
+            <i class="fas fa-bell"></i> Notification
         </h3>
         @php
             // Handle notifications from dashboard service or fallback to system-generated
@@ -16,7 +16,7 @@
                     switch ($role) {
                         case 'admin':
                             // Generate admin notifications from recent system activity
-                            $recentUserCount = \App\Models\Users::where('created_at', '>=', \Carbon\Carbon::now()->subDays(7))->count();
+                            $recentUserCount = \App\Models\User::where('created_at', '>=', \Carbon\Carbon::now()->subDays(7))->count();
                             $recentTraineeCount = \App\Models\Trainee::where('created_at', '>=', \Carbon\Carbon::now()->subDays(7))->count();
                             $activeSessionsCount = \App\Models\ActivitySession::where('status', 'active')->count();
                             
@@ -53,7 +53,7 @@
                                 ];
                             }
                             
-                            $pendingVolunteers = \App\Models\Volunteers::where('status', 'pending')->count();
+                            $pendingVolunteers = \App\Models\Volunteer::where('status', 'pending')->count();
                             if ($pendingVolunteers > 0) {
                                 $notificationData[] = [
                                     'type' => 'info',
@@ -105,7 +105,7 @@
                             // Generate supervisor notifications
                             $centreId = session('centre_id');
                             if ($centreId) {
-                                $centreTeachers = \App\Models\Users::where('role', 'teacher')
+                                $centreTeachers = \App\Models\User::where('role', 'teacher')
                                     ->where('centre_id', $centreId)->count();
                                 $centreTrainees = \App\Models\Trainee::where('centre_id', $centreId)->count();
                                 
@@ -179,7 +179,7 @@
             </div>
             @if(session('role') === 'admin')
                 <a href="{{ route('admin.notifications') }}" class="btn btn-sm btn-block btn-light mt-2">
-                    <i class="fas fa-list me-1"></i>View All Notifications
+                    <i class="fas fa-list me-1"></i>View All Notification
                 </a>
             @else
                 <button class="btn btn-sm btn-block btn-light mt-2" onclick="markAllAsRead()">

@@ -3,13 +3,13 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\Assets;
+use App\Models\Asset;
 
 class AssetManagementController extends Controller
 {
     public function index()
     {
-        $assets = Assets::all();
+        $assets = Asset::all();
         return view('assetmanagement', compact('assets'));
     }
 

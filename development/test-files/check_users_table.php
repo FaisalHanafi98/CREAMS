@@ -9,13 +9,13 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 try {
-    echo "1. Users table columns:" . PHP_EOL;
+    echo "1. User table columns:" . PHP_EOL;
     $columns = Schema::getColumnListing('users');
     foreach ($columns as $column) {
         echo "   - " . $column . PHP_EOL;
     }
     
-    echo PHP_EOL . "2. Users table structure details:" . PHP_EOL;
+    echo PHP_EOL . "2. User table structure details:" . PHP_EOL;
     $details = DB::select('DESCRIBE users');
     foreach ($details as $detail) {
         echo "   " . $detail->Field . " | " . $detail->Type . " | " . ($detail->Null == 'YES' ? 'NULL' : 'NOT NULL') . " | " . ($detail->Key ?: 'NO KEY') . PHP_EOL;

@@ -1,17 +1,17 @@
 @extends('layouts.app')
 
-@section('title', $category->name . ' Activities')
+@section('title', $category->name . ' Activity')
 
 @section('content')
 <div class="container-fluid">
     <div class="d-sm-flex align-items-center justify-content-between mb-4">
         <h1 class="h3 mb-0 text-gray-800">
             <i class="{{ $category->icon_class ?? 'fas fa-tasks' }} mr-2" style="color: {{ $category->color_code ?? '#8B5CF6' }}"></i>
-            {{ $category->name }} Activities
+            {{ $category->name }} Activity
         </h1>
         <div>
             <a href="{{ route('activities.categories') }}" class="btn btn-secondary btn-sm">
-                <i class="fas fa-arrow-left"></i> Back to Categories
+                <i class="fas fa-arrow-left"></i> Back to Category
             </a>
             @if(in_array(session('role'), ['admin', 'supervisor']))
                 <a href="{{ route('activities.create') }}" class="btn btn-primary btn-sm">
@@ -102,7 +102,7 @@
                 <div class="mb-4">
                     <i class="{{ $category->icon_class ?? 'fas fa-tasks' }} fa-3x" style="color: {{ $category->color_code ?? '#8B5CF6' }}; opacity: 0.3;"></i>
                 </div>
-                <h5 class="card-title">No Activities Found</h5>
+                <h5 class="card-title">No Activity Found</h5>
                 <p class="card-text text-muted">
                     There are currently no activities in the {{ $category->name }} category.
                 </p>

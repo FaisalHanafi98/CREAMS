@@ -7,7 +7,7 @@ echo "=== CHECKING VOLUNTEERS TABLE ===" . PHP_EOL;
 
 try {
     $columns = DB::select('DESCRIBE volunteers');
-    echo "Volunteers table columns:" . PHP_EOL;
+    echo "Volunteer table columns:" . PHP_EOL;
     foreach ($columns as $column) {
         echo "  - {$column->Field} ({$column->Type})" . PHP_EOL;
     }

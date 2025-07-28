@@ -10,7 +10,7 @@
                 <div class="col-lg-4 col-md-6">
                     <div class="footer-widget">
                         <div class="footer-logo">
-                            <img src="{{ asset('images/creams-logo.png') }}" alt="CREAMS Logo">
+                            <img src="{{ asset('images/logo/logo_ppdk.jpg') }}" alt="CREAMS Logo">
                         </div>
                         <p class="footer-desc">A collaborative initiative dedicated to empowering children with disabilities through community-based rehabilitation services.</p>
                         <div class="social-icons">

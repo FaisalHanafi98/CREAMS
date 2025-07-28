@@ -88,9 +88,9 @@ try {
     echo "\n6. Testing Storage Directories...\n";
     
     $storagePaths = [
-        'storage/app/letters' => 'Letters Storage',
+        'storage/app/letters' => 'Letter Storage',
         'storage/app/letter_templates' => 'Templates Storage',
-        'public/letters' => 'Public Letters Access'
+        'public/letters' => 'Public Letter Access'
     ];
     
     foreach ($storagePaths as $path => $description) {
@@ -112,7 +112,7 @@ try {
     echo "2. Fill in the letter form fields\n";
     echo "3. Click 'Generate Letter' button\n";
     echo "4. Letter will be generated and downloaded\n";
-    echo "5. Use 'View All Letters' to see archive\n";
+    echo "5. Use 'View All Letter' to see archive\n";
     echo "6. Use 'Refresh List' to update recent letters\n";
     
     echo "\n=== ENDPOINTS ===\n";

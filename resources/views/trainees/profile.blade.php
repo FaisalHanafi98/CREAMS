@@ -403,12 +403,12 @@
     <nav aria-label="breadcrumb">
         <ol class="breadcrumb">
             <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Dashboard</a></li>
-            <li class="breadcrumb-item"><a href="{{ route('trainees.home') }}">Trainees</a></li>
+            <li class="breadcrumb-item"><a href="{{ route('trainees.home') }}">Trainee</a></li>
             <li class="breadcrumb-item active">{{ $trainee->full_name ?? 'Profile' }}</li>
         </ol>
     </nav>
 
-    <!-- Success/Error Messages -->
+    <!-- Success/Error Message -->
     @if(session('success'))
     <div class="alert alert-success alert-dismissible fade show mb-4" role="alert">
         <i class="fas fa-check-circle me-2"></i>{{ session('success') }}
@@ -462,7 +462,7 @@
     <div class="stats-grid">
         <div class="stat-card">
             <div class="stat-number">{{ $totalActivities ?? 0 }}</div>
-            <div class="stat-label">Total Activities</div>
+            <div class="stat-label">Total Activity</div>
         </div>
         <div class="stat-card">
             <div class="stat-number">{{ $attendanceRate ?? 0 }}%</div>
@@ -470,7 +470,7 @@
         </div>
         <div class="stat-card">
             <div class="stat-number">{{ $recentActivities ?? 0 }}</div>
-            <div class="stat-label">Recent Activities</div>
+            <div class="stat-label">Recent Activity</div>
         </div>
         <div class="stat-card">
             <div class="stat-number">{{ $enrollmentDuration ?? 'N/A' }}</div>
@@ -555,11 +555,11 @@
             </div>
             @endif
 
-            <!-- Current Activities -->
+            <!-- Current Activity -->
             <div class="info-card">
                 <div class="card-header">
                     <i class="fas fa-tasks"></i>
-                    <h3>Current Activities</h3>
+                    <h3>Current Activity</h3>
                 </div>
                 
                 @if($trainee->activities && $trainee->activities->count() > 0)

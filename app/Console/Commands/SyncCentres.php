@@ -108,7 +108,7 @@ class SyncCentres extends Command
             
             $this->info('Centre synchronization completed:');
             $this->info('- Total users processed: ' . count($users));
-            $this->info('- Users with invalid centre_id: ' . $invalidCount);
+            $this->info('- User with invalid centre_id: ' . $invalidCount);
             $this->info('- Total users updated: ' . $updatedCount);
             
             Log::info('Centre sync command completed', [

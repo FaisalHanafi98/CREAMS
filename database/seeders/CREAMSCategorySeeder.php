@@ -14,121 +14,121 @@ class CREAMSCategorySeeder extends Seeder
     public function run(): void
     {
         $categories = [
-            // Rehabilitation Categories
+            // Rehabilitation Category
             [
-                'name' => 'Physical Therapy',
-                'type' => 'rehabilitation',
-                'icon' => 'fas fa-running',
-                'color' => '#28a745', // Green
-                'description' => 'Improve physical strength, mobility, and motor skills through targeted exercises and therapeutic activities.',
+                'category_name' => 'Physical Therapy',
+                'category_icon' => 'fas fa-running',
+                'category_color' => '#28a745', // Green
+                'category_description' => 'Improve physical strength, mobility, and motor skills through targeted exercises and therapeutic activities.',
+                'category_status' => 'active',
                 'sort_order' => 1
             ],
             [
-                'name' => 'Occupational Therapy',
-                'type' => 'rehabilitation',
-                'icon' => 'fas fa-hands-helping',
-                'color' => '#17a2b8', // Teal
-                'description' => 'Develop daily living skills, fine motor abilities, and adaptive behaviors for independent living.',
+                'category_name' => 'Occupational Therapy',
+                'category_icon' => 'fas fa-hands-helping',
+                'category_color' => '#17a2b8', // Teal
+                'category_description' => 'Develop daily living skills, fine motor abilities, and adaptive behaviors for independent living.',
+                'category_status' => 'active',
                 'sort_order' => 2
             ],
             [
-                'name' => 'Speech Therapy',
-                'type' => 'rehabilitation',
-                'icon' => 'fas fa-comments',
-                'color' => '#fd7e14', // Orange
-                'description' => 'Enhance communication abilities, language development, and speech articulation skills.',
+                'category_name' => 'Speech Therapy',
+                'category_icon' => 'fas fa-comments',
+                'category_color' => '#fd7e14', // Orange
+                'category_description' => 'Enhance communication abilities, language development, and speech articulation skills.',
+                'category_status' => 'active',
                 'sort_order' => 3
             ],
             [
-                'name' => 'Behavioral Therapy',
-                'type' => 'rehabilitation',
-                'icon' => 'fas fa-brain',
-                'color' => '#6f42c1', // Purple
-                'description' => 'Manage behaviors, develop emotional regulation, and improve social interaction skills.',
+                'category_name' => 'Behavioral Therapy',
+                'category_icon' => 'fas fa-brain',
+                'category_color' => '#6f42c1', // Purple
+                'category_description' => 'Manage behaviors, develop emotional regulation, and improve social interaction skills.',
+                'category_status' => 'active',
                 'sort_order' => 4
             ],
             [
-                'name' => 'Sensory Integration',
-                'type' => 'rehabilitation',
-                'icon' => 'fas fa-hand-paper',
-                'color' => '#e83e8c', // Pink
-                'description' => 'Process sensory information effectively and improve sensory-motor coordination.',
+                'category_name' => 'Sensory Integration',
+                'category_icon' => 'fas fa-hand-paper',
+                'category_color' => '#e83e8c', // Pink
+                'category_description' => 'Process sensory information effectively and improve sensory-motor coordination.',
+                'category_status' => 'active',
                 'sort_order' => 5
             ],
 
-            // Academic Categories
+            // Academic Category
             [
-                'name' => 'Mathematics',
-                'type' => 'academic',
-                'icon' => 'fas fa-calculator',
-                'color' => '#007bff', // Blue
-                'description' => 'Develop numerical skills, problem-solving abilities, and mathematical reasoning.',
+                'category_name' => 'Mathematics',
+                'category_icon' => 'fas fa-calculator',
+                'category_color' => '#007bff', // Blue
+                'category_description' => 'Develop numerical skills, problem-solving abilities, and mathematical reasoning.',
+                'category_status' => 'active',
                 'sort_order' => 6
             ],
             [
-                'name' => 'Literacy',
-                'type' => 'academic',
-                'icon' => 'fas fa-book-open',
-                'color' => '#20c997', // Teal green
-                'description' => 'Improve reading comprehension, writing skills, and language literacy.',
+                'category_name' => 'Literacy',
+                'category_icon' => 'fas fa-book-open',
+                'category_color' => '#20c997', // Teal green
+                'category_description' => 'Improve reading comprehension, writing skills, and language literacy.',
+                'category_status' => 'active',
                 'sort_order' => 7
             ],
             [
-                'name' => 'Science',
-                'type' => 'academic',
-                'icon' => 'fas fa-flask',
-                'color' => '#6610f2', // Indigo
-                'description' => 'Explore scientific concepts through hands-on experiments and discovery-based learning.',
+                'category_name' => 'Science',
+                'category_icon' => 'fas fa-flask',
+                'category_color' => '#6610f2', // Indigo
+                'category_description' => 'Explore scientific concepts through hands-on experiments and discovery-based learning.',
+                'category_status' => 'active',
                 'sort_order' => 8
             ],
             [
-                'name' => 'Computer Skills',
-                'type' => 'academic',
-                'icon' => 'fas fa-laptop',
-                'color' => '#6c757d', // Gray
-                'description' => 'Develop digital literacy, computer operation skills, and basic programming concepts.',
+                'category_name' => 'Computer Skills',
+                'category_icon' => 'fas fa-laptop',
+                'category_color' => '#6c757d', // Gray
+                'category_description' => 'Develop digital literacy, computer operation skills, and basic programming concepts.',
+                'category_status' => 'active',
                 'sort_order' => 9
             ],
 
-            // Creative & Social Categories
+            // Creative & Social Category
             [
-                'name' => 'Art & Creativity',
-                'type' => 'academic',
-                'icon' => 'fas fa-palette',
-                'color' => '#dc3545', // Red
-                'description' => 'Express creativity through various art forms and develop aesthetic appreciation.',
+                'category_name' => 'Art & Creativity',
+                'category_icon' => 'fas fa-palette',
+                'category_color' => '#dc3545', // Red
+                'category_description' => 'Express creativity through various art forms and develop aesthetic appreciation.',
+                'category_status' => 'active',
                 'sort_order' => 10
             ],
             [
-                'name' => 'Music Therapy',
-                'type' => 'rehabilitation',
-                'icon' => 'fas fa-music',
-                'color' => '#ffc107', // Yellow
-                'description' => 'Use music to promote healing, improve communication, and enhance emotional well-being.',
+                'category_name' => 'Music Therapy',
+                'category_icon' => 'fas fa-music',
+                'category_color' => '#ffc107', // Yellow
+                'category_description' => 'Use music to promote healing, improve communication, and enhance emotional well-being.',
+                'category_status' => 'active',
                 'sort_order' => 11
             ],
             [
-                'name' => 'Social Skills',
-                'type' => 'academic',
-                'icon' => 'fas fa-users',
-                'color' => '#32bdea', // Primary blue
-                'description' => 'Develop interpersonal skills, social awareness, and communication abilities.',
+                'category_name' => 'Social Skills',
+                'category_icon' => 'fas fa-users',
+                'category_color' => '#32bdea', // Primary blue
+                'category_description' => 'Develop interpersonal skills, social awareness, and communication abilities.',
+                'category_status' => 'active',
                 'sort_order' => 12
             ],
             [
-                'name' => 'Life Skills',
-                'type' => 'academic',
-                'icon' => 'fas fa-graduation-cap',
-                'color' => '#795548', // Brown
-                'description' => 'Learn essential life skills for independent living and community participation.',
+                'category_name' => 'Life Skills',
+                'category_icon' => 'fas fa-graduation-cap',
+                'category_color' => '#795548', // Brown
+                'category_description' => 'Learn essential life skills for independent living and community participation.',
+                'category_status' => 'active',
                 'sort_order' => 13
             ],
             [
-                'name' => 'Vocational Training',
-                'type' => 'academic',
-                'icon' => 'fas fa-tools',
-                'color' => '#607d8b', // Blue gray
-                'description' => 'Develop job-related skills and prepare for workforce participation.',
+                'category_name' => 'Vocational Training',
+                'category_icon' => 'fas fa-tools',
+                'category_color' => '#607d8b', // Blue gray
+                'category_description' => 'Develop job-related skills and prepare for workforce participation.',
+                'category_status' => 'active',
                 'sort_order' => 14
             ]
         ];

@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Notifications - CREAMS')
+@section('title', 'Notification - CREAMS')
 
 @section('content')
 <div class="container-fluid">
@@ -11,7 +11,7 @@
                 <div class="row align-items-center">
                     <div class="col">
                         <h1 class="page-title">
-                            <i class="fas fa-bell"></i> Notifications
+                            <i class="fas fa-bell"></i> Notification
                         </h1>
                         <p class="page-subtitle">Manage your notifications and alerts</p>
                     </div>
@@ -36,7 +36,7 @@
                 </div>
             </div>
 
-            {{-- Alert Messages --}}
+            {{-- Alert Message --}}
             @if(session('success'))
                 <div class="alert alert-success alert-dismissible fade show" role="alert">
                     <i class="fas fa-check-circle"></i> {{ session('success') }}
@@ -55,7 +55,7 @@
                 </div>
             @endif
 
-            {{-- Notifications Filter --}}
+            {{-- Notification Filter --}}
             <div class="card mb-4">
                 <div class="card-body">
                     <div class="row">
@@ -86,7 +86,7 @@
                 </div>
             </div>
 
-            {{-- Notifications List --}}
+            {{-- Notification List --}}
             <div class="notifications-container">
                 @if($notifications->count() > 0)
                     @foreach($notifications as $notification)
@@ -184,7 +184,7 @@
                         <div class="empty-state-icon mb-4">
                             <i class="fas fa-bell-slash fa-5x text-muted"></i>
                         </div>
-                        <h4 class="text-muted">No Notifications</h4>
+                        <h4 class="text-muted">No Notification</h4>
                         <p class="text-muted mb-4">You don't have any notifications at the moment.</p>
                         <a href="{{ route('dashboard') }}" class="btn btn-primary">
                             <i class="fas fa-arrow-left"></i> Back to Dashboard

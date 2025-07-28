@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Assets;
+use App\Models\Asset;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -14,7 +14,7 @@ class AssetManagementUpdateController extends Controller
     public function index($asset_id)
     {
         // Retrieve the asset with the given ID from the database
-        $asset = Assets::find($asset_id);
+        $asset = Asset::find($asset_id);
 
         // Pass the asset data to the view
         return view('assetmanagementupdate', ['asset' => $asset]);
@@ -38,7 +38,7 @@ class AssetManagementUpdateController extends Controller
         $assetId = $request->input('asset_id');
 
         // Retrieve the asset with the given ID from the database
-        $asset = Assets::find($assetId);
+        $asset = Asset::find($assetId);
 
         // Update the asset fields with the validated data
         $asset->asset_name = $validatedData['asset_name'];

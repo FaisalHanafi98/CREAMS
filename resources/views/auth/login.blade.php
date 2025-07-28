@@ -32,7 +32,7 @@
 
         body {
             font-family: 'Poppins', sans-serif;
-            background: url('{{ asset('images/pexels-iqwan-alif-493640-1206101.jpg') }}') center center;
+            background: url('{{ asset('images/20250521_104028[1].jpg') }}') center center;
             background-size: cover;
             background-attachment: fixed;
             height: 100vh;

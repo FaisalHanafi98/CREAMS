@@ -67,7 +67,7 @@
                         </a>
                         @endif
                         <a href="{{ route('activities.home') }}" class="btn btn-secondary">
-                            <i class="fas fa-arrow-left"></i> Back to Activities
+                            <i class="fas fa-arrow-left"></i> Back to Activity
                         </a>
                     </div>
                 </div>
@@ -144,7 +144,7 @@
                     </div>
                     <div class="stat-item">
                         <i class="fas fa-chalkboard-teacher text-warning"></i>
-                        <span>Teachers: {{ $stats['teachers'] }}</span>
+                        <span>Teacher: {{ $stats['teachers'] }}</span>
                     </div>
                 </div>
             </div>

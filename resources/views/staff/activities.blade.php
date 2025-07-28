@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('title')
-{{ $staffMember->name }} - Activities | CREAMS
+{{ $staffMember->name }} - Activity | CREAMS
 @endsection
 
 @section('styles')
@@ -159,11 +159,11 @@
             <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Dashboard</a></li>
             <li class="breadcrumb-item"><a href="{{ route('staffs.home') }}">Staff Directory</a></li>
             <li class="breadcrumb-item"><a href="{{ route('staffs.profile', $staffMember->encrypted_id ?? $staffMember->id) }}">{{ $staffMember->name }}</a></li>
-            <li class="breadcrumb-item active">Activities</li>
+            <li class="breadcrumb-item active">Activity</li>
         </ol>
     </nav>
 
-    <!-- Success/Error Messages -->
+    <!-- Success/Error Message -->
     @if(session('success'))
     <div class="alert alert-success alert-dismissible fade show" role="alert">
         <i class="fas fa-check-circle me-2"></i>{{ session('success') }}
@@ -183,7 +183,7 @@
         <div class="row align-items-center">
             <div class="col-md-8">
                 <h1 class="mb-2">
-                    <i class="fas fa-tasks me-3"></i>{{ $staffMember->name }}'s Activities
+                    <i class="fas fa-tasks me-3"></i>{{ $staffMember->name }}'s Activity
                 </h1>
                 <p class="mb-0 opacity-75">Manage and view all assigned rehabilitation activities</p>
             </div>
@@ -204,13 +204,13 @@
         <div class="stats-grid">
             <div class="stat-card">
                 <div class="stat-number">{{ count($activities) }}</div>
-                <div class="stat-label">Total Activities</div>
+                <div class="stat-label">Total Activity</div>
             </div>
             <div class="stat-card">
                 <div class="stat-number">
                     {{ collect($activities)->whereIn('activity_status', ['scheduled', 'ongoing'])->count() }}
                 </div>
-                <div class="stat-label">Active Activities</div>
+                <div class="stat-label">Active Activity</div>
             </div>
             <div class="stat-card">
                 <div class="stat-number">
@@ -231,10 +231,10 @@
         </div>
     </div>
 
-    <!-- Activities List -->
+    <!-- Activity List -->
     <div class="activities-card">
         <h3 class="mb-4">
-            <i class="fas fa-list me-2 text-primary"></i>All Activities
+            <i class="fas fa-list me-2 text-primary"></i>All Activity
         </h3>
 
         @if(count($activities) > 0)
@@ -302,7 +302,7 @@
         @else
             <div class="no-activities">
                 <i class="fas fa-clipboard-list fa-3x mb-3 text-muted"></i>
-                <h4>No Activities Assigned</h4>
+                <h4>No Activity Assigned</h4>
                 <p class="mb-0">This staff member has not been assigned any activities yet.</p>
             </div>
         @endif

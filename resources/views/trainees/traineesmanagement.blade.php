@@ -182,8 +182,8 @@
             <li class="{{ request()->routeIs('traineesmanagement') ? 'active' : '' }}">
                 <a href="{{ route('traineesmanagement') }}">
                     <i class="fas fa-user-graduate"></i>
-                    <span>Trainees</span>
-                    <div class="tooltip-sidebar">Trainees</div>
+                    <span>Trainee</span>
+                    <div class="tooltip-sidebar">Trainee</div>
                 </a>
             </li>
             <li class="{{ request()->routeIs('traineesregistrationpage') ? '' : '' }}">
@@ -238,11 +238,11 @@
         <div class="header">
             <div class="header-content">
                 <div class="page-info">
-                    <h1 class="page-title">Trainees</h1>
+                    <h1 class="page-title">Trainee</h1>
                     <div class="breadcrumb">
                         <a href="{{ route('dashboard') }}">Dashboard</a>
                         <span class="separator">/</span>
-                        <span class="current">Trainees</span>
+                        <span class="current">Trainee</span>
                     </div>
                 </div>
                 
@@ -315,7 +315,7 @@
         
         <!-- Content Section -->
         <div class="content-section">
-            <!-- Alert Messages -->
+            <!-- Alert Message -->
             @if(session('success'))
                 <div class="alert alert-success alert-dismissible fade show" role="alert">
                     <i class="fas fa-check-circle mr-2"></i> {{ session('success') }}
@@ -344,7 +344,7 @@
                             </div>
                             <div class="stats-details">
                                 <div class="stats-value">{{ count($trainees) }}</div>
-                                <div class="stats-label">Total Trainees</div>
+                                <div class="stats-label">Total Trainee</div>
                             </div>
                         </div>
                     </div>
@@ -358,7 +358,7 @@
                             </div>
                             <div class="stats-details">
                                 <div class="stats-value">{{ count($trainees->unique('centre_name')) }}</div>
-                                <div class="stats-label">Centres</div>
+                                <div class="stats-label">Centre</div>
                             </div>
                         </div>
                     </div>
@@ -586,7 +586,7 @@
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="filterModalLabel">Filter Trainees</h5>
+                    <h5 class="modal-title" id="filterModalLabel">Filter Trainee</h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
@@ -596,7 +596,7 @@
                         <div class="form-group">
                             <label for="filterCentre">Centre</label>
                             <select class="form-control" id="filterCentre">
-                                <option value="">All Centres</option>
+                                <option value="">All Centre</option>
                                 @php
                                     $centres = $trainees->pluck('centre_name')->unique()->sort();
                                 @endphp
@@ -823,7 +823,7 @@
             // Export functionality
             $('#exportBtn').click(function() {
                 Swal.fire({
-                    title: 'Export Trainees',
+                    title: 'Export Trainee',
                     text: 'Choose export format:',
                     icon: 'question',
                     showCancelButton: true,
@@ -846,7 +846,7 @@
             // Export to Excel
             function exportToExcel() {
                 var wb = XLSX.utils.table_to_book(document.getElementById('traineesTable'), {
-                    sheet: "Trainees"
+                    sheet: "Trainee"
                 });
                 var wbout = XLSX.write(wb, {
                     bookType: 'xlsx',
@@ -864,7 +864,7 @@
                 
                 Swal.fire({
                     title: 'Success!',
-                    text: 'Trainees exported to Excel successfully',
+                    text: 'Trainee exported to Excel successfully',
                     icon: 'success',
                     confirmButtonText: 'OK'
                 });
@@ -873,16 +873,16 @@
             // Export to CSV
             function exportToCSV() {
                 var wb = XLSX.utils.table_to_book(document.getElementById('traineesTable'), {
-                    sheet: "Trainees"
+                    sheet: "Trainee"
                 });
-                var wbout = XLSX.utils.sheet_to_csv(wb.Sheets["Trainees"]);
+                var wbout = XLSX.utils.sheet_to_csv(wb.Sheets["Trainee"]);
                 
                 var blob = new Blob([wbout], {type: 'text/csv;charset=utf-8'});
                 saveAs(blob, "trainees_" + new Date().toISOString().slice(0,10) + ".csv");
                 
                 Swal.fire({
                     title: 'Success!',
-                    text: 'Trainees exported to CSV successfully',
+                    text: 'Trainee exported to CSV successfully',
                     icon: 'success',
                     confirmButtonText: 'OK'
                 });

@@ -96,7 +96,7 @@
                 👁️ View Full Message
             </a>
             <a href="{{ route('admin.contacts.index') }}" class="button">
-                📊 Manage All Messages
+                📊 Manage All Message
             </a>
             @if($contact->email)
             <a href="mailto:{{ $contact->email }}?subject=Re: {{ $contact->subject }}&body=Dear {{ $contact->name }},%0D%0A%0D%0AThank you for contacting IIUM PD-CARE regarding your {{ strtolower($contact->formatted_reason) }}.%0D%0A%0D%0A" class="button">

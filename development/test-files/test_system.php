@@ -63,7 +63,7 @@ echo PHP_EOL . "=== WORKFLOW TEST ===" . PHP_EOL;
 
 // Test creating a sample letter
 try {
-    $user = App\Models\Users::find(49);
+    $user = App\Models\User::find(49);
     if (!$user) {
         throw new Exception("User with ID 49 not found");
     }
@@ -103,6 +103,6 @@ try {
 
 echo PHP_EOL . "=== SYSTEM READY FOR TESTING ===" . PHP_EOL;
 echo "You can now access:" . PHP_EOL;
-echo "- Letters Archive: http://localhost:8000/letters" . PHP_EOL;
+echo "- Letter Archive: http://localhost:8000/letters" . PHP_EOL;
 echo "- Create New Letter: http://localhost:8000/letters/create" . PHP_EOL;
 echo PHP_EOL . "All components are working correctly!" . PHP_EOL;

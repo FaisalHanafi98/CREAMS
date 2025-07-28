@@ -164,7 +164,7 @@
                 <div class="breadcrumb">
                     <a href="{{ route('dashboard') }}">Dashboard</a>
                     <span class="separator">/</span>
-                    <a href="{{ route('messages.index') }}">Messages</a>
+                    <a href="{{ route('messages.index') }}">Message</a>
                     <span class="separator">/</span>
                     <span class="current">Compose</span>
                 </div>
@@ -186,9 +186,9 @@
                 
                 <div class="recipient-type-tabs">
                     <div class="recipient-type-tab active" data-tab="admin">Administrators</div>
-                    <div class="recipient-type-tab" data-tab="supervisor">Supervisors</div>
-                    <div class="recipient-type-tab" data-tab="teacher">Teachers</div>
-                    <div class="recipient-type-tab" data-tab="ajk">AJKs</div>
+                    <div class="recipient-type-tab" data-tab="supervisor">Supervisor</div>
+                    <div class="recipient-type-tab" data-tab="teacher">Teacher</div>
+                    <div class="recipient-type-tab" data-tab="ajk">AJK</div>
                 </div>
                 
                 <div class="form-group">
@@ -267,7 +267,7 @@
             </li>
             <li>
                 <i class="fas fa-info-circle"></i>
-                <span>Administrators handle system-wide issues, Supervisors manage centres, and Teachers work directly with trainees.</span>
+                <span>Administrators handle system-wide issues, Supervisor manage centres, and Teacher work directly with trainees.</span>
             </li>
             <li>
                 <i class="fas fa-info-circle"></i>

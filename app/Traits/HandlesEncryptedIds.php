@@ -29,7 +29,7 @@ trait HandlesEncryptedIds
     /**
      * Decrypt and validate an encrypted ID token
      */
-    protected function decryptId($encryptedId)
+    protected function decryptId($encryptedId, $validateSession = false)
     {
         try {
             $payload = Crypt::decrypt($encryptedId);
@@ -39,8 +39,8 @@ trait HandlesEncryptedIds
                 return null;
             }
             
-            // Validate session
-            if ($payload['session'] !== Session::getId()) {
+            // Optional session validation (disabled by default for staff profile links)
+            if ($validateSession && $payload['session'] !== Session::getId()) {
                 return null;
             }
             

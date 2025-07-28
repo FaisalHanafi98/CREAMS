@@ -25,7 +25,7 @@
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
                             <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
-                                Total Assets
+                                Total Asset
                             </div>
                             <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $statistics['total_assets'] }}</div>
                         </div>
@@ -130,7 +130,7 @@
                 <div class="col-md-2 mb-3">
                     <label for="category" class="form-label">Category</label>
                     <select class="form-control" id="category" name="category">
-                        <option value="">All Categories</option>
+                        <option value="">All Category</option>
                         @foreach($categories as $cat)
                             <option value="{{ $cat->id }}" {{ $category == $cat->id ? 'selected' : '' }}>
                                 {{ $cat->name }}
@@ -171,10 +171,10 @@
         </div>
     </div>
 
-    <!-- Assets Table -->
+    <!-- Asset Table -->
     <div class="card shadow mb-4">
         <div class="card-header py-3">
-            <h6 class="m-0 font-weight-bold text-primary">Assets List</h6>
+            <h6 class="m-0 font-weight-bold text-primary">Asset List</h6>
         </div>
         <div class="card-body">
             @if($assets->count() > 0)

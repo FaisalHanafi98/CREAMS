@@ -41,7 +41,7 @@ class TraineeDocument extends Model
      */
     public function uploader()
     {
-        return $this->belongsTo(Users::class, 'uploaded_by');
+        return $this->belongsTo(User::class, 'uploaded_by');
     }
 
     /**

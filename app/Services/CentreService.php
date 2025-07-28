@@ -2,8 +2,8 @@
 
 namespace App\Services;
 
-use App\Models\Centres;
-use App\Models\Users;
+use App\Models\Centre;
+use App\Models\User;
 use App\Models\Trainee;
 use App\Models\Activity;
 use App\Models\Asset;
@@ -33,11 +33,11 @@ class CentreService
         ]));
         
         return Cache::remember($cacheKey, self::CACHE_DURATION, function () use ($filters, $userId, $userRole) {
-            $query = Centres::query();
+            $query = Centre::query();
             
             // Apply role-based filtering
             if (!in_array($userRole, ['admin'])) {
-                $user = Users::find($userId);
+                $user = User::find($userId);
                 if ($user) {
                     $query->where('id', $user->centre_id);
                 }
@@ -100,7 +100,7 @@ class CentreService
         $cacheKey = "centre_details_{$centreId}";
         
         return Cache::remember($cacheKey, self::CACHE_DURATION, function () use ($centreId) {
-            $centre = Centres::with([
+            $centre = Centre::with([
                     'users' => function($q) {
                         $q->select('id', 'centre_id', 'name', 'role', 'is_active')
                           ->where('is_active', true)
@@ -143,7 +143,7 @@ class CentreService
      */
     private function calculateRealTimeStatistics($centreId)
     {
-        $centre = Centres::find($centreId);
+        $centre = Centre::find($centreId);
         if (!$centre) {
             return [];
         }
@@ -152,7 +152,7 @@ class CentreService
             'centre_id' => $centreId,
             'centre_name' => $centre->centre_name,
             'centre_capacity' => $centre->centre_capacity ?? 0,
-            'total_users' => Users::where('centre_id', $centreId)->where('is_active', true)->count(),
+            'total_users' => User::where('centre_id', $centreId)->where('is_active', true)->count(),
             'total_trainees' => Trainee::where('centre_id', $centreId)->where('is_active', true)->count(),
             'total_activities' => Activity::where('centre_id', $centreId)->where('is_active', true)->count(),
             'total_assets' => Asset::where('centre_id', $centreId)->count(),
@@ -368,7 +368,7 @@ class CentreService
             return false;
         }
         
-        $user = Users::find($userId);
+        $user = User::find($userId);
         return $user && $user->centre_id == $centreId;
     }
     
@@ -450,11 +450,11 @@ class CentreService
         $cacheKey = "centres_summary_{$userId}_{$userRole}";
         
         return Cache::remember($cacheKey, self::CACHE_DURATION, function () use ($userId, $userRole) {
-            $query = Centres::query();
+            $query = Centre::query();
             
             // Apply role-based filtering
             if (!in_array($userRole, ['admin'])) {
-                $user = Users::find($userId);
+                $user = User::find($userId);
                 if ($user) {
                     $query->where('id', $user->centre_id);
                 }

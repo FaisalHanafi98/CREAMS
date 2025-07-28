@@ -1,14 +1,14 @@
 @extends('trainees.dashboard')
 
-@section('title', 'Trainee Activities')
+@section('title', 'Trainee Activity')
 
-@section('page-title', 'Trainee Activities')
-@section('breadcrumb', 'Activities')
+@section('page-title', 'Trainee Activity')
+@section('breadcrumb', 'Activity')
 
 @section('page-actions')
 <div class="page-actions">
     <a href="{{ route('trainees.home') }}" class="action-btn">
-        <i class="fas fa-arrow-left"></i> Back to Trainees
+        <i class="fas fa-arrow-left"></i> Back to Trainee
     </a>
     <button id="addActivityBtn" class="action-btn primary">
         <i class="fas fa-plus"></i> Add Activity
@@ -545,7 +545,7 @@
     <div class="activity-filter-card">
         <div class="activity-filter-header">
             <h3 class="activity-filter-title">
-                <i class="fas fa-filter"></i> Filter Activities
+                <i class="fas fa-filter"></i> Filter Activity
             </h3>
         </div>
         
@@ -555,7 +555,7 @@
                     <div class="form-group">
                         <label for="filter_trainee" class="form-label">Trainee</label>
                         <select class="form-control" id="filter_trainee" name="filter_trainee">
-                            <option value="">All Trainees</option>
+                            <option value="">All Trainee</option>
                             @foreach($trainees ?? [] as $trainee)
                                 <option value="{{ $trainee->id }}">
                                     {{ $trainee->trainee_first_name }} {{ $trainee->trainee_last_name }}
@@ -600,7 +600,7 @@
         </div>
     </div>
     
-    <!-- Activities List -->
+    <!-- Activity List -->
     <div class="activities-grid" id="activitiesGrid">
         @if(isset($activities) && count($activities) > 0)
             @foreach($activities as $activity)
@@ -664,7 +664,7 @@
         @else
             <div class="empty-state col-12">
                 <i class="fas fa-clipboard-list"></i>
-                <h4>No Activities Found</h4>
+                <h4>No Activity Found</h4>
                 <p>No activities have been recorded yet. Click the "Add Activity" button to get started.</p>
                 <button class="btn btn-primary mt-3" id="emptyStateAddBtn">
                     <i class="fas fa-plus"></i> Add First Activity

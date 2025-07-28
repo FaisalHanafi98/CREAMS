@@ -6,12 +6,8 @@ use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
-use App\Models\Users;
-use App\Models\Admins;
-use App\Models\Supervisors;
-use App\Models\Teachers;
-use App\Models\AJKs;
-use App\Models\Messages;
+use App\Models\User;
+use App\Models\Message;
 
 class CREAMSMessageSeeder extends Seeder
 {
@@ -26,8 +22,8 @@ class CREAMSMessageSeeder extends Seeder
             Log::info('Starting messages table seeding');
             
             // Check if table already has data
-            if (Messages::count() > 0) {
-                if (!$this->command->confirm('Messages table already has data. Continue with seeding?')) {
+            if (Message::count() > 0) {
+                if (!$this->command->confirm('Message table already has data. Continue with seeding?')) {
                     $this->command->info('Seeding aborted!');
                     return;
                 }
@@ -40,10 +36,10 @@ class CREAMSMessageSeeder extends Seeder
             DB::beginTransaction();
             
             // Get some users from each role for test messages
-            $admins = Admins::where('status', 'active')->limit($mode === 'minimal' ? 1 : 2)->get();
-            $supervisors = Supervisors::where('status', 'active')->limit($mode === 'minimal' ? 1 : 2)->get();
-            $teachers = Teachers::where('status', 'active')->limit($mode === 'minimal' ? 2 : 3)->get();
-            $ajks = AJKs::where('status', 'active')->limit($mode === 'minimal' ? 1 : 2)->get();
+            $admins = User::where('role', 'admin')->where('status', 'active')->limit($mode === 'minimal' ? 1 : 2)->get();
+            $supervisors = User::where('role', 'supervisor')->where('status', 'active')->limit($mode === 'minimal' ? 1 : 2)->get();
+            $teachers = User::where('role', 'teacher')->where('status', 'active')->limit($mode === 'minimal' ? 2 : 3)->get();
+            $ajks = User::where('role', 'ajk')->where('status', 'active')->limit($mode === 'minimal' ? 1 : 2)->get();
             
             // Check if we have enough users to create messages
             if ($admins->isEmpty() || $supervisors->isEmpty() || $teachers->isEmpty()) {
@@ -57,8 +53,8 @@ class CREAMSMessageSeeder extends Seeder
             
             DB::commit();
             
-            Log::info('Messages table seeded successfully');
-            $this->command->info('Messages seeded successfully!');
+            Log::info('Message table seeded successfully');
+            $this->command->info('Message seeded successfully!');
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Error seeding messages table', [
@@ -329,15 +325,22 @@ class CREAMSMessageSeeder extends Seeder
         $now = Carbon::now();
         $createdAt = $createdAt ?? Carbon::now()->subMinutes(rand(5, 60 * 24 * 10)); // Random time within the past 10 days
         
+        // Get centre_id from sender's profile
+        $sender = User::find($senderId);
+        $centreId = $sender ? $sender->centre_id : 1; // Default to centre 1 if not found
+        
         $data = [
             'sender_id' => $senderId,
-            'sender_type' => $senderType,
             'recipient_id' => $recipientId,
-            'recipient_type' => $recipientType,
-            'subject' => $subject,
-            'content' => $content,
-            'read' => $read,
+            'centre_id' => $centreId,
+            'message_subject' => $subject,
+            'message_body' => $content,
+            'message_type' => 'direct',
+            'message_priority' => 'normal',
+            'is_read' => $read,
             'read_at' => $read ? $createdAt->copy()->addMinutes(rand(1, 60)) : null, // If read, set read time 1-60 minutes after creation
+            'delivered_at' => $createdAt->copy()->addMinutes(1), // Mark as delivered shortly after creation
+            'is_deleted' => false,
             'created_at' => $createdAt,
             'updated_at' => $createdAt
         ];

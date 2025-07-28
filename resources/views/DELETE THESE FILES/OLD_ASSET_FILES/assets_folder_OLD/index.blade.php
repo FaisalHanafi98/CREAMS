@@ -253,7 +253,7 @@
                 <i class="fas fa-boxes"></i>
             </div>
             <div class="stat-value">{{ $stats['total'] ?? 0 }}</div>
-            <div class="stat-label">Total Assets</div>
+            <div class="stat-label">Total Asset</div>
         </div>
         <div class="stat-card">
             <div class="stat-icon">
@@ -267,7 +267,7 @@
                 <i class="fas fa-building"></i>
             </div>
             <div class="stat-value">{{ $stats['centres'] ?? 0 }}</div>
-            <div class="stat-label">Centres</div>
+            <div class="stat-label">Centre</div>
         </div>
         <div class="stat-card">
             <div class="stat-icon">
@@ -289,7 +289,7 @@
     <div class="filter-section">
         <form method="GET" action="{{ route('assets.index') }}" class="row align-items-end">
             <div class="col-md-4 mb-3">
-                <label for="search" class="form-label">Search Assets</label>
+                <label for="search" class="form-label">Search Asset</label>
                 <div class="search-box">
                     <input type="text" 
                            class="form-control" 
@@ -314,7 +314,7 @@
             <div class="col-md-3 mb-3">
                 <label for="centre" class="form-label">Centre</label>
                 <select class="form-control" id="centre" name="centre">
-                    <option value="">All Centres</option>
+                    <option value="">All Centre</option>
                     @foreach($centres as $centre)
                         <option value="{{ $centre->centre_name }}" {{ request('centre') == $centre->centre_name ? 'selected' : '' }}>
                             {{ $centre->centre_name }}
@@ -330,7 +330,7 @@
         </form>
     </div>
 
-    <!-- Assets Table -->
+    <!-- Asset Table -->
     <div class="asset-table">
         <div class="table-responsive">
             <table class="table table-hover mb-0">
@@ -398,7 +398,7 @@
                         <tr>
                             <td colspan="8" class="text-center py-5">
                                 <i class="fas fa-boxes fa-3x text-muted mb-3"></i>
-                                <h5 class="text-muted">No Assets Found</h5>
+                                <h5 class="text-muted">No Asset Found</h5>
                                 <p class="text-muted">No assets match your current filters.</p>
                                 @if(in_array(session('role'), ['admin', 'supervisor']))
                                 <a href="{{ route('assets.create') }}" class="btn btn-primary">

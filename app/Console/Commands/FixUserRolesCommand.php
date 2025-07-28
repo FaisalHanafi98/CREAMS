@@ -32,9 +32,9 @@ class FixUserRolesCommand extends Command
      */
     public function handle()
     {
-        $this->info('CREAMS User Roles Fix Tool');
+        $this->info('CREAMS User Role Fix Tool');
         $this->info('This command will find and fix code that incorrectly references separate role tables (admins, supervisors, etc.)');
-        $this->info('Instead, it will update references to use the main Users model with role filtering');
+        $this->info('Instead, it will update references to use the main User model with role filtering');
         
         $scanOnly = $this->option('scan-only');
         if ($scanOnly) {
@@ -54,21 +54,21 @@ class FixUserRolesCommand extends Command
             return 1;
         }
         
-        $this->info('Users table exists. Continuing...');
+        $this->info('User table exists. Continuing...');
         
         // Step 2: Check for references to role-specific models in controllers
         $this->info('Step 2: Scanning controllers for role-specific model references...');
         
         $controllersPath = app_path('Http/Controllers');
         $modelReferences = [
-            'Admins::' => 0,
-            'Supervisors::' => 0,
-            'Teachers::' => 0,
-            'AJKs::' => 0,
-            'App\\Models\\Admins' => 0,
-            'App\\Models\\Supervisors' => 0,
-            'App\\Models\\Teachers' => 0,
-            'App\\Models\\AJKs' => 0,
+            'Admin::' => 0,
+            'Supervisor::' => 0,
+            'Teacher::' => 0,
+            'AJK::' => 0,
+            'App\\Models\\Admin' => 0,
+            'App\\Models\\Supervisor' => 0,
+            'App\\Models\\Teacher' => 0,
+            'App\\Models\\AJK' => 0,
         ];
         
         $filesToFix = [];
@@ -103,38 +103,38 @@ class FixUserRolesCommand extends Command
                 $content = File::get($filePath);
                 $originalContent = $content;
                 
-                // Replace role-specific model imports with Users model
+                // Replace role-specific model imports with User model
                 $content = preg_replace(
-                    '/use App\\\\Models\\\\(Admins|Supervisors|Teachers|AJKs);/m',
-                    'use App\\Models\\Users;',
+                    '/use App\\\\Models\\\\(Admin|Supervisor|Teacher|AJK);/m',
+                    'use App\\Models\\User;',
                     $content
                 );
                 
-                // Replace direct static calls to role-specific models with Users model + where clause
+                // Replace direct static calls to role-specific models with User model + where clause
                 $replacements = [
                     // Find pattern
-                    '/(\\\App\\\Models\\\|\b)(Admins)::find\((\$[a-zA-Z0-9_]+)\)/m' => 'Users::where(\'role\', \'admin\')->where(\'id\', $3)->first()',
-                    '/(\\\App\\\Models\\\|\b)(Supervisors)::find\((\$[a-zA-Z0-9_]+)\)/m' => 'Users::where(\'role\', \'supervisor\')->where(\'id\', $3)->first()',
-                    '/(\\\App\\\Models\\\|\b)(Teachers)::find\((\$[a-zA-Z0-9_]+)\)/m' => 'Users::where(\'role\', \'teacher\')->where(\'id\', $3)->first()',
-                    '/(\\\App\\\Models\\\|\b)(AJKs)::find\((\$[a-zA-Z0-9_]+)\)/m' => 'Users::where(\'role\', \'ajk\')->where(\'id\', $3)->first()',
+                    '/(\\\App\\\Models\\\|\b)(Admin)::find\((\$[a-zA-Z0-9_]+)\)/m' => 'User::where(\'role\', \'admin\')->where(\'id\', $3)->first()',
+                    '/(\\\App\\\Models\\\|\b)(Supervisor)::find\((\$[a-zA-Z0-9_]+)\)/m' => 'User::where(\'role\', \'supervisor\')->where(\'id\', $3)->first()',
+                    '/(\\\App\\\Models\\\|\b)(Teacher)::find\((\$[a-zA-Z0-9_]+)\)/m' => 'User::where(\'role\', \'teacher\')->where(\'id\', $3)->first()',
+                    '/(\\\App\\\Models\\\|\b)(AJK)::find\((\$[a-zA-Z0-9_]+)\)/m' => 'User::where(\'role\', \'ajk\')->where(\'id\', $3)->first()',
                     
                     // Additional replacements for other common patterns
-                    '/(\\\App\\\Models\\\|\b)(Admins)::findOrFail\((\$[a-zA-Z0-9_]+)\)/m' => 'Users::where(\'role\', \'admin\')->where(\'id\', $3)->firstOrFail()',
-                    '/(\\\App\\\Models\\\|\b)(Supervisors)::findOrFail\((\$[a-zA-Z0-9_]+)\)/m' => 'Users::where(\'role\', \'supervisor\')->where(\'id\', $3)->firstOrFail()',
-                    '/(\\\App\\\Models\\\|\b)(Teachers)::findOrFail\((\$[a-zA-Z0-9_]+)\)/m' => 'Users::where(\'role\', \'teacher\')->where(\'id\', $3)->firstOrFail()',
-                    '/(\\\App\\\Models\\\|\b)(AJKs)::findOrFail\((\$[a-zA-Z0-9_]+)\)/m' => 'Users::where(\'role\', \'ajk\')->where(\'id\', $3)->firstOrFail()',
+                    '/(\\\App\\\Models\\\|\b)(Admin)::findOrFail\((\$[a-zA-Z0-9_]+)\)/m' => 'User::where(\'role\', \'admin\')->where(\'id\', $3)->firstOrFail()',
+                    '/(\\\App\\\Models\\\|\b)(Supervisor)::findOrFail\((\$[a-zA-Z0-9_]+)\)/m' => 'User::where(\'role\', \'supervisor\')->where(\'id\', $3)->firstOrFail()',
+                    '/(\\\App\\\Models\\\|\b)(Teacher)::findOrFail\((\$[a-zA-Z0-9_]+)\)/m' => 'User::where(\'role\', \'teacher\')->where(\'id\', $3)->firstOrFail()',
+                    '/(\\\App\\\Models\\\|\b)(AJK)::findOrFail\((\$[a-zA-Z0-9_]+)\)/m' => 'User::where(\'role\', \'ajk\')->where(\'id\', $3)->firstOrFail()',
                     
                     // Replace case statements in switch blocks
-                    '/case\s+[\'"]admin[\'"]\s*:\s*\$user\s*=\s*(\\\App\\\Models\\\|\b)(Admins)::find\((\$[a-zA-Z0-9_]+)\);/m' => 'case \'admin\': $user = Users::where(\'role\', \'admin\')->where(\'id\', $3)->first();',
-                    '/case\s+[\'"]supervisor[\'"]\s*:\s*\$user\s*=\s*(\\\App\\\Models\\\|\b)(Supervisors)::find\((\$[a-zA-Z0-9_]+)\);/m' => 'case \'supervisor\': $user = Users::where(\'role\', \'supervisor\')->where(\'id\', $3)->first();',
-                    '/case\s+[\'"]teacher[\'"]\s*:\s*\$user\s*=\s*(\\\App\\\Models\\\|\b)(Teachers)::find\((\$[a-zA-Z0-9_]+)\);/m' => 'case \'teacher\': $user = Users::where(\'role\', \'teacher\')->where(\'id\', $3)->first();',
-                    '/case\s+[\'"]ajk[\'"]\s*:\s*\$user\s*=\s*(\\\App\\\Models\\\|\b)(AJKs)::find\((\$[a-zA-Z0-9_]+)\);/m' => 'case \'ajk\': $user = Users::where(\'role\', \'ajk\')->where(\'id\', $3)->first();',
+                    '/case\s+[\'"]admin[\'"]\s*:\s*\$user\s*=\s*(\\\App\\\Models\\\|\b)(Admin)::find\((\$[a-zA-Z0-9_]+)\);/m' => 'case \'admin\': $user = User::where(\'role\', \'admin\')->where(\'id\', $3)->first();',
+                    '/case\s+[\'"]supervisor[\'"]\s*:\s*\$user\s*=\s*(\\\App\\\Models\\\|\b)(Supervisor)::find\((\$[a-zA-Z0-9_]+)\);/m' => 'case \'supervisor\': $user = User::where(\'role\', \'supervisor\')->where(\'id\', $3)->first();',
+                    '/case\s+[\'"]teacher[\'"]\s*:\s*\$user\s*=\s*(\\\App\\\Models\\\|\b)(Teacher)::find\((\$[a-zA-Z0-9_]+)\);/m' => 'case \'teacher\': $user = User::where(\'role\', \'teacher\')->where(\'id\', $3)->first();',
+                    '/case\s+[\'"]ajk[\'"]\s*:\s*\$user\s*=\s*(\\\App\\\Models\\\|\b)(AJK)::find\((\$[a-zA-Z0-9_]+)\);/m' => 'case \'ajk\': $user = User::where(\'role\', \'ajk\')->where(\'id\', $3)->first();',
                     
                     // Replace new role-specific model instances
-                    '/\$user\s*=\s*new\s+(\\\App\\\Models\\\|\b)(Admins)\(\);/m' => '$user = new Users(); $user->role = \'admin\';',
-                    '/\$user\s*=\s*new\s+(\\\App\\\Models\\\|\b)(Supervisors)\(\);/m' => '$user = new Users(); $user->role = \'supervisor\';',
-                    '/\$user\s*=\s*new\s+(\\\App\\\Models\\\|\b)(Teachers)\(\);/m' => '$user = new Users(); $user->role = \'teacher\';',
-                    '/\$user\s*=\s*new\s+(\\\App\\\Models\\\|\b)(AJKs)\(\);/m' => '$user = new Users(); $user->role = \'ajk\';',
+                    '/\$user\s*=\s*new\s+(\\\App\\\Models\\\|\b)(Admin)\(\);/m' => '$user = new User(); $user->role = \'admin\';',
+                    '/\$user\s*=\s*new\s+(\\\App\\\Models\\\|\b)(Supervisor)\(\);/m' => '$user = new User(); $user->role = \'supervisor\';',
+                    '/\$user\s*=\s*new\s+(\\\App\\\Models\\\|\b)(Teacher)\(\);/m' => '$user = new User(); $user->role = \'teacher\';',
+                    '/\$user\s*=\s*new\s+(\\\App\\\Models\\\|\b)(AJK)\(\);/m' => '$user = new User(); $user->role = \'ajk\';',
                 ];
                 
                 foreach ($replacements as $pattern => $replacement) {
@@ -243,17 +243,17 @@ return new class extends Migration
             $originalContent = $content;
             
             // Check if the controller has a method that accesses admins table
-            if (Str::contains($content, 'App\\Models\\Admins') || 
-                Str::contains($content, '\\App\\Models\\Admins') || 
-                Str::contains($content, 'Admins::')) {
+            if (Str::contains($content, 'App\\Models\\Admin') || 
+                Str::contains($content, '\\App\\Models\\Admin') || 
+                Str::contains($content, 'Admin::')) {
                 
                 if (!$scanOnly) {
-                    $this->info('Updating DashboardController to use Users model with role filtering...');
+                    $this->info('Updating DashboardController to use User model with role filtering...');
                     
                     // Replace imports
                     $content = preg_replace(
-                        '/use App\\\\Models\\\\(Admins|Supervisors|Teachers|AJKs);/m',
-                        'use App\\Models\\Users;',
+                        '/use App\\\\Models\\\\(Admin|Supervisor|Teacher|AJK);/m',
+                        'use App\\Models\\User;',
                         $content
                     );
                     
@@ -263,7 +263,7 @@ return new class extends Migration
                             '/private function getUserNameById\(\$userId, \$role\)\s*{\s*switch \(\$role\) {.*?}/s',
                             'private function getUserNameById($userId, $role)
     {
-        $user = Users::where(\'role\', $role)->where(\'id\', $userId)->first();
+        $user = User::where(\'role\', $role)->where(\'id\', $userId)->first();
         return $user ? $user->name : \'Unknown User\';
     }',
                             $content

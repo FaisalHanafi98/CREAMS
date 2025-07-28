@@ -1,7 +1,7 @@
 {{-- activities/ajk-view.blade.php --}}
 @extends('layouts.app')
 
-@section('title', 'Activities Overview - CREAMS')
+@section('title', 'Activity Overview - CREAMS')
 
 @section('styles')
 <link rel="stylesheet" href="{{ asset('css/activities.css') }}">
@@ -11,7 +11,7 @@
 <div class="container-fluid">
     <div class="page-header">
         <h1 class="page-title">
-            <i class="fas fa-tasks"></i> Activities Overview
+            <i class="fas fa-tasks"></i> Activity Overview
         </h1>
         <div class="page-actions">
             <button type="button" class="btn btn-outline-primary" onclick="window.print()">
@@ -29,7 +29,7 @@
                 </div>
                 <div class="stat-content">
                     <h3>{{ $stats['total_activities'] }}</h3>
-                    <p>Total Activities</p>
+                    <p>Total Activity</p>
                 </div>
             </div>
         </div>
@@ -40,7 +40,7 @@
                 </div>
                 <div class="stat-content">
                     <h3>{{ $stats['active_activities'] }}</h3>
-                    <p>Active Activities</p>
+                    <p>Active Activity</p>
                 </div>
             </div>
         </div>
@@ -68,10 +68,10 @@
         </div>
     </div>
 
-    <!-- Activities Overview -->
+    <!-- Activity Overview -->
     <div class="card">
         <div class="card-header">
-            <h5 class="m-0">Activities Overview</h5>
+            <h5 class="m-0">Activity Overview</h5>
         </div>
         <div class="card-body">
             <div class="table-responsive">
@@ -127,12 +127,12 @@
         </div>
     </div>
 
-    <!-- Activity Categories Summary -->
+    <!-- Activity Category Summary -->
     <div class="row mt-4">
         <div class="col-md-6">
             <div class="card">
                 <div class="card-header">
-                    <h5 class="m-0">Activities by Category</h5>
+                    <h5 class="m-0">Activity by Category</h5>
                 </div>
                 <div class="card-body">
                     @php
@@ -153,7 +153,7 @@
         <div class="col-md-6">
             <div class="card">
                 <div class="card-header">
-                    <h5 class="m-0">Activities by Difficulty</h5>
+                    <h5 class="m-0">Activity by Difficulty</h5>
                 </div>
                 <div class="card-body">
                     @php

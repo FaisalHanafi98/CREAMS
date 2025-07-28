@@ -6,7 +6,7 @@ use App\Models\Asset;
 use App\Models\AssetCategory;
 use App\Models\AssetMaintenance;
 use App\Models\AssetMovement;
-use App\Models\Users;
+use App\Models\User;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
 use Carbon\Carbon;
@@ -68,7 +68,7 @@ class AssetService
     {
         try {
             $asset = Asset::findOrFail($assetId);
-            $user = Users::findOrFail($userId);
+            $user = User::findOrFail($userId);
 
             // Validate assignment
             if ($asset->status !== 'available') {

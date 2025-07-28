@@ -5,16 +5,16 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use App\Models\Admins;
-use App\Models\Supervisors;
-use App\Models\Teachers;
-use App\Models\AJKs;
-use App\Models\Trainees;
-use App\Models\Centres;
-use App\Models\Activities;
-use App\Models\Assets;
-use App\Models\Messages;
-use App\Models\Notifications;
+use App\Models\Admin;
+use App\Models\Supervisor;
+use App\Models\Teacher;
+use App\Models\AJK;
+use App\Models\Trainee;
+use App\Models\Centre;
+use App\Models\Activity;
+use App\Models\Asset;
+use App\Models\Message;
+use App\Models\Notification;
 
 class ApiController extends Controller
 {
@@ -25,7 +25,7 @@ class ApiController extends Controller
      */
     public function getCentres()
     {
-        $centres = Centres::where('centre_status', true)->get();
+        $centres = Centre::where('centre_status', true)->get();
         
         return response()->json([
             'success' => true,
@@ -40,7 +40,7 @@ class ApiController extends Controller
      */
     public function getPublicActivities()
     {
-        $activities = Activities::where('is_public', true)
+        $activities = Activity::where('is_public', true)
             ->with('centre')
             ->orderBy('activity_date', 'desc')
             ->take(5)
@@ -72,16 +72,16 @@ class ApiController extends Controller
         
         switch ($role) {
             case 'admin':
-                $user = Admins::find($id);
+                $user = Admin::find($id);
                 break;
             case 'supervisor':
-                $user = Supervisors::with('centre')->find($id);
+                $user = Supervisor::with('centre')->find($id);
                 break;
             case 'teacher':
-                $user = Teachers::with('centre')->find($id);
+                $user = Teacher::with('centre')->find($id);
                 break;
             case 'ajk':
-                $user = AJKs::with('centre')->find($id);
+                $user = AJK::with('centre')->find($id);
                 break;
             default:
                 return response()->json([
@@ -147,16 +147,16 @@ class ApiController extends Controller
         
         switch ($role) {
             case 'admin':
-                $user = Admins::find($id);
+                $user = Admin::find($id);
                 break;
             case 'supervisor':
-                $user = Supervisors::find($id);
+                $user = Supervisor::find($id);
                 break;
             case 'teacher':
-                $user = Teachers::find($id);
+                $user = Teacher::find($id);
                 break;
             case 'ajk':
-                $user = AJKs::find($id);
+                $user = AJK::find($id);
                 break;
             default:
                 return response()->json([
@@ -217,18 +217,18 @@ class ApiController extends Controller
         $stats = [];
         
         // Common stats for all roles
-        $stats['totalCentres'] = Centres::count();
-        $stats['totalTrainees'] = Trainees::count();
+        $stats['totalCentres'] = Centre::count();
+        $stats['totalTrainees'] = Trainee::count();
         
         // Role-specific stats
         switch ($role) {
             case 'admin':
-                $stats['supervisorCount'] = Supervisors::count();
-                $stats['teacherCount'] = Teachers::count();
-                $stats['ajkCount'] = AJKs::count();
-                $stats['activeCentres'] = Centres::where('centre_status', true)->count();
-                $stats['totalActivities'] = Activities::count();
-                $stats['totalAssets'] = Assets::count();
+                $stats['supervisorCount'] = Supervisor::count();
+                $stats['teacherCount'] = Teacher::count();
+                $stats['ajkCount'] = AJK::count();
+                $stats['activeCentres'] = Centre::where('centre_status', true)->count();
+                $stats['totalActivities'] = Activity::count();
+                $stats['totalAssets'] = Asset::count();
                 
                 // Monthly registration stats
                 $stats['monthlyRegistrations'] = DB::table('trainees')
@@ -241,25 +241,25 @@ class ApiController extends Controller
                 break;
                 
             case 'supervisor':
-                $user = Supervisors::find($id);
+                $user = Supervisor::find($id);
                 $centreId = $user->centre_id;
                 
-                $stats['teacherCount'] = Teachers::where('centre_id', $centreId)->count();
-                $stats['traineesInCentre'] = Trainees::where('centre_id', $centreId)->count();
-                $stats['activitiesInCentre'] = Activities::where('centre_id', $centreId)->count();
-                $stats['assetsInCentre'] = Assets::where('centre_id', $centreId)->count();
+                $stats['teacherCount'] = Teacher::where('centre_id', $centreId)->count();
+                $stats['traineesInCentre'] = Trainee::where('centre_id', $centreId)->count();
+                $stats['activitiesInCentre'] = Activity::where('centre_id', $centreId)->count();
+                $stats['assetsInCentre'] = Asset::where('centre_id', $centreId)->count();
                 
                 break;
                 
             case 'teacher':
-                $user = Teachers::find($id);
+                $user = Teacher::find($id);
                 $centreId = $user->centre_id;
                 
                 // Count of trainees assigned to this teacher
-                $stats['assignedTrainees'] = Trainees::where('user_id', $id)->count();
+                $stats['assignedTrainees'] = Trainee::where('user_id', $id)->count();
                 
                 // Count of activities this teacher is involved in
-                $stats['teacherActivities'] = Activities::where('teacher_id', $id)->count();
+                $stats['teacherActivities'] = Activity::where('teacher_id', $id)->count();
                 
                 // Recent attendance statistics
                 $stats['attendanceStats'] = DB::table('attendances')
@@ -274,15 +274,15 @@ class ApiController extends Controller
                 break;
                 
             case 'ajk':
-                $user = AJKs::find($id);
+                $user = AJK::find($id);
                 $centreId = $user->centre_id;
                 
-                // Events organized by this AJK
+                // Event organized by this AJK
                 $stats['eventsOrganized'] = DB::table('events')
                     ->where('ajk_id', $id)
                     ->count();
                 
-                // Volunteers managed by this AJK
+                // Volunteer managed by this AJK
                 $stats['volunteersManaged'] = DB::table('volunteers')
                     ->where('ajk_id', $id)
                     ->count();
@@ -291,7 +291,7 @@ class ApiController extends Controller
         }
         
         // Recent activities for all roles
-        $recentActivities = Activities::orderBy('activity_date', 'desc')
+        $recentActivities = Activity::orderBy('activity_date', 'desc')
             ->take(5)
             ->with('centre')
             ->get();
@@ -299,13 +299,13 @@ class ApiController extends Controller
         $stats['recentActivities'] = $recentActivities;
         
         // Unread messages count
-        $stats['unreadMessages'] = Messages::where('recipient_id', $id)
+        $stats['unreadMessages'] = Message::where('recipient_id', $id)
             ->where('recipient_type', $role)
             ->where('read', false)
             ->count();
             
         // Unread notifications count
-        $stats['unreadNotifications'] = Notifications::where('user_id', $id)
+        $stats['unreadNotifications'] = Notification::where('user_id', $id)
             ->where('user_type', $role)
             ->where('read', false)
             ->count();
@@ -338,7 +338,7 @@ class ApiController extends Controller
         
         // Search in each user model
         if (!$roleFilter || $roleFilter === 'admin') {
-            $admins = Admins::where('name', 'like', "%{$query}%")
+            $admins = Admin::where('name', 'like', "%{$query}%")
                 ->orWhere('email', 'like', "%{$query}%")
                 ->orWhere('iium_id', 'like', "%{$query}%")
                 ->get()
@@ -350,7 +350,7 @@ class ApiController extends Controller
         }
         
         if (!$roleFilter || $roleFilter === 'supervisor') {
-            $supervisors = Supervisors::where('name', 'like', "%{$query}%")
+            $supervisors = Supervisor::where('name', 'like', "%{$query}%")
                 ->orWhere('email', 'like', "%{$query}%")
                 ->orWhere('iium_id', 'like', "%{$query}%")
                 ->with('centre')
@@ -363,7 +363,7 @@ class ApiController extends Controller
         }
         
         if (!$roleFilter || $roleFilter === 'teacher') {
-            $teachers = Teachers::where('name', 'like', "%{$query}%")
+            $teachers = Teacher::where('name', 'like', "%{$query}%")
                 ->orWhere('email', 'like', "%{$query}%")
                 ->orWhere('iium_id', 'like', "%{$query}%")
                 ->with('centre')
@@ -376,7 +376,7 @@ class ApiController extends Controller
         }
         
         if (!$roleFilter || $roleFilter === 'ajk') {
-            $ajks = AJKs::where('name', 'like', "%{$query}%")
+            $ajks = AJK::where('name', 'like', "%{$query}%")
                 ->orWhere('email', 'like', "%{$query}%")
                 ->orWhere('iium_id', 'like', "%{$query}%")
                 ->with('centre')
@@ -402,23 +402,23 @@ class ApiController extends Controller
      */
     public function getCentreData($id)
     {
-        $centre = Centres::findOrFail($id);
+        $centre = Centre::findOrFail($id);
         
         // Get users associated with this centre
-        $supervisors = Supervisors::where('centre_id', $id)->get();
-        $teachers = Teachers::where('centre_id', $id)->get();
-        $ajks = AJKs::where('centre_id', $id)->get();
+        $supervisors = Supervisor::where('centre_id', $id)->get();
+        $teachers = Teacher::where('centre_id', $id)->get();
+        $ajks = AJK::where('centre_id', $id)->get();
         
         // Get activities for this centre
-        $activities = Activities::where('centre_id', $id)
+        $activities = Activity::where('centre_id', $id)
             ->orderBy('activity_date', 'desc')
             ->get();
             
         // Get trainees for this centre
-        $trainees = Trainees::where('centre_id', $id)->get();
+        $trainees = Trainee::where('centre_id', $id)->get();
         
         // Get assets for this centre
-        $assets = Assets::where('centre_id', $id)->get();
+        $assets = Asset::where('centre_id', $id)->get();
         
         // Centre statistics
         $stats = [
@@ -465,33 +465,33 @@ class ApiController extends Controller
         
         switch ($role) {
             case 'admin':
-                // Admins see all activities
-                $activities = Activities::orderBy('activity_date', 'desc')
+                // Admin see all activities
+                $activities = Activity::orderBy('activity_date', 'desc')
                     ->with(['centre', 'teacher'])
                     ->paginate(10);
                 break;
                 
             case 'supervisor':
-                $user = Supervisors::find($id);
-                // Supervisors see activities in their centre
-                $activities = Activities::where('centre_id', $user->centre_id)
+                $user = Supervisor::find($id);
+                // Supervisor see activities in their centre
+                $activities = Activity::where('centre_id', $user->centre_id)
                     ->orderBy('activity_date', 'desc')
                     ->with(['centre', 'teacher'])
                     ->paginate(10);
                 break;
                 
             case 'teacher':
-                // Teachers see activities they're assigned to
-                $activities = Activities::where('teacher_id', $id)
+                // Teacher see activities they're assigned to
+                $activities = Activity::where('teacher_id', $id)
                     ->orderBy('activity_date', 'desc')
                     ->with(['centre', 'teacher'])
                     ->paginate(10);
                 break;
                 
             case 'ajk':
-                $user = AJKs::find($id);
-                // AJKs see activities in their centre
-                $activities = Activities::where('centre_id', $user->centre_id)
+                $user = AJK::find($id);
+                // AJK see activities in their centre
+                $activities = Activity::where('centre_id', $user->centre_id)
                     ->orderBy('activity_date', 'desc')
                     ->with(['centre', 'teacher'])
                     ->paginate(10);
@@ -522,7 +522,7 @@ class ApiController extends Controller
             ], 401);
         }
         
-        $notifications = Notifications::where('user_id', $id)
+        $notifications = Notification::where('user_id', $id)
             ->where('user_type', $role)
             ->orderBy('created_at', 'desc')
             ->paginate(10);
@@ -551,7 +551,7 @@ class ApiController extends Controller
             ], 401);
         }
         
-        $notification = Notifications::findOrFail($id);
+        $notification = Notification::findOrFail($id);
         
         // Ensure the notification belongs to the user
         if ($notification->user_id != $userId || $notification->user_type != $role) {

@@ -9,24 +9,24 @@ echo "=== TESTING USERS/STAFF MODULE ===" . PHP_EOL;
 echo "Testing users table structure..." . PHP_EOL;
 try {
     $columns = DB::select('DESCRIBE users');
-    echo "✅ Users table columns:" . PHP_EOL;
+    echo "✅ User table columns:" . PHP_EOL;
     foreach ($columns as $column) {
         echo "  - {$column->Field} ({$column->Type})" . PHP_EOL;
     }
 } catch (Exception $e) {
-    echo "❌ Users table structure error: " . $e->getMessage() . PHP_EOL;
+    echo "❌ User table structure error: " . $e->getMessage() . PHP_EOL;
 }
 
 // Test users data
 echo PHP_EOL . "Testing users data..." . PHP_EOL;
 try {
-    $users = App\Models\Users::all();
-    echo "✅ Users retrieved: " . $users->count() . " users" . PHP_EOL;
+    $users = App\Models\User::all();
+    echo "✅ User retrieved: " . $users->count() . " users" . PHP_EOL;
     foreach ($users->take(5) as $user) {
         echo "  - {$user->name} ({$user->role}) - Centre: {$user->centre_id}" . PHP_EOL;
     }
 } catch (Exception $e) {
-    echo "❌ Users data error: " . $e->getMessage() . PHP_EOL;
+    echo "❌ User data error: " . $e->getMessage() . PHP_EOL;
 }
 
 // Test if UserController can be instantiated
@@ -44,7 +44,7 @@ echo PHP_EOL . "Testing authentication operations..." . PHP_EOL;
 // Test user authentication
 echo "Testing user authentication..." . PHP_EOL;
 try {
-    $admin = App\Models\Users::where('role', 'admin')->first();
+    $admin = App\Models\User::where('role', 'admin')->first();
     if ($admin) {
         echo "✅ Admin user found: {$admin->name}" . PHP_EOL;
         echo "  - Email: {$admin->email}" . PHP_EOL;
@@ -64,7 +64,7 @@ echo PHP_EOL . "Testing CRUD operations..." . PHP_EOL;
 // Test CREATE
 echo "Testing CREATE operation..." . PHP_EOL;
 try {
-    $testUser = App\Models\Users::create([
+    $testUser = App\Models\User::create([
         'iium_id' => 'TEST' . now()->format('mdHi'),
         'name' => 'Test User ' . now()->format('Y-m-d H:i:s'),
         'email' => 'test' . now()->format('mdHi') . '@example.com',
@@ -87,7 +87,7 @@ try {
 // Test READ
 echo PHP_EOL . "Testing READ operation..." . PHP_EOL;
 try {
-    $user = App\Models\Users::first();
+    $user = App\Models\User::first();
     if ($user) {
         echo "✅ User read successfully: {$user->name}" . PHP_EOL;
         echo "  - Email: {$user->email}" . PHP_EOL;
@@ -105,7 +105,7 @@ try {
 // Test UPDATE
 echo PHP_EOL . "Testing UPDATE operation..." . PHP_EOL;
 try {
-    $user = App\Models\Users::where('name', 'LIKE', 'Test User%')->first();
+    $user = App\Models\User::where('name', 'LIKE', 'Test User%')->first();
     if ($user) {
         $user->update([
             'name' => 'Updated Test User ' . now()->format('H:i:s'),
@@ -124,7 +124,7 @@ echo PHP_EOL . "Testing role-based queries..." . PHP_EOL;
 try {
     $roles = ['admin', 'supervisor', 'teacher', 'ajk'];
     foreach ($roles as $role) {
-        $count = App\Models\Users::where('role', $role)->count();
+        $count = App\Models\User::where('role', $role)->count();
         echo "✅ {$role}: {$count} users" . PHP_EOL;
     }
 } catch (Exception $e) {
@@ -134,9 +134,9 @@ try {
 // Test centre-based queries
 echo PHP_EOL . "Testing centre-based queries..." . PHP_EOL;
 try {
-    $centres = App\Models\Centres::all();
+    $centres = App\Models\Centre::all();
     foreach ($centres as $centre) {
-        $count = App\Models\Users::where('centre_id', $centre->centre_id)->count();
+        $count = App\Models\User::where('centre_id', $centre->centre_id)->count();
         echo "✅ {$centre->centre_name}: {$count} users" . PHP_EOL;
     }
 } catch (Exception $e) {
@@ -146,7 +146,7 @@ try {
 // Test DELETE
 echo PHP_EOL . "Testing DELETE operation..." . PHP_EOL;
 try {
-    $user = App\Models\Users::where('name', 'LIKE', 'Updated Test User%')->first();
+    $user = App\Models\User::where('name', 'LIKE', 'Updated Test User%')->first();
     if ($user) {
         $userName = $user->name;
         $user->delete();

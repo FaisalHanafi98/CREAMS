@@ -10,7 +10,7 @@ class ActivityEnrollment extends Model
 {
     use HasFactory;
 
-    protected $table = 'activity_enrollments_new';
+    protected $table = 'activity_enrollments';
 
     protected $fillable = [
         'trainee_id',

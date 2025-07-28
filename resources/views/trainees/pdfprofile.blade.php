@@ -217,7 +217,7 @@
         <div class="stats-grid">
             <div class="stat-box">
                 <div class="stat-number">{{ $totalActivities }}</div>
-                <div class="stat-label">Total Activities</div>
+                <div class="stat-label">Total Activity</div>
             </div>
             <div class="stat-box">
                 <div class="stat-number">{{ $trainee->created_at->diffInDays() }}</div>
@@ -305,10 +305,10 @@
     </div>
     @endif
 
-    <!-- Activities Section -->
+    <!-- Activity Section -->
     @if($trainee->activities && $trainee->activities->count() > 0)
     <div class="profile-section">
-        <h2>Recent Activities</h2>
+        <h2>Recent Activity</h2>
         <ul class="activities-list">
             @foreach($trainee->activities->take(10) as $activity)
             <li>

@@ -1,13 +1,13 @@
 @extends('layouts.app')
 
-@section('title', 'Rehabilitation Categories')
+@section('title', 'Rehabilitation Category')
 
 @section('content')
 <div class="container-fluid">
     <div class="d-sm-flex align-items-center justify-content-between mb-4">
-        <h1 class="h3 mb-0 text-gray-800">Rehabilitation Categories</h1>
+        <h1 class="h3 mb-0 text-gray-800">Rehabilitation Category</h1>
         <a href="{{ route('activities.home') }}" class="btn btn-secondary btn-sm">
-            <i class="fas fa-arrow-left"></i> Back to Activities
+            <i class="fas fa-arrow-left"></i> Back to Activity
         </a>
     </div>
 
@@ -16,7 +16,7 @@
             <div class="col-12">
                 <h3 class="text-capitalize mb-3">
                     <i class="fas fa-{{ $type === 'rehabilitation' ? 'heartbeat' : 'graduation-cap' }} mr-2"></i>
-                    {{ ucfirst($type) }} Activities
+                    {{ ucfirst($type) }} Activity
                 </h3>
             </div>
         </div>
@@ -36,7 +36,7 @@
                             <p class="card-text text-muted text-center mb-4">{{ $category->description }}</p>
                             <div class="text-center mb-3">
                                 <span class="badge badge-pill" style="background-color: {{ $category->color_code }}; color: white;">
-                                    {{ $category->activities_count }} Activities
+                                    {{ $category->activities_count }} Activity
                                 </span>
                             </div>
                             <div class="text-center">
@@ -45,7 +45,7 @@
                                    style="background-color: {{ $category->color_code }}; border-color: {{ $category->color_code }}; color: white;"
                                    onmouseover="this.style.opacity='0.8'"
                                    onmouseout="this.style.opacity='1'">
-                                    View Activities <i class="fas fa-arrow-right ml-1"></i>
+                                    View Activity <i class="fas fa-arrow-right ml-1"></i>
                                 </a>
                             </div>
                         </div>
@@ -55,11 +55,11 @@
         </div>
     @endforeach
 
-    @if($categories->isEmpty())
+    @if(empty($categories) || count($categories) === 0)
         <div class="card shadow mt-4">
             <div class="card-body text-center">
                 <i class="fas fa-plus-circle fa-3x text-muted mb-3"></i>
-                <h5 class="text-muted">No Categories Available</h5>
+                <h5 class="text-muted">No Category Available</h5>
                 <p class="text-muted">Contact your administrator to add activity categories.</p>
             </div>
         </div>

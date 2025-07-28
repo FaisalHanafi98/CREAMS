@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('title')
-{{ $staffMember->name }} - Assigned Trainees | CREAMS
+{{ $staffMember->name }} - Assigned Trainee | CREAMS
 @endsection
 
 @section('styles')
@@ -167,11 +167,11 @@
             <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Dashboard</a></li>
             <li class="breadcrumb-item"><a href="{{ route('staffs.home') }}">Staff Directory</a></li>
             <li class="breadcrumb-item"><a href="{{ route('staffs.profile', $staffMember->encrypted_id ?? $staffMember->id) }}">{{ $staffMember->name }}</a></li>
-            <li class="breadcrumb-item active">Assigned Trainees</li>
+            <li class="breadcrumb-item active">Assigned Trainee</li>
         </ol>
     </nav>
 
-    <!-- Success/Error Messages -->
+    <!-- Success/Error Message -->
     @if(session('success'))
     <div class="alert alert-success alert-dismissible fade show" role="alert">
         <i class="fas fa-check-circle me-2"></i>{{ session('success') }}
@@ -191,7 +191,7 @@
         <div class="row align-items-center">
             <div class="col-md-8">
                 <h1 class="mb-2">
-                    <i class="fas fa-users me-3"></i>{{ $staffMember->name }}'s Assigned Trainees
+                    <i class="fas fa-users me-3"></i>{{ $staffMember->name }}'s Assigned Trainee
                 </h1>
                 <p class="mb-0 opacity-75">Manage and monitor trainee progress and enrollment</p>
             </div>
@@ -212,7 +212,7 @@
         <div class="stats-grid">
             <div class="stat-card">
                 <div class="stat-number">{{ count($trainees) }}</div>
-                <div class="stat-label">Total Trainees</div>
+                <div class="stat-label">Total Trainee</div>
             </div>
             <div class="stat-card">
                 <div class="stat-number">
@@ -230,15 +230,15 @@
                 <div class="stat-number">
                     {{ collect($trainees)->unique('activity_name')->count() }}
                 </div>
-                <div class="stat-label">Unique Activities</div>
+                <div class="stat-label">Unique Activity</div>
             </div>
         </div>
     </div>
 
-    <!-- Trainees List -->
+    <!-- Trainee List -->
     <div class="trainees-card">
         <h3 class="mb-4">
-            <i class="fas fa-list me-2 text-primary"></i>All Assigned Trainees
+            <i class="fas fa-list me-2 text-primary"></i>All Assigned Trainee
         </h3>
 
         @if(count($trainees) > 0)
@@ -317,7 +317,7 @@
         @else
             <div class="no-trainees">
                 <i class="fas fa-user-graduate fa-3x mb-3 text-muted"></i>
-                <h4>No Trainees Assigned</h4>
+                <h4>No Trainee Assigned</h4>
                 <p class="mb-0">This staff member has no trainees assigned to their activities yet.</p>
             </div>
         @endif

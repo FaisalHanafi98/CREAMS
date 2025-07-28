@@ -11,6 +11,7 @@
         --warning-color: #ffc107;
         --danger-color: #dc3545;
         --dark-color: #2c3e50;
+        --info-color: #17a2b8;
         --light-bg: #f8f9fc;
         --border-color: #e3e6f0;
     }
@@ -259,9 +260,10 @@
     }
 
     .trainee-actions {
-        display: flex;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
         gap: 8px;
-        justify-content: center;
+        margin-top: 15px;
     }
 
     .btn-action {
@@ -290,6 +292,16 @@
 
     .btn-profile {
         background: var(--success-color);
+        color: white;
+    }
+
+    .btn-schedule {
+        background: var(--info-color);
+        color: white;
+    }
+
+    .btn-attendance {
+        background: var(--dark-color);
         color: white;
     }
 
@@ -412,9 +424,11 @@
                     <i class="fas fa-plus me-2"></i>Add Trainee
                 </a>
                 @endif
+                {{-- 
                 <a href="{{ route('trainees.reports') }}" class="btn btn-light me-2">
                     <i class="fas fa-chart-bar me-2"></i>Reports
                 </a>
+                --}}
                 <a href="{{ route('dashboard') }}" class="btn btn-light">
                     <i class="fas fa-arrow-left me-2"></i>Back
                 </a>
@@ -429,21 +443,21 @@
                 <i class="fas fa-users"></i>
             </div>
             <div class="stat-value">{{ $stats['total'] ?? 0 }}</div>
-            <div class="stat-label">Total Trainees</div>
+            <div class="stat-label">Total Trainee</div>
         </div>
         <div class="stat-card">
             <div class="stat-icon">
                 <i class="fas fa-user-check"></i>
             </div>
             <div class="stat-value">{{ $stats['active'] ?? 0 }}</div>
-            <div class="stat-label">Active Trainees</div>
+            <div class="stat-label">Active Trainee</div>
         </div>
         <div class="stat-card">
             <div class="stat-icon">
                 <i class="fas fa-graduation-cap"></i>
             </div>
             <div class="stat-value">{{ $stats['enrolled'] ?? 0 }}</div>
-            <div class="stat-label">Enrolled in Activities</div>
+            <div class="stat-label">Enrolled in Activity</div>
         </div>
         <div class="stat-card">
             <div class="stat-icon">
@@ -456,10 +470,10 @@
 
     <!-- Filters -->
     <div class="filter-section">
-        <h5><i class="fas fa-filter me-2"></i>Filter Trainees</h5>
+        <h5><i class="fas fa-filter me-2"></i>Filter Trainee</h5>
         <form method="GET" action="{{ route('trainees.index') }}" class="row align-items-end">
             <div class="col-md-3 mb-3">
-                <label for="search" class="form-label">Search Trainees</label>
+                <label for="search" class="form-label">Search Trainee</label>
                 <input type="text" 
                        class="form-control" 
                        id="search" 
@@ -483,7 +497,7 @@
             <div class="col-md-3 mb-3">
                 <label for="centre" class="form-label">Centre</label>
                 <select class="form-control" id="centre" name="centre">
-                    <option value="">All Centres</option>
+                    <option value="">All Centre</option>
                     @if(isset($centres))
                         @foreach($centres as $centre)
                             <option value="{{ $centre->centre_name }}" {{ request('centre') == $centre->centre_name ? 'selected' : '' }}>
@@ -501,7 +515,7 @@
         </form>
     </div>
 
-    <!-- Trainees Grid -->
+    <!-- Trainee Grid -->
     @if(isset($trainees) && count($trainees) > 0)
         <div class="trainee-grid">
             @foreach($trainees as $trainee)
@@ -551,18 +565,26 @@
                         </div>
 
                         <div class="trainee-actions">
-                            <a href="{{ route('trainees.show', $trainee->id) }}" class="btn-action btn-view" title="View Details">
-                                <i class="fas fa-eye"></i>View
-                            </a>
-                            @if(in_array(session('role'), ['admin', 'supervisor']))
-                            <a href="{{ route('trainees.edit', $trainee->id) }}" class="btn-action btn-edit" title="Edit Trainee">
-                                <i class="fas fa-edit"></i>Edit
-                            </a>
-                            @endif
-                            <a href="{{ route('trainees.profile', $trainee->id) }}" class="btn-action btn-profile" title="Full Profile">
+                            <a href="{{ route('trainees.show', $trainee->id) }}" class="btn-action btn-view" title="View Complete Profile">
                                 <i class="fas fa-user"></i>Profile
                             </a>
+                            @if(in_array(session('role'), ['admin', 'supervisor']))
+                            <a href="{{ route('trainees.edit', \App\Helpers\EncryptionHelper::generateEncryptedId($trainee->id)) }}" class="btn-action btn-edit" title="Edit Trainee Information">
+                                <i class="fas fa-edit"></i>Edit
+                            </a>
+                            @else
+                            <a href="{{ route('trainees.schedule', $trainee->id) }}" class="btn-action btn-schedule" title="View Schedule">
+                                <i class="fas fa-calendar"></i>Schedule
+                            </a>
+                            @endif
+                            <a href="{{ route('trainees.schedule', $trainee->id) }}" class="btn-action btn-schedule" title="View Schedule">
+                                <i class="fas fa-calendar"></i>Schedule
+                            </a>
+                            <a href="{{ route('trainees.attendance', $trainee->id) }}" class="btn-action btn-attendance" title="View Attendance">
+                                <i class="fas fa-clipboard-check"></i>Attendance
+                            </a>
                         </div>
+
                     </div>
                 </div>
             @endforeach
@@ -579,7 +601,7 @@
             <div class="empty-icon">
                 <i class="fas fa-user-graduate"></i>
             </div>
-            <h4>No Trainees Found</h4>
+            <h4>No Trainee Found</h4>
             <p>No trainees match your current filters or none have been registered yet.</p>
             @if(in_array(session('role'), ['admin', 'supervisor']))
             <a href="{{ route('trainees.create') }}" class="btn btn-primary">

@@ -444,7 +444,7 @@
             
             <div class="notification-dropdown" id="notificationDropdown">
                 <div class="notification-header">
-                    <h3>Notifications</h3>
+                    <h3>Notification</h3>
                     <div class="notification-actions">
                         <button class="notification-action-btn refresh-btn" id="refreshNotifications" title="Refresh">
                             <i class="fas fa-sync-alt"></i>
@@ -507,7 +507,7 @@
                 
                 <div class="notification-footer">
                     <a href="{{ route('notifications.index') }}" class="view-all-link">
-                        View All Notifications
+                        View All Notification
                         <i class="fas fa-arrow-right"></i>
                     </a>
                 </div>
@@ -532,7 +532,7 @@
     
     &lt;div class="notification-dropdown" id="notificationDropdown"&gt;
         &lt;div class="notification-header"&gt;
-            &lt;h3&gt;Notifications&lt;/h3&gt;
+            &lt;h3&gt;Notification&lt;/h3&gt;
             &lt;div class="notification-actions"&gt;
                 &lt;button class="notification-action-btn refresh-btn" id="refreshNotifications" title="Refresh"&gt;
                     &lt;i class="fas fa-sync-alt"&gt;&lt;/i&gt;
@@ -550,7 +550,7 @@
             &lt;/div&gt;
             
             &lt;div class="notification-list" id="notificationList"&gt;
-                &lt;!-- Notifications will be populated here via JavaScript --&gt;
+                &lt;!-- Notification will be populated here via JavaScript --&gt;
             &lt;/div&gt;
             
             &lt;div class="empty-notifications hidden" id="emptyNotifications"&gt;
@@ -563,7 +563,7 @@
         
         &lt;div class="notification-footer"&gt;
             &lt;a href="{{ route('notifications.index') }}" class="view-all-link"&gt;
-                View All Notifications
+                View All Notification
                 &lt;i class="fas fa-arrow-right"&gt;&lt;/i&gt;
             &lt;/a&gt;
         &lt;/div&gt;

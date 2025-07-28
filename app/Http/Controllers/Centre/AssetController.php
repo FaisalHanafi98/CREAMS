@@ -7,8 +7,8 @@ use App\Models\Asset;
 use App\Models\AssetCategory;
 use App\Models\AssetMaintenance;
 use App\Models\AssetMovement;
-use App\Models\Users;
-use App\Models\Centres;
+use App\Models\User;
+use App\Models\Centre;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
@@ -141,7 +141,7 @@ class AssetController extends Controller
         }
 
         $categories = AssetCategory::active()->get();
-        $centres = session('role') === 'admin' ? Centres::all() : Centres::where('id', session('centre_id'))->get();
+        $centres = session('role') === 'admin' ? Centre::all() : Centre::where('id', session('centre_id'))->get();
 
         return view('assets.create', compact('categories', 'centres'));
     }
@@ -330,8 +330,8 @@ class AssetController extends Controller
         }
 
         $categories = AssetCategory::active()->get();
-        $centres = session('role') === 'admin' ? Centres::all() : Centres::where('id', session('centre_id'))->get();
-        $users = Users::where('centre_id', $asset->centre_id)->get();
+        $centres = session('role') === 'admin' ? Centre::all() : Centre::where('id', session('centre_id'))->get();
+        $users = User::where('centre_id', $asset->centre_id)->get();
 
         return view('assets.edit', compact('asset', 'categories', 'centres', 'users'));
     }

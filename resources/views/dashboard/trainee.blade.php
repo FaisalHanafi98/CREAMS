@@ -314,7 +314,7 @@
                     </div>
                 </div>
                 <div class="stat-value">{{ $stats['activities_enrolled'] ?? 0 }}</div>
-                <div class="stat-label">Activities Enrolled</div>
+                <div class="stat-label">Activity Enrolled</div>
                 <div class="stat-change positive">
                     <i class="fas fa-plus-circle"></i>
                     Active enrollments
@@ -328,7 +328,7 @@
                     </div>
                 </div>
                 <div class="stat-value">{{ $stats['activities_completed'] ?? 0 }}</div>
-                <div class="stat-label">Activities Completed</div>
+                <div class="stat-label">Activity Completed</div>
                 <div class="stat-change positive">
                     <i class="fas fa-trophy"></i>
                     Well done!
@@ -381,8 +381,8 @@
                     </div>
                     <div class="row">
                         <div class="col-md-6">
-                            <p class="mb-2"><strong>Activities Enrolled:</strong> {{ $stats['activities_enrolled'] ?? 0 }}</p>
-                            <p class="mb-2"><strong>Activities Completed:</strong> {{ $stats['activities_completed'] ?? 0 }}</p>
+                            <p class="mb-2"><strong>Activity Enrolled:</strong> {{ $stats['activities_enrolled'] ?? 0 }}</p>
+                            <p class="mb-2"><strong>Activity Completed:</strong> {{ $stats['activities_completed'] ?? 0 }}</p>
                         </div>
                         <div class="col-md-6">
                             <p class="mb-2"><strong>Attendance Rate:</strong> {{ number_format($stats['attendance_rate'] ?? 0, 1) }}%</p>
@@ -391,11 +391,11 @@
                     </div>
                 </div>
 
-                <!-- Recent Activities -->
+                <!-- Recent Activity -->
                 <div class="card-section">
                     <div class="section-header">
-                        <h3 class="section-title">My Recent Activities</h3>
-                        <a href="{{ route('activities.home') }}" class="btn btn-sm btn-outline-success">View All Activities</a>
+                        <h3 class="section-title">My Recent Activity</h3>
+                        <a href="{{ route('activities.home') }}" class="btn btn-sm btn-outline-success">View All Activity</a>
                     </div>
                     
                     @if(isset($recent_activities) && count($recent_activities) > 0)
@@ -475,10 +475,10 @@
                     </ul>
                 </div>
 
-                <!-- Notifications -->
+                <!-- Notification -->
                 <div class="card-section">
                     <div class="section-header">
-                        <h3 class="section-title">Notifications</h3>
+                        <h3 class="section-title">Notification</h3>
                     </div>
                     
                     <ul class="upcoming-list">

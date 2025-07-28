@@ -29,7 +29,8 @@
       "Bash(done)",
       "Bash(cd \"C:\\laragon\\www\\CREAMS\\resources\\views\")",
       "Bash(find . -name \"*.blade.php\" -exec grep -l \"teachershome\\|traineeshome\\|auth\\.registerpage\\|activities\\.index\\|rehabilitation\\.categories\\|staff\\.view\\|staff\\.edit\" {} ;)",
-      "Bash(wc:*)"
+      "Bash(wc:*)",
+      "Bash(composer:*)"
     ],
     "deny": []
   }

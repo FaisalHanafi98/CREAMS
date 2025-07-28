@@ -1,12 +1,12 @@
 @extends('layouts.dashboard')
 
-@section('title', 'Notifications')
+@section('title', 'Notification')
 
 @section('content')
 <div class="content-section">
     <div class="card mb-4">
         <div class="card-header">
-            <h5 class="card-title">Notifications</h5>
+            <h5 class="card-title">Notification</h5>
             <div class="card-options">
                 <form action="{{ route('notifications.mark-read') }}" method="POST" class="d-inline">
                     @csrf
@@ -61,7 +61,7 @@
                         <div class="empty-state-icon">
                             <i class="fas fa-bell-slash"></i>
                         </div>
-                        <h4>No Notifications</h4>
+                        <h4>No Notification</h4>
                         <p>You don't have any notifications at this time.</p>
                     </div>
                 @endif

@@ -5,14 +5,14 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
-use App\Models\Users;
-use App\Models\Admins;
-use App\Models\Supervisors;
-use App\Models\AJKs;
-use App\Models\Teachers;
-use App\Models\Centres;
-use App\Models\Notifications;
-use App\Models\Trainees;
+use App\Models\User;
+use App\Models\Admin;
+use App\Models\Supervisor;
+use App\Models\AJK;
+use App\Models\Teacher;
+use App\Models\Centre;
+use App\Models\Notification;
+use App\Models\Trainee;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Password;
@@ -50,7 +50,7 @@ class MainController extends Controller
             $hasStatusColumn = Schema::hasColumn('centres', 'status');
             $hasCentreStatusColumn = Schema::hasColumn('centres', 'centre_status');
 
-            Log::info('Centres table structure check', [
+            Log::info('Centre table structure check', [
                 'has_status_column' => $hasStatusColumn,
                 'has_centre_status_column' => $hasCentreStatusColumn
             ]);
@@ -58,17 +58,17 @@ class MainController extends Controller
             // Get centers for dropdown based on available columns
             if ($hasStatusColumn) {
                 Log::info('Querying centres using status column');
-                $centers = Centres::where('status', 'active')->get();
+                $centers = Centre::where('status', 'active')->get();
             } elseif ($hasCentreStatusColumn) {
                 Log::info('Querying centres using centre_status column');
-                $centers = Centres::where('centre_status', 'active')->get();
+                $centers = Centre::where('centre_status', 'active')->get();
             } else {
                 // Fallback - get all centers without filtering
                 Log::info('No status columns found, getting all centres');
-                $centers = Centres::all();
+                $centers = Centre::all();
             }
 
-            Log::info('Centres retrieved successfully', [
+            Log::info('Centre retrieved successfully', [
                 'count' => $centers->count()
             ]);
         } catch (\Exception $e) {
@@ -176,7 +176,7 @@ class MainController extends Controller
             DB::beginTransaction();
             try {
                 // Create the user with proper logging
-                $user = new Users();
+                $user = new User();
                 $user->iium_id = strtoupper($validatedData['iium_id']);
                 $user->name = $validatedData['name'];
                 $user->email = $validatedData['email'];
@@ -209,9 +209,9 @@ class MainController extends Controller
                 }
 
                 // Create welcome notification using custom notification structure
-                $notification = new Notifications();
+                $notification = new Notification();
                 $notification->user_id = $user->id;
-                $notification->user_type = 'App\Models\Users';
+                $notification->user_type = 'App\Models\User';
                 $notification->notification_type = 'success';
                 $notification->notification_title = 'Welcome to CREAMS';
                 $notification->notification_message = 'Welcome to the Community-based REhAbilitation Management System. Your account has been created successfully.';
@@ -303,7 +303,7 @@ class MainController extends Controller
             $user = null;
 
             if ($isEmail) {
-                $user = Users::where('email', $identifier)
+                $user = User::where('email', $identifier)
                             ->where('status', 'active')
                             ->first();
 
@@ -313,7 +313,7 @@ class MainController extends Controller
                 ]);
             } else {
                 $iiumId = strtoupper($identifier);
-                $user = Users::where('iium_id', $iiumId)
+                $user = User::where('iium_id', $iiumId)
                             ->where('status', 'active')
                             ->first();
 
@@ -442,7 +442,7 @@ class MainController extends Controller
 
         try {
             // Start query
-            $query = Users::where('email', $email)
+            $query = User::where('email', $email)
                         ->where('status', 'active');
 
             // Add role filter if specified
@@ -489,7 +489,7 @@ class MainController extends Controller
 
         try {
             // Start query
-            $query = Users::where('iium_id', $iiumId)
+            $query = User::where('iium_id', $iiumId)
                         ->where('status', 'active');
 
             // Add role filter if specified
@@ -594,13 +594,13 @@ class MainController extends Controller
     {
         $className = get_class($user);
 
-        if ($className === Admins::class) {
+        if ($className === Admin::class) {
             return 'admin';
-        } elseif ($className === Supervisors::class) {
+        } elseif ($className === Supervisor::class) {
             return 'supervisor';
-        } elseif ($className === Teachers::class) {
+        } elseif ($className === Teacher::class) {
             return 'teacher';
-        } elseif ($className === AJKs::class) {
+        } elseif ($className === AJK::class) {
             return 'ajk';
         }
 
@@ -631,7 +631,7 @@ class MainController extends Controller
         // If the user is logged in, find their model and clear the remember token
         if ($userId) {
             try {
-                $user = Users::find($userId);
+                $user = User::find($userId);
 
                 if ($user) {
                     Log::debug('Clearing remember token for user', ['user_id' => $userId]);
@@ -690,7 +690,7 @@ class MainController extends Controller
         
         try {
             // Search for users (staff/teachers)
-            $users = Users::where('name', 'like', "%{$query}%")
+            $users = User::where('name', 'like', "%{$query}%")
                 ->where('status', 'active')
                 ->where('role', '!=', 'admin') // Optional: exclude admins from results
                 ->select('id', 'name', 'role', 'centre_id')
@@ -699,7 +699,7 @@ class MainController extends Controller
                 ->get();
                 
             // Search for trainees
-            $trainees = Trainees::where(function($q) use ($query) {
+            $trainees = Trainee::where(function($q) use ($query) {
                     $q->where('trainee_first_name', 'like', "%{$query}%")
                       ->orWhere('trainee_last_name', 'like', "%{$query}%");
                 })

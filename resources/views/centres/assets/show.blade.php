@@ -466,7 +466,7 @@
             </div>
             <div class="col-md-4 text-end">
                 <a href="{{ route('centres.assets.index') }}" class="btn btn-light">
-                    <i class="fas fa-arrow-left me-2"></i>Back to Assets
+                    <i class="fas fa-arrow-left me-2"></i>Back to Asset
                 </a>
             </div>
         </div>
@@ -653,7 +653,7 @@
     <div class="action-buttons">
         <div>
             <a href="{{ route('centres.assets.index') }}" class="btn btn-outline-secondary">
-                <i class="fas fa-list"></i>View All Assets
+                <i class="fas fa-list"></i>View All Asset
             </a>
         </div>
         <div class="d-flex gap-2 flex-wrap">

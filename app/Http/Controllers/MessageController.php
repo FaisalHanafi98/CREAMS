@@ -5,13 +5,13 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
-use App\Models\Messages;
-use App\Models\Notifications;
-use App\Models\Users;
-use App\Models\Admins;
-use App\Models\Supervisors;
-use App\Models\Teachers;
-use App\Models\AJKs;
+use App\Models\Message;
+use App\Models\Notification;
+use App\Models\User;
+use App\Models\Admin;
+use App\Models\Supervisor;
+use App\Models\Teacher;
+use App\Models\AJK;
 
 class MessageController extends Controller
 {
@@ -36,22 +36,22 @@ class MessageController extends Controller
             $role = session('role');
             $id = session('id');
             
-            Log::info('Messages index accessed', [
+            Log::info('Message index accessed', [
                 'user_id' => $id,
                 'role' => $role
             ]);
             
-            $inbox = Messages::where('recipient_id', $id)
+            $inbox = Message::where('recipient_id', $id)
                 ->where('recipient_type', $role)
                 ->orderBy('created_at', 'desc')
                 ->paginate(10, ['*'], 'inbox_page');
                 
-            $sent = Messages::where('sender_id', $id)
+            $sent = Message::where('sender_id', $id)
                 ->where('sender_type', $role)
                 ->orderBy('created_at', 'desc')
                 ->paginate(10, ['*'], 'sent_page');
                 
-            $unreadCount = Messages::where('recipient_id', $id)
+            $unreadCount = Message::where('recipient_id', $id)
                 ->where('recipient_type', $role)
                 ->where('read', false)
                 ->count();
@@ -86,22 +86,22 @@ class MessageController extends Controller
             ]);
             
             // Get users for each role
-            $admins = Admins::where('id', '!=', ($role === 'admin' ? $id : 0))
+            $admins = Admin::where('id', '!=', ($role === 'admin' ? $id : 0))
                 ->where('status', 'active')
                 ->orderBy('name')
                 ->get(['id', 'name', 'email']);
                 
-            $supervisors = Supervisors::where('id', '!=', ($role === 'supervisor' ? $id : 0))
+            $supervisors = Supervisor::where('id', '!=', ($role === 'supervisor' ? $id : 0))
                 ->where('status', 'active')
                 ->orderBy('name')
                 ->get(['id', 'name', 'email']);
                 
-            $teachers = Teachers::where('id', '!=', ($role === 'teacher' ? $id : 0))
+            $teachers = Teacher::where('id', '!=', ($role === 'teacher' ? $id : 0))
                 ->where('status', 'active')
                 ->orderBy('name')
                 ->get(['id', 'name', 'email']);
                 
-            $ajks = AJKs::where('id', '!=', ($role === 'ajk' ? $id : 0))
+            $ajks = AJK::where('id', '!=', ($role === 'ajk' ? $id : 0))
                 ->where('status', 'active')
                 ->orderBy('name')
                 ->get(['id', 'name', 'email']);
@@ -153,7 +153,7 @@ class MessageController extends Controller
             ]);
             
             // Create message
-            $message = new Messages();
+            $message = new Message();
             $message->sender_id = $senderId;
             $message->sender_type = $senderRole;
             $message->recipient_id = $request->recipient_id;
@@ -174,7 +174,7 @@ class MessageController extends Controller
             }
             
             // Create notification for recipient
-            $notification = new Notifications();
+            $notification = new Notification();
             $notification->user_id = $request->recipient_id;
             $notification->user_type = $request->recipient_type;
             $notification->type = 'message';
@@ -219,7 +219,7 @@ class MessageController extends Controller
     public function show($id)
     {
         try {
-            $message = Messages::findOrFail($id);
+            $message = Message::findOrFail($id);
             $role = session('role');
             $userId = session('id');
             
@@ -257,7 +257,7 @@ class MessageController extends Controller
             }
             
             // Get conversation history
-            $conversation = Messages::where(function($query) use ($message) {
+            $conversation = Message::where(function($query) use ($message) {
                     $query->where('sender_id', $message->sender_id)
                         ->where('sender_type', $message->sender_type)
                         ->where('recipient_id', $message->recipient_id)
@@ -294,7 +294,7 @@ class MessageController extends Controller
     public function reply($id)
     {
         try {
-            $message = Messages::findOrFail($id);
+            $message = Message::findOrFail($id);
             $role = session('role');
             $userId = session('id');
             
@@ -356,7 +356,7 @@ class MessageController extends Controller
     public function markAsRead($id)
     {
         try {
-            $message = Messages::findOrFail($id);
+            $message = Message::findOrFail($id);
             $role = session('role');
             $userId = session('id');
             
@@ -417,7 +417,7 @@ class MessageController extends Controller
                 'role' => $role
             ]);
             
-            $count = Messages::where('recipient_id', $userId)
+            $count = Message::where('recipient_id', $userId)
                 ->where('recipient_type', $role)
                 ->where('read', false)
                 ->update([
@@ -452,7 +452,7 @@ class MessageController extends Controller
     public function destroy($id)
     {
         try {
-            $message = Messages::findOrFail($id);
+            $message = Message::findOrFail($id);
             $role = session('role');
             $userId = session('id');
             

@@ -4,8 +4,8 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
-use App\Models\Users;
-use App\Models\Centres;
+use App\Models\User;
+use App\Models\Centre;
 
 class CREAMSMalaysianStaffSeeder extends Seeder
 {
@@ -94,7 +94,7 @@ class CREAMSMalaysianStaffSeeder extends Seeder
         $this->command->info('🇲🇾 Creating realistic Malaysian CREAMS staff...');
 
         // Get centres
-        $centres = Centres::all();
+        $centres = Centre::all();
         
         if ($centres->isEmpty()) {
             $this->command->error('No centres found! Please run CREAMSCentresSeeder first.');
@@ -168,7 +168,7 @@ class CREAMSMalaysianStaffSeeder extends Seeder
         $specialization = $this->getSpecialization($role);
         $qualification = $this->getQualification($role);
 
-        $staff = Users::create([
+        $staff = User::create([
             'iium_id' => $iiumId,
             'name' => $name,
             'email' => $email,
@@ -259,7 +259,7 @@ class CREAMSMalaysianStaffSeeder extends Seeder
         
         // Check if email exists and add suffix if needed
         $counter = 1;
-        while (Users::where('email', $email)->exists()) {
+        while (User::where('email', $email)->exists()) {
             $email = "{$baseEmail}{$counter}@iium.edu.my";
             $counter++;
         }
@@ -377,13 +377,13 @@ class CREAMSMalaysianStaffSeeder extends Seeder
     {
         $this->command->info("\n📊 CREAMS Staff Summary:");
         
-        $summary = Users::selectRaw('role, centre_id, COUNT(*) as count')
+        $summary = User::selectRaw('role, centre_id, COUNT(*) as count')
             ->groupBy('role', 'centre_id')
             ->orderBy('centre_id')
             ->orderBy('role')
             ->get();
 
-        $centres = Centres::pluck('centre_name', 'centre_id');
+        $centres = Centre::pluck('centre_name', 'centre_id');
         
         foreach ($centres as $centreId => $centreName) {
             $this->command->info("\n🏢 {$centreName} (ID: {$centreId}):");
@@ -401,7 +401,7 @@ class CREAMSMalaysianStaffSeeder extends Seeder
             $this->command->line("   👥 Total: {$total} staff");
         }
 
-        $grandTotal = Users::count();
+        $grandTotal = User::count();
         $this->command->info("\n🎯 Grand Total: {$grandTotal} CREAMS staff created across all centres!");
         $this->command->info("✅ All staff have Malaysian names, proper IIUM IDs, and realistic qualifications!");
     }

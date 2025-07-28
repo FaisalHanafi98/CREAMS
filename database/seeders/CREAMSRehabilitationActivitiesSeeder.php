@@ -4,8 +4,8 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use App\Models\Activity;
-use App\Models\Users;
-use App\Models\Centres;
+use App\Models\User;
+use App\Models\Centre;
 
 class CREAMSRehabilitationActivitiesSeeder extends Seeder
 {
@@ -15,39 +15,27 @@ class CREAMSRehabilitationActivitiesSeeder extends Seeder
     private array $rehabilitationActivities = [
         [
             'activity_code' => 'ST001',
-            'activity_name' => 'Terapi Pertuturan dan Bahasa / Speech and Language Therapy',
+            'name' => 'Terapi Pertuturan dan Bahasa / Speech and Language Therapy',
             'category' => 'Speech Therapy',
-            'activity_type' => 'Individual',
             'description' => 'Terapi komprehensif untuk mengatasi masalah komunikasi, pertuturan, dan bahasa. Comprehensive therapy to address communication, speech, and language difficulties.',
-            'objectives' => 'Meningkatkan kemahiran komunikasi verbal dan bukan verbal / Improve verbal and non-verbal communication skills',
-            'materials_needed' => 'Picture cards, communication boards, speech therapy tools, mirrors, audio recording devices',
-            'skills_developed' => ['Verbal Communication', 'Non-verbal Communication', 'Language Comprehension', 'Articulation', 'Social Communication'],
-            'age_group' => '3-18 years',
+            'required_materials' => ['Picture cards', 'communication boards', 'speech therapy tools', 'mirrors', 'audio recording devices'],
+            'learning_objectives' => ['Meningkatkan kemahiran komunikasi verbal dan bukan verbal', 'Improve verbal and non-verbal communication skills'],
             'difficulty_level' => 'Intermediate',
             'min_participants' => 1,
             'max_participants' => 3,
             'duration_minutes' => 45,
-            'location_type' => 'Therapy Room',
-            'requires_equipment' => true,
-            'equipment_list' => ['Speech therapy tools', 'Communication aids', 'Assessment materials']
         ],
         [
             'activity_code' => 'OT001',
-            'activity_name' => 'Terapi Okupasi / Occupational Therapy',
+            'name' => 'Terapi Okupasi / Occupational Therapy',
             'category' => 'Occupational Therapy',
-            'activity_type' => 'Both',
             'description' => 'Terapi untuk meningkatkan kemahiran motor halus, motor kasar, dan aktiviti kehidupan seharian. Therapy to improve fine motor, gross motor, and daily living skills.',
-            'objectives' => 'Meningkatkan kemandirian dalam aktiviti harian / Enhance independence in daily activities',
-            'materials_needed' => 'Sensory tools, fine motor activities, adaptive equipment, therapeutic toys',
-            'skills_developed' => ['Fine Motor Skills', 'Gross Motor Skills', 'Sensory Integration', 'Daily Living Skills', 'Cognitive Skills'],
-            'age_group' => '3-18 years',
+            'required_materials' => ['Sensory tools', 'fine motor activities', 'adaptive equipment', 'therapeutic toys'],
+            'learning_objectives' => ['Meningkatkan kemandirian dalam aktiviti harian', 'Enhance independence in daily activities'],
             'difficulty_level' => 'Intermediate',
             'min_participants' => 1,
             'max_participants' => 4,
             'duration_minutes' => 60,
-            'location_type' => 'Occupational Therapy Room',
-            'requires_equipment' => true,
-            'equipment_list' => ['Sensory integration equipment', 'Fine motor tools', 'Adaptive devices']
         ],
         [
             'activity_code' => 'PT001',
@@ -253,8 +241,8 @@ class CREAMSRehabilitationActivitiesSeeder extends Seeder
     {
         $this->command->info('🎯 Creating Malaysian rehabilitation activities...');
 
-        $centres = Centres::all();
-        $teachers = Users::where('role', 'teacher')->get();
+        $centres = Centre::all();
+        $teachers = User::where('role', 'teacher')->get();
 
         if ($centres->isEmpty()) {
             $this->command->error('No centres found! Please run CREAMSCentresSeeder first.');
@@ -280,7 +268,7 @@ class CREAMSRehabilitationActivitiesSeeder extends Seeder
                 $activity = $this->createActivity($activityData, $centre, $teacher);
                 $totalActivities++;
                 
-                $this->command->line("   ✅ {$activity->activity_name} (Teacher: {$teacher->name})");
+                $this->command->line("   ✅ {$activity->name} (Teacher: {$teacher->name})");
             }
         }
 
@@ -296,7 +284,8 @@ class CREAMSRehabilitationActivitiesSeeder extends Seeder
                 
             case '02': // Kuantan (Specialized) - Focus on autism and developmental
                 return array_filter($this->rehabilitationActivities, function($activity) {
-                    return in_array($activity['category'], [
+                    $category = $activity['category'] ?? '';
+                    return in_array($category, [
                         'Speech Therapy', 'Behavioral Therapy', 'Sensory Integration',
                         'Social Skills', 'Occupational Therapy', 'Art & Creativity'
                     ]);
@@ -304,7 +293,8 @@ class CREAMSRehabilitationActivitiesSeeder extends Seeder
                 
             case '03': // Pagoh (Community-based) - Focus on life skills and vocational
                 return array_filter($this->rehabilitationActivities, function($activity) {
-                    return in_array($activity['category'], [
+                    $category = $activity['category'] ?? '';
+                    return in_array($category, [
                         'Life Skills', 'Vocational Training', 'Computer Skills',
                         'Physical Therapy', 'Social Skills', 'Mathematics', 'Literacy'
                     ]);
@@ -318,35 +308,46 @@ class CREAMSRehabilitationActivitiesSeeder extends Seeder
     private function createActivity(array $activityData, $centre, $teacher): Activity
     {
         return Activity::create([
-            'activity_code' => $activityData['activity_code'] . '_' . $centre->centre_id,
-            'activity_name' => $activityData['activity_name'],
-            'description' => $activityData['description'],
-            'category' => $activityData['category'],
-            'activity_type' => $activityData['activity_type'],
-            'objectives' => $activityData['objectives'],
-            'materials_needed' => $activityData['materials_needed'],
-            'skills_developed' => json_encode($activityData['skills_developed']),
-            'age_group' => $activityData['age_group'],
-            'difficulty_level' => $activityData['difficulty_level'],
-            'min_participants' => $activityData['min_participants'],
+            'activity_id' => $activityData['activity_code'] . '_' . $centre->centre_id,
+            'activity_name' => $activityData['activity_name'] ?? $activityData['name'],
+            'activity_description' => $activityData['description'],
+            'activity_type' => $activityData['activity_type'] ?? 'Individual',
+            'activity_date' => now()->addDays(rand(1, 30))->format('Y-m-d'),
+            'activity_start_time' => '09:00:00',
+            'activity_end_time' => sprintf('%02d:%02d:00', 
+                9 + intval($activityData['duration_minutes'] / 60), 
+                $activityData['duration_minutes'] % 60
+            ),
+            'activity_location' => $activityData['location_type'] ?? 'Therapy Room',
             'max_participants' => $activityData['max_participants'],
-            'duration_minutes' => $activityData['duration_minutes'],
-            'location_type' => $activityData['location_type'],
-            'requires_equipment' => $activityData['requires_equipment'],
-            'equipment_list' => json_encode($activityData['equipment_list']),
-            'is_active' => true,
-            'times_conducted' => rand(5, 50), // Historical data
-            'average_rating' => round(rand(40, 50) / 10, 1), // 4.0 to 5.0 rating
-            'created_by' => $teacher->id,
+            'current_participants' => 0,
+            'activity_goals' => isset($activityData['objectives']) ? 
+                $activityData['objectives'] : 
+                (is_array($activityData['learning_objectives'] ?? []) ? 
+                    implode(', ', $activityData['learning_objectives']) : 
+                    'General rehabilitation goals'
+                ),
+            'activity_outcomes' => null,
+            'required_resources' => isset($activityData['materials_needed']) ? 
+                (is_string($activityData['materials_needed']) ? 
+                    json_encode(explode(', ', $activityData['materials_needed'])) : 
+                    json_encode($activityData['materials_needed'])
+                ) : 
+                (is_array($activityData['required_materials'] ?? []) ? 
+                    json_encode($activityData['required_materials']) : 
+                    json_encode(['Basic therapy materials'])
+                ),
+            'activity_status' => 'scheduled',
             'centre_id' => $centre->centre_id,
-            'created_at' => now()->subDays(rand(60, 365)),
-            'updated_at' => now()->subDays(rand(1, 30)),
+            'category_id' => null, // Will be set later if needed
+            'created_by' => $teacher->id,
+            'instructor_id' => $teacher->id,
         ]);
     }
 
     private function showActivitySummary(int $totalActivities): void
     {
-        $this->command->info("\n📊 Malaysian Rehabilitation Activities Summary:");
+        $this->command->info("\n📊 Malaysian Rehabilitation Activity Summary:");
         
         // Summary by centre
         $centreStats = Activity::join('centres', 'activities.centre_id', '=', 'centres.centre_id')
@@ -358,30 +359,30 @@ class CREAMSRehabilitationActivitiesSeeder extends Seeder
             $this->command->info("🏢 {$stat->centre_name}: {$stat->count} activities");
         }
         
-        // Summary by category
-        $this->command->info("\n🎯 Activity Categories:");
-        $categoryStats = Activity::selectRaw('category, COUNT(*) as count')
-            ->groupBy('category')
+        // Summary by activity type
+        $this->command->info("\n🎯 Activity Types:");
+        $typeStats = Activity::selectRaw('activity_type, COUNT(*) as count')
+            ->groupBy('activity_type')
             ->orderBy('count', 'desc')
             ->get();
             
-        foreach ($categoryStats as $stat) {
-            $this->command->line("   📋 {$stat->category}: {$stat->count} activities");
+        foreach ($typeStats as $stat) {
+            $this->command->line("   📋 {$stat->activity_type}: {$stat->count} activities");
         }
         
-        // Summary by activity type
-        $this->command->info("\n🔄 Activity Types:");
-        $typeStats = Activity::selectRaw('activity_type, COUNT(*) as count')
-            ->groupBy('activity_type')
+        // Summary by status
+        $this->command->info("\n🔄 Activity Status:");
+        $statusStats = Activity::selectRaw('activity_status, COUNT(*) as count')
+            ->groupBy('activity_status')
             ->get();
             
-        foreach ($typeStats as $stat) {
-            $this->command->line("   ⚙️ {$stat->activity_type}: {$stat->count} activities");
+        foreach ($statusStats as $stat) {
+            $this->command->line("   ⚙️ {$stat->activity_status}: {$stat->count} activities");
         }
 
         $this->command->info("\n🎯 Total: {$totalActivities} rehabilitation activities created!");
         $this->command->info("✅ All activities include Malaysian context with bilingual names!");
-        $this->command->info("🇲🇾 Activities reflect real Malaysian rehabilitation programs!");
+        $this->command->info("🇲🇾 Activity reflect real Malaysian rehabilitation programs!");
         $this->command->info("👨‍⚕️ Each activity assigned to qualified therapists/teachers!");
     }
 }

@@ -484,7 +484,7 @@
         </div>
         
         <div class="form-content">
-            <!-- Flash Messages -->
+            <!-- Flash Message -->
             @if (session('success'))
                 <div class="alert alert-success alert-dismissible fade show">
                     <i class="fas fa-check-circle"></i> {{ session('success') }}

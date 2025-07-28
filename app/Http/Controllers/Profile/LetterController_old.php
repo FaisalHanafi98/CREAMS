@@ -57,7 +57,7 @@ class LetterController extends Controller
             return view('letters.index', compact('letters'));
 
         } catch (\Exception $e) {
-            Log::error('Letters index error: ' . $e->getMessage());
+            Log::error('Letter index error: ' . $e->getMessage());
             
             // If view doesn't exist, create a basic response
             if (str_contains($e->getMessage(), 'View [letters.index] not found')) {
@@ -167,12 +167,12 @@ class LetterController extends Controller
         <!DOCTYPE html>
         <html>
         <head>
-            <title>Letters Archive</title>
+            <title>Letter Archive</title>
             <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
         </head>
         <body>
             <div class="container mt-5">
-                <h2>Letters Archive</h2>
+                <h2>Letter Archive</h2>
                 <a href="' . route('dashboard') . '" class="btn btn-secondary mb-3">Back to Dashboard</a>
                 <a href="/profile#letters-tab" class="btn btn-primary mb-3">Generate New Letter</a>
                 

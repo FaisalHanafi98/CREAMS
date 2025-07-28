@@ -28,16 +28,16 @@ class MultipleUserGuard extends SessionGuard
             
             switch ($role) {
                 case 'admin':
-                    $model = \App\Models\Admins::class;
+                    $model = \App\Models\Admin::class;
                     break;
                 case 'supervisor':
-                    $model = \App\Models\Supervisors::class;
+                    $model = \App\Models\Supervisor::class;
                     break;
                 case 'teacher':
-                    $model = \App\Models\Teachers::class;
+                    $model = \App\Models\Teacher::class;
                     break;
                 case 'ajk':
-                    $model = \App\Models\AJKs::class;
+                    $model = \App\Models\AJK::class;
                     break;
                 default:
                     return null;

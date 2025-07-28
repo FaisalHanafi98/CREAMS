@@ -7,7 +7,7 @@ echo "=== CHECKING ASSETS TABLE ===" . PHP_EOL;
 
 try {
     $columns = DB::select('DESCRIBE assets');
-    echo "Assets table columns:" . PHP_EOL;
+    echo "Asset table columns:" . PHP_EOL;
     foreach ($columns as $column) {
         echo "  - {$column->Field} ({$column->Type})" . PHP_EOL;
     }

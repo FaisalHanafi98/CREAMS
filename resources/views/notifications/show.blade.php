@@ -165,7 +165,7 @@
                 <div class="breadcrumb">
                     <a href="{{ route('dashboard') }}">Dashboard</a>
                     <span class="separator">/</span>
-                    <a href="{{ route('notifications.index') }}">Notifications</a>
+                    <a href="{{ route('notifications.index') }}">Notification</a>
                     <span class="separator">/</span>
                     <span class="current">View</span>
                 </div>
@@ -239,7 +239,7 @@
                 <p>This notification was generated from a message. You can view the full message details or conversation history.</p>
                 <div class="text-center mt-4">
                     <a href="{{ route('messages.index') }}" class="btn btn-primary">
-                        <i class="fas fa-envelope"></i> Go to Messages
+                        <i class="fas fa-envelope"></i> Go to Message
                     </a>
                 </div>
             </div>

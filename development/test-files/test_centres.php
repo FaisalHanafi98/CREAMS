@@ -9,24 +9,24 @@ echo "=== TESTING CENTRES MODULE ===\n";
 echo "Testing centres table structure...\n";
 try {
     $columns = DB::select('DESCRIBE centres');
-    echo "✅ Centres table columns:\n";
+    echo "✅ Centre table columns:\n";
     foreach ($columns as $column) {
         echo "  - {$column->Field} ({$column->Type})\n";
     }
 } catch (Exception $e) {
-    echo "❌ Centres table structure error: " . $e->getMessage() . "\n";
+    echo "❌ Centre table structure error: " . $e->getMessage() . "\n";
 }
 
 // Test centres data
 echo "\nTesting centres data...\n";
 try {
-    $centres = App\Models\Centres::all();
-    echo "✅ Centres retrieved: " . $centres->count() . " centres\n";
+    $centres = App\Models\Centre::all();
+    echo "✅ Centre retrieved: " . $centres->count() . " centres\n";
     foreach ($centres as $centre) {
         echo "  - {$centre->centre_name} (ID: {$centre->centre_id})\n";
     }
 } catch (Exception $e) {
-    echo "❌ Centres data error: " . $e->getMessage() . "\n";
+    echo "❌ Centre data error: " . $e->getMessage() . "\n";
 }
 
 // Test if CentreController can be instantiated
@@ -44,7 +44,7 @@ echo "\nTesting CRUD operations...\n";
 // Test CREATE
 echo "Testing CREATE operation...\n";
 try {
-    $testCentre = App\Models\Centres::create([
+    $testCentre = App\Models\Centre::create([
         'centre_id' => 'TEST' . now()->format('mdHi'),
         'centre_name' => 'Test Centre ' . now()->format('Y-m-d H:i:s'),
         'centre_address' => 'Test Address',
@@ -64,7 +64,7 @@ try {
 // Test READ
 echo "\nTesting READ operation...\n";
 try {
-    $centre = App\Models\Centres::first();
+    $centre = App\Models\Centre::first();
     if ($centre) {
         echo "✅ Centre read successfully: {$centre->centre_name}\n";
         echo "  - ID: {$centre->centre_id}\n";
@@ -81,7 +81,7 @@ try {
 // Test UPDATE
 echo "\nTesting UPDATE operation...\n";
 try {
-    $centre = App\Models\Centres::where('centre_id', 'LIKE', 'TEST%')->first();
+    $centre = App\Models\Centre::where('centre_id', 'LIKE', 'TEST%')->first();
     if ($centre) {
         $centre->update([
             'centre_name' => 'Updated Test Centre ' . now()->format('H:i:s'),
@@ -98,7 +98,7 @@ try {
 // Test DELETE
 echo "\nTesting DELETE operation...\n";
 try {
-    $centre = App\Models\Centres::where('centre_id', 'LIKE', 'TEST%')->first();
+    $centre = App\Models\Centre::where('centre_id', 'LIKE', 'TEST%')->first();
     if ($centre) {
         $centreName = $centre->centre_name;
         $centre->delete();

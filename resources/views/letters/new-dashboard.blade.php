@@ -136,7 +136,7 @@
         <div class="stats-cards">
             <div class="stat-card">
                 <div class="stat-number">{{ $letters->total() }}</div>
-                <div class="stat-label">Total Letters</div>
+                <div class="stat-label">Total Letter</div>
             </div>
             <div class="stat-card">
                 <div class="stat-number">{{ $letters->where('letter_file_path', '!=', null)->count() }}</div>
@@ -255,9 +255,9 @@
             </form>
         </div>
 
-        <!-- Letters Archive Panel -->
+        <!-- Letter Archive Panel -->
         <div class="archive-panel">
-            <h3 class="mb-4">Letters Archive</h3>
+            <h3 class="mb-4">Letter Archive</h3>
             
             <!-- Search Bar -->
             <div class="row mb-3">
@@ -277,7 +277,7 @@
                 </div>
             </div>
 
-            <!-- Letters Table -->
+            <!-- Letter Table -->
             <div class="table-responsive letter-table">
                 <table class="table table-hover">
                     <thead>

@@ -8,14 +8,14 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use App\Models\Events;
-use App\Models\Volunteers;
-use App\Models\Trainees;
-use App\Models\Activities;
-use App\Models\Centres;
-use App\Models\Assets;
-use App\Models\Users;
-use App\Models\Notifications;
+use App\Models\Event;
+use App\Models\Volunteer;
+use App\Models\Trainee;
+use App\Models\Activity;
+use App\Models\Centre;
+use App\Models\Asset;
+use App\Models\User;
+use App\Models\Notification;
 
 class AJKController extends Controller
 {
@@ -46,27 +46,27 @@ class AJKController extends Controller
         ]);
         
         // Get counts for dashboard cards
-        $eventCount = Events::where('centre_id', $centreId)->count();
-        $volunteerCount = Volunteers::where('centre_id', $centreId)->count();
-        $upcomingEventCount = Events::where('centre_id', $centreId)
+        $eventCount = Event::where('centre_id', $centreId)->count();
+        $volunteerCount = Volunteer::where('centre_id', $centreId)->count();
+        $upcomingEventCount = Event::where('centre_id', $centreId)
                                 ->where('date', '>=', now())
                                 ->count();
         
         // Get upcoming events
-        $upcomingEvents = Events::where('centre_id', $centreId)
+        $upcomingEvents = Event::where('centre_id', $centreId)
                             ->where('date', '>=', now())
                             ->orderBy('date')
                             ->take(5)
                             ->get();
         
         // Get recent volunteer applications
-        $recentVolunteers = Volunteers::where('centre_id', $centreId)
+        $recentVolunteers = Volunteer::where('centre_id', $centreId)
                             ->orderBy('created_at', 'desc')
                             ->take(5)
                             ->get();
 
         // Get centre details
-        $centre = Centres::find($centreId);
+        $centre = Centre::find($centreId);
         
         return view('AJK.dashboard', [
             'eventCount' => $eventCount,
@@ -90,9 +90,9 @@ class AJKController extends Controller
         Log::info('AJK accessed users list', ['ajk_id' => $ajkId, 'centre_id' => $centreId]);
         
         // For AJK users, we might show a limited view of users
-        // This could include volunteers or other AJKs at the same centre
-        $volunteers = Volunteers::where('centre_id', $centreId)->get();
-        $ajks = Users::where('role', 'ajk')
+        // This could include volunteers or other AJK at the same centre
+        $volunteers = Volunteer::where('centre_id', $centreId)->get();
+        $ajks = User::where('role', 'ajk')
                 ->where('centre_id', $centreId)
                 ->where('id', '!=', $ajkId)
                 ->get();
@@ -115,7 +115,7 @@ class AJKController extends Controller
         Log::info('AJK accessed trainees list', ['ajk_id' => $ajkId, 'centre_id' => $centreId]);
         
         // Get trainees for this centre
-        $trainees = Trainees::where('centre_id', $centreId)->get();
+        $trainees = Trainee::where('centre_id', $centreId)->get();
         
         return view('ajk.trainees', [
             'trainees' => $trainees
@@ -133,8 +133,8 @@ class AJKController extends Controller
         $centreId = session('centre_id');
         Log::info('AJK accessed centres list', ['ajk_id' => $ajkId, 'centre_id' => $centreId]);
         
-        // Get centre information - AJKs should only see their own centre
-        $centre = Centres::find($centreId);
+        // Get centre information - AJK should only see their own centre
+        $centre = Centre::find($centreId);
         
         // Get event statistics for this centre
         $eventStats = $this->getCentreEventStats($centreId);
@@ -153,15 +153,15 @@ class AJKController extends Controller
      */
     private function getCentreEventStats($centreId)
     {
-        $totalEvents = Events::where('centre_id', $centreId)->count();
-        $pastEvents = Events::where('centre_id', $centreId)
+        $totalEvents = Event::where('centre_id', $centreId)->count();
+        $pastEvents = Event::where('centre_id', $centreId)
                         ->where('date', '<', now())
                         ->count();
-        $upcomingEvents = Events::where('centre_id', $centreId)
+        $upcomingEvents = Event::where('centre_id', $centreId)
                             ->where('date', '>=', now())
                             ->count();
-        $totalVolunteers = Volunteers::where('centre_id', $centreId)->count();
-        $approvedVolunteers = Volunteers::where('centre_id', $centreId)
+        $totalVolunteers = Volunteer::where('centre_id', $centreId)->count();
+        $approvedVolunteers = Volunteer::where('centre_id', $centreId)
                                 ->where('status', 'approved')
                                 ->count();
         
@@ -186,10 +186,10 @@ class AJKController extends Controller
         Log::info('AJK accessed assets list', ['ajk_id' => $ajkId, 'centre_id' => $centreId]);
         
         // Get assets for this centre
-        $assets = Assets::where('centre_id', $centreId)->get();
+        $assets = Asset::where('centre_id', $centreId)->get();
         
         // Get asset categories count
-        $assetsByType = Assets::where('centre_id', $centreId)
+        $assetsByType = Asset::where('centre_id', $centreId)
                         ->selectRaw('asset_type, count(*) as count')
                         ->groupBy('asset_type')
                         ->get();
@@ -230,7 +230,7 @@ class AJKController extends Controller
     private function getEventReportData($centreId)
     {
         // Get events by month
-        $eventsByMonth = Events::where('centre_id', $centreId)
+        $eventsByMonth = Event::where('centre_id', $centreId)
                         ->selectRaw('MONTH(date) as month, YEAR(date) as year, COUNT(*) as count')
                         ->whereRaw('date >= DATE_SUB(NOW(), INTERVAL 12 MONTH)')
                         ->groupBy('year', 'month')
@@ -260,13 +260,13 @@ class AJKController extends Controller
     private function getVolunteerReportData($centreId)
     {
         // Get volunteers by status
-        $volunteersByStatus = Volunteers::where('centre_id', $centreId)
+        $volunteersByStatus = Volunteer::where('centre_id', $centreId)
                             ->selectRaw('status, count(*) as count')
                             ->groupBy('status')
                             ->get();
         
         // Get volunteers by month
-        $volunteersByMonth = Volunteers::where('centre_id', $centreId)
+        $volunteersByMonth = Volunteer::where('centre_id', $centreId)
                             ->selectRaw('MONTH(created_at) as month, YEAR(created_at) as year, COUNT(*) as count')
                             ->whereRaw('created_at >= DATE_SUB(NOW(), INTERVAL 12 MONTH)')
                             ->groupBy('year', 'month')
@@ -310,8 +310,8 @@ class AJKController extends Controller
         Log::info('AJK accessed settings', ['ajk_id' => $ajkId, 'centre_id' => $centreId]);
         
         // Get user settings
-        $user = Users::find($ajkId);
-        $centre = Centres::find($centreId);
+        $user = User::find($ajkId);
+        $centre = Centre::find($centreId);
         
         return view('ajk.settings', [
             'user' => $user,
@@ -340,7 +340,7 @@ class AJKController extends Controller
         ]);
         
         // Update user
-        $user = Users::find($ajkId);
+        $user = User::find($ajkId);
         
         if (isset($validated['name'])) {
             $user->name = $validated['name'];
@@ -381,16 +381,16 @@ class AJKController extends Controller
         Log::info('AJK accessed activities list', ['ajk_id' => $ajkId, 'centre_id' => $centreId]);
         
         // Get activities for this centre
-        $activities = Activities::where('centre_id', $centreId)
+        $activities = Activity::where('centre_id', $centreId)
                     ->orderBy('date', 'desc')
                     ->get();
         
         // Get activity statistics
-        $upcomingActivities = Activities::where('centre_id', $centreId)
+        $upcomingActivities = Activity::where('centre_id', $centreId)
                             ->where('date', '>=', now())
                             ->count();
         
-        $pastActivities = Activities::where('centre_id', $centreId)
+        $pastActivities = Activity::where('centre_id', $centreId)
                         ->where('date', '<', now())
                         ->count();
         
@@ -413,17 +413,17 @@ class AJKController extends Controller
         Log::info('AJK managing volunteers', ['ajk_id' => $ajkId, 'centre_id' => $centreId]);
         
         // Get volunteers for this centre, grouped by status
-        $pendingVolunteers = Volunteers::where('centre_id', $centreId)
+        $pendingVolunteers = Volunteer::where('centre_id', $centreId)
                             ->where('status', 'pending')
                             ->orderBy('created_at', 'desc')
                             ->get();
                             
-        $approvedVolunteers = Volunteers::where('centre_id', $centreId)
+        $approvedVolunteers = Volunteer::where('centre_id', $centreId)
                             ->where('status', 'approved')
                             ->orderBy('name')
                             ->get();
                             
-        $rejectedVolunteers = Volunteers::where('centre_id', $centreId)
+        $rejectedVolunteers = Volunteer::where('centre_id', $centreId)
                             ->where('status', 'rejected')
                             ->orderBy('created_at', 'desc')
                             ->get();
@@ -448,7 +448,7 @@ class AJKController extends Controller
         Log::info('AJK viewing volunteer', ['ajk_id' => $ajkId, 'volunteer_id' => $id]);
         
         // Get volunteer
-        $volunteer = Volunteers::findOrFail($id);
+        $volunteer = Volunteer::findOrFail($id);
         
         // Check if this AJK has access to this volunteer
         if ($volunteer->centre_id != $centreId) {
@@ -483,7 +483,7 @@ class AJKController extends Controller
         Log::info('AJK editing volunteer', ['ajk_id' => $ajkId, 'volunteer_id' => $id]);
         
         // Get volunteer
-        $volunteer = Volunteers::findOrFail($id);
+        $volunteer = Volunteer::findOrFail($id);
         
         // Check if this AJK has access to this volunteer
         if ($volunteer->centre_id != $centreId) {
@@ -492,7 +492,7 @@ class AJKController extends Controller
         }
         
         // Get centre events for assignment
-        $upcomingEvents = Events::where('centre_id', $centreId)
+        $upcomingEvents = Event::where('centre_id', $centreId)
                         ->where('date', '>=', now())
                         ->orderBy('date')
                         ->get();
@@ -517,7 +517,7 @@ class AJKController extends Controller
         Log::info('AJK updating volunteer', ['ajk_id' => $ajkId, 'volunteer_id' => $id]);
         
         // Get volunteer
-        $volunteer = Volunteers::findOrFail($id);
+        $volunteer = Volunteer::findOrFail($id);
         
         // Check if this AJK has access to this volunteer
         if ($volunteer->centre_id != $centreId) {
@@ -563,7 +563,7 @@ class AJKController extends Controller
         Log::info('AJK changing volunteer status', ['ajk_id' => $ajkId, 'volunteer_id' => $id]);
         
         // Get volunteer
-        $volunteer = Volunteers::findOrFail($id);
+        $volunteer = Volunteer::findOrFail($id);
         
         // Check if this AJK has access to this volunteer
         if ($volunteer->centre_id != $centreId) {
@@ -603,7 +603,7 @@ class AJKController extends Controller
     /**
      * Notify volunteer of status change.
      *
-     * @param Volunteers $volunteer
+     * @param Volunteer $volunteer
      * @param string $status
      * @return void
      */
@@ -632,14 +632,14 @@ class AJKController extends Controller
         Log::info('AJK accessed notifications', ['ajk_id' => $ajkId]);
         
         // Get notifications for this AJK
-        $notifications = Notifications::where('user_id', $ajkId)
-                        ->where('user_type', 'App\\Models\\Users')
+        $notifications = Notification::where('user_id', $ajkId)
+                        ->where('user_type', 'App\\Models\\User')
                         ->orderBy('created_at', 'desc')
                         ->paginate(20);
         
         // Get unread count
-        $unreadCount = Notifications::where('user_id', $ajkId)
-                    ->where('user_type', 'App\\Models\\Users')
+        $unreadCount = Notification::where('user_id', $ajkId)
+                    ->where('user_type', 'App\\Models\\User')
                     ->where('read', false)
                     ->count();
         
@@ -669,9 +669,9 @@ class AJKController extends Controller
         
         // Mark specific notifications as read
         if (isset($validated['notification_ids'])) {
-            Notifications::whereIn('id', $validated['notification_ids'])
+            Notification::whereIn('id', $validated['notification_ids'])
                 ->where('user_id', $ajkId)
-                ->where('user_type', 'App\\Models\\Users')
+                ->where('user_type', 'App\\Models\\User')
                 ->update([
                     'read' => true,
                     'read_at' => now()
@@ -680,14 +680,14 @@ class AJKController extends Controller
         
         // Mark all notifications as read
         if (isset($validated['all']) && $validated['all']) {
-            Notifications::where('user_id', $ajkId)
-                ->where('user_type', 'App\\Models\\Users')
+            Notification::where('user_id', $ajkId)
+                ->where('user_type', 'App\\Models\\User')
                 ->update([
                     'read' => true,
                     'read_at' => now()
                 ]);
         }
         
-        return redirect()->back()->with('success', 'Notifications marked as read');
+        return redirect()->back()->with('success', 'Notification marked as read');
     }
 }

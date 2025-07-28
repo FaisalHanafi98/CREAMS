@@ -5,15 +5,15 @@ $app->make('Illuminate\Contracts\Console\Kernel')->bootstrap();
 
 echo "=== TESTING TRAINEE MODULE ISSUES ===" . PHP_EOL;
 
-use App\Models\Trainees;
+use App\Models\Trainee;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 try {
-    echo "1. Comparing Trainees model fillable fields vs database columns..." . PHP_EOL;
+    echo "1. Comparing Trainee model fillable fields vs database columns..." . PHP_EOL;
     
     // Get model fillable fields
-    $trainee = new Trainees();
+    $trainee = new Trainee();
     $fillableFields = $trainee->getFillable();
     
     // Get database columns
@@ -38,7 +38,7 @@ try {
     echo PHP_EOL . "2. Testing trainee creation with missing fields..." . PHP_EOL;
     
     try {
-        $testTrainee = Trainees::create([
+        $testTrainee = Trainee::create([
             'trainee_id' => 'TEST001',
             'trainee_first_name' => 'Test',
             'trainee_last_name' => 'Trainee',
@@ -68,7 +68,7 @@ try {
     echo PHP_EOL . "3. Testing trainee creation with correct database fields..." . PHP_EOL;
     
     try {
-        $correctTrainee = Trainees::create([
+        $correctTrainee = Trainee::create([
             'trainee_id' => 'TEST002',
             'trainee_first_name' => 'Correct',
             'trainee_last_name' => 'Trainee',
@@ -100,7 +100,7 @@ try {
     echo PHP_EOL . "4. Testing enrollment status through relationships..." . PHP_EOL;
     
     // Get a real trainee to test relationships
-    $realTrainee = Trainees::first();
+    $realTrainee = Trainee::first();
     if ($realTrainee) {
         echo "   Testing with trainee: " . $realTrainee->full_name . PHP_EOL;
         
@@ -114,16 +114,16 @@ try {
         
         try {
             $activities = $realTrainee->activities;
-            echo "   ✓ Activities relationship works, count: " . $activities->count() . PHP_EOL;
+            echo "   ✓ Activity relationship works, count: " . $activities->count() . PHP_EOL;
         } catch (Exception $e) {
-            echo "   ❌ Activities relationship failed: " . $e->getMessage() . PHP_EOL;
+            echo "   ❌ Activity relationship failed: " . $e->getMessage() . PHP_EOL;
         }
         
         try {
             $attendances = $realTrainee->attendances;
-            echo "   ✓ Attendances relationship works, count: " . $attendances->count() . PHP_EOL;
+            echo "   ✓ Attendance relationship works, count: " . $attendances->count() . PHP_EOL;
         } catch (Exception $e) {
-            echo "   ❌ Attendances relationship failed: " . $e->getMessage() . PHP_EOL;
+            echo "   ❌ Attendance relationship failed: " . $e->getMessage() . PHP_EOL;
         }
     } else {
         echo "   No trainee records found for testing" . PHP_EOL;

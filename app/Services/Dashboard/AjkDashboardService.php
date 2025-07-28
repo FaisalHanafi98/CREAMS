@@ -2,13 +2,13 @@
 
 namespace App\Services\Dashboard;
 
-use App\Models\Users;
-use App\Models\Events;
-use App\Models\Volunteers;
+use App\Models\User;
+use App\Models\Event;
+use App\Models\Volunteer;
 use App\Models\ContactMessages;
 use App\Models\Asset;
 use App\Models\Activity;
-use App\Models\Centres;
+use App\Models\Centre;
 use App\Services\Asset\AssetManagementService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -32,7 +32,7 @@ class AjkDashboardService extends BaseDashboardService
     {
         return Cache::remember("dashboard_ajk_{$ajkId}", $this->cacheTimeout, function () use ($ajkId) {
             try {
-                $ajk = Users::find($ajkId);
+                $ajk = User::find($ajkId);
                 if (!$ajk) {
                     throw new Exception("AJK user not found: {$ajkId}");
                 }
@@ -70,15 +70,15 @@ class AjkDashboardService extends BaseDashboardService
             $eventsExist = Schema::hasTable('events');
             
             return [
-                'total_events' => $eventsExist ? Events::count() : 0,
-                'upcoming_events' => $eventsExist ? Events::where('event_date', '>', now())->count() : 0,
-                'active_volunteers' => Volunteers::where('volunteer_status', 'approved')->count(),
-                'pending_volunteers' => Volunteers::where('volunteer_status', 'pending')->count(),
+                'total_events' => $eventsExist ? Event::count() : 0,
+                'upcoming_events' => $eventsExist ? Event::where('event_date', '>', now())->count() : 0,
+                'active_volunteers' => Volunteer::where('volunteer_status', 'approved')->count(),
+                'pending_volunteers' => Volunteer::where('volunteer_status', 'pending')->count(),
                 'total_assets' => Asset::count(),
                 'asset_value' => 0, // Asset values not available in current table structure
-                'community_messages' => ContactMessages::count(),
-                'unread_messages' => ContactMessages::where('message_status', 'unread')->count(),
-                'events_this_month' => $eventsExist ? Events::whereMonth('event_date', Carbon::now()->month)->count() : 0,
+                'community_messages' => ContactMessage::count(),
+                'unread_messages' => ContactMessage::where('message_status', 'unread')->count(),
+                'events_this_month' => $eventsExist ? Event::whereMonth('event_date', Carbon::now()->month)->count() : 0,
                 'volunteer_participation' => $this->getVolunteerParticipationRate(),
                 'centre_coordination_score' => $this->getCentreCoordinationScore(),
                 'community_satisfaction' => $this->getCommunityFeedbackScore(),
@@ -128,7 +128,7 @@ class AjkDashboardService extends BaseDashboardService
     {
         try {
             return [
-                'active_volunteers' => Volunteers::where('volunteer_status', 'approved')
+                'active_volunteers' => Volunteer::where('volunteer_status', 'approved')
                     ->get()
                     ->map(function ($volunteer) {
                         return [
@@ -144,7 +144,7 @@ class AjkDashboardService extends BaseDashboardService
                     })
                     ->toArray(),
                 
-                'pending_applications' => Volunteers::where('volunteer_status', 'pending')
+                'pending_applications' => Volunteer::where('volunteer_status', 'pending')
                     ->latest()
                     ->get()
                     ->map(function ($volunteer) {
@@ -161,7 +161,7 @@ class AjkDashboardService extends BaseDashboardService
                     ->toArray(),
                     
                 'volunteer_statistics' => [
-                    'total_applications' => Volunteers::count(),
+                    'total_applications' => Volunteer::count(),
                     'approval_rate' => $this->calculateApprovalRate(),
                     'average_response_time' => $this->getAverageResponseTime(),
                     'retention_rate' => $this->calculateVolunteerRetentionRate(),
@@ -180,7 +180,7 @@ class AjkDashboardService extends BaseDashboardService
     {
         try {
             return [
-                'recent_messages' => ContactMessages::latest()
+                'recent_messages' => ContactMessage::latest()
                     ->limit(10)
                     ->get()
                     ->map(function ($message) {
@@ -197,7 +197,7 @@ class AjkDashboardService extends BaseDashboardService
                     ->toArray(),
                     
                 'engagement_metrics' => [
-                    'total_inquiries' => ContactMessages::count(),
+                    'total_inquiries' => ContactMessage::count(),
                     'response_rate' => $this->calculateResponseRate(),
                     'average_response_time' => $this->getAverageMessageResponseTime(),
                     'satisfaction_score' => $this->getCommunityFeedbackScore(),
@@ -332,10 +332,10 @@ class AjkDashboardService extends BaseDashboardService
     private function getAjkQuickActions(int $ajkId): array
     {
         try {
-            $pendingVolunteers = Volunteers::where('volunteer_status', 'pending')->count();
-            $unreadMessages = ContactMessages::where('message_status', 'unread')->count();
+            $pendingVolunteers = Volunteer::where('volunteer_status', 'pending')->count();
+            $unreadMessages = ContactMessage::where('message_status', 'unread')->count();
             $upcomingEvents = Schema::hasTable('events') 
-                ? Events::where('event_date', '>', now())
+                ? Event::where('event_date', '>', now())
                     ->where('event_date', '<=', now()->addDays(7))
                     ->count()
                 : 0;
@@ -355,20 +355,20 @@ class AjkDashboardService extends BaseDashboardService
                     'color' => 'success',
                 ],
                 [
-                    'title' => 'Manage Assets',
+                    'title' => 'Manage Asset',
                     'icon' => 'fas fa-boxes',
                     'url' => '/ajk/assets',
                     'color' => 'info',
                 ],
                 [
-                    'title' => 'Community Messages',
+                    'title' => 'Community Message',
                     'icon' => 'fas fa-envelope',
                     'url' => '/ajk/messages',
                     'color' => 'primary',
                     'badge' => $unreadMessages > 0 ? $unreadMessages : null,
                 ],
                 [
-                    'title' => 'Upcoming Events',
+                    'title' => 'Upcoming Event',
                     'icon' => 'fas fa-calendar-alt',
                     'url' => '/ajk/events/upcoming',
                     'color' => 'secondary',
@@ -397,7 +397,7 @@ class AjkDashboardService extends BaseDashboardService
                 return [];
             }
             
-            return Events::with(['attendees'])
+            return Event::with(['attendees'])
                 ->get()
                 ->map(function ($event) {
                     return [
@@ -430,9 +430,9 @@ class AjkDashboardService extends BaseDashboardService
             
             return [
                 'period' => $currentMonth->format('F Y'),
-                'events_organized' => Schema::hasTable('events') ? Events::where('event_date', '>=', $currentMonth)->count() : 0,
-                'volunteers_recruited' => Volunteers::where('created_at', '>=', $currentMonth)->count(),
-                'messages_received' => ContactMessages::where('created_at', '>=', $currentMonth)->count(),
+                'events_organized' => Schema::hasTable('events') ? Event::where('event_date', '>=', $currentMonth)->count() : 0,
+                'volunteers_recruited' => Volunteer::where('created_at', '>=', $currentMonth)->count(),
+                'messages_received' => ContactMessage::where('created_at', '>=', $currentMonth)->count(),
                 'assets_acquired' => Asset::where('created_at', '>=', $currentMonth)->count(),
                 'budget_utilization' => $this->calculateBudgetUtilization($currentMonth),
                 'community_reach' => $this->calculateCommunityReach($currentMonth),
@@ -450,7 +450,7 @@ class AjkDashboardService extends BaseDashboardService
     private function getCentreCoordination(int $ajkId): array
     {
         try {
-            return Centres::with(['users', 'activities', 'trainees'])
+            return Centre::with(['users', 'activities', 'trainees'])
                 ->get()
                 ->map(function ($centre) {
                     return [
@@ -537,8 +537,8 @@ class AjkDashboardService extends BaseDashboardService
     private function calculateApprovalRate(): float
     {
         try {
-            $total = Volunteers::count();
-            $approved = Volunteers::where('volunteer_status', 'approved')->count();
+            $total = Volunteer::count();
+            $approved = Volunteer::where('volunteer_status', 'approved')->count();
             return $total > 0 ? ($approved / $total) * 100 : 0;
         } catch (Exception $e) {
             return 0;

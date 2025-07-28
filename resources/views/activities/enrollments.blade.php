@@ -22,7 +22,7 @@
             <div class="card">
                 <div class="card-header">
                     <h3 class="card-title">
-                        <i class="fas fa-users"></i> Enrolled Trainees ({{ $session->enrollments->count() }}/{{ $session->max_participants ?? $session->max_capacity ?? 'Unlimited' }})
+                        <i class="fas fa-users"></i> Enrolled Trainee ({{ $session->enrollments->count() }}/{{ $session->max_participants ?? $session->max_capacity ?? 'Unlimited' }})
                     </h3>
                 </div>
                 <div class="card-body">
@@ -70,12 +70,12 @@
             </div>
         </div>
 
-        {{-- Eligible Trainees --}}
+        {{-- Eligible Trainee --}}
         <div class="col-lg-6">
             <div class="card">
                 <div class="card-header">
                     <h3 class="card-title">
-                        <i class="fas fa-user-plus"></i> Eligible Trainees ({{ $eligibleTrainees->count() }})
+                        <i class="fas fa-user-plus"></i> Eligible Trainee ({{ $eligibleTrainees->count() }})
                     </h3>
                 </div>
                 <div class="card-body">

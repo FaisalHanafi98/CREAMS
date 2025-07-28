@@ -176,7 +176,7 @@
                         <i class="fas fa-file-excel me-1"></i>Export Excel
                     </button>
                     <a href="{{ route('assets.index') }}" class="btn btn-outline-light">
-                        <i class="fas fa-arrow-left me-2"></i>Back to Assets
+                        <i class="fas fa-arrow-left me-2"></i>Back to Asset
                     </a>
                 </div>
             </div>
@@ -199,7 +199,7 @@
             <div class="col-md-3">
                 <label for="centreFilter" class="form-label">Centre</label>
                 <select class="form-control" id="centreFilter" name="centre">
-                    <option value="">All Centres</option>
+                    <option value="">All Centre</option>
                     @foreach($centres as $centre)
                         <option value="{{ $centre->centre_name }}">{{ $centre->centre_name }}</option>
                     @endforeach
@@ -234,7 +234,7 @@
                 <i class="fas fa-boxes"></i>
             </div>
             <div class="overview-value">{{ $analytics['total_assets'] }}</div>
-            <div class="overview-label">Total Assets</div>
+            <div class="overview-label">Total Asset</div>
         </div>
         <div class="overview-card">
             <div class="overview-icon">
@@ -262,14 +262,14 @@
                 <i class="fas fa-building"></i>
             </div>
             <div class="overview-value">{{ $analytics['active_centres'] }}</div>
-            <div class="overview-label">Active Centres</div>
+            <div class="overview-label">Active Centre</div>
         </div>
         <div class="overview-card">
             <div class="overview-icon">
                 <i class="fas fa-layer-group"></i>
             </div>
             <div class="overview-value">{{ $analytics['asset_categories'] }}</div>
-            <div class="overview-label">Asset Categories</div>
+            <div class="overview-label">Asset Category</div>
         </div>
     </div>
 
@@ -283,18 +283,18 @@
             </div>
         </div>
 
-        <!-- Assets by Centre -->
+        <!-- Asset by Centre -->
         <div class="col-lg-6 mb-4">
             <div class="chart-container">
-                <div class="chart-title">Assets by Centre</div>
+                <div class="chart-title">Asset by Centre</div>
                 <canvas id="assetByCentreChart"></canvas>
             </div>
         </div>
 
-        <!-- Assets by Type -->
+        <!-- Asset by Type -->
         <div class="col-lg-6 mb-4">
             <div class="chart-container">
-                <div class="chart-title">Assets by Type</div>
+                <div class="chart-title">Asset by Type</div>
                 <canvas id="assetByTypeChart"></canvas>
             </div>
         </div>
@@ -371,7 +371,7 @@
                         <thead class="table-light">
                             <tr>
                                 <th>Centre</th>
-                                <th>Total Assets</th>
+                                <th>Total Asset</th>
                                 <th>Asset Types</th>
                                 <th>Total Value</th>
                                 <th>Maintenance Due</th>
@@ -401,11 +401,11 @@
             </div>
         </div>
 
-        <!-- High-Value Assets Report -->
+        <!-- High-Value Asset Report -->
         <div class="col-12 mb-4">
             <div class="report-card">
                 <h4 class="mb-3">
-                    <i class="fas fa-gem me-2"></i>High-Value Assets (>RM 1,000)
+                    <i class="fas fa-gem me-2"></i>High-Value Asset (>RM 1,000)
                 </h4>
                 <div class="table-responsive">
                     <table class="table table-hover">
@@ -505,14 +505,14 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Assets by Centre Chart
+    // Asset by Centre Chart
     const centreCtx = document.getElementById('assetByCentreChart').getContext('2d');
     new Chart(centreCtx, {
         type: 'bar',
         data: {
             labels: {!! json_encode(array_keys($chartData['centres'])) !!},
             datasets: [{
-                label: 'Number of Assets',
+                label: 'Number of Asset',
                 data: {!! json_encode(array_values($chartData['centres'])) !!},
                 backgroundColor: creamsPalette.primary,
                 borderColor: creamsPalette.secondary,
@@ -539,7 +539,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Assets by Type Chart  
+    // Asset by Type Chart  
     const typeCtx = document.getElementById('assetByTypeChart').getContext('2d');
     new Chart(typeCtx, {
         type: 'pie',

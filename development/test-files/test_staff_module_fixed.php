@@ -5,7 +5,7 @@ $app->make('Illuminate\Contracts\Console\Kernel')->bootstrap();
 
 echo "=== TESTING FIXED STAFF MODULE ===" . PHP_EOL;
 
-use App\Models\Users;
+use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 
@@ -13,7 +13,7 @@ try {
     echo "1. Testing bio/about field fix..." . PHP_EOL;
     
     // Create test user
-    $testUser = Users::create([
+    $testUser = User::create([
         'iium_id' => 'TEST002',
         'name' => 'Test Staff User',
         'email' => 'teststaff@test.com',

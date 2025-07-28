@@ -4,7 +4,7 @@
     </div>
     <div class="stat-content">
         <h3 class="stat-value">{{ $totalUsers }}</h3>
-        <p class="stat-label">Total Users</p>
+        <p class="stat-label">Total User</p>
     </div>
 </div>
 
@@ -14,7 +14,7 @@
     </div>
     <div class="stat-content">
         <h3 class="stat-value">{{ $totalTrainees }}</h3>
-        <p class="stat-label">Total Trainees</p>
+        <p class="stat-label">Total Trainee</p>
     </div>
 </div>
 
@@ -24,7 +24,7 @@
     </div>
     <div class="stat-content">
         <h3 class="stat-value">{{ $totalActivities }}</h3>
-        <p class="stat-label">Total Activities</p>
+        <p class="stat-label">Total Activity</p>
     </div>
 </div>
 

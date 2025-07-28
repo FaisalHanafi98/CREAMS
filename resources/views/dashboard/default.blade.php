@@ -268,7 +268,7 @@
                 <div class="nav-icon">
                     <i class="fas fa-user-graduate"></i>
                 </div>
-                <div class="nav-title">Trainees</div>
+                <div class="nav-title">Trainee</div>
                 <div class="nav-description">View and manage trainee information</div>
             </a>
             
@@ -276,7 +276,7 @@
                 <div class="nav-icon">
                     <i class="fas fa-calendar-alt"></i>
                 </div>
-                <div class="nav-title">Activities</div>
+                <div class="nav-title">Activity</div>
                 <div class="nav-description">Schedule and track rehabilitation activities</div>
             </a>
             
@@ -285,7 +285,7 @@
                     <div class="nav-icon">
                         <i class="fas fa-boxes"></i>
                     </div>
-                    <div class="nav-title">Assets</div>
+                    <div class="nav-title">Asset</div>
                     <div class="nav-description">Manage equipment and resources</div>
                 </a>
             @endif
@@ -295,7 +295,7 @@
                     <div class="nav-icon">
                         <i class="fas fa-file-alt"></i>
                     </div>
-                    <div class="nav-title">Letters</div>
+                    <div class="nav-title">Letter</div>
                     <div class="nav-description">Generate and manage official letters</div>
                 </a>
             @endif

@@ -252,7 +252,7 @@
                 <div class="breadcrumb">
                     <a href="{{ route('dashboard') }}">Dashboard</a>
                     <span class="separator">/</span>
-                    <a href="{{ route('messages.index') }}">Messages</a>
+                    <a href="{{ route('messages.index') }}">Message</a>
                     <span class="separator">/</span>
                     <span class="current">View</span>
                 </div>
@@ -270,13 +270,13 @@
                             @php
                                 $senderAvatar = 'images/default-avatar.png';
                                 if ($message->sender_type === 'admin') {
-                                    $user = \App\Models\Admins::find($message->sender_id);
+                                    $user = \App\Models\Admin::find($message->sender_id);
                                 } elseif ($message->sender_type === 'supervisor') {
-                                    $user = \App\Models\Supervisors::find($message->sender_id);
+                                    $user = \App\Models\Supervisor::find($message->sender_id);
                                 } elseif ($message->sender_type === 'teacher') {
-                                    $user = \App\Models\Teachers::find($message->sender_id);
+                                    $user = \App\Models\Teacher::find($message->sender_id);
                                 } elseif ($message->sender_type === 'ajk') {
-                                    $user = \App\Models\AJKs::find($message->sender_id);
+                                    $user = \App\Models\AJK::find($message->sender_id);
                                 }
                                 
                                 if ($user && $user->avatar) {
@@ -295,13 +295,13 @@
                             @php
                                 $recipientAvatar = 'images/default-avatar.png';
                                 if ($message->recipient_type === 'admin') {
-                                    $user = \App\Models\Admins::find($message->recipient_id);
+                                    $user = \App\Models\Admin::find($message->recipient_id);
                                 } elseif ($message->recipient_type === 'supervisor') {
-                                    $user = \App\Models\Supervisors::find($message->recipient_id);
+                                    $user = \App\Models\Supervisor::find($message->recipient_id);
                                 } elseif ($message->recipient_type === 'teacher') {
-                                    $user = \App\Models\Teachers::find($message->recipient_id);
+                                    $user = \App\Models\Teacher::find($message->recipient_id);
                                 } elseif ($message->recipient_type === 'ajk') {
-                                    $user = \App\Models\AJKs::find($message->recipient_id);
+                                    $user = \App\Models\AJK::find($message->recipient_id);
                                 }
                                 
                                 if ($user && $user->avatar) {
@@ -334,7 +334,7 @@
         <div class="message-actions">
             <div class="action-buttons">
                 <a href="{{ route('messages.index') }}" class="btn btn-outline-secondary">
-                    <i class="fas fa-arrow-left"></i> Back to Messages
+                    <i class="fas fa-arrow-left"></i> Back to Message
                 </a>
                 <a href="{{ route('messages.reply', $message->id) }}" class="btn btn-primary">
                     <i class="fas fa-reply"></i> Reply
@@ -364,13 +364,13 @@
                                     @php
                                         $conversationAvatar = 'images/default-avatar.png';
                                         if ($conversationMessage->sender_type === 'admin') {
-                                            $user = \App\Models\Admins::find($conversationMessage->sender_id);
+                                            $user = \App\Models\Admin::find($conversationMessage->sender_id);
                                         } elseif ($conversationMessage->sender_type === 'supervisor') {
-                                            $user = \App\Models\Supervisors::find($conversationMessage->sender_id);
+                                            $user = \App\Models\Supervisor::find($conversationMessage->sender_id);
                                         } elseif ($conversationMessage->sender_type === 'teacher') {
-                                            $user = \App\Models\Teachers::find($conversationMessage->sender_id);
+                                            $user = \App\Models\Teacher::find($conversationMessage->sender_id);
                                         } elseif ($conversationMessage->sender_type === 'ajk') {
-                                            $user = \App\Models\AJKs::find($conversationMessage->sender_id);
+                                            $user = \App\Models\AJK::find($conversationMessage->sender_id);
                                         }
                                         
                                         if ($user && $user->avatar) {

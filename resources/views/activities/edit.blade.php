@@ -18,7 +18,7 @@
         </div>
     </div>
 
-    {{-- Flash Messages --}}
+    {{-- Flash Message --}}
     @if(session('success'))
         <div class="alert alert-success alert-dismissible fade show" role="alert">
             <i class="fas fa-check-circle mr-2"></i> {{ session('success') }}
@@ -123,7 +123,7 @@
                                                 id="category_id" name="category_id" required>
                                             <option value="">Select Category</option>
                                             @foreach($categories->groupBy('type') as $type => $typeCategories)
-                                                <optgroup label="{{ ucfirst($type) }} Activities">
+                                                <optgroup label="{{ ucfirst($type) }} Activity">
                                                     @foreach($typeCategories as $category)
                                                         <option value="{{ $category->id }}" 
                                                                 {{ old('category_id', $activity->category_id ?? ($activity->category == $category->name ? $category->id : '')) == $category->id ? 'selected' : '' }}

@@ -12,7 +12,7 @@
         </h1>
         <div class="page-actions">
             <a href="{{ route('activities.home') }}" class="btn btn-outline-secondary">
-                <i class="fas fa-list"></i> Activities List
+                <i class="fas fa-list"></i> Activity List
             </a>
             @if(in_array(session('role'), ['admin', 'supervisor']))
                 <a href="{{ route('activities.create') }}" class="btn btn-primary">
@@ -34,7 +34,7 @@
                         <div class="form-group">
                             <label for="centre_filter">Centre</label>
                             <select class="form-control" id="centre_filter" name="centre">
-                                <option value="">All Centres</option>
+                                <option value="">All Centre</option>
                                 @foreach($centres ?? [] as $centre)
                                     <option value="{{ $centre->centre_id ?? $centre['id'] }}" 
                                             {{ request('centre') == ($centre->centre_id ?? $centre['id']) ? 'selected' : '' }}>
@@ -63,7 +63,7 @@
                         <div class="form-group">
                             <label for="category_filter">Category</label>
                             <select class="form-control" id="category_filter" name="category">
-                                <option value="">All Categories</option>
+                                <option value="">All Category</option>
                                 <option value="Physical Therapy" {{ request('category') == 'Physical Therapy' ? 'selected' : '' }}>Physical Therapy</option>
                                 <option value="Occupational Therapy" {{ request('category') == 'Occupational Therapy' ? 'selected' : '' }}>Occupational Therapy</option>
                                 <option value="Speech Therapy" {{ request('category') == 'Speech Therapy' ? 'selected' : '' }}>Speech Therapy</option>
@@ -85,7 +85,7 @@
                         <div class="form-group">
                             <label for="teacher_filter">Teacher</label>
                             <select class="form-control" id="teacher_filter" name="teacher">
-                                <option value="">All Teachers</option>
+                                <option value="">All Teacher</option>
                                 @foreach($teachers ?? [] as $teacher)
                                     <option value="{{ $teacher->id }}" {{ request('teacher') == $teacher->id ? 'selected' : '' }}>
                                         {{ $teacher->name }}
@@ -192,7 +192,7 @@
                     <p class="text-muted">No sessions match the current filters or no sessions are scheduled.</p>
                     @if(in_array(session('role'), ['admin', 'supervisor']))
                         <a href="{{ route('activities.home') }}" class="btn btn-primary">
-                            <i class="fas fa-plus"></i> Create Activities & Sessions
+                            <i class="fas fa-plus"></i> Create Activity & Sessions
                         </a>
                     @endif
                 </div>

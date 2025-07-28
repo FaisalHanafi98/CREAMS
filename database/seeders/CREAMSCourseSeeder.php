@@ -3,8 +3,8 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use App\Models\Courses;
-use App\Models\Users;
+use App\Models\Course;
+use App\Models\User;
 
 class CREAMSCourseSeeder extends Seeder
 {
@@ -40,7 +40,7 @@ class CREAMSCourseSeeder extends Seeder
             'course_level' => 'Intermediate',
             'course_duration_months' => 9,
             'course_objectives' => ['Develop fine motor skills', 'Improve daily living skills', 'Enhance sensory integration'],
-            'course_modules' => ['Fine Motor Skills', 'Daily Living Activities', 'Sensory Integration', 'Adaptive Equipment'],
+            'course_modules' => ['Fine Motor Skills', 'Daily Living Activity', 'Sensory Integration', 'Adaptive Equipment'],
             'course_certificate' => 'Certificate of Occupational Therapy Achievement',
             'course_fee' => 400.00,
             'max_trainees' => 12
@@ -84,7 +84,7 @@ class CREAMSCourseSeeder extends Seeder
     {
         $this->command->info('📚 Creating Malaysian rehabilitation courses...');
 
-        $users = Users::where('role', 'teacher')->get();
+        $users = User::where('role', 'teacher')->get();
 
         if ($users->isEmpty()) {
             $this->command->error('No teachers found! Please run staff seeders first.');
@@ -96,7 +96,7 @@ class CREAMSCourseSeeder extends Seeder
         foreach ($this->courseData as $index => $courseInfo) {
             $teacher = $users->random();
             
-            $course = Courses::create([
+            $course = Course::create([
                 'course_id' => 'CRS-' . str_pad($index + 1, 3, '0', STR_PAD_LEFT),
                 'course_name' => $courseInfo['course_name'],
                 'course_description' => $courseInfo['course_description'],

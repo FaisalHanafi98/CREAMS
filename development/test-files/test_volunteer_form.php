@@ -5,10 +5,10 @@ $app->make('Illuminate\Contracts\Console\Kernel')->bootstrap();
 
 echo "=== TESTING VOLUNTEER FORM SUBMISSION ===" . PHP_EOL;
 
-use App\Models\Volunteers;
+use App\Models\Volunteer;
 
 try {
-    echo "1. Testing Volunteers model creation..." . PHP_EOL;
+    echo "1. Testing Volunteer model creation..." . PHP_EOL;
     
     $testData = [
         'volunteer_name' => 'John Doe',
@@ -26,11 +26,11 @@ try {
         'emergency_contact_phone' => '+60987654321',
     ];
     
-    $volunteer = Volunteers::create($testData);
-    echo "✓ Volunteers model created successfully with ID: " . $volunteer->id . PHP_EOL;
+    $volunteer = Volunteer::create($testData);
+    echo "✓ Volunteer model created successfully with ID: " . $volunteer->id . PHP_EOL;
     
-    echo "2. Testing Volunteers retrieval..." . PHP_EOL;
-    $retrieved = Volunteers::find($volunteer->id);
+    echo "2. Testing Volunteer retrieval..." . PHP_EOL;
+    $retrieved = Volunteer::find($volunteer->id);
     echo "✓ Retrieved volunteer: " . $retrieved->volunteer_name . " (" . $retrieved->volunteer_email . ")" . PHP_EOL;
     
     echo "3. Testing column access..." . PHP_EOL;

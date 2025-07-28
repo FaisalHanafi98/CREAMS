@@ -537,7 +537,7 @@
                     </div>
                 </div>
                 <div class="stat-value">{{ $stats['active_trainees'] ?? 0 }}</div>
-                <div class="stat-label">Active Trainees</div>
+                <div class="stat-label">Active Trainee</div>
                 <div class="stat-change positive">
                     <i class="fas fa-users"></i>
                     Currently enrolled
@@ -724,7 +724,7 @@
                             <div class="action-icon">
                                 <i class="fas fa-boxes"></i>
                             </div>
-                            <div class="action-label">Manage Assets</div>
+                            <div class="action-label">Manage Asset</div>
                         </a>
                         
                         <a href="{{ route('tasks.create') }}" class="action-btn">
@@ -786,10 +786,10 @@
                     @endif
                 </div>
 
-                <!-- Notifications -->
+                <!-- Notification -->
                 <div class="card-section">
                     <div class="section-header">
-                        <h3 class="section-title">Support Notifications</h3>
+                        <h3 class="section-title">Support Notification</h3>
                     </div>
                     
                     @if(isset($notifications) && count($notifications) > 0)

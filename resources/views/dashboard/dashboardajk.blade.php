@@ -8,10 +8,10 @@
     </div>
   </div>
   
-  <!-- Upcoming Events -->
+  <!-- Upcoming Event -->
   <div class="card mt-4">
     <div class="card-header">
-      <h5 class="card-title">Upcoming Events</h5>
+      <h5 class="card-title">Upcoming Event</h5>
       <div class="card-options">
         <a href="{{ route('ajk.events') }}" class="btn btn-sm btn-primary">
           <i class="fas fa-plus"></i> Create New Event

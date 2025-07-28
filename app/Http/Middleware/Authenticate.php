@@ -5,7 +5,7 @@ namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use App\Models\Users;
+use App\Models\User;
 
 class Authenticate
 {
@@ -40,10 +40,10 @@ class Authenticate
             return redirect()->route('auth.loginpage')->with('error', 'Please log in to access this page');
         }
         
-        // Verify the user exists in the Users table
+        // Verify the user exists in the User table
         try {
             $userId = session('id');
-            $user = Users::find($userId);
+            $user = User::find($userId);
             
             if (!$user) {
                 Log::warning('Session contains user ID that does not exist in database', [

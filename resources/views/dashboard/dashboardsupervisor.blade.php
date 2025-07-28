@@ -28,7 +28,7 @@
                   <i class="fas fa-book"></i> {{ $teacher->classes()->count() }} Classes
                 </div>
                 <div class="teacher-trainee-count">
-                  <i class="fas fa-users"></i> {{ $teacher->trainees()->count() }} Trainees
+                  <i class="fas fa-users"></i> {{ $teacher->trainees()->count() }} Trainee
                 </div>
                 <div class="teacher-actions mt-2">
                   <a href="{{ route('supervisor.teacher.view', $teacher->id) }}" class="btn btn-sm btn-primary">View Profile</a>
@@ -57,7 +57,7 @@
             <div class="approval-details">
               <span><i class="fas fa-user"></i> Requested by: Dr. Nurul Hafizah</span>
               <span><i class="fas fa-calendar"></i> March 28, 2025</span>
-              <span><i class="fas fa-users"></i> 15 Trainees</span>
+              <span><i class="fas fa-users"></i> 15 Trainee</span>
             </div>
           </div>
           <div class="approval-actions">

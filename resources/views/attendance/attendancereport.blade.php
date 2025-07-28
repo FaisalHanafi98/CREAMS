@@ -35,7 +35,7 @@
                             <div class="col-md-3 mb-3">
                                 <label for="center_name">Centre</label>
                                 <select class="form-control" id="center_name" name="center_name">
-                                    <option value="">All Centres</option>
+                                    <option value="">All Centre</option>
                                     @foreach($centers as $center)
                                     <option value="{{ $center->center_name }}" {{ request('center_name') == $center->center_name ? 'selected' : '' }}>{{ $center->center_name }}</option>
                                     @endforeach

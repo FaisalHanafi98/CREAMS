@@ -32,7 +32,7 @@ class MessageTemplate extends Model
      */
     public function creator()
     {
-        return $this->belongsTo(Users::class, 'created_by');
+        return $this->belongsTo(User::class, 'created_by');
     }
 
     /**
@@ -40,7 +40,7 @@ class MessageTemplate extends Model
      */
     public function centre()
     {
-        return $this->belongsTo(Centres::class, 'centre_id');
+        return $this->belongsTo(Centre::class, 'centre_id');
     }
 
     /**

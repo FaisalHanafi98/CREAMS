@@ -31,7 +31,7 @@
                             <div class="col-md-3 mb-3">
                                 <label for="center">Centre</label>
                                 <select class="form-control" id="center" name="center_id">
-                                    <option value="">All Centres</option>
+                                    <option value="">All Centre</option>
                                     @foreach($centers as $center)
                                     <option value="{{ $center->center_id }}" {{ request('center_id') == $center->center_id ? 'selected' : '' }}>{{ $center->center_name }}</option>
                                     @endforeach
@@ -40,7 +40,7 @@
                             <div class="col-md-3 mb-3">
                                 <label for="activity">Activity</label>
                                 <select class="form-control" id="activity" name="activity_id">
-                                    <option value="">All Activities</option>
+                                    <option value="">All Activity</option>
                                     @foreach($activities as $activity)
                                     <option value="{{ $activity->id }}" {{ request('activity_id') == $activity->id ? 'selected' : '' }}>{{ $activity->name }}</option>
                                     @endforeach

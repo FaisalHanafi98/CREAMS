@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
-use App\Models\Users;
+use App\Models\User;
 use App\Models\AuditLog;
 
 class UserController extends Controller
@@ -67,23 +67,23 @@ class UserController extends Controller
         $ajks = [];
         $teachers = [];
         
-        // Admins can see all users
+        // Admin can see all users
         if ($userRole === 'admin') {
-            $admins = Users::where('role', 'admin')->get();
-            $supervisors = Users::where('role', 'supervisor')->get();
-            $ajks = Users::where('role', 'ajk')->get();
-            $teachers = Users::where('role', 'teacher')->get();
+            $admins = User::where('role', 'admin')->get();
+            $supervisors = User::where('role', 'supervisor')->get();
+            $ajks = User::where('role', 'ajk')->get();
+            $teachers = User::where('role', 'teacher')->get();
         } 
-        // Supervisors can see AJKs and Teachers
+        // Supervisor can see AJK and Teacher
         else if ($userRole === 'supervisor') {
-            $ajks = Users::where('role', 'ajk')->get();
-            $teachers = Users::where('role', 'teacher')->get();
+            $ajks = User::where('role', 'ajk')->get();
+            $teachers = User::where('role', 'teacher')->get();
         } 
-        // AJKs can see Teachers
+        // AJK can see Teacher
         else if ($userRole === 'ajk') {
-            $teachers = Users::where('role', 'teacher')->get();
+            $teachers = User::where('role', 'teacher')->get();
         } 
-        // Teachers can't manage other staff
+        // Teacher can't manage other staff
         else {
             return redirect()->route('dashboard')
                 ->with('error', 'You do not have permission to access this page');
@@ -127,7 +127,7 @@ class UserController extends Controller
                 ->with('error', 'You do not have permission to create users');
         }
         
-        return view('users.create', [
+        return view('users.registration', [
             'availableRoles' => $availableRoles,
             'userRole' => $userRole
         ]);
@@ -205,8 +205,8 @@ class UserController extends Controller
         
         DB::beginTransaction();
         try {
-            // Create user directly in Users table
-            $user = new Users();
+            // Create user directly in User table
+            $user = new User();
             $user->iium_id = strtoupper($validatedData['iium_id']);
             $user->name = $validatedData['name'];
             $user->email = $validatedData['email'];
@@ -267,7 +267,7 @@ class UserController extends Controller
         }
         
         // Get user from the users table filtered by role
-        $user = Users::where('role', $role)
+        $user = User::where('role', $role)
                 ->where('id', $id)
                 ->firstOrFail();
         
@@ -310,7 +310,7 @@ class UserController extends Controller
         }
         
         // Get user from users table filtered by role
-        $user = Users::where('role', $role)
+        $user = User::where('role', $role)
                ->where('id', $id)
                ->firstOrFail();
         
@@ -343,7 +343,7 @@ class UserController extends Controller
         }
         
         // Get user from users table filtered by role
-        $user = Users::where('role', $role)
+        $user = User::where('role', $role)
                ->where('id', $id)
                ->firstOrFail();
         
@@ -454,7 +454,7 @@ class UserController extends Controller
         }
         
         // Get user from users table filtered by role
-        $user = Users::where('role', $role)
+        $user = User::where('role', $role)
                ->where('id', $id)
                ->firstOrFail();
         
@@ -509,7 +509,7 @@ class UserController extends Controller
         ]);
         
         // Get user from users table filtered by role
-        $user = Users::where('role', $role)
+        $user = User::where('role', $role)
                ->where('id', $id)
                ->firstOrFail();
         
@@ -558,7 +558,7 @@ class UserController extends Controller
         ]);
         
         // Get user from users table filtered by role
-        $user = Users::where('role', $role)
+        $user = User::where('role', $role)
                ->where('id', $id)
                ->firstOrFail();
         

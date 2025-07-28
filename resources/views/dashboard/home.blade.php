@@ -256,20 +256,30 @@
                 <p class="dashboard-subtitle">Welcome back! Here's an overview of your system.</p>
             </div>
             <div class="col-auto">
-                <div class="date-display">
-                    <i class="fas fa-calendar-alt"></i>
-                    <span id="current-date">{{ date('l, F d, Y') }}</span>
+                <div class="d-flex align-items-center gap-3">
+                    <!-- Mark Attendance Button -->
+                    <button id="markAttendanceBtn" class="btn btn-success btn-sm d-flex align-items-center gap-2" 
+                            style="background: linear-gradient(45deg, #28a745, #20c997); border: none; border-radius: 20px; padding: 8px 16px;">
+                        <i class="fas fa-clock"></i>
+                        <span id="attendanceButtonText">Mark Attendance</span>
+                    </button>
+                    
+                    <!-- Date Display -->
+                    <div class="date-display">
+                        <i class="fas fa-calendar-alt"></i>
+                        <span id="current-date">{{ date('l, F d, Y') }}</span>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Recent Activities Section -->
+    <!-- Recent Activity Section -->
     <div class="card recent-access-card mb-4">
         <div class="card-header recent-access-header">
-            <h5 class="recent-access-title"><i class="fas fa-history"></i> Recent Activities</h5>
+            <h5 class="recent-access-title"><i class="fas fa-history"></i> Recent Activity</h5>
             <div class="d-flex align-items-center">
-                <button id="refresh-activities" class="btn btn-sm btn-outline-primary me-2" title="Refresh Activities">
+                <button id="refresh-activities" class="btn btn-sm btn-outline-primary me-2" title="Refresh Activity">
                     <i class="fas fa-sync-alt"></i>
                 </button>
                 @if(session('role') === 'admin' || session('role') === 'supervisor')
@@ -374,9 +384,9 @@
                     <p class="mb-3"><small class="text-muted">You last logged in: {{ session('login_time', 'Unknown') }}</small></p>
                     
                     @if(session('role') === 'admin')
-                        <h6 class="text-primary mb-3">System Activities</h6>
+                        <h6 class="text-primary mb-3">System Activity</h6>
                     @else
-                        <h6 class="text-primary mb-3">Recent Activities in Your Centre</h6>
+                        <h6 class="text-primary mb-3">Recent Activity in Your Centre</h6>
                     @endif
                     
                     <div class="activity-list">
@@ -415,7 +425,7 @@
                     <div class="empty-state">
                         <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
                         <h6 class="text-muted">No recent activities</h6>
-                        <p class="text-muted mb-0">Activities will appear here as they are created</p>
+                        <p class="text-muted mb-0">Activity will appear here as they are created</p>
                         @if(session('role') === 'admin' || session('role') === 'teacher')
                             <a href="{{ route('activities.create') }}" class="btn btn-primary btn-sm mt-2">
                                 <i class="fas fa-plus me-1"></i>Create Activity
@@ -456,7 +466,7 @@
                 <div class="card-body">
                     <div class="row">
                         @foreach($data['stats'] as $index => $stat)
-                            @if(in_array($stat['title'], ['Supervisors', 'Teachers', 'AJKs', 'Total Users']))
+                            @if(in_array($stat['title'], ['Supervisor', 'Teacher', 'AJK', 'Total User']))
                                 <div class="col-6 mb-4">
                                     <div class="card h-100 stats-card">
                                         <div class="card-body">
@@ -477,11 +487,11 @@
                         @endforeach
                     </div>
 
-                    <!-- Recent Users Table -->
+                    <!-- Recent User Table -->
                     @if(isset($data['userManagement']))
                         <div class="card">
                             <div class="card-header">
-                                <h5 class="mb-0">Recent Users</h5>
+                                <h5 class="mb-0">Recent User</h5>
                             </div>
                             <div class="table-responsive">
                                 <table class="table table-hover">
@@ -564,7 +574,7 @@
                                             <i class="fas fa-user-graduate"></i>
                                         </div>
                                         <div>
-                                            <h6 class="mb-0">Total Trainees</h6>
+                                            <h6 class="mb-0">Total Trainee</h6>
                                             <small class="text-muted">Active enrollment</small>
                                         </div>
                                     </div>
@@ -591,10 +601,10 @@
                         </div>
                     </div>
                     
-                    <!-- Rehabilitation Categories Card -->
+                    <!-- Rehabilitation Category Card -->
                     <div class="card mb-4">
                         <div class="card-header py-3">
-                            <h6 class="m-0 font-weight-bold text-primary">Rehabilitation Categories</h6>
+                            <h6 class="m-0 font-weight-bold text-primary">Rehabilitation Category</h6>
                         </div>
                         <div class="card-body">
                             <div class="row">
@@ -623,14 +633,14 @@
                                     </div>
                                 </div>
                             </div>
-                            <a href="{{ route('activities.categories') }}" class="btn btn-sm btn-primary">View All Categories</a>
+                            <a href="{{ route('activities.categories') }}" class="btn btn-sm btn-primary">View All Category</a>
                         </div>
                     </div>
                     
-                    <!-- Recent Activities -->
+                    <!-- Recent Activity -->
                     <div class="card mt-3">
                         <div class="card-header d-flex justify-content-between align-items-center">
-                            <h5 class="mb-0">Recent Activities</h5>
+                            <h5 class="mb-0">Recent Activity</h5>
                             <a href="{{ route('activities.home') }}" class="btn btn-sm btn-outline-primary">View All</a>
                         </div>
                         <div class="table-responsive">
@@ -737,7 +747,7 @@
                                     <p class="text-muted mb-0">No sessions scheduled today</p>
                                     @if(session('role') !== 'ajk')
                                         <a href="{{ route('activities.home') }}" class="btn btn-sm btn-outline-primary mt-2">
-                                            Schedule Activities
+                                            Schedule Activity
                                         </a>
                                     @endif
                                 </div>
@@ -806,10 +816,10 @@
                         </div>
                     </div>
 
-                    <!-- Assets Overview -->
+                    <!-- Asset Overview -->
                     <div class="card asset-management-section">
                         <div class="card-header d-flex justify-content-between align-items-center">
-                            <h5 class="mb-0"><i class="fas fa-boxes"></i> Assets Overview</h5>
+                            <h5 class="mb-0"><i class="fas fa-boxes"></i> Asset Overview</h5>
                             @php
                                 $role = session('role');
                                 $assetsUrl = '';
@@ -877,7 +887,7 @@
                                 </div>
                                 <div class="col-6 mb-2">
                                     <a href="{{ route('activities.categories') }}" class="btn btn-outline-success btn-block">
-                                        <i class="fas fa-heartbeat"></i> Activities
+                                        <i class="fas fa-heartbeat"></i> Activity
                                     </a>
                                 </div>
                                 <div class="col-6 mb-2">
@@ -958,7 +968,7 @@ $(document).ready(function() {
             // Show success message
             const notification = $(`
                 <div class="alert alert-success alert-dismissible fade show" role="alert" style="position: fixed; top: 20px; right: 20px; z-index: 9999;">
-                    <i class="fas fa-check-circle me-2"></i>Activities refreshed successfully!
+                    <i class="fas fa-check-circle me-2"></i>Activity refreshed successfully!
                     <button type="button" class="close" data-dismiss="alert">
                         <span>&times;</span>
                     </button>
@@ -1070,6 +1080,166 @@ $(document).ready(function() {
     window.routeExists = function(routeName) {
         return false; // This would normally be determined server-side
     };
+
+    // Staff Attendance Functionality
+    $('#markAttendanceBtn').click(function() {
+        const button = $(this);
+        const buttonText = $('#attendanceButtonText');
+        const originalText = buttonText.text();
+        
+        // Check today's attendance status first
+        checkTodayAttendanceStatus();
+    });
+
+    function checkTodayAttendanceStatus() {
+        const userId = {{ session('id') }};
+        
+        $.get(`/staff-attendance/today/${userId}`)
+            .done(function(response) {
+                if (response.success) {
+                    showAttendanceModal(response);
+                } else {
+                    showError('Failed to load attendance status');
+                }
+            })
+            .fail(function() {
+                showError('Failed to connect to server');
+            });
+    }
+
+    function showAttendanceModal(attendanceData) {
+        const { has_checked_in, has_checked_out, can_check_in, can_check_out, today_attendance } = attendanceData;
+        
+        let modalContent = `
+            <div class="modal fade" id="attendanceModal" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header bg-primary text-white">
+                            <h5 class="modal-title">
+                                <i class="fas fa-clock me-2"></i>Mark Attendance
+                            </h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="card border-0 ${can_check_in ? 'bg-light' : 'bg-success text-white'}">
+                                        <div class="card-body text-center">
+                                            <i class="fas fa-sign-in-alt fa-2x mb-2"></i>
+                                            <h6>Check In</h6>
+                                            ${has_checked_in ? 
+                                                `<span class="badge bg-success">✓ Completed</span>` : 
+                                                `<button class="btn btn-success btn-sm" onclick="markAttendance('check_in')">
+                                                    <i class="fas fa-clock"></i> Check In Now
+                                                </button>`
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="card border-0 ${can_check_out ? 'bg-light' : 'bg-secondary text-white'}">
+                                        <div class="card-body text-center">
+                                            <i class="fas fa-sign-out-alt fa-2x mb-2"></i>
+                                            <h6>Check Out</h6>
+                                            ${has_checked_out ? 
+                                                `<span class="badge bg-success">✓ Completed</span>` : 
+                                                (can_check_out ? 
+                                                    `<button class="btn btn-warning btn-sm" onclick="markAttendance('check_out')">
+                                                        <i class="fas fa-clock"></i> Check Out Now
+                                                    </button>` :
+                                                    `<span class="text-muted">Check in first</span>`
+                                                )
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            ${today_attendance && today_attendance.length > 0 ? `
+                                <div class="mt-4">
+                                    <h6><i class="fas fa-history me-2"></i>Today's Records:</h6>
+                                    <div class="table-responsive">
+                                        <table class="table table-sm">
+                                            <thead><tr><th>Time</th><th>Type</th><th>Status</th></tr></thead>
+                                            <tbody>
+                                                ${today_attendance.map(record => `
+                                                    <tr>
+                                                        <td>${record.attendance_time}</td>
+                                                        <td>${record.attendance_type}</td>
+                                                        <td><span class="badge bg-success">${record.status}</span></td>
+                                                    </tr>
+                                                `).join('')}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Remove existing modal and add new one
+        $('#attendanceModal').remove();
+        $('body').append(modalContent);
+        $('#attendanceModal').modal('show');
+    }
+
+    function markAttendance(type) {
+        const data = {
+            user_id: {{ session('id') }},
+            attendance_type: type,
+            status: 'present'
+        };
+        
+        $.ajaxSetup({
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            }
+        });
+        
+        $.post('/staff-attendance/mark', data)
+            .done(function(response) {
+                if (response.success) {
+                    $('#attendanceModal').modal('hide');
+                    showSuccess(response.message);
+                    updateAttendanceButton(type);
+                } else {
+                    showError(response.message);
+                }
+            })
+            .fail(function(xhr) {
+                const response = xhr.responseJSON;
+                showError(response ? response.message : 'Failed to mark attendance');
+            });
+    }
+
+    function updateAttendanceButton(type) {
+        const buttonText = $('#attendanceButtonText');
+        if (type === 'check_in') {
+            buttonText.text('Check Out');
+        } else {
+            buttonText.text('Attendance Complete');
+            $('#markAttendanceBtn').addClass('disabled');
+        }
+    }
+
+    function showSuccess(message) {
+        if (typeof toastr !== 'undefined') {
+            toastr.success(message);
+        } else {
+            alert('✓ ' + message);
+        }
+    }
+
+    function showError(message) {
+        if (typeof toastr !== 'undefined') {
+            toastr.error(message);
+        } else {
+            alert('✗ ' + message);
+        }
+    }
 });
 </script>
 @endsection

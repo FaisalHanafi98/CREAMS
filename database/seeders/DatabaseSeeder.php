@@ -33,25 +33,25 @@ class DatabaseSeeder extends Seeder
                 CREAMSCentresSeeder::class,       // Malaysian rehabilitation centres
             ]);
 
-            // Phase 2: Staff and Users
+            // Phase 2: Staff and User
             $this->command->info("\n👥 PHASE 2: Creating Malaysian staff members...");
             $this->call([
                 CREAMSMalaysianStaffSeeder::class, // Realistic Malaysian staff with proper qualifications
             ]);
 
-            // Phase 3: Courses and Programs
+            // Phase 3: Course and Programs
             $this->command->info("\n📚 PHASE 3: Setting up courses and programs...");
             $this->call([
                 CREAMSCourseSeeder::class,             // Create courses first
             ]);
 
-            // Phase 4: Trainees
+            // Phase 4: Trainee
             $this->command->info("\n🧒 PHASE 4: Creating diverse Malaysian trainees...");
             $this->call([
-                CREAMSTraineeSeeder::class,            // Enterprise trainee seeder with realistic Malaysian data
+                CREAMSEnhancedTraineeSeeder::class,    // Enhanced trainee seeder with unique, realistic Malaysian profiles
             ]);
 
-            // Phase 5: Activities and Programs
+            // Phase 5: Activity and Programs
             $this->command->info("\n🎯 PHASE 5: Setting up rehabilitation activities and academic programs...");
             $this->call([
                 CREAMSCategorySeeder::class,                  // Activity categories with metadata
@@ -170,16 +170,16 @@ class DatabaseSeeder extends Seeder
             $stats = $this->getSystemStatistics();
             
             $this->command->info("\n📊 FINAL SYSTEM STATISTICS:");
-            $this->command->info("🏢 Rehabilitation Centres: " . $stats['centres']);
+            $this->command->info("🏢 Rehabilitation Centre: " . $stats['centres']);
             $this->command->info("👥 Total Staff Members: " . $stats['staff']);
             $this->command->info("   📋 Administrators: " . $stats['admins']);
-            $this->command->info("   📋 Supervisors: " . $stats['supervisors']); 
-            $this->command->info("   📋 Teachers/Therapists: " . $stats['teachers']);
+            $this->command->info("   📋 Supervisor: " . $stats['supervisors']); 
+            $this->command->info("   📋 Teacher/Therapists: " . $stats['teachers']);
             $this->command->info("   📋 Committee Members (AJK): " . $stats['ajk']);
             
             $this->command->info("\n🧒 TRAINEES & PROGRAMS:");
-            $this->command->info("👶 Total Trainees: " . $stats['trainees']);
-            $this->command->info("🎯 Rehabilitation Activities: " . $stats['activities']);
+            $this->command->info("👶 Total Trainee: " . $stats['trainees']);
+            $this->command->info("🎯 Rehabilitation Activity: " . $stats['activities']);
             $this->command->info("📅 Activity Sessions: " . $stats['sessions']);
             $this->command->info("✅ Completed Sessions: " . $stats['completed_sessions']);
             $this->command->info("📋 Total Enrollments: " . $stats['enrollments']);

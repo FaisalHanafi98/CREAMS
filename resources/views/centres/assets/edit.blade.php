@@ -428,13 +428,13 @@
             </div>
             <div class="col-md-4 text-end">
                 <a href="{{ route('centres.assets.index') }}" class="btn btn-light">
-                    <i class="fas fa-arrow-left me-2"></i>Back to Assets
+                    <i class="fas fa-arrow-left me-2"></i>Back to Asset
                 </a>
             </div>
         </div>
     </div>
 
-    <!-- Error Messages -->
+    <!-- Error Message -->
     @if ($errors->any())
         <div class="alert alert-danger">
             <h6><i class="fas fa-exclamation-triangle me-2"></i>Please fix the following errors:</h6>

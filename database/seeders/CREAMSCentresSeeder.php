@@ -3,7 +3,7 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use App\Models\Centres;
+use App\Models\Centre;
 
 class CREAMSCentresSeeder extends Seeder
 {
@@ -55,7 +55,7 @@ class CREAMSCentresSeeder extends Seeder
         ];
 
         foreach ($centres as $centre) {
-            Centres::updateOrCreate(
+            Centre::updateOrCreate(
                 ['centre_id' => $centre['centre_id']],
                 $centre
             );

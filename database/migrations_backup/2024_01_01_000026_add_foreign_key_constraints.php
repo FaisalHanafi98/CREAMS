@@ -11,24 +11,24 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // Users foreign keys
+        // User foreign keys
         Schema::table('users', function (Blueprint $table) {
             $table->foreign('centre_id')->references('centre_id')->on('centres')->onDelete('set null');
         });
 
-        // Courses foreign keys
+        // Course foreign keys
         Schema::table('courses', function (Blueprint $table) {
             $table->foreign('teacher_id')->references('id')->on('users')->onDelete('set null');
             $table->foreign('centre_id')->references('centre_id')->on('centres')->onDelete('cascade');
         });
 
-        // Trainees foreign keys
+        // Trainee foreign keys
         Schema::table('trainees', function (Blueprint $table) {
             $table->foreign('centre_id')->references('centre_id')->on('centres')->onDelete('cascade');
             $table->foreign('course_id')->references('id')->on('courses')->onDelete('set null');
         });
 
-        // Activities foreign keys
+        // Activity foreign keys
         Schema::table('activities', function (Blueprint $table) {
             $table->foreign('category_id')->references('id')->on('categories')->onDelete('set null');
             $table->foreign('created_by')->references('id')->on('users')->onDelete('set null');
@@ -59,12 +59,12 @@ return new class extends Migration
             $table->foreign('teacher_id')->references('id')->on('users')->onDelete('set null');
         });
 
-        // Assets foreign keys
+        // Asset foreign keys
         Schema::table('assets', function (Blueprint $table) {
             $table->foreign('assigned_to_id')->references('id')->on('users')->onDelete('set null');
         });
 
-        // Messages foreign keys
+        // Message foreign keys
         Schema::table('messages', function (Blueprint $table) {
             $table->foreign('sender_id')->references('id')->on('users')->onDelete('cascade');
             $table->foreign('recipient_id')->references('id')->on('users')->onDelete('cascade');
@@ -77,7 +77,7 @@ return new class extends Migration
             $table->foreign('centre_id')->references('centre_id')->on('centres')->onDelete('cascade');
         });
 
-        // Events foreign keys
+        // Event foreign keys
         Schema::table('events', function (Blueprint $table) {
             $table->foreign('organizer_id')->references('id')->on('users')->onDelete('cascade');
             $table->foreign('centre_id')->references('centre_id')->on('centres')->onDelete('cascade');
@@ -89,7 +89,7 @@ return new class extends Migration
             $table->foreign('session_id')->references('id')->on('activity_sessions')->onDelete('cascade');
         });
 
-        // Letters foreign keys
+        // Letter foreign keys
         Schema::table('letters', function (Blueprint $table) {
             $table->foreign('trainee_id')->references('id')->on('trainees')->onDelete('set null');
             $table->foreign('created_by')->references('id')->on('users')->onDelete('cascade');

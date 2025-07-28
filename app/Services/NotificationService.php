@@ -2,9 +2,9 @@
 
 namespace App\Services;
 
-use App\Models\Notifications;
-use App\Models\Users;
-use App\Models\Messages;
+use App\Models\Notification;
+use App\Models\User;
+use App\Models\Message;
 use App\Models\MessageTemplate;
 use App\Models\MessageRecipient;
 use Illuminate\Support\Facades\Cache;
@@ -28,7 +28,7 @@ class NotificationService
         $cacheKey = "user_notifications_{$userId}_{$limit}_" . ($unreadOnly ? 'unread' : 'all');
         
         return Cache::remember($cacheKey, self::CACHE_DURATION, function () use ($userId, $limit, $unreadOnly) {
-            $query = Notifications::where('user_id', $userId)
+            $query = Notification::where('user_id', $userId)
                 ->orderBy('created_at', 'desc');
                 
             if ($unreadOnly) {
@@ -47,7 +47,7 @@ class NotificationService
         $cacheKey = "unread_count_{$userId}";
         
         return Cache::remember($cacheKey, self::CACHE_DURATION, function () use ($userId) {
-            return Notifications::where('user_id', $userId)
+            return Notification::where('user_id', $userId)
                 ->where('is_read', false)
                 ->count();
         });
@@ -61,13 +61,13 @@ class NotificationService
         try {
             DB::beginTransaction();
             
-            $notification = Notifications::create([
+            $notification = Notification::create([
                 'notification_title' => $data['title'],
                 'notification_message' => $data['message'],
                 'notification_type' => $data['type'] ?? 'info',
                 'notification_channel' => $data['channel'] ?? 'database',
                 'user_id' => $data['user_id'],
-                'notifiable_type' => $data['notifiable_type'] ?? 'App\\Models\\Users',
+                'notifiable_type' => $data['notifiable_type'] ?? 'App\\Models\\User',
                 'notifiable_id' => $data['notifiable_id'] ?? $data['user_id'],
                 'centre_id' => $data['centre_id'] ?? null,
                 'priority' => $data['priority'] ?? 'normal',
@@ -136,7 +136,7 @@ class NotificationService
             foreach ($recipients as $recipient) {
                 $recipientData[] = [
                     'message_id' => $message->id,
-                    'recipient_type' => 'App\\Models\\Users',
+                    'recipient_type' => 'App\\Models\\User',
                     'recipient_id' => $recipient['id'],
                     'recipient_type_specific' => 'user',
                     'delivered_at' => $options['scheduled_at'] ? null : $timestamp,
@@ -208,7 +208,7 @@ class NotificationService
                     'notification_type' => $data['type'] ?? 'info',
                     'notification_channel' => $data['channel'] ?? 'database',
                     'user_id' => $userId,
-                    'notifiable_type' => 'App\\Models\\Users',
+                    'notifiable_type' => 'App\\Models\\User',
                     'notifiable_id' => $userId,
                     'centre_id' => $data['centre_id'] ?? null,
                     'priority' => $data['priority'] ?? 'normal',
@@ -222,7 +222,7 @@ class NotificationService
             }
             
             // Batch insert for performance
-            Notifications::insert($notifications);
+            Notification::insert($notifications);
             
             // Clear cache for all affected users
             foreach ($userIds as $userId) {
@@ -247,7 +247,7 @@ class NotificationService
     public function markNotificationAsRead($notificationId, $userId)
     {
         try {
-            $notification = Notifications::where('id', $notificationId)
+            $notification = Notification::where('id', $notificationId)
                 ->where('user_id', $userId)
                 ->firstOrFail();
                 
@@ -280,9 +280,9 @@ class NotificationService
         $cacheKey = "notification_stats_{$userId}";
         
         return Cache::remember($cacheKey, self::CACHE_DURATION, function () use ($userId) {
-            $total = Notifications::where('user_id', $userId)->count();
-            $unread = Notifications::where('user_id', $userId)->where('is_read', false)->count();
-            $today = Notifications::where('user_id', $userId)
+            $total = Notification::where('user_id', $userId)->count();
+            $unread = Notification::where('user_id', $userId)->where('is_read', false)->count();
+            $today = Notification::where('user_id', $userId)
                 ->whereDate('created_at', today())
                 ->count();
                 

@@ -35,7 +35,7 @@ echo "Fix Code: 'recipient_id' => \$validated['recipient_id'] ?? 0\n";
 
 echo "\nTo test the fix:\n";
 echo "1. Access the CREAMS system as an admin\n";
-echo "2. Go to Profile -> Letters tab\n";
+echo "2. Go to Profile -> Letter tab\n";
 echo "3. Fill out the letter form (without recipient_id field)\n";
 echo "4. Click 'Generate Letter'\n";
 echo "5. The system should now generate the letter without the 'recipient_id' undefined error\n";

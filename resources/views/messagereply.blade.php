@@ -110,7 +110,7 @@
                 <div class="breadcrumb">
                     <a href="{{ route('dashboard') }}">Dashboard</a>
                     <span class="separator">/</span>
-                    <a href="{{ route('messages.index') }}">Messages</a>
+                    <a href="{{ route('messages.index') }}">Message</a>
                     <span class="separator">/</span>
                     <span class="current">Reply</span>
                 </div>

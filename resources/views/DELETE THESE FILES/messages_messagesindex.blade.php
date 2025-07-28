@@ -1,12 +1,12 @@
 @extends('layouts.dashboard')
 
-@section('title', 'Messages')
+@section('title', 'Message')
 
 @section('content')
 <div class="content-section">
     <div class="card mb-4">
         <div class="card-header">
-            <h5 class="card-title">Messages</h5>
+            <h5 class="card-title">Message</h5>
             <div class="card-options">
                 <button class="btn btn-sm btn-primary" data-toggle="modal" data-target="#composeModal">
                     <i class="fas fa-paper-plane"></i> Compose New Message
@@ -51,7 +51,7 @@
                         <div class="empty-state-icon">
                             <i class="fas fa-envelope-open"></i>
                         </div>
-                        <h4>No Messages</h4>
+                        <h4>No Message</h4>
                         <p>You don't have any messages yet.</p>
                     </div>
                 @endif

@@ -73,25 +73,54 @@ class EnhanceTraineeManagement extends Migration
 
         // Add indexes for better search performance
         Schema::table('trainees', function (Blueprint $table) {
-            // Check if indexes don't already exist to prevent errors
+            // Check and add indexes only if they don't already exist
+            $existingIndexes = collect(DB::select("SHOW INDEX FROM trainees"))->pluck('Key_name')->toArray();
+            
             try {
-                $table->index('unique_identifier');
-                $table->index(['trainee_first_name', 'trainee_last_name', 'status']);
-                $table->index('admission_date');
-                $table->index('status');
-                $table->index('centre_id');
+                // Add unique_identifier index if it doesn't exist
+                if (!in_array('trainees_unique_identifier_index', $existingIndexes)) {
+                    $table->index('unique_identifier');
+                }
                 
-                // Add fulltext index for search
-                DB::statement('ALTER TABLE trainees ADD FULLTEXT search_index (trainee_first_name, trainee_last_name, trainee_email, trainee_phone_number)');
+                // Add composite name/status index if it doesn't exist
+                if (!in_array('trainees_trainee_first_name_trainee_last_name_status_index', $existingIndexes)) {
+                    $table->index(['trainee_first_name', 'trainee_last_name', 'status']);
+                }
+                
+                // Add admission_date index if it doesn't exist
+                if (!in_array('trainees_admission_date_index', $existingIndexes)) {
+                    $table->index('admission_date');
+                }
+                
+                // Add status index if it doesn't exist
+                if (!in_array('trainees_status_index', $existingIndexes)) {
+                    $table->index('status');
+                }
+                
+                // Add centre_id index if it doesn't exist
+                if (!in_array('trainees_centre_id_index', $existingIndexes)) {
+                    $table->index('centre_id');
+                }
+                
+                // Add fulltext index for search if it doesn't exist
+                if (!in_array('search_index', $existingIndexes)) {
+                    DB::statement('ALTER TABLE trainees ADD FULLTEXT search_index (trainee_first_name, trainee_last_name, trainee_email, trainee_phone_number)');
+                }
                 
                 // Add foreign key for last_updated_by
-                $table->foreign('last_updated_by')->references('id')->on('users')->onDelete('set null');
+                $foreignKeys = collect(DB::select("SELECT CONSTRAINT_NAME FROM information_schema.KEY_COLUMN_USAGE WHERE TABLE_NAME = 'trainees' AND CONSTRAINT_NAME LIKE '%last_updated_by%'"))->pluck('CONSTRAINT_NAME')->toArray();
+                if (empty($foreignKeys)) {
+                    $table->foreign('last_updated_by')->references('id')->on('users')->onDelete('set null');
+                }
                 
                 // Add unique constraint to prevent duplicates
-                $table->unique(['trainee_first_name', 'trainee_last_name', 'trainee_date_of_birth', 'guardian_phone'], 'unique_trainee_constraint');
+                if (!in_array('unique_trainee_constraint', $existingIndexes)) {
+                    $table->unique(['trainee_first_name', 'trainee_last_name', 'trainee_date_of_birth', 'guardian_phone'], 'unique_trainee_constraint');
+                }
                 
             } catch (\Exception $e) {
-                // Index might already exist, continue
+                // Log error but continue migration
+                \Log::warning('Index creation failed: ' . $e->getMessage());
             }
         });
         

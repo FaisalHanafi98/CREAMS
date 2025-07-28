@@ -38,7 +38,7 @@ class CentreStatistics extends Model
      */
     public function centre()
     {
-        return $this->belongsTo(Centres::class, 'centre_id');
+        return $this->belongsTo(Centre::class, 'centre_id');
     }
 
     /**
@@ -187,7 +187,7 @@ class CentreStatistics extends Model
      */
     public static function calculateAndStore($centreId)
     {
-        $centre = Centres::find($centreId);
+        $centre = Centre::find($centreId);
         if (!$centre) {
             return false;
         }
@@ -197,7 +197,7 @@ class CentreStatistics extends Model
         
         $stats = [
             'centre_id' => $centreId,
-            'total_users' => Users::where('centre_id', $centreId)->where('is_active', true)->count(),
+            'total_users' => User::where('centre_id', $centreId)->where('is_active', true)->count(),
             'total_trainees' => Trainee::where('centre_id', $centreId)->where('is_active', true)->count(),
             'total_activities' => Activity::where('centre_id', $centreId)->where('is_active', true)->count(),
             'total_assets' => Asset::where('centre_id', $centreId)->count(),

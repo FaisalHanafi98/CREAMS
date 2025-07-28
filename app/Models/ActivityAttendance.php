@@ -47,7 +47,7 @@ class ActivityAttendance extends Model
      */
     public function markedBy()
     {
-        return $this->belongsTo(Users::class, 'marked_by');
+        return $this->belongsTo(User::class, 'marked_by');
     }
 
     /**

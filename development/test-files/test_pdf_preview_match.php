@@ -6,7 +6,7 @@ $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
 
 use App\Models\Letter;
 use App\Models\LetterTemplate;
-use App\Models\Users;
+use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
 
 echo "🔍 PDF PREVIEW MATCH VERIFICATION TEST 🔍\n";
@@ -26,7 +26,7 @@ try {
     }
     
     // Get user
-    $user = Users::find(49);
+    $user = User::find(49);
     if (!$user) {
         echo "❌ User not found\n";
         exit;

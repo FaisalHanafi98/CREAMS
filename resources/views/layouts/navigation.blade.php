@@ -17,7 +17,7 @@
                     </x-nav-link>
                     <!-- Add trainee module link -->
                     <x-nav-link :href="route('traineeshome')" :active="request()->routeIs('traineeshome')">
-                        {{ __('Trainees') }}
+                        {{ __('Trainee') }}
                     </x-nav-link>
                 </div>
             </div>
@@ -76,7 +76,7 @@
             </x-responsive-nav-link>
             <!-- Add mobile trainee module link -->
             <x-responsive-nav-link :href="route('traineeshome')" :active="request()->routeIs('traineeshome')">
-                {{ __('Trainees') }}
+                {{ __('Trainee') }}
             </x-responsive-nav-link>
         </div>
 

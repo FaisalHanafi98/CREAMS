@@ -51,7 +51,7 @@ class TraineeProgress extends Model
      */
     public function assessor()
     {
-        return $this->belongsTo(Users::class, 'assessed_by');
+        return $this->belongsTo(User::class, 'assessed_by');
     }
 
     /**

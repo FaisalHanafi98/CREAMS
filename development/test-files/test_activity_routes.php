@@ -18,24 +18,24 @@ try {
 echo "\nTesting categories for create form...\n";
 try {
     $categories = App\Models\Category::active()->ordered()->get();
-    echo "✅ Categories retrieved: " . $categories->count() . " categories\n";
+    echo "✅ Category retrieved: " . $categories->count() . " categories\n";
     foreach ($categories as $category) {
         echo "  - {$category->category_name}\n";
     }
 } catch (Exception $e) {
-    echo "❌ Categories retrieval failed: " . $e->getMessage() . "\n";
+    echo "❌ Category retrieval failed: " . $e->getMessage() . "\n";
 }
 
 // Test if activities index works
 echo "\nTesting activities index...\n";
 try {
     $activities = App\Models\Activity::with('centre')->paginate(10);
-    echo "✅ Activities index data retrieved: " . $activities->count() . " activities\n";
+    echo "✅ Activity index data retrieved: " . $activities->count() . " activities\n";
     foreach ($activities as $activity) {
         echo "  - {$activity->activity_name} ({$activity->activity_status})\n";
     }
 } catch (Exception $e) {
-    echo "❌ Activities index failed: " . $e->getMessage() . "\n";
+    echo "❌ Activity index failed: " . $e->getMessage() . "\n";
 }
 
 // Test if activity show works

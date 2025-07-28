@@ -163,7 +163,7 @@
             <div class="stats-card">
                 <div class="d-flex align-items-center">
                     <div class="mr-3">
-                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Trainees</div>
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Trainee</div>
                         <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $stats['total'] ?? 0 }}</div>
                     </div>
                     <div class="ml-auto">
@@ -339,11 +339,11 @@
         </div>
     </div>
 
-    <!-- Trainees List -->
+    <!-- Trainee List -->
     <div class="card shadow mb-4">
         <div class="card-header py-3 d-flex justify-content-between align-items-center">
             <h6 class="m-0 font-weight-bold text-primary">
-                Trainees ({{ $trainees->total() }} found)
+                Trainee ({{ $trainees->total() }} found)
             </h6>
             
             <div class="d-flex align-items-center">

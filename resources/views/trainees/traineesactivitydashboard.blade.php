@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'My Activities')
+@section('title', 'My Activity')
 
 @section('styles')
 <style>
@@ -165,7 +165,7 @@
                 <i class="fas fa-calendar-check"></i>
             </div>
             <div class="stat-value">{{ $enrollments->count() }}</div>
-            <div class="stat-label">Enrolled Activities</div>
+            <div class="stat-label">Enrolled Activity</div>
         </div>
         
         <div class="stat-card">
@@ -247,11 +247,11 @@
             </div>
         </div>
         
-        <!-- Upcoming Activities -->
+        <!-- Upcoming Activity -->
         <div class="col-lg-4">
             <div class="card">
                 <div class="card-header">
-                    <h5 class="mb-0">Upcoming Activities</h5>
+                    <h5 class="mb-0">Upcoming Activity</h5>
                 </div>
                 <div class="card-body">
                     @forelse($upcomingActivities as $day)
@@ -285,7 +285,7 @@
                         <i class="fas fa-chart-line"></i> View Progress Report
                     </a>
                     <a href="{{ route('activities.home') }}" class="btn btn-secondary btn-block">
-                        <i class="fas fa-search"></i> Browse Activities
+                        <i class="fas fa-search"></i> Browse Activity
                     </a>
                 </div>
             </div>

@@ -11,7 +11,7 @@ try {
     $adminService = new App\Services\Dashboard\AdminDashboardService();
     
     // Get admin user
-    $admin = App\Models\Users::where('role', 'admin')->first();
+    $admin = App\Models\User::where('role', 'admin')->first();
     if (!$admin) {
         echo "❌ No admin user found" . PHP_EOL;
         exit;
@@ -41,7 +41,7 @@ try {
     );
     
     // Get AJK user
-    $ajk = App\Models\Users::where('role', 'ajk')->first();
+    $ajk = App\Models\User::where('role', 'ajk')->first();
     if (!$ajk) {
         echo "❌ No AJK user found" . PHP_EOL;
     } else {
@@ -64,12 +64,12 @@ try {
 // Test specific problematic queries directly
 echo PHP_EOL . "Testing individual queries..." . PHP_EOL;
 
-echo "Testing Volunteers with volunteer_status..." . PHP_EOL;
+echo "Testing Volunteer with volunteer_status..." . PHP_EOL;
 try {
-    $pendingCount = App\Models\Volunteers::where('volunteer_status', 'pending')->count();
+    $pendingCount = App\Models\Volunteer::where('volunteer_status', 'pending')->count();
     echo "✅ Pending volunteers: {$pendingCount}" . PHP_EOL;
 } catch (Exception $e) {
-    echo "❌ Volunteers query error: " . $e->getMessage() . PHP_EOL;
+    echo "❌ Volunteer query error: " . $e->getMessage() . PHP_EOL;
 }
 
 echo "Testing ContactMessages with message_status..." . PHP_EOL;
@@ -80,12 +80,12 @@ try {
     echo "❌ ContactMessages query error: " . $e->getMessage() . PHP_EOL;
 }
 
-echo "Testing Centres with centre_status..." . PHP_EOL;
+echo "Testing Centre with centre_status..." . PHP_EOL;
 try {
-    $activeCentres = App\Models\Centres::where('centre_status', 'active')->count();
+    $activeCentres = App\Models\Centre::where('centre_status', 'active')->count();
     echo "✅ Active centres: {$activeCentres}" . PHP_EOL;
 } catch (Exception $e) {
-    echo "❌ Centres query error: " . $e->getMessage() . PHP_EOL;
+    echo "❌ Centre query error: " . $e->getMessage() . PHP_EOL;
 }
 
 echo PHP_EOL . "=== END DASHBOARD FIXES TEST ===" . PHP_EOL;

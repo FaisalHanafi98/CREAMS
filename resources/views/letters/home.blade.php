@@ -7,7 +7,7 @@
             <!-- Page Header -->
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h2 class="page-title">
-                    <i class="fas fa-file-alt mr-2"></i>Letters Archive
+                    <i class="fas fa-file-alt mr-2"></i>Letter Archive
                 </h2>
                 <div>
                     <a href="/profile#letters-tab" class="btn btn-primary">
@@ -43,7 +43,7 @@
                 </div>
             </div>
 
-            <!-- Letters Table -->
+            <!-- Letter Table -->
             <div class="card">
                 <div class="card-body">
                     @if($letters->count() > 0)
@@ -129,7 +129,7 @@
                     @else
                         <div class="text-center py-5">
                             <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
-                            <h5>No Letters Found</h5>
+                            <h5>No Letter Found</h5>
                             <p class="text-muted">
                                 @if(request('search'))
                                     No letters match your search criteria.

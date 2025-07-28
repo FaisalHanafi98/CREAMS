@@ -5,8 +5,8 @@ namespace App\Console\Commands;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use App\Models\Users;
-use App\Models\Centres;
+use App\Models\User;
+use App\Models\Centre;
 
 class DiversifyCentres extends Command
 {
@@ -46,7 +46,7 @@ class DiversifyCentres extends Command
         
         try {
             // Get all active centres
-            $centres = Centres::where('centre_status', 'active')->get(['centre_id', 'centre_name']);
+            $centres = Centre::where('centre_status', 'active')->get(['centre_id', 'centre_name']);
             
             if ($centres->isEmpty()) {
                 $this->error('No active centres found in the database.');
@@ -60,7 +60,7 @@ class DiversifyCentres extends Command
             $centreMap = $centres->pluck('centre_name', 'centre_id')->toArray();
             
             // Get all users
-            $users = Users::all();
+            $users = User::all();
             $totalUsers = $users->count();
             
             if ($totalUsers === 0) {

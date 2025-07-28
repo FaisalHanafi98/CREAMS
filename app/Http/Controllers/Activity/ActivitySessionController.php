@@ -5,9 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\Activity;
 use App\Models\ActivitySession;
 use App\Models\SessionEnrollment;
-use App\Models\Users;
+use App\Models\User;
 use App\Models\Trainee;
-use App\Models\Centres;
+use App\Models\Centre;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -36,7 +36,7 @@ class ActivitySessionController extends Controller
             return view('activities.sessions.index', compact('activity', 'sessions', 'sessionsByClass'));
             
         } catch (\Exception $e) {
-            return redirect()->route('activities.index')
+            return redirect()->route('activities.home')
                 ->with('error', 'Activity not found.');
         }
     }
@@ -47,7 +47,7 @@ class ActivitySessionController extends Controller
     public function create($activityId)
     {
         if (!in_array(session('role'), ['admin', 'supervisor'])) {
-            return redirect()->route('activities.index')
+            return redirect()->route('activities.home')
                 ->with('error', 'You do not have permission to create sessions.');
         }
         
@@ -55,7 +55,7 @@ class ActivitySessionController extends Controller
             $activity = Activity::findOrFail($activityId);
             
             // Get qualified teachers
-            $teachers = Users::where('role', 'teacher')
+            $teachers = User::where('role', 'teacher')
                 ->where(function ($query) use ($activity) {
                     for ($i = 1; $i <= 5; $i++) {
                         $query->orWhere("user_activity_{$i}", $activity->category);
@@ -64,7 +64,7 @@ class ActivitySessionController extends Controller
                 ->get();
                 
             // Get classes/centres
-            $centres = Centres::all();
+            $centres = Centre::all();
             
             $currentSemester = date('Y') . '-' . (date('n') <= 6 ? '1' : '2');
             
@@ -72,7 +72,7 @@ class ActivitySessionController extends Controller
                 compact('activity', 'teachers', 'centres', 'currentSemester'));
                 
         } catch (\Exception $e) {
-            return redirect()->route('activities.index')
+            return redirect()->route('activities.home')
                 ->with('error', 'Activity not found.');
         }
     }
@@ -83,7 +83,7 @@ class ActivitySessionController extends Controller
     public function store(Request $request, $activityId)
     {
         if (!in_array(session('role'), ['admin', 'supervisor'])) {
-            return redirect()->route('activities.index')
+            return redirect()->route('activities.home')
                 ->with('error', 'You do not have permission to create sessions.');
         }
         
@@ -171,7 +171,7 @@ class ActivitySessionController extends Controller
     public function edit($activityId, $sessionId)
     {
         if (!in_array(session('role'), ['admin', 'supervisor'])) {
-            return redirect()->route('activities.index')
+            return redirect()->route('activities.home')
                 ->with('error', 'You do not have permission to edit sessions.');
         }
         
@@ -186,7 +186,7 @@ class ActivitySessionController extends Controller
             }
             
             // Get qualified teachers
-            $teachers = Users::where('role', 'teacher')
+            $teachers = User::where('role', 'teacher')
                 ->where(function ($query) use ($activity) {
                     for ($i = 1; $i <= 5; $i++) {
                         $query->orWhere("user_activity_{$i}", $activity->category);
@@ -194,7 +194,7 @@ class ActivitySessionController extends Controller
                 })
                 ->get();
                 
-            $centres = Centres::all();
+            $centres = Centre::all();
             
             return view('activities.sessions.edit', 
                 compact('activity', 'session', 'teachers', 'centres'));
@@ -211,7 +211,7 @@ class ActivitySessionController extends Controller
     public function update(Request $request, $activityId, $sessionId)
     {
         if (!in_array(session('role'), ['admin', 'supervisor'])) {
-            return redirect()->route('activities.index')
+            return redirect()->route('activities.home')
                 ->with('error', 'You do not have permission to edit sessions.');
         }
         
@@ -275,7 +275,7 @@ class ActivitySessionController extends Controller
     public function destroy($activityId, $sessionId)
     {
         if (!in_array(session('role'), ['admin', 'supervisor'])) {
-            return redirect()->route('activities.index')
+            return redirect()->route('activities.home')
                 ->with('error', 'You do not have permission to delete sessions.');
         }
         

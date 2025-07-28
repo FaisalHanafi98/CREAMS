@@ -409,7 +409,7 @@
                     </div>
                 </div>
                 <div class="stat-value">{{ $stats['activities_this_month'] ?? 0 }}</div>
-                <div class="stat-label">Activities This Month</div>
+                <div class="stat-label">Activity This Month</div>
                 <div class="stat-change positive">
                     <i class="fas fa-plus-circle"></i>
                     Active participation
@@ -468,7 +468,7 @@
                                 <div class="child-stats">
                                     <div class="child-stat">
                                         <span class="child-stat-value">{{ $child->activities_enrolled ?? 0 }}</span>
-                                        <span>Activities</span>
+                                        <span>Activity</span>
                                     </div>
                                     <div class="child-stat">
                                         <span class="child-stat-value">{{ number_format($child->attendance_rate ?? 0, 1) }}%</span>
@@ -489,11 +489,11 @@
                     @endif
                 </div>
 
-                <!-- Upcoming Activities -->
+                <!-- Upcoming Activity -->
                 <div class="card-section">
                     <div class="section-header">
-                        <h3 class="section-title">Upcoming Activities</h3>
-                        <a href="{{ route('activities.home') }}" class="btn btn-sm btn-outline-purple">View All Activities</a>
+                        <h3 class="section-title">Upcoming Activity</h3>
+                        <a href="{{ route('activities.home') }}" class="btn btn-sm btn-outline-purple">View All Activity</a>
                     </div>
                     
                     @if(isset($upcoming_activities) && count($upcoming_activities) > 0)
@@ -573,22 +573,22 @@
                             <div class="action-icon">
                                 <i class="fas fa-calendar"></i>
                             </div>
-                            <div class="action-label">Activities</div>
+                            <div class="action-label">Activity</div>
                         </a>
                         
                         <a href="{{ route('messages.index') }}" class="action-btn">
                             <div class="action-icon">
                                 <i class="fas fa-envelope"></i>
                             </div>
-                            <div class="action-label">Messages</div>
+                            <div class="action-label">Message</div>
                         </a>
                     </div>
                 </div>
 
-                <!-- Notifications -->
+                <!-- Notification -->
                 <div class="card-section">
                     <div class="section-header">
-                        <h3 class="section-title">Notifications</h3>
+                        <h3 class="section-title">Notification</h3>
                     </div>
                     
                     <ul class="upcoming-list">

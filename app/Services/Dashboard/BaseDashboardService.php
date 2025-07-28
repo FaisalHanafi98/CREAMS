@@ -2,13 +2,13 @@
 
 namespace App\Services\Dashboard;
 
-use App\Models\Users;
+use App\Models\User;
 use App\Models\Trainee;
 use App\Models\Activity;
 use App\Models\ActivitySession;
-use App\Models\Centres;
+use App\Models\Centre;
 use App\Models\Asset;
-use App\Models\Events;
+use App\Models\Event;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;

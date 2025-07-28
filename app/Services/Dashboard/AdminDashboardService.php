@@ -2,13 +2,13 @@
 
 namespace App\Services\Dashboard;
 
-use App\Models\Users;
+use App\Models\User;
 use App\Models\Trainee;
 use App\Models\Activity;
 use App\Models\ActivitySession;
-use App\Models\Centres;
+use App\Models\Centre;
 use App\Models\ContactMessages;
-use App\Models\Volunteers;
+use App\Models\Volunteer;
 use App\Models\Asset;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -58,32 +58,32 @@ class AdminDashboardService extends BaseDashboardService
             $basicStats = $this->getBasicStats();
             
             // Get actual counts but apply UAT-friendly adjustments
-            $actualUserCount = Users::count();
+            $actualUserCount = User::count();
             $actualTraineeCount = Trainee::count();
             $actualActivityCount = Activity::count();
             
             // Use actual database counts (no artificial minimums)
             $actualStats = [
-                // Total Users: Use actual count from database
+                // Total User:: Use actual count from database
                 'total_users' => $actualUserCount,
-                'administrators' => Users::where('role', 'admin')->count(),
-                'supervisors' => Users::where('role', 'supervisor')->count(),
-                'teachers' => Users::where('role', 'teacher')->count(),
+                'administrators' => User::where('role', 'admin')->count(),
+                'supervisors' => User::where('role', 'supervisor')->count(),
+                'teachers' => User::where('role', 'teacher')->count(),
                 
-                // Trainees: Use actual count from database
+                // Trainee: Use actual count from database
                 'total_trainees' => $actualTraineeCount,
                 
-                // Activities: Use actual count from database
+                // Activity: Use actual count from database
                 'total_activities' => $actualActivityCount,
                 
                 // Active sessions from database
                 'active_sessions' => ActivitySession::where('session_status', 'active')->count(),
                 
                 // Other actual stats from database
-                'pending_volunteers' => Volunteers::where('volunteer_status', 'pending')->count(),
-                'unread_messages' => ContactMessages::where('message_status', 'unread')->count(),
-                'total_centres' => Centres::count(),
-                'active_centres' => Centres::where('centre_status', 'active')->count(),
+                'pending_volunteers' => Volunteer::where('volunteer_status', 'pending')->count(),
+                'unread_messages' => ContactMessage::where('message_status', 'unread')->count(),
+                'total_centres' => Centre::count(),
+                'active_centres' => Centre::where('centre_status', 'active')->count(),
                 'total_assets' => Asset::count(),
                 'asset_value' => 0, // Asset values not available in current table structure
             ];
@@ -93,17 +93,17 @@ class AdminDashboardService extends BaseDashboardService
 
             // Calculate role distribution from actual database counts
             $roleDistribution = [
-                'admin' => Users::where('role', 'admin')->count(),
-                'supervisor' => Users::where('role', 'supervisor')->count(),
-                'teacher' => Users::where('role', 'teacher')->count(),
-                'ajk' => Users::where('role', 'ajk')->count(),
+                'admin' => User::where('role', 'admin')->count(),
+                'supervisor' => User::where('role', 'supervisor')->count(),
+                'teacher' => User::where('role', 'teacher')->count(),
+                'ajk' => User::where('role', 'ajk')->count(),
                 'trainee' => $actualTraineeCount,
-                'parent' => Users::where('role', 'parent')->count()
+                'parent' => User::where('role', 'parent')->count()
             ];
 
             // Calculate recent growth (last 30 days) from actual database
             $recentGrowth = [
-                'new_users' => Users::where('created_at', '>=', Carbon::now()->subDays(30))->count(),
+                'new_users' => User::where('created_at', '>=', Carbon::now()->subDays(30))->count(),
                 'new_trainees' => Trainee::where('created_at', '>=', Carbon::now()->subDays(30))->count(),
                 'new_activities' => Activity::where('created_at', '>=', Carbon::now()->subDays(30))->count(),
             ];
@@ -113,10 +113,10 @@ class AdminDashboardService extends BaseDashboardService
                 'recent_growth' => $recentGrowth,
                 
                 // Add analytics data for User Access Analytics section
-                'active_today' => Users::whereDate('user_last_accessed_at', Carbon::today())->count(),
-                'active_week' => Users::where('user_last_accessed_at', '>=', Carbon::now()->startOfWeek())->count(),
-                'fellow_teachers' => Users::where('role', 'teacher')->count(),
-                'teachers_online' => Users::where('role', 'teacher')->where('user_last_accessed_at', '>=', Carbon::now()->subMinutes(15))->count(),
+                'active_today' => User::whereDate('user_last_accessed_at', Carbon::today())->count(),
+                'active_week' => User::where('user_last_accessed_at', '>=', Carbon::now()->startOfWeek())->count(),
+                'fellow_teachers' => User::where('role', 'teacher')->count(),
+                'teachers_online' => User::where('role', 'teacher')->where('user_last_accessed_at', '>=', Carbon::now()->subMinutes(15))->count(),
             ]);
 
         } catch (Exception $e) {
@@ -128,22 +128,22 @@ class AdminDashboardService extends BaseDashboardService
             // Return fallback stats using basic database queries even on error
             try {
                 return [
-                    'total_users' => Users::count(),
+                    'total_users' => User::count(),
                     'total_trainees' => Trainee::count(),
                     'total_activities' => Activity::count(),
                     'active_sessions' => 0,
-                    'administrators' => Users::where('role', 'admin')->count(),
-                    'supervisors' => Users::where('role', 'supervisor')->count(),
-                    'teachers' => Users::where('role', 'teacher')->count(),
-                    'pending_volunteers' => Volunteers::where('volunteer_status', 'pending')->count(),
-                    'unread_messages' => ContactMessages::where('message_status', 'unread')->count(),
-                    'total_centres' => Centres::count(),
-                    'active_centres' => Centres::where('centre_status', 'active')->count(),
+                    'administrators' => User::where('role', 'admin')->count(),
+                    'supervisors' => User::where('role', 'supervisor')->count(),
+                    'teachers' => User::where('role', 'teacher')->count(),
+                    'pending_volunteers' => Volunteer::where('volunteer_status', 'pending')->count(),
+                    'unread_messages' => ContactMessage::where('message_status', 'unread')->count(),
+                    'total_centres' => Centre::count(),
+                    'active_centres' => Centre::where('centre_status', 'active')->count(),
                     'total_assets' => Asset::count(),
                     'asset_value' => 0, // Asset values not available in current table structure
                     'active_today' => 0,
                     'active_week' => 0,
-                    'fellow_teachers' => Users::where('role', 'teacher')->count(),
+                    'fellow_teachers' => User::where('role', 'teacher')->count(),
                     'teachers_online' => 0,
                 ];
             } catch (Exception $e) {
@@ -202,7 +202,7 @@ class AdminDashboardService extends BaseDashboardService
     {
         // Mock realistic data for UAT - users who were active today
         // Using user_last_accessed_at column instead of last_login
-        $actualCount = Users::whereDate('user_last_accessed_at', Carbon::today())->count();
+        $actualCount = User::whereDate('user_last_accessed_at', Carbon::today())->count();
         return min(max($actualCount, 15), 25); // Between 15-25 active today
     }
 
@@ -213,7 +213,7 @@ class AdminDashboardService extends BaseDashboardService
     {
         // Mock realistic data for UAT - users who were active this week
         // Using user_last_accessed_at column instead of last_login
-        $actualCount = Users::where('user_last_accessed_at', '>=', Carbon::now()->startOfWeek())->count();
+        $actualCount = User::where('user_last_accessed_at', '>=', Carbon::now()->startOfWeek())->count();
         return min(max($actualCount, 35), 45); // Between 35-45 active this week
     }
 
@@ -254,7 +254,7 @@ class AdminDashboardService extends BaseDashboardService
                                 'colorScheme' => 'primary'
                             ],
                             [
-                                'label' => 'Trainees',
+                                'label' => 'Trainee',
                                 'data' => [85, 95, 108, 115, 120, 125],
                                 'colorScheme' => 'success'
                             ]
@@ -265,14 +265,14 @@ class AdminDashboardService extends BaseDashboardService
                     'type' => 'doughnut',
                     'title' => 'Staff Role Distribution',
                     'data' => [
-                        'labels' => ['Teachers', 'Supervisors', 'Administrators'],
+                        'labels' => ['Teacher', 'Supervisor', 'Administrators'],
                         'datasets' => [
                             [
                                 'label' => 'Staff Count',
                                 'data' => [
-                                    Users::where('role', 'teacher')->count(),
-                                    Users::where('role', 'supervisor')->count(),
-                                    Users::where('role', 'admin')->count()
+                                    User::where('role', 'teacher')->count(),
+                                    User::where('role', 'supervisor')->count(),
+                                    User::where('role', 'admin')->count()
                                 ],
                                 'backgroundColor' => [
                                     'rgba(50, 189, 234, 0.8)',
@@ -317,7 +317,7 @@ class AdminDashboardService extends BaseDashboardService
     private function getCentrePerformanceChart(): array
     {
         try {
-            $data = Centres::with(['users', 'trainees', 'activities'])
+            $data = Centre::with(['users', 'trainees', 'activities'])
                 ->get()
                 ->map(function ($centre) {
                     return [
@@ -332,17 +332,17 @@ class AdminDashboardService extends BaseDashboardService
                 'labels' => $data->pluck('name')->toArray(),
                 'datasets' => [
                     [
-                        'label' => 'Users',
+                        'label' => 'User',
                         'data' => $data->pluck('users')->toArray(),
                         'backgroundColor' => 'rgba(75, 192, 192, 0.8)',
                     ],
                     [
-                        'label' => 'Trainees',
+                        'label' => 'Trainee',
                         'data' => $data->pluck('trainees')->toArray(),
                         'backgroundColor' => 'rgba(54, 162, 235, 0.8)',
                     ],
                     [
-                        'label' => 'Activities',
+                        'label' => 'Activity',
                         'data' => $data->pluck('activities')->toArray(),
                         'backgroundColor' => 'rgba(255, 205, 86, 0.8)',
                     ],
@@ -369,7 +369,7 @@ class AdminDashboardService extends BaseDashboardService
                 $date = Carbon::now()->subMonths($i);
                 $months[] = $date->format('M Y');
 
-                $userData[] = Users::whereYear('created_at', $date->year)
+                $userData[] = User::whereYear('created_at', $date->year)
                     ->whereMonth('created_at', $date->month)
                     ->count();
 
@@ -386,19 +386,19 @@ class AdminDashboardService extends BaseDashboardService
                 'labels' => $months,
                 'datasets' => [
                     [
-                        'label' => 'New Users',
+                        'label' => 'New User',
                         'data' => $userData,
                         'borderColor' => 'rgb(75, 192, 192)',
                         'backgroundColor' => 'rgba(75, 192, 192, 0.2)',
                     ],
                     [
-                        'label' => 'New Trainees',
+                        'label' => 'New Trainee',
                         'data' => $traineeData,
                         'borderColor' => 'rgb(54, 162, 235)',
                         'backgroundColor' => 'rgba(54, 162, 235, 0.2)',
                     ],
                     [
-                        'label' => 'New Activities',
+                        'label' => 'New Activity',
                         'data' => $activityData,
                         'borderColor' => 'rgb(255, 205, 86)',
                         'backgroundColor' => 'rgba(255, 205, 86, 0.2)',
@@ -420,7 +420,7 @@ class AdminDashboardService extends BaseDashboardService
             [
                 'title' => 'Add New User',
                 'icon' => 'fas fa-user-plus',
-                'url' => '/admin/users/create',
+                'url' => '/admin/users/registration',
                 'color' => 'primary',
             ],
             [
@@ -436,24 +436,24 @@ class AdminDashboardService extends BaseDashboardService
                 'color' => 'info',
             ],
             [
-                'title' => 'Manage Assets',
+                'title' => 'Manage Asset',
                 'icon' => 'fas fa-boxes',
                 'url' => '/admin/assets',
                 'color' => 'warning',
             ],
             [
-                'title' => 'View Messages',
+                'title' => 'View Message',
                 'icon' => 'fas fa-envelope',
                 'url' => '/admin/messages',
                 'color' => 'secondary',
-                'badge' => ContactMessages::where('message_status', 'unread')->count(),
+                'badge' => ContactMessage::where('message_status', 'unread')->count(),
             ],
             [
-                'title' => 'Review Volunteers',
+                'title' => 'Review Volunteer',
                 'icon' => 'fas fa-hands-helping',
                 'url' => '/admin/volunteers',
                 'color' => 'danger',
-                'badge' => Volunteers::where('volunteer_status', 'pending')->count(),
+                'badge' => Volunteer::where('volunteer_status', 'pending')->count(),
             ],
         ];
     }
@@ -465,7 +465,7 @@ class AdminDashboardService extends BaseDashboardService
     {
         try {
             return [
-                'volunteers' => Volunteers::where('volunteer_status', 'pending')
+                'volunteers' => Volunteer::where('volunteer_status', 'pending')
                     ->limit(5)
                     ->get()
                     ->map(function ($volunteer) {
@@ -508,25 +508,25 @@ class AdminDashboardService extends BaseDashboardService
             }
 
             // Check for inactive centres
-            $inactiveCentres = Centres::where('centre_status', '!=', 'active')->count();
+            $inactiveCentres = Centre::where('centre_status', '!=', 'active')->count();
             if ($inactiveCentres > 0) {
                 $alerts[] = [
                     'type' => 'warning',
-                    'title' => 'Inactive Centres',
+                    'title' => 'Inactive Centre',
                     'message' => "{$inactiveCentres} centres are currently inactive.",
                     'action' => '/admin/centres',
                 ];
             }
 
             // Check for old unread messages
-            $oldMessages = ContactMessages::where('message_status', 'unread')
+            $oldMessages = ContactMessage::where('message_status', 'unread')
                 ->where('created_at', '<', Carbon::now()->subDays(7))
                 ->count();
             
             if ($oldMessages > 0) {
                 $alerts[] = [
                     'type' => 'info',
-                    'title' => 'Old Messages',
+                    'title' => 'Old Message',
                     'message' => "{$oldMessages} messages have been unread for over a week.",
                     'action' => '/admin/messages',
                 ];
@@ -550,12 +550,12 @@ class AdminDashboardService extends BaseDashboardService
 
             return [
                 'total_growth' => [
-                    'users' => Users::where('created_at', '>=', $last30Days)->count(),
+                    'users' => User::where('created_at', '>=', $last30Days)->count(),
                     'trainees' => Trainee::where('created_at', '>=', $last30Days)->count(),
                     'activities' => Activity::where('created_at', '>=', $last30Days)->count(),
                 ],
                 'weekly_growth' => [
-                    'users' => Users::where('created_at', '>=', $last7Days)->count(),
+                    'users' => User::where('created_at', '>=', $last7Days)->count(),
                     'trainees' => Trainee::where('created_at', '>=', $last7Days)->count(),
                     'activities' => Activity::where('created_at', '>=', $last7Days)->count(),
                 ],
@@ -573,8 +573,8 @@ class AdminDashboardService extends BaseDashboardService
     private function calculateGrowthRate(): array
     {
         try {
-            $currentMonth = Users::whereMonth('created_at', Carbon::now()->month)->count();
-            $lastMonth = Users::whereMonth('created_at', Carbon::now()->subMonth()->month)->count();
+            $currentMonth = User::whereMonth('created_at', Carbon::now()->month)->count();
+            $lastMonth = User::whereMonth('created_at', Carbon::now()->subMonth()->month)->count();
             
             $userGrowthRate = $lastMonth > 0 ? (($currentMonth - $lastMonth) / $lastMonth) * 100 : 0;
 
@@ -594,7 +594,7 @@ class AdminDashboardService extends BaseDashboardService
     private function getCentreStatistics(): array
     {
         try {
-            return Centres::with(['users', 'trainees', 'activities'])
+            return Centre::with(['users', 'trainees', 'activities'])
                 ->get()
                 ->map(function ($centre) {
                     return [

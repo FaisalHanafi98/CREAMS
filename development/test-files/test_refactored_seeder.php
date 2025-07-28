@@ -6,25 +6,25 @@ $app->make('Illuminate\Contracts\Console\Kernel')->bootstrap();
 echo "=== TESTING REFACTORED TRAINEES SEEDER ===" . PHP_EOL;
 
 use Database\Seeders\RefactoredTraineesSeeder;
-use App\Models\Trainees;
-use App\Models\Centres;
+use App\Models\Trainee;
+use App\Models\Centre;
 use Faker\Factory as Faker;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Artisan;
 
 try {
     echo "1. Getting initial trainee count..." . PHP_EOL;
-    $initialCount = Trainees::count();
+    $initialCount = Trainee::count();
     echo "   Initial trainees count: {$initialCount}" . PHP_EOL;
     
     echo PHP_EOL . "2. Running refactored seeder (creating 3 test trainees)..." . PHP_EOL;
     
     $faker = Faker::create('en_MY');
-    $centres = Centres::select('centre_id', 'centre_name')->get();
+    $centres = Centre::select('centre_id', 'centre_name')->get();
     
     if ($centres->isEmpty()) {
         echo "   No centres found, creating test centre..." . PHP_EOL;
-        $centre = Centres::create([
+        $centre = Centre::create([
             'centre_id' => 'TST',
             'centre_name' => 'Test Centre',
             'centre_status' => 'active'
@@ -78,18 +78,18 @@ try {
             'updated_at' => now()
         ];
         
-        $trainee = Trainees::create($testTraineeData);
+        $trainee = Trainee::create($testTraineeData);
         echo "   ✅ Created test trainee: {$trainee->full_name} (ID: {$trainee->trainee_id})" . PHP_EOL;
     }
     
     echo PHP_EOL . "3. Verifying created trainees..." . PHP_EOL;
-    $finalCount = Trainees::count();
+    $finalCount = Trainee::count();
     $newTrainees = $finalCount - $initialCount;
     echo "   Final trainees count: {$finalCount}" . PHP_EOL;
     echo "   New trainees created: {$newTrainees}" . PHP_EOL;
     
     echo PHP_EOL . "4. Testing new trainees data integrity..." . PHP_EOL;
-    $testTrainees = Trainees::where('trainee_id', 'LIKE', 'TEST-%')->get();
+    $testTrainees = Trainee::where('trainee_id', 'LIKE', 'TEST-%')->get();
     
     foreach ($testTrainees as $trainee) {
         echo "   Testing trainee: {$trainee->full_name}" . PHP_EOL;
@@ -118,14 +118,14 @@ try {
         
         try {
             $activities = $firstTestTrainee->activities;
-            echo "   ✅ Activities relationship works: {$activities->count()}" . PHP_EOL;
+            echo "   ✅ Activity relationship works: {$activities->count()}" . PHP_EOL;
         } catch (Exception $e) {
-            echo "   ❌ Activities relationship failed: " . $e->getMessage() . PHP_EOL;
+            echo "   ❌ Activity relationship failed: " . $e->getMessage() . PHP_EOL;
         }
     }
     
     echo PHP_EOL . "6. Cleanup test data..." . PHP_EOL;
-    $deletedCount = Trainees::where('trainee_id', 'LIKE', 'TEST-%')->delete();
+    $deletedCount = Trainee::where('trainee_id', 'LIKE', 'TEST-%')->delete();
     echo "   ✅ Deleted {$deletedCount} test trainees" . PHP_EOL;
     
     echo PHP_EOL . "=== REFACTORED SEEDER TEST COMPLETED SUCCESSFULLY ===" . PHP_EOL;

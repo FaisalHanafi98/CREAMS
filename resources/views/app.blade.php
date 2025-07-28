@@ -290,14 +290,14 @@
                         <li class="nav-item">
                             <a class="nav-link {{ request()->routeIs('activities.*') ? 'active' : '' }}" 
                                href="{{ route('activities.home') }}">
-                                <i class="fas fa-tasks"></i> Activities
+                                <i class="fas fa-tasks"></i> Activity
                             </a>
                         </li>
                         
                         <li class="nav-item">
                             <a class="nav-link {{ request()->routeIs('trainees.*') ? 'active' : '' }}" 
                                href="{{ route('trainees.index') }}">
-                                <i class="fas fa-child"></i> Trainees
+                                <i class="fas fa-child"></i> Trainee
                             </a>
                         </li>
                     @endif
@@ -342,7 +342,7 @@
     <!-- Main Content -->
     <main class="main-content">
         <div class="container">
-            <!-- Flash Messages -->
+            <!-- Flash Message -->
             @if(session('success'))
                 <div class="alert alert-success alert-dismissible fade show" role="alert">
                     <i class="fas fa-check-circle"></i> {{ session('success') }}

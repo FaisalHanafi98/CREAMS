@@ -14,13 +14,16 @@ class ActivitySession extends Model
 
     protected $fillable = [
         'activity_id',
+        'session_id',
         'session_code',
         'session_name',
         'session_description',
         'session_date',
         'scheduled_date',
         'start_time',
+        'session_start_time',
         'end_time',
+        'session_end_time',
         'venue',
         'max_participants',
         'current_participants',
@@ -88,7 +91,7 @@ class ActivitySession extends Model
      */
     public function teacher()
     {
-        return $this->belongsTo(Users::class, 'teacher_id');
+        return $this->belongsTo(User::class, 'teacher_id');
     }
 
     /**
@@ -96,7 +99,7 @@ class ActivitySession extends Model
      */
     public function supervisor()
     {
-        return $this->belongsTo(Users::class, 'supervisor_id');
+        return $this->belongsTo(User::class, 'supervisor_id');
     }
 
     /**
@@ -104,7 +107,7 @@ class ActivitySession extends Model
      */
     public function enrollments()
     {
-        return $this->hasMany(ActivityEnrollment::class, 'session_id');
+        return $this->hasMany(ActivityEnrollment::class, 'activity_id', 'activity_id');
     }
 
     /**

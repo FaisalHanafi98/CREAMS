@@ -10,17 +10,17 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Artisan;
-use App\Models\Users;
-use App\Models\Admins;
-use App\Models\Supervisors;
-use App\Models\Teachers;
-use App\Models\AJKs;
-use App\Models\Trainees;
-use App\Models\Activities;
-use App\Models\Centres;
+use App\Models\User;
+use App\Models\Admin;
+use App\Models\Supervisor;
+use App\Models\Teacher;
+use App\Models\AJK;
+use App\Models\Trainee;
+use App\Models\Activity;
+use App\Models\Centre;
 use App\Models\Asset;
-use App\Models\Messages;
-use App\Models\Notifications;
+use App\Models\Message;
+use App\Models\Notification;
 use Carbon\Carbon;
 use Exception;
 
@@ -92,36 +92,36 @@ class AdminController extends Controller
             $stats = [
                 // User Statistics
                 'users' => [
-                    'total' => Users::count(),
-                    'admins' => Users::where('role', 'admin')->count(),
-                    'supervisors' => Users::where('role', 'supervisor')->count(),
-                    'teachers' => Users::where('role', 'teacher')->count(),
-                    'ajks' => Users::where('role', 'ajk')->count(),
-                    'active_today' => Users::whereDate('last_login', today())->count(),
-                    'new_this_month' => Users::whereMonth('created_at', now()->month)->count()
+                    'total' => User::count(),
+                    'admins' => User::where('role', 'admin')->count(),
+                    'supervisors' => User::where('role', 'supervisor')->count(),
+                    'teachers' => User::where('role', 'teacher')->count(),
+                    'ajks' => User::where('role', 'ajk')->count(),
+                    'active_today' => User::whereDate('last_login', today())->count(),
+                    'new_this_month' => User::whereMonth('created_at', now()->month)->count()
                 ],
                 
                 // Trainee Statistics
                 'trainees' => [
-                    'total' => Trainees::count(),
-                    'active' => Trainees::where('status', 'active')->count(),
+                    'total' => Trainee::count(),
+                    'active' => Trainee::where('status', 'active')->count(),
                     'enrolled_activities' => DB::table('session_enrollments')->where('status', 'Active')->count(),
-                    'new_this_month' => Trainees::whereMonth('created_at', now()->month)->count()
+                    'new_this_month' => Trainee::whereMonth('created_at', now()->month)->count()
                 ],
                 
                 // Centre Statistics
                 'centres' => [
-                    'total' => Centres::count(),
-                    'active' => Centres::where('is_active', true)->count(),
+                    'total' => Centre::count(),
+                    'active' => Centre::where('is_active', true)->count(),
                     'assets_total' => Asset::count(),
-                    'activities_total' => Activities::count()
+                    'activities_total' => Activity::count()
                 ],
                 
                 // System Activity
                 'activity' => [
-                    'messages_today' => Messages::whereDate('created_at', today())->count(),
-                    'logins_today' => Users::whereDate('last_login', today())->count(),
-                    'activities_this_week' => Activities::whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()])->count()
+                    'messages_today' => Message::whereDate('created_at', today())->count(),
+                    'logins_today' => User::whereDate('last_login', today())->count(),
+                    'activities_this_week' => Activity::whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()])->count()
                 ]
             ];
             
@@ -140,10 +140,10 @@ class AdminController extends Controller
     {
         try {
             return [
-                'recent_users' => Users::latest()->limit(5)->get(['id', 'name', 'email', 'role', 'created_at']),
-                'recent_trainees' => Trainees::latest()->limit(5)->get(['id', 'trainee_first_name', 'trainee_last_name', 'created_at']),
-                'recent_activities' => Activities::latest()->limit(5)->get(['id', 'activity_name', 'created_at']),
-                'recent_messages' => Messages::with('sender')->latest()->limit(5)->get(['id', 'message_subject', 'sender_id', 'created_at'])
+                'recent_users' => User::latest()->limit(5)->get(['id', 'name', 'email', 'role', 'created_at']),
+                'recent_trainees' => Trainee::latest()->limit(5)->get(['id', 'trainee_first_name', 'trainee_last_name', 'created_at']),
+                'recent_activities' => Activity::latest()->limit(5)->get(['id', 'activity_name', 'created_at']),
+                'recent_messages' => Message::with('sender')->latest()->limit(5)->get(['id', 'message_subject', 'sender_id', 'created_at'])
             ];
         } catch (Exception $e) {
             Log::error('Error getting recent activity', ['error' => $e->getMessage()]);
@@ -190,12 +190,12 @@ class AdminController extends Controller
             }
             
             // Check for inactive centres
-            $inactiveCentres = Centres::where('is_active', false)->count();
+            $inactiveCentres = Centre::where('is_active', false)->count();
             if ($inactiveCentres > 0) {
                 $alerts[] = [
                     'type' => 'info',
                     'message' => "{$inactiveCentres} centre(s) are inactive",
-                    'action' => 'Manage Centres'
+                    'action' => 'Manage Centre'
                 ];
             }
             
@@ -208,7 +208,7 @@ class AdminController extends Controller
                 $alerts[] = [
                     'type' => 'warning',
                     'message' => "{$overdueAssets} asset(s) have overdue maintenance",
-                    'action' => 'View Assets'
+                    'action' => 'View Asset'
                 ];
             }
             
@@ -283,7 +283,7 @@ class AdminController extends Controller
             $status = $request->get('status', 'all');
             
             // Build user query
-            $usersQuery = Users::with(['centre']);
+            $usersQuery = User::with(['centre']);
             
             // Apply filters
             if ($search) {
@@ -309,15 +309,15 @@ class AdminController extends Controller
             $users = $usersQuery->orderBy('created_at', 'desc')->paginate(20);
             
             // Get filter options
-            $centres = Centres::all(['id', 'centre_name']);
+            $centres = Centre::all(['id', 'centre_name']);
             $roles = ['admin', 'supervisor', 'teacher', 'ajk', 'trainee'];
             
             // Get user statistics
             $userStats = [
-                'total' => Users::count(),
-                'active' => Users::where('is_active', true)->count(),
-                'inactive' => Users::where('is_active', false)->count(),
-                'by_role' => Users::select('role', DB::raw('count(*) as count'))
+                'total' => User::count(),
+                'active' => User::where('is_active', true)->count(),
+                'inactive' => User::where('is_active', false)->count(),
+                'by_role' => User::select('role', DB::raw('count(*) as count'))
                     ->groupBy('role')->get()->pluck('count', 'role')
             ];
             
@@ -341,10 +341,10 @@ class AdminController extends Controller
      */
     public function createUser()
     {
-        $centres = Centres::where('is_active', true)->get(['id', 'centre_name']);
+        $centres = Centre::where('is_active', true)->get(['id', 'centre_name']);
         $roles = ['admin', 'supervisor', 'teacher', 'ajk'];
         
-        return view('admin.users.create', compact('centres', 'roles'));
+        return view('admin.users.registration', compact('centres', 'roles'));
     }
     
     /**
@@ -367,7 +367,7 @@ class AdminController extends Controller
                 return back()->withErrors($validator)->withInput();
             }
             
-            $user = Users::create([
+            $user = User::create([
                 'name' => $request->name,
                 'email' => $request->email,
                 'phone' => $request->phone,
@@ -400,7 +400,7 @@ class AdminController extends Controller
     /**
      * Show specific user details
      */
-    public function showUser(Users $user)
+    public function showUser(User $user)
     {
         try {
             $user->load(['centre']);
@@ -409,8 +409,8 @@ class AdminController extends Controller
             $userStats = [
                 'login_count' => DB::table('user_login_logs')->where('user_id', $user->id)->count(),
                 'last_login' => $user->last_login,
-                'messages_sent' => Messages::where('sender_id', $user->id)->count(),
-                'activities_created' => Activities::where('created_by', $user->id)->count()
+                'messages_sent' => Message::where('sender_id', $user->id)->count(),
+                'activities_created' => Activity::where('created_by', $user->id)->count()
             ];
             
             return view('admin.users.show', compact('user', 'userStats'));
@@ -428,9 +428,9 @@ class AdminController extends Controller
     /**
      * Show user edit form
      */
-    public function editUser(Users $user)
+    public function editUser(User $user)
     {
-        $centres = Centres::where('is_active', true)->get(['id', 'centre_name']);
+        $centres = Centre::where('is_active', true)->get(['id', 'centre_name']);
         $roles = ['admin', 'supervisor', 'teacher', 'ajk'];
         
         return view('admin.users.edit', compact('user', 'centres', 'roles'));
@@ -439,7 +439,7 @@ class AdminController extends Controller
     /**
      * Update user
      */
-    public function updateUser(Request $request, Users $user)
+    public function updateUser(Request $request, User $user)
     {
         try {
             $validator = Validator::make($request->all(), [
@@ -495,7 +495,7 @@ class AdminController extends Controller
     /**
      * Deactivate user (soft delete)
      */
-    public function deactivateUser(Users $user)
+    public function deactivateUser(User $user)
     {
         try {
             // Prevent admins from deactivating themselves
@@ -554,12 +554,12 @@ class AdminController extends Controller
             
             switch ($action) {
                 case 'activate':
-                    Users::whereIn('id', $userIds)->update(['is_active' => true]);
+                    User::whereIn('id', $userIds)->update(['is_active' => true]);
                     $affectedCount = count($userIds);
                     break;
                     
                 case 'deactivate':
-                    Users::whereIn('id', $userIds)->update([
+                    User::whereIn('id', $userIds)->update([
                         'is_active' => false,
                         'deactivated_by' => session('id'),
                         'deactivated_at' => now()
@@ -569,7 +569,7 @@ class AdminController extends Controller
                     
                 case 'change_centre':
                     if ($request->filled('centre_id')) {
-                        Users::whereIn('id', $userIds)->update(['centre_id' => $request->centre_id]);
+                        User::whereIn('id', $userIds)->update(['centre_id' => $request->centre_id]);
                         $affectedCount = count($userIds);
                     }
                     break;
@@ -601,8 +601,8 @@ class AdminController extends Controller
      */
     public function manageTrainees()
     {
-        // Check if Trainees model exists and get trainees
-        $trainees = class_exists('App\Models\Trainees') ? Trainees::all() : collect();
+        // Check if Trainee model exists and get trainees
+        $trainees = class_exists('App\Models\Trainee') ? Trainee::all() : collect();
         
         return view('admin.trainees', [
             'name' => Auth::user()->name ?? session('name'),

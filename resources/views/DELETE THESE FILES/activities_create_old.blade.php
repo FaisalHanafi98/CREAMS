@@ -9,7 +9,7 @@
             <i class="fas fa-plus-circle"></i> Create New Activity
         </h1>
         <a href="{{ route('activities.home') }}" class="btn btn-outline-secondary">
-            <i class="fas fa-arrow-left"></i> Back to Activities
+            <i class="fas fa-arrow-left"></i> Back to Activity
         </a>
     </div>
 
@@ -77,7 +77,7 @@
                                     required>
                                 <option value="">Select Category</option>
                                 @foreach($categories->groupBy('type') as $type => $typeCategories)
-                                    <optgroup label="{{ ucfirst($type) }} Activities">
+                                    <optgroup label="{{ ucfirst($type) }} Activity">
                                         @foreach($typeCategories as $category)
                                             <option value="{{ $category->id }}" 
                                                     {{ old('category_id') == $category->id ? 'selected' : '' }}

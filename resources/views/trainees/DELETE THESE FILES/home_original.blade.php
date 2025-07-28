@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trainees Home - CREAMS</title>
+    <title>Trainee Home - CREAMS</title>
     
     <!-- Favicon -->
     <link rel="shortcut icon" href="{{ asset('images/logo/favicon.png') }}" type="image/x-icon">
@@ -35,7 +35,7 @@
         <li class="nav-item {{ request()->routeIs('trainees.home') || request()->routeIs('trainees.*') ? 'active' : '' }}">
             <a class="nav-link" href="{{ route('trainees.home') }}">
                 <i class="fas fa-fw fa-user-graduate"></i>
-                <span>Trainees</span>
+                <span>Trainee</span>
             </a>
         </li>
 
@@ -43,14 +43,14 @@
         <li class="nav-item {{ request()->routeIs('traineeactivity') ? 'active' : '' }}">
             <a class="nav-link" href="{{ route('traineeactivity') }}">
                 <i class="fas fa-fw fa-clipboard-list"></i>
-                <span>Activities</span>
+                <span>Activity</span>
             </a>
         </li>
         @else
         <li class="nav-item {{ request()->routeIs('activities.*') ? 'active' : '' }}">
             <a class="nav-link" href="{{ route('activities.home') }}">
                 <i class="fas fa-fw fa-clipboard-list"></i>
-                <span>Activities</span>
+                <span>Activity</span>
             </a>
         </li>
         @endif
@@ -75,14 +75,14 @@
         <li class="nav-item {{ request()->routeIs('assetmanagementpage') || request()->routeIs('assets.*') ? 'active' : '' }}">
             <a class="nav-link" href="{{ route('assetmanagementpage') }}">
                 <i class="fas fa-fw fa-boxes"></i>
-                <span>Assets</span>
+                <span>Asset</span>
             </a>
         </li>
         @elseif(in_array(session('role'), ['admin']))
         <li class="nav-item {{ request()->routeIs('assets.*') ? 'active' : '' }}">
             <a class="nav-link" href="{{ route('assets.index') }}">
                 <i class="fas fa-fw fa-boxes"></i>
-                <span>Assets</span>
+                <span>Asset</span>
             </a>
         </li>
         @endif
@@ -90,7 +90,7 @@
         <li class="nav-item {{ request()->routeIs('centres.*') ? 'active' : '' }}">
             <a class="nav-link" href="{{ route('centres.index') }}">
                 <i class="fas fa-fw fa-building"></i>
-                <span>Centres</span>
+                <span>Centre</span>
             </a>
         </li>
 
@@ -177,12 +177,12 @@
                         <i class="fas fa-plus fa-sm text-white-50 mr-1"></i>Register New Trainee
                     </a>
                     <a href="#" class="btn btn-info btn-sm shadow-sm ml-2" data-toggle="modal" data-target="#filterModal">
-                        <i class="fas fa-filter fa-sm text-white-50 mr-1"></i>Filter Trainees
+                        <i class="fas fa-filter fa-sm text-white-50 mr-1"></i>Filter Trainee
                     </a>
                 </div>
             </div>
 
-            <!-- Alert Messages -->
+            <!-- Alert Message -->
             @if(session('success'))
                 <div class="alert alert-success alert-dismissible fade show" role="alert">
                     {{ session('success') }}
@@ -212,13 +212,13 @@
 
             <!-- Content Row - Statistics -->
             <div class="row">
-                <!-- Total Trainees Card -->
+                <!-- Total Trainee Card -->
                 <div class="col-xl-3 col-md-6 mb-4">
                     <div class="card border-left-primary shadow h-100 py-2">
                         <div class="card-body">
                             <div class="row no-gutters align-items-center">
                                 <div class="col mr-2">
-                                    <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Trainees</div>
+                                    <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Trainee</div>
                                     <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $totalTrainees ?? 0 }}</div>
                                 </div>
                                 <div class="col-auto">
@@ -263,13 +263,13 @@
                     </div>
                 </div>
 
-                <!-- New Trainees Card -->
+                <!-- New Trainee Card -->
                 <div class="col-xl-3 col-md-6 mb-4">
                     <div class="card border-left-warning shadow h-100 py-2">
                         <div class="card-body">
                             <div class="row no-gutters align-items-center">
                                 <div class="col mr-2">
-                                    <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">New Trainees (30 days)</div>
+                                    <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">New Trainee (30 days)</div>
                                     <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $newTraineesCount ?? 0 }}</div>
                                 </div>
                                 <div class="col-auto">
@@ -284,7 +284,7 @@
             <!-- Search Box -->
             <div class="card shadow mb-4">
                 <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">Search Trainees</h6>
+                    <h6 class="m-0 font-weight-bold text-primary">Search Trainee</h6>
                 </div>
                 <div class="card-body">
                     <form action="{{ route('trainees.home') }}" method="GET" class="form-inline">
@@ -342,7 +342,7 @@
                 </div>
             @endif
 
-            <!-- Trainees by Center -->
+            <!-- Trainee by Center -->
             @if(isset($traineesByCenter) && $traineesByCenter->count() > 0)
                 @foreach($traineesByCenter as $centreName => $centerTrainees)
                     <div class="card shadow mb-4">
@@ -430,7 +430,7 @@
             <div class="modal-content">
                 <form action="{{ route('trainees.home') }}" method="GET">
                     <div class="modal-header">
-                        <h5 class="modal-title" id="filterModalLabel">Filter Trainees</h5>
+                        <h5 class="modal-title" id="filterModalLabel">Filter Trainee</h5>
                         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                             <span aria-hidden="true">&times;</span>
                         </button>

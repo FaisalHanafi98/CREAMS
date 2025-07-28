@@ -9,13 +9,13 @@ class Activity extends Model
 {
     use HasFactory;
 
-    protected $table = 'activities_new';
+    protected $table = 'activities';
 
     protected $fillable = [
         'activity_code',
         'name',
         'description',
-        'category',
+        'activity_type',
         'difficulty_level',
         'max_participants',
         'min_participants',
@@ -24,7 +24,12 @@ class Activity extends Model
         'learning_objectives',
         'is_active',
         'centre_id',
-        'created_by'
+        'created_by',
+        'instructor_id',
+        'location',
+        'sessions_per_week',
+        'start_date',
+        'start_time'
     ];
 
     protected $casts = [
@@ -40,7 +45,7 @@ class Activity extends Model
      */
     public function centre()
     {
-        return $this->belongsTo(Centres::class, 'centre_id');
+        return $this->belongsTo(Centre::class, 'centre_id');
     }
 
     /**
@@ -48,7 +53,15 @@ class Activity extends Model
      */
     public function creator()
     {
-        return $this->belongsTo(Users::class, 'created_by');
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    /**
+     * Get the instructor for this activity (alias for creator)
+     */
+    public function instructor()
+    {
+        return $this->belongsTo(User::class, 'created_by');
     }
 
     /**
@@ -65,6 +78,26 @@ class Activity extends Model
     public function enrollments()
     {
         return $this->hasMany(ActivityEnrollment::class);
+    }
+
+    /**
+     * Get only active enrollments for this activity
+     */
+    public function activeEnrollments()
+    {
+        return $this->hasMany(ActivityEnrollment::class)
+            ->where('enrollment_status', 'enrolled');
+    }
+
+    /**
+     * Get enrolled trainees (participants) for this activity
+     */
+    public function participants()
+    {
+        return $this->belongsToMany(Trainee::class, 'activity_enrollments', 'activity_id', 'trainee_id')
+                    ->wherePivot('enrollment_status', 'enrolled')
+                    ->withPivot(['enrollment_date', 'enrollment_status', 'progress_percentage', 'attendance_count'])
+                    ->withTimestamps();
     }
 
     /**
@@ -185,7 +218,7 @@ class Activity extends Model
             'Vocational Training' => 'fas fa-briefcase'
         ];
 
-        return $icons[$this->category] ?? 'fas fa-circle';
+        return $icons[$this->activity_type] ?? 'fas fa-circle';
     }
 
     /**
@@ -210,7 +243,7 @@ class Activity extends Model
             'Vocational Training' => '#FFC107'
         ];
 
-        return $colors[$this->category] ?? '#6c757d';
+        return $colors[$this->activity_type] ?? '#6c757d';
     }
 
     /**
@@ -226,5 +259,77 @@ class Activity extends Model
         }
         
         return $minutes . 'm';
+    }
+
+    /**
+     * Get activity name from database column
+     */
+    public function getNameAttribute()
+    {
+        return $this->attributes['activity_name'] ?? '';
+    }
+
+    /**
+     * Set activity name to database column
+     */
+    public function setNameAttribute($value)
+    {
+        $this->attributes['activity_name'] = $value;
+    }
+
+    /**
+     * Get activity description from database column
+     */
+    public function getDescriptionAttribute()
+    {
+        return $this->attributes['activity_description'] ?? '';
+    }
+
+    /**
+     * Set activity description to database column
+     */
+    public function setDescriptionAttribute($value)
+    {
+        $this->attributes['activity_description'] = $value;
+    }
+
+    /**
+     * Get therapy category based on activity name
+     */
+    public function getCategoryAttribute()
+    {
+        $name = strtolower($this->activity_name ?? '');
+        
+        if (strpos($name, 'speech') !== false || strpos($name, 'pertuturan') !== false) {
+            return 'Speech Therapy';
+        } elseif (strpos($name, 'occupational') !== false || strpos($name, 'okupasi') !== false) {
+            return 'Occupational Therapy';
+        } elseif (strpos($name, 'physiotherapy') !== false || strpos($name, 'fisioterapi') !== false) {
+            return 'Physical Therapy';
+        } elseif (strpos($name, 'behavioral') !== false || strpos($name, 'tingkah laku') !== false) {
+            return 'Behavioral Therapy';
+        } elseif (strpos($name, 'sensory') !== false || strpos($name, 'sensori') !== false) {
+            return 'Sensory Integration';
+        } elseif (strpos($name, 'social') !== false || strpos($name, 'sosial') !== false) {
+            return 'Social Skills';
+        } elseif (strpos($name, 'life') !== false || strpos($name, 'hidup') !== false) {
+            return 'Life Skills';
+        } elseif (strpos($name, 'art') !== false || strpos($name, 'seni') !== false) {
+            return 'Art & Creativity';
+        } elseif (strpos($name, 'music') !== false || strpos($name, 'muzik') !== false) {
+            return 'Music Therapy';
+        } elseif (strpos($name, 'academic') !== false || strpos($name, 'akademik') !== false) {
+            return 'Academic Support';
+        } elseif (strpos($name, 'literacy') !== false || strpos($name, 'literasi') !== false) {
+            return 'Literacy';
+        } elseif (strpos($name, 'computer') !== false || strpos($name, 'komputer') !== false) {
+            return 'Computer Skills';
+        } elseif (strpos($name, 'mathematics') !== false || strpos($name, 'matematik') !== false) {
+            return 'Mathematics';
+        } elseif (strpos($name, 'vocational') !== false || strpos($name, 'vokasional') !== false) {
+            return 'Vocational Training';
+        } else {
+            return 'Other';
+        }
     }
 }

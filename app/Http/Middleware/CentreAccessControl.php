@@ -5,11 +5,11 @@ namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use App\Models\Users;
+use App\Models\User;
 use App\Models\Activity;
 use App\Models\Trainee;
 use App\Models\Asset;
-use App\Models\Centres;
+use App\Models\Centre;
 
 class CentreAccessControl
 {
@@ -230,7 +230,7 @@ class CentreAccessControl
             return true; // No specific centre ID, allow general access
         }
 
-        // Supervisors and teachers can only access their own centre
+        // Supervisor and teachers can only access their own centre
         if (in_array($userRole, ['supervisor', 'teacher', 'ajk'])) {
             $hasAccess = $centreId === $userCentreId;
             
@@ -259,7 +259,7 @@ class CentreAccessControl
 
         // If trainee has centre_name, convert to centre_id
         if (isset($trainee->centre_name) && $trainee->centre_name) {
-            $centre = Centres::where('centre_name', $trainee->centre_name)->first();
+            $centre = Centre::where('centre_name', $trainee->centre_name)->first();
             return $centre ? $centre->centre_id : null;
         }
 
@@ -278,7 +278,7 @@ class CentreAccessControl
 
         // If asset has centre_name, convert to centre_id
         if (isset($asset->centre_name) && $asset->centre_name) {
-            $centre = Centres::where('centre_name', $asset->centre_name)->first();
+            $centre = Centre::where('centre_name', $asset->centre_name)->first();
             return $centre ? $centre->centre_id : null;
         }
 

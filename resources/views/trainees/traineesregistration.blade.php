@@ -52,24 +52,24 @@
             <li class="{{ request()->routeIs('trainees.home') || request()->routeIs('traineeprofile') || request()->routeIs('traineesregistrationpage') ? 'active' : '' }}">
                 <a href="{{ route('trainees.home') }}">
                     <i class="fas fa-user-graduate"></i>
-                    <span>Trainees</span>
-                    <div class="tooltip-sidebar">Trainees</div>
+                    <span>Trainee</span>
+                    <div class="tooltip-sidebar">Trainee</div>
                 </a>
             </li>
             @if(Route::has('traineeactivity'))
             <li class="{{ request()->routeIs('traineeactivity') ? 'active' : '' }}">
                 <a href="{{ route('traineeactivity') }}">
                     <i class="fas fa-clipboard-list"></i>
-                    <span>Activities</span>
-                    <div class="tooltip-sidebar">Trainee Activities</div>
+                    <span>Activity</span>
+                    <div class="tooltip-sidebar">Trainee Activity</div>
                 </a>
             </li>
             @else
             <li class="{{ request()->routeIs('activities.*') ? 'active' : '' }}">
                 <a href="{{ route('activities.home') }}">
                     <i class="fas fa-clipboard-list"></i>
-                    <span>Activities</span>
-                    <div class="tooltip-sidebar">Activities</div>
+                    <span>Activity</span>
+                    <div class="tooltip-sidebar">Activity</div>
                 </a>
             </li>
             @endif
@@ -90,7 +90,7 @@
             <li class="{{ request()->routeIs('assetmanagementpage') ? 'active' : '' }}">
                 <a href="{{ route('assetmanagementpage') }}">
                     <i class="fas fa-box"></i>
-                    <span>Assets</span>
+                    <span>Asset</span>
                     <div class="tooltip-sidebar">Asset Management</div>
                 </a>
             </li>
@@ -122,7 +122,7 @@
                     <div class="breadcrumb">
                         <a href="{{ route('dashboard') }}">Dashboard</a>
                         <span class="separator">/</span>
-                        <a href="{{ route('trainees.home') }}">Trainees</a>
+                        <a href="{{ route('trainees.home') }}">Trainee</a>
                         <span class="separator">/</span>
                         <span class="current">Register New Trainee</span>
                     </div>
@@ -179,14 +179,14 @@
             
             <div class="page-actions">
                 <a href="{{ route('trainees.home') }}" class="action-btn">
-                    <i class="fas fa-arrow-left"></i> Back to Trainees
+                    <i class="fas fa-arrow-left"></i> Back to Trainee
                 </a>
             </div>
         </div>
         
         <!-- Content Section -->
         <div class="content-section">
-            <!-- Alert Messages -->
+            <!-- Alert Message -->
             @if(session('success'))
                 <div class="alert alert-success alert-dismissible fade show" role="alert">
                     {{ session('success') }}

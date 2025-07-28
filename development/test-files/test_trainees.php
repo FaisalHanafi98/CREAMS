@@ -9,24 +9,24 @@ echo "=== TESTING TRAINEES MODULE ===" . PHP_EOL;
 echo "Testing trainees table structure..." . PHP_EOL;
 try {
     $columns = DB::select('DESCRIBE trainees');
-    echo "✅ Trainees table columns:" . PHP_EOL;
+    echo "✅ Trainee table columns:" . PHP_EOL;
     foreach ($columns as $column) {
         echo "  - {$column->Field} ({$column->Type})" . PHP_EOL;
     }
 } catch (Exception $e) {
-    echo "❌ Trainees table structure error: " . $e->getMessage() . PHP_EOL;
+    echo "❌ Trainee table structure error: " . $e->getMessage() . PHP_EOL;
 }
 
 // Test trainees data
 echo PHP_EOL . "Testing trainees data..." . PHP_EOL;
 try {
     $trainees = App\Models\Trainee::all();
-    echo "✅ Trainees retrieved: " . $trainees->count() . " trainees" . PHP_EOL;
+    echo "✅ Trainee retrieved: " . $trainees->count() . " trainees" . PHP_EOL;
     foreach ($trainees->take(5) as $trainee) {
         echo "  - {$trainee->full_name} (ID: {$trainee->id})" . PHP_EOL;
     }
 } catch (Exception $e) {
-    echo "❌ Trainees data error: " . $e->getMessage() . PHP_EOL;
+    echo "❌ Trainee data error: " . $e->getMessage() . PHP_EOL;
 }
 
 // Test if TraineeController can be instantiated

@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 
 use Illuminate\Http\Request;
 use App\Models\Trainee;
-use App\Models\Centres;
+use App\Models\Centre;
 use Illuminate\Support\Facades\Log;
 use Exception;
 
@@ -53,16 +53,17 @@ class TraineeHomeController extends Controller
             }
             
             // Get the filtered trainees with eager loading
-            $trainees = $query->with('centre')->get();
+            $trainees = $query->with(['centre', 'activities', 'enrollments'])->get();
             
             // Get all active centers for filter dropdown
             // Check if we need to use status or centre_status based on your DB structure
-            // Get centres with safe query
+            // Get centres with safe query using scope
             try {
-                $centres = Centres::where('status', 'active')->get();
+                $centres = Centre::active()->get();
             } catch (\Exception $e) {
-                // If status column doesn't exist, get all centres
-                $centres = Centres::all();
+                // If active scope doesn't exist, get all centres
+                Log::warning('Centre active scope not available, getting all centres');
+                $centres = Centre::all();
             }
             
             // Get distinct condition types for filter dropdown
@@ -88,19 +89,54 @@ class TraineeHomeController extends Controller
                 'dates' => $recentlyCreated->pluck('created_at')->toArray()
             ]);
             
-            Log::info('Trainees retrieved successfully', [
+            // Calculate stats for the view using proper column names and relationships
+            $activeTrainees = $trainees->where('status', 'active')->count();
+            
+            // Count trainees enrolled in activities using the enrollments relationship
+            $enrolledTrainees = $trainees->filter(function($trainee) {
+                return $trainee->enrollments && $trainee->enrollments->where('enrollment_status', 'enrolled')->count() > 0;
+            })->count();
+            
+            // Calculate average progress based on actual enrollment data
+            $totalProgress = 0;
+            $traineesWithProgress = 0;
+            
+            foreach ($trainees as $trainee) {
+                if ($trainee->enrollments && $trainee->enrollments->count() > 0) {
+                    $enrolledActivities = $trainee->enrollments->where('enrollment_status', 'enrolled');
+                    if ($enrolledActivities->count() > 0) {
+                        $avgTraineeProgress = $enrolledActivities->avg('progress_percentage') ?? 0;
+                        $totalProgress += $avgTraineeProgress;
+                        $traineesWithProgress++;
+                    }
+                }
+            }
+            
+            $avgProgress = $traineesWithProgress > 0 ? round($totalProgress / $traineesWithProgress) : 0;
+            
+            $stats = [
+                'total' => $totalTrainees,
+                'active' => $activeTrainees,
+                'enrolled' => $enrolledTrainees,
+                'avg_progress' => $avgProgress
+            ];
+            
+            Log::info('Trainee retrieved successfully', [
                 'total_trainees' => $totalTrainees,
                 'new_trainees' => $newTraineesCount,
+                'stats' => $stats,
                 'applied_filters' => $request->only(['search', 'centre', 'condition'])
             ]);
             
             return view('trainees.home', [
+                'trainees' => $trainees, // Add the direct trainees variable that the view expects
                 'traineesByCenter' => $traineesByCenter,
                 'centres' => $centres,
                 'conditions' => $conditions,
                 'totalTrainees' => $totalTrainees,
                 'conditionTypes' => $conditionTypes,
                 'newTraineesCount' => $newTraineesCount,
+                'stats' => $stats, // Add the missing stats array
                 'currentFilters' => $request->only(['search', 'centre', 'condition'])
             ]);
         } catch (Exception $e) {
@@ -111,12 +147,14 @@ class TraineeHomeController extends Controller
             
             // Return view with empty data and error message
             return view('trainees.home', [
+                'trainees' => collect(), // Add the direct trainees variable that the view expects
                 'traineesByCenter' => collect(),
                 'centres' => collect(),
                 'conditions' => collect(),
                 'totalTrainees' => 0,
                 'conditionTypes' => 0,
                 'newTraineesCount' => 0,
+                'stats' => ['total' => 0, 'active' => 0, 'enrolled' => 0, 'avg_progress' => 0],
                 'error' => 'An error occurred while retrieving trainees: ' . $e->getMessage()
             ]);
         }
@@ -166,12 +204,13 @@ class TraineeHomeController extends Controller
             $traineesByCenter = $trainees->groupBy('centre_name');
             
             // Get all centers for filter dropdown - using centre_status instead of status
-            // Get centres with safe query
+            // Get centres with safe query using scope
             try {
-                $centres = Centres::where('status', 'active')->get();
+                $centres = Centre::active()->get();
             } catch (\Exception $e) {
-                // If status column doesn't exist, get all centres
-                $centres = Centres::all();
+                // If active scope doesn't exist, get all centres
+                Log::warning('Centre active scope not available, getting all centres');
+                $centres = Centre::all();
             }
             
             // Get condition types for filter dropdown
@@ -187,13 +226,14 @@ class TraineeHomeController extends Controller
             // Count new trainees in the last 30 days
             $newTraineesCount = Trainee::where('created_at', '>=', now()->subDays(30))->count();
             
-            Log::info('Trainees filtered successfully', [
+            Log::info('Trainee filtered successfully', [
                 'count' => $trainees->count(),
                 'filters' => $request->all(),
                 'user_id' => session('id')
             ]);
             
             return view('trainees.home', [
+                'trainees' => $trainees, // Add the direct trainees variable that the view expects
                 'traineesByCenter' => $traineesByCenter,
                 'centres' => $centres,
                 'conditions' => $conditions,
@@ -211,8 +251,13 @@ class TraineeHomeController extends Controller
             ]);
             
             return view('trainees.home', [
+                'trainees' => collect(), // Add the direct trainees variable that the view expects
                 'traineesByCenter' => collect(),
-                'centres' => Centres::all(), // Safe fallback for error case
+                'centres' => Centre::all(), // Safe fallback for error case
+                'conditions' => collect(),
+                'totalTrainees' => 0,
+                'conditionTypes' => 0,
+                'newTraineesCount' => 0,
                 'error' => 'An error occurred while filtering trainees. Please try again later.'
             ]);
         }
@@ -294,7 +339,7 @@ class TraineeHomeController extends Controller
                 fclose($file);
             };
             
-            Log::info('Trainees data exported successfully', [
+            Log::info('Trainee data exported successfully', [
                 'user_id' => session('id'),
                 'count' => $trainees->count(),
                 'format' => $format
@@ -379,6 +424,131 @@ class TraineeHomeController extends Controller
             
             return redirect()->route('traineeshome')
                 ->with('error', 'An error occurred while retrieving trainees statistics: ' . $e->getMessage());
+        }
+    }
+    
+    /**
+     * Display a specific trainee details
+     */
+    public function show($id)
+    {
+        try {
+            if (!session()->has('id')) {
+                return redirect()->route('login');
+            }
+
+            $trainee = Trainee::findOrFail($id);
+            
+            Log::info('Viewing trainee details', [
+                'trainee_id' => $id,
+                'user_id' => session('id')
+            ]);
+
+            return view('trainees.show', compact('trainee'));
+
+        } catch (Exception $e) {
+            Log::error('Error showing trainee details', [
+                'trainee_id' => $id,
+                'error' => $e->getMessage(),
+                'user_id' => session('id')
+            ]);
+
+            return redirect()->route('traineeshome')
+                ->with('error', 'Trainee not found or an error occurred.');
+        }
+    }
+
+    /**
+     * Display a specific trainee's schedule
+     */
+    public function schedule($id)
+    {
+        try {
+            if (!session()->has('id')) {
+                return redirect()->route('login');
+            }
+
+            $trainee = Trainee::findOrFail($id);
+            
+            Log::info('Viewing trainee schedule', [
+                'trainee_id' => $id,
+                'user_id' => session('id')
+            ]);
+
+            // Sample weekly schedule data - this would come from database in real implementation
+            $weeklySchedule = [
+                'Monday' => [
+                    ['time' => '09:00 AM', 'activity' => 'Physical Therapy', 'location' => 'Therapy Room A'],
+                    ['time' => '02:00 PM', 'activity' => 'Group Session', 'location' => 'Main Hall']
+                ],
+                'Tuesday' => [
+                    ['time' => '10:00 AM', 'activity' => 'Individual Counseling', 'location' => 'Counseling Room'],
+                    ['time' => '03:00 PM', 'activity' => 'Assessment', 'location' => 'Assessment Center']
+                ],
+                'Wednesday' => [
+                    ['time' => '09:30 AM', 'activity' => 'Therapy Session', 'location' => 'Therapy Room B'],
+                ],
+                'Thursday' => [
+                    ['time' => '11:00 AM', 'activity' => 'Progress Review', 'location' => 'Office'],
+                    ['time' => '02:30 PM', 'activity' => 'Group Activity', 'location' => 'Recreation Hall']
+                ],
+                'Friday' => [
+                    ['time' => '09:00 AM', 'activity' => 'Final Assessment', 'location' => 'Assessment Center'],
+                ],
+                'Saturday' => [],
+                'Sunday' => []
+            ];
+
+            return view('trainees.schedule', compact('trainee', 'weeklySchedule'));
+
+        } catch (Exception $e) {
+            Log::error('Error showing trainee schedule', [
+                'trainee_id' => $id,
+                'error' => $e->getMessage(),
+                'user_id' => session('id')
+            ]);
+
+            return redirect()->route('trainees.show', $id)
+                ->with('error', 'Could not load schedule. Please try again.');
+        }
+    }
+
+    /**
+     * Display a specific trainee's attendance record
+     */
+    public function attendance($id)
+    {
+        try {
+            if (!session()->has('id')) {
+                return redirect()->route('login');
+            }
+
+            $trainee = Trainee::findOrFail($id);
+            
+            Log::info('Viewing trainee attendance', [
+                'trainee_id' => $id,
+                'user_id' => session('id')
+            ]);
+
+            // Sample attendance statistics - this would come from database in real implementation
+            $attendanceStats = [
+                'present' => 18,
+                'late' => 3,
+                'absent' => 2,
+                'rate' => 92
+            ];
+
+            return view('trainees.attendance', compact('trainee', 'attendanceStats'));
+
+        } catch (Exception $e) {
+            Log::error('Error showing trainee attendance', [
+                'trainee_id' => $id,
+                'error' => $e->getMessage(),
+                'user_id' => session('id')
+            ]);
+
+            return redirect()->route('trainees.show', $id)
+                ->with('error', 'Could not load attendance data. Please try again.');
         }
     }
 }

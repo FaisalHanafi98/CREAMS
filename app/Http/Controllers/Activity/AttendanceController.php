@@ -85,9 +85,9 @@ class AttendanceController extends Controller
             // Get centres for filter dropdown (with proper authorization)
             $centres = collect();
             if ($user->role === 'admin') {
-                $centres = \App\Models\Centres::select('id', 'centre_name')->get();
+                $centres = \App\Models\Centre::select('id', 'centre_name')->get();
             } elseif ($user->role === 'supervisor') {
-                $centres = \App\Models\Centres::where('id', $user->centre_id)
+                $centres = \App\Models\Centre::where('id', $user->centre_id)
                     ->select('id', 'centre_name')->get();
             }
             
@@ -398,7 +398,7 @@ class AttendanceController extends Controller
         if ($user->role === 'teacher') {
             return response()->json([
                 'success' => false,
-                'message' => 'Teachers cannot export attendance data'
+                'message' => 'Teacher cannot export attendance data'
             ], 403);
         } elseif (!in_array($user->role, ['admin']) && $centreId !== $user->centre_id) {
             return response()->json([
@@ -529,5 +529,73 @@ class AttendanceController extends Controller
             'success' => false,
             'message' => 'PDF export functionality will be implemented in the next update'
         ]);
+    }
+    
+    /**
+     * Get attendance form for a specific session
+     */
+    public function getAttendanceForm($sessionId)
+    {
+        try {
+            // Check authentication
+            if (!session()->has('id')) {
+                return response()->json(['error' => 'Unauthorized'], 401);
+            }
+
+            $user = (object) [
+                'id' => session('id'),
+                'role' => session('role'),
+                'centre_id' => session('centre_id')
+            ];
+
+            // Get session with activity and enrollments
+            $session = ActivitySession::with([
+                'activity:id,activity_name,centre_id',
+                'sessionEnrollments.trainee:id,unique_identifier,trainee_first_name,trainee_last_name,date_of_birth'
+            ])->findOrFail($sessionId);
+
+            // Permission checks
+            if ($user->role === 'teacher' && $session->teacher_id !== $user->id) {
+                return response()->json(['error' => 'Unauthorized: You can only mark attendance for your own sessions'], 403);
+            }
+
+            if (!in_array($user->role, ['admin']) && $session->activity->centre_id !== $user->centre_id) {
+                return response()->json(['error' => 'Unauthorized: Access denied to this centre\'s sessions'], 403);
+            }
+
+            // Check if attendance already marked
+            if ($session->attendance_marked) {
+                return response()->json(['error' => 'Attendance has already been marked for this session'], 422);
+            }
+
+            // Get enrollments for this session
+            $enrollments = $session->sessionEnrollments;
+
+            if ($enrollments->isEmpty()) {
+                return response()->json(['error' => 'No trainees are enrolled in this session'], 422);
+            }
+
+            // Return HTML form
+            $html = view('attendance.form-modal', [
+                'session' => $session,
+                'enrollments' => $enrollments
+            ])->render();
+
+            return response()->json([
+                'success' => true,
+                'html' => $html
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Failed to load attendance form', [
+                'session_id' => $sessionId,
+                'user_id' => session('id'),
+                'error' => $e->getMessage()
+            ]);
+
+            return response()->json([
+                'error' => 'Failed to load attendance form: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

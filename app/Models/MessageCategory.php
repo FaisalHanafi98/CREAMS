@@ -31,7 +31,7 @@ class MessageCategory extends Model
      */
     public function messages()
     {
-        return $this->hasMany(Messages::class, 'message_category_id');
+        return $this->hasMany(Message::class, 'message_category_id');
     }
 
     /**

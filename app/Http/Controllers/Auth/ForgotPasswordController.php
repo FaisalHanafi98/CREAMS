@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
-use App\Models\Users;
+use App\Models\User;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\PasswordResetEmail;
 use Illuminate\Support\Facades\Hash;
@@ -108,7 +108,7 @@ class ForgotPasswordController extends Controller
      */
     private function findUserByEmail($email)
     {
-        $user = Users::where('email', $email)->first();
+        $user = User::where('email', $email)->first();
         
         if ($user) {
             Log::info('User found', [

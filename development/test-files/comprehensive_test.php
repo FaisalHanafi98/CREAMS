@@ -17,22 +17,22 @@ try {
 
 // Check if we have test users
 echo "\nChecking test users...\n";
-$adminUser = App\Models\Users::where('role', 'admin')->first();
+$adminUser = App\Models\User::where('role', 'admin')->first();
 if ($adminUser) {
     echo "✅ Admin user found: {$adminUser->name} ({$adminUser->email})\n";
 } else {
     echo "❌ No admin user found\n";
 }
 
-$teacherUser = App\Models\Users::where('role', 'teacher')->first();
+$teacherUser = App\Models\User::where('role', 'teacher')->first();
 if ($teacherUser) {
     echo "✅ Teacher user found: {$teacherUser->name} ({$teacherUser->email})\n";
 } else {
     echo "❌ No teacher user found\n";
 }
 
-// Test Activities table structure
-echo "\nTesting Activities table structure...\n";
+// Test Activity table structure
+echo "\nTesting Activity table structure...\n";
 $columns = DB::select('DESCRIBE activities');
 $requiredColumns = ['id', 'activity_name', 'activity_description', 'activity_type', 'activity_status', 'centre_id'];
 $existingColumns = array_column($columns, 'Field');
@@ -45,24 +45,24 @@ foreach ($requiredColumns as $col) {
     }
 }
 
-// Test Activities data
-echo "\nTesting Activities data...\n";
+// Test Activity data
+echo "\nTesting Activity data...\n";
 $activities = App\Models\Activity::take(5)->get();
 echo "Found " . App\Models\Activity::count() . " activities\n";
 foreach ($activities as $activity) {
     echo "- {$activity->activity_name} (Status: {$activity->activity_status})\n";
 }
 
-// Test Centres table structure
-echo "\nTesting Centres table structure...\n";
-$centres = App\Models\Centres::take(3)->get();
-echo "Found " . App\Models\Centres::count() . " centres\n";
+// Test Centre table structure
+echo "\nTesting Centre table structure...\n";
+$centres = App\Models\Centre::take(3)->get();
+echo "Found " . App\Models\Centre::count() . " centres\n";
 foreach ($centres as $centre) {
     echo "- {$centre->centre_name} (ID: {$centre->centre_id})\n";
 }
 
-// Test Trainees table structure
-echo "\nTesting Trainees table structure...\n";
+// Test Trainee table structure
+echo "\nTesting Trainee table structure...\n";
 $trainees = App\Models\Trainee::take(3)->get();
 echo "Found " . App\Models\Trainee::count() . " trainees\n";
 foreach ($trainees as $trainee) {

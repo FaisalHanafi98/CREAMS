@@ -4,9 +4,9 @@ namespace App\Http\Controllers\Activity;
 
 use App\Http\Controllers\Controller;
 use App\Models\Activity;
-use App\Models\Users;
-use App\Models\Trainees;
-use App\Models\Centres;
+use App\Models\User;
+use App\Models\Trainee;
+use App\Models\Centre;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
@@ -50,10 +50,10 @@ class ActivityRegistrationController extends Controller
     {
         try {
             // Get all courses
-            $courses = Courses::with(['teacher', 'participant', 'location'])->get();
+            $courses = Course::with(['teacher', 'participant', 'location'])->get();
 
             // Get eligible teachers based on activity
-            $teachers = Users::where(function($query) {
+            $teachers = User::where(function($query) {
                 $query->whereIn('user_activity_1', $this->courseTypes)
                       ->orWhereIn('user_activity_2', $this->courseTypes);
             })->get();
@@ -65,7 +65,7 @@ class ActivityRegistrationController extends Controller
             });
 
             // Get eligible trainees
-            $trainees = Trainees::whereIn('trainee_condition', $this->eligibleConditions)->get();
+            $trainees = Trainee::whereIn('trainee_condition', $this->eligibleConditions)->get();
             
             // Format trainee data for dropdown
             $traineesList = $trainees->mapWithKeys(function($trainee) {
@@ -87,7 +87,7 @@ class ActivityRegistrationController extends Controller
                 ->values();
 
             // Get centres
-            $centres = Centres::pluck('centre_name', 'centre_id');
+            $centres = Centre::pluck('centre_name', 'centre_id');
 
             return view('courseregistration', [
                 'courses' => $courses,
@@ -138,13 +138,13 @@ class ActivityRegistrationController extends Controller
             ]);
 
             // Check if the teacher is eligible to teach the selected course type
-            $teacher = Users::findOrFail($validatedData['teacher_id']);
+            $teacher = User::findOrFail($validatedData['teacher_id']);
             if ($teacher->user_activity_1 !== $validatedData['course_type'] && $teacher->user_activity_2 !== $validatedData['course_type']) {
                 return redirect()->back()->withInput()->with('error', 'Selected teacher is not eligible to teach this course type.');
             }
 
             // Check if the participant is eligible for the course based on their condition
-            $participant = Trainees::findOrFail($validatedData['participant_id']);
+            $participant = Trainee::findOrFail($validatedData['participant_id']);
             if (!in_array($participant->trainee_condition, $this->eligibleConditions)) {
                 return redirect()->back()->withInput()->with('error', 'Selected participant is not eligible for this course.');
             }
@@ -166,7 +166,7 @@ class ActivityRegistrationController extends Controller
             DB::beginTransaction();
             
             // Create the course
-            $course = Courses::create($validatedData);
+            $course = Course::create($validatedData);
 
             // Commit transaction
             DB::commit();
@@ -207,11 +207,11 @@ class ActivityRegistrationController extends Controller
     protected function checkSchedulingConflicts($participantId, $teacherId, $courseDay, $startTime, $endTime)
     {
         // Check if the course day is available for the participant and teacher
-        $participantDayCount = Courses::where('participant_id', $participantId)
+        $participantDayCount = Course::where('participant_id', $participantId)
             ->where('course_day', $courseDay)
             ->count();
             
-        $teacherDayCount = Courses::where('teacher_id', $teacherId)
+        $teacherDayCount = Course::where('teacher_id', $teacherId)
             ->where('course_day', $courseDay)
             ->count();
             
@@ -224,7 +224,7 @@ class ActivityRegistrationController extends Controller
         }
 
         // Check for time overlaps for the participant
-        $participantOverlap = Courses::where('participant_id', $participantId)
+        $participantOverlap = Course::where('participant_id', $participantId)
             ->where('course_day', $courseDay)
             ->where(function($query) use ($startTime, $endTime) {
                 $query->whereBetween('start_time', [$startTime, $endTime])
@@ -241,7 +241,7 @@ class ActivityRegistrationController extends Controller
         }
         
         // Check for time overlaps for the teacher
-        $teacherOverlap = Courses::where('teacher_id', $teacherId)
+        $teacherOverlap = Course::where('teacher_id', $teacherId)
             ->where('course_day', $courseDay)
             ->where(function($query) use ($startTime, $endTime) {
                 $query->whereBetween('start_time', [$startTime, $endTime])

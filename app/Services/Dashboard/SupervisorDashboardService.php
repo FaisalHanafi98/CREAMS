@@ -2,10 +2,10 @@
 
 namespace App\Services\Dashboard;
 
-use App\Models\Users;
+use App\Models\User;
 use App\Models\Activity;
 use App\Models\ActivitySession;
-use App\Models\Centres;
+use App\Models\Centre;
 use App\Models\Trainee;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -22,7 +22,7 @@ class SupervisorDashboardService extends BaseDashboardService
     {
         return Cache::remember("dashboard_supervisor_{$supervisorId}", $this->cacheTimeout, function () use ($supervisorId) {
             try {
-                $supervisor = Users::find($supervisorId);
+                $supervisor = User::find($supervisorId);
                 if (!$supervisor) {
                     throw new Exception("Supervisor not found: {$supervisorId}");
                 }
@@ -59,7 +59,7 @@ class SupervisorDashboardService extends BaseDashboardService
             $centreId = $supervisor->centre_id;
             
             return [
-                'total_teachers' => Users::where('role', 'teacher')
+                'total_teachers' => User::where('role', 'teacher')
                     ->where('centre_id', $centreId)
                     ->count(),
                 'total_activities' => Activity::where('centre_id', $centreId)->count(),
@@ -117,10 +117,10 @@ class SupervisorDashboardService extends BaseDashboardService
     private function getTeacherPerformance(int $supervisorId): array
     {
         try {
-            $supervisor = Users::find($supervisorId);
+            $supervisor = User::find($supervisorId);
             $centreId = $supervisor->centre_id;
             
-            return Users::where('role', 'teacher')
+            return User::where('role', 'teacher')
                 ->where('centre_id', $centreId)
                 ->with(['activities'])
                 ->get()
@@ -148,7 +148,7 @@ class SupervisorDashboardService extends BaseDashboardService
     private function getCentreOverview(int $supervisorId): array
     {
         try {
-            $supervisor = Users::find($supervisorId);
+            $supervisor = User::find($supervisorId);
             $centre = $supervisor->centre;
             
             if (!$centre) {
@@ -192,7 +192,7 @@ class SupervisorDashboardService extends BaseDashboardService
     private function getPendingApprovals(int $supervisorId): array
     {
         try {
-            $supervisor = Users::find($supervisorId);
+            $supervisor = User::find($supervisorId);
             $centreId = $supervisor->centre_id;
             
             return [
@@ -224,7 +224,7 @@ class SupervisorDashboardService extends BaseDashboardService
                     'badge' => $pendingCount > 0 ? $pendingCount : null,
                 ],
                 [
-                    'title' => 'Manage Teachers',
+                    'title' => 'Manage Teacher',
                     'icon' => 'fas fa-users',
                     'url' => '/supervisor/teachers',
                     'color' => 'primary',
@@ -266,7 +266,7 @@ class SupervisorDashboardService extends BaseDashboardService
     private function getActivityMetrics(int $supervisorId): array
     {
         try {
-            $supervisor = Users::find($supervisorId);
+            $supervisor = User::find($supervisorId);
             $centreId = $supervisor->centre_id;
             
             return Activity::where('centre_id', $centreId)
@@ -297,7 +297,7 @@ class SupervisorDashboardService extends BaseDashboardService
     private function getMonthlyReport(int $supervisorId): array
     {
         try {
-            $supervisor = Users::find($supervisorId);
+            $supervisor = User::find($supervisorId);
             $centreId = $supervisor->centre_id;
             $currentMonth = Carbon::now()->startOfMonth();
             
@@ -364,7 +364,7 @@ class SupervisorDashboardService extends BaseDashboardService
     private function calculateTeacherWorkload(int $centreId): float
     {
         try {
-            $teachers = Users::where('role', 'teacher')->where('centre_id', $centreId)->count();
+            $teachers = User::where('role', 'teacher')->where('centre_id', $centreId)->count();
             $activities = Activity::where('centre_id', $centreId)->count();
             
             return $teachers > 0 ? $activities / $teachers : 0;

@@ -45,7 +45,7 @@ class SessionEnrollment extends Model
 
     public function enrolledBy()
     {
-        return $this->belongsTo(Users::class, 'enrolled_by');
+        return $this->belongsTo(User::class, 'enrolled_by');
     }
 
     // Scopes

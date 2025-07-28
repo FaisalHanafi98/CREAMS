@@ -1,14 +1,14 @@
 # CREAMS System Fixes Validation Commands
 
-# Test 1: Trainee Activities Relationship (Fix #1)
-echo "=== Testing Trainee Activities Relationship ==="
+# Test 1: Trainee Activity Relationship (Fix #1)
+echo "=== Testing Trainee Activity Relationship ==="
 $trainee = App\Models\Trainee::first();
 if ($trainee) {
     echo "Trainee found: " . $trainee->trainee_first_name;
     $activities = $trainee->activities()->limit(1)->get();
     if ($activities->count() > 0) {
         $activity = $activities->first();
-        echo "Activities relationship working";
+        echo "Activity relationship working";
         if ($activity->pivot && property_exists($activity->pivot, 'enrollment_status')) {
             echo "✓ Pivot enrollment_status field accessible";
         } else {
@@ -44,14 +44,14 @@ foreach ($routes as $routeName) {
 
 # Test 4: Asset-Centre relationship (Fix #4)
 echo "=== Testing Asset-Centre Relationship ==="
-$centre = App\Models\Centres::first();
+$centre = App\Models\Centre::first();
 if ($centre) {
     echo "Centre found: " . $centre->centre_name . " (ID: " . $centre->centre_id . ")";
     try {
         $assetsCount = $centre->assets()->count();
-        echo "✓ Centre-Assets relationship working, count: $assetsCount";
+        echo "✓ Centre-Asset relationship working, count: $assetsCount";
     } catch (Exception $e) {
-        echo "✗ Centre-Assets relationship error: " . $e->getMessage();
+        echo "✗ Centre-Asset relationship error: " . $e->getMessage();
     }
 }
 

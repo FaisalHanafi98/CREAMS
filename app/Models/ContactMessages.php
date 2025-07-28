@@ -74,7 +74,7 @@ protected $hidden = [
  */
 public function assignedUser()
 {
-    return $this->belongsTo(Users::class, 'assigned_to');
+    return $this->belongsTo(User::class, 'assigned_to');
 }
 
 /**

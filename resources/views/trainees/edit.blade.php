@@ -547,7 +547,7 @@
                                 <a href="{{ route('dashboard') }}">Dashboard</a>
                             </li>
                             <li class="breadcrumb-item">
-                                <a href="{{ route('trainees.index') }}">Trainees</a>
+                                <a href="{{ route('trainees.index') }}">Trainee</a>
                             </li>
                             <li class="breadcrumb-item">
                                 <a href="{{ route('trainees.show', $trainee->id) }}">{{ $trainee->trainee_first_name ?? 'Trainee' }}</a>
@@ -575,7 +575,7 @@
             <small class="text-muted">Toggle off to view data in read-only mode, toggle on to make changes</small>
         </div>
     
-    <!-- Alert Messages -->
+    <!-- Alert Message -->
     @if(session('success'))
         <div class="alert alert-success alert-dismissible fade show" role="alert">
             <i class="fas fa-check-circle mr-2"></i> {{ session('success') }}

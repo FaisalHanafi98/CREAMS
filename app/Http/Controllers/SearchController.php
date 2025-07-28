@@ -3,10 +3,10 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\Users;
+use App\Models\User;
 use App\Models\Trainee;
 use App\Models\Activity;
-use App\Models\Centres;
+use App\Models\Centre;
 use Illuminate\Support\Facades\Log;
 
 class SearchController extends Controller
@@ -38,8 +38,8 @@ class SearchController extends Controller
                 return response()->json(['results' => $results]);
             }
 
-            // Search for staffs/teachers in Users model
-            $users = Users::where(function ($q) use ($query) {
+            // Search for staffs/teachers in User model
+            $users = User::where(function ($q) use ($query) {
                 $q->where('name', 'LIKE', "%{$query}%")
                   ->orWhere('email', 'LIKE', "%{$query}%")
                   ->orWhere('iium_id', 'LIKE', "%{$query}%");
@@ -53,7 +53,7 @@ class SearchController extends Controller
                 // Get centre name
                 $centreName = "Unknown";
                 if ($user->centre_id) {
-                    $centre = Centres::where('centre_id', $user->centre_id)->first();
+                    $centre = Centre::where('centre_id', $user->centre_id)->first();
                     if ($centre) {
                         $centreName = $centre->centre_name;
                     }

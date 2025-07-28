@@ -15,12 +15,12 @@ Session::put('name', 'Test Admin');
 echo "Testing categories...\n";
 try {
     $categories = App\Models\Category::active()->ordered()->get();
-    echo "✅ Categories retrieved: " . $categories->count() . " categories\n";
+    echo "✅ Category retrieved: " . $categories->count() . " categories\n";
     foreach ($categories as $category) {
         echo "  - {$category->category_name} (Status: {$category->category_status})\n";
     }
 } catch (Exception $e) {
-    echo "❌ Categories error: " . $e->getMessage() . "\n";
+    echo "❌ Category error: " . $e->getMessage() . "\n";
 }
 
 // Test if we can create an activity
@@ -55,7 +55,7 @@ try {
 echo "\nTesting activity reading...\n";
 try {
     $activities = App\Models\Activity::take(3)->get();
-    echo "✅ Activities retrieved: " . $activities->count() . " activities\n";
+    echo "✅ Activity retrieved: " . $activities->count() . " activities\n";
     foreach ($activities as $activity) {
         echo "  - {$activity->activity_name} (Status: {$activity->activity_status})\n";
     }

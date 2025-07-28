@@ -9,7 +9,7 @@
             <h5 class="card-title">Conversation with {{ $conversation['with'] }}</h5>
             <div class="card-options">
                 <a href="{{ route('messages') }}" class="btn btn-sm btn-secondary">
-                    <i class="fas fa-arrow-left"></i> Back to Messages
+                    <i class="fas fa-arrow-left"></i> Back to Message
                 </a>
                 <button class="btn btn-sm btn-primary ml-2" data-toggle="modal" data-target="#replyModal">
                     <i class="fas fa-reply"></i> Reply

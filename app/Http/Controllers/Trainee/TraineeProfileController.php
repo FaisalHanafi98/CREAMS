@@ -9,8 +9,8 @@ use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
 use App\Models\Trainee;
-use App\Models\Activities;
-use App\Models\Centres;
+use App\Models\Activity;
+use App\Models\Centre;
 use Carbon\Carbon;
 use Exception;
 use App\Traits\HandlesErrors;
@@ -148,16 +148,24 @@ class TraineeProfileController extends Controller
      * @param int $id
      * @return \Illuminate\View\View
      */
-    public function edit($id)
+    public function edit($encrypted_id)
     {
         try {
+            // Decrypt the ID
+            $id = \App\Helpers\EncryptionHelper::decryptId($encrypted_id);
+            
+            if (!$id) {
+                return redirect()->route('trainees.home')->with('error', 'Invalid or expired link.');
+            }
+            
             Log::info('Accessing trainee edit form', [
                 'user_id' => session('id'),
-                'trainee_id' => $id
+                'trainee_id' => $id,
+                'encrypted_id' => $encrypted_id
             ]);
             
             $trainee = Trainee::findOrFail($id);
-            $centres = Centres::where('is_active', 1)->get();
+            $centres = Centre::where('is_active', 1)->get();
             
             // List of conditions (same as in registration)
             $conditions = [
@@ -400,7 +408,7 @@ class TraineeProfileController extends Controller
             ]);
             
             // Create a new activity record for this progress update
-            $activity = new Activities();
+            $activity = new Activity();
             $activity->trainee_id = $id;
             $activity->activity_name = 'Progress Update: ' . $validatedData['progress_type'];
             $activity->activity_type = 'Progress';
@@ -506,7 +514,7 @@ class TraineeProfileController extends Controller
             }
             
             // Delete related activities
-            Activities::where('trainee_id', $id)->delete();
+            Activity::where('trainee_id', $id)->delete();
             
             // Delete the trainee
             $trainee->delete();
@@ -558,7 +566,7 @@ class TraineeProfileController extends Controller
             ]);
             
             // Create a new activity
-            $activity = new Activities();
+            $activity = new Activity();
             $activity->trainee_id = $id;
             $activity->activity_name = $validatedData['activity_name'];
             $activity->activity_type = $validatedData['activity_type'];

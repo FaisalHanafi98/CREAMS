@@ -72,7 +72,7 @@
                                     <a href="#"><i class="ri-notification-3-line font-size-16"></i></a>
                                     <span class="bg-danger text-white">2</span>
                                  </div>
-                                 <button type="submit" class="btn iq-bg-success">Notifications</button>
+                                 <button type="submit" class="btn iq-bg-success">Notification</button>
                               </div>
                            </div>
                         </div>

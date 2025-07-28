@@ -907,10 +907,10 @@
         </div>
     </div>
     
-    <!-- Back to Activities Link -->
+    <!-- Back to Activity Link -->
     <div style="text-align: center; margin-top: 20px;">
         <a href="{{ route('activities.home') }}" class="btn btn-outline-secondary">
-            <i class="fas fa-arrow-left"></i> Back to Activities
+            <i class="fas fa-arrow-left"></i> Back to Activity
         </a>
     </div>
 </div>

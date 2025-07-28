@@ -5,11 +5,11 @@ namespace App\Console\Commands;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
-use App\Models\Users;
-use App\Models\Trainees;
+use App\Models\User;
+use App\Models\Trainee;
 use App\Models\Activity;
 use App\Models\Asset;
-use App\Models\Centres;
+use App\Models\Centre;
 
 class SystemHealthCheck extends Command
 {
@@ -45,25 +45,25 @@ class SystemHealthCheck extends Command
         // Check model relationships
         $this->info('🔗 Checking model relationships...');
         try {
-            // Test Users model
-            $userCount = Users::count();
-            $this->info("✅ Users model: {$userCount} records");
+            // Test User model
+            $userCount = User::count();
+            $this->info("✅ User model: {$userCount} records");
             
-            // Test Trainees model and avatar field
-            $traineeCount = Trainees::count();
-            $this->info("✅ Trainees model: {$traineeCount} records");
+            // Test Trainee model and avatar field
+            $traineeCount = Trainee::count();
+            $this->info("✅ Trainee model: {$traineeCount} records");
             
             // Test if avatar field exists in trainees
             if (Schema::hasColumn('trainees', 'avatar')) {
-                $this->info('✅ Trainees avatar field: EXISTS');
+                $this->info('✅ Trainee avatar field: EXISTS');
             } else {
-                $issues[] = '❌ Trainees avatar field missing';
+                $issues[] = '❌ Trainee avatar field missing';
             }
             
-            // Test Activities model with creator relationship
+            // Test Activity model with creator relationship
             if (class_exists('App\Models\Activity')) {
                 $activityCount = Activity::count();
-                $this->info("✅ Activities model: {$activityCount} records");
+                $this->info("✅ Activity model: {$activityCount} records");
                 
                 // Test creator relationship
                 $activityWithCreator = Activity::with('creator')->first();
@@ -77,12 +77,12 @@ class SystemHealthCheck extends Command
             // Test Asset model
             if (class_exists('App\Models\Asset')) {
                 $assetCount = Asset::count();
-                $this->info("✅ Assets model: {$assetCount} records");
+                $this->info("✅ Asset model: {$assetCount} records");
             }
             
-            // Test Centres model
-            $centreCount = Centres::count();
-            $this->info("✅ Centres model: {$centreCount} records");
+            // Test Centre model
+            $centreCount = Centre::count();
+            $this->info("✅ Centre model: {$centreCount} records");
             
         } catch (\Exception $e) {
             $issues[] = '❌ Model relationship error: ' . $e->getMessage();

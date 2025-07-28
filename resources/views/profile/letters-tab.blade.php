@@ -1,5 +1,5 @@
 <div class="letters-management">
-    <!-- Flash Messages -->
+    <!-- Flash Message -->
     @if(session('success'))
     <div class="alert alert-success alert-dismissible fade show mb-4" role="alert">
         <i class="fas fa-check-circle mr-2"></i> {{ session('success') }}
@@ -89,8 +89,11 @@
             </div>
             
             <button type="submit" class="btn btn-primary">
-                <i class="fas fa-save"></i> Update Template
+                <i class="fas fa-save"></i> Save Template
             </button>
+            <small class="form-text text-muted mt-2">
+                <i class="fas fa-info-circle"></i> Saving will create a new active template and deactivate previous ones.
+            </small>
         </form>
     </div>
     
@@ -154,9 +157,9 @@
         </div>
     </div>
     
-    <!-- Recent Letters -->
+    <!-- Recent Letter -->
     <div class="recent-letters mt-5">
-        <h5><i class="fas fa-history"></i> Recent Letters</h5>
+        <h5><i class="fas fa-history"></i> Recent Letter</h5>
         <div class="table-responsive">
             <table class="table table-sm table-hover">
                 <thead class="thead-light">
@@ -214,7 +217,7 @@
         @if(isset($recentLetters) && $recentLetters->count() > 0)
             <div class="text-center">
                 <a href="{{ route('letters.archive') }}" class="btn btn-sm btn-outline-primary">
-                    <i class="fas fa-list"></i> View All Letters
+                    <i class="fas fa-list"></i> View All Letter
                 </a>
                 <button type="button" id="refreshLettersBtn" class="btn btn-sm btn-outline-secondary">
                     <i class="fas fa-sync"></i> Refresh List
@@ -413,6 +416,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (directBtn) {
         directBtn.addEventListener('click', directGenerateLetter);
     }
+    
     
     // Clear form
     const clearBtn = document.getElementById('clearBtn');

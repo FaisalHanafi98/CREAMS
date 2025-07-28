@@ -7,9 +7,9 @@ use App\Models\Activity;
 use App\Models\ActivitySchedule;
 use App\Models\ActivityEnrollment;
 use App\Models\ActivitySession;
-use App\Models\Users;
-use App\Models\Trainees;
-use App\Models\Centres;
+use App\Models\User;
+use App\Models\Trainee;
+use App\Models\Centre;
 use Carbon\Carbon;
 
 class CREAMSScheduleSeeder extends Seeder
@@ -20,9 +20,9 @@ class CREAMSScheduleSeeder extends Seeder
     public function run(): void
     {
         // Get existing users who are teachers
-        $teachers = Users::where('role', 'teacher')->get();
-        $centres = Centres::all();
-        $trainees = Trainees::all();
+        $teachers = User::where('role', 'teacher')->get();
+        $centres = Centre::all();
+        $trainees = Trainee::all();
 
         if ($teachers->isEmpty() || $centres->isEmpty()) {
             $this->command->info('No teachers or centres found. Please seed users and centres first.');
@@ -51,7 +51,7 @@ class CREAMSScheduleSeeder extends Seeder
             [
                 'activity_name' => 'Occupational Therapy',
                 'activity_name_bm' => 'Terapi Pekerjaan',
-                'description' => 'Activities to develop fine motor skills, daily living skills, and sensory processing abilities.',
+                'description' => 'Activity to develop fine motor skills, daily living skills, and sensory processing abilities.',
                 'category' => 'Occupational Therapy',
                 'objectives' => 'Improve fine motor skills, develop independence in daily activities',
                 'materials_needed' => ['Therapy putty', 'Sensory tools', 'Daily living aids', 'Fine motor activities'],

@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
-use App\Models\Users;
+use App\Models\User;
 use Exception;
 
 class UserProfileController extends Controller
@@ -43,7 +43,7 @@ class UserProfileController extends Controller
             }
             
             // Fetch user data from database
-            $user = Users::find($roleId);
+            $user = User::find($roleId);
             
             if (!$user) {
                 Log::warning('User not found in database', ['user_id' => $roleId]);
@@ -119,7 +119,7 @@ class UserProfileController extends Controller
             }
             
             // Return the profile view with user data
-            return view('profile', [
+            return view('profile.home', [
                 'user' => $userData,
                 'role' => $role,
                 'debug' => config('app.debug'),
@@ -162,10 +162,8 @@ class UserProfileController extends Controller
                     ->with('error', 'Your session has expired. Please log in again.');
             }
             
-            // Validate input
-            $validated = $request->validate([
-                'name' => 'required|string|max:255',
-                'email' => 'required|email|max:255',
+            // Build validation rules based on what fields are being updated
+            $validationRules = [
                 'phone' => 'nullable|string|max:20',
                 'address' => 'nullable|string|max:500',
                 'about' => 'nullable|string|max:1000',
@@ -174,14 +172,24 @@ class UserProfileController extends Controller
                 'education_specialization' => 'nullable|string|max:255',
                 'teaching_specialization' => 'nullable|string|max:255',
                 'position' => 'nullable|string|max:255',
-            ]);
+            ];
+            
+            // Only require name and email if they're being updated
+            if ($request->has('name')) {
+                $validationRules['name'] = 'required|string|max:255';
+            }
+            if ($request->has('email')) {
+                $validationRules['email'] = 'required|email|max:255';
+            }
+            
+            $validated = $request->validate($validationRules);
             
             // Find user
-            $user = Users::findOrFail($roleId);
+            $user = User::findOrFail($roleId);
             
             // Check if email is unique (if changed)
-            if ($user->email !== $validated['email']) {
-                $emailExists = Users::where('email', $validated['email'])
+            if (isset($validated['email']) && $user->email !== $validated['email']) {
+                $emailExists = User::where('email', $validated['email'])
                     ->where('id', '!=', $roleId)
                     ->exists();
                     
@@ -192,19 +200,34 @@ class UserProfileController extends Controller
                 }
             }
             
-            // Update user data
-            $user->name = $validated['name'];
-            $user->email = $validated['email'];
-            $user->phone = $validated['phone'];
-            $user->address = $validated['address'];
-            $user->about = $validated['about']; // Map about field to about column
-            
-            // Update new education fields
-            $user->education_level = $validated['education_level'];
-            $user->education_specialization = $validated['education_specialization'];
-            $user->teaching_specialization = $validated['teaching_specialization'];
-            $user->position = $validated['position'];
-            
+            // Only update fields that were provided in the request
+            if (isset($validated['name'])) {
+                $user->name = $validated['name'];
+            }
+            if (isset($validated['email'])) {
+                $user->email = $validated['email'];
+            }
+            if (array_key_exists('phone', $validated)) {
+                $user->phone = $validated['phone'];
+            }
+            if (array_key_exists('address', $validated)) {
+                $user->address = $validated['address'];
+            }
+            if (array_key_exists('about', $validated)) {
+                $user->about = $validated['about'];
+            }
+            if (array_key_exists('education_level', $validated)) {
+                $user->education_level = $validated['education_level'];
+            }
+            if (array_key_exists('education_specialization', $validated)) {
+                $user->education_specialization = $validated['education_specialization'];
+            }
+            if (array_key_exists('teaching_specialization', $validated)) {
+                $user->teaching_specialization = $validated['teaching_specialization'];
+            }
+            if (array_key_exists('position', $validated)) {
+                $user->position = $validated['position'];
+            }
             if (!empty($validated['date_of_birth'])) {
                 $user->date_of_birth = $validated['date_of_birth'];
             }
@@ -241,20 +264,43 @@ class UserProfileController extends Controller
                     ->withInput();
             }
             
-            // Update session data
-            session([
-                'name' => $user->name,
-                'email' => $user->email,
-                'phone' => $user->phone,
-                'address' => $user->address,
-                'about' => $user->about,
-                'bio' => $user->about,  // Store both for compatibility
-                'date_of_birth' => $user->date_of_birth,
-                'education_level' => $user->education_level,
-                'education_specialization' => $user->education_specialization,
-                'teaching_specialization' => $user->teaching_specialization,
-                'position' => $user->position,
-            ]);
+            // Update session data only for changed fields
+            $sessionUpdates = [];
+            if (isset($validated['name'])) {
+                $sessionUpdates['name'] = $user->name;
+            }
+            if (isset($validated['email'])) {
+                $sessionUpdates['email'] = $user->email;
+            }
+            if (array_key_exists('phone', $validated)) {
+                $sessionUpdates['phone'] = $user->phone;
+            }
+            if (array_key_exists('address', $validated)) {
+                $sessionUpdates['address'] = $user->address;
+            }
+            if (array_key_exists('about', $validated)) {
+                $sessionUpdates['about'] = $user->about;
+                $sessionUpdates['bio'] = $user->about; // Store both for compatibility
+            }
+            if (array_key_exists('education_level', $validated)) {
+                $sessionUpdates['education_level'] = $user->education_level;
+            }
+            if (array_key_exists('education_specialization', $validated)) {
+                $sessionUpdates['education_specialization'] = $user->education_specialization;
+            }
+            if (array_key_exists('teaching_specialization', $validated)) {
+                $sessionUpdates['teaching_specialization'] = $user->teaching_specialization;
+            }
+            if (array_key_exists('position', $validated)) {
+                $sessionUpdates['position'] = $user->position;
+            }
+            if (!empty($validated['date_of_birth'])) {
+                $sessionUpdates['date_of_birth'] = $user->date_of_birth;
+            }
+            
+            if (!empty($sessionUpdates)) {
+                session($sessionUpdates);
+            }
             
             Log::info('Profile updated successfully', [
                 'user_id' => $roleId,
@@ -336,7 +382,7 @@ class UserProfileController extends Controller
             $passwordUpdateSuccess = false;
             
             try {
-                $user = Users::find($roleId);
+                $user = User::find($roleId);
                 if ($user) {
                     // Check if current password is correct
                     if (!Hash::check($request->current_password, $user->password)) {
@@ -508,7 +554,7 @@ class UserProfileController extends Controller
             
             if (!$currentAvatar) {
                 try {
-                    $user = Users::find($roleId);
+                    $user = User::find($roleId);
                     if ($user) {
                         $currentAvatar = $user->avatar ?? $user->avatar;
                     }
@@ -583,7 +629,7 @@ class UserProfileController extends Controller
             
             try {
                 // Try with Eloquent first
-                $user = Users::find($roleId);
+                $user = User::find($roleId);
                 if ($user) {
                     $user->avatar = $avatarName;
                     $saved = $user->save();
@@ -671,7 +717,7 @@ class UserProfileController extends Controller
                 'path' => $path
             ]);
             
-            return redirect()->back()->with('success', 'Your profile photo has been updated successfully.');
+            return redirect()->route('profile')->with('success', 'Your profile photo has been updated successfully.');
         } catch (Exception $e) {
             DB::rollBack();
             

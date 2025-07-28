@@ -2,7 +2,7 @@
 
 namespace App\Services\Dashboard;
 
-use App\Models\Users;
+use App\Models\User;
 use App\Models\Trainee;
 use App\Models\Activity;
 use App\Models\ActivitySession;
@@ -23,7 +23,7 @@ class TeacherDashboardService extends BaseDashboardService
     {
         return Cache::remember("dashboard_teacher_{$teacherId}", $this->cacheTimeout, function () use ($teacherId) {
             try {
-                $teacher = Users::find($teacherId);
+                $teacher = User::find($teacherId);
                 if (!$teacher) {
                     throw new Exception("Teacher not found: {$teacherId}");
                 }
@@ -286,7 +286,7 @@ class TeacherDashboardService extends BaseDashboardService
                     'color' => 'primary',
                 ],
                 [
-                    'title' => 'My Activities',
+                    'title' => 'My Activity',
                     'icon' => 'fas fa-tasks',
                     'url' => '/teacher/activities',
                     'color' => 'info',

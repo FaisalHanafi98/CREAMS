@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Activities Management')
+@section('title', 'Activity Management')
 
 @section('styles')
 <link rel="stylesheet" href="{{ asset('css/activities.css') }}">
@@ -12,7 +12,7 @@
     <div class="activities-header">
         <div class="activities-header-content">
             <div>
-                <h1 class="activities-title">Activities Management</h1>
+                <h1 class="activities-title">Activity Management</h1>
                 <p class="activities-subtitle">Manage rehabilitation activities and sessions</p>
             </div>
             @if(in_array(session('role'), ['admin', 'supervisor']))
@@ -32,7 +32,7 @@
                 <div class="stat-icon-wrapper">
                     <div>
                         <div class="activity-stat-value">{{ $stats['total_activities'] ?? 0 }}</div>
-                        <div class="activity-stat-label">Total Activities</div>
+                        <div class="activity-stat-label">Total Activity</div>
                     </div>
                     <div class="activity-stat-icon primary">
                         <i class="fas fa-tasks"></i>
@@ -51,7 +51,7 @@
                 <div class="stat-icon-wrapper">
                     <div>
                         <div class="activity-stat-value">{{ $stats['active_activities'] ?? 0 }}</div>
-                        <div class="activity-stat-label">Active Activities</div>
+                        <div class="activity-stat-label">Active Activity</div>
                     </div>
                     <div class="activity-stat-icon success">
                         <i class="fas fa-check-circle"></i>
@@ -110,7 +110,7 @@
             <div class="filter-group">
                 <label class="filter-label">Category</label>
                 <select id="categoryFilter" class="form-select">
-                    <option value="">All Categories</option>
+                    <option value="">All Category</option>
                     @foreach($categories as $category)
                     <option value="{{ $category }}">{{ $category }}</option>
                     @endforeach
@@ -147,11 +147,11 @@
         </div>
     </div>
 
-    <!-- Activities Grid -->
+    <!-- Activity Grid -->
     <div class="activities-grid" id="activitiesGrid">
         @forelse($activities as $activity)
         <div class="activity-card fade-in-up" 
-             data-category="{{ $activity->category }}"
+             data-category="{{ $activity->activity_type }}"
              data-status="{{ $activity->is_active ? 'active' : 'inactive' }}"
              data-age="{{ $activity->age_group }}"
              data-name="{{ strtolower($activity->activity_name) }}">
@@ -165,7 +165,7 @@
             
             <div class="activity-card-body">
                 <div class="activity-category-badge">
-                    <i class="fas fa-tag"></i> {{ $activity->category }}
+                    <i class="fas fa-tag"></i> {{ $activity->activity_type }}
                 </div>
                 
                 <p class="activity-description">
@@ -226,7 +226,7 @@
                 <div class="empty-state-icon">
                     <i class="fas fa-clipboard-list"></i>
                 </div>
-                <h4 class="empty-state-title">No Activities Found</h4>
+                <h4 class="empty-state-title">No Activity Found</h4>
                 <p class="empty-state-text">
                     @if(request()->has('search') || request()->has('category'))
                         No activities match your search criteria. Try adjusting your filters.
@@ -245,7 +245,7 @@
     </div>
 </div>
 
-<!-- Success/Error Messages -->
+<!-- Success/Error Message -->
 @if(session('success'))
 <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
     <div class="toast show align-items-center text-white bg-success border-0" role="alert">

@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Asset;
-use App\Models\Centres;
+use App\Models\Centre;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
@@ -44,7 +44,7 @@ class AssetController extends Controller
                 'total_value' => Asset::sum('purchase_price')
             ];
 
-            $centres = Centres::all();
+            $centres = Centre::all();
 
             return view('assets.index', compact('assets', 'stats', 'centres'));
 
@@ -67,7 +67,7 @@ class AssetController extends Controller
                 ->with('error', 'Only administrators can create assets.');
         }
 
-        $centres = Centres::all();
+        $centres = Centre::all();
         $assetTypes = $this->getAssetTypes();
         
         return view('assets.create', compact('centres', 'assetTypes'));
@@ -165,7 +165,7 @@ class AssetController extends Controller
 
         try {
             $asset = Asset::where('asset_id', $id)->firstOrFail();
-            $centres = Centres::where('is_active', true)->get();
+            $centres = Centre::where('is_active', true)->get();
             $assetTypes = $this->getAssetTypes();
             
             return view('assets.edit', compact('asset', 'centres', 'assetTypes'));
@@ -309,7 +309,7 @@ class AssetController extends Controller
     public function reports(Request $request)
     {
         try {
-            $centres = Centres::all();
+            $centres = Centre::all();
             $assetTypes = Asset::distinct('asset_type')->whereNotNull('asset_type')->pluck('asset_type')->sort();
 
             // Basic Analytics
@@ -318,7 +318,7 @@ class AssetController extends Controller
                 'total_value' => Asset::sum('purchase_price'),
                 'utilization_rate' => $this->calculateUtilizationRate(),
                 'maintenance_due' => Asset::where('asset_quantity', '<=', 5)->count(),
-                'active_centres' => Centres::count(),
+                'active_centres' => Centre::count(),
                 'asset_categories' => Asset::distinct('asset_type')->count('asset_type')
             ];
 
@@ -351,7 +351,7 @@ class AssetController extends Controller
             // Centre Report
             $centreReport = $this->generateCentreReport();
 
-            // High Value Assets
+            // High Value Asset
             $highValueAssets = Asset::where('asset_price', '>', 1000)
                                    ->orderBy('asset_price', 'desc')
                                    ->limit(20)
@@ -504,7 +504,7 @@ class AssetController extends Controller
     private function generateCentreReport(): array
     {
         $report = [];
-        $centres = Centres::all();
+        $centres = Centre::all();
 
         foreach ($centres as $centre) {
             $assets = Asset::where('centre_id', $centre->centre_id);
@@ -577,7 +577,7 @@ class AssetController extends Controller
     public function maintenance(Request $request)
     {
         try {
-            $centres = Centres::all();
+            $centres = Centre::all();
             $assetTypes = Asset::distinct('asset_type')->whereNotNull('asset_type')->pluck('asset_type')->sort();
             $assets = Asset::all();
 
@@ -855,7 +855,7 @@ class AssetController extends Controller
     public function movements(Request $request)
     {
         try {
-            $centres = Centres::all();
+            $centres = Centre::all();
             $assets = Asset::all();
 
             // Generate movement history

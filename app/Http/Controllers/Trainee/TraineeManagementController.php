@@ -7,8 +7,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
-use App\Models\Trainees;
-use App\Models\Centres;
+use App\Models\Trainee;
+use App\Models\Centre;
 use Carbon\Carbon;
 
 class TraineeManagementController extends Controller
@@ -22,7 +22,7 @@ class TraineeManagementController extends Controller
     {
         try {
             // Fetch all trainees with related data
-            $trainees = Trainees::orderBy('id', 'desc')->get();
+            $trainees = Trainee::orderBy('id', 'desc')->get();
             
             // Get statistics data
             $totalTrainees = $trainees->count();
@@ -63,7 +63,7 @@ class TraineeManagementController extends Controller
     public function show($id)
     {
         try {
-            $trainee = Trainees::findOrFail($id);
+            $trainee = Trainee::findOrFail($id);
             
             return view('traineeprofile', [
                 'trainee' => $trainee
@@ -88,7 +88,7 @@ class TraineeManagementController extends Controller
     public function destroy($id)
     {
         try {
-            $trainee = Trainees::findOrFail($id);
+            $trainee = Trainee::findOrFail($id);
             
             // Delete avatar file if exists
             if ($trainee->trainee_avatar && !str_contains($trainee->trainee_avatar, 'default') && Storage::exists($trainee->trainee_avatar)) {
@@ -127,7 +127,7 @@ class TraineeManagementController extends Controller
     {
         try {
             $format = $request->input('format', 'xlsx');
-            $trainees = Trainees::all();
+            $trainees = Trainee::all();
             
             // Log the export action
             Log::info('Trainee data exported', [

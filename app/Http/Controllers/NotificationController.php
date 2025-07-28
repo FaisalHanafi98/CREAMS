@@ -29,7 +29,7 @@ class NotificationController extends Controller
             $role = session('role');
             $id = session('id');
             
-            Log::info('Notifications index accessed', [
+            Log::info('Notification index accessed', [
                 'user_id' => $id,
                 'role' => $role
             ]);

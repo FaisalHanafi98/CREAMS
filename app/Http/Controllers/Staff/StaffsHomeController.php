@@ -7,8 +7,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use App\Models\Users;
-use App\Models\Centres;
+use App\Models\User;
+use App\Models\Centre;
 use App\Traits\HandlesEncryptedIds;
 
 class StaffsHomeController extends Controller
@@ -31,7 +31,7 @@ class StaffsHomeController extends Controller
             $searchTerm = $request->query('search');
             
             // Fix N+1 query: Use Eloquent relationships instead of manual joins
-            $query = Users::with(['centre'])->select(
+            $query = User::with(['centre'])->select(
                 'users.id', 
                 'users.name as user_name', 
                 'users.role', 
@@ -117,12 +117,12 @@ class StaffsHomeController extends Controller
             
             // Get centres for filter dropdown
             try {
-                $centres = Centres::where('centres.status', 'active')
+                $centres = Centre::where('centres.status', 'active')
                     ->get(['centre_id', 'centre_name']);
             } catch (\Exception $e) {
                 // If status column doesn't exist, get all centres
                 try {
-                    $centres = Centres::all(['centre_id', 'centre_name']);
+                    $centres = Centre::all(['centre_id', 'centre_name']);
                 } catch (\Exception $e2) {
                     $centres = collect(); // Empty collection if error
                     Log::error('Error fetching centres: ' . $e2->getMessage());
@@ -207,7 +207,7 @@ class StaffsHomeController extends Controller
             ]);
             
             // Get user with ID
-            $user = Users::findOrFail($id);
+            $user = User::findOrFail($id);
             
             // Debug: Log what user we found
             Log::info('User found for profile viewing', [
@@ -218,11 +218,11 @@ class StaffsHomeController extends Controller
             
             // Get centres for dropdown
             try {
-                $centres = Centres::where('centres.status', 'active')
+                $centres = Centre::where('centres.status', 'active')
                     ->get(['centre_id', 'centre_name']);
             } catch (\Exception $e) {
                 // If status column doesn't exist, get all centres
-                $centres = Centres::all(['centre_id', 'centre_name']);
+                $centres = Centre::all(['centre_id', 'centre_name']);
             }
             
             // Check if current user has permission to edit this user
@@ -275,7 +275,7 @@ class StaffsHomeController extends Controller
     {
         try {
             // Get user with ID
-            $user = Users::findOrFail($id);
+            $user = User::findOrFail($id);
             
             // Check if current user has permission to edit this user
             if (!$this->checkEditPermission($user)) {
@@ -332,7 +332,7 @@ class StaffsHomeController extends Controller
             $searchTerm = $request->input('search');
             
             // Start with base query and include centre information
-            $query = Users::select(
+            $query = User::select(
                 'users.id', 
                 'users.name as user_name', 
                 'users.role', 
@@ -430,7 +430,7 @@ class StaffsHomeController extends Controller
     /**
      * Check if current user has permission to edit the target user
      *
-     * @param Users $targetUser
+     * @param User $targetUser
      * @return bool
      */
     private function checkEditPermission($targetUser)

@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Activities - CREAMS')
+@section('title', 'Activity - CREAMS')
 
 <!-- CREATED_AT: JULY 7 - AUTO BY CLAUDE -->
 
@@ -8,7 +8,7 @@
 <div class="activities-container">
     <div class="page-header">
         <h1 class="page-title">
-            <i class="fas fa-tasks"></i> Activities Management
+            <i class="fas fa-tasks"></i> Activity Management
         </h1>
         <div class="page-actions">
             <a href="{{ route('activities.schedule') }}" class="btn btn-outline-info">
@@ -27,7 +27,7 @@
         <div class="stat-card stat-card-gradient-1">
             <div class="stat-content">
                 <h3>{{ $stats['total'] }}</h3>
-                <p>Total Activities</p>
+                <p>Total Activity</p>
             </div>
             <div class="stat-icon">
                 <i class="fas fa-clipboard-list"></i>
@@ -36,7 +36,7 @@
         <div class="stat-card stat-card-gradient-2">
             <div class="stat-content">
                 <h3>{{ $stats['active'] }}</h3>
-                <p>Active Activities</p>
+                <p>Active Activity</p>
             </div>
             <div class="stat-icon">
                 <i class="fas fa-check-circle"></i>
@@ -67,7 +67,7 @@
         <div class="filters-row">
             <div class="filter-item">
                 <select id="categoryFilter" class="form-control">
-                    <option value="">All Categories</option>
+                    <option value="">All Category</option>
                     <optgroup label="Rehabilitation">
                         <option value="Physical Therapy">Physical Therapy</option>
                         <option value="Occupational Therapy">Occupational Therapy</option>
@@ -106,7 +106,7 @@
         </div>
     </div>
 
-    {{-- Activities Grid --}}
+    {{-- Activity Grid --}}
     <div class="activities-grid">
         @forelse($activities as $activity)
             <div class="activity-card" data-category="{{ $activity->category->name ?? $activity->category }}" 
@@ -209,7 +209,7 @@
         @empty
             <div class="empty-state">
                 <i class="fas fa-clipboard-list"></i>
-                <h3>No Activities Found</h3>
+                <h3>No Activity Found</h3>
                 <p>Start by creating your first activity.</p>
                 @if(in_array($role, ['admin', 'supervisor']))
                     <a href="{{ route('activities.create') }}" class="btn btn-primary">

@@ -5,11 +5,11 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
-use App\Models\Users;
+use App\Models\User;
 use App\Models\Activity;
-use App\Models\Trainees;
+use App\Models\Trainee;
 use App\Models\ContactMessages;
-use App\Models\Volunteers;
+use App\Models\Volunteer;
 
 class ApiController extends Controller
 {
@@ -21,8 +21,8 @@ class ApiController extends Controller
         try {
             $stats = [
                 'users' => [
-                    'total' => Users::count(),
-                    'by_role' => Users::selectRaw('role, COUNT(*) as count')
+                    'total' => User::count(),
+                    'by_role' => User::selectRaw('role, COUNT(*) as count')
                         ->groupBy('role')
                         ->pluck('count', 'role')
                 ],
@@ -31,18 +31,18 @@ class ApiController extends Controller
                     'active' => Activity::whereIn('activity_status', ['scheduled', 'ongoing'])->count()
                 ],
                 'trainees' => [
-                    'total' => Trainees::count(),
-                    'by_centre' => Trainees::selectRaw('centre_name, COUNT(*) as count')
+                    'total' => Trainee::count(),
+                    'by_centre' => Trainee::selectRaw('centre_name, COUNT(*) as count')
                         ->groupBy('centre_name')
                         ->pluck('count', 'centre_name')
                 ],
                 'contact_messages' => [
-                    'total' => ContactMessages::count(),
-                    'pending' => ContactMessages::where('message_status', 'new')->count()
+                    'total' => ContactMessage::count(),
+                    'pending' => ContactMessage::where('message_status', 'new')->count()
                 ],
                 'volunteers' => [
-                    'total' => Volunteers::count(),
-                    'pending' => Volunteers::where('volunteer_status', 'pending')->count()
+                    'total' => Volunteer::count(),
+                    'pending' => Volunteer::where('volunteer_status', 'pending')->count()
                 ]
             ];
 
@@ -78,7 +78,7 @@ class ApiController extends Controller
             $results = [];
 
             if ($type === 'all' || $type === 'users') {
-                $results['users'] = Users::where('name', 'LIKE', "%{$query}%")
+                $results['users'] = User::where('name', 'LIKE', "%{$query}%")
                     ->orWhere('email', 'LIKE', "%{$query}%")
                     ->orWhere('iium_id', 'LIKE', "%{$query}%")
                     ->select('id', 'name', 'email', 'role', 'iium_id')
@@ -96,7 +96,7 @@ class ApiController extends Controller
             }
 
             if ($type === 'all' || $type === 'trainees') {
-                $results['trainees'] = Trainees::where('trainee_first_name', 'LIKE', "%{$query}%")
+                $results['trainees'] = Trainee::where('trainee_first_name', 'LIKE', "%{$query}%")
                     ->orWhere('trainee_last_name', 'LIKE', "%{$query}%")
                     ->orWhere('trainee_email', 'LIKE', "%{$query}%")
                     ->select('id', 'trainee_first_name', 'trainee_last_name', 'trainee_email', 'centre_name')
@@ -186,10 +186,10 @@ class ApiController extends Controller
             switch ($role) {
                 case 'admin':
                     $data['stats'] = [
-                        'total_users' => Users::count(),
+                        'total_users' => User::count(),
                         'total_activities' => Activity::count(),
-                        'total_trainees' => Trainees::count(),
-                        'pending_messages' => ContactMessages::where('message_status', 'new')->count()
+                        'total_trainees' => Trainee::count(),
+                        'pending_messages' => ContactMessage::where('message_status', 'new')->count()
                     ];
                     break;
 
@@ -206,7 +206,7 @@ class ApiController extends Controller
                 default:
                     $data['stats'] = [
                         'activities_count' => Activity::whereIn('activity_status', ['scheduled', 'ongoing'])->count(),
-                        'trainees_count' => Trainees::count()
+                        'trainees_count' => Trainee::count()
                     ];
             }
 

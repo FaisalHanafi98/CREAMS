@@ -294,7 +294,7 @@
                 </button>
                 @endif
                 <a href="{{ route('assets.index') }}" class="btn btn-outline-light">
-                    <i class="fas fa-arrow-left me-2"></i>Back to Assets
+                    <i class="fas fa-arrow-left me-2"></i>Back to Asset
                 </a>
             </div>
         </div>
@@ -358,7 +358,7 @@
             <div class="col-md-3">
                 <label for="centreFilter" class="form-label">Centre</label>
                 <select class="form-control" id="centreFilter" name="centre">
-                    <option value="">All Centres</option>
+                    <option value="">All Centre</option>
                     @foreach($centres as $centre)
                         <option value="{{ $centre->centre_name }}">{{ $centre->centre_name }}</option>
                     @endforeach

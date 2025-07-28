@@ -7,7 +7,7 @@
     
     <div class="notification-dropdown" id="notificationDropdown">
         <div class="notification-header">
-            <h3>Notifications</h3>
+            <h3>Notification</h3>
             <div class="notification-actions">
                 <button class="notification-action-btn refresh-btn" id="refreshNotifications" title="Refresh">
                     <i class="fas fa-sync-alt"></i>
@@ -25,7 +25,7 @@
             </div>
             
             <div class="notification-list" id="notificationList">
-                <!-- Notifications will be populated here via JavaScript -->
+                <!-- Notification will be populated here via JavaScript -->
             </div>
             
             <div class="empty-notifications hidden" id="emptyNotifications">
@@ -38,7 +38,7 @@
         
         <div class="notification-footer">
             <a href="{{ route('notifications.index') }}" class="view-all-link">
-                View All Notifications
+                View All Notification
                 <i class="fas fa-arrow-right"></i>
             </a>
         </div>

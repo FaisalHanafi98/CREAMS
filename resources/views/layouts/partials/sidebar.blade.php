@@ -1,6 +1,6 @@
 @extends('layouts.main')
 
-@section('title', $categoryInfo['name'] . ' Activities')
+@section('title', $categoryInfo['name'] . ' Activity')
 
 @section('content')
 <div class="container-fluid">
@@ -17,13 +17,13 @@
             </nav>
             <h1 class="h3 mb-0 text-gray-800">
                 <i class="fas {{ $categoryInfo['icon'] }} text-primary mr-2"></i>
-                {{ $categoryInfo['name'] }} Activities
+                {{ $categoryInfo['name'] }} Activity
             </h1>
             <p class="text-muted">{{ $categoryInfo['description'] }}</p>
         </div>
         <div>
             <a href="{{ route(session('role', 'admin') . '.rehabilitation') }}" class="btn btn-outline-secondary mr-2">
-                <i class="fas fa-arrow-left mr-2"></i>Back to Categories
+                <i class="fas fa-arrow-left mr-2"></i>Back to Category
             </a>
             @if(in_array(session('role'), ['admin', 'supervisor']))
             <a href="{{ route(session('role', 'admin') . '.rehabilitation.activities.create') }}?category={{ $categoryInfo['key'] }}" class="btn btn-primary">
@@ -41,7 +41,7 @@
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
                             <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
-                                Total Activities
+                                Total Activity
                             </div>
                             <div class="h5 mb-0 font-weight-bold text-gray-800">
                                 {{ $activities->count() }}
@@ -113,11 +113,11 @@
         </div>
     </div>
 
-    <!-- Activities List -->
+    <!-- Activity List -->
     <div class="card shadow mb-4">
         <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
             <h6 class="m-0 font-weight-bold text-primary">
-                {{ $categoryInfo['name'] }} Activities
+                {{ $categoryInfo['name'] }} Activity
             </h6>
             @if(in_array(session('role'), ['admin', 'supervisor']))
             <a href="{{ route(session('role', 'admin') . '.rehabilitation.activities.create') }}?category={{ $categoryInfo['key'] }}" class="btn btn-sm btn-primary">

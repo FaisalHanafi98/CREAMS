@@ -3,24 +3,21 @@
 namespace App\Http\Controllers\Dashboard;
 
 use App\Http\Controllers\Controller;
-use App\Services\DashboardService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Response;
 use Carbon\Carbon;
+use App\Models\User;
+use App\Models\Trainee;
+use App\Models\Activity;
+use App\Models\ActivitySession;
+use App\Models\Centre;
+use App\Models\Asset;
 
 class DashboardController extends Controller
 {
-    protected $dashboardService;
-    
-    public function __construct(DashboardService $dashboardService)
-    {
-        $this->dashboardService = $dashboardService;
-    }
-    
     /**
-     * Display role-specific optimized dashboard
+     * Display modern dashboard
      */
     public function index(Request $request)
     {
@@ -34,698 +31,556 @@ class DashboardController extends Controller
             $role = session('role');
             $centreId = session('centre_id');
             
-            // Check if mobile request or force mobile
-            $isMobile = $this->isMobileDevice($request) || $request->get('mobile') === 'true';
+            // Get dashboard data based on role
+            $dashboardData = $this->getDashboardData($role, $userId, $centreId);
             
-            // Start performance tracking
-            $startTime = microtime(true);
-            
-            // Get dashboard data with caching
-            $dashboardData = $this->dashboardService->getDashboardData($userId, $role, $centreId);
-            
-            // Add performance metrics
-            $dashboardData['performance'] = [
-                'load_time' => round((microtime(true) - $startTime) * 1000, 2),
-                'cache_status' => Cache::has("dashboard_{$role}_{$userId}_{$centreId}") ? 'hit' : 'miss',
-                'last_updated' => now()->toISOString()
-            ];
-            
-            // Determine view based on role and device
-            if ($isMobile) {
-                $view = 'dashboard.mobile';
-                // Simplify data for mobile
-                $dashboardData = $this->prepareMobileData($dashboardData, $role);
-            } else {
-                $view = $this->getViewForRole($role);
-            }
-            
-            // Add common data for all dashboards
-            $dashboardData['user'] = [
-                'id' => $userId,
-                'name' => session('name'),
-                'role' => $role,
-                'centre_id' => $centreId,
-                'last_login' => session('last_login')
-            ];
-            
-            // Set cache headers for better performance
-            return response()
-                ->view($view, $dashboardData)
-                ->header('Cache-Control', 'public, max-age=300')
-                ->header('X-Load-Time', $dashboardData['performance']['load_time'] . 'ms')
-                ->header('X-Device-Type', $isMobile ? 'mobile' : 'desktop');
-                
-        } catch (\Exception $e) {
-            Log::error('Dashboard loading failed', [
-                'user_id' => session('id') ?? 'unknown',
-                'role' => session('role') ?? 'unknown',
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-            
-            return $this->handleDashboardError($e);
-        }
-    }
-    
-    /**
-     * Get real-time updates via AJAX
-     */
-    public function getUpdates(Request $request)
-    {
-        try {
-            $lastUpdate = $request->get('last_update', 0);
-            $role = session('role');
-            $userId = session('id');
-            $centreId = session('centre_id');
-            $isMobile = $request->boolean('mobile', false);
-            
-            // Get updates since last check
-            $updates = $this->getRecentUpdates($lastUpdate, $role, $userId, $centreId);
-            
-            // Get fresh stats if requested
-            $includeStats = $request->boolean('include_stats', false);
-            $stats = null;
-            
-            if ($includeStats) {
-                $dashboardData = $this->dashboardService->getDashboardData($userId, $role, $centreId);
-                if ($isMobile) {
-                    // Simplified stats for mobile
-                    $stats = array_slice($dashboardData['stats'] ?? [], 0, 4);
-                } else {
-                    $stats = $dashboardData['stats'] ?? [];
-                }
-            }
-            
-            $response = [
-                'success' => true,
-                'updates' => $updates,
-                'stats' => $stats,
-                'timestamp' => time(),
-                'server_time' => now()->toISOString()
-            ];
-            
-            // Add mobile-specific optimizations
-            if ($isMobile) {
-                $response['mobile_optimized'] = true;
-                $response['data_compressed'] = true;
-            }
-            
-            return response()->json($response);
+            return view('dashboard.modern', $dashboardData);
             
         } catch (\Exception $e) {
-            Log::error('Dashboard updates failed', [
-                'user_id' => session('id'),
+            Log::error('Modern dashboard error', [
+                'user_id' => $userId ?? 'unknown',
                 'error' => $e->getMessage()
             ]);
             
-            return response()->json([
-                'success' => false,
-                'error' => 'Failed to get updates'
-            ], 500);
+            return view('dashboard.modern', [
+                'error' => 'Unable to load dashboard data',
+                'role' => $role ?? 'unknown',
+                'user_name' => session('name', 'User')
+            ]);
         }
     }
-    
+
     /**
-     * Refresh dashboard statistics
+     * Get comprehensive dashboard data based on role
      */
-    public function refreshStats(Request $request)
+    private function getDashboardData($role, $userId, $centreId)
     {
-        try {
-            $userId = session('id');
-            $role = session('role');
-            $centreId = session('centre_id');
-            
-            // Clear cache for this user
-            $this->dashboardService->clearUserCache($userId, $role, $centreId);
-            
-            // Get fresh data
-            $startTime = microtime(true);
-            $dashboardData = $this->dashboardService->getDashboardData($userId, $role, $centreId);
-            $loadTime = round((microtime(true) - $startTime) * 1000, 2);
-            
-            return response()->json([
-                'success' => true,
-                'stats' => $dashboardData['stats'] ?? [],
-                'charts' => $dashboardData['charts'] ?? [],
-                'load_time' => $loadTime,
-                'timestamp' => time()
-            ]);
-            
-        } catch (\Exception $e) {
-            Log::error('Dashboard refresh failed', [
-                'user_id' => session('id'),
-                'error' => $e->getMessage()
-            ]);
-            
-            return response()->json([
-                'success' => false,
-                'error' => 'Failed to refresh dashboard'
-            ], 500);
-        }
-    }
-    
-    /**
-     * Get widget data for AJAX loading
-     */
-    public function getWidget(Request $request, $widget)
-    {
-        try {
-            $userId = session('id');
-            $role = session('role');
-            $centreId = session('centre_id');
-            
-            $data = $this->getWidgetData($widget, $userId, $role, $centreId);
-            
-            return response()->json([
-                'success' => true,
-                'data' => $data,
-                'widget' => $widget
-            ]);
-            
-        } catch (\Exception $e) {
-            Log::error('Widget loading failed', [
-                'widget' => $widget,
-                'user_id' => session('id'),
-                'error' => $e->getMessage()
-            ]);
-            
-            return response()->json([
-                'success' => false,
-                'error' => 'Failed to load widget'
-            ], 500);
-        }
-    }
-    
-    /**
-     * Export dashboard data
-     */
-    public function export(Request $request, $format = 'json')
-    {
-        try {
-            $userId = session('id');
-            $role = session('role');
-            $centreId = session('centre_id');
-            
-            $dashboardData = $this->dashboardService->getDashboardData($userId, $role, $centreId);
-            
-            switch ($format) {
-                case 'csv':
-                    return $this->exportToCsv($dashboardData);
-                case 'pdf':
-                    return $this->exportToPdf($dashboardData);
-                case 'excel':
-                    return $this->exportToExcel($dashboardData);
-                default:
-                    return response()->json($dashboardData);
-            }
-            
-        } catch (\Exception $e) {
-            Log::error('Dashboard export failed', [
-                'format' => $format,
-                'user_id' => session('id'),
-                'error' => $e->getMessage()
-            ]);
-            
-            return response()->json([
-                'success' => false,
-                'error' => 'Export failed'
-            ], 500);
-        }
-    }
-    
-    /**
-     * Clear dashboard cache (admin only)
-     */
-    public function clearCache(Request $request)
-    {
-        try {
-            // Check admin permission
-            if (session('role') !== 'admin') {
-                return response()->json([
-                    'success' => false,
-                    'error' => 'Unauthorized'
-                ], 403);
-            }
-            
-            $this->dashboardService->clearAllCaches();
-            
-            Log::info('Dashboard cache cleared', [
-                'admin_id' => session('id')
-            ]);
-            
-            return response()->json([
-                'success' => true,
-                'message' => 'Cache cleared successfully'
-            ]);
-            
-        } catch (\Exception $e) {
-            Log::error('Cache clearing failed', [
-                'admin_id' => session('id'),
-                'error' => $e->getMessage()
-            ]);
-            
-            return response()->json([
-                'success' => false,
-                'error' => 'Failed to clear cache'
-            ], 500);
-        }
-    }
-    
-    /**
-     * Get mobile-optimized dashboard
-     */
-    public function mobile(Request $request)
-    {
-        try {
-            $userId = session('id');
-            $role = session('role');
-            $centreId = session('centre_id');
-            
-            // Get simplified data for mobile
-            $dashboardData = $this->dashboardService->getDashboardData($userId, $role, $centreId);
-            
-            // Simplify data for mobile view
-            $mobileData = [
-                'stats' => $dashboardData['stats'] ?? [],
-                'recent' => [
-                    'activities' => array_slice($dashboardData['recent']['activities'] ?? [], 0, 3),
-                    'notifications' => array_slice($dashboardData['alerts'] ?? [], 0, 5)
-                ],
-                'quick_actions' => $this->getMobileQuickActions($role)
-            ];
-            
-            return view('dashboard.mobile', $mobileData);
-            
-        } catch (\Exception $e) {
-            Log::error('Mobile dashboard failed', [
-                'user_id' => session('id'),
-                'error' => $e->getMessage()
-            ]);
-            
-            return $this->handleDashboardError($e);
-        }
-    }
-    
-    // =============================================
-    // PRIVATE HELPER METHODS
-    // =============================================
-    
-    /**
-     * Get view name based on role
-     */
-    private function getViewForRole($role): string
-    {
-        $views = [
-            'admin' => 'dashboard.admin',
-            'supervisor' => 'dashboard.supervisor', 
-            'teacher' => 'dashboard.teacher',
-            'ajk' => 'dashboard.ajk'
+        $data = [
+            'role' => $role,
+            'user_name' => session('name'),
+            'centre_id' => $centreId,
+            'current_time' => now()->format('l, F j, Y - g:i A'),
+            'quick_stats' => $this->getQuickStats($role, $userId, $centreId),
+            'recent_activities' => $this->getRecentActivities($role, $userId, $centreId),
+            'upcoming_sessions' => $this->getUpcomingSessions($role, $userId, $centreId),
+            'notifications' => $this->getNotifications($userId),
+            'recent_users' => $this->getRecentUsers($role, $centreId),
+            'current_sessions' => $this->getCurrentSessions($role, $userId, $centreId),
+            'calendar_events' => $this->getCalendarEvents($role, $userId, $centreId),
+            'system_alerts' => $this->getSystemAlerts($role),
+            'progress_summary' => $this->getProgressSummary($role, $userId, $centreId),
+            'centre_info' => $this->getCentreInfo($centreId)
         ];
-        
-        $view = $views[$role] ?? 'dashboard.default';
-        
-        // Check if role-specific view exists, fallback to default
-        if (!view()->exists($view)) {
-            $view = 'dashboard.default';
+
+        try {
+            return $data;
+        } catch (\Exception $e) {
+            Log::error('Dashboard data error', ['error' => $e->getMessage()]);
+            return $data;
+        }
+    }
+
+    /**
+     * Get admin statistics
+     */
+    private function getAdminStats()
+    {
+        return [
+            [
+                'title' => 'Total Users',
+                'value' => DB::table('users')->count(),
+                'icon' => 'fas fa-users',
+                'color' => 'primary',
+                'trend' => '+12%'
+            ],
+            [
+                'title' => 'Active Trainees',
+                'value' => DB::table('trainees')->where('status', 'active')->count(),
+                'icon' => 'fas fa-user-graduate',
+                'color' => 'success',
+                'trend' => '+8%'
+            ],
+            [
+                'title' => 'Total Activities',
+                'value' => DB::table('activities')->where('is_active', true)->count(),
+                'icon' => 'fas fa-tasks',
+                'color' => 'info',
+                'trend' => '+15%'
+            ],
+            [
+                'title' => 'Active Centres',
+                'value' => DB::table('centres')->where('is_active', true)->count(),
+                'icon' => 'fas fa-building',
+                'color' => 'warning',
+                'trend' => 'stable'
+            ]
+        ];
+    }
+
+    /**
+     * Get supervisor statistics
+     */
+    private function getSupervisorStats($centreId)
+    {
+        return [
+            [
+                'title' => 'Centre Staff',
+                'value' => DB::table('users')->where('centre_id', $centreId)->count(),
+                'icon' => 'fas fa-users',
+                'color' => 'primary'
+            ],
+            [
+                'title' => 'Centre Trainees',
+                'value' => DB::table('trainees')->where('centre_id', $centreId)->where('status', 'active')->count(),
+                'icon' => 'fas fa-user-graduate',
+                'color' => 'success'
+            ],
+            [
+                'title' => 'Active Activities',
+                'value' => DB::table('activities')->where('centre_id', $centreId)->where('is_active', true)->count(),
+                'icon' => 'fas fa-tasks',
+                'color' => 'info'
+            ],
+            [
+                'title' => 'Assets',
+                'value' => DB::table('assets')->where('centre_id', $centreId)->count(),
+                'icon' => 'fas fa-boxes',
+                'color' => 'warning'
+            ]
+        ];
+    }
+
+    /**
+     * Get teacher statistics
+     */
+    private function getTeacherStats($userId, $centreId)
+    {
+        return [
+            [
+                'title' => 'My Activities',
+                'value' => DB::table('activities')->where('created_by', $userId)->count(),
+                'icon' => 'fas fa-clipboard-list',
+                'color' => 'primary'
+            ],
+            [
+                'title' => 'Assigned Sessions',
+                'value' => DB::table('activity_sessions')->where('teacher_id', $userId)->where('status', 'scheduled')->count(),
+                'icon' => 'fas fa-calendar',
+                'color' => 'success'
+            ],
+            [
+                'title' => 'Centre Trainees',
+                'value' => DB::table('trainees')->where('centre_id', $centreId)->where('status', 'active')->count(),
+                'icon' => 'fas fa-user-graduate',
+                'color' => 'info'
+            ],
+            [
+                'title' => 'Completed Sessions',
+                'value' => DB::table('activity_sessions')->where('teacher_id', $userId)->where('status', 'completed')->count(),
+                'icon' => 'fas fa-check-circle',
+                'color' => 'success'
+            ]
+        ];
+    }
+
+    /**
+     * Get AJK statistics
+     */
+    private function getAjkStats($centreId)
+    {
+        return [
+            [
+                'title' => 'Centre Trainees',
+                'value' => DB::table('trainees')->where('centre_id', $centreId)->where('status', 'active')->count(),
+                'icon' => 'fas fa-user-graduate',
+                'color' => 'primary'
+            ],
+            [
+                'title' => 'Active Activities',
+                'value' => DB::table('activities')->where('centre_id', $centreId)->where('is_active', true)->count(),
+                'icon' => 'fas fa-tasks',
+                'color' => 'success'
+            ],
+            [
+                'title' => 'Today\'s Sessions',
+                'value' => DB::table('activity_sessions')
+                    ->join('activities', 'activity_sessions.activity_id', '=', 'activities.id')
+                    ->where('activities.centre_id', $centreId)
+                    ->whereDate('activity_sessions.scheduled_date', today())
+                    ->count(),
+                'icon' => 'fas fa-calendar-day',
+                'color' => 'info'
+            ]
+        ];
+    }
+
+    /**
+     * Get recent activities
+     */
+    private function getRecentActivities($centreId = null)
+    {
+        $query = DB::table('activities')
+            ->select('name', 'created_at', 'is_active')
+            ->orderBy('created_at', 'desc')
+            ->limit(5);
+            
+        if ($centreId) {
+            $query->where('centre_id', $centreId);
         }
         
-        return $view;
+        return $query->get()->map(function ($activity) {
+            return [
+                'title' => $activity->name,
+                'time' => Carbon::parse($activity->created_at)->diffForHumans(),
+                'status' => $activity->is_active ? 'active' : 'inactive'
+            ];
+        });
     }
-    
+
     /**
-     * Get recent updates based on role and timestamp
+     * Get upcoming sessions for teacher
      */
-    private function getRecentUpdates($lastUpdate, $role, $userId, $centreId): array
+    private function getUpcomingSessions($teacherId)
     {
-        $updates = [];
-        $since = Carbon::createFromTimestamp($lastUpdate);
-        
+        return DB::table('activity_sessions')
+            ->join('activities', 'activity_sessions.activity_id', '=', 'activities.id')
+            ->select('activities.name as activity_name', 'activity_sessions.scheduled_date', 'activity_sessions.start_time', 'activity_sessions.venue')
+            ->where('activity_sessions.teacher_id', $teacherId)
+            ->where('activity_sessions.status', 'scheduled')
+            ->where('activity_sessions.scheduled_date', '>=', today())
+            ->orderBy('activity_sessions.scheduled_date')
+            ->orderBy('activity_sessions.start_time')
+            ->limit(5)
+            ->get()
+            ->map(function ($session) {
+                return [
+                    'activity' => $session->activity_name,
+                    'date' => Carbon::parse($session->scheduled_date)->format('M j'),
+                    'time' => Carbon::parse($session->start_time)->format('g:i A'),
+                    'venue' => $session->venue ?? 'TBA'
+                ];
+            });
+    }
+
+    /**
+     * Get notifications for user
+     */
+    private function getNotifications($userId)
+    {
+        try {
+            return DB::table('notifications')
+                ->where('user_id', $userId)
+                ->where('is_read', false)
+                ->orderBy('created_at', 'desc')
+                ->limit(5)
+                ->get()
+                ->map(function ($notification) {
+                    return [
+                        'id' => $notification->id,
+                        'type' => $notification->type ?? 'info',
+                        'title' => $notification->title,
+                        'message' => $notification->message,
+                        'time' => Carbon::parse($notification->created_at)->diffForHumans(),
+                        'read' => $notification->is_read
+                    ];
+                });
+        } catch (\Exception $e) {
+            return [
+                [
+                    'type' => 'info',
+                    'title' => 'Welcome!',
+                    'message' => 'Welcome to your CREAMS dashboard!',
+                    'time' => 'now'
+                ]
+            ];
+        }
+    }
+
+    /**
+     * Get recent users (admin/supervisor only)
+     */
+    private function getRecentUsers($role, $centreId)
+    {
+        if (!in_array($role, ['admin', 'supervisor'])) {
+            return [];
+        }
+
+        try {
+            $query = DB::table('users')
+                ->select('id', 'name', 'role', 'last_login', 'is_online', 'created_at')
+                ->orderBy('last_login', 'desc')
+                ->limit(8);
+
+            if ($role === 'supervisor' && $centreId) {
+                $query->where('centre_id', $centreId);
+            }
+
+            return $query->get()->map(function ($user) {
+                return [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'role' => ucfirst($user->role),
+                    'last_login' => $user->last_login ? Carbon::parse($user->last_login)->diffForHumans() : 'Never',
+                    'status' => $user->is_online ? 'online' : 'offline',
+                    'created' => Carbon::parse($user->created_at)->format('M j, Y')
+                ];
+            });
+        } catch (\Exception $e) {
+            return [];
+        }
+    }
+
+    /**
+     * Get current active sessions
+     */
+    private function getCurrentSessions($role, $userId, $centreId)
+    {
+        try {
+            $query = DB::table('activity_sessions')
+                ->join('activities', 'activity_sessions.activity_id', '=', 'activities.id')
+                ->join('users', 'activity_sessions.teacher_id', '=', 'users.id')
+                ->select(
+                    'activities.activity_name',
+                    'activity_sessions.start_time',
+                    'activity_sessions.end_time',
+                    'activity_sessions.venue',
+                    'users.name as teacher_name',
+                    'activity_sessions.status',
+                    'activity_sessions.id as session_id'
+                )
+                ->where('activity_sessions.status', 'ongoing')
+                ->whereDate('activity_sessions.scheduled_date', today());
+
+            if ($role === 'teacher') {
+                $query->where('activity_sessions.teacher_id', $userId);
+            } elseif ($role === 'supervisor' && $centreId) {
+                $query->where('activities.centre_id', $centreId);
+            }
+
+            return $query->limit(6)->get()->map(function ($session) {
+                return [
+                    'activity' => $session->activity_name,
+                    'teacher' => $session->teacher_name,
+                    'time' => Carbon::parse($session->start_time)->format('g:i A') . ' - ' . Carbon::parse($session->end_time)->format('g:i A'),
+                    'venue' => $session->venue ?? 'TBA',
+                    'status' => ucfirst($session->status),
+                    'session_id' => $session->session_id
+                ];
+            });
+        } catch (\Exception $e) {
+            return [];
+        }
+    }
+
+    /**
+     * Get calendar events for the week
+     */
+    private function getCalendarEvents($role, $userId, $centreId)
+    {
+        try {
+            $startDate = now()->startOfWeek();
+            $endDate = now()->endOfWeek();
+
+            $query = DB::table('activity_sessions')
+                ->join('activities', 'activity_sessions.activity_id', '=', 'activities.id')
+                ->select(
+                    'activities.activity_name',
+                    'activity_sessions.scheduled_date',
+                    'activity_sessions.start_time',
+                    'activity_sessions.end_time',
+                    'activity_sessions.status'
+                )
+                ->whereBetween('activity_sessions.scheduled_date', [$startDate, $endDate])
+                ->where('activity_sessions.status', '!=', 'cancelled');
+
+            if ($role === 'teacher') {
+                $query->where('activity_sessions.teacher_id', $userId);
+            } elseif ($role === 'supervisor' && $centreId) {
+                $query->where('activities.centre_id', $centreId);
+            }
+
+            return $query->orderBy('activity_sessions.scheduled_date')
+                ->orderBy('activity_sessions.start_time')
+                ->limit(10)
+                ->get()
+                ->map(function ($event) {
+                    return [
+                        'title' => $event->activity_name,
+                        'date' => Carbon::parse($event->scheduled_date)->format('M j'),
+                        'day' => Carbon::parse($event->scheduled_date)->format('D'),
+                        'time' => Carbon::parse($event->start_time)->format('g:i A'),
+                        'status' => $event->status,
+                        'color' => $this->getStatusColor($event->status)
+                    ];
+                });
+        } catch (\Exception $e) {
+            return [];
+        }
+    }
+
+    /**
+     * Get system alerts
+     */
+    private function getSystemAlerts($role)
+    {
+        $alerts = [];
+
+        if (in_array($role, ['admin', 'supervisor'])) {
+            try {
+                // Check for pending registrations
+                $pendingRegistrations = DB::table('trainees')->where('status', 'pending')->count();
+                if ($pendingRegistrations > 0) {
+                    $alerts[] = [
+                        'type' => 'warning',
+                        'icon' => 'fas fa-user-clock',
+                        'message' => "{$pendingRegistrations} trainee registration(s) pending approval",
+                        'action_url' => route('trainees.create'),
+                        'action_text' => 'Review'
+                    ];
+                }
+
+                // Check for overdue sessions
+                $overdueSessions = DB::table('activity_sessions')
+                    ->where('status', 'scheduled')
+                    ->where('scheduled_date', '<', today())
+                    ->count();
+                if ($overdueSessions > 0) {
+                    $alerts[] = [
+                        'type' => 'danger',
+                        'icon' => 'fas fa-exclamation-triangle',
+                        'message' => "{$overdueSessions} session(s) are overdue",
+                        'action_url' => route('enhanced-attendance.index'),
+                        'action_text' => 'Check'
+                    ];
+                }
+
+                // Check for low attendance
+                $lowAttendanceActivities = DB::table('activities')
+                    ->leftJoin('activity_enrollments', 'activities.id', '=', 'activity_enrollments.activity_id')
+                    ->select('activities.id', 'activities.activity_name', DB::raw('COUNT(activity_enrollments.id) as enrollment_count'))
+                    ->where('activities.activity_status', 'scheduled')
+                    ->groupBy('activities.id', 'activities.activity_name')
+                    ->having('enrollment_count', '<', 3)
+                    ->count();
+
+                if ($lowAttendanceActivities > 0) {
+                    $alerts[] = [
+                        'type' => 'info',
+                        'icon' => 'fas fa-chart-line',
+                        'message' => "{$lowAttendanceActivities} activity(ies) have low enrollment",
+                        'action_url' => route('activities.home'),
+                        'action_text' => 'View'
+                    ];
+                }
+            } catch (\Exception $e) {
+                // Ignore errors and continue
+            }
+        }
+
+        return $alerts;
+    }
+
+    /**
+     * Get progress summary
+     */
+    private function getProgressSummary($role, $userId, $centreId)
+    {
+        try {
+            if ($role === 'teacher') {
+                $totalSessions = DB::table('activity_sessions')->where('teacher_id', $userId)->count();
+                $completedSessions = DB::table('activity_sessions')->where('teacher_id', $userId)->where('status', 'completed')->count();
+                $progress = $totalSessions > 0 ? round(($completedSessions / $totalSessions) * 100) : 0;
+
+                return [
+                    'title' => 'Teaching Progress',
+                    'percentage' => $progress,
+                    'completed' => $completedSessions,
+                    'total' => $totalSessions,
+                    'description' => 'Sessions completed this month'
+                ];
+            } elseif (in_array($role, ['admin', 'supervisor'])) {
+                $query = DB::table('activity_sessions')
+                    ->join('activities', 'activity_sessions.activity_id', '=', 'activities.id');
+
+                if ($role === 'supervisor' && $centreId) {
+                    $query->where('activities.centre_id', $centreId);
+                }
+
+                $totalSessions = $query->count();
+                $completedSessions = $query->where('activity_sessions.status', 'completed')->count();
+                $progress = $totalSessions > 0 ? round(($completedSessions / $totalSessions) * 100) : 0;
+
+                return [
+                    'title' => 'Centre Progress',
+                    'percentage' => $progress,
+                    'completed' => $completedSessions,
+                    'total' => $totalSessions,
+                    'description' => 'Activities completed this month'
+                ];
+            }
+
+            return null;
+        } catch (\Exception $e) {
+            return null;
+        }
+    }
+
+    /**
+     * Get centre information
+     */
+    private function getCentreInfo($centreId)
+    {
+        if (!$centreId) return null;
+
+        try {
+            return DB::table('centres')
+                ->select('centre_name', 'centre_address', 'centre_phone', 'centre_email', 'centre_capacity')
+                ->where('centre_id', $centreId)
+                ->first();
+        } catch (\Exception $e) {
+            return null;
+        }
+    }
+
+    /**
+     * Get enhanced quick stats based on role
+     */
+    private function getQuickStats($role, $userId, $centreId)
+    {
         try {
             switch ($role) {
                 case 'admin':
-                    $updates = $this->getAdminUpdates($since);
-                    break;
+                    return $this->getAdminStats();
                 case 'supervisor':
-                    $updates = $this->getSupervisorUpdates($since, $centreId);
-                    break;
+                    return $this->getSupervisorStats($centreId);
                 case 'teacher':
-                    $updates = $this->getTeacherUpdates($since, $userId);
-                    break;
+                    return $this->getTeacherStats($userId, $centreId);
                 case 'ajk':
-                    $updates = $this->getAjkUpdates($since, $centreId);
-                    break;
-            }
-        } catch (\Exception $e) {
-            Log::warning('Failed to get role-specific updates', [
-                'role' => $role,
-                'error' => $e->getMessage()
-            ]);
-        }
-        
-        return $updates;
-    }
-    
-    /**
-     * Get admin-specific updates
-     */
-    private function getAdminUpdates($since): array
-    {
-        $updates = [];
-        
-        // Check for new users
-        $newUsers = \App\Models\Users::where('created_at', '>', $since)->count();
-        if ($newUsers > 0) {
-            $updates[] = [
-                'type' => 'info',
-                'icon' => 'fas fa-user-plus',
-                'message' => "{$newUsers} new user(s) registered",
-                'action' => route('users.index'),
-                'timestamp' => now()->toISOString()
-            ];
-        }
-        
-        // Check for new trainees
-        $newTrainees = \App\Models\Trainee::where('created_at', '>', $since)->count();
-        if ($newTrainees > 0) {
-            $updates[] = [
-                'type' => 'success',
-                'icon' => 'fas fa-user-graduate',
-                'message' => "{$newTrainees} new trainee(s) enrolled",
-                'action' => route('trainees.index'),
-                'timestamp' => now()->toISOString()
-            ];
-        }
-        
-        // Check for system alerts
-        $criticalAlerts = \App\Models\AssetMaintenance::where('scheduled_date', '<', now())
-            ->where('status', 'scheduled')
-            ->where('updated_at', '>', $since)
-            ->count();
-            
-        if ($criticalAlerts > 0) {
-            $updates[] = [
-                'type' => 'warning',
-                'icon' => 'fas fa-exclamation-triangle',
-                'message' => "{$criticalAlerts} maintenance task(s) are now overdue",
-                'action' => route('assets.maintenance'),
-                'timestamp' => now()->toISOString()
-            ];
-        }
-        
-        return $updates;
-    }
-    
-    /**
-     * Get teacher-specific updates
-     */
-    private function getTeacherUpdates($since, $userId): array
-    {
-        $updates = [];
-        
-        // Check for new enrollments in teacher's sessions
-        $newEnrollments = \App\Models\ActivityEnrollment::whereHas('session', function($q) use ($userId) {
-                $q->where('teacher_id', $userId);
-            })
-            ->where('created_at', '>', $since)
-            ->count();
-            
-        if ($newEnrollments > 0) {
-            $updates[] = [
-                'type' => 'info',
-                'icon' => 'fas fa-user-check',
-                'message' => "{$newEnrollments} new enrollment(s) in your sessions",
-                'action' => route('activities.index'),
-                'timestamp' => now()->toISOString()
-            ];
-        }
-        
-        // Check for sessions requiring attendance
-        $pendingAttendance = \App\Models\ActivitySession::where('teacher_id', $userId)
-            ->where('status', 'scheduled')
-            ->where('session_date', '<', now())
-            ->where('updated_at', '>', $since)
-            ->count();
-            
-        if ($pendingAttendance > 0) {
-            $updates[] = [
-                'type' => 'warning',
-                'icon' => 'fas fa-clipboard-check',
-                'message' => "{$pendingAttendance} session(s) need attendance marking",
-                'action' => route('activities.index'),
-                'timestamp' => now()->toISOString()
-            ];
-        }
-        
-        return $updates;
-    }
-    
-    /**
-     * Get supervisor-specific updates
-     */
-    private function getSupervisorUpdates($since, $centreId): array
-    {
-        // Implementation similar to teacher updates but centre-specific
-        return [];
-    }
-    
-    /**
-     * Get AJK-specific updates
-     */
-    private function getAjkUpdates($since, $centreId): array
-    {
-        // Implementation for AJK role updates
-        return [];
-    }
-    
-    /**
-     * Get widget-specific data
-     */
-    private function getWidgetData($widget, $userId, $role, $centreId): array
-    {
-        $cacheKey = "widget_{$widget}_{$role}_{$userId}_{$centreId}";
-        
-        return Cache::remember($cacheKey, 60, function() use ($widget, $userId, $role, $centreId) {
-            switch ($widget) {
-                case 'quick-stats':
-                    return $this->getQuickStatsWidget($userId, $role, $centreId);
-                case 'recent-activity':
-                    return $this->getRecentActivityWidget($userId, $role, $centreId);
-                case 'schedule':
-                    return $this->getScheduleWidget($userId, $role, $centreId);
-                case 'alerts':
-                    return $this->getAlertsWidget($userId, $role, $centreId);
+                    return $this->getAjkStats($centreId);
                 default:
                     return [];
             }
-        });
-    }
-    
-    /**
-     * Get mobile quick actions based on role
-     */
-    private function getMobileQuickActions($role): array
-    {
-        $actions = [
-            'admin' => [
-                ['icon' => 'fas fa-user-plus', 'label' => 'Add User', 'route' => 'users.create'],
-                ['icon' => 'fas fa-chart-bar', 'label' => 'Reports', 'route' => 'reports.index'],
-                ['icon' => 'fas fa-cog', 'label' => 'Settings', 'route' => 'settings.index']
-            ],
-            'teacher' => [
-                ['icon' => 'fas fa-clipboard-check', 'label' => 'Attendance', 'route' => 'activities.index'],
-                ['icon' => 'fas fa-calendar', 'label' => 'Schedule', 'route' => 'activities.schedule'],
-                ['icon' => 'fas fa-user-graduate', 'label' => 'Trainees', 'route' => 'trainees.index']
-            ],
-            'supervisor' => [
-                ['icon' => 'fas fa-users', 'label' => 'Team', 'route' => 'users.index'],
-                ['icon' => 'fas fa-chart-line', 'label' => 'Performance', 'route' => 'reports.index'],
-                ['icon' => 'fas fa-calendar-alt', 'label' => 'Schedule', 'route' => 'activities.index']
-            ],
-            'ajk' => [
-                ['icon' => 'fas fa-tools', 'label' => 'Maintenance', 'route' => 'assets.maintenance'],
-                ['icon' => 'fas fa-box', 'label' => 'Assets', 'route' => 'assets.index'],
-                ['icon' => 'fas fa-bell', 'label' => 'Alerts', 'route' => 'notifications.index']
-            ]
-        ];
-        
-        return $actions[$role] ?? [];
-    }
-    
-    /**
-     * Detect if the request is from a mobile device
-     */
-    private function isMobileDevice(Request $request): bool
-    {
-        $userAgent = $request->header('User-Agent');
-        
-        $mobileKeywords = [
-            'Mobile', 'Android', 'iPhone', 'iPad', 'iPod', 'BlackBerry', 
-            'Windows Phone', 'Opera Mini', 'IEMobile', 'Mobile Safari'
-        ];
-        
-        foreach ($mobileKeywords as $keyword) {
-            if (stripos($userAgent, $keyword) !== false) {
-                return true;
-            }
+        } catch (\Exception $e) {
+            return [];
         }
-        
-        // Check for small screen size indicators
-        $mobileRegex = '/(' . implode('|', [
-            'android', 'webos', 'iphone', 'ipad', 'ipod', 'blackberry', 'iemobile', 'opera mini'
-        ]) . ')/i';
-        
-        return preg_match($mobileRegex, $userAgent);
     }
-    
+
     /**
-     * Prepare data specifically for mobile view
+     * Get status color for calendar events
      */
-    private function prepareMobileData(array $dashboardData, string $role): array
+    private function getStatusColor($status)
     {
-        // Simplify and optimize data for mobile
-        $mobileData = [
-            'stats' => $dashboardData['stats'] ?? [],
-            'performance' => $dashboardData['performance'] ?? [],
-            'recent' => [
-                'activities' => array_slice($dashboardData['recent']['activities'] ?? [], 0, 3),
-                'notifications' => array_slice($dashboardData['alerts'] ?? [], 0, 5)
-            ],
-            'quick_actions' => $this->getMobileQuickActions($role)
-        ];
-        
-        // Add mobile-specific optimizations
-        $mobileData['mobile_optimized'] = true;
-        $mobileData['compression_applied'] = true;
-        
-        return $mobileData;
-    }
-    
-    /**
-     * Handle dashboard errors gracefully
-     */
-    private function handleDashboardError(\Exception $e): \Illuminate\Http\Response
-    {
-        $errorData = [
-            'error' => true,
-            'message' => 'Dashboard temporarily unavailable',
-            'details' => app()->environment('local') ? $e->getMessage() : null,
-            'stats' => [
-                'total_users' => 0,
-                'total_trainees' => 0,
-                'total_activities' => 0,
-                'total_sessions' => 0
-            ],
-            'alerts' => [
-                [
-                    'type' => 'danger',
-                    'message' => 'Dashboard data is temporarily unavailable. Please refresh the page.',
-                    'action' => '#'
-                ]
-            ]
-        ];
-        
-        return response()->view('dashboard.error', $errorData, 200);
-    }
-    
-    // =============================================
-    // EXPORT FUNCTIONALITY
-    // =============================================
-    
-    private function exportToCsv($data) 
-    {
-        $filename = 'dashboard_data_' . date('Y-m-d_H-i-s') . '.csv';
-        
-        $headers = [
-            'Content-Type' => 'text/csv',
-            'Content-Disposition' => "attachment; filename=\"$filename\"",
-        ];
-        
-        $callback = function() use ($data) {
-            $file = fopen('php://output', 'w');
-            
-            // Add headers
-            fputcsv($file, ['Metric', 'Value', 'Description']);
-            
-            // Add stats data
-            if (isset($data['stats'])) {
-                foreach ($data['stats'] as $key => $value) {
-                    fputcsv($file, [
-                        ucwords(str_replace('_', ' ', $key)),
-                        $value,
-                        'Dashboard statistic'
-                    ]);
-                }
-            }
-            
-            fclose($file);
-        };
-        
-        return response()->stream($callback, 200, $headers);
-    }
-    
-    private function exportToPdf($data) 
-    {
-        // For future implementation with a PDF library like DomPDF
-        return response()->json([
-            'success' => false,
-            'message' => 'PDF export functionality coming soon'
-        ]);
-    }
-    
-    private function exportToExcel($data) 
-    {
-        // For future implementation with PhpSpreadsheet
-        return response()->json([
-            'success' => false,
-            'message' => 'Excel export functionality coming soon'
-        ]);
-    }
-    
-    // =============================================
-    // WIDGET METHODS
-    // =============================================
-    
-    private function getQuickStatsWidget($userId, $role, $centreId) 
-    {
-        return [
-            'stats' => $this->dashboardService->getDashboardData($userId, $role, $centreId)['stats'] ?? [],
-            'last_updated' => now()->toISOString()
-        ];
-    }
-    
-    private function getRecentActivityWidget($userId, $role, $centreId) 
-    {
-        $dashboardData = $this->dashboardService->getDashboardData($userId, $role, $centreId);
-        
-        return [
-            'activities' => $dashboardData['recent']['activities'] ?? [],
-            'count' => count($dashboardData['recent']['activities'] ?? []),
-            'last_updated' => now()->toISOString()
-        ];
-    }
-    
-    private function getScheduleWidget($userId, $role, $centreId) 
-    {
-        $dashboardData = $this->dashboardService->getDashboardData($userId, $role, $centreId);
-        
-        return [
-            'today' => $dashboardData['schedule']['today'] ?? [],
-            'upcoming' => array_slice($dashboardData['schedule']['upcoming'] ?? [], 0, 5),
-            'last_updated' => now()->toISOString()
-        ];
-    }
-    
-    private function getAlertsWidget($userId, $role, $centreId) 
-    {
-        $dashboardData = $this->dashboardService->getDashboardData($userId, $role, $centreId);
-        
-        return [
-            'alerts' => $dashboardData['alerts'] ?? [],
-            'count' => count($dashboardData['alerts'] ?? []),
-            'critical_count' => count(array_filter($dashboardData['alerts'] ?? [], function($alert) {
-                return ($alert['type'] ?? '') === 'danger';
-            })),
-            'last_updated' => now()->toISOString()
-        ];
+        switch ($status) {
+            case 'scheduled':
+                return 'primary';
+            case 'ongoing':
+                return 'success';
+            case 'completed':
+                return 'info';
+            case 'cancelled':
+                return 'danger';
+            default:
+                return 'secondary';
+        }
     }
 }

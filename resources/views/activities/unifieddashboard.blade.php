@@ -315,7 +315,7 @@
                     <i class="fas fa-clipboard-list"></i>
                 </div>
                 <div class="stat-value">{{ $stats['total_activities'] ?? 0 }}</div>
-                <div class="stat-label">Total Activities</div>
+                <div class="stat-label">Total Activity</div>
             </div>
             
             <div class="stat-card">
@@ -323,7 +323,7 @@
                     <i class="fas fa-check-circle"></i>
                 </div>
                 <div class="stat-value">{{ $stats['active_activities'] ?? 0 }}</div>
-                <div class="stat-label">Active Activities</div>
+                <div class="stat-label">Active Activity</div>
             </div>
             
             <div class="stat-card">
@@ -339,7 +339,7 @@
                     <i class="fas fa-users"></i>
                 </div>
                 <div class="stat-value">{{ $stats['active_trainees'] ?? 0 }}</div>
-                <div class="stat-label">Active Trainees</div>
+                <div class="stat-label">Active Trainee</div>
             </div>
         </div>
 
@@ -349,7 +349,7 @@
                 <div class="form-group">
                     <label>Category</label>
                     <select name="category" class="form-control" onchange="this.form.submit()">
-                        <option value="">All Categories</option>
+                        <option value="">All Category</option>
                         @foreach($categories as $groupName => $group)
                             <optgroup label="{{ $groupName }}">
                                 @foreach($group as $category => $meta)
@@ -389,7 +389,7 @@
             </form>
         </div>
 
-        <!-- Activities Grid -->
+        <!-- Activity Grid -->
         @if($activities->count() > 0)
             <div class="activity-grid">
                 @foreach($activities as $activity)
@@ -451,7 +451,7 @@
                 <div class="empty-icon">
                     <i class="fas fa-clipboard-list"></i>
                 </div>
-                <div class="empty-title">No Activities Found</div>
+                <div class="empty-title">No Activity Found</div>
                 <div class="empty-text">
                     @if(request()->hasAny(['category', 'search']))
                         No activities match your search criteria.

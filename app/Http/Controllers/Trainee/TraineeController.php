@@ -5,8 +5,8 @@ namespace App\Http\Controllers\Trainee;
 use App\Http\Controllers\Controller;
 
 use Illuminate\Http\Request;
-use App\Models\Trainees;
-use App\Models\Centres;
+use App\Models\Trainee;
+use App\Models\Centre;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
@@ -25,13 +25,13 @@ class TraineeController extends Controller
             $role = session('role');
             $userId = session('id');
             
-            Log::info('Trainees index accessed', [
+            Log::info('Trainee index accessed', [
                 'user_id' => $userId,
                 'role' => $role
             ]);
             
             // Get trainees with relationships
-            $query = Trainees::with(['centre']);
+            $query = Trainee::with(['centre']);
             
             // Filter by user role and centre if needed
             if (in_array($role, ['teacher', 'supervisor', 'ajk'])) {
@@ -46,9 +46,9 @@ class TraineeController extends Controller
             // Get statistics
             $stats = [
                 'total_trainees' => $trainees->total(),
-                'active_trainees' => Trainees::where('status', 'active')->count(),
-                'new_this_month' => Trainees::where('created_at', '>=', now()->subMonth())->count(),
-                'centres_count' => Centres::count()
+                'active_trainees' => Trainee::where('status', 'active')->count(),
+                'new_this_month' => Trainee::where('created_at', '>=', now()->subMonth())->count(),
+                'centres_count' => Centre::count()
             ];
             
             return view('trainees.home', compact('trainees', 'stats', 'role'));
@@ -85,7 +85,7 @@ class TraineeController extends Controller
             ]);
             
             // Get active centres
-            $centres = Centres::where('is_active', 1)
+            $centres = Centre::where('is_active', 1)
                 ->orderBy('centre_name')
                 ->get();
             
@@ -177,7 +177,7 @@ class TraineeController extends Controller
             }
             
             // Create trainee with all required fields
-            $trainee = Trainees::create([
+            $trainee = Trainee::create([
                 'trainee_first_name' => $validated['trainee_first_name'],
                 'trainee_last_name' => $validated['trainee_last_name'],
                 'trainee_email' => $validated['trainee_email'],
@@ -247,7 +247,7 @@ class TraineeController extends Controller
     public function show($id)
     {
         try {
-            $trainee = Trainees::with(['centre', 'activities', 'attendances'])
+            $trainee = Trainee::with(['centre', 'activities', 'attendances'])
                 ->findOrFail($id);
             
             Log::info('Trainee profile viewed', [
@@ -292,8 +292,8 @@ class TraineeController extends Controller
                     ->with('error', 'You do not have permission to edit trainees.');
             }
             
-            $trainee = Trainees::findOrFail($id);
-            $centres = Centres::where('is_active', 1)
+            $trainee = Trainee::findOrFail($id);
+            $centres = Centre::where('is_active', 1)
                 ->orderBy('centre_name')
                 ->get();
             
@@ -332,7 +332,7 @@ class TraineeController extends Controller
                     ->with('error', 'You do not have permission to update trainees.');
             }
             
-            $trainee = Trainees::findOrFail($id);
+            $trainee = Trainee::findOrFail($id);
             
             Log::info('Trainee update initiated', [
                 'trainee_id' => $trainee->id,
@@ -439,7 +439,7 @@ class TraineeController extends Controller
                     ->with('error', 'Only administrators can delete trainees.');
             }
             
-            $trainee = Trainees::findOrFail($id);
+            $trainee = Trainee::findOrFail($id);
             
             Log::warning('Trainee deletion initiated', [
                 'trainee_id' => $trainee->id,

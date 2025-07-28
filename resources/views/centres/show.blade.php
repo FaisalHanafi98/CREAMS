@@ -18,10 +18,10 @@
                 </a>
             @endif
             <a href="{{ route('centres.assets', $centre->centre_id) }}" class="btn btn-primary">
-                <i class="fas fa-box"></i> View Assets
+                <i class="fas fa-box"></i> View Asset
             </a>
             <a href="{{ route('centres.index') }}" class="btn btn-outline-secondary">
-                <i class="fas fa-arrow-left"></i> Back to Centres
+                <i class="fas fa-arrow-left"></i> Back to Centre
             </a>
         </div>
     </div>
@@ -87,10 +87,10 @@
                 </div>
             </div>
 
-            {{-- Recent Activities Card --}}
+            {{-- Recent Activity Card --}}
             <div class="detail-card mt-4">
                 <div class="detail-card-header">
-                    <h3>Recent Activities</h3>
+                    <h3>Recent Activity</h3>
                     <a href="{{ route('activities.home') }}?centre={{ $centre->centre_id }}" class="btn btn-sm btn-outline-light">
                         View All
                     </a>
@@ -128,12 +128,12 @@
                 </div>
             </div>
 
-            {{-- Assets Overview Card --}}
+            {{-- Asset Overview Card --}}
             <div class="detail-card mt-4">
                 <div class="detail-card-header">
-                    <h3>Assets Overview</h3>
+                    <h3>Asset Overview</h3>
                     <a href="{{ route('centres.assets', $centre->centre_id) }}" class="btn btn-sm btn-outline-light">
-                        Manage Assets
+                        Manage Asset
                     </a>
                 </div>
                 <div class="detail-card-body">
@@ -142,7 +142,7 @@
                             <div class="col-md-4 text-center">
                                 <div class="asset-stat">
                                     <h4 class="text-primary">{{ $stats->total_assets ?? $stats['total_assets'] ?? 0 }}</h4>
-                                    <small class="text-muted">Total Assets</small>
+                                    <small class="text-muted">Total Asset</small>
                                 </div>
                             </div>
                             <div class="col-md-4 text-center">
@@ -164,7 +164,7 @@
                             <p class="text-muted mb-0">No assets registered</p>
                             @if(in_array(session('role'), ['admin', 'supervisor']))
                                 <a href="{{ route('centres.assets', $centre->centre_id) }}" class="btn btn-sm btn-primary mt-2">
-                                    Add Assets
+                                    Add Asset
                                 </a>
                             @endif
                         </div>
@@ -186,11 +186,11 @@
                     </div>
                     <div class="stat-item">
                         <div class="stat-value">{{ $stats->total_trainees ?? $stats['total_trainees'] ?? 0 }}</div>
-                        <div class="stat-label">Total Trainees</div>
+                        <div class="stat-label">Total Trainee</div>
                     </div>
                     <div class="stat-item">
                         <div class="stat-value">{{ $stats->total_assets ?? $stats['total_assets'] ?? 0 }}</div>
-                        <div class="stat-label">Total Assets</div>
+                        <div class="stat-label">Total Asset</div>
                     </div>
                     <div class="stat-item">
                         <div class="stat-value">{{ $centre->capacity ?? 0 }}</div>
@@ -214,7 +214,7 @@
                 <div class="quick-actions-body">
                     <a href="{{ route('centres.assets', $centre->centre_id) }}" class="action-item">
                         <i class="fas fa-box"></i>
-                        <span>Manage Assets</span>
+                        <span>Manage Asset</span>
                     </a>
                     <a href="{{ route('centres.edit', $centre->centre_id) }}" class="action-item">
                         <i class="fas fa-edit"></i>

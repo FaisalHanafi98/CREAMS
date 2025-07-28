@@ -6,12 +6,8 @@ use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
-use App\Models\Users;
-use App\Models\Admins;
-use App\Models\Supervisors;
-use App\Models\Teachers;
-use App\Models\AJKs;
-use App\Models\Notifications;
+use App\Models\User;
+use App\Models\Notification;
 use Illuminate\Support\Facades\Schema;
 
 class CREAMSNotificationSeeder extends Seeder
@@ -28,7 +24,7 @@ class CREAMSNotificationSeeder extends Seeder
             
             // Check if table already has data
             if (Schema::hasTable('notifications') && DB::table('notifications')->count() > 0) {
-                if (!$this->command->confirm('Notifications table already has data. Continue with seeding?')) {
+                if (!$this->command->confirm('Notification table already has data. Continue with seeding?')) {
                     $this->command->info('Seeding aborted!');
                     return;
                 }
@@ -41,13 +37,10 @@ class CREAMSNotificationSeeder extends Seeder
             DB::beginTransaction();
             
             // Get users from each role for test notifications
-            $admins = Admins::where('status', 'active')->get();
-            $supervisors = Supervisors::where('status', 'active')->get();
-            $teachers = Teachers::where('status', 'active')->get();
-            $ajks = AJKs::where('status', 'active')->get();
+            $allUsers = User::where('status', 'active')->get();
             
             // Check if we have users to create notifications for
-            if ($admins->isEmpty() && $supervisors->isEmpty() && $teachers->isEmpty() && $ajks->isEmpty()) {
+            if ($allUsers->isEmpty()) {
                 Log::warning('No active users found to seed notifications for.');
                 $this->command->warn('No active users found to seed notifications for.');
                 DB::rollBack();
@@ -57,29 +50,14 @@ class CREAMSNotificationSeeder extends Seeder
             // Create notifications for each user
             $totalNotifications = 0;
             
-            foreach ($admins as $admin) {
-                $count = $this->createNotificationsForUser($admin->id, 'admin', $mode);
-                $totalNotifications += $count;
-            }
-            
-            foreach ($supervisors as $supervisor) {
-                $count = $this->createNotificationsForUser($supervisor->id, 'supervisor', $mode);
-                $totalNotifications += $count;
-            }
-            
-            foreach ($teachers as $teacher) {
-                $count = $this->createNotificationsForUser($teacher->id, 'teacher', $mode);
-                $totalNotifications += $count;
-            }
-            
-            foreach ($ajks as $ajk) {
-                $count = $this->createNotificationsForUser($ajk->id, 'ajk', $mode);
+            foreach ($allUsers as $user) {
+                $count = $this->createNotificationsForUser($user->id, $user->role, $user->centre_id ?? 1, $mode);
                 $totalNotifications += $count;
             }
             
             DB::commit();
             
-            Log::info('Notifications table seeded successfully', [
+            Log::info('Notification table seeded successfully', [
                 'total_notifications' => $totalNotifications
             ]);
             
@@ -101,10 +79,11 @@ class CREAMSNotificationSeeder extends Seeder
      *
      * @param  int  $userId
      * @param  string  $userType
+     * @param  int  $centreId
      * @param  string  $mode
      * @return int Number of notifications created
      */
-    private function createNotificationsForUser($userId, $userType, $mode = 'full')
+    private function createNotificationsForUser($userId, $userType, $centreId, $mode = 'full')
     {
         // Generate 5-15 random notifications per user in full mode, 3-5 in minimal mode
         $count = $mode === 'full' ? rand(5, 15) : rand(3, 5);
@@ -288,8 +267,8 @@ class CREAMSNotificationSeeder extends Seeder
         
         // Generate random notifications
         for ($i = 0; $i < $count; $i++) {
-            $type = array_rand($notificationTypes);
-            $typeConfig = $notificationTypes[$type];
+            $categoryType = array_rand($notificationTypes);
+            $typeConfig = $notificationTypes[$categoryType];
             
             $titleTemplate = $typeConfig['titles'][array_rand($typeConfig['titles'])];
             $contentTemplate = $typeConfig['content'][array_rand($typeConfig['content'])];
@@ -312,6 +291,17 @@ class CREAMSNotificationSeeder extends Seeder
             $title = str_replace(array_keys($replacements), array_values($replacements), $titleTemplate);
             $content = str_replace(array_keys($replacements), array_values($replacements), $contentTemplate);
             
+            // Map notification categories to allowed types
+            $allowedTypes = ['info', 'warning', 'success', 'error'];
+            $notificationType = match($categoryType) {
+                'message' => 'info',
+                'activity' => 'success',
+                'trainee' => 'info',
+                'asset' => 'warning',
+                'system' => 'error',
+                default => 'info'
+            };
+            
             // Random data for additional context (nullable)
             $data = null;
             if (rand(0, 2) == 0) { // 1/3 chance of having additional data
@@ -319,7 +309,8 @@ class CREAMSNotificationSeeder extends Seeder
                     'action_url' => '#',
                     'action_text' => 'View Details',
                     'related_id' => rand(1000, 9999),
-                    'related_type' => $type,
+                    'related_type' => $categoryType,
+                    'category' => $categoryType,
                     'additional_info' => 'This is additional information for the notification.',
                     'priority' => rand(1, 3)  // 1 = low, 2 = medium, 3 = high
                 ]);
@@ -334,12 +325,18 @@ class CREAMSNotificationSeeder extends Seeder
             DB::table('notifications')->insert([
                 'user_id' => $userId,
                 'user_type' => $userType,
-                'type' => $type,
-                'title' => $title,
-                'content' => $content,
-                'data' => $data,
-                'read' => $read,
+                'centre_id' => $centreId,
+                'notification_title' => $title,
+                'notification_message' => $content,
+                'notification_type' => $notificationType,
+                'notification_channel' => 'database',
+                'notifiable_type' => 'App\\Models\\User',
+                'notifiable_id' => $userId,
+                'priority' => rand(1, 3), // 1=low, 2=medium, 3=high
+                'notification_data' => $data,
+                'is_read' => $read,
                 'read_at' => $readAt,
+                'delivered_at' => $createdAt->copy()->addMinutes(1),
                 'created_at' => $createdAt,
                 'updated_at' => $createdAt
             ]);
@@ -350,8 +347,8 @@ class CREAMSNotificationSeeder extends Seeder
         // Ensure some recent unread notifications for testing
         $recentCount = $mode === 'minimal' ? 2 : 3;
         for ($i = 0; $i < $recentCount; $i++) {
-            $type = array_rand($notificationTypes);
-            $typeConfig = $notificationTypes[$type];
+            $categoryType = array_rand($notificationTypes);
+            $typeConfig = $notificationTypes[$categoryType];
             
             $titleTemplate = $typeConfig['titles'][array_rand($typeConfig['titles'])];
             $contentTemplate = $typeConfig['content'][array_rand($typeConfig['content'])];
@@ -377,12 +374,23 @@ class CREAMSNotificationSeeder extends Seeder
             $title = 'URGENT: ' . str_replace(array_keys($replacements), array_values($replacements), $titleTemplate);
             $content = str_replace(array_keys($replacements), array_values($replacements), $contentTemplate);
             
+            // Map notification categories to allowed types
+            $notificationType = match($categoryType) {
+                'message' => 'info',
+                'activity' => 'success',
+                'trainee' => 'info',
+                'asset' => 'warning',
+                'system' => 'error',
+                default => 'info'
+            };
+            
             // Add action data for these important notifications
             $data = json_encode([
                 'action_url' => '#',
                 'action_text' => 'Take Action',
                 'related_id' => rand(1000, 9999),
-                'related_type' => $type,
+                'related_type' => $categoryType,
+                'category' => $categoryType,
                 'priority' => 3, // High priority
                 'urgent' => true
             ]);
@@ -391,12 +399,18 @@ class CREAMSNotificationSeeder extends Seeder
             DB::table('notifications')->insert([
                 'user_id' => $userId,
                 'user_type' => $userType,
-                'type' => $type,
-                'title' => $title,
-                'content' => $content,
-                'data' => $data,
-                'read' => false,
+                'centre_id' => $centreId,
+                'notification_title' => $title,
+                'notification_message' => $content,
+                'notification_type' => $notificationType,
+                'notification_channel' => 'database',
+                'notifiable_type' => 'App\\Models\\User',
+                'notifiable_id' => $userId,
+                'priority' => 3, // High priority for urgent notifications
+                'notification_data' => $data,
+                'is_read' => false,
                 'read_at' => null,
+                'delivered_at' => $createdAt->copy()->addMinutes(1),
                 'created_at' => $createdAt,
                 'updated_at' => $createdAt
             ]);

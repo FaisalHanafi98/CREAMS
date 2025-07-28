@@ -8,8 +8,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
-use App\Models\Users;
-use App\Models\Centres;
+use App\Models\User;
+use App\Models\Centre;
 use App\Models\Activity;
 use App\Models\Trainee;
 use App\Traits\HandlesErrors;
@@ -41,7 +41,7 @@ class StaffController extends Controller
             ]);
 
             // Get staff member with ID
-            $user = Users::findOrFail($id);
+            $user = User::findOrFail($id);
             
             // Debug: Log what user we found
             Log::info('Staff found for profile viewing', [
@@ -54,7 +54,7 @@ class StaffController extends Controller
             // Get centre information
             $centre = null;
             if ($user->centre_id) {
-                $centre = Centres::where('centre_id', $user->centre_id)->first();
+                $centre = Centre::where('centre_id', $user->centre_id)->first();
             }
 
             // Check if current user has permission to view this profile
@@ -111,7 +111,7 @@ class StaffController extends Controller
             ]);
 
             // Get staff member with ID
-            $user = Users::findOrFail($id);
+            $user = User::findOrFail($id);
             
             // Debug: Log what user we found
             Log::info('Staff found for profile editing', [
@@ -122,17 +122,17 @@ class StaffController extends Controller
 
             // Get centres for dropdown
             try {
-                $centres = Centres::where('status', 'active')
+                $centres = Centre::where('status', 'active')
                     ->get(['centre_id', 'centre_name']);
             } catch (\Exception $e) {
                 // If status column doesn't exist, get all centres
-                $centres = Centres::all(['centre_id', 'centre_name']);
+                $centres = Centre::all(['centre_id', 'centre_name']);
             }
 
             // Get centre information for current assignment
             $centre = null;
             if ($user->centre_id) {
-                $centre = Centres::where('centre_id', $user->centre_id)->first();
+                $centre = Centre::where('centre_id', $user->centre_id)->first();
             }
 
             // Check if current user has permission to edit this profile
@@ -151,7 +151,8 @@ class StaffController extends Controller
             return view('staff.edit', [
                 'staffMember' => $user,
                 'centres' => $centres,
-                'centre' => $centre
+                'centre' => $centre,
+                'encrypted_id' => $encrypted_id
             ]);
             
         } catch (\Exception $e) {
@@ -179,7 +180,7 @@ class StaffController extends Controller
             }
             
             // Get staff member with ID
-            $user = Users::findOrFail($id);
+            $user = User::findOrFail($id);
             
             // Check if current user has permission to edit this profile
             if (!$this->checkEditPermission($user)) {
@@ -268,7 +269,7 @@ class StaffController extends Controller
     /**
      * Check if current user can view a profile
      *
-     * @param Users $targetUser
+     * @param User $targetUser
      * @return bool
      */
     private function checkViewPermission($targetUser)
@@ -276,7 +277,7 @@ class StaffController extends Controller
         $currentUserRole = session('role');
         $currentUserId = session('id');
         
-        // Users can always view their own profile
+        // User can always view their own profile
         if ($currentUserId == $targetUser->id) {
             return true;
         }
@@ -292,12 +293,12 @@ class StaffController extends Controller
         $currentUserLevel = $roleHierarchy[$currentUserRole] ?? 0;
         $targetUserLevel = $roleHierarchy[$targetUser->role] ?? 0;
         
-        // Admins can view all profiles
+        // Admin can view all profiles
         if ($currentUserRole === 'admin') {
             return true;
         }
         
-        // Supervisors can view teachers and ajk
+        // Supervisor can view teachers and ajk
         if ($currentUserRole === 'supervisor' && in_array($targetUser->role, ['teacher', 'ajk'])) {
             return true;
         }
@@ -313,7 +314,7 @@ class StaffController extends Controller
     /**
      * Check if current user can edit a profile
      *
-     * @param Users $targetUser
+     * @param User $targetUser
      * @return bool
      */
     private function checkEditPermission($targetUser)
@@ -321,7 +322,7 @@ class StaffController extends Controller
         $currentUserRole = session('role');
         $currentUserId = session('id');
         
-        // Users can always edit their own profile
+        // User can always edit their own profile
         if ($currentUserId == $targetUser->id) {
             return true;
         }
@@ -344,7 +345,7 @@ class StaffController extends Controller
     /**
      * Get real-time statistics for a staff member using existing tables
      *
-     * @param Users $staffMember
+     * @param User $staffMember
      * @return array
      */
     private function getStaffStatistics($staffMember)
@@ -421,10 +422,17 @@ class StaffController extends Controller
      * @param int $id
      * @return \Illuminate\View\View
      */
-    public function showSchedule($id)
+    public function showSchedule($encrypted_id)
     {
         try {
-            $staffMember = Users::findOrFail($id);
+            // Decrypt the ID
+            $id = $this->decryptId($encrypted_id);
+            if (!$id) {
+                return redirect()->route('staffs.home')->with('error', 'Invalid or expired link.');
+            }
+            
+            // Find staff member by ID
+            $staffMember = User::findOrFail($id);
             
             // Check permission
             if (!$this->checkViewPermission($staffMember)) {
@@ -448,13 +456,15 @@ class StaffController extends Controller
             if (\Schema::hasTable('activity_sessions')) {
                 $sessions = \DB::table('activity_sessions')
                     ->join('activities', 'activity_sessions.activity_id', '=', 'activities.id')
+                    ->leftJoin('categories', 'activities.category_id', '=', 'categories.id')
                     ->where('activity_sessions.teacher_id', $staffMember->id)
                     ->where('activity_sessions.status', 'scheduled')
                     ->where('activity_sessions.scheduled_date', '>=', now())
                     ->select(
                         'activity_sessions.*',
                         'activities.activity_name',
-                        'activities.category'
+                        'activities.category_id',
+                        'categories.category_name as category'
                     )
                     ->orderBy('activity_sessions.scheduled_date')
                     ->orderBy('activity_sessions.start_time')
@@ -476,16 +486,29 @@ class StaffController extends Controller
                     ->get();
             }
 
+            // Sample schedule statistics for the view
+            $scheduleStats = [
+                'total_hours' => 40,
+                'today_sessions' => 3,
+                'week_sessions' => 15,
+                'month_hours' => 160
+            ];
+
             return view('staff.schedule', [
                 'staffMember' => $staffMember,
                 'activities' => $activities,
                 'schedules' => $schedules,
-                'sessions' => $sessions
+                'sessions' => $sessions,
+                'scheduleStats' => $scheduleStats
             ]);
 
         } catch (\Exception $e) {
-            Log::error('Error showing staff schedule: ' . $e->getMessage());
-            return redirect()->route('staffs.profile', ['encrypted_id' => $this->generateEncryptedId($id)])
+            Log::error('Error showing staff schedule: ' . $e->getMessage(), [
+                'encrypted_id' => $encrypted_id,
+                'error' => $e->getTraceAsString()
+            ]);
+            
+            return redirect()->route('staffs.home')
                 ->with('error', 'Unable to load schedule.');
         }
     }
@@ -493,13 +516,19 @@ class StaffController extends Controller
     /**
      * Show teacher's activities
      *
-     * @param int $id
+     * @param string $encrypted_id
      * @return \Illuminate\View\View
      */
-    public function showActivities($id)
+    public function showActivities($encrypted_id)
     {
         try {
-            $staffMember = Users::findOrFail($id);
+            // Decrypt the ID
+            $id = $this->decryptId($encrypted_id);
+            if (!$id) {
+                return redirect()->route('staffs.home')->with('error', 'Invalid or expired link.');
+            }
+            
+            $staffMember = User::findOrFail($id);
             
             // Check permission
             if (!$this->checkViewPermission($staffMember)) {
@@ -522,10 +551,10 @@ class StaffController extends Controller
                             $join->on('activities.id', '=', 'activity_enrollments.activity_id')
                                  ->whereIn('activity_enrollments.enrollment_status', ['enrolled', 'active']);
                         })
-                        ->withCount(['enrollments as enrollment_count' => function($query) {
-                            $query->whereIn('enrollment_status', ['enrolled', 'active']);
-                        }])
-                        ->select('activities.*')
+                        ->select(
+                            'activities.*',
+                            \DB::raw('COUNT(activity_enrollments.id) as enrollment_count')
+                        )
                         ->groupBy('activities.id')
                         ->get();
                 } else {
@@ -548,13 +577,19 @@ class StaffController extends Controller
     /**
      * Show assigned trainees for teacher
      *
-     * @param int $id
+     * @param string $encrypted_id
      * @return \Illuminate\View\View
      */
-    public function showTrainees($id)
+    public function showTrainees($encrypted_id)
     {
         try {
-            $staffMember = Users::findOrFail($id);
+            // Decrypt the ID
+            $id = $this->decryptId($encrypted_id);
+            if (!$id) {
+                return redirect()->route('staffs.home')->with('error', 'Invalid or expired link.');
+            }
+            
+            $staffMember = User::findOrFail($id);
             
             // Check permission
             if (!$this->checkViewPermission($staffMember)) {
@@ -593,6 +628,75 @@ class StaffController extends Controller
             Log::error('Error showing staff trainees: ' . $e->getMessage());
             return redirect()->route('staffs.profile', ['encrypted_id' => $this->generateEncryptedId($id)])
                 ->with('error', 'Unable to load assigned trainees.');
+        }
+    }
+
+    /**
+     * Show staff attendance record using IIUM ID
+     *
+     * @param string $iium_id
+     * @return \Illuminate\View\View
+     */
+    public function showAttendance($encrypted_id)
+    {
+        try {
+            // Decrypt the ID
+            $id = $this->decryptId($encrypted_id);
+            if (!$id) {
+                return redirect()->route('staffs.home')->with('error', 'Invalid or expired link.');
+            }
+            
+            // Find staff member by ID
+            $staffMember = User::findOrFail($id);
+            
+            Log::info('Viewing staff attendance', [
+                'encrypted_id' => $encrypted_id,
+                'staff_id' => $staffMember->id,
+                'viewer_id' => session('id')
+            ]);
+
+            // Check permission
+            if (!$this->checkViewPermission($staffMember)) {
+                return redirect()->route('staffs.home')
+                    ->with('error', 'You do not have permission to view this attendance record.');
+            }
+
+            // Sample attendance statistics - this would come from database in real implementation
+            $attendanceStats = [
+                'present_days' => 20,
+                'late_arrivals' => 2,
+                'early_leaves' => 1,
+                'attendance_rate' => 95
+            ];
+
+            $monthlyStats = [
+                'total_hours' => '168',
+                'avg_daily' => '8.2',
+                'overtime' => '12'
+            ];
+
+            $weeklyStats = [
+                'hours' => '40'
+            ];
+
+            $workingDays = 22;
+
+            return view('staff.attendance', [
+                'staffMember' => $staffMember,
+                'attendanceStats' => $attendanceStats,
+                'monthlyStats' => $monthlyStats,
+                'weeklyStats' => $weeklyStats,
+                'workingDays' => $workingDays
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error showing staff attendance: ' . $e->getMessage(), [
+                'encrypted_id' => $encrypted_id,
+                'error' => $e->getTraceAsString()
+            ]);
+
+            return redirect()->route('staffs.home')
+                ->with('error', 'Unable to load attendance record.');
         }
     }
 }

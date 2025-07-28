@@ -378,7 +378,7 @@
                                 <a href="{{ route('dashboard') }}">Dashboard</a>
                             </li>
                             <li class="breadcrumb-item">
-                                <a href="{{ route('trainees.index') }}">Trainees</a>
+                                <a href="{{ route('trainees.index') }}">Trainee</a>
                             </li>
                             <li class="breadcrumb-item active" aria-current="page">Register</li>
                         </ol>

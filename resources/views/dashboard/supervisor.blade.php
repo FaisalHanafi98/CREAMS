@@ -492,7 +492,7 @@
                     </div>
                 </div>
                 <div class="stat-value">{{ $stats['centre_trainees'] ?? 0 }}</div>
-                <div class="stat-label">Centre Trainees</div>
+                <div class="stat-label">Centre Trainee</div>
                 <div class="stat-change positive">
                     <i class="fas fa-arrow-up"></i>
                     Active participants
@@ -614,10 +614,10 @@
                     </div>
                 </div>
 
-                <!-- Today's Activities -->
+                <!-- Today's Activity -->
                 <div class="card-section">
                     <div class="section-header">
-                        <h3 class="section-title">Today's Activities</h3>
+                        <h3 class="section-title">Today's Activity</h3>
                         <a href="{{ route('activities.home') }}" class="btn btn-sm btn-outline-warning">View All</a>
                     </div>
                     
@@ -681,7 +681,7 @@
                             <div class="action-icon">
                                 <i class="fas fa-user-graduate"></i>
                             </div>
-                            <div class="action-label">Manage Trainees</div>
+                            <div class="action-label">Manage Trainee</div>
                         </a>
                     </div>
                 </div>
@@ -740,7 +740,7 @@
                     </div>
                 </div>
 
-                <!-- Recent Trainees -->
+                <!-- Recent Trainee -->
                 <div class="card-section">
                     <div class="section-header">
                         <h3 class="section-title">Recent Enrollments</h3>

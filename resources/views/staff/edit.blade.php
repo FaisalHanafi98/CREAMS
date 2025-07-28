@@ -278,7 +278,7 @@
         </div>
     </div>
 
-    <!-- Success/Error Messages -->
+    <!-- Success/Error Message -->
     @if(session('success'))
     <div class="alert alert-success alert-dismissible fade show" role="alert">
         <i class="fas fa-check-circle me-2"></i>{{ session('success') }}
@@ -299,7 +299,7 @@
     </div>
     @endif
 
-    <form action="{{ route('staffs.update', $staffMember->encrypted_id ?? $staffMember->id) }}" method="POST" enctype="multipart/form-data">
+    <form action="{{ route('staffs.update', $encrypted_id) }}" method="POST" enctype="multipart/form-data">
         @csrf
         @method('PUT')
         

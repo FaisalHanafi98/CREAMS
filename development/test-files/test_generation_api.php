@@ -32,7 +32,7 @@ echo "\nTo test manually:\n";
 echo "1. Open browser to http://localhost:8000\n";
 echo "2. Login to the system\n";
 echo "3. Navigate to Profile tab\n";
-echo "4. Go to Letters tab\n";
+echo "4. Go to Letter tab\n";
 echo "5. Fill in the form and click 'Generate Letter'\n";
 echo "6. Check for successful generation and download\n";
 

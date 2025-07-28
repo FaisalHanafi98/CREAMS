@@ -13,7 +13,7 @@
                     </h3>
                 </div>
                 <div class="card-body">
-                    <!-- Alert Messages -->
+                    <!-- Alert Message -->
                     @if(session('success'))
                         <div class="alert alert-success alert-dismissible fade show">
                             <i class="fas fa-check-circle mr-2"></i>{{ session('success') }}

@@ -2,94 +2,26 @@
 
 @section('title', 'My Profile - CREAMS')
 
-@push('styles')
+@section('styles')
 <style>
-    /* Custom animations and transitions */
-    .tab-content {
-        animation: fadeIn 0.3s ease-in-out;
-    }
-
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(10px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-
-    .form-input-animated {
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        width: 100%;
-        padding: 12px 16px;
-        border: 2px solid #e3e6f0;
-        border-radius: 10px;
-        font-size: 14px;
-        background: #fafafa;
-    }
-
-    .form-input-animated:focus {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-        border-color: var(--primary-color);
-        background: white;
-        outline: none;
-    }
-
-    .form-input-animated:disabled {
-        background: #f5f5f5;
-        color: #6c757d;
-        cursor: not-allowed;
-    }
-
-    /* Password strength indicator */
-    .password-strength {
-        height: 4px;
-        transition: all 0.3s ease;
-        border-radius: 2px;
-        margin-top: 8px;
-    }
-
-    .strength-weak { background-color: #ef4444; width: 33%; }
-    .strength-medium { background-color: #f59e0b; width: 66%; }
-    .strength-strong { background-color: #10b981; width: 100%; }
-
-    /* Letter preview card hover effect */
-    .letter-card {
-        transition: all 0.2s ease;
-        background: #f8f9fa;
-        border-radius: 10px;
-        padding: 16px;
-        margin-bottom: 12px;
-        cursor: pointer;
-        border: 1px solid #e9ecef;
-    }
-
-    .letter-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-        border-color: var(--primary-color);
-    }
-
-    /* Loading spinner */
-    .spinner {
-        animation: spin 1s linear infinite;
-    }
-
-    @keyframes spin {
-        from { transform: rotate(0deg); }
-        to { transform: rotate(360deg); }
-    }
-
-    /* Profile specific styles with CREAMS theming */
-    .profile-page {
-        background: var(--light-color);
-        min-height: calc(100vh - 60px);
+    :root {
+        --primary-color: #c850c0;
+        --secondary-color: #32bdea;
+        --success-color: #28a745;
+        --warning-color: #ffc107;
+        --danger-color: #dc3545;
+        --dark-color: #2c3e50;
+        --light-bg: #f8f9fc;
+        --border-color: #e3e6f0;
     }
 
     .profile-header {
         background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
         color: white;
-        padding: 30px 0;
-        margin-bottom: 30px;
+        padding: 2rem;
+        margin-bottom: 2rem;
         border-radius: 15px;
-        box-shadow: 0 5px 20px rgba(50, 189, 234, 0.3);
+        box-shadow: 0 5px 20px rgba(200, 80, 192, 0.3);
         position: relative;
         overflow: hidden;
     }
@@ -98,170 +30,237 @@
         content: '';
         position: absolute;
         top: 0;
-        left: 0;
         right: 0;
-        bottom: 0;
-        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
-        opacity: 0.1;
+        width: 200px;
+        height: 200px;
+        background: rgba(255,255,255,0.1);
+        border-radius: 50%;
+        transform: translate(50px, -50px);
     }
 
-    .profile-header .container-fluid {
+    .profile-header h1 {
+        margin: 0;
+        font-size: 2.5rem;
+        font-weight: 700;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.1);
         position: relative;
         z-index: 1;
     }
 
-    /* Tab Navigation */
-    .tab-navigation {
-        background: white;
+    .profile-header p {
+        margin: 10px 0 0 0;
+        opacity: 0.9;
+        font-size: 1.1rem;
+        position: relative;
+        z-index: 1;
+    }
+
+    .container-fluid {
+        background: var(--light-bg);
+        min-height: 100vh;
+        padding: 20px;
+    }
+
+    .profile-form .card {
+        border: none;
         border-radius: 15px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.07);
-        margin-bottom: 30px;
-        overflow: hidden;
-    }
-
-    .nav-tabs {
-        border: none;
-        padding: 0;
-        display: flex;
-        flex-wrap: wrap;
-    }
-
-    .nav-tabs .nav-item {
-        flex: 1;
-        min-width: 200px;
-    }
-
-    .nav-tabs .nav-link {
-        border: none;
-        padding: 20px 15px;
-        text-align: center;
-        color: #6c757d;
-        background: transparent;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+        margin-bottom: 25px;
+        background: white;
         transition: all 0.3s ease;
-        font-weight: 500;
-        font-size: 14px;
-        border-radius: 0;
+        border: 1px solid #f1f3f4;
+    }
+
+    .profile-form .card:hover {
+        box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+        transform: translateY(-3px);
+    }
+
+    .profile-form .card-header {
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        color: white;
+        border-radius: 15px 15px 0 0 !important;
+        padding: 20px 25px;
+        border: none;
+    }
+
+    .profile-form .card-header h5 {
+        margin: 0;
+        font-weight: 700;
+        color: white !important;
+        font-size: 18px;
         display: flex;
         align-items: center;
-        justify-content: center;
-        gap: 8px;
-        text-decoration: none;
-        border-bottom: 3px solid transparent;
+        gap: 10px;
     }
 
-    .nav-tabs .nav-link:hover {
-        color: var(--primary-color);
-        background: rgba(50, 189, 234, 0.05);
-        border-bottom-color: rgba(50, 189, 234, 0.3);
-    }
-
-    .nav-tabs .nav-link.active {
-        color: var(--primary-color);
-        background: rgba(50, 189, 234, 0.1);
-        border-bottom-color: var(--primary-color);
-        font-weight: 600;
-    }
-
-    /* Content Sections */
-    .content-section {
-        background: white;
-        border-radius: 15px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.07);
+    .profile-form .card-body {
         padding: 30px;
-        margin-bottom: 0;
-        transition: all 0.3s ease;
     }
 
-    .content-section:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
-    }
-
-    /* Form styling */
-    .form-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-        gap: 20px;
-        margin-bottom: 20px;
-    }
-
-    .form-group-modern {
-        margin-bottom: 20px;
-    }
-
-    .form-label-modern {
-        display: block;
-        margin-bottom: 8px;
+    .profile-form .form-group label {
         font-weight: 600;
         color: var(--dark-color);
+        margin-bottom: 10px;
         font-size: 14px;
         text-transform: uppercase;
         letter-spacing: 0.5px;
     }
 
-    /* Button styling */
-    .btn-modern {
-        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-        color: white;
-        border: none;
-        padding: 12px 24px;
+    .profile-form .form-control {
+        border: 2px solid #e9ecef;
+        border-radius: 10px;
+        padding: 15px 18px;
+        transition: all 0.3s ease;
+        font-size: 16px;
+        background: #fafbfc;
+    }
+
+    .profile-form .form-control:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 0.2rem rgba(200, 80, 192, 0.25);
+        background: white;
+        outline: none;
+    }
+
+    .profile-form .form-control:disabled {
+        background: #f1f3f4;
+        color: #6c757d;
+        border-color: #e9ecef;
+        cursor: not-allowed;
+    }
+
+    .profile-form .form-control:hover:not(:disabled) {
+        border-color: var(--primary-color);
+        background: white;
+    }
+
+    .profile-form select.form-control {
+        cursor: pointer;
+        appearance: none !important;
+        -webkit-appearance: none !important;
+        -moz-appearance: none !important;
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23c850c0' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+        background-position: right 12px center;
+        background-repeat: no-repeat;
+        background-size: 16px;
+        padding-right: 45px !important;
+    }
+
+    .profile-form textarea.form-control {
+        resize: vertical;
+        min-height: 100px;
+    }
+
+    .btn {
+        padding: 12px 25px;
         border-radius: 10px;
         font-weight: 600;
-        font-size: 14px;
-        cursor: pointer;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
         transition: all 0.3s ease;
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        text-decoration: none;
+        border: none;
+        font-size: 14px;
     }
 
-    .btn-modern:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(50, 189, 234, 0.3);
+    .btn-primary {
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
         color: white;
-        text-decoration: none;
     }
 
-    .btn-modern:disabled {
-        opacity: 0.6;
-        cursor: not-allowed;
-        transform: none;
-        box-shadow: none;
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(200, 80, 192, 0.4);
     }
 
     .btn-secondary {
-        background: linear-gradient(135deg, #6c757d, #495057);
+        background: #6c757d;
+        color: white;
     }
 
     .btn-secondary:hover {
-        box-shadow: 0 8px 25px rgba(108, 117, 125, 0.3);
+        background: #5a6268;
+        transform: translateY(-2px);
     }
 
-    /* Avatar styling */
-    .profile-avatar-section {
-        display: flex;
-        align-items: center;
-        gap: 20px;
-        padding: 20px 0;
-        border-bottom: 1px solid #e9ecef;
+    .btn-success {
+        background: var(--success-color);
+        color: white;
+    }
+
+    .btn-success:hover {
+        background: #218838;
+        transform: translateY(-2px);
+    }
+
+    .edit-mode-controls {
+        display: none;
+    }
+
+    .edit-mode .edit-mode-controls {
+        display: block;
+    }
+
+    .edit-mode .view-mode-controls {
+        display: none;
+    }
+
+    .password-strength {
+        height: 5px;
+        border-radius: 3px;
+        margin-top: 8px;
+        background: #e9ecef;
+        overflow: hidden;
+    }
+
+    .password-strength-bar {
+        height: 100%;
+        border-radius: 3px;
+        transition: width 0.3s ease;
+    }
+
+    .strength-weak .password-strength-bar { background: var(--danger-color); width: 25%; }
+    .strength-medium .password-strength-bar { background: var(--warning-color); width: 50%; }
+    .strength-good .password-strength-bar { background: #17a2b8; width: 75%; }
+    .strength-strong .password-strength-bar { background: var(--success-color); width: 100%; }
+
+    .strength-text {
+        font-size: 12px;
+        margin-top: 5px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .file-upload-area {
+        border: 2px dashed #ced4da;
+        border-radius: 10px;
+        padding: 40px;
+        text-align: center;
+        background: #fafbfc;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .file-upload-area:hover {
+        border-color: var(--primary-color);
+        background: rgba(200, 80, 192, 0.05);
+    }
+
+    .avatar-section {
+        text-align: center;
         margin-bottom: 30px;
     }
 
     .profile-avatar {
-        width: 100px;
-        height: 100px;
+        width: 120px;
+        height: 120px;
         border-radius: 50%;
-        border: 4px solid rgba(50, 189, 234, 0.2);
+        border: 4px solid rgba(200, 80, 192, 0.3);
+        margin: 0 auto 15px;
         overflow: hidden;
+        box-shadow: 0 5px 20px rgba(200, 80, 192, 0.3);
         position: relative;
-        background: rgba(50, 189, 234, 0.1);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 2.5rem;
-        color: var(--primary-color);
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
     }
 
     .profile-avatar img {
@@ -270,458 +269,279 @@
         object-fit: cover;
     }
 
-    .avatar-upload-btn {
-        position: absolute;
-        bottom: -5px;
-        right: -5px;
-        width: 35px;
-        height: 35px;
-        border-radius: 50%;
-        background: var(--primary-color);
-        color: white;
-        border: 3px solid white;
-        cursor: pointer;
+    .avatar-placeholder {
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 14px;
-        transition: all 0.3s ease;
+        font-size: 2.5rem;
+        font-weight: bold;
+        color: white;
+        height: 100%;
     }
 
-    .avatar-upload-btn:hover {
-        background: var(--secondary-color);
-        transform: scale(1.1);
-    }
-
-    .avatar-upload-btn:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-        transform: none;
-    }
-
-    /* Alert styling */
-    .alert-modern {
-        border: none;
+    .alert {
         border-radius: 10px;
+        border: none;
         padding: 15px 20px;
         margin-bottom: 20px;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        font-weight: 500;
     }
 
     .alert-success {
-        background: linear-gradient(135deg, #d4edda, #c3e6cb);
-        color: #155724;
-        border-left: 4px solid #28a745;
+        background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+        color: #065f46;
     }
 
     .alert-danger {
-        background: linear-gradient(135deg, #f8d7da, #f5c6cb);
-        color: #721c24;
-        border-left: 4px solid #dc3545;
+        background: linear-gradient(135deg, #fee2e2, #fecaca);
+        color: #991b1b;
     }
 
-    /* File upload area */
-    .file-upload-area {
-        border: 2px dashed #e9ecef;
-        border-radius: 10px;
-        padding: 30px;
-        text-align: center;
-        background: #fafafa;
-        transition: all 0.3s ease;
-        cursor: pointer;
-    }
-
-    .file-upload-area:hover {
-        border-color: var(--primary-color);
-        background: rgba(50, 189, 234, 0.05);
-    }
-
-    .file-upload-area.dragover {
-        border-color: var(--primary-color);
-        background: rgba(50, 189, 234, 0.1);
-    }
-
-    /* Mobile responsive */
     @media (max-width: 768px) {
-        .form-grid {
-            grid-template-columns: 1fr;
-        }
-        
-        .profile-avatar-section {
-            flex-direction: column;
+        .profile-header {
             text-align: center;
+            padding: 1.5rem;
         }
-        
-        .nav-tabs {
-            flex-direction: column;
+
+        .profile-header h1 {
+            font-size: 2rem;
         }
-        
-        .nav-tabs .nav-item {
-            min-width: auto;
+
+        .profile-form .card-body {
+            padding: 20px;
         }
     }
 </style>
-@endpush
+@endsection
 
 @section('content')
-<div class="profile-page" x-data="profilePage()">
-    <div class="container-fluid">
-        <!-- Profile Header -->
-        <div class="profile-header">
-            <div class="container-fluid">
-                <div class="row align-items-center">
-                    <div class="col-md-8">
-                        <div class="d-flex align-items-center">
-                            <div class="profile-avatar">
-                                @if(!empty($user['avatar']) && file_exists(public_path('storage/avatars/' . $user['avatar'])))
-                                    <img src="{{ asset('storage/avatars/' . $user['avatar']) }}" alt="Profile Avatar">
-                                @else
-                                    <i class="fas fa-user"></i>
-                                @endif
-                            </div>
-                            <div class="ml-4">
-                                <h1 class="mb-2" style="font-size: 2.5rem; font-weight: 600;">{{ $user['name'] ?? 'User' }}</h1>
-                                <div style="font-size: 1.2rem; opacity: 0.9; background: rgba(255, 255, 255, 0.2); padding: 8px 20px; border-radius: 25px; display: inline-block;">
-                                    {{ ucfirst($role ?? 'User') }} • Member since {{ \Carbon\Carbon::parse($user['created_at'] ?? now())->format('M Y') }}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-4 text-right">
-                        <div style="background: rgba(255,255,255,0.2); padding: 8px 15px; border-radius: 20px; font-size: 12px; display: inline-block;">
-                            <i class="fas fa-user-cog"></i> Last updated: {{ \Carbon\Carbon::parse($user['updated_at'] ?? now())->format('M d, Y') }}
-                        </div>
-                    </div>
-                </div>
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="profile-header">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1>
+                    <i class="fas fa-user-circle me-3"></i>My Profile
+                </h1>
+                <p>Manage your personal information and account settings</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <a href="{{ route('dashboard') }}" class="btn btn-light">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                </a>
             </div>
         </div>
+    </div>
 
-        <!-- Tab Navigation -->
-        <div class="tab-navigation">
-            <ul class="nav nav-tabs" role="tablist">
-                <li class="nav-item">
-                    <a class="nav-link active" @click="activeTab = 'profile'" 
-                       :class="{'active': activeTab === 'profile'}" 
-                       href="#" role="tab">
-                        <i class="fas fa-user"></i>
-                        Profile Information
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" @click="activeTab = 'password'" 
-                       :class="{'active': activeTab === 'password'}" 
-                       href="#" role="tab">
-                        <i class="fas fa-lock"></i>
-                        Change Password
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" @click="activeTab = 'settings'" 
-                       :class="{'active': activeTab === 'settings'}" 
-                       href="#" role="tab">
-                        <i class="fas fa-cog"></i>
-                        Settings
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" @click="activeTab = 'letters'" 
-                       :class="{'active': activeTab === 'letters'}" 
-                       href="#" role="tab">
-                        <i class="fas fa-envelope"></i>
-                        Letter Generator
-                    </a>
-                </li>
+    <!-- Success/Error Message -->
+    @if(session('success'))
+        <div class="alert alert-success">
+            <i class="fas fa-check-circle me-2"></i>{{ session('success') }}
+        </div>
+    @endif
+
+    @if(session('error'))
+        <div class="alert alert-danger">
+            <i class="fas fa-exclamation-circle me-2"></i>{{ session('error') }}
+        </div>
+    @endif
+
+    @if($errors->any())
+        <div class="alert alert-danger">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            <ul class="mb-0">
+                @foreach($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
             </ul>
         </div>
+    @endif
 
-        <!-- Tab Content -->
-        <div class="content-section">
-            <!-- Profile Information Tab -->
-            <div x-show="activeTab === 'profile'" x-transition:enter="transition ease-out duration-200" class="tab-content">
-                @if(session('success'))
-                    <div class="alert-modern alert-success">
-                        <i class="fas fa-check-circle"></i>{{ session('success') }}
-                    </div>
-                @endif
-
-                @if(session('error'))
-                    <div class="alert-modern alert-danger">
-                        <i class="fas fa-exclamation-circle"></i>{{ session('error') }}
-                    </div>
-                @endif
-
-                @if($errors->any())
-                    <div class="alert-modern alert-danger">
-                        <i class="fas fa-exclamation-triangle"></i>
-                        <div>
-                            Please correct the following errors:
-                            <ul class="mb-0 mt-2">
-                                @foreach($errors->all() as $error)
-                                    <li>{{ $error }}</li>
-                                @endforeach
-                            </ul>
-                        </div>
-                    </div>
-                @endif
-
-                <form @submit.prevent="saveProfile">
-                    <!-- Profile Header with Avatar -->
-                    <div class="profile-avatar-section">
-                        <div class="profile-avatar">
-                            @if(!empty($user['avatar']) && file_exists(public_path('storage/avatars/' . $user['avatar'])))
-                                <img src="{{ asset('storage/avatars/' . $user['avatar']) }}" alt="{{ $user['name'] ?? 'User' }}">
-                            @else
-                                <i class="fas fa-user"></i>
-                            @endif
-                            <button type="button" :disabled="!isEditing" class="avatar-upload-btn"
-                                    onclick="document.getElementById('avatarUpload').click()">
-                                <i class="fas fa-camera"></i>
-                            </button>
-                            <input type="file" id="avatarUpload" accept="image/*" style="display: none;">
-                        </div>
-                        <div>
-                            <h2 style="font-size: 1.8rem; font-weight: 700; color: var(--dark-color); margin-bottom: 5px;">
-                                {{ $user['name'] ?? 'User' }}
-                            </h2>
-                            <p style="color: #6c757d; margin: 0;">
-                                {{ ucfirst($role ?? 'User') }} • {{ $user['email'] ?? 'No email provided' }}
-                            </p>
-                        </div>
-                    </div>
-
-                    <!-- Form Fields -->
-                    <div class="form-grid">
-                        <div class="form-group-modern">
-                            <label class="form-label-modern">Full Name</label>
-                            <input type="text" x-model="profileData.name" :disabled="!isEditing" 
-                                   class="form-input-animated" required>
-                        </div>
-
-                        <div class="form-group-modern">
-                            <label class="form-label-modern">Email Address</label>
-                            <input type="email" x-model="profileData.email" :disabled="!isEditing" 
-                                   class="form-input-animated" required>
-                        </div>
-
-                        <div class="form-group-modern">
-                            <label class="form-label-modern">Phone Number</label>
-                            <input type="tel" x-model="profileData.phone" :disabled="!isEditing" 
-                                   class="form-input-animated">
-                        </div>
-
-                        <div class="form-group-modern">
-                            <label class="form-label-modern">Role</label>
-                            <input type="text" value="{{ ucfirst($role ?? 'User') }}" disabled 
-                                   class="form-input-animated">
-                        </div>
-
-                        <div class="form-group-modern">
-                            <label class="form-label-modern">Department</label>
-                            <input type="text" x-model="profileData.department" :disabled="!isEditing" 
-                                   class="form-input-animated">
-                        </div>
-
-                        <div class="form-group-modern">
-                            <label class="form-label-modern">Location</label>
-                            <input type="text" x-model="profileData.location" :disabled="!isEditing" 
-                                   class="form-input-animated">
-                        </div>
-                    </div>
-
-                    <div class="form-group-modern">
-                        <label class="form-label-modern">Bio / About</label>
-                        <textarea x-model="profileData.bio" :disabled="!isEditing" rows="4" 
-                                  class="form-input-animated" 
-                                  placeholder="Tell us about yourself..."></textarea>
-                    </div>
-
-                    <!-- Action Buttons -->
-                    <div class="d-flex justify-content-end gap-3 pt-4" style="border-top: 1px solid #e9ecef;">
-                        <button x-show="!isEditing" @click="isEditing = true" type="button" 
-                                class="btn-modern">
-                            <i class="fas fa-edit"></i>Edit Profile
-                        </button>
-
-                        <template x-if="isEditing">
-                            <div class="d-flex gap-3">
-                                <button @click="cancelEdit" type="button" class="btn-modern btn-secondary">
-                                    <i class="fas fa-times"></i>Cancel
-                                </button>
-                                <button type="submit" class="btn-modern">
-                                    <i class="fas fa-save"></i>Save Changes
-                                </button>
-                            </div>
-                        </template>
-                    </div>
-                </form>
+    <!-- Profile Form -->
+    <div class="profile-form" x-data="profileManager()">
+        <!-- Personal Information Card -->
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-user me-2"></i>Personal Information</h5>
             </div>
-
-            <!-- Change Password Tab -->
-            <div x-show="activeTab === 'password'" x-transition:enter="transition ease-out duration-200" class="tab-content">
-                <form @submit.prevent="changePassword" style="max-width: 500px; margin: 0 auto;">
-                    <h3 style="text-align: center; margin-bottom: 30px; color: var(--dark-color);">
-                        <i class="fas fa-shield-alt mr-2"></i>Change Your Password
-                    </h3>
-                    
-                    <div class="form-group-modern">
-                        <label class="form-label-modern">Current Password</label>
-                        <input type="password" x-model="passwordData.current" required class="form-input-animated">
-                    </div>
-
-                    <div class="form-group-modern">
-                        <label class="form-label-modern">New Password</label>
-                        <input type="password" x-model="passwordData.new" @input="checkPasswordStrength" 
-                               required class="form-input-animated">
-                        <div style="margin-top: 8px;">
-                            <div style="background: #e9ecef; border-radius: 4px; height: 4px; overflow: hidden;">
-                                <div class="password-strength" :class="passwordStrengthClass"></div>
+            <div class="card-body">
+                <!-- Avatar Section -->
+                <div class="avatar-section">
+                    <div class="profile-avatar">
+                        @if(session('avatar'))
+                            <img src="{{ asset('storage/avatars/' . session('avatar')) }}" alt="Profile Picture">
+                        @else
+                            <div class="avatar-placeholder">
+                                {{ strtoupper(substr(session('name', 'U'), 0, 1)) }}
                             </div>
-                            <p style="font-size: 12px; color: #6c757d; margin-top: 4px;" x-text="passwordStrengthText"></p>
-                        </div>
+                        @endif
                     </div>
-
-                    <div class="form-group-modern">
-                        <label class="form-label-modern">Confirm New Password</label>
-                        <input type="password" x-model="passwordData.confirm" required class="form-input-animated">
-                        <p x-show="passwordData.new && passwordData.confirm && passwordData.new !== passwordData.confirm"
-                           style="color: #dc3545; font-size: 12px; margin-top: 4px;">Passwords do not match</p>
-                    </div>
-
-                    <div class="pt-4">
-                        <button type="submit" :disabled="!passwordValid" class="btn-modern w-100">
-                            <i class="fas fa-key"></i>Change Password
-                        </button>
-                    </div>
-                </form>
-            </div>
-
-            <!-- Settings Tab -->
-            <div x-show="activeTab === 'settings'" x-transition:enter="transition ease-out duration-200" class="tab-content">
-                <div class="text-center py-5">
-                    <div class="mb-4">
-                        <i class="fas fa-cog fa-4x text-muted spinner"></i>
-                    </div>
-                    <h3 style="color: var(--dark-color); margin-bottom: 10px;">Settings Module Under Development</h3>
-                    <p style="color: #6c757d;">Settings module is currently under development (KIV).</p>
-                    <p style="color: #6c757d; font-size: 14px;">We're working hard to bring you new features!</p>
+                    <h4>{{ session('name', 'User') }}</h4>
+                    <span class="badge" style="background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); color: white; padding: 8px 15px; border-radius: 20px;">
+                        {{ ucfirst(session('role', 'user')) }}
+                    </span>
                 </div>
-            </div>
 
-            <!-- Letter Generator Tab -->
-            <div x-show="activeTab === 'letters'" x-transition:enter="transition ease-out duration-200" class="tab-content">
-                <!-- Letter Form -->
-                <form @submit.prevent="generateLetter">
-                    <h3 style="color: var(--dark-color); margin-bottom: 30px; text-align: center;">
-                        <i class="fas fa-envelope-open-text mr-2"></i>Create New Letter
-                    </h3>
+                <form method="POST" action="{{ route('profile.update') }}" enctype="multipart/form-data" :class="editing ? 'edit-mode' : ''">
+                    @csrf
+                    @method('PUT')
 
-                    <div class="form-grid">
-                        <div class="form-group-modern">
-                            <label class="form-label-modern">Letter ID</label>
-                            <input type="text" x-model="letterData.id" disabled class="form-input-animated">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <div class="view-mode-controls">
+                            <button type="button" class="btn btn-primary" @click="editing = true">
+                                <i class="fas fa-edit me-2"></i>Edit Profile
+                            </button>
                         </div>
-
-                        <div class="form-group-modern">
-                            <label class="form-label-modern">Date</label>
-                            <input type="date" x-model="letterData.date" required class="form-input-animated">
-                        </div>
-
-                        <div class="form-group-modern">
-                            <label class="form-label-modern">To (Recipient Name)</label>
-                            <input type="text" x-model="letterData.recipientName" required class="form-input-animated">
-                        </div>
-
-                        <div class="form-group-modern">
-                            <label class="form-label-modern">Recipient Email</label>
-                            <input type="email" x-model="letterData.recipientEmail" required class="form-input-animated">
-                        </div>
-
-                        <div class="form-group-modern">
-                            <label class="form-label-modern">Sender Email</label>
-                            <input type="email" value="{{ $user['email'] ?? '' }}" disabled class="form-input-animated">
-                        </div>
-
-                        <div class="form-group-modern">
-                            <label class="form-label-modern">Letter Type</label>
-                            <select x-model="letterData.type" class="form-input-animated">
-                                <option value="formal">Formal Letter</option>
-                                <option value="invitation">Invitation</option>
-                                <option value="announcement">Announcement</option>
-                                <option value="other">Other</option>
-                            </select>
+                        <div class="edit-mode-controls">
+                            <button type="button" class="btn btn-secondary me-2" @click="editing = false">
+                                <i class="fas fa-times me-2"></i>Cancel
+                            </button>
                         </div>
                     </div>
 
-                    <div class="form-group-modern">
-                        <label class="form-label-modern">Letter Content</label>
-                        <textarea x-model="letterData.content" rows="6" required class="form-input-animated"></textarea>
-                    </div>
-
-                    <div class="form-grid">
-                        <div class="form-group-modern">
-                            <label class="form-label-modern">Upload Header Image</label>
-                            <div class="file-upload-area">
-                                <i class="fas fa-cloud-upload-alt fa-2x mb-3" style="color: var(--primary-color);"></i>
-                                <p style="margin: 0; color: #6c757d;">
-                                    <strong>Click to upload</strong> or drag and drop<br>
-                                    <small>PNG, JPG, GIF up to 10MB</small>
-                                </p>
-                                <input type="file" accept="image/*" style="display: none;">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Full Name</label>
+                                <input type="text" class="form-control" name="name" 
+                                       value="{{ session('name', '') }}" 
+                                       disabled required>
                             </div>
                         </div>
-
-                        <div class="form-group-modern">
-                            <label class="form-label-modern">Upload Footer Image</label>
-                            <div class="file-upload-area">
-                                <i class="fas fa-cloud-upload-alt fa-2x mb-3" style="color: var(--primary-color);"></i>
-                                <p style="margin: 0; color: #6c757d;">
-                                    <strong>Click to upload</strong> or drag and drop<br>
-                                    <small>PNG, JPG, GIF up to 10MB</small>
-                                </p>
-                                <input type="file" accept="image/*" style="display: none;">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Email Address</label>
+                                <input type="email" class="form-control" name="email" 
+                                       value="{{ session('email', '') }}" 
+                                       disabled required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Phone Number</label>
+                                <input type="text" class="form-control" name="phone" 
+                                       value="{{ session('phone', '') }}" 
+                                       disabled>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>IIUM ID</label>
+                                <input type="text" class="form-control" 
+                                       value="{{ session('iium_id', '') }}" disabled>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="form-group">
+                                <label>Bio</label>
+                                <textarea class="form-control" name="bio" rows="3" 
+                                          disabled placeholder="Tell us about yourself...">{{ session('bio', '') }}</textarea>
                             </div>
                         </div>
                     </div>
 
-                    <div class="text-center pt-4">
-                        <button type="submit" class="btn-modern">
-                            <i class="fas fa-magic"></i>Generate Letter
+                    <div class="form-group edit-mode-controls">
+                        <label>Profile Picture</label>
+                        <div class="file-upload-area" onclick="document.getElementById('avatar').click()">
+                            <i class="fas fa-cloud-upload-alt fa-3x mb-3" style="color: var(--primary-color);"></i>
+                            <p class="mb-0"><strong>Click to upload or drag and drop</strong></p>
+                            <small class="text-muted">PNG, JPG up to 2MB</small>
+                            <input type="file" id="avatar" name="avatar" class="d-none" accept="image/*">
+                        </div>
+                    </div>
+
+                    <div class="edit-mode-controls">
+                        <button type="submit" class="btn btn-primary me-2">
+                            <i class="fas fa-save me-2"></i>Save Changes
+                        </button>
+                        <button type="button" class="btn btn-secondary" @click="editing = false">
+                            <i class="fas fa-times me-2"></i>Cancel
                         </button>
                     </div>
                 </form>
+            </div>
+        </div>
 
-                <!-- Recent Letters Section -->
-                <div style="margin-top: 50px; padding-top: 30px; border-top: 1px solid #e9ecef;">
-                    <div class="d-flex justify-content-between align-items-center mb-4">
-                        <h3 style="color: var(--dark-color); margin: 0;">
-                            <i class="fas fa-history mr-2"></i>Recent Letters
-                        </h3>
-                        <a href="#" class="text-decoration-none" style="color: var(--primary-color);">
-                            View All →
-                        </a>
-                    </div>
-
-                    <!-- Sample recent letters -->
-                    <div class="letter-card">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <div class="flex-grow-1">
-                                <div class="d-flex align-items-center mb-2" style="gap: 15px;">
-                                    <span style="font-weight: 600; color: var(--dark-color);">#LTR-2025-001</span>
-                                    <span style="color: #6c757d; font-size: 13px;">Jul 20, 2025</span>
+        <!-- Security Card -->
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-shield-alt me-2"></i>Security Settings</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ route('profile.password') }}" x-data="passwordManager()">
+                    @csrf
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Current Password</label>
+                                <input type="password" class="form-control" name="current_password" 
+                                       x-model="currentPassword" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>New Password</label>
+                                <input type="password" class="form-control" name="password" 
+                                       x-model="newPassword" @input="checkStrength()" required>
+                                <div class="password-strength" :class="strengthClass">
+                                    <div class="password-strength-bar"></div>
                                 </div>
-                                <h5 style="color: var(--dark-color); margin-bottom: 5px;">To: John Doe</h5>
-                                <p style="color: #6c757d; margin: 0; font-size: 14px;">
-                                    Dear Mr. Doe, I am writing to inform you about the upcoming changes to our policy regarding...
-                                </p>
+                                <div class="strength-text" :class="strengthTextClass" x-text="strengthText"></div>
                             </div>
-                            <div style="margin-left: 15px;">
-                                <span style="background: #d4edda; color: #155724; padding: 4px 10px; border-radius: 15px; font-size: 12px; font-weight: 600;">
-                                    Sent
-                                </span>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Confirm New Password</label>
+                                <input type="password" class="form-control" name="password_confirmation" 
+                                       x-model="confirmPassword" required>
+                                <small x-show="newPassword && confirmPassword && newPassword !== confirmPassword" 
+                                       class="text-danger">Passwords do not match</small>
                             </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Password Requirements</label>
+                                <ul class="list-unstyled small mt-2">
+                                    <li><i class="fas fa-check text-success me-2"></i>At least 8 characters</li>
+                                    <li><i class="fas fa-check text-success me-2"></i>Include uppercase letter</li>
+                                    <li><i class="fas fa-check text-success me-2"></i>Include lowercase letter</li>
+                                    <li><i class="fas fa-check text-success me-2"></i>Include number</li>
+                                    <li><i class="fas fa-check text-success me-2"></i>Include special character</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-success" :disabled="!isValidPassword()">
+                        <i class="fas fa-key me-2"></i>Update Password
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Account Information Card -->
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-info-circle me-2"></i>Account Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label>Last Login</label>
+                            <input type="text" class="form-control" value="{{ session('login_time', 'Never') }}" disabled>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label>Role</label>
+                            <input type="text" class="form-control" value="{{ ucfirst(session('role', 'user')) }}" disabled>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label>Centre ID</label>
+                            <input type="text" class="form-control" value="{{ session('centre_id', 'N/A') }}" disabled>
                         </div>
                     </div>
                 </div>
@@ -732,189 +552,122 @@
 @endsection
 
 @push('scripts')
-<script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+<script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
 <script>
-function profilePage() {
+function profileManager() {
     return {
-        activeTab: 'profile',
-        isEditing: false,
-        profileData: {
-            name: '{{ $user["name"] ?? "" }}',
-            email: '{{ $user["email"] ?? "" }}',
-            phone: '{{ $user["phone"] ?? "" }}',
-            department: '{{ $user["department"] ?? "" }}',
-            location: '{{ $user["location"] ?? "" }}',
-            bio: '{{ $user["bio"] ?? $user["about"] ?? "" }}'
-        },
-        originalData: {},
-        passwordData: {
-            current: '',
-            new: '',
-            confirm: ''
-        },
-        letterData: {
-            id: 'LTR-' + new Date().getFullYear() + '-' + Math.floor(Math.random() * 1000).toString().padStart(3, '0'),
-            date: new Date().toISOString().split('T')[0],
-            recipientName: '',
-            recipientEmail: '',
-            content: '',
-            type: 'formal'
-        },
-        passwordStrength: 0,
-        passwordStrengthClass: '',
-        passwordStrengthText: '',
-
+        editing: false,
         init() {
-            this.originalData = {...this.profileData};
-        },
-
-        cancelEdit() {
-            this.profileData = {...this.originalData};
-            this.isEditing = false;
-        },
-
-        saveProfile() {
-            // Create form data for submission
-            const form = document.createElement('form');
-            form.method = 'POST';
-            form.action = '{{ route("profile.update") }}';
-            
-            // Add CSRF token
-            const csrfInput = document.createElement('input');
-            csrfInput.type = 'hidden';
-            csrfInput.name = '_token';
-            csrfInput.value = '{{ csrf_token() }}';
-            form.appendChild(csrfInput);
-            
-            // Add form data
-            Object.keys(this.profileData).forEach(key => {
-                const input = document.createElement('input');
-                input.type = 'hidden';
-                input.name = key;
-                input.value = this.profileData[key] || '';
-                form.appendChild(input);
+            this.$watch('editing', (value) => {
+                this.toggleFormFields(value);
             });
+        },
+        toggleFormFields(enabled) {
+            const form = this.$el;
+            const inputs = form.querySelectorAll('input[name]:not([name="avatar"]), textarea[name]');
             
-            document.body.appendChild(form);
-            form.submit();
-        },
-
-        checkPasswordStrength() {
-            const password = this.passwordData.new;
-            let strength = 0;
-
-            if (password.length >= 8) strength++;
-            if (password.match(/[a-z]+/)) strength++;
-            if (password.match(/[A-Z]+/)) strength++;
-            if (password.match(/[0-9]+/)) strength++;
-            if (password.match(/[$@#&!]+/)) strength++;
-
-            this.passwordStrength = strength;
-
-            if (strength <= 2) {
-                this.passwordStrengthClass = 'strength-weak';
-                this.passwordStrengthText = 'Weak password';
-            } else if (strength <= 4) {
-                this.passwordStrengthClass = 'strength-medium';
-                this.passwordStrengthText = 'Medium strength';
-            } else {
-                this.passwordStrengthClass = 'strength-strong';
-                this.passwordStrengthText = 'Strong password';
-            }
-        },
-
-        get passwordValid() {
-            return this.passwordData.current &&
-                   this.passwordData.new &&
-                   this.passwordData.confirm &&
-                   this.passwordData.new === this.passwordData.confirm &&
-                   this.passwordStrength >= 3;
-        },
-
-        changePassword() {
-            if (this.passwordValid) {
-                // Create form for password change
-                const form = document.createElement('form');
-                form.method = 'POST';
-                form.action = '{{ route("profile.password") }}';
-                
-                // Add CSRF token
-                const csrfInput = document.createElement('input');
-                csrfInput.type = 'hidden';
-                csrfInput.name = '_token';
-                csrfInput.value = '{{ csrf_token() }}';
-                form.appendChild(csrfInput);
-                
-                // Add password data
-                ['current', 'new', 'confirm'].forEach(field => {
-                    const input = document.createElement('input');
-                    input.type = 'hidden';
-                    input.name = field === 'current' ? 'current_password' : 
-                                 field === 'new' ? 'new_password' : 'new_password_confirmation';
-                    input.value = this.passwordData[field];
-                    form.appendChild(input);
-                });
-                
-                document.body.appendChild(form);
-                form.submit();
-            }
-        },
-
-        generateLetter() {
-            // Create form for letter generation
-            const form = document.createElement('form');
-            form.method = 'POST';
-            form.action = '{{ route("profile.letters.generate") }}';
-            
-            // Add CSRF token
-            const csrfInput = document.createElement('input');
-            csrfInput.type = 'hidden';
-            csrfInput.name = '_token';
-            csrfInput.value = '{{ csrf_token() }}';
-            form.appendChild(csrfInput);
-            
-            // Add letter data
-            Object.keys(this.letterData).forEach(key => {
-                const input = document.createElement('input');
-                input.type = 'hidden';
-                input.name = key;
-                input.value = this.letterData[key] || '';
-                form.appendChild(input);
+            inputs.forEach(input => {
+                if (input.name !== 'iium_id') { // Keep IIUM ID always disabled
+                    input.disabled = !enabled;
+                }
             });
-            
-            document.body.appendChild(form);
-            form.submit();
         }
     }
 }
 
-// Handle file upload areas
-document.addEventListener('DOMContentLoaded', function() {
-    const uploadAreas = document.querySelectorAll('.file-upload-area');
-    uploadAreas.forEach(area => {
-        area.addEventListener('click', function() {
-            const input = this.querySelector('input[type="file"]');
-            if (input) input.click();
-        });
-        
-        area.addEventListener('dragover', function(e) {
-            e.preventDefault();
-            this.classList.add('dragover');
-        });
-        
-        area.addEventListener('dragleave', function() {
-            this.classList.remove('dragover');
-        });
-        
-        area.addEventListener('drop', function(e) {
-            e.preventDefault();
-            this.classList.remove('dragover');
-            const input = this.querySelector('input[type="file"]');
-            if (input && e.dataTransfer.files.length > 0) {
-                input.files = e.dataTransfer.files;
+function passwordManager() {
+    return {
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: '',
+        strength: 0,
+        strengthClass: 'strength-weak',
+        strengthText: 'Weak',
+        strengthTextClass: 'text-danger',
+
+        checkStrength() {
+            const password = this.newPassword;
+            let score = 0;
+
+            if (password.length >= 8) score++;
+            if (/[a-z]/.test(password)) score++;
+            if (/[A-Z]/.test(password)) score++;
+            if (/[0-9]/.test(password)) score++;
+            if (/[^A-Za-z0-9]/.test(password)) score++;
+
+            this.strength = score;
+
+            if (score < 2) {
+                this.strengthClass = 'strength-weak';
+                this.strengthText = 'Weak';
+                this.strengthTextClass = 'text-danger';
+            } else if (score < 3) {
+                this.strengthClass = 'strength-medium';
+                this.strengthText = 'Medium';
+                this.strengthTextClass = 'text-warning';
+            } else if (score < 4) {
+                this.strengthClass = 'strength-good';
+                this.strengthText = 'Good';
+                this.strengthTextClass = 'text-info';
+            } else {
+                this.strengthClass = 'strength-strong';
+                this.strengthText = 'Strong';
+                this.strengthTextClass = 'text-success';
             }
+        },
+
+        isValidPassword() {
+            return this.currentPassword && 
+                   this.newPassword && 
+                   this.confirmPassword && 
+                   this.newPassword === this.confirmPassword && 
+                   this.strength >= 3;
+        }
+    }
+}
+
+// File upload handling
+document.addEventListener('DOMContentLoaded', function() {
+    const fileUploadArea = document.querySelector('.file-upload-area');
+    const fileInput = document.getElementById('avatar');
+
+    if (fileUploadArea && fileInput) {
+        // Drag and drop handlers
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            fileUploadArea.addEventListener(eventName, preventDefaults, false);
         });
-    });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            fileUploadArea.addEventListener(eventName, highlight, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            fileUploadArea.addEventListener(eventName, unhighlight, false);
+        });
+
+        function highlight(e) {
+            fileUploadArea.classList.add('dragover');
+        }
+
+        function unhighlight(e) {
+            fileUploadArea.classList.remove('dragover');
+        }
+
+        fileUploadArea.addEventListener('drop', handleDrop, false);
+
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            if (files.length > 0) {
+                fileInput.files = files;
+            }
+        }
+    }
 });
 </script>
 @endpush

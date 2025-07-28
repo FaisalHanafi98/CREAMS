@@ -406,7 +406,7 @@
                 <h1>
                     <i class="fas fa-boxes me-3"></i>Asset Management
                 </h1>
-                <p>Comprehensive asset tracking and management system for {{ $centre->centre_name ?? 'All Centres' }}</p>
+                <p>Comprehensive asset tracking and management system for {{ $centre->centre_name ?? 'All Centre' }}</p>
             </div>
             <div class="col-md-4 text-end">
                 @if(in_array(session('role'), ['admin', 'supervisor']))
@@ -434,7 +434,7 @@
                 <i class="fas fa-boxes"></i>
             </div>
             <div class="stat-value">{{ $stats['total'] ?? 0 }}</div>
-            <div class="stat-label">Total Assets</div>
+            <div class="stat-label">Total Asset</div>
         </div>
         <div class="stat-card">
             <div class="stat-icon">
@@ -448,7 +448,7 @@
                 <i class="fas fa-building"></i>
             </div>
             <div class="stat-value">{{ $stats['centres'] ?? 0 }}</div>
-            <div class="stat-label">Centres</div>
+            <div class="stat-label">Centre</div>
         </div>
         <div class="stat-card">
             <div class="stat-icon">
@@ -468,10 +468,10 @@
 
     <!-- Filters -->
     <div class="filter-section">
-        <h5><i class="fas fa-filter me-2"></i>Filter Assets</h5>
+        <h5><i class="fas fa-filter me-2"></i>Filter Asset</h5>
         <form method="GET" action="{{ route('centres.assets.index') }}" class="row align-items-end">
             <div class="col-md-4 mb-3">
-                <label for="search" class="form-label">Search Assets</label>
+                <label for="search" class="form-label">Search Asset</label>
                 <div class="position-relative">
                     <input type="text" 
                            class="form-control" 
@@ -498,7 +498,7 @@
             <div class="col-md-3 mb-3">
                 <label for="centre" class="form-label">Centre</label>
                 <select class="form-control" id="centre" name="centre">
-                    <option value="">All Centres</option>
+                    <option value="">All Centre</option>
                     @if(isset($centres))
                         @foreach($centres as $centre)
                             <option value="{{ $centre->centre_name }}" {{ request('centre') == $centre->centre_name ? 'selected' : '' }}>
@@ -516,7 +516,7 @@
         </form>
     </div>
 
-    <!-- Assets Table -->
+    <!-- Asset Table -->
     <div class="asset-table">
         <div class="table-header">
             <h3><i class="fas fa-list me-2"></i>Asset Inventory</h3>
@@ -607,7 +607,7 @@
                                     <div class="empty-icon">
                                         <i class="fas fa-boxes"></i>
                                     </div>
-                                    <h4>No Assets Found</h4>
+                                    <h4>No Asset Found</h4>
                                     <p>No assets match your current filters or none have been added yet.</p>
                                     @if(in_array(session('role'), ['admin', 'supervisor']))
                                     <a href="{{ route('assets.create') }}" class="btn btn-primary">

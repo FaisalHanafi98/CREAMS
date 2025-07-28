@@ -1,13 +1,13 @@
 <!-- resources/views/assets/index.blade.php -->
 @extends('layouts.app')
 
-@section('title', 'Assets Management')
+@section('title', 'Asset Management')
 
 @section('content')
 <div class="container-fluid">
     <!-- Page Header -->
     <div class="d-sm-flex align-items-center justify-content-between mb-4">
-        <h1 class="h3 mb-0 text-gray-800">Assets Management</h1>
+        <h1 class="h3 mb-0 text-gray-800">Asset Management</h1>
         <a href="#" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm">
             <i class="fas fa-plus fa-sm text-white-50"></i> Add New Asset
         </a>
@@ -20,7 +20,7 @@
                 <div class="card-body">
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Assets</div>
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Asset</div>
                             <div class="h5 mb-0 font-weight-bold text-gray-800">{{ count($assets) }}</div>
                         </div>
                         <div class="col-auto">
@@ -86,12 +86,12 @@
         </div>
     </div>
     
-    <!-- Assets by center -->
+    <!-- Asset by center -->
     <div class="row">
         <div class="col-lg-6">
             <div class="card shadow mb-4">
                 <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">Assets by Centre</h6>
+                    <h6 class="m-0 font-weight-bold text-primary">Asset by Centre</h6>
                 </div>
                 <div class="card-body">
                     <div class="chart-pie pt-4">
@@ -118,7 +118,7 @@
         <div class="col-lg-6">
             <div class="card shadow mb-4">
                 <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">Assets by Type</h6>
+                    <h6 class="m-0 font-weight-bold text-primary">Asset by Type</h6>
                 </div>
                 <div class="card-body">
                     <div class="chart-pie pt-4">
@@ -146,7 +146,7 @@
         </div>
     </div>
     
-    <!-- Assets Table -->
+    <!-- Asset Table -->
     <div class="card shadow mb-4">
         <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
             <h6 class="m-0 font-weight-bold text-primary">Asset List</h6>
@@ -216,7 +216,7 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     $(document).ready(function() {
-        // Assets by center Chart
+        // Asset by center Chart
         var ctxcenter = document.getElementById("assetsBycenter");
         var assetsBycenter = new Chart(ctxcenter, {
             type: 'doughnut',
@@ -253,7 +253,7 @@
             },
         });
         
-        // Assets by Type Chart
+        // Asset by Type Chart
         var ctxType = document.getElementById("assetsByType");
         var assetsByType = new Chart(ctxType, {
             type: 'doughnut',
@@ -306,7 +306,7 @@
         <h1 class="h3 mb-0 text-gray-800">Asset Details: {{ $asset['name'] }}</h1>
         <div>
             <a href="{{ route(session('role') . '.assets') }}" class="btn btn-secondary btn-sm shadow-sm mr-2">
-                <i class="fas fa-arrow-left fa-sm text-white-50"></i> Back to Assets
+                <i class="fas fa-arrow-left fa-sm text-white-50"></i> Back to Asset
             </a>
             <a href="#" class="btn btn-warning btn-sm shadow-sm mr-2">
                 <i class="fas fa-tools fa-sm text-white-50"></i> Maintenance

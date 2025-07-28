@@ -20,13 +20,13 @@ trait AuthenticationTrait
         Log::debug('Determining role from class', ['class' => $className]);
         
         // Map class names to roles using direct string matching
-        if (strpos($className, 'Admins') !== false) {
+        if (strpos($className, 'Admin') !== false) {
             return 'admin';
-        } elseif (strpos($className, 'Supervisors') !== false) {
+        } elseif (strpos($className, 'Supervisor') !== false) {
             return 'supervisor';
-        } elseif (strpos($className, 'Teachers') !== false) {
+        } elseif (strpos($className, 'Teacher') !== false) {
             return 'teacher';
-        } elseif (strpos($className, 'AJKs') !== false) {
+        } elseif (strpos($className, 'AJK') !== false) {
             return 'ajk';
         }
         

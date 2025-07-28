@@ -83,7 +83,7 @@ class Letter extends Model
      */
     public function generator()
     {
-        return $this->belongsTo(Users::class, 'created_by');
+        return $this->belongsTo(User::class, 'created_by');
     }
     
     /**
@@ -91,7 +91,7 @@ class Letter extends Model
      */
     public function createdBy()
     {
-        return $this->belongsTo(Users::class, 'created_by');
+        return $this->belongsTo(User::class, 'created_by');
     }
 
     /**

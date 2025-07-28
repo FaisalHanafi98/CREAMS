@@ -2,14 +2,14 @@
 
 namespace App\Services;
 
-use App\Models\Users;
+use App\Models\User;
 use App\Models\Trainee;
 use App\Models\Activity;
 use App\Models\ActivitySession;
 use App\Models\Letter;
 use App\Models\Asset;
 use App\Models\AssetMaintenance;
-use App\Models\Centres;
+use App\Models\Centre;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -177,11 +177,11 @@ class DashboardService
     {
         return Cache::remember('admin_stats', 60, function() {
             return [
-                'total_users' => Users::count(),
+                'total_users' => User::count(),
                 'total_trainees' => Trainee::count(),
                 'total_activities' => Activity::count(),
                 'total_sessions' => ActivitySession::count(),
-                'active_centres' => Centres::where('is_active', true)->count(),
+                'active_centres' => Centre::where('is_active', true)->count(),
                 'total_letters' => Letter::count(),
                 'total_assets' => Asset::count(),
                 'pending_maintenance' => AssetMaintenance::where('status', 'scheduled')->count(),
@@ -200,7 +200,7 @@ class DashboardService
         return Cache::remember("supervisor_stats_{$centreId}", 60, function() use ($centreId) {
             return [
                 'centre_trainees' => Trainee::where('centre_id', $centreId)->where('is_active', true)->count(),
-                'centre_teachers' => Users::where('centre_id', $centreId)->where('role', 'teacher')->where('is_active', true)->count(),
+                'centre_teachers' => User::where('centre_id', $centreId)->where('role', 'teacher')->where('is_active', true)->count(),
                 'centre_activities' => Activity::where('centre_id', $centreId)->where('is_active', true)->count(),
                 'today_sessions' => ActivitySession::whereDate('session_date', Carbon::today())
                     ->whereHas('activity', function($q) use ($centreId) {
@@ -235,7 +235,7 @@ class DashboardService
                     ->whereBetween('session_date', [$startOfWeek, $endOfWeek])
                     ->count(),
                 'total_trainees' => DB::table('activity_enrollments')
-                    ->join('activity_sessions', 'activity_enrollments.session_id', '=', 'activity_sessions.id')
+                    ->join('activity_sessions', 'activity_enrollments.activity_id', '=', 'activity_sessions.activity_id')
                     ->where('activity_sessions.teacher_id', $userId)
                     ->where('activity_enrollments.enrollment_status', 'enrolled')
                     ->distinct('activity_enrollments.trainee_id')
@@ -259,7 +259,7 @@ class DashboardService
     private function getUserGrowthData($months = 6): array
     {
         return Cache::remember("user_growth_{$months}", 300, function() use ($months) {
-            $data = Users::selectRaw('DATE(created_at) as date, COUNT(*) as count')
+            $data = User::selectRaw('DATE(created_at) as date, COUNT(*) as count')
                 ->where('created_at', '>=', Carbon::now()->subMonths($months))
                 ->groupBy('date')
                 ->orderBy('date')
@@ -280,11 +280,18 @@ class DashboardService
     private function getActivityDistribution(): array
     {
         return Cache::remember('activity_distribution', 300, function() {
-            return Activity::selectRaw('category, COUNT(*) as count')
-                ->where('is_active', true)
-                ->groupBy('category')
-                ->pluck('count', 'category')
-                ->toArray();
+            $activities = Activity::all();
+            $distribution = [];
+            
+            foreach ($activities as $activity) {
+                $category = $activity->category;
+                if (!isset($distribution[$category])) {
+                    $distribution[$category] = 0;
+                }
+                $distribution[$category]++;
+            }
+            
+            return $distribution;
         });
     }
 
@@ -300,11 +307,11 @@ class DashboardService
                     $join->on('centres.id', '=', 'users.centre_id')
                          ->where('users.role', '=', 'teacher');
                 })
-                ->selectRaw('centres.name, 
+                ->selectRaw('centres.centre_name, 
                            COUNT(DISTINCT trainees.id) as trainee_count,
                            COUNT(DISTINCT users.id) as teacher_count')
                 ->where('centres.is_active', true)
-                ->groupBy('centres.id', 'centres.name')
+                ->groupBy('centres.id', 'centres.centre_name')
                 ->get()
                 ->toArray();
         });
@@ -321,13 +328,13 @@ class DashboardService
             
             return [
                 'current_month' => [
-                    'users' => Users::where('created_at', '>=', $currentMonth)->count(),
+                    'users' => User::where('created_at', '>=', $currentMonth)->count(),
                     'trainees' => Trainee::where('created_at', '>=', $currentMonth)->count(),
                     'sessions' => ActivitySession::where('created_at', '>=', $currentMonth)->count(),
                     'letters' => Letter::where('created_at', '>=', $currentMonth)->count()
                 ],
                 'last_month' => [
-                    'users' => Users::whereBetween('created_at', [$lastMonth, $currentMonth])->count(),
+                    'users' => User::whereBetween('created_at', [$lastMonth, $currentMonth])->count(),
                     'trainees' => Trainee::whereBetween('created_at', [$lastMonth, $currentMonth])->count(),
                     'sessions' => ActivitySession::whereBetween('created_at', [$lastMonth, $currentMonth])->count(),
                     'letters' => Letter::whereBetween('created_at', [$lastMonth, $currentMonth])->count()
@@ -384,8 +391,8 @@ class DashboardService
         }
 
         // Check for inactive teachers
-        $inactiveTeachers = Users::where('role', 'teacher')
-            ->where('last_login', '<', Carbon::now()->subDays(7))
+        $inactiveTeachers = User::where('role', 'teacher')
+            ->where('user_last_accessed_at', '<', Carbon::now()->subDays(7))
             ->count();
         
         if ($inactiveTeachers > 0) {
@@ -409,7 +416,7 @@ class DashboardService
             
             // Check query performance
             $start = microtime(true);
-            Users::count();
+            User::count();
             $queryTime = (microtime(true) - $start) * 1000;
             
             if ($queryTime > 1000) {
@@ -485,9 +492,9 @@ class DashboardService
     private function calculateGrowthRate($model, $days): float
     {
         $modelClass = match($model) {
-            'users' => Users::class,
+            'users' => User::class,
             'trainees' => Trainee::class,
-            default => Users::class
+            default => User::class
         };
 
         $current = $modelClass::where('created_at', '>=', Carbon::now()->subDays($days))->count();
@@ -510,7 +517,7 @@ class DashboardService
     {
         $totalCapacity = ActivitySession::whereDate('session_date', Carbon::today())->sum('max_participants');
         $totalEnrolled = DB::table('activity_enrollments')
-            ->join('activity_sessions', 'activity_enrollments.session_id', '=', 'activity_sessions.id')
+            ->join('activity_sessions', 'activity_enrollments.activity_id', '=', 'activity_sessions.activity_id')
             ->whereDate('activity_sessions.session_date', Carbon::today())
             ->where('activity_enrollments.enrollment_status', 'enrolled')
             ->count();
@@ -527,7 +534,7 @@ class DashboardService
      */
     private function getRecentUsers($limit): \Illuminate\Database\Eloquent\Collection
     {
-        return Users::select(['id', 'name', 'email', 'role', 'created_at'])
+        return User::select(['id', 'name', 'email', 'role', 'created_at'])
             ->latest()
             ->limit($limit)
             ->get();
@@ -535,7 +542,7 @@ class DashboardService
 
     private function getRecentTrainees($limit): \Illuminate\Database\Eloquent\Collection
     {
-        return Trainee::select(['id', 'name', 'condition', 'age', 'created_at'])
+        return Trainee::select(['id', 'trainee_first_name', 'trainee_last_name', 'trainee_condition', 'trainee_date_of_birth', 'created_at'])
             ->latest()
             ->limit($limit)
             ->get();
@@ -546,7 +553,7 @@ class DashboardService
         return Activity::with(['sessions' => function($query) {
                 $query->latest()->limit(1);
             }])
-            ->select(['id', 'name', 'category', 'description', 'created_at'])
+            ->select(['id', 'activity_name', 'activity_type', 'activity_description', 'created_at'])
             ->latest()
             ->limit($limit)
             ->get();
@@ -554,7 +561,7 @@ class DashboardService
 
     private function getRecentLetters($limit): \Illuminate\Database\Eloquent\Collection
     {
-        return Letter::select(['id', 'letter_reference', 'trainee_name', 'letter_type', 'created_at'])
+        return Letter::select(['id', 'letter_reference', 'letter_type', 'recipient_id', 'recipient_type', 'created_at'])
             ->latest()
             ->limit($limit)
             ->get();
@@ -644,7 +651,16 @@ class DashboardService
     private function getTeacherQuickActions($userId) { return []; }
     private function calculateTeacherAverageAttendance($userId) { return 0; }
     private function getDefaultDashboard($centreId) { return $this->getEmptyDashboard(); }
-    private function getTodaySchedule($centreId) { return []; }
+    private function getTodaySchedule($centreId) 
+    { 
+        return ActivitySession::with(['activity', 'teacher', 'enrollments.trainee'])
+            ->whereDate('session_date', Carbon::today())
+            ->whereHas('activity', function($q) use ($centreId) {
+                $q->where('centre_id', $centreId);
+            })
+            ->orderBy('start_time')
+            ->get();
+    }
     private function getWeekSchedule($centreId) { return []; }
     private function getUpcomingActivities($centreId, $limit) { return []; }
     private function getCentreTeachers($centreId) { return []; }

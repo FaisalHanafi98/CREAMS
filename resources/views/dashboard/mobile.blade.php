@@ -338,14 +338,14 @@
                 <div class="mobile-action-icon">
                     <i class="fas fa-user-graduate"></i>
                 </div>
-                <div class="mobile-action-label">Trainees</div>
+                <div class="mobile-action-label">Trainee</div>
             </a>
             
             <a href="{{ route('activities.home') }}" class="mobile-action-btn">
                 <div class="mobile-action-icon">
                     <i class="fas fa-calendar-alt"></i>
                 </div>
-                <div class="mobile-action-label">Activities</div>
+                <div class="mobile-action-label">Activity</div>
             </a>
             
             <a href="{{ route('profile') }}" class="mobile-action-btn">
@@ -357,10 +357,10 @@
         @endif
     </div>
 
-    <!-- Recent Activities -->
+    <!-- Recent Activity -->
     <div class="mobile-section">
         <div class="mobile-section-header">
-            <h3 class="mobile-section-title">Recent Activities</h3>
+            <h3 class="mobile-section-title">Recent Activity</h3>
             <i class="fas fa-chevron-right" style="color: #cbd5e0; font-size: 12px;"></i>
         </div>
         <div class="mobile-section-content">
@@ -400,11 +400,11 @@
         </div>
     </div>
 
-    <!-- Notifications -->
+    <!-- Notification -->
     @if(isset($recent['notifications']) && count($recent['notifications']) > 0)
         <div class="mobile-section">
             <div class="mobile-section-header">
-                <h3 class="mobile-section-title">Notifications</h3>
+                <h3 class="mobile-section-title">Notification</h3>
                 <span style="background: #f56565; color: white; font-size: 10px; padding: 2px 6px; border-radius: 10px;">{{ count($recent['notifications']) }}</span>
             </div>
             <div class="mobile-section-content">

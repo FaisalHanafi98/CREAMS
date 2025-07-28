@@ -8,7 +8,7 @@
         @method('PUT')
     @endif
     
-    <!-- Flash Messages -->
+    <!-- Flash Message -->
     @if(session('success'))
     <div class="alert alert-success alert-dismissible fade show mb-4" role="alert">
         <i class="fas fa-check-circle mr-2"></i> {{ session('success') }}

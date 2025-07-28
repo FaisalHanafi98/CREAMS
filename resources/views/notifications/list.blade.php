@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Notifications - CREAMS')
+@section('title', 'Notification - CREAMS')
 
 @section('styles')
 <link rel="stylesheet" href="{{ asset('css/notificationstyle.css') }}">
@@ -216,11 +216,11 @@
     <div class="dashboard-header mb-4">
         <div class="row align-items-center">
             <div class="col">
-                <h1 class="dashboard-title">Notifications</h1>
+                <h1 class="dashboard-title">Notification</h1>
                 <div class="breadcrumb">
                     <a href="{{ route('dashboard') }}">Dashboard</a>
                     <span class="separator">/</span>
-                    <span class="current">Notifications</span>
+                    <span class="current">Notification</span>
                 </div>
             </div>
         </div>
@@ -229,7 +229,7 @@
     <div class="notification-container">
         <div class="notification-header">
             <h2 class="notification-title">
-                <i class="fas fa-bell mr-2"></i> Notifications
+                <i class="fas fa-bell mr-2"></i> Notification
                 @if($unreadCount > 0)
                     <span class="badge badge-primary">{{ $unreadCount }}</span>
                 @endif
@@ -239,7 +239,7 @@
                     <i class="fas fa-check-double"></i> Mark All as Read
                 </button>
                 <button class="action-btn" id="clearReadBtn">
-                    <i class="fas fa-trash"></i> Clear Read Notifications
+                    <i class="fas fa-trash"></i> Clear Read Notification
                 </button>
             </div>
         </div>
@@ -249,8 +249,8 @@
             <div class="filter-options">
                 <div class="filter-option active" data-filter="all">All</div>
                 <div class="filter-option" data-filter="unread">Unread</div>
-                <div class="filter-option" data-filter="message">Messages</div>
-                <div class="filter-option" data-filter="activity">Activities</div>
+                <div class="filter-option" data-filter="message">Message</div>
+                <div class="filter-option" data-filter="activity">Activity</div>
                 <div class="filter-option" data-filter="system">System</div>
             </div>
         </div>

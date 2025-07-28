@@ -8,13 +8,15 @@
 <style>
     :root {
         --primary-color: #32bdea;
-        --secondary-color: #25a6cf;
-        --success-color: #1cc88a;
-        --warning-color: #f6c23e;
-        --danger-color: #e74a3b;
-        --dark-color: #2c3e50;
-        --light-bg: #f8f9fc;
-        --border-color: #e3e6f0;
+        --secondary-color: #c850c0;
+        --success-color: #2ed573;
+        --danger-color: #ff4757;
+        --warning-color: #ffa502;
+        --info-color: #1e90ff;
+        --dark-color: #1a2a3a;
+        --light-color: #f8f9fa;
+        --border-color: #e9ecef;
+        --transition-speed: 0.3s;
     }
 
     .profile-header {
@@ -252,7 +254,7 @@
                     </p>
                 </div>
                 <div class="col-md-3 text-center">
-                    <a href="{{ route('staffs.edit', $staffMember->encrypted_id ?? $staffMember->id) }}" class="action-btn btn-edit">
+                    <a href="{{ route('staffs.edit', ['encrypted_id' => $staffMember->encrypted_id ?? \App\Helpers\EncryptionHelper::generateEncryptedId($staffMember->id)]) }}" class="action-btn btn-edit">
                         <i class="fas fa-edit me-2"></i>Edit Profile
                     </a>
                     <a href="{{ route('staffs.home') }}" class="action-btn btn-back">
@@ -393,13 +395,13 @@
                     <div class="col-6">
                         <div class="stats-card">
                             <div class="stats-number">{{ $stats['active_sessions'] ?? 0 }}</div>
-                            <div class="stats-label">Active Activities</div>
+                            <div class="stats-label">Active Activity</div>
                         </div>
                     </div>
                     <div class="col-6">
                         <div class="stats-card">
                             <div class="stats-number">{{ $stats['total_trainees'] ?? 0 }}</div>
-                            <div class="stats-label">Total Trainees</div>
+                            <div class="stats-label">Total Trainee</div>
                         </div>
                     </div>
                     <div class="col-6">
@@ -422,24 +424,273 @@
                     <i class="fas fa-cog me-2"></i>Quick Actions
                 </h3>
                 
+                @php
+                    $currentUserRole = session('role');
+                    $currentUserId = session('id');
+                    $canMarkAttendance = false;
+                @endphp
+                
                 <div class="d-grid gap-2">
-                    <a href="{{ route('staffs.edit', $staffMember->encrypted_id ?? $staffMember->id) }}" class="btn btn-outline-primary">
+                    <a href="{{ route('staffs.edit', ['encrypted_id' => $staffMember->encrypted_id ?? \App\Helpers\EncryptionHelper::generateEncryptedId($staffMember->id)]) }}" class="btn btn-outline-primary">
                         <i class="fas fa-edit me-2"></i>Edit Profile
                     </a>
-                    <a href="{{ route('staffs.schedule', $staffMember->encrypted_id ?? $staffMember->id) }}" class="btn btn-outline-success">
-                        <i class="fas fa-calendar me-2"></i>View Schedule
+                    <a href="{{ route('staffs.schedule', $staffMember->encrypted_id ?? \App\Helpers\EncryptionHelper::generateEncryptedId($staffMember->id)) }}" class="btn btn-outline-success">
+                        <i class="fas fa-calendar-alt me-2"></i>View Schedule
                     </a>
-                    <a href="{{ route('staffs.activities', $staffMember->encrypted_id ?? $staffMember->id) }}" class="btn btn-outline-info">
-                        <i class="fas fa-tasks me-2"></i>View Activities
+                    <a href="{{ route('staffs.attendance', $staffMember->encrypted_id ?? \App\Helpers\EncryptionHelper::generateEncryptedId($staffMember->id)) }}" class="btn btn-outline-info">
+                        <i class="fas fa-user-clock me-2"></i>View Attendance
                     </a>
+                    @if($currentUserRole === 'admin')
+                    <a href="{{ route('staffs.activities', $staffMember->encrypted_id ?? \App\Helpers\EncryptionHelper::generateEncryptedId($staffMember->id)) }}" class="btn btn-outline-info">
+                        <i class="fas fa-tasks me-2"></i>View Activity
+                    </a>
+                    @endif
                     @if($staffMember->role === 'teacher')
-                    <a href="{{ route('staffs.trainees', $staffMember->encrypted_id ?? $staffMember->id) }}" class="btn btn-outline-warning">
-                        <i class="fas fa-users me-2"></i>Assigned Trainees
+                    <a href="{{ route('staffs.trainees', $staffMember->encrypted_id ?? \App\Helpers\EncryptionHelper::generateEncryptedId($staffMember->id)) }}" class="btn btn-outline-warning">
+                        <i class="fas fa-users me-2"></i>Assigned Trainee
                     </a>
+                    @endif
+                    
+                    @php
+                        // Users can mark their own attendance
+                        if ($staffMember->id == $currentUserId) {
+                            $canMarkAttendance = true;
+                        }
+                        // Admin can mark for anyone
+                        elseif ($currentUserRole === 'admin') {
+                            $canMarkAttendance = true;
+                        }
+                        // Supervisor can mark for staff in their centre
+                        elseif ($currentUserRole === 'supervisor' && $staffMember->centre_id === session('centre_id') && in_array($staffMember->role, ['teacher', 'ajk'])) {
+                            $canMarkAttendance = true;
+                        }
+                    @endphp
+                    
+                    @if($canMarkAttendance)
+                    <button type="button" class="btn btn-outline-info" id="markAttendanceBtn" data-user-id="{{ $staffMember->id }}" data-user-name="{{ $staffMember->name }}">
+                        <i class="fas fa-clock me-2"></i>Mark Attendance
+                    </button>
                     @endif
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<!-- Mark Attendance Modal -->
+<div class="modal fade" id="markAttendanceModal" tabindex="-1" aria-labelledby="markAttendanceModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="markAttendanceModalLabel">
+                    <i class="fas fa-clock me-2"></i>Mark Attendance
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="attendanceStatusAlert" class="alert" style="display: none;"></div>
+                
+                <form id="attendanceForm">
+                    <input type="hidden" id="attendanceUserId" name="user_id">
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="attendanceStatus" class="form-label fw-bold">Status</label>
+                            <select class="form-select" id="attendanceStatus" name="status" required>
+                                <option value="">Select Status</option>
+                                <option value="present">Present</option>
+                                <option value="absent">Absent</option>
+                                <option value="late">Late</option>
+                                <option value="sick_leave">Sick Leave</option>
+                                <option value="emergency_leave">Emergency Leave</option>
+                                <option value="authorized_leave">Authorized Leave</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="attendanceType" class="form-label fw-bold">Type</label>
+                            <select class="form-select" id="attendanceType" name="attendance_type" required>
+                                <option value="">Select Type</option>
+                                <option value="check_in">Check In</option>
+                                <option value="check_out">Check Out</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="attendanceRemarks" class="form-label fw-bold">Remarks (Optional)</label>
+                        <textarea class="form-control" id="attendanceRemarks" name="remarks" rows="3" placeholder="Add any additional notes..."></textarea>
+                    </div>
+                    
+                    <div class="border-top pt-3">
+                        <h6 class="fw-bold mb-2">Attendance Information</h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <small class="text-muted d-block">Date:</small>
+                                <span class="fw-bold" id="attendanceDate"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <small class="text-muted d-block">Time:</small>
+                                <span class="fw-bold" id="attendanceTime"></span>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="submitAttendance">
+                    <i class="fas fa-check me-2"></i>Mark Attendance
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @endsection
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const markAttendanceBtn = document.getElementById('markAttendanceBtn');
+    const attendanceModal = new bootstrap.Modal(document.getElementById('markAttendanceModal'));
+    const attendanceForm = document.getElementById('attendanceForm');
+    const submitBtn = document.getElementById('submitAttendance');
+    
+    if (markAttendanceBtn) {
+        // Update time display every second
+        function updateDateTime() {
+            const now = new Date();
+            document.getElementById('attendanceDate').textContent = now.toLocaleDateString('en-MY', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+            document.getElementById('attendanceTime').textContent = now.toLocaleTimeString('en-MY', {
+                hour12: false,
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+        }
+        
+        // Mark Attendance Button Click
+        markAttendanceBtn.addEventListener('click', function() {
+            const userId = this.getAttribute('data-user-id');
+            const userName = this.getAttribute('data-user-name');
+            
+            // Set user data
+            document.getElementById('attendanceUserId').value = userId;
+            document.getElementById('markAttendanceModalLabel').innerHTML = 
+                `<i class="fas fa-clock me-2"></i>Mark Attendance - ${userName}`;
+            
+            // Update date/time
+            updateDateTime();
+            setInterval(updateDateTime, 1000);
+            
+            // Reset form
+            attendanceForm.reset();
+            document.getElementById('attendanceUserId').value = userId;
+            showAlert('', '', false);
+            
+            // Check today's status
+            fetch(`/staff-attendance/status/${userId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        let statusHtml = '<div class="alert alert-info"><h6>Today\'s Status</h6>';
+                        
+                        if (data.has_checked_in) {
+                            statusHtml += '<span class="badge bg-success me-2">Checked In</span>';
+                        }
+                        if (data.has_checked_out) {
+                            statusHtml += '<span class="badge bg-warning">Checked Out</span>';
+                        }
+                        if (!data.has_checked_in && !data.has_checked_out) {
+                            statusHtml += '<span class="badge bg-secondary">No attendance marked</span>';
+                        }
+                        
+                        statusHtml += '</div>';
+                        showAlert(statusHtml, 'info', true);
+                        
+                        // Pre-select appropriate type
+                        if (!data.has_checked_in) {
+                            document.getElementById('attendanceType').value = 'check_in';
+                        } else if (!data.has_checked_out) {
+                            document.getElementById('attendanceType').value = 'check_out';
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Error checking status:', error);
+                });
+            
+            attendanceModal.show();
+        });
+        
+        // Submit Attendance
+        submitBtn.addEventListener('click', function() {
+            const formData = new FormData(attendanceForm);
+            
+            // Validate required fields
+            if (!formData.get('status') || !formData.get('attendance_type')) {
+                showAlert('Please fill in all required fields.', 'danger', true);
+                return;
+            }
+            
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Marking...';
+            
+            // Submit attendance
+            fetch('/staff-attendance/mark', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    'Accept': 'application/json'
+                    // Don't set Content-Type for FormData - let browser set it with boundary
+                },
+                body: formData
+            })
+            .then(response => {
+                console.log('Response status:', response.status);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Response data:', data);
+                if (data.success) {
+                    showAlert(data.message, 'success', true);
+                    setTimeout(() => {
+                        attendanceModal.hide();
+                        location.reload(); // Refresh to show updated status
+                    }, 1500);
+                } else {
+                    showAlert(data.message || 'Failed to mark attendance.', 'danger', true);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showAlert(`An error occurred: ${error.message}`, 'danger', true);
+            })
+            .finally(() => {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-check me-2"></i>Mark Attendance';
+            });
+        });
+        
+        function showAlert(message, type, show) {
+            const alertDiv = document.getElementById('attendanceStatusAlert');
+            if (show && message) {
+                alertDiv.className = `alert alert-${type}`;
+                alertDiv.innerHTML = message;
+                alertDiv.style.display = 'block';
+            } else {
+                alertDiv.style.display = 'none';
+            }
+        }
+    }
+});
+</script>
+@endpush

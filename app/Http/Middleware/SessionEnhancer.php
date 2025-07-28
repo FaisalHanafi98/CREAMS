@@ -5,7 +5,7 @@ namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use App\Models\Users;
+use App\Models\User;
 
 class SessionEnhancer
 {
@@ -36,7 +36,7 @@ class SessionEnhancer
             
             // Check if avatar data is missing
             if (!session('avatar') && !session('user_avatar')) {
-                $user = Users::find($userId);
+                $user = User::find($userId);
                 
                 if ($user) {
                     Log::info('Enhancing session data for user', [

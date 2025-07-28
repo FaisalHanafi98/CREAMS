@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Models\Users;
+use App\Models\User;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Log;
@@ -78,7 +78,7 @@ class SessionManager
         
         // Clear remember token
         if ($userId) {
-            Users::where('id', $userId)->update(['remember_token' => null]);
+            User::where('id', $userId)->update(['remember_token' => null]);
         }
         
         // Clear cookies
@@ -112,7 +112,7 @@ class SessionManager
         
         // Check remember token
         if (Cookie::get('remember_token') && Cookie::get('user_id')) {
-            $user = Users::where('id', Cookie::get('user_id'))
+            $user = User::where('id', Cookie::get('user_id'))
                 ->where('remember_token', Cookie::get('remember_token'))
                 ->where('status', 'active')
                 ->first();
@@ -150,7 +150,7 @@ class SessionManager
         // Cache user data in session to avoid repeated DB queries
         $sessionKey = 'user_data_' . $userId;
         if (!Session::has($sessionKey)) {
-            $user = Users::find($userId);
+            $user = User::find($userId);
             if ($user) {
                 Session::put($sessionKey, $user->toArray());
             }
@@ -158,7 +158,7 @@ class SessionManager
         }
         
         $userData = Session::get($sessionKey);
-        return new Users($userData);
+        return new User($userData);
     }
     
     /**
@@ -218,7 +218,7 @@ class SessionManager
             return false;
         }
         
-        $user = Users::find($userId);
+        $user = User::find($userId);
         if (!$user) {
             self::logout();
             return false;

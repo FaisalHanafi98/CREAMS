@@ -3,13 +3,13 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\Assets;
+use App\Models\Asset;
 
 class AssetManagementRegisterController extends Controller
 {
     public function index()
     {
-        $assets = Assets::all();
+        $assets = Asset::all();
         return view('assetmanagementregister', compact('assets'));
     }
 
@@ -27,7 +27,7 @@ class AssetManagementRegisterController extends Controller
             'asset_avatar' => ['image', 'mimes:jpeg,png,jpg,gif', 'max:2048', 'nullable'],
         ]);
 
-        $asset = Assets::create([
+        $asset = Asset::create([
             'asset_id' => $request->asset_id,
             'asset_name' => $request->asset_name,
             'asset_type' => $request->asset_type,

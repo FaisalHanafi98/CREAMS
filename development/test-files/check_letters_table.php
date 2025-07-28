@@ -7,13 +7,13 @@ echo "=== CHECKING LETTERS TABLE ===" . PHP_EOL;
 
 try {
     $columns = DB::select('DESCRIBE letters');
-    echo "Letters table columns:" . PHP_EOL;
+    echo "Letter table columns:" . PHP_EOL;
     foreach ($columns as $column) {
         echo "  - {$column->Field} ({$column->Type})" . PHP_EOL;
     }
 } catch (Exception $e) {
     echo "Error: " . $e->getMessage() . PHP_EOL;
-    echo "Letters table does not exist or is not accessible." . PHP_EOL;
+    echo "Letter table does not exist or is not accessible." . PHP_EOL;
 }
 
 echo "=== END CHECK ===" . PHP_EOL;

@@ -117,7 +117,7 @@
         </ol>
     </nav>
 
-    <!-- Success/Error Messages -->
+    <!-- Success/Error Message -->
     @if(session('success'))
     <div class="alert alert-success alert-dismissible fade show" role="alert">
         <i class="fas fa-check-circle me-2"></i>{{ session('success') }}
@@ -252,11 +252,11 @@
             @endif
         </div>
 
-        <!-- Activities Summary -->
+        <!-- Activity Summary -->
         <div class="col-lg-4">
             <div class="schedule-card">
                 <h3 class="mb-4">
-                    <i class="fas fa-tasks me-2 text-primary"></i>Activities Summary
+                    <i class="fas fa-tasks me-2 text-primary"></i>Activity Summary
                 </h3>
 
                 @if(count($activities) > 0)
@@ -304,7 +304,7 @@
                     <div class="col-6">
                         <div class="text-center">
                             <div class="h4 text-warning mb-1">{{ count($activities) }}</div>
-                            <small class="text-muted">Total Activities</small>
+                            <small class="text-muted">Total Activity</small>
                         </div>
                     </div>
                     <div class="col-6">

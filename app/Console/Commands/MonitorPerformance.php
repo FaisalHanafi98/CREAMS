@@ -13,7 +13,7 @@ class MonitorPerformance extends Command
 
     public function handle()
     {
-        $this->info('Activities Module Performance Report');
+        $this->info('Activity Module Performance Report');
         $this->info('=====================================');
 
         // Check slow queries

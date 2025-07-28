@@ -8,11 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
-use App\Models\Users;
-use App\Models\Admins;
-use App\Models\Supervisors;
-use App\Models\Teachers;
-use App\Models\AJKs;
+use App\Models\User;
 
 class EnhancedLoginController extends Controller
 {
@@ -206,11 +202,7 @@ class EnhancedLoginController extends Controller
     {
         // Define user models with their roles
         $userModels = [
-            ['model' => Users::class, 'role' => null], // Universal users table
-            ['model' => Admins::class, 'role' => 'admin'],
-            ['model' => Supervisors::class, 'role' => 'supervisor'],
-            ['model' => Teachers::class, 'role' => 'teacher'],
-            ['model' => AJKs::class, 'role' => 'ajk']
+            ['model' => User::class, 'role' => null], // Universal users table
         ];
         
         foreach ($userModels as $userModel) {

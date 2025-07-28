@@ -16,7 +16,7 @@ try {
         echo "- {$column->Field} ({$column->Type})\n";
     }
 } catch (Exception $e) {
-    echo "❌ Categories table doesn't exist: " . $e->getMessage() . "\n";
+    echo "❌ Category table doesn't exist: " . $e->getMessage() . "\n";
 }
 
 echo "\n=== CHECKING EXISTING DATA ===\n";

@@ -5,10 +5,10 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
-use App\Models\Admins;
-use App\Models\Supervisors;
-use App\Models\Teachers;
-use App\Models\AJKs;
+use App\Models\Admin;
+use App\Models\Supervisor;
+use App\Models\Teacher;
+use App\Models\AJK;
 
 class LoginController extends Controller
 {
@@ -32,10 +32,10 @@ class LoginController extends Controller
         
         // Try to authenticate user with each user type
         $userTypes = [
-            ['model' => Admins::class, 'guard' => 'admin', 'role' => 'admin'],
-            ['model' => Supervisors::class, 'guard' => 'supervisor', 'role' => 'supervisor'],
-            ['model' => Teachers::class, 'guard' => 'teacher', 'role' => 'teacher'],
-            ['model' => AJKs::class, 'guard' => 'ajk', 'role' => 'ajk']
+            ['model' => Admin::class, 'guard' => 'admin', 'role' => 'admin'],
+            ['model' => Supervisor::class, 'guard' => 'supervisor', 'role' => 'supervisor'],
+            ['model' => Teacher::class, 'guard' => 'teacher', 'role' => 'teacher'],
+            ['model' => AJK::class, 'guard' => 'ajk', 'role' => 'ajk']
         ];
         
         foreach ($userTypes as $userType) {

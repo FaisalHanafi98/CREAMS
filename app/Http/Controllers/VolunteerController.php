@@ -1,7 +1,7 @@
 <?php
 namespace App\Http\Controllers;
 use Illuminate\Http\Request;
-use App\Models\Volunteers;
+use App\Models\Volunteer;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
@@ -79,20 +79,20 @@ public function submit(Request $request)
         $validatedData = $validator->validated();
 
         // Save application to database
-        $application = Volunteers::create([
+        $application = Volunteer::create([
             'volunteer_name' => $validatedData['first_name'] . ' ' . $validatedData['last_name'],
             'volunteer_email' => strtolower(trim($validatedData['email'])),
             'volunteer_phone' => $validatedData['phone'],
             'volunteer_address' => $request->address ?: '',
-            'volunteer_birth_date' => $validatedData['birth_date'] ?: '1990-01-01',
-            'volunteer_gender' => $validatedData['gender'] ?: 'Other',
+            'volunteer_birth_date' => $validatedData['birth_date'] ?? '1990-01-01',
+            'volunteer_gender' => $validatedData['gender'] ?? 'Other',
             'volunteer_skills' => $request->skills ?: '',
             'volunteer_experience' => $request->experience ?: '',
             'volunteer_availability' => implode(', ', $validatedData['availability']),
             'volunteer_status' => 'pending',
             'volunteer_start_date' => now()->format('Y-m-d'),
-            'emergency_contact_name' => $validatedData['emergency_contact_name'] ?: '',
-            'emergency_contact_phone' => $validatedData['emergency_contact_phone'] ?: '',
+            'emergency_contact_name' => $validatedData['emergency_contact_name'] ?? '',
+            'emergency_contact_phone' => $validatedData['emergency_contact_phone'] ?? '',
         ]);
 
         Log::info('Volunteer application saved successfully', [
@@ -206,7 +206,7 @@ public function submit(Request $request)
 public function getApplications()
 {
     try {
-        $applications = Volunteers::orderBy('created_at', 'desc')
+        $applications = Volunteer::orderBy('created_at', 'desc')
             ->paginate(15);
 
         return response()->json([
@@ -235,7 +235,7 @@ public function getApplications()
 public function show($id)
 {
     try {
-        $application = Volunteers::findOrFail($id);
+        $application = Volunteer::findOrFail($id);
         return view('admin.volunteers.show', compact('application'));
     } catch (\Exception $e) {
         return redirect()->route('admin.volunteers.index')
@@ -253,7 +253,7 @@ public function show($id)
 public function updateStatus(Request $request, $id)
 {
     try {
-        $application = Volunteers::findOrFail($id);
+        $application = Volunteer::findOrFail($id);
         
         $validator = Validator::make($request->all(), [
             'status' => 'required|in:pending,active,inactive',

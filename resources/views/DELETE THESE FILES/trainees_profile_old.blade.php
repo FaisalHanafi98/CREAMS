@@ -11,7 +11,7 @@
         </h1>
         <div>
             <a href="{{ route('traineeshome') }}" class="btn btn-secondary btn-sm shadow-sm mr-2">
-                <i class="fas fa-arrow-left fa-sm text-white-50 mr-1"></i>Back to Trainees
+                <i class="fas fa-arrow-left fa-sm text-white-50 mr-1"></i>Back to Trainee
             </a>
             <div class="btn-group">
                 <a href="{{ route('traineeprofile.edit', ['id' => $trainee->id]) }}" class="btn btn-primary btn-sm shadow-sm">
@@ -42,7 +42,7 @@
         </div>
     </div>
 
-    <!-- Alert Messages -->
+    <!-- Alert Message -->
     @if(session('success'))
         <div class="alert alert-success alert-dismissible fade show" role="alert">
             {{ session('success') }}
@@ -106,13 +106,13 @@
             </div>
         </div>
 
-        <!-- Total Activities Card -->
+        <!-- Total Activity Card -->
         <div class="col-xl-3 col-md-6 mb-4">
             <div class="card border-left-info shadow h-100 py-2">
                 <div class="card-body">
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Total Activities</div>
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Total Activity</div>
                             <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $totalActivities }}</div>
                         </div>
                         <div class="col-auto">
@@ -253,7 +253,7 @@
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" id="activities-tab" data-toggle="tab" href="#activities" role="tab" aria-controls="activities" aria-selected="false">
-                                <i class="fas fa-tasks mr-1"></i> Activities
+                                <i class="fas fa-tasks mr-1"></i> Activity
                             </a>
                         </li>
                         <li class="nav-item">
@@ -345,10 +345,10 @@
                             </div>
                         </div>
                         
-                        <!-- Activities Tab -->
+                        <!-- Activity Tab -->
                         <div class="tab-pane fade" id="activities" role="tabpanel" aria-labelledby="activities-tab">
                             <div class="d-flex justify-content-between align-items-center mb-4">
-                                <h5 class="mb-0">Activities ({{ $totalActivities }})</h5>
+                                <h5 class="mb-0">Activity ({{ $totalActivities }})</h5>
                                 <button class="btn btn-primary" data-toggle="modal" data-target="#addActivityModal">
                                     <i class="fas fa-plus-circle mr-1"></i> Add Activity
                                 </button>

@@ -29,7 +29,7 @@
                         </div>
                         
                         <div class="d-flex justify-content-between mb-3">
-                            <h5>Trainees</h5>
+                            <h5>Trainee</h5>
                             <div>
                                 <button type="button" class="btn btn-sm btn-success quick-mark" 
                                         data-status="Present">

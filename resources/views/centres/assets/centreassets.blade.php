@@ -1,12 +1,12 @@
 @extends('layouts.app')
 
-@section('title', $centre->centre_name . ' - Assets')
+@section('title', $centre->centre_name . ' - Asset')
 
 @section('content')
 <div class="assets-container">
     <div class="page-header">
         <div>
-            <h1 class="page-title">{{ $centre->centre_name }} Assets</h1>
+            <h1 class="page-title">{{ $centre->centre_name }} Asset</h1>
             <p class="subtitle">Asset management for {{ $centre->centre_name }}</p>
         </div>
         <div class="page-actions">
@@ -21,7 +21,7 @@
         </div>
     </div>
 
-    {{-- Flash Messages --}}
+    {{-- Flash Message --}}
     @if(session('success'))
         <div class="alert alert-success alert-dismissible fade show" role="alert">
             <i class="fas fa-check-circle mr-2"></i> {{ session('success') }}
@@ -49,7 +49,7 @@
                 </div>
                 <div class="stat-content">
                     <h3>{{ $stats['total_assets'] ?? 0 }}</h3>
-                    <p>Total Assets</p>
+                    <p>Total Asset</p>
                 </div>
             </div>
         </div>
@@ -88,7 +88,7 @@
         </div>
     </div>
 
-    {{-- Assets Table --}}
+    {{-- Asset Table --}}
     <div class="assets-table-card">
         <div class="table-header">
             <h3>Asset Inventory</h3>
@@ -184,7 +184,7 @@
                     <div class="empty-icon">
                         <i class="fas fa-box-open"></i>
                     </div>
-                    <h4>No Assets Found</h4>
+                    <h4>No Asset Found</h4>
                     <p>This centre doesn't have any assets registered yet.</p>
                     @if(in_array(session('role'), ['admin', 'supervisor']))
                         <a href="{{ route('assets.create') }}?centre={{ $centre->centre_name }}" class="btn btn-primary">

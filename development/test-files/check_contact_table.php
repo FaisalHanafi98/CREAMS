@@ -7,7 +7,7 @@ echo "=== CHECKING CONTACT MESSAGES TABLE ===" . PHP_EOL;
 
 try {
     $columns = DB::select('DESCRIBE contact_messages');
-    echo "Contact Messages table columns:" . PHP_EOL;
+    echo "Contact Message table columns:" . PHP_EOL;
     foreach ($columns as $column) {
         echo "  - {$column->Field} ({$column->Type})" . PHP_EOL;
     }

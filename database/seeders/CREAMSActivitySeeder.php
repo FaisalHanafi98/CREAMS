@@ -9,7 +9,7 @@ use App\Models\ActivitySchedule;
 use App\Models\ActivityEnrollment;
 use App\Models\SessionEnrollment;
 use App\Models\Trainee;
-use App\Models\Users;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -69,7 +69,7 @@ class CREAMSActivitySeeder extends Seeder
         $totalEnrollments = 0;
 
         foreach ($activities as $activity) {
-            $this->command->line("   🎯 Creating sessions for: {$activity->activity_name}");
+            $this->command->line("   🎯 Creating sessions for: {$activity->name}");
             
             // Create weekly schedule for each activity
             $schedule = $this->createActivitySchedule($activity);
@@ -95,17 +95,20 @@ class CREAMSActivitySeeder extends Seeder
 
         return ActivitySchedule::create([
             'activity_id' => $activity->id,
-            'day_of_week' => $dayOfWeek,
+            'schedule_name' => "Weekly {$activity->name} Schedule",
+            'schedule_description' => "Regular weekly schedule for {$activity->name} on {$dayOfWeek}",
+            'recurrence_type' => 'weekly',
+            'recurrence_pattern' => json_encode([
+                'day_of_week' => $dayOfWeek,
+                'room' => $this->generateRoomNumber()
+            ]),
             'start_time' => $timeSlot['start'],
             'end_time' => $timeSlot['end'],
             'location' => $venue,
-            'room' => $this->generateRoomNumber(),
-            'recurring' => 'weekly',
             'start_date' => Carbon::now()->subMonths(3)->startOfWeek(),
             'end_date' => Carbon::now()->addMonths(6)->endOfWeek(),
-            'max_capacity' => $activity->max_participants,
-            'status' => 'active',
-            'created_at' => Carbon::now()->subDays(rand(60, 180)),
+            'schedule_status' => 'active',
+            'created_by' => $activity->created_by,
         ]);
     }
 
@@ -183,9 +186,10 @@ class CREAMSActivitySeeder extends Seeder
         $endDate = Carbon::now()->addMonths(2)->endOfWeek();
 
         // Find all occurrences of the scheduled day between start and end dates
+        $dayOfWeek = $schedule->recurrence_pattern['day_of_week'] ?? 'Monday';
         $current = $startDate->copy();
         while ($current <= $endDate) {
-            if ($current->format('l') === $schedule->day_of_week) {
+            if ($current->format('l') === $dayOfWeek) {
                 $sessionDate = $current->copy();
                 
                 // Determine session status based on date
@@ -218,29 +222,31 @@ class CREAMSActivitySeeder extends Seeder
 
     private function createSession(Activity $activity, ActivitySchedule $schedule, Carbon $date, string $status): ActivitySession
     {
-        // Calculate duration from schedule
-        $startTime = Carbon::parse($schedule->start_time);
-        $endTime = Carbon::parse($schedule->end_time);
-        $duration = $startTime->diffInMinutes($endTime);
-
+        // Generate unique session ID
+        $sessionId = 'SES-' . $activity->id . '-' . $date->format('Ymd') . '-' . substr(uniqid(), -4);
+        
         $session = ActivitySession::create([
             'activity_id' => $activity->id,
+            'session_id' => $sessionId,
             'teacher_id' => $activity->created_by,
+            'instructor_id' => $activity->created_by,
+            'session_date' => $date->format('Y-m-d'),
             'scheduled_date' => $date->format('Y-m-d'),
+            'session_name' => $activity->name . ' - ' . $date->format('M d'),
             'start_time' => $schedule->start_time,
             'end_time' => $schedule->end_time,
-            'duration_minutes' => $duration,
+            'session_start_time' => $schedule->start_time,
+            'session_end_time' => $schedule->end_time,
             'venue' => $schedule->location,
-            'room_number' => $schedule->room,
+            'session_location' => $schedule->location,
             'max_participants' => $activity->max_participants,
-            'enrolled_count' => 0, // Will be updated when enrollments are created
+            'current_participants' => 0, // Will be updated when enrollments are created
             'status' => $status,
+            'session_status' => $status,
             'notes' => $this->generateSessionNotes($activity, $status),
-            'materials_prepared' => $status !== 'cancelled',
+            'session_notes' => $this->generateSessionNotes($activity, $status),
             'attendance_marked' => $status === 'completed',
-            'actual_start' => $status === 'completed' ? $date->copy()->setTimeFromTimeString($schedule->start_time) : null,
-            'actual_end' => $status === 'completed' ? $date->copy()->setTimeFromTimeString($schedule->end_time) : null,
-            'session_report' => $status === 'completed' ? $this->generateSessionReport($activity) : null,
+            'session_materials' => $status !== 'cancelled' ? $activity->required_materials : [],
             'created_at' => $date->copy()->subDays(rand(1, 7)),
         ]);
 
@@ -311,18 +317,6 @@ class CREAMSActivitySeeder extends Seeder
         $totalEnrollments = 0;
 
         foreach ($selectedTrainees as $trainee) {
-            // Create activity enrollment
-            $activityEnrollment = ActivityEnrollment::create([
-                'activity_id' => $activity->id,
-                'trainee_id' => $trainee->id,
-                'enrollment_date' => Carbon::now()->subDays(rand(30, 120)),
-                'start_date' => Carbon::now()->subDays(rand(20, 100)),
-                'status' => 'enrolled',
-                'goals' => $this->generateEnrollmentGoals($activity, $trainee),
-                'enrolled_by' => $activity->created_by,
-                'progress_notes' => $this->generateEnrollmentNotes($trainee),
-            ]);
-
             // Enroll in individual sessions
             foreach ($sessions as $session) {
                 $this->enrollTraineeInSession($session, $trainee);
@@ -330,10 +324,10 @@ class CREAMSActivitySeeder extends Seeder
             }
         }
 
-        // Update enrolled count for sessions
+        // Update participant count for sessions
         foreach ($sessions as $session) {
             $session->update([
-                'enrolled_count' => SessionEnrollment::where('session_id', $session->id)->count()
+                'current_participants' => SessionEnrollment::where('session_id', $session->id)->count()
             ]);
         }
 
@@ -440,15 +434,22 @@ class CREAMSActivitySeeder extends Seeder
     {
         $attendanceStatus = $this->getAttendanceStatus($session->status);
         
+        $enrollmentStatus = match($attendanceStatus) {
+            'present' => 'attended',
+            'absent' => 'absent', 
+            'excused' => 'excused',
+            default => 'enrolled'
+        };
+
         return SessionEnrollment::create([
             'session_id' => $session->id,
             'trainee_id' => $trainee->id,
             'enrollment_date' => $session->created_at,
-            'attendance_status' => $attendanceStatus,
-            'checked_in_at' => $attendanceStatus === 'present' ? 
-                Carbon::parse($session->scheduled_date . ' ' . $session->start_time)->addMinutes(rand(0, 10)) : null,
+            'enrolled_by' => $session->teacher_id,
+            'enrollment_status' => $enrollmentStatus,
             'participation_score' => $attendanceStatus === 'present' ? rand(6, 10) : null,
-            'progress_notes' => $attendanceStatus === 'present' ? $this->generateProgressNotes() : null,
+            'enrollment_notes' => $attendanceStatus === 'present' ? $this->generateProgressNotes() : null,
+            'feedback' => $attendanceStatus === 'present' ? $this->generateProgressNotes() : null,
         ]);
     }
 
@@ -462,7 +463,6 @@ class CREAMSActivitySeeder extends Seeder
         $random = rand(1, 100);
         if ($random <= 85) return 'present';
         if ($random <= 92) return 'absent';
-        if ($random <= 97) return 'late';
         return 'excused';
     }
 
@@ -497,21 +497,21 @@ class CREAMSActivitySeeder extends Seeder
         }
         
         // Enrollment statistics
-        $enrollmentStats = SessionEnrollment::selectRaw('attendance_status, COUNT(*) as count')
-            ->groupBy('attendance_status')
+        $enrollmentStats = SessionEnrollment::selectRaw('enrollment_status, COUNT(*) as count')
+            ->groupBy('enrollment_status')
             ->get();
             
-        $this->command->info("\n👥 Attendance Distribution:");
+        $this->command->info("\n👥 Enrollment Distribution:");
         foreach ($enrollmentStats as $stat) {
-            $this->command->line("   📊 {$stat->attendance_status}: {$stat->count} enrollments");
+            $this->command->line("   📊 {$stat->enrollment_status}: {$stat->count} enrollments");
         }
         
         // Activity participation
-        $participationStats = DB::table('activities')
-            ->join('activity_sessions', 'activities.id', '=', 'activity_sessions.activity_id')
+        $participationStats = DB::table('activities_new')
+            ->join('activity_sessions', 'activities_new.id', '=', 'activity_sessions.activity_id')
             ->join('session_enrollments', 'activity_sessions.id', '=', 'session_enrollments.session_id')
-            ->selectRaw('activities.category, COUNT(DISTINCT session_enrollments.trainee_id) as unique_trainees')
-            ->groupBy('activities.category')
+            ->selectRaw('activities_new.category, COUNT(DISTINCT session_enrollments.trainee_id) as unique_trainees')
+            ->groupBy('activities_new.category')
             ->orderBy('unique_trainees', 'desc')
             ->get();
             
