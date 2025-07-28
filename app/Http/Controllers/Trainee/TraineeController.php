@@ -128,6 +128,7 @@ class TraineeController extends Controller
                 'trainee_first_name' => 'required|string|max:255',
                 'trainee_last_name' => 'required|string|max:255',
                 'trainee_email' => 'required|email|unique:trainees,trainee_email',
+                'ic_number' => 'required|string|max:20|unique:trainees,ic_number',
                 'trainee_phone_number' => 'required|string|max:20',
                 'trainee_date_of_birth' => 'required|date|before:today',
                 'gender' => 'required|string|in:Male,Female',
@@ -154,6 +155,8 @@ class TraineeController extends Controller
                 'trainee_last_name.required' => 'Last name is required.',
                 'trainee_email.required' => 'Email address is required.',
                 'trainee_email.unique' => 'This email is already registered.',
+                'ic_number.required' => 'IC/Passport number is required.',
+                'ic_number.unique' => 'This IC/Passport number is already registered.',
                 'trainee_date_of_birth.before' => 'Date of birth must be in the past.',
                 'trainee_avatar.image' => 'Avatar must be a valid image file.',
                 'trainee_avatar.max' => 'Avatar file size must not exceed 2MB.',
@@ -176,18 +179,44 @@ class TraineeController extends Controller
                 ]);
             }
             
+            // Get centre_id from centre_name
+            $centre = Centre::where('centre_name', $validated['centre_name'])->first();
+            if (!$centre) {
+                throw new \Exception('Centre not found');
+            }
+            
+            // Generate unique trainee_id and unique_identifier
+            $year = now()->year;
+            $lastTrainee = Trainee::where('trainee_id', 'like', "TRN{$year}%")
+                                  ->orderBy('trainee_id', 'desc')
+                                  ->first();
+            
+            if ($lastTrainee) {
+                $lastNumber = (int) substr($lastTrainee->trainee_id, -5);
+                $newNumber = $lastNumber + 1;
+            } else {
+                $newNumber = 1;
+            }
+            
+            $traineeId = sprintf('TRN%s%s%05d', $year, $centre->centre_id, $newNumber);
+            $uniqueIdentifier = $traineeId; // Use same value for now
+            
             // Create trainee with all required fields
             $trainee = Trainee::create([
+                'trainee_id' => $traineeId,
+                'unique_identifier' => $uniqueIdentifier,
                 'trainee_first_name' => $validated['trainee_first_name'],
                 'trainee_last_name' => $validated['trainee_last_name'],
                 'trainee_email' => $validated['trainee_email'],
+                'ic_number' => $validated['ic_number'],
                 'trainee_phone_number' => $validated['trainee_phone_number'],
                 'trainee_date_of_birth' => $validated['trainee_date_of_birth'],
                 'gender' => $validated['gender'],
                 'avatar' => $avatarPath,
                 'centre_name' => $validated['centre_name'],
+                'centre_id' => $centre->centre_id,
                 'trainee_condition' => $validated['trainee_condition'],
-                'address' => $validated['address'],
+                'trainee_address' => $validated['address'],
                 // Guardian information
                 'guardian_name' => $validated['guardian_name'],
                 'guardian_relationship' => $validated['guardian_relationship'],

@@ -137,6 +137,9 @@ Route::middleware(['auth', 'validate.params'])->group(function () {
     // New Modern Dashboard Template
     Route::get('/dashboard/modern-new', [App\Http\Controllers\Dashboard\DashboardController::class, 'modernNew'])->name('dashboard.modern-new');
     
+    // Enhanced Dashboard with Improved UX
+    Route::get('/dashboard/enhanced', [App\Http\Controllers\Dashboard\DashboardController::class, 'enhanced'])->name('dashboard.enhanced');
+    
     // Optimized Dashboard Routes
     // Optimized Dashboard System Routes with Enhanced Middleware
     Route::prefix('dashboard')->name('dashboard.')->middleware(['throttle:dashboard'])->group(function () {
@@ -705,7 +708,8 @@ Route::middleware(['auth'])->prefix('api')->name('api.')->group(function () {
 |--------------------------------------------------------------------------
 */
 
-Route::middleware(['auth'])->group(function () {
+// Search routes accessible to authenticated users (using session-based auth)
+Route::middleware(['web'])->group(function () {
     Route::get('/search', [App\Http\Controllers\SearchController::class, 'search'])->name('search');
     Route::post('/search', [App\Http\Controllers\SearchController::class, 'search'])->name('search.post');
 });

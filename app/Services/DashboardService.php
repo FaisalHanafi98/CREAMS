@@ -201,7 +201,7 @@ class DashboardService
             return [
                 'centre_trainees' => Trainee::where('centre_id', $centreId)->where('is_active', true)->count(),
                 'centre_teachers' => User::where('centre_id', $centreId)->where('role', 'teacher')->where('is_active', true)->count(),
-                'centre_activities' => Activity::where('centre_id', $centreId)->where('is_active', true)->count(),
+                'centre_activities' => Activity::where('centre_id', $centreId)->where('activity_status', 'scheduled')->count(),
                 'today_sessions' => ActivitySession::whereDate('session_date', Carbon::today())
                     ->whereHas('activity', function($q) use ($centreId) {
                         $q->where('centre_id', $centreId);

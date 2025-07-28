@@ -19,6 +19,11 @@ class SearchController extends Controller
      */
     public function search(Request $request)
     {
+        // Check if user is authenticated (using session-based auth)
+        if (!session()->has('id')) {
+            return response()->json(['results' => [], 'error' => 'Unauthorized'], 401);
+        }
+
         // Get the search query
         $query = $request->input('query');
 

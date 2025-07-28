@@ -154,7 +154,7 @@ class CentreService
             'centre_capacity' => $centre->centre_capacity ?? 0,
             'total_users' => User::where('centre_id', $centreId)->where('is_active', true)->count(),
             'total_trainees' => Trainee::where('centre_id', $centreId)->where('is_active', true)->count(),
-            'total_activities' => Activity::where('centre_id', $centreId)->where('is_active', true)->count(),
+            'total_activities' => Activity::where('centre_id', $centreId)->where('activity_status', 'scheduled')->count(),
             'total_assets' => Asset::where('centre_id', $centreId)->count(),
             'active_sessions_today' => $this->getTodayActiveSessions($centreId),
             'completed_sessions_today' => $this->getTodayCompletedSessions($centreId),
@@ -312,8 +312,8 @@ class CentreService
     private function getRecentActivities($centreId, $limit = 10)
     {
         return Activity::where('centre_id', $centreId)
-            ->where('is_active', true)
-            ->select('id', 'activity_name', 'activity_type', 'created_at', 'is_active')
+            ->where('activity_status', 'scheduled')
+            ->select('id', 'activity_name', 'activity_type', 'created_at', 'activity_status')
             ->orderBy('created_at', 'desc')
             ->limit($limit)
             ->get()
@@ -324,7 +324,7 @@ class CentreService
                     'type' => $activity->activity_type,
                     'date' => $activity->created_at->toDateString(),
                     'time' => $activity->created_at->format('H:i'),
-                    'is_active' => $activity->is_active
+                    'status' => $activity->activity_status
                 ];
             });
     }

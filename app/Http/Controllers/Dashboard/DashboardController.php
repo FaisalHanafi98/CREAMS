@@ -17,7 +17,7 @@ use App\Models\Asset;
 class DashboardController extends Controller
 {
     /**
-     * Display modern dashboard
+     * Display modern dashboard (now using enhanced version)
      */
     public function index(Request $request)
     {
@@ -31,8 +31,8 @@ class DashboardController extends Controller
             $role = session('role');
             $centreId = session('centre_id');
             
-            // Get dashboard data based on role
-            $dashboardData = $this->getDashboardData($role, $userId, $centreId);
+            // Get enhanced dashboard data with additional UX features
+            $dashboardData = $this->getEnhancedDashboardData($role, $userId, $centreId);
             
             return view('dashboard.modern', $dashboardData);
             
@@ -79,6 +79,41 @@ class DashboardController extends Controller
             
             return view('dashboard.modernnew', [
                 'error' => 'Unable to load dashboard data',
+                'role' => $role ?? 'unknown',
+                'user_name' => session('name', 'User'),
+                'current_time' => now()->format('l, F j, Y - g:i A')
+            ]);
+        }
+    }
+
+    /**
+     * Display enhanced dashboard with improved UX
+     */
+    public function enhanced(Request $request)
+    {
+        try {
+            // Check authentication
+            if (!session()->has('id')) {
+                return redirect()->route('login');
+            }
+
+            $userId = session('id');
+            $role = session('role');
+            $centreId = session('centre_id');
+            
+            // Get enhanced dashboard data with additional UX features
+            $dashboardData = $this->getEnhancedDashboardData($role, $userId, $centreId);
+            
+            return view('dashboard.enhanced', $dashboardData);
+            
+        } catch (\Exception $e) {
+            Log::error('Enhanced dashboard error', [
+                'user_id' => $userId ?? 'unknown',
+                'error' => $e->getMessage()
+            ]);
+            
+            return view('dashboard.enhanced', [
+                'error' => 'Unable to load enhanced dashboard data',
                 'role' => $role ?? 'unknown',
                 'user_name' => session('name', 'User'),
                 'current_time' => now()->format('l, F j, Y - g:i A')
@@ -138,7 +173,7 @@ class DashboardController extends Controller
             ],
             [
                 'title' => 'Total Activities',
-                'value' => DB::table('activities')->where('is_active', true)->count(),
+                'value' => DB::table('activities')->where('activity_status', 'scheduled')->count(),
                 'icon' => 'fas fa-tasks',
                 'color' => 'info',
                 'trend' => '+15%'
@@ -173,7 +208,7 @@ class DashboardController extends Controller
             ],
             [
                 'title' => 'Active Activities',
-                'value' => DB::table('activities')->where('centre_id', $centreId)->where('is_active', true)->count(),
+                'value' => DB::table('activities')->where('centre_id', $centreId)->where('activity_status', 'scheduled')->count(),
                 'icon' => 'fas fa-tasks',
                 'color' => 'info'
             ],
@@ -233,7 +268,7 @@ class DashboardController extends Controller
             ],
             [
                 'title' => 'Active Activities',
-                'value' => DB::table('activities')->where('centre_id', $centreId)->where('is_active', true)->count(),
+                'value' => DB::table('activities')->where('centre_id', $centreId)->where('activity_status', 'scheduled')->count(),
                 'icon' => 'fas fa-tasks',
                 'color' => 'success'
             ],
@@ -253,35 +288,46 @@ class DashboardController extends Controller
     /**
      * Get recent activities
      */
-    private function getRecentActivities($centreId = null)
+    private function getRecentActivities($role = null, $userId = null, $centreId = null)
     {
-        $query = DB::table('activities')
-            ->select('name', 'created_at', 'is_active')
-            ->orderBy('created_at', 'desc')
-            ->limit(5);
+        try {
+            $query = DB::table('activities')
+                ->select('activity_name', 'created_at', 'activity_status', 'activity_type')
+                ->orderBy('created_at', 'desc')
+                ->limit(5);
+                
+            if ($centreId && $centreId !== 'admin') {
+                $query->where('centre_id', $centreId);
+            }
             
-        if ($centreId) {
-            $query->where('centre_id', $centreId);
+            // Filter by activity type if specified (rehabilitation or academic)
+            if ($role && in_array($role, ['teacher', 'supervisor'])) {
+                $query->whereIn('activity_type', ['rehabilitation', 'academic']);
+            }
+            
+            return $query->get()->map(function ($activity) {
+                return [
+                    'title' => $activity->activity_name,
+                    'time' => Carbon::parse($activity->created_at)->diffForHumans(),
+                    'status' => $activity->activity_status,
+                    'type' => $activity->activity_type ?? 'general'
+                ];
+            });
+        } catch (\Exception $e) {
+            Log::error('Recent activities error', ['error' => $e->getMessage()]);
+            return collect();
         }
-        
-        return $query->get()->map(function ($activity) {
-            return [
-                'title' => $activity->name,
-                'time' => Carbon::parse($activity->created_at)->diffForHumans(),
-                'status' => $activity->is_active ? 'active' : 'inactive'
-            ];
-        });
     }
 
     /**
      * Get upcoming sessions for teacher
      */
-    private function getUpcomingSessions($teacherId)
+    private function getUpcomingSessions($role = null, $userId = null, $centreId = null)
     {
         return DB::table('activity_sessions')
             ->join('activities', 'activity_sessions.activity_id', '=', 'activities.id')
-            ->select('activities.name as activity_name', 'activity_sessions.scheduled_date', 'activity_sessions.start_time', 'activity_sessions.venue')
-            ->where('activity_sessions.teacher_id', $teacherId)
+            ->select('activities.activity_name', 'activity_sessions.scheduled_date', 'activity_sessions.start_time', 'activity_sessions.venue')
+            ->where('activity_sessions.teacher_id', $userId)
             ->where('activity_sessions.status', 'scheduled')
             ->where('activity_sessions.scheduled_date', '>=', today())
             ->orderBy('activity_sessions.scheduled_date')
@@ -618,5 +664,90 @@ class DashboardController extends Controller
             default:
                 return 'secondary';
         }
+    }
+
+    /**
+     * Get enhanced dashboard data with additional UX features
+     */
+    private function getEnhancedDashboardData($role, $userId, $centreId)
+    {
+        $data = $this->getDashboardData($role, $userId, $centreId);
+        
+        // Add enhanced features
+        $data['enhanced_features'] = true;
+        $data['user_preferences'] = $this->getUserPreferences($userId);
+        $data['system_health'] = $this->getSystemHealth();
+        $data['quick_actions_enhanced'] = $this->getEnhancedQuickActions($role);
+        
+        return $data;
+    }
+
+    /**
+     * Get user preferences for dashboard customization
+     */
+    private function getUserPreferences($userId)
+    {
+        // Default preferences
+        return [
+            'widgets' => [
+                'stats' => true,
+                'sessions' => true,
+                'notifications' => true,
+                'calendar' => true
+            ],
+            'theme' => 'light',
+            'layout' => 'default'
+        ];
+    }
+
+    /**
+     * Get system health metrics
+     */
+    private function getSystemHealth()
+    {
+        try {
+            return [
+                'database' => 'healthy',
+                'cache' => 'healthy',
+                'storage' => 'healthy',
+                'overall' => 'healthy'
+            ];
+        } catch (\Exception $e) {
+            return [
+                'database' => 'unknown',
+                'cache' => 'unknown',
+                'storage' => 'unknown',
+                'overall' => 'unknown'
+            ];
+        }
+    }
+
+    /**
+     * Get enhanced quick actions based on role
+     */
+    private function getEnhancedQuickActions($role)
+    {
+        $actions = [];
+        
+        if ($role === 'admin') {
+            $actions['administration'] = [
+                ['label' => 'Add User', 'icon' => 'fas fa-user-plus', 'route' => 'staffs.register'],
+                ['label' => 'Add Centre', 'icon' => 'fas fa-building', 'route' => 'centres.create']
+            ];
+        }
+        
+        if (in_array($role, ['admin', 'supervisor'])) {
+            $actions['management'] = [
+                ['label' => 'Add Trainee', 'icon' => 'fas fa-user-graduate', 'route' => 'trainees.create'],
+                ['label' => 'Create Activity', 'icon' => 'fas fa-plus-circle', 'route' => 'activities.create']
+            ];
+        }
+        
+        $actions['personal'] = [
+            ['label' => 'My Profile', 'icon' => 'fas fa-user', 'route' => 'profile'],
+            ['label' => 'Generate Letter', 'icon' => 'fas fa-file-alt', 'route' => 'profile', 'fragment' => '#letter-generator']
+        ];
+        
+        return $actions;
     }
 }

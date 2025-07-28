@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Dashboard - CREAMS')
+@section('title', 'Enhanced Dashboard - CREAMS')
 
 @section('content')
 <div class="enhanced-dashboard">
@@ -65,17 +65,15 @@
                 </div>
                 <div class="col-lg-4 col-md-5">
                     <div class="header-actions">
-                        <!-- Page Toggle (Admin Only) -->
-                        @if($role === 'admin')
-                        <div class="page-toggle mb-3">
-                            <button class="toggle-btn active" id="generalPageBtn" onclick="switchPage('general')">
-                                <i class="fas fa-chart-line"></i> General
-                            </button>
-                            <button class="toggle-btn" id="personalPageBtn" onclick="switchPage('personal')">
-                                <i class="fas fa-user"></i> Personal
-                            </button>
+                        <!-- Global Search -->
+                        <div class="global-search-container">
+                            <div class="search-input-wrapper">
+                                <input type="text" class="global-search-input" placeholder="Search trainees, activities..." id="globalSearch">
+                                <i class="fas fa-search search-icon"></i>
+                            </div>
+                            <div class="search-results" id="searchResults"></div>
                         </div>
-                        @endif
+                        
                         <!-- Action Buttons -->
                         <div class="action-buttons">
                             <button class="btn btn-icon" onclick="toggleCustomization()" title="Customize Dashboard">
@@ -102,12 +100,8 @@
         </div>
     </div>
 
-    <!-- Dashboard Book Container -->
-    <div class="dashboard-book" id="dashboardBook">
-        <!-- General Page (Left Page) -->
-        <div class="dashboard-page general-page active" id="generalPage">
-            <!-- Smart Notifications Bar -->
-            @if(isset($system_alerts) && count($system_alerts) > 0)
+    <!-- Smart Notifications Bar -->
+    @if(isset($system_alerts) && count($system_alerts) > 0)
     <div class="smart-notifications-bar mb-4">
         <div class="notification-carousel" id="notificationCarousel">
             @foreach($system_alerts as $alert)
@@ -455,383 +449,6 @@
         </div>
     </div>
 </div>
-        </div>
-
-        <!-- Personal Page (Right Page) -->
-        <div class="dashboard-page personal-page" id="personalPage">
-            <div class="personal-dashboard-content">
-                <!-- Personal Header -->
-                <div class="personal-header mb-4">
-                    <div class="row align-items-center">
-                        <div class="col-md-8">
-                            <h2 class="personal-title">
-                                <i class="fas fa-user-circle me-2"></i>
-                                My Personal Dashboard
-                            </h2>
-                            <p class="personal-subtitle">Your personalized workspace and insights</p>
-                        </div>
-                        <div class="col-md-4 text-end">
-                            <div class="personal-avatar">
-                                @php
-                                    $avatarPath = session('user_avatar') ?? session('avatar');
-                                    $avatarUrl = $avatarPath ? asset('storage/avatars/' . $avatarPath) : asset('images/default-avatar.svg');
-                                @endphp
-                                <img src="{{ $avatarUrl }}" alt="Profile" class="avatar-img">
-                                <div class="avatar-info">
-                                    <h5>{{ $user_name }}</h5>
-                                    <span class="role-badge">{{ ucfirst($role) }}</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Personal Statistics -->
-                <div class="row mb-4">
-                    <div class="col-md-3">
-                        <div class="personal-stat-card">
-                            <div class="stat-icon bg-primary">
-                                <i class="fas fa-tasks"></i>
-                            </div>
-                            <div class="stat-details">
-                                <h3 id="personalTasks">{{ $quick_stats[0]['value'] ?? 0 }}</h3>
-                                <p>My Tasks</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="personal-stat-card">
-                            <div class="stat-icon bg-success">
-                                <i class="fas fa-calendar-check"></i>
-                            </div>
-                            <div class="stat-details">
-                                <h3 id="personalSessions">{{ isset($upcoming_sessions) ? count($upcoming_sessions) : 0 }}</h3>
-                                <p>My Sessions</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="personal-stat-card">
-                            <div class="stat-icon bg-warning">
-                                <i class="fas fa-bell"></i>
-                            </div>
-                            <div class="stat-details">
-                                <h3 id="personalNotifications">{{ isset($notifications) ? count($notifications) : 0 }}</h3>
-                                <p>Notifications</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="personal-stat-card">
-                            <div class="stat-icon bg-info">
-                                <i class="fas fa-chart-line"></i>
-                            </div>
-                            <div class="stat-details">
-                                <h3 id="personalProgress">{{ $progress_summary['percentage'] ?? 0 }}%</h3>
-                                <p>Progress</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Personal Content Sections -->
-                <div class="row">
-                    <div class="col-md-6">
-                        <!-- My Recent Activities -->
-                        <div class="personal-widget mb-4">
-                            <div class="widget-header">
-                                <h5><i class="fas fa-history me-2"></i>My Recent Activities</h5>
-                            </div>
-                            <div class="widget-content">
-                                @if(isset($recent_activities) && count($recent_activities) > 0)
-                                    @foreach((is_array($recent_activities) ? array_slice($recent_activities, 0, 5) : $recent_activities->take(5)) as $activity)
-                                    <div class="personal-activity-item">
-                                        <div class="activity-icon">
-                                            <i class="fas fa-circle" style="color: {{ $activity['status'] === 'active' ? '#28a745' : '#6c757d' }}"></i>
-                                        </div>
-                                        <div class="activity-content">
-                                            <h6>{{ $activity['title'] }}</h6>
-                                            <small class="text-muted">{{ $activity['time'] }}</small>
-                                        </div>
-                                    </div>
-                                    @endforeach
-                                @else
-                                    <div class="no-data">
-                                        <i class="fas fa-inbox"></i>
-                                        <p>No recent activities</p>
-                                    </div>
-                                @endif
-                            </div>
-                        </div>
-
-                        <!-- Quick Actions -->
-                        <div class="personal-widget">
-                            <div class="widget-header">
-                                <h5><i class="fas fa-rocket me-2"></i>Quick Actions</h5>
-                            </div>
-                            <div class="widget-content">
-                                <div class="personal-actions-grid">
-                                    <a href="{{ route('profile') }}" class="personal-action">
-                                        <i class="fas fa-user-edit"></i>
-                                        <span>Edit Profile</span>
-                                    </a>
-                                    @if($role === 'admin')
-                                    <a href="{{ route('staffs.register') }}" class="personal-action">
-                                        <i class="fas fa-user-plus"></i>
-                                        <span>Add User</span>
-                                    </a>
-                                    @endif
-                                    <a href="{{ route('profile') }}#letter-generator" class="personal-action">
-                                        <i class="fas fa-file-alt"></i>
-                                        <span>Generate Letter</span>
-                                    </a>
-                                    <a href="#" class="personal-action" onclick="toggleTheme()">
-                                        <i class="fas fa-palette"></i>
-                                        <span>Change Theme</span>
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <!-- Personal Calendar -->
-                        <div class="personal-widget mb-4">
-                            <div class="widget-header">
-                                <h5><i class="fas fa-calendar me-2"></i>My Schedule</h5>
-                            </div>
-                            <div class="widget-content">
-                                @if(isset($calendar_events) && count($calendar_events) > 0)
-                                    @foreach((is_array($calendar_events) ? array_slice($calendar_events, 0, 5) : $calendar_events->take(5)) as $event)
-                                    <div class="personal-event-item">
-                                        <div class="event-date">
-                                            <span class="event-day">{{ $event['day'] }}</span>
-                                            <span class="event-date-num">{{ $event['date'] }}</span>
-                                        </div>
-                                        <div class="event-details">
-                                            <h6>{{ $event['title'] }}</h6>
-                                            <small>{{ $event['time'] }}</small>
-                                        </div>
-                                        <div class="event-status">
-                                            <span class="status-dot status-{{ $event['color'] }}"></span>
-                                        </div>
-                                    </div>
-                                    @endforeach
-                                @else
-                                    <div class="no-data">
-                                        <i class="fas fa-calendar-alt"></i>
-                                        <p>No upcoming events</p>
-                                    </div>
-                                @endif
-                            </div>
-                        </div>
-
-                        <!-- Personal Notifications -->
-                        <div class="personal-widget">
-                            <div class="widget-header">
-                                <h5><i class="fas fa-bell me-2"></i>My Notifications</h5>
-                            </div>
-                            <div class="widget-content">
-                                @if(isset($notifications) && count($notifications) > 0)
-                                    @foreach((is_array($notifications) ? array_slice($notifications, 0, 4) : $notifications->take(4)) as $notification)
-                                    <div class="personal-notification-item">
-                                        <div class="notification-dot {{ $notification['type'] }}"></div>
-                                        <div class="notification-content">
-                                            <p>{{ $notification['message'] }}</p>
-                                            <small class="text-muted">{{ $notification['time'] }}</small>
-                                        </div>
-                                    </div>
-                                    @endforeach
-                                @else
-                                    <div class="no-data">
-                                        <i class="fas fa-bell-slash"></i>
-                                        <p>No new notifications</p>
-                                    </div>
-                                @endif
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Personal Page (Right Page) -->
-        <div class="dashboard-page personal-page" id="personalPage">
-            <!-- Personal Header -->
-            <div class="personal-header">
-                <div class="personal-avatar">
-                    {{ substr($user_name, 0, 1) }}
-                </div>
-                <div class="personal-greeting">Hello, {{ $user_name }}!</div>
-                <div class="personal-subtitle">Your personal dashboard</div>
-            </div>
-
-            <!-- Personal Statistics -->
-            <div class="personal-stats-grid">
-                <div class="personal-stat-card">
-                    <div class="personal-stat-header">
-                        <div class="personal-stat-icon">
-                            <i class="fas fa-tasks"></i>
-                        </div>
-                    </div>
-                    <div class="personal-stat-value">{{ $quick_stats[0]['value'] ?? '0' }}</div>
-                    <div class="personal-stat-label">My Activities</div>
-                </div>
-                
-                <div class="personal-stat-card">
-                    <div class="personal-stat-header">
-                        <div class="personal-stat-icon">
-                            <i class="fas fa-calendar-check"></i>
-                        </div>
-                    </div>
-                    <div class="personal-stat-value">{{ count($upcoming_sessions ?? []) }}</div>
-                    <div class="personal-stat-label">Upcoming Sessions</div>
-                </div>
-                
-                <div class="personal-stat-card">
-                    <div class="personal-stat-header">
-                        <div class="personal-stat-icon">
-                            <i class="fas fa-bell"></i>
-                        </div>
-                    </div>
-                    <div class="personal-stat-value">{{ count($notifications ?? []) }}</div>
-                    <div class="personal-stat-label">Notifications</div>
-                </div>
-            </div>
-
-            <!-- Personal Widgets Row -->
-            <div class="row">
-                <!-- My Recent Activities -->
-                <div class="col-lg-6 mb-4">
-                    <div class="personal-widget">
-                        <div class="personal-widget-header">
-                            <h5 class="personal-widget-title">
-                                <i class="fas fa-history"></i>
-                                My Recent Activities
-                            </h5>
-                        </div>
-                        <div class="personal-widget-content">
-                            @if(isset($recent_activities) && count($recent_activities) > 0)
-                                @foreach((is_array($recent_activities) ? array_slice($recent_activities, 0, 4) : $recent_activities->take(4)) as $activity)
-                                <div class="personal-activity-item">
-                                    <div class="personal-activity-icon">
-                                        <i class="fas fa-play"></i>
-                                    </div>
-                                    <div class="personal-activity-content">
-                                        <div class="personal-activity-title">{{ $activity->title ?? 'Activity' }}</div>
-                                        <div class="personal-activity-time">{{ $activity->time ?? 'Recently' }}</div>
-                                    </div>
-                                </div>
-                                @endforeach
-                            @else
-                                <div class="text-center text-muted py-3">
-                                    <i class="fas fa-clipboard"></i>
-                                    <p class="mb-0 mt-2">No recent activities</p>
-                                </div>
-                            @endif
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Personal Calendar -->
-                <div class="col-lg-6 mb-4">
-                    <div class="personal-widget">
-                        <div class="personal-widget-header">
-                            <h5 class="personal-widget-title">
-                                <i class="fas fa-calendar-alt"></i>
-                                My Schedule
-                            </h5>
-                        </div>
-                        <div class="personal-widget-content">
-                            @if(isset($upcoming_sessions) && count($upcoming_sessions) > 0)
-                                @foreach((is_array($upcoming_sessions) ? array_slice($upcoming_sessions, 0, 4) : $upcoming_sessions->take(4)) as $session)
-                                <div class="personal-activity-item">
-                                    <div class="personal-activity-icon">
-                                        <i class="fas fa-clock"></i>
-                                    </div>
-                                    <div class="personal-activity-content">
-                                        <div class="personal-activity-title">{{ $session->activity ?? 'Session' }}</div>
-                                        <div class="personal-activity-time">{{ $session->date ?? 'Soon' }} at {{ $session->time ?? 'TBA' }}</div>
-                                    </div>
-                                </div>
-                                @endforeach
-                            @else
-                                <div class="text-center text-muted py-3">
-                                    <i class="fas fa-calendar-times"></i>
-                                    <p class="mb-0 mt-2">No upcoming sessions</p>
-                                </div>
-                            @endif
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Quick Actions Personal -->
-            <div class="personal-widget">
-                <div class="personal-widget-header">
-                    <h5 class="personal-widget-title">
-                        <i class="fas fa-rocket"></i>
-                        Quick Actions
-                    </h5>
-                </div>
-                <div class="personal-widget-content">
-                    <div class="row">
-                        <div class="col-md-3 col-6 mb-3">
-                            <a href="{{ route('profile') }}" class="btn btn-outline-primary btn-sm w-100">
-                                <i class="fas fa-user me-2"></i>My Profile
-                            </a>
-                        </div>
-                        @if(in_array($role, ['admin', 'supervisor', 'teacher']))
-                        <div class="col-md-3 col-6 mb-3">
-                            <a href="{{ route('activities.create') }}" class="btn btn-outline-success btn-sm w-100">
-                                <i class="fas fa-plus me-2"></i>New Activity
-                            </a>
-                        </div>
-                        @endif
-                        <div class="col-md-3 col-6 mb-3">
-                            <a href="#" onclick="showFullCalendar()" class="btn btn-outline-info btn-sm w-100">
-                                <i class="fas fa-calendar me-2"></i>Calendar
-                            </a>
-                        </div>
-                        <div class="col-md-3 col-6 mb-3">
-                            <a href="#" onclick="showNotifications()" class="btn btn-outline-warning btn-sm w-100">
-                                <i class="fas fa-bell me-2"></i>Notifications
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Personal Notifications -->
-            <div class="personal-widget">
-                <div class="personal-widget-header">
-                    <h5 class="personal-widget-title">
-                        <i class="fas fa-envelope"></i>
-                        My Notifications
-                    </h5>
-                </div>
-                <div class="personal-widget-content">
-                    @if(isset($notifications) && count($notifications) > 0)
-                        @foreach((is_array($notifications) ? array_slice($notifications, 0, 3) : $notifications->take(3)) as $notification)
-                        <div class="personal-activity-item">
-                            <div class="personal-activity-icon">
-                                <i class="fas fa-info-circle"></i>
-                            </div>
-                            <div class="personal-activity-content">
-                                <div class="personal-activity-title">{{ $notification['title'] ?? 'Notification' }}</div>
-                                <div class="personal-activity-time">{{ $notification['time'] ?? 'Recently' }}</div>
-                            </div>
-                        </div>
-                        @endforeach
-                    @else
-                        <div class="text-center text-muted py-3">
-                            <i class="fas fa-bell-slash"></i>
-                            <p class="mb-0 mt-2">No new notifications</p>
-                        </div>
-                    @endif
-                </div>
-            </div>
-        </div>
-    </div>
 
 @if(isset($error))
 <div class="alert alert-danger mt-3">
@@ -842,60 +459,19 @@
 
 @section('styles')
 <style>
-/* Sidebar-Matching Dashboard Theme */
+/* Enhanced Dashboard Styles */
 :root {
-    /* Primary Colors (Matching Sidebar) */
-    --primary-color: #32bdea;
-    --secondary-color: #c850c0;
-    --success-color: #2ed573;
-    --warning-color: #ffa502;
-    --info-color: #1e90ff;
-    --danger-color: #ff4757;
-    
-    /* Gradients using sidebar colors */
-    --primary-gradient: linear-gradient(135deg, #32bdea 0%, #c850c0 100%);
-    --success-gradient: linear-gradient(135deg, #2ed573 0%, #1e90ff 100%);
-    --warning-gradient: linear-gradient(135deg, #ffa502 0%, #ff4757 100%);
-    --info-gradient: linear-gradient(135deg, #1e90ff 0%, #32bdea 100%);
-    
-    /* Background Colors (Matching Sidebar) */
-    --bg-body: #f0f2f5;
-    --bg-light: #f8f9fa;
-    --bg-white: #ffffff;
-    --bg-card: #ffffff;
-    
-    /* Text Colors (Matching Sidebar) */
-    --text-primary: #555;
-    --text-secondary: #6c757d;
-    --text-muted: #888;
-    --text-white: #ffffff;
-    --text-dark: #1a2a3a;
-    
-    /* Border and Shadow (Matching Sidebar) */
-    --border-color: #e9ecef;
-    --border-light: #f1f5f9;
-    --card-shadow: 0 0 10px rgba(0,0,0,0.05);
-    --hover-shadow: 0 5px 15px rgba(0,0,0,0.1);
-    --active-bg: rgba(50, 189, 234, 0.05);
-    --active-bg-strong: rgba(50, 189, 234, 0.1);
-    
-    /* Interactive Elements */
-    --border-radius: 10px;
-    --border-radius-sm: 8px;
-    --transition: all 0.3s ease;
-    --hover-transform: translateY(-3px);
-    
-    /* Flip book colors */
-    --book-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
-    --page-gradient: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
-}
-
-/* Sidebar-Matching Body Styling */
-body {
-    background: var(--bg-body) !important;
-    font-family: 'Poppins', sans-serif;
-    color: var(--text-primary);
-    line-height: 1.6;
+    --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --success-gradient: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+    --warning-gradient: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);
+    --info-gradient: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+    --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    --hover-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+    --border-radius: 16px;
+    --text-primary: #2d3748;
+    --text-secondary: #718096;
+    --bg-light: #f8fafc;
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .enhanced-dashboard {
@@ -903,21 +479,6 @@ body {
     background: var(--bg-light);
     min-height: 100vh;
     position: relative;
-    overflow-x: hidden;
-}
-
-/* Subtle gradient overlay using sidebar colors */
-.enhanced-dashboard::before {
-    content: '';
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: radial-gradient(circle at 20% 80%, rgba(50, 189, 234, 0.02) 0%, transparent 50%),
-                radial-gradient(circle at 80% 20%, rgba(200, 80, 192, 0.02) 0%, transparent 50%);
-    pointer-events: none;
-    z-index: 0;
 }
 
 /* Dashboard Customization Panel */
@@ -958,10 +519,6 @@ body {
     font-size: 0.9rem;
 }
 
-.widget-toggle input {
-    display: none;
-}
-
 .toggle-slider {
     position: relative;
     width: 50px;
@@ -995,12 +552,11 @@ input:checked + .toggle-slider::before {
 /* Enhanced Header */
 .dashboard-header-enhanced {
     position: relative;
-    background: var(--bg-white);
+    background: white;
     border-radius: var(--border-radius);
     box-shadow: var(--card-shadow);
     margin-bottom: 30px;
     overflow: hidden;
-    z-index: 1;
 }
 
 .header-gradient {
@@ -1065,30 +621,53 @@ input:checked + .toggle-slider::before {
     color: #0056b3;
 }
 
-
-.search-result-item {
-    padding: 12px 16px;
-    border-bottom: 1px solid #f1f5f9;
-    cursor: pointer;
-    transition: var(--transition);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+/* Global Search */
+.global-search-container {
+    position: relative;
+    margin-bottom: 15px;
 }
 
-.search-result-item:hover {
+.search-input-wrapper {
+    position: relative;
+}
+
+.global-search-input {
+    width: 100%;
+    padding: 12px 40px 12px 16px;
+    border: 2px solid #e2e8f0;
+    border-radius: 25px;
+    font-size: 0.9rem;
+    transition: var(--transition);
     background: #f8fafc;
 }
 
-.search-result-item:last-child {
-    border-bottom: none;
+.global-search-input:focus {
+    outline: none;
+    border-color: #667eea;
+    background: white;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
-.search-loading, .search-no-results {
-    padding: 16px;
-    text-align: center;
+.search-icon {
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
     color: var(--text-secondary);
-    font-size: 0.9rem;
+}
+
+.search-results {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border-radius: 12px;
+    box-shadow: var(--hover-shadow);
+    max-height: 300px;
+    overflow-y: auto;
+    z-index: 1000;
+    display: none;
 }
 
 /* Action Buttons */
@@ -1201,19 +780,19 @@ input:checked + .toggle-slider::before {
 }
 
 .stat-card-enhanced {
-    background: var(--bg-white);
+    background: white;
     border-radius: var(--border-radius);
     box-shadow: var(--card-shadow);
     transition: var(--transition);
+    border: none;
     overflow: hidden;
     cursor: pointer;
     position: relative;
     height: 140px;
-    z-index: 1;
 }
 
 .stat-card-enhanced:hover {
-    transform: var(--hover-transform);
+    transform: translateY(-4px);
     box-shadow: var(--hover-shadow);
 }
 
@@ -1238,22 +817,22 @@ input:checked + .toggle-slider::before {
 
 .stat-card-primary .stat-icon-enhanced {
     background: var(--primary-gradient);
-    color: var(--text-white);
+    color: white;
 }
 
 .stat-card-success .stat-icon-enhanced {
     background: var(--success-gradient);
-    color: var(--text-white);
+    color: white;
 }
 
 .stat-card-info .stat-icon-enhanced {
     background: var(--info-gradient);
-    color: var(--text-white);
+    color: white;
 }
 
 .stat-card-warning .stat-icon-enhanced {
     background: var(--warning-gradient);
-    color: var(--text-white);
+    color: white;
 }
 
 .stat-details {
@@ -1308,32 +887,29 @@ input:checked + .toggle-slider::before {
 
 /* Dashboard Widgets */
 .dashboard-widget {
-    background: var(--bg-white);
+    background: white;
     border-radius: var(--border-radius);
     box-shadow: var(--card-shadow);
     margin-bottom: 24px;
     overflow: hidden;
     transition: var(--transition);
-    z-index: 1;
 }
 
 .dashboard-widget:hover {
     box-shadow: var(--hover-shadow);
-    transform: var(--hover-transform);
 }
 
 .widget-header {
     padding: 20px 24px;
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 1px solid #f1f5f9;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background: var(--bg-light);
 }
 
 .widget-title {
     font-size: 1.1rem;
-    font-weight: 700;
+    font-weight: 600;
     color: var(--text-primary);
     margin: 0;
     display: flex;
@@ -1549,40 +1125,40 @@ input:checked + .toggle-slider::before {
     align-items: center;
     justify-content: center;
     padding: 16px 12px;
-    background: var(--bg-light);
-    border-radius: var(--border-radius-sm);
+    background: #fafbfc;
+    border-radius: 12px;
     text-decoration: none;
     color: var(--text-primary);
     transition: var(--transition);
-    border: 1px solid var(--border-color);
+    border: 2px solid transparent;
     text-align: center;
 }
 
 .quick-action-enhanced:hover {
-    color: var(--primary-color);
-    background: var(--active-bg);
-    transform: var(--hover-transform);
+    background: var(--primary-gradient);
+    color: white;
+    transform: translateY(-2px);
     text-decoration: none;
-    box-shadow: var(--hover-shadow);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
 }
 
 .action-icon {
     width: 40px;
     height: 40px;
-    border-radius: var(--border-radius-sm);
-    background: var(--bg-light);
+    border-radius: 50%;
+    background: rgba(102, 126, 234, 0.1);
     display: flex;
     align-items: center;
     justify-content: center;
     margin-bottom: 8px;
     font-size: 1.2rem;
-    color: var(--primary-color);
+    color: #667eea;
     transition: var(--transition);
 }
 
 .quick-action-enhanced:hover .action-icon {
-    background: rgba(50, 189, 234, 0.1);
-    color: var(--primary-color);
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
 }
 
 .action-label {
@@ -1637,15 +1213,6 @@ input:checked + .toggle-slider::before {
 
 .notification-item-enhanced:hover .notification-dismiss {
     opacity: 1;
-}
-
-.notification-count {
-    background: #fc8181;
-    color: white;
-    border-radius: 10px;
-    padding: 2px 8px;
-    font-size: 0.7rem;
-    margin-left: 8px;
 }
 
 /* Enhanced Calendar Events */
@@ -1879,370 +1446,16 @@ input:checked + .toggle-slider::before {
         background: #4a5568;
     }
 }
-
-/* Dashboard Book Container */
-.dashboard-book {
-    perspective: 2000px;
-    width: 100%;
-    height: auto;
-    position: relative;
-    margin: 0 auto;
-    transform-style: preserve-3d;
-}
-
-.dashboard-page {
-    width: 100%;
-    min-height: 600px;
-    position: absolute;
-    top: 0;
-    left: 0;
-    background: var(--page-gradient);
-    border-radius: var(--border-radius);
-    box-shadow: var(--book-shadow);
-    backface-visibility: hidden;
-    transform-origin: left center;
-    transition: transform var(--flip-duration) var(--flip-easing);
-    overflow: hidden;
-    border: 1px solid var(--border-light);
-}
-
-.dashboard-page.active {
-    position: relative;
-    transform: rotateY(0deg);
-    z-index: 2;
-}
-
-.dashboard-page.flipping {
-    transform: rotateY(-180deg);
-    z-index: 1;
-}
-
-.general-page {
-    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
-}
-
-.personal-page {
-    background: linear-gradient(135deg, #fff5f5 0%, #f0f8ff 100%);
-    transform: rotateY(180deg);
-}
-
-.personal-page.active {
-    transform: rotateY(0deg);
-}
-
-/* Page Toggle Styles */
-.page-toggle {
-    display: flex;
-    background: var(--bg-white);
-    border-radius: 50px;
-    padding: 4px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    border: 1px solid var(--border-light);
-}
-
-.toggle-btn {
-    flex: 1;
-    padding: 12px 20px;
-    border: none;
-    background: transparent;
-    border-radius: 46px;
-    font-weight: 600;
-    font-size: 0.9rem;
-    color: var(--text-secondary);
-    cursor: pointer;
-    transition: all 0.3s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    min-width: 120px;
-}
-
-.toggle-btn.active {
-    background: var(--primary-gradient);
-    color: white;
-    box-shadow: 0 2px 8px rgba(50, 189, 234, 0.3);
-}
-
-.toggle-btn:hover:not(.active) {
-    background: var(--active-bg);
-    color: var(--primary-color);
-}
-
-/* Personal Page Specific Styles */
-.personal-page {
-    padding: 25px;
-}
-
-.personal-header {
-    text-align: center;
-    margin-bottom: 30px;
-    padding: 20px;
-    background: var(--primary-gradient);
-    color: white;
-    border-radius: var(--border-radius);
-    position: relative;
-    overflow: hidden;
-}
-
-.personal-header::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="pattern" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse"><circle cx="10" cy="10" r="1" fill="rgba(255,255,255,0.1)"/></pattern></defs><rect width="100" height="100" fill="url(%23pattern)"/></svg>');
-    opacity: 0.5;
-}
-
-.personal-avatar {
-    width: 80px;
-    height: 80px;
-    border-radius: 50%;
-    margin: 0 auto 15px;
-    border: 4px solid rgba(255,255,255,0.3);
-    background: rgba(255,255,255,0.2);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 2rem;
-    position: relative;
-    z-index: 1;
-}
-
-.personal-greeting {
-    font-size: 1.5rem;
-    font-weight: 700;
-    margin-bottom: 5px;
-    position: relative;
-    z-index: 1;
-}
-
-.personal-subtitle {
-    font-size: 1rem;
-    opacity: 0.9;
-    position: relative;
-    z-index: 1;
-}
-
-.personal-stats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 20px;
-    margin-bottom: 25px;
-}
-
-.personal-stat-card {
-    background: var(--bg-white);
-    padding: 20px;
-    border-radius: var(--border-radius);
-    box-shadow: var(--box-shadow);
-    border: 1px solid var(--border-light);
-    transition: var(--transition);
-    position: relative;
-    overflow: hidden;
-}
-
-.personal-stat-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 3px;
-    background: var(--primary-gradient);
-}
-
-.personal-stat-card:hover {
-    transform: translateY(-3px);
-    box-shadow: var(--hover-shadow);
-}
-
-.personal-stat-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 15px;
-}
-
-.personal-stat-icon {
-    width: 45px;
-    height: 45px;
-    border-radius: 12px;
-    background: var(--primary-gradient);
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.2rem;
-}
-
-.personal-stat-value {
-    font-size: 2rem;
-    font-weight: 700;
-    color: var(--text-primary);
-    margin-bottom: 5px;
-}
-
-.personal-stat-label {
-    color: var(--text-secondary);
-    font-size: 0.9rem;
-    font-weight: 500;
-}
-
-.personal-widget {
-    background: var(--bg-white);
-    border-radius: var(--border-radius);
-    box-shadow: var(--box-shadow);
-    border: 1px solid var(--border-light);
-    margin-bottom: 20px;
-    overflow: hidden;
-}
-
-.personal-widget-header {
-    padding: 20px 25px;
-    border-bottom: 1px solid var(--border-light);
-    background: var(--bg-light);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-
-.personal-widget-title {
-    font-size: 1.1rem;
-    font-weight: 600;
-    color: var(--text-primary);
-    margin: 0;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.personal-widget-content {
-    padding: 25px;
-}
-
-.personal-activity-item {
-    padding: 15px 0;
-    border-bottom: 1px solid var(--border-light);
-    display: flex;
-    align-items: center;
-    gap: 15px;
-}
-
-.personal-activity-item:last-child {
-    border-bottom: none;
-}
-
-.personal-activity-icon {
-    width: 35px;
-    height: 35px;
-    border-radius: 8px;
-    background: var(--primary-color);
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.9rem;
-    opacity: 0.8;
-}
-
-.personal-activity-content {
-    flex: 1;
-}
-
-.personal-activity-title {
-    font-weight: 600;
-    color: var(--text-primary);
-    margin-bottom: 2px;
-}
-
-.personal-activity-time {
-    font-size: 0.8rem;
-    color: var(--text-muted);
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-    .dashboard-book {
-        perspective: 1000px;
-    }
-    
-    .page-toggle {
-        margin-bottom: 20px;
-    }
-    
-    .toggle-btn {
-        padding: 10px 15px;
-        font-size: 0.8rem;
-        min-width: 100px;
-    }
-    
-    .personal-stats-grid {
-        grid-template-columns: 1fr;
-        gap: 15px;
-    }
-    
-    .personal-stat-card {
-        padding: 15px;
-    }
-    
-    .personal-widget-content {
-        padding: 20px;
-    }
-}
 </style>
 @endsection
 
 @section('scripts')
 <script>
-// Page switching functionality with flip book animation
-function switchPage(page) {
-    const generalPage = document.getElementById('generalPage');
-    const personalPage = document.getElementById('personalPage');
-    const generalBtn = document.getElementById('generalPageBtn');
-    const personalBtn = document.getElementById('personalPageBtn');
-    
-    if (page === 'personal') {
-        // Switch to personal page
-        generalPage.classList.add('flipping');
-        generalPage.classList.remove('active');
-        personalPage.classList.add('active');
-        personalPage.classList.remove('flipping');
-        
-        // Update button states
-        generalBtn.classList.remove('active');
-        personalBtn.classList.add('active');
-        
-        // Add subtle animation feedback
-        personalBtn.style.transform = 'scale(0.95)';
-        setTimeout(() => {
-            personalBtn.style.transform = 'scale(1)';
-        }, 150);
-        
-    } else {
-        // Switch to general page
-        personalPage.classList.add('flipping');
-        personalPage.classList.remove('active');
-        generalPage.classList.add('active');
-        generalPage.classList.remove('flipping');
-        
-        // Update button states
-        generalBtn.classList.add('active');
-        personalBtn.classList.remove('active');
-        
-        // Add subtle animation feedback
-        generalBtn.style.transform = 'scale(0.95)';
-        setTimeout(() => {
-            generalBtn.style.transform = 'scale(1)';
-        }, 150);
-    }
-}
 // Enhanced Dashboard JavaScript
 document.addEventListener('DOMContentLoaded', function() {
     initializeDashboard();
     initializeCounters();
+    initializeSearch();
     initializeNotifications();
     loadUserPreferences();
 });
@@ -2296,6 +1509,90 @@ function initializeCounters() {
     counters.forEach(counter => observer.observe(counter));
 }
 
+// Global search functionality
+function initializeSearch() {
+    const searchInput = document.getElementById('globalSearch');
+    const searchResults = document.getElementById('searchResults');
+    let searchTimeout;
+    
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            const query = this.value.trim();
+            
+            if (query.length < 2) {
+                searchResults.style.display = 'none';
+                return;
+            }
+            
+            searchTimeout = setTimeout(() => {
+                performSearch(query);
+            }, 300);
+        });
+        
+        // Hide results when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
+                searchResults.style.display = 'none';
+            }
+        });
+    }
+}
+
+// Perform search
+function performSearch(query) {
+    const searchResults = document.getElementById('searchResults');
+    
+    // Show loading state
+    searchResults.innerHTML = '<div class="search-loading">Searching...</div>';
+    searchResults.style.display = 'block';
+    
+    // Simulate API call (replace with actual search endpoint)
+    setTimeout(() => {
+        const mockResults = [
+            { type: 'trainee', name: 'Ahmad Rahman', id: '123' },
+            { type: 'activity', name: 'Physical Therapy', id: '456' },
+            { type: 'session', name: 'Morning Session - Room A', id: '789' }
+        ].filter(item => item.name.toLowerCase().includes(query.toLowerCase()));
+        
+        if (mockResults.length > 0) {
+            searchResults.innerHTML = mockResults.map(result => 
+                `<div class="search-result-item" onclick="navigateToResult('${result.type}', '${result.id}')">
+                    <i class="fas fa-${getResultIcon(result.type)} me-2"></i>
+                    ${result.name}
+                    <small class="text-muted">${result.type}</small>
+                </div>`
+            ).join('');
+        } else {
+            searchResults.innerHTML = '<div class="search-no-results">No results found</div>';
+        }
+    }, 500);
+}
+
+// Get icon for search result type
+function getResultIcon(type) {
+    const icons = {
+        'trainee': 'user-graduate',
+        'activity': 'tasks',
+        'session': 'calendar-alt',
+        'user': 'user'
+    };
+    return icons[type] || 'circle';
+}
+
+// Navigate to search result
+function navigateToResult(type, id) {
+    const routes = {
+        'trainee': '/trainees/',
+        'activity': '/activities/',
+        'session': '/sessions/',
+        'user': '/users/'
+    };
+    
+    if (routes[type]) {
+        window.location.href = routes[type] + id;
+    }
+}
 
 // Dashboard customization
 function toggleCustomization() {
@@ -2316,12 +1613,12 @@ function toggleWidget(widgetId, show) {
 function saveUserPreferences() {
     const preferences = {
         widgets: {
-            stats: document.getElementById('toggle-stats')?.checked || true,
-            sessions: document.getElementById('toggle-sessions')?.checked || true,
-            notifications: document.getElementById('toggle-notifications')?.checked || true,
-            calendar: document.getElementById('toggle-calendar')?.checked || true
+            stats: document.getElementById('toggle-stats').checked,
+            sessions: document.getElementById('toggle-sessions').checked,
+            notifications: document.getElementById('toggle-notifications').checked,
+            calendar: document.getElementById('toggle-calendar').checked
         },
-        theme: 'light' // Always use vivid light theme
+        theme: document.body.classList.contains('dark-mode') ? 'dark' : 'light'
     };
     
     localStorage.setItem('dashboardPreferences', JSON.stringify(preferences));
@@ -2343,9 +1640,9 @@ function loadUserPreferences() {
         });
     }
     
-    // Always use vivid light theme - force remove dark mode
-    document.body.classList.remove('dark-mode');
-    preferences.theme = 'light';
+    if (preferences.theme === 'dark') {
+        document.body.classList.add('dark-mode');
+    }
 }
 
 // Show stat details modal
@@ -2389,15 +1686,13 @@ function initializeNotifications() {
 
 // Check for new notifications
 function checkForNotifications() {
-    // Make API call for new notifications
+    // Simulate API call for new notifications
     fetch('/api/notifications/check')
         .then(response => response.json())
         .then(data => {
             if (data.hasNew) {
                 updateNotificationBadge(data.count);
-                if (data.latest) {
-                    showNotificationToast(data.latest);
-                }
+                showNotificationToast(data.latest);
             }
         })
         .catch(error => console.log('Notification check failed:', error));
@@ -2415,8 +1710,7 @@ function updateNotificationBadge(count) {
 // Show notification toast
 function showNotificationToast(notification) {
     const toast = document.createElement('div');
-    toast.className = 'toast notification-toast position-fixed top-0 end-0 m-3';
-    toast.setAttribute('role', 'alert');
+    toast.className = 'toast notification-toast';
     toast.innerHTML = `
         <div class="toast-header">
             <i class="fas fa-bell text-primary me-2"></i>
@@ -2465,19 +1759,17 @@ function refreshDashboard() {
 
 function refreshSessions() {
     const sessionsWidget = document.getElementById('currentSessionsWidget');
-    if (sessionsWidget) {
-        const loader = document.createElement('div');
-        loader.className = 'text-center p-3';
-        loader.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Refreshing...';
-        
-        sessionsWidget.querySelector('.widget-content').appendChild(loader);
-        
-        // Simulate API call
-        setTimeout(() => {
-            loader.remove();
-            // Update sessions data here
-        }, 1500);
-    }
+    const loader = document.createElement('div');
+    loader.className = 'text-center p-3';
+    loader.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Refreshing...';
+    
+    sessionsWidget.querySelector('.widget-content').appendChild(loader);
+    
+    // Simulate API call
+    setTimeout(() => {
+        loader.remove();
+        // Update sessions data here
+    }, 1500);
 }
 
 // Dismiss notification
@@ -2504,17 +1796,11 @@ function markAllRead() {
 
 // Mobile navigation functions
 function showQuickActions() {
-    const widget = document.getElementById('quickActionsWidget');
-    if (widget) {
-        widget.scrollIntoView({ behavior: 'smooth' });
-    }
+    document.getElementById('quickActionsWidget').scrollIntoView({ behavior: 'smooth' });
 }
 
 function showNotifications() {
-    const widget = document.getElementById('notificationsWidget');
-    if (widget) {
-        widget.scrollIntoView({ behavior: 'smooth' });
-    }
+    document.getElementById('notificationsWidget').scrollIntoView({ behavior: 'smooth' });
 }
 
 function showProfile() {
@@ -2525,17 +1811,11 @@ function showFullCalendar() {
     window.location.href = '/calendar';
 }
 
-// Theme toggle (disabled - always use vivid light theme)
+// Theme toggle
 function toggleTheme() {
-    // Force vivid light theme always
-    document.body.classList.remove('dark-mode');
-    localStorage.setItem('theme', 'light');
-    
-    // Add subtle animation feedback
-    document.body.style.transform = 'scale(1.001)';
-    setTimeout(() => {
-        document.body.style.transform = 'scale(1)';
-    }, 150);
+    document.body.classList.toggle('dark-mode');
+    const isDark = document.body.classList.contains('dark-mode');
+    localStorage.setItem('theme', isDark ? 'dark' : 'light');
 }
 
 // Add widget toggle event listeners

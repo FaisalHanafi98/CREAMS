@@ -458,7 +458,7 @@ class StaffController extends Controller
                     ->join('activities', 'activity_sessions.activity_id', '=', 'activities.id')
                     ->leftJoin('categories', 'activities.category_id', '=', 'categories.id')
                     ->where('activity_sessions.teacher_id', $staffMember->id)
-                    ->where('activity_sessions.status', 'scheduled')
+                    ->where('activity_sessions.session_status', 'scheduled')
                     ->where('activity_sessions.scheduled_date', '>=', now())
                     ->select(
                         'activity_sessions.*',
@@ -552,10 +552,44 @@ class StaffController extends Controller
                                  ->whereIn('activity_enrollments.enrollment_status', ['enrolled', 'active']);
                         })
                         ->select(
-                            'activities.*',
+                            'activities.id',
+                            'activities.activity_id',
+                            'activities.activity_name',
+                            'activities.activity_description',
+                            'activities.activity_type',
+                            'activities.activity_date',
+                            'activities.activity_start_time',
+                            'activities.activity_end_time',
+                            'activities.activity_location',
+                            'activities.max_participants',
+                            'activities.current_participants',
+                            'activities.activity_status',
+                            'activities.centre_id',
+                            'activities.category_id',
+                            'activities.created_by',
+                            'activities.created_at',
+                            'activities.updated_at',
                             \DB::raw('COUNT(activity_enrollments.id) as enrollment_count')
                         )
-                        ->groupBy('activities.id')
+                        ->groupBy(
+                            'activities.id',
+                            'activities.activity_id',
+                            'activities.activity_name',
+                            'activities.activity_description',
+                            'activities.activity_type',
+                            'activities.activity_date',
+                            'activities.activity_start_time',
+                            'activities.activity_end_time',
+                            'activities.activity_location',
+                            'activities.max_participants',
+                            'activities.current_participants',
+                            'activities.activity_status',
+                            'activities.centre_id',
+                            'activities.category_id',
+                            'activities.created_by',
+                            'activities.created_at',
+                            'activities.updated_at'
+                        )
                         ->get();
                 } else {
                     $activities = $activitiesQuery->get();

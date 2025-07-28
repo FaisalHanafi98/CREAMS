@@ -80,6 +80,11 @@ class StaffAttendanceController extends Controller
     public function markAttendance(Request $request)
     {
         try {
+            Log::info('Mark attendance request received', [
+                'request_data' => $request->all(),
+                'session_user' => session('id')
+            ]);
+            
             $validated = $request->validate([
                 'user_id' => 'required|integer|exists:users,id',
                 'status' => 'required|in:present,absent,late,sick_leave,emergency_leave,authorized_leave',

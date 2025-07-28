@@ -519,6 +519,16 @@
             </div>
         </div>
 
+        <!-- Letter Generator Card -->
+        <div class="card" id="letter-generator">
+            <div class="card-header">
+                <h5><i class="fas fa-file-alt me-2"></i>Letter Generator</h5>
+            </div>
+            <div class="card-body">
+                @include('profile.letterstab')
+            </div>
+        </div>
+
         <!-- Account Information Card -->
         <div class="card">
             <div class="card-header">
@@ -668,6 +678,38 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     }
+
+    // Handle anchor navigation to letter generator
+    function scrollToSection() {
+        const hash = window.location.hash;
+        if (hash === '#letter-generator') {
+            const letterSection = document.getElementById('letter-generator');
+            if (letterSection) {
+                // Add highlight effect
+                letterSection.style.boxShadow = '0 0 20px rgba(200, 80, 192, 0.5)';
+                letterSection.style.border = '2px solid rgba(200, 80, 192, 0.8)';
+                
+                // Smooth scroll to the section
+                letterSection.scrollIntoView({ 
+                    behavior: 'smooth', 
+                    block: 'start' 
+                });
+                
+                // Remove highlight after a few seconds
+                setTimeout(() => {
+                    letterSection.style.transition = 'all 0.5s ease';
+                    letterSection.style.boxShadow = '0 5px 20px rgba(0,0,0,0.08)';
+                    letterSection.style.border = '1px solid #f1f3f4';
+                }, 3000);
+            }
+        }
+    }
+
+    // Handle on page load
+    scrollToSection();
+
+    // Handle when hash changes
+    window.addEventListener('hashchange', scrollToSection);
 });
 </script>
 @endpush
