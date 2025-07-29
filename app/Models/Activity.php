@@ -12,30 +12,35 @@ class Activity extends Model
     protected $table = 'activities';
 
     protected $fillable = [
-        'activity_code',
-        'name',
-        'description',
+        'activity_id',
+        'activity_name',
+        'activity_description',
         'activity_type',
-        'difficulty_level',
+        'activity_date',
+        'activity_start_time',
+        'activity_end_time',
+        'activity_location',
         'max_participants',
-        'min_participants',
-        'duration_minutes',
-        'required_materials',
-        'learning_objectives',
-        'is_active',
+        'current_participants',
+        'activity_goals',
+        'activity_outcomes',
+        'activity_image',
+        'required_resources',
+        'activity_status',
         'centre_id',
+        'category_id',
         'created_by',
-        'instructor_id',
-        'location',
-        'sessions_per_week',
-        'start_date',
-        'start_time'
+        'times_conducted',
+        'instructor_id'
     ];
 
     protected $casts = [
-        'required_materials' => 'array',
-        'learning_objectives' => 'array',
-        'is_active' => 'boolean'
+        'required_resources' => 'array',
+        'activity_goals' => 'array',
+        'activity_outcomes' => 'array',
+        'activity_date' => 'date',
+        'activity_start_time' => 'datetime:H:i',
+        'activity_end_time' => 'datetime:H:i'
     ];
 
     protected $appends = ['category_icon', 'category_color', 'formatted_duration'];
@@ -158,7 +163,7 @@ class Activity extends Model
      */
     public function scopeActive($query)
     {
-        return $query->where('is_active', true);
+        return $query->where('activity_status', 'scheduled');
     }
 
     /**
@@ -261,37 +266,6 @@ class Activity extends Model
         return $minutes . 'm';
     }
 
-    /**
-     * Get activity name from database column
-     */
-    public function getNameAttribute()
-    {
-        return $this->attributes['activity_name'] ?? '';
-    }
-
-    /**
-     * Set activity name to database column
-     */
-    public function setNameAttribute($value)
-    {
-        $this->attributes['activity_name'] = $value;
-    }
-
-    /**
-     * Get activity description from database column
-     */
-    public function getDescriptionAttribute()
-    {
-        return $this->attributes['activity_description'] ?? '';
-    }
-
-    /**
-     * Set activity description to database column
-     */
-    public function setDescriptionAttribute($value)
-    {
-        $this->attributes['activity_description'] = $value;
-    }
 
     /**
      * Get therapy category based on activity name

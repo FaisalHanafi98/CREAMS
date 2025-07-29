@@ -18,18 +18,35 @@ class Letter extends Model
         'letter_type',
         'recipient_id',
         'recipient_type',
+        'recipient_organization',
+        'purpose',
+        'priority_level',
         'template_id',
         'letter_status',
+        'is_archived',
+        'archived_at',
+        'archived_by',
         'sent_date',
+        'is_sent',
+        'delivery_method',
+        'delivery_notes',
         'letter_file_path',
         'letter_data',
+        'generation_metadata',
+        'generated_file_type',
+        'file_size_bytes',
+        'centre_id',
         'created_by'
     ];
 
     protected $casts = [
         'letter_date' => 'date',
         'sent_date' => 'date',
-        'letter_data' => 'array'    // Updated to match database
+        'archived_at' => 'datetime',
+        'is_archived' => 'boolean',
+        'is_sent' => 'boolean',
+        'letter_data' => 'array',
+        'generation_metadata' => 'array'
     ];
 
     protected static function boot()

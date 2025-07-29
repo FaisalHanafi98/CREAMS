@@ -292,6 +292,22 @@
         background-color: #fff;
     }
     
+    /* Select field specific styling */
+    select.form-control {
+        height: 50px;
+        line-height: 1.5;
+        font-size: 1rem;
+        padding: 12px 16px;
+    }
+    
+    select.form-control option {
+        padding: 8px 12px;
+        font-size: 1rem;
+        line-height: 1.4;
+        height: auto;
+        min-height: 32px;
+    }
+    
     /* Action Buttons */
     .form-actions {
         margin-top: 30px;
@@ -524,7 +540,7 @@
                 <div class="profile-user-info">
                     <div class="profile-avatar" id="avatar-container">
                         @if(isset($user['avatar']) && $user['avatar'])
-                            <img src="{{ asset('storage/avatars/' . $user['avatar']) }}" alt="{{ $user['name'] ?? 'User' }}" id="avatar-preview" onerror="this.onerror=null; this.src='{{ asset('images/default-avatar.svg') }}'; console.warn('Avatar not found, using default');">
+                            <img src="{{ asset('storage/avatars/' . $user['avatar']) }}?v={{ time() }}" alt="{{ $user['name'] ?? 'User' }}" id="avatar-preview" onerror="this.onerror=null; this.src='{{ asset('images/default-avatar.svg') }}'; console.warn('Avatar not found, using default');">
                         @else
                             <img src="{{ asset('images/default-avatar.svg') }}" alt="{{ $user['name'] ?? 'User' }}" id="avatar-preview" onerror="this.onerror=null; this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxjaXJjbGUgY3g9IjUwIiBjeT0iNTAiIHI9IjUwIiBmaWxsPSIjRTVFN0VCIi8+CjxwYXRoIGQ9Ik01MCA1MEM1OC4yODQgNTAgNjUgNDMuMjg0IDY1IDM1QzY1IDI2LjcxNiA1OC4yODQgMjAgNTAgMjBDNDEuNzE2IDIwIDM1IDI2LjcxNiAzNSAzNUMzNSA0My4yODQgNDEuNzE2IDUwIDUwIDUwWiIgZmlsbD0iIzlDQTNBRiIvPgo8cGF0aCBkPSJNODAgODBDODAgNjcuODUgNjcuODUgNTcuNSA1MCA1Ny41QzMyLjE1IDU3LjUgMjAgNjcuODUgMjAgODBIMjBIODBaIiBmaWxsPSIjOUNBM0FGIi8+Cjwvc3ZnPgo=';">
                         @endif
@@ -536,7 +552,7 @@
                         <h2>{{ $user['name'] ?? 'User' }}</h2>
                         @php
                             $roleDisplayNames = [
-                                'admin' => 'System Administrator',
+                                'admin' => 'Administrator',
                                 'supervisor' => 'Centre Supervisor', 
                                 'teacher' => 'Special Education Teacher',
                                 'ajk' => 'Activity Coordinator'
@@ -830,6 +846,56 @@
                 @if(session('role') === 'admin')
                 <!-- Letter Generator Tab -->
                 <div class="tab-pane fade" id="letters" role="tabpanel">
+                    <!-- Template Management Section -->
+                    <div class="form-section">
+                        <h4><i class="fas fa-layer-group"></i> Letter Template Management</h4>
+                        
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="template_name">Template Name</label>
+                                    <input type="text" class="form-control" id="template_name" name="template_name" placeholder="e.g., Official Recommendation Letter">
+                                    <small class="form-text text-muted">Give your template a descriptive name</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="template_description">Template Description</label>
+                                    <input type="text" class="form-control" id="template_description" name="template_description" placeholder="Brief description of template purpose">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Header Text Option -->
+                        <div class="form-group">
+                            <label for="header_text">Header Text (Optional)</label>
+                            <textarea class="form-control" id="header_text" name="header_text" rows="2" placeholder="Optional text to overlay on header image or use as header if no image"></textarea>
+                            <small class="form-text text-muted">This text will appear over the header image or replace it if no image is uploaded</small>
+                        </div>
+
+                        <!-- Footer Text Option -->
+                        <div class="form-group">
+                            <label for="footer_text">Footer Text (Optional)</label>
+                            <textarea class="form-control" id="footer_text" name="footer_text" rows="2" placeholder="Optional text to overlay on footer image or use as footer if no image"></textarea>
+                            <small class="form-text text-muted">This text will appear over the footer image or replace it if no image is uploaded</small>
+                        </div>
+
+                        <div class="template-actions mb-4">
+                            <button type="button" class="btn btn-outline-primary" id="save-template-btn">
+                                <i class="fas fa-save"></i> Save Template
+                            </button>
+                            <button type="button" class="btn btn-outline-info" id="load-template-btn">
+                                <i class="fas fa-folder-open"></i> Load Template
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" id="view-templates-btn">
+                                <i class="fas fa-list"></i> View All Templates
+                            </button>
+                            <button type="button" class="btn btn-outline-warning" onclick="showLetterArchive()">
+                                <i class="fas fa-archive"></i> Letter Archive
+                            </button>
+                        </div>
+                    </div>
+
                     <div class="form-section">
                         <h4><i class="fas fa-file-alt"></i> Letter Generator</h4>
                         <form id="letter-form" action="{{ route('profile.letter.generate') }}" method="POST" enctype="multipart/form-data">
@@ -1093,8 +1159,32 @@ $(document).ready(function() {
         };
         reader.readAsDataURL(file);
         
-        // Submit form
-        $('#avatarForm').submit();
+        // Submit form with AJAX to handle response properly
+        const formData = new FormData($('#avatarForm')[0]);
+        
+        $.ajax({
+            url: $('#avatarForm').attr('action'),
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(response) {
+                hideLoadingOverlay();
+                if (response.success || $(response).find('.alert-success').length > 0) {
+                    showSuccessAlert('Profile photo updated successfully!');
+                    // Force refresh the avatar with a new timestamp
+                    const newSrc = $('#avatar-preview').attr('src').split('?')[0] + '?v=' + new Date().getTime();
+                    $('#avatar-preview').attr('src', newSrc);
+                } else {
+                    showErrorAlert('Failed to update profile photo. Please try again.');
+                }
+            },
+            error: function(xhr, status, error) {
+                hideLoadingOverlay();
+                console.error('Avatar upload error:', error);
+                showErrorAlert('An error occurred while uploading the photo. Please try again.');
+            }
+        });
     });
     
     // Form submission handlers with loading states and validation
@@ -1324,33 +1414,113 @@ $(document).ready(function() {
         const userName = @json($user['name'] ?? 'Administrator');
         const userRole = @json($roleDisplay ?? 'Administrator');
         
+        // Get uploaded header and footer images
+        const headerImg = $('#header-preview img');
+        const footerImg = $('#footer-preview img');
+        
+        const headerImageSrc = headerImg.length > 0 ? headerImg.attr('src') : null;
+        const footerImageSrc = footerImg.length > 0 ? footerImg.attr('src') : null;
+        
+        // Get header and footer text
+        const headerText = $('#header_text').val();
+        const footerText = $('#footer_text').val();
+        
+        // Build header HTML
+        let headerHTML = '';
+        if (headerImageSrc || headerText) {
+            headerHTML = '<div style="text-align: center; margin-bottom: 30px; position: relative;">';
+            
+            if (headerImageSrc) {
+                headerHTML += `<img src="${headerImageSrc}" alt="Letter Header" style="max-width: 100%; height: auto; max-height: 200px;">`;
+            }
+            
+            if (headerText) {
+                const textStyle = headerImageSrc ? 
+                    'position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(255,255,255,0.9); padding: 10px; border-radius: 5px;' :
+                    'padding: 20px; border-bottom: 1px solid #ddd;';
+                    
+                headerHTML += `<div style="${textStyle} color: #333; font-weight: bold; text-align: center;">
+                    ${headerText.replace(/\n/g, '<br>')}
+                </div>`;
+            }
+            
+            headerHTML += '</div>';
+        } else {
+            // Fallback header if no image or text
+            headerHTML = `<div style="text-align: center; margin-bottom: 30px; border-bottom: 1px solid #ddd; padding-bottom: 20px;">
+                <h2 style="margin: 0; color: #333; font-size: 18px;">CREAMS - Community-based Rehabilitation Management System</h2>
+                <p style="margin: 5px 0 0 0; color: #666; font-size: 14px;">International Islamic University Malaysia (IIUM)</p>
+            </div>`;
+        }
+        
+        // Build footer HTML
+        let footerHTML = '';
+        if (footerImageSrc || footerText) {
+            footerHTML = '<div style="text-align: center; margin-top: 50px; position: relative;">';
+            
+            if (footerImageSrc) {
+                footerHTML += `<img src="${footerImageSrc}" alt="Letter Footer" style="max-width: 100%; height: auto; max-height: 150px;">`;
+            }
+            
+            if (footerText) {
+                const textStyle = footerImageSrc ? 
+                    'position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(255,255,255,0.9); padding: 10px; border-radius: 5px;' :
+                    'padding: 20px; border-top: 1px solid #ddd;';
+                    
+                footerHTML += `<div style="${textStyle} color: #333; font-size: 12px; text-align: center;">
+                    ${footerText.replace(/\n/g, '<br>')}
+                </div>`;
+            }
+            
+            footerHTML += '</div>';
+        } else {
+            // Fallback footer if no image or text
+            footerHTML = `<div style="text-align: center; margin-top: 50px; border-top: 1px solid #ddd; padding-top: 20px; font-size: 12px; color: #666;">
+                <p style="margin: 0;">CREAMS System - International Islamic University Malaysia</p>
+                <p style="margin: 2px 0 0 0;">Generated on: ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}</p>
+            </div>`;
+        }
+        
         const previewHTML = `
             <div style="font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; border: 1px solid #ddd;">
-                <div id="header-area" style="text-align: center; margin-bottom: 20px;"></div>
+                <!-- Header Image or Default -->
+                ${headerHTML}
+                
+                <!-- Date and Reference -->
                 <div style="text-align: right; margin-bottom: 20px;">
                     <strong>Ref: ${letterRef}</strong><br>
                     <strong>Date: ${new Date(letterDate).toLocaleDateString()}</strong>
                 </div>
+                
+                <!-- Recipient -->
                 <div style="margin-bottom: 20px;">
                     <strong>To:</strong><br>
                     ${recipientName}<br>
                     ${recipientAddress.replace(/\n/g, '<br>')}
                 </div>
+                
+                <!-- Subject -->
                 <div style="margin-bottom: 20px;">
                     <strong>Subject: ${letterSubject}</strong>
                 </div>
-                <div style="margin-bottom: 30px; line-height: 1.6;">
+                
+                <!-- Content -->
+                <div style="margin-bottom: 30px; line-height: 1.6; text-align: justify;">
                     ${letterContent.replace(/\n/g, '<br>')}
                 </div>
+                
+                <!-- Signature -->
                 <div style="margin-top: 40px;">
-                    <p>Yours sincerely,</p>
+                    <p>Thank you for your attention.</p>
                     <p style="margin-top: 40px;">
                         <strong>${userName}</strong><br>
                         ${userRole}<br>
-                        IIUM PD-CARE
+                        CREAMS System - IIUM
                     </p>
                 </div>
-                <div id="footer-area" style="text-align: center; margin-top: 30px;"></div>
+                
+                <!-- Footer Image or Default -->
+                ${footerHTML}
             </div>
         `;
         
@@ -1362,6 +1532,304 @@ $(document).ready(function() {
     updateFieldStyling();
     disableEditing();
     
+    // Template Management JavaScript
+    $('#save-template-btn').click(function() {
+        const templateData = {
+            template_name: $('#template_name').val(),
+            template_description: $('#template_description').val(),
+            header_text: $('#header_text').val(),
+            footer_text: $('#footer_text').val(),
+            header_image_path: $('#header-preview img').length > 0 ? $('#header-preview img').attr('src') : null,
+            footer_image_path: $('#footer-preview img').length > 0 ? $('#footer-preview img').attr('src') : null
+        };
+        
+        if (!templateData.template_name) {
+            showErrorAlert('Please enter a template name.');
+            return;
+        }
+        
+        // Show confirmation with template preview
+        const confirmMsg = `Save template "${templateData.template_name}"?\n\nThis will save the current header/footer configuration for future use.`;
+        if (confirm(confirmMsg)) {
+            saveTemplate(templateData);
+        }
+    });
+    
+    $('#load-template-btn').click(function() {
+        loadTemplatesModal();
+    });
+    
+    $('#view-templates-btn').click(function() {
+        loadTemplatesModal();
+    });
+    
+    // Letter Archive Management 
+    function showLetterArchive() {
+        loadLetterArchive();
+    }
+    
+    // Save template via AJAX
+    function saveTemplate(templateData) {
+        $.ajax({
+            url: '{{ route("profile.templates.save") }}',
+            method: 'POST',
+            data: {
+                ...templateData,
+                _token: '{{ csrf_token() }}'
+            },
+            beforeSend: function() {
+                $('#save-template-btn').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Saving...');
+            },
+            success: function(response) {
+                if (response.success) {
+                    showSuccessAlert('Template saved successfully!');
+                    $('#template_name').val('');
+                    $('#template_description').val('');
+                } else {
+                    showErrorAlert('Failed to save template: ' + response.message);
+                }
+            },
+            error: function(xhr) {
+                let errorMessage = 'Failed to save template.';
+                if (xhr.responseJSON && xhr.responseJSON.message) {
+                    errorMessage = xhr.responseJSON.message;
+                }
+                showErrorAlert(errorMessage);
+            },
+            complete: function() {
+                $('#save-template-btn').prop('disabled', false).html('<i class="fas fa-save"></i> Save Template');
+            }
+        });
+    }
+    
+    // Load templates and show modal
+    function loadTemplatesModal() {
+        $.ajax({
+            url: '{{ route("profile.templates.load") }}',
+            method: 'GET',
+            success: function(response) {
+                if (response.success) {
+                    showTemplatesModal(response.templates);
+                } else {
+                    showErrorAlert('Failed to load templates: ' + response.message);
+                }
+            },
+            error: function(xhr) {
+                showErrorAlert('Failed to load templates.');
+            }
+        });
+    }
+    
+    // Show templates modal
+    function showTemplatesModal(templates) {
+        let templatesHtml = '';
+        
+        if (templates.length === 0) {
+            templatesHtml = '<p class="text-muted">No templates found. Save your first template to get started!</p>';
+        } else {
+            templatesHtml = '<div class="row">';
+            templates.forEach(function(template) {
+                templatesHtml += `
+                    <div class="col-md-6 mb-3">
+                        <div class="card">
+                            <div class="card-body">
+                                <h6 class="card-title">${template.template_name}</h6>
+                                <p class="card-text text-muted small">${template.template_description || 'No description'}</p>
+                                <p class="small text-info">
+                                    Created by: ${template.creator ? template.creator.name : 'Unknown'}<br>
+                                    Used: ${template.usage_count} times
+                                </p>
+                                <button class="btn btn-primary btn-sm" onclick="loadSingleTemplate(${template.id})">
+                                    <i class="fas fa-download"></i> Load Template
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            templatesHtml += '</div>';
+        }
+        
+        const modalHtml = `
+            <div class="modal fade" id="templatesModal" tabindex="-1">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title"><i class="fas fa-folder-open"></i> Letter Templates</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            ${templatesHtml}
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Remove existing modal
+        $('#templatesModal').remove();
+        
+        // Add new modal
+        $('body').append(modalHtml);
+        
+        // Show modal
+        $('#templatesModal').modal('show');
+    }
+    
+    // Load single template
+    function loadSingleTemplate(templateId) {
+        $.ajax({
+            url: '{{ route("profile.templates.load-single") }}',
+            method: 'POST',
+            data: {
+                template_id: templateId,
+                _token: '{{ csrf_token() }}'
+            },
+            success: function(response) {
+                if (response.success) {
+                    const template = response.template;
+                    
+                    // Fill in header and footer text
+                    $('#header_text').val(template.header_text || '');
+                    $('#footer_text').val(template.footer_text || '');
+                    
+                    // Handle header image
+                    if (template.header_image_path) {
+                        $('#header-preview').html(`<img src="${template.header_image_path}" alt="Header Image" style="max-width: 100%; height: auto; max-height: 200px;">`);
+                    }
+                    
+                    // Handle footer image
+                    if (template.footer_image_path) {
+                        $('#footer-preview').html(`<img src="${template.footer_image_path}" alt="Footer Image" style="max-width: 100%; height: auto; max-height: 150px;">`);
+                    }
+                    
+                    // Close modal
+                    $('#templatesModal').modal('hide');
+                    
+                    showSuccessAlert(`Template "${template.template_name}" loaded successfully!`);
+                } else {
+                    showErrorAlert('Failed to load template: ' + response.message);
+                }
+            },
+            error: function(xhr) {
+                showErrorAlert('Failed to load template.');
+            }
+        });
+    }
+    
+    // Load letter archive
+    function loadLetterArchive() {
+        $.ajax({
+            url: '{{ route("profile.letters.archive") }}',
+            method: 'GET',
+            success: function(response) {
+                if (response.success) {
+                    showLetterArchiveModal(response.letters);
+                } else {
+                    showErrorAlert('Failed to load letter archive: ' + response.message);
+                }
+            },
+            error: function(xhr) {
+                showErrorAlert('Failed to load letter archive.');
+            }
+        });
+    }
+    
+    // Show letter archive modal
+    function showLetterArchiveModal(letters) {
+        let archiveHtml = '';
+        
+        if (letters.data && letters.data.length === 0) {
+            archiveHtml = '<p class="text-muted">No letters found in archive.</p>';
+        } else {
+            archiveHtml = `
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Reference</th>
+                                <th>Date</th>
+                                <th>Subject</th>
+                                <th>Recipient</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+            
+            (letters.data || letters).forEach(function(letter) {
+                const letterData = letter.letter_data || {};
+                archiveHtml += `
+                    <tr>
+                        <td><code>${letter.letter_reference}</code></td>
+                        <td>${new Date(letter.letter_date).toLocaleDateString()}</td>
+                        <td>${letter.letter_subject}</td>
+                        <td>${letterData.recipient_name || 'Unknown'}</td>
+                        <td>
+                            <a href="${letter.pdf_url || '#'}" class="btn btn-sm btn-primary" target="_blank">
+                                <i class="fas fa-download"></i>
+                            </a>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            archiveHtml += '</tbody></table></div>';
+        }
+        
+        const modalHtml = `
+            <div class="modal fade" id="archiveModal" tabindex="-1">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title"><i class="fas fa-archive"></i> Letter Archive</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            ${archiveHtml}
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Remove existing modal
+        $('#archiveModal').remove();
+        
+        // Add new modal
+        $('body').append(modalHtml);
+        
+        // Show modal
+        $('#archiveModal').modal('show');
+    }
+    
+    // Helper function to show info alerts
+    function showInfoAlert(message) {
+        const alertHtml = `
+            <div class="alert alert-info alert-dismissible fade show" role="alert">
+                <i class="fas fa-info-circle"></i> ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        `;
+        
+        // Remove existing alerts
+        $('.alert').remove();
+        
+        // Add new alert at the top of the form
+        $('.profile-form').prepend(alertHtml);
+        
+        // Auto-hide after 5 seconds
+        setTimeout(function() {
+            $('.alert-info').alert('close');
+        }, 5000);
+    }
+
     // Auto-hide alerts
     setTimeout(function() {
         $('.alert-dismissible').alert('close');

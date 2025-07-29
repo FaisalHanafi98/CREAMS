@@ -14,6 +14,14 @@ class LetterTemplate extends Model
         'template_content',
         'template_type',
         'template_variables',
+        'template_description',
+        'header_image_path',
+        'footer_image_path',
+        'header_text',
+        'footer_text',
+        'centre_id',
+        'usage_count',
+        'last_used_at',
         'is_active',
         'created_by'
     ];
@@ -21,6 +29,8 @@ class LetterTemplate extends Model
     protected $casts = [
         'is_active' => 'boolean',
         'template_variables' => 'array',
+        'last_used_at' => 'datetime',
+        'usage_count' => 'integer'
     ];
 
     /**

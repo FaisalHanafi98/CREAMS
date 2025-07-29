@@ -11,6 +11,8 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use App\Models\User;
+use App\Models\LetterTemplate;
+use App\Models\Letter;
 use Exception;
 
 class UserProfileController extends Controller
@@ -351,61 +353,75 @@ class UserProfileController extends Controller
                     ->with('error', 'Your session has expired. Please log in again.');
             }
             
-            // Validate input
-            $validator = Validator::make($request->all(), [
+            // First validate only required fields
+            $basicValidator = Validator::make($request->all(), [
                 'current_password' => 'required',
-                'new_password' => [
-                    'required',
-                    'min:8',
-                    'confirmed',
-                    'different:current_password',
-                    'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/'
-                ],
+                'new_password' => 'required',
                 'new_password_confirmation' => 'required'
             ], [
                 'current_password.required' => 'Your current password is required.',
                 'new_password.required' => 'The new password is required.',
-                'new_password.min' => 'Your password must be at least 8 characters long.',
-                'new_password.confirmed' => 'The password confirmation does not match.',
-                'new_password.different' => 'Your new password cannot be the same as your current password.',
-                'new_password.regex' => 'Your password must include at least one uppercase letter, one lowercase letter, one number, and one special character.',
                 'new_password_confirmation.required' => 'Please confirm your new password.'
             ]);
             
-            if ($validator->fails()) {
+            if ($basicValidator->fails()) {
                 return redirect()->back()
-                    ->withErrors($validator);
+                    ->withErrors($basicValidator);
             }
             
-            // Get user model
-            $user = null;
+            // Get user and verify current password first
+            $user = User::find($roleId);
+            if (!$user) {
+                Log::warning('User not found during password change', ['user_id' => $roleId]);
+                return redirect()->back()
+                    ->with('error', 'User not found. Please log in again.');
+            }
+            
+            // Check if current password is correct FIRST
+            if (!Hash::check($request->current_password, $user->password)) {
+                Log::warning('Incorrect current password during password change', [
+                    'user_id' => $roleId,
+                    'role' => $role
+                ]);
+                
+                DB::rollBack();
+                return redirect()->back()
+                    ->with('error', 'Your current password is incorrect.');
+            }
+            
+            // Only after current password is verified, validate new password format
+            $passwordValidator = Validator::make($request->all(), [
+                'new_password' => [
+                    'min:8',
+                    'confirmed',
+                    'different:current_password',
+                    'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/'
+                ]
+            ], [
+                'new_password.min' => 'Your password must be at least 8 characters long.',
+                'new_password.confirmed' => 'The password confirmation does not match.',
+                'new_password.different' => 'Your new password cannot be the same as your current password.',
+                'new_password.regex' => 'Your password must include at least one uppercase letter, one lowercase letter, one number, and one special character.'
+            ]);
+            
+            if ($passwordValidator->fails()) {
+                return redirect()->back()
+                    ->withErrors($passwordValidator);
+            }
+            
+            // Update password (user is already verified)
             $passwordUpdateSuccess = false;
             
             try {
-                $user = User::find($roleId);
-                if ($user) {
-                    // Check if current password is correct
-                    if (!Hash::check($request->current_password, $user->password)) {
-                        Log::warning('Incorrect current password during password change', [
-                            'user_id' => $roleId,
-                            'role' => $role
-                        ]);
-                        
-                        DB::rollBack();
-                        return redirect()->back()
-                            ->with('error', 'Your current password is incorrect.');
-                    }
-                    
-                    // Update password
-                    $user->password = Hash::make($request->new_password);
-                    $saved = $user->save();
-                    
-                    if ($saved) {
-                        $passwordUpdateSuccess = true;
-                        Log::info('Password changed with Eloquent model', [
-                            'user_id' => $roleId
-                        ]);
-                    }
+                // Update password
+                $user->password = Hash::make($request->new_password);
+                $saved = $user->save();
+                
+                if ($saved) {
+                    $passwordUpdateSuccess = true;
+                    Log::info('Password changed with Eloquent model', [
+                        'user_id' => $roleId
+                    ]);
                 }
             } catch (Exception $e) {
                 Log::warning('Error changing password with Eloquent', [
@@ -729,6 +745,213 @@ class UserProfileController extends Controller
             
             return redirect()->back()
                 ->with('error', 'An unexpected error occurred while uploading your profile photo: ' . $e->getMessage());
+        }
+    }
+    
+    /**
+     * Save a letter template
+     * 
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function saveTemplate(Request $request)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'template_name' => 'required|string|max:255',
+                'template_description' => 'nullable|string|max:1000',
+                'header_image_path' => 'nullable|string',
+                'footer_image_path' => 'nullable|string',
+                'header_text' => 'nullable|string',
+                'footer_text' => 'nullable|string'
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validation failed',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            $roleId = session('id');
+            $centreId = session('centre_id');
+
+            if (!$roleId) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Authentication required'
+                ], 401);
+            }
+
+            $template = new LetterTemplate();
+            $template->template_name = $request->template_name;
+            $template->template_description = $request->template_description;
+            $template->header_image_path = $request->header_image_path;
+            $template->footer_image_path = $request->footer_image_path;
+            $template->header_text = $request->header_text;
+            $template->footer_text = $request->footer_text;
+            $template->centre_id = $centreId;
+            $template->created_by = $roleId;
+            $template->is_active = true;
+            $template->usage_count = 0;
+            $template->save();
+
+            Log::info('Template saved successfully', [
+                'template_id' => $template->id,
+                'user_id' => $roleId,
+                'template_name' => $template->template_name
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Template saved successfully',
+                'template' => $template
+            ]);
+
+        } catch (Exception $e) {
+            Log::error('Error saving template', [
+                'error' => $e->getMessage(),
+                'user_id' => session('id')
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to save template: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Load templates for current centre
+     * 
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function loadTemplates(Request $request)
+    {
+        try {
+            $centreId = session('centre_id');
+            
+            $templates = LetterTemplate::where('centre_id', $centreId)
+                ->where('is_active', true)
+                ->orderBy('last_used_at', 'desc')
+                ->orderBy('usage_count', 'desc')
+                ->orderBy('created_at', 'desc')
+                ->with('creator:id,name')
+                ->get();
+
+            return response()->json([
+                'success' => true,
+                'templates' => $templates
+            ]);
+
+        } catch (Exception $e) {
+            Log::error('Error loading templates', [
+                'error' => $e->getMessage(),
+                'user_id' => session('id')
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to load templates: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Load a specific template
+     * 
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function loadTemplate(Request $request)
+    {
+        try {
+            $templateId = $request->input('template_id');
+            $centreId = session('centre_id');
+
+            if (!$templateId) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Template ID is required'
+                ], 400);
+            }
+
+            $template = LetterTemplate::where('id', $templateId)
+                ->where('centre_id', $centreId)
+                ->where('is_active', true)
+                ->first();
+
+            if (!$template) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Template not found'
+                ], 404);
+            }
+
+            // Update usage count and last used timestamp
+            $template->increment('usage_count');
+            $template->update(['last_used_at' => now()]);
+
+            return response()->json([
+                'success' => true,
+                'template' => $template
+            ]);
+
+        } catch (Exception $e) {
+            Log::error('Error loading template', [
+                'error' => $e->getMessage(),
+                'template_id' => $request->input('template_id'),
+                'user_id' => session('id')
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to load template: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get letter archive for current centre
+     * 
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getLetterArchive(Request $request)
+    {
+        try {
+            $centreId = session('centre_id');
+            $page = $request->input('page', 1);
+            $perPage = $request->input('per_page', 20);
+            $search = $request->input('search');
+
+            $query = Letter::where('centre_id', $centreId)
+                ->orderBy('created_at', 'desc');
+
+            if ($search) {
+                $query->search($search);
+            }
+
+            $letters = $query->with(['createdBy:id,name', 'template:id,template_name'])
+                ->paginate($perPage, ['*'], 'page', $page);
+
+            return response()->json([
+                'success' => true,
+                'letters' => $letters
+            ]);
+
+        } catch (Exception $e) {
+            Log::error('Error loading letter archive', [
+                'error' => $e->getMessage(),
+                'user_id' => session('id')
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to load letter archive: ' . $e->getMessage()
+            ], 500);
         }
     }
 }

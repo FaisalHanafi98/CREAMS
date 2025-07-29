@@ -166,6 +166,12 @@ Route::middleware(['auth', 'validate.params'])->group(function () {
     Route::post('/profile/change-password', [UserProfileController::class, 'changePassword'])->name('profile.password');
     Route::post('/profile/upload-avatar', [UserProfileController::class, 'uploadAvatar'])->name('profile.avatar');
     
+    // Template management routes
+    Route::post('/profile/templates/save', [UserProfileController::class, 'saveTemplate'])->name('profile.templates.save');
+    Route::get('/profile/templates/load', [UserProfileController::class, 'loadTemplates'])->name('profile.templates.load');
+    Route::post('/profile/templates/load-single', [UserProfileController::class, 'loadTemplate'])->name('profile.templates.load-single');
+    Route::get('/profile/letters/archive', [UserProfileController::class, 'getLetterArchive'])->name('profile.letters.archive');
+    
     // Letter template routes for profile (Admin only)
     Route::middleware(['role:admin'])->group(function () {
         Route::post('/profile/letter-template', [LetterTemplateController::class, 'store'])->name('profile.letter.store');

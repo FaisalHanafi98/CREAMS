@@ -562,7 +562,27 @@ class LetterTemplateController extends Controller
                 'footerImage' => null  // Set to null for fallback
             ];
             
-            $htmlContent = view('letters.pdf-template', $data)->render();
+            try {
+                $htmlContent = view('letters.pdf-template', $data)->render();
+            } catch (\Exception $viewException) {
+                Log::error('View rendering failed in fallback, trying simple template', [
+                    'view_error' => $viewException->getMessage(),
+                    'view_trace' => $viewException->getTraceAsString(),
+                    'data_keys' => array_keys($data),
+                    'letter_id' => $letter->id ?? 'unknown'
+                ]);
+                
+                // Try simple template as last resort
+                try {
+                    $htmlContent = view('letters.pdf-template-simple', $data)->render();
+                    Log::info('Successfully used simple template as fallback');
+                } catch (\Exception $simpleException) {
+                    Log::error('Even simple template failed', [
+                        'simple_error' => $simpleException->getMessage()
+                    ]);
+                    throw $viewException; // Throw original exception
+                }
+            }
             
             // Wrap in complete HTML document
             $fullHtmlContent = "<!DOCTYPE html>
