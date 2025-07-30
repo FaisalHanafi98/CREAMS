@@ -930,7 +930,7 @@
                             <div class="upload-area" onclick="document.getElementById('header-input').click();">
                                 <div id="header-preview" class="preview-area">
                                     @if($activeTemplate && $activeTemplate->header_image_url)
-                                        <img src="{{ $activeTemplate->header_image_url }}" alt="Header Image" style="max-width: 100%; height: auto; max-height: 200px;">
+                                        <img src="{{ $activeTemplate->header_image_url }}" alt="Header Image" style="max-width: 20%; height: auto; max-height: 80px; border: 2px solid #ddd; border-radius: 8px;">
                                     @else
                                         <i class="fas fa-cloud-upload-alt"></i>
                                         <p>Click to upload header image</p>
@@ -953,7 +953,7 @@
                             <div class="upload-area" onclick="document.getElementById('footer-input').click();">
                                 <div id="footer-preview" class="preview-area">
                                     @if($activeTemplate && $activeTemplate->footer_image_url)
-                                        <img src="{{ $activeTemplate->footer_image_url }}" alt="Footer Image" style="max-width: 100%; height: auto; max-height: 150px;">
+                                        <img src="{{ $activeTemplate->footer_image_url }}" alt="Footer Image" style="max-width: 20%; height: auto; max-height: 60px; border: 2px solid #ddd; border-radius: 8px;">
                                     @else
                                         <i class="fas fa-cloud-upload-alt"></i>
                                         <p>Click to upload footer image</p>
@@ -1442,7 +1442,8 @@ $(document).ready(function() {
         if (file) {
             const reader = new FileReader();
             reader.onload = function(e) {
-                $(previewSelector).html(`<img src="${e.target.result}" alt="Preview" style="max-width: 100%; height: auto;">`);
+                const maxHeight = previewSelector.includes('header') ? '80px' : '60px';
+                $(previewSelector).html(`<img src="${e.target.result}" alt="Preview" style="max-width: 20%; height: auto; max-height: ${maxHeight}; border: 2px solid #ddd; border-radius: 8px;">`);
             };
             reader.readAsDataURL(file);
         }
@@ -1728,12 +1729,12 @@ $(document).ready(function() {
                     
                     // Handle header image
                     if (template.header_image_path) {
-                        $('#header-preview').html(`<img src="${template.header_image_path}" alt="Header Image" style="max-width: 100%; height: auto; max-height: 200px;">`);
+                        $('#header-preview').html(`<img src="${template.header_image_path}" alt="Header Image" style="max-width: 20%; height: auto; max-height: 80px; border: 2px solid #ddd; border-radius: 8px;">`);
                     }
                     
                     // Handle footer image
                     if (template.footer_image_path) {
-                        $('#footer-preview').html(`<img src="${template.footer_image_path}" alt="Footer Image" style="max-width: 100%; height: auto; max-height: 150px;">`);
+                        $('#footer-preview').html(`<img src="${template.footer_image_path}" alt="Footer Image" style="max-width: 20%; height: auto; max-height: 60px; border: 2px solid #ddd; border-radius: 8px;">`);
                     }
                     
                     // Close modal
@@ -1765,12 +1766,12 @@ $(document).ready(function() {
                 
                 // Handle header image
                 if (templateData.headerImage) {
-                    $('#header-preview').html(`<img src="${templateData.headerImage}" alt="Header Image" style="max-width: 100%; height: auto; max-height: 200px;">`);
+                    $('#header-preview').html(`<img src="${templateData.headerImage}" alt="Header Image" style="max-width: 20%; height: auto; max-height: 80px; border: 2px solid #ddd; border-radius: 8px;">`);
                 }
                 
                 // Handle footer image
                 if (templateData.footerImage) {
-                    $('#footer-preview').html(`<img src="${templateData.footerImage}" alt="Footer Image" style="max-width: 100%; height: auto; max-height: 150px;">`);
+                    $('#footer-preview').html(`<img src="${templateData.footerImage}" alt="Footer Image" style="max-width: 20%; height: auto; max-height: 60px; border: 2px solid #ddd; border-radius: 8px;">`);
                 }
                 
                 // Clear localStorage

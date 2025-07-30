@@ -254,7 +254,9 @@ class LetterTemplateController extends Controller
                 // Return the PDF file directly for immediate download
                 $publicPdfPath = public_path('letters/' . basename($pdfPath));
                 if (file_exists($publicPdfPath)) {
-                    return response()->download($publicPdfPath, $letter->letter_reference . '.pdf', [
+                    // Clean filename by replacing slashes with underscores
+                    $cleanFilename = str_replace(['/', '\\'], '_', $letter->letter_reference) . '.pdf';
+                    return response()->download($publicPdfPath, $cleanFilename, [
                         'Content-Type' => 'application/pdf'
                     ]);
                 } else {
@@ -705,8 +707,9 @@ class LetterTemplateController extends Controller
                 'downloaded_by' => session('id')
             ]);
             
-            // Return the PDF as download
-            return response()->download($publicPdfPath, basename($letter->letter_file_path), [
+            // Return the PDF as download with cleaned filename
+            $cleanFilename = str_replace(['/', '\\'], '_', $letter->letter_reference) . '.pdf';
+            return response()->download($publicPdfPath, $cleanFilename, [
                 'Content-Type' => 'application/pdf'
             ]);
             

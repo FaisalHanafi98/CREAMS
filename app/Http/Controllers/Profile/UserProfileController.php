@@ -66,8 +66,13 @@ class UserProfileController extends Controller
             // Add role information
             $userData['role'] = $role;
             
-            // Handle avatar - prefer database avatar, but fall back to session avatar if database is empty
-            if (empty($userData['avatar']) && session()->has('avatar')) {
+            // Handle avatar - prefer database avatar over session avatar for consistency
+            // If both exist, database takes precedence; if database is empty, use session
+            if (!empty($userData['avatar'])) {
+                // Database has avatar, update session to match
+                session(['avatar' => $userData['avatar'], 'user_avatar' => $userData['avatar']]);
+            } elseif (session()->has('avatar')) {
+                // No avatar in database but session has one, use session
                 $userData['avatar'] = session('avatar');
             }
             
@@ -784,17 +789,43 @@ class UserProfileController extends Controller
                 ], 401);
             }
 
+            // Deactivate all previous templates first
+            LetterTemplate::where('is_active', true)->update(['is_active' => false]);
+
+            // Handle base64 image conversion to files
+            $headerImagePath = null;
+            $footerImagePath = null;
+
+            // Process header image if it's base64
+            if ($request->header_image_path && str_starts_with($request->header_image_path, 'data:image/')) {
+                $headerImagePath = $this->saveBase64Image($request->header_image_path, 'header');
+                Log::info('Header image saved from base64', ['path' => $headerImagePath]);
+            }
+
+            // Process footer image if it's base64
+            if ($request->footer_image_path && str_starts_with($request->footer_image_path, 'data:image/')) {
+                $footerImagePath = $this->saveBase64Image($request->footer_image_path, 'footer');
+                Log::info('Footer image saved from base64', ['path' => $footerImagePath]);
+            }
+
             $template = new LetterTemplate();
             $template->template_name = $request->template_name;
-            $template->template_description = $request->template_description;
-            $template->header_image_path = $request->header_image_path;
-            $template->footer_image_path = $request->footer_image_path;
-            $template->header_text = $request->header_text;
-            $template->footer_text = $request->footer_text;
-            $template->centre_id = $centreId;
+            $template->template_description = $request->template_description ?? '';
+            $template->template_content = '<div class="main-content">[CONTENT]</div>'; // Default template content
+            $template->header_image_path = $headerImagePath;
+            $template->footer_image_path = $footerImagePath;
+            $template->header_text = $request->header_text ?? '';
+            $template->footer_text = $request->footer_text ?? '';
+            $template->centre_id = $centreId ?? '001';
             $template->created_by = $roleId;
             $template->is_active = true;
             $template->usage_count = 0;
+            $template->template_variables = [
+                'header_content' => $request->header_text ?? '',
+                'footer_content' => $request->footer_text ?? '',
+                'header_image' => $headerImagePath,
+                'footer_image' => $footerImagePath,
+            ];
             $template->save();
 
             Log::info('Template saved successfully', [
@@ -952,6 +983,56 @@ class UserProfileController extends Controller
                 'success' => false,
                 'message' => 'Failed to load letter archive: ' . $e->getMessage()
             ], 500);
+        }
+    }
+
+    /**
+     * Save base64 image data as a file
+     * 
+     * @param string $base64Data
+     * @param string $type (header|footer)
+     * @return string|null
+     */
+    private function saveBase64Image($base64Data, $type)
+    {
+        try {
+            // Extract the image data from base64 string
+            if (preg_match('/^data:image\/(\w+);base64,(.+)$/', $base64Data, $matches)) {
+                $imageType = $matches[1];
+                $imageData = base64_decode($matches[2]);
+                
+                // Validate image type
+                $allowedTypes = ['jpeg', 'jpg', 'png', 'gif'];
+                if (!in_array(strtolower($imageType), $allowedTypes)) {
+                    Log::warning('Invalid image type for template', ['type' => $imageType]);
+                    return null;
+                }
+                
+                // Generate unique filename
+                $filename = $type . '_' . time() . '_' . uniqid() . '.' . $imageType;
+                
+                // Ensure template_images directory exists
+                Storage::makeDirectory('public/template_images');
+                
+                // Save the image
+                $saved = Storage::put('public/template_images/' . $filename, $imageData);
+                
+                if ($saved) {
+                    return 'template_images/' . $filename;
+                } else {
+                    Log::error('Failed to save base64 image', ['type' => $type]);
+                    return null;
+                }
+            } else {
+                Log::warning('Invalid base64 image format', ['type' => $type]);
+                return null;
+            }
+        } catch (Exception $e) {
+            Log::error('Error saving base64 image', [
+                'type' => $type,
+                'error' => $e->getMessage()
+            ]);
+            return null;
         }
     }
 }
