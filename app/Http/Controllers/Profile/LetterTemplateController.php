@@ -161,6 +161,7 @@ class LetterTemplateController extends Controller
 
             $validated = $request->validate([
                 'reference_number' => 'required|string|max:50|unique:letters,letter_reference',
+                'letter_name' => 'required|string|max:255',
                 'letter_date' => 'required|date',
                 'subject' => 'required|string|max:255',
                 'content' => 'required|string',
@@ -214,6 +215,7 @@ class LetterTemplateController extends Controller
             // Create letter record
             $letter = Letter::create([
                 'letter_reference' => $validated['reference_number'],
+                'letter_name' => $validated['letter_name'],
                 'letter_date' => $validated['letter_date'],
                 'letter_subject' => $validated['subject'],
                 'letter_content' => $validated['content'],
@@ -254,8 +256,9 @@ class LetterTemplateController extends Controller
                 // Return the PDF file directly for immediate download
                 $publicPdfPath = public_path('letters/' . basename($pdfPath));
                 if (file_exists($publicPdfPath)) {
-                    // Clean filename by replacing slashes with underscores
-                    $cleanFilename = str_replace(['/', '\\'], '_', $letter->letter_reference) . '.pdf';
+                    // Use letter name for filename, fallback to reference if no name
+                    $filename = $letter->letter_name ?: str_replace(['/', '\\'], '_', $letter->letter_reference);
+                    $cleanFilename = str_replace(['/', '\\', ':', '*', '?', '"', '<', '>', '|'], '_', $filename) . '.pdf';
                     return response()->download($publicPdfPath, $cleanFilename, [
                         'Content-Type' => 'application/pdf'
                     ]);
@@ -301,6 +304,7 @@ class LetterTemplateController extends Controller
     {
         try {
             $validated = $request->validate([
+                'letter_name' => 'nullable|string|max:255',
                 'subject' => 'required|string|max:255',
                 'content' => 'required|string',
                 'letter_date' => 'required|date',
@@ -707,8 +711,9 @@ class LetterTemplateController extends Controller
                 'downloaded_by' => session('id')
             ]);
             
-            // Return the PDF as download with cleaned filename
-            $cleanFilename = str_replace(['/', '\\'], '_', $letter->letter_reference) . '.pdf';
+            // Use letter name for filename, fallback to reference if no name
+            $filename = $letter->letter_name ?: str_replace(['/', '\\'], '_', $letter->letter_reference);
+            $cleanFilename = str_replace(['/', '\\', ':', '*', '?', '"', '<', '>', '|'], '_', $filename) . '.pdf';
             return response()->download($publicPdfPath, $cleanFilename, [
                 'Content-Type' => 'application/pdf'
             ]);

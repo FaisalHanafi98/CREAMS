@@ -1007,6 +1007,13 @@
                                 </div>
                             </div>
                             
+                            <!-- Letter Name -->
+                            <div class="form-group mb-4">
+                                <label for="letter_name">Letter Name <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="letter_name" name="letter_name" placeholder="e.g., Recommendation Letter for John Doe" required>
+                                <small class="form-text text-muted">This name will be used as the filename when downloading the PDF</small>
+                            </div>
+                            
                             <!-- Recipient Information -->
                             <div class="form-group">
                                 <label for="recipient_name">Recipient Name</label>
@@ -1505,6 +1512,7 @@ $(document).ready(function() {
     
     function generateLetterPreview() {
         const formData = {
+            letter_name: $('#letter_name').val(),
             subject: $('#letter_subject').val(),
             content: $('#letter_content').val(),
             letter_date: $('#letter_date').val(), 
@@ -1513,8 +1521,8 @@ $(document).ready(function() {
         };
         
         // Validate required fields
-        if (!formData.subject || !formData.content) {
-            alert('Please fill in the subject and content fields to generate a preview.');
+        if (!formData.letter_name || !formData.subject || !formData.content) {
+            alert('Please fill in the letter name, subject and content fields to generate a preview.');
             return;
         }
         

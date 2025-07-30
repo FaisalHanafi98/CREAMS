@@ -12,6 +12,7 @@ class Letter extends Model
 
     protected $fillable = [
         'letter_reference',
+        'letter_name',
         'letter_date',
         'letter_subject',
         'letter_content',

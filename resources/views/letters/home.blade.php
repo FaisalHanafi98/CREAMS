@@ -124,6 +124,7 @@
                             <table class="table table-hover">
                                 <thead>
                                     <tr>
+                                        <th>Letter Name</th>
                                         <th>Reference</th>
                                         <th>Subject</th>
                                         <th>Recipient</th>
@@ -147,7 +148,10 @@
                                         @endphp
                                         <tr>
                                             <td>
-                                                <strong>{{ $letter->letter_reference ?? 'N/A' }}</strong>
+                                                <strong class="text-primary">{{ $letter->letter_name ?? 'Unnamed Letter' }}</strong>
+                                            </td>
+                                            <td>
+                                                <small class="text-muted">{{ $letter->letter_reference ?? 'N/A' }}</small>
                                             </td>
                                             <td>{{ Str::limit($letter->letter_subject ?? 'No Subject', 40) }}</td>
                                             <td>{{ $letterData['recipient_name'] ?? 'Unknown' }}</td>
