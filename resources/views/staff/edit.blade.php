@@ -63,26 +63,28 @@
         background: var(--secondary-color);
     }
 
-    .form-floating {
+    .form-group {
         margin-bottom: 1.5rem;
     }
 
-    .form-floating > .form-control {
+    .form-group > .form-control {
         border: 2px solid var(--border-color);
         border-radius: 10px;
-        padding: 1rem 0.75rem;
+        padding: 0.75rem 1rem;
         font-size: 1rem;
         transition: all 0.3s ease;
     }
 
-    .form-floating > .form-control:focus {
+    .form-group > .form-control:focus {
         border-color: var(--primary-color);
         box-shadow: 0 0 0 0.25rem rgba(50, 189, 234, 0.25);
     }
 
-    .form-floating > label {
-        color: #6c757d;
-        font-weight: 500;
+    .form-group > label {
+        color: var(--dark-color);
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        display: block;
     }
 
     .form-select {
@@ -314,11 +316,11 @@
                         
                         <div class="row">
                             <div class="col-md-6">
-                                <div class="form-floating">
+                                <div class="form-group">
+                                    <label for="name">Full Name</label>
                                     <input type="text" class="form-control @error('name') is-invalid @enderror" 
                                            id="name" name="name" value="{{ old('name', $staffMember->name) }}" 
-                                           placeholder="Full Name" required>
-                                    <label for="name">Full Name</label>
+                                           placeholder="Enter full name" required>
                                     @error('name')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror

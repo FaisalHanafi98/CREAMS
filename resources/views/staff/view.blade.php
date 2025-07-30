@@ -236,7 +236,13 @@
             <div class="row align-items-center">
                 <div class="col-md-3 text-center">
                     @if($staffMember->avatar)
-                        <img src="{{ asset('storage/avatars/' . $staffMember->avatar) }}" alt="{{ $staffMember->name }}" class="profile-avatar">
+                        <img src="{{ asset('storage/avatars/' . $staffMember->avatar) }}?v={{ time() }}" 
+                             alt="{{ $staffMember->name }}" 
+                             class="profile-avatar"
+                             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <div class="profile-avatar bg-light align-items-center justify-content-center" style="display: none;">
+                            <i class="fas fa-user fa-3x text-muted"></i>
+                        </div>
                     @else
                         <div class="profile-avatar bg-light d-flex align-items-center justify-content-center">
                             <i class="fas fa-user fa-3x text-muted"></i>
@@ -483,9 +489,11 @@
         <div class="modal-content">
             <div class="modal-header bg-primary text-white">
                 <h5 class="modal-title" id="markAttendanceModalLabel">
-                    <i class="fas fa-clock me-2"></i>Mark Attendance
+                    <i class="fas fa-clock mr-2"></i>Mark Attendance
                 </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
             </div>
             <div class="modal-body">
                 <div id="attendanceStatusAlert" class="alert" style="display: none;"></div>
@@ -537,9 +545,9 @@
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
                 <button type="button" class="btn btn-primary" id="submitAttendance">
-                    <i class="fas fa-check me-2"></i>Mark Attendance
+                    <i class="fas fa-check mr-2"></i>Mark Attendance
                 </button>
             </div>
         </div>
@@ -549,10 +557,11 @@
 @endsection
 
 @push('scripts')
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-document.addEventListener('DOMContentLoaded', function() {
+$(document).ready(function() {
     const markAttendanceBtn = document.getElementById('markAttendanceBtn');
-    const attendanceModal = new bootstrap.Modal(document.getElementById('markAttendanceModal'));
     const attendanceForm = document.getElementById('attendanceForm');
     const submitBtn = document.getElementById('submitAttendance');
     
@@ -582,7 +591,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Set user data
             document.getElementById('attendanceUserId').value = userId;
             document.getElementById('markAttendanceModalLabel').innerHTML = 
-                `<i class="fas fa-clock me-2"></i>Mark Attendance - ${userName}`;
+                `<i class="fas fa-clock mr-2"></i>Mark Attendance - ${userName}`;
             
             // Update date/time
             updateDateTime();
@@ -625,7 +634,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     console.error('Error checking status:', error);
                 });
             
-            attendanceModal.show();
+            $('#markAttendanceModal').modal('show');
         });
         
         // Submit Attendance
@@ -639,7 +648,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             submitBtn.disabled = true;
-            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Marking...';
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Marking...';
             
             // Submit attendance
             fetch('/staff-attendance/mark', {
@@ -663,7 +672,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (data.success) {
                     showAlert(data.message, 'success', true);
                     setTimeout(() => {
-                        attendanceModal.hide();
+                        $('#markAttendanceModal').modal('hide');
                         location.reload(); // Refresh to show updated status
                     }, 1500);
                 } else {
@@ -676,7 +685,7 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .finally(() => {
                 submitBtn.disabled = false;
-                submitBtn.innerHTML = '<i class="fas fa-check me-2"></i>Mark Attendance';
+                submitBtn.innerHTML = '<i class="fas fa-check mr-2"></i>Mark Attendance';
             });
         });
         

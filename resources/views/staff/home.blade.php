@@ -6,15 +6,15 @@
 <link href="{{ asset('css/dropdown-improvements.css') }}" rel="stylesheet">
 <style>
     :root {
-        --primary-color: #3498db;
-        --secondary-color: #2980b9;
-        --success-color: #28a745;
-        --warning-color: #ffc107;
-        --danger-color: #dc3545;
-        --dark-color: #2c3e50;
-        --info-color: #17a2b8;
+        --primary-color: #32bdea;
+        --secondary-color: #c850c0;
+        --success-color: #2ed573;
+        --warning-color: #ffa502;
+        --danger-color: #ff4757;
+        --dark-color: #1a2a3a;
+        --info-color: #1e90ff;
         --light-bg: #f8f9fc;
-        --border-color: #e3e6f0;
+        --border-color: #e9ecef;
     }
 
     .staff-header {
@@ -23,7 +23,7 @@
         padding: 2rem;
         margin-bottom: 2rem;
         border-radius: 15px;
-        box-shadow: 0 5px 20px rgba(52, 152, 219, 0.3);
+        box-shadow: 0 5px 20px rgba(50, 189, 234, 0.3);
         position: relative;
         overflow: hidden;
     }
@@ -503,10 +503,14 @@
             @foreach($users as $user)
                 <div class="staff-card">
                     <div class="staff-card-header">
-                        @if($user->avatar && file_exists(public_path('storage/avatars/' . $user->avatar)))
-                            <img src="{{ $user->avatar_url }}" 
+                        @if($user->avatar)
+                            <img src="{{ asset('storage/avatars/' . $user->avatar) }}?v={{ time() }}" 
                                  alt="{{ $user->user_name }}" 
-                                 class="staff-avatar">
+                                 class="staff-avatar"
+                                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                            <div class="staff-avatar bg-light d-flex align-items-center justify-content-center" style="display: none;">
+                                <i class="fas fa-user fa-2x text-muted"></i>
+                            </div>
                         @else
                             <div class="avatar-placeholder">
                                 {{ strtoupper(substr($user->user_name, 0, 1)) }}
