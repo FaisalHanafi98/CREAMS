@@ -1,4 +1,3 @@
-@if(isset($letter))
 <div class="letter-preview">
     <style>
         .letter-preview {
@@ -39,7 +38,7 @@
         }
     </style>
 
-    <!-- Header Image -->
+    <!-- Header Content -->
     @if(isset($template) && $template->template_variables)
         @php
             $variables = is_string($template->template_variables) 
@@ -47,48 +46,48 @@
                 : $template->template_variables;
         @endphp
         
-        @if(isset($variables['header_image']))
+        @if(isset($variables['header_content']) && $variables['header_content'])
             <div class="letter-header">
-                <img src="{{ asset('storage/template_images/' . $variables['header_image']) }}" 
+                <h3>{!! nl2br(e($variables['header_content'])) !!}</h3>
+            </div>
+        @endif
+        
+        @if(isset($variables['header_image']) && $variables['header_image'])
+            <div class="letter-header">
+                <img src="{{ asset('storage/' . $variables['header_image']) }}" 
                      alt="Header" 
-                     style="max-width: 100%; height: auto;">
+                     style="max-width: 100%; height: auto;"
+                     onerror="this.style.display='none';">
             </div>
         @endif
     @endif
 
     <!-- Letter Date -->
     <div class="letter-date">
-        <strong>Date:</strong> {{ $letter->letter_date instanceof \Carbon\Carbon ? $letter->letter_date->format('d F Y') : \Carbon\Carbon::parse($letter->letter_date)->format('d F Y') }}
-    </div>
-
-    <!-- Reference Number -->
-    <div class="letter-reference">
-        <strong>Ref:</strong> {{ $letter->letter_reference }}
+        <strong>Date:</strong> {{ $letter_date ?? \Carbon\Carbon::now()->format('d F Y') }}
     </div>
 
     <!-- Recipient -->
+    @if(isset($recipient_name) || isset($recipient_address))
     <div class="letter-recipient">
-        @php
-            $letterData = is_array($letter->letter_data) ? $letter->letter_data : json_decode($letter->letter_data, true);
-        @endphp
-        
-        @if(isset($letterData['recipient_name']))
-            <strong>{{ $letterData['recipient_name'] }}</strong><br>
+        @if(isset($recipient_name) && $recipient_name)
+            <strong>{{ $recipient_name }}</strong><br>
         @endif
         
-        @if(isset($letterData['recipient_address']) && $letterData['recipient_address'])
-            {!! nl2br(e($letterData['recipient_address'])) !!}
+        @if(isset($recipient_address) && $recipient_address)
+            {!! nl2br(e($recipient_address)) !!}
         @endif
     </div>
+    @endif
 
     <!-- Subject -->
     <div class="letter-subject">
-        RE: {{ $letter->letter_subject }}
+        <strong>RE: {{ $subject ?? 'Letter Subject' }}</strong>
     </div>
 
     <!-- Content -->
     <div class="letter-content">
-        {!! nl2br(e($letter->letter_content)) !!}
+        {!! nl2br(e($content ?? 'Letter content will appear here...')) !!}
     </div>
 
     <!-- Signature -->
@@ -96,23 +95,27 @@
         <p>Thank you.</p>
         <br><br>
         <p>
-            <strong>{{ $letterData['generated_by_name'] ?? 'Administrator' }}</strong><br>
-            {{ $letterData['generated_by_position'] ?? 'Position' }}<br>
+            <strong>{{ session('name') ?? 'Administrator' }}</strong><br>
+            {{ ucfirst(session('role')) ?? 'Position' }}<br>
             CREAMS System
         </p>
     </div>
 
-    <!-- Footer Image -->
-    @if(isset($template) && isset($variables['footer_image']))
-        <div class="letter-footer">
-            <img src="{{ asset('storage/template_images/' . $variables['footer_image']) }}" 
-                 alt="Footer" 
-                 style="max-width: 100%; height: auto;">
-        </div>
+    <!-- Footer Content -->
+    @if(isset($template) && isset($variables))
+        @if(isset($variables['footer_content']) && $variables['footer_content'])
+            <div class="letter-footer">
+                <p><em>{!! nl2br(e($variables['footer_content'])) !!}</em></p>
+            </div>
+        @endif
+        
+        @if(isset($variables['footer_image']) && $variables['footer_image'])
+            <div class="letter-footer">
+                <img src="{{ asset('storage/' . $variables['footer_image']) }}" 
+                     alt="Footer" 
+                     style="max-width: 100%; height: auto;"
+                     onerror="this.style.display='none';">
+            </div>
+        @endif
     @endif
 </div>
-@else
-<div class="alert alert-danger">
-    Error: Letter data not found. Please try again.
-</div>
-@endif

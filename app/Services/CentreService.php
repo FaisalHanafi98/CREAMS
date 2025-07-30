@@ -191,7 +191,7 @@ class CentreService
             ->join('activities', 'activity_sessions.activity_id', '=', 'activities.id')
             ->where('activities.centre_id', $centreId)
             ->where('activity_sessions.session_date', now()->toDateString())
-            ->where('activity_sessions.status', 'scheduled')
+            ->where('activity_sessions.session_status', 'scheduled')
             ->count();
     }
     
@@ -204,7 +204,7 @@ class CentreService
             ->join('activities', 'activity_sessions.activity_id', '=', 'activities.id')
             ->where('activities.centre_id', $centreId)
             ->where('activity_sessions.session_date', now()->toDateString())
-            ->where('activity_sessions.status', 'completed')
+            ->where('activity_sessions.session_status', 'completed')
             ->count();
     }
     
@@ -220,7 +220,7 @@ class CentreService
             ->where('activities.centre_id', $centreId)
             ->where('activity_sessions.session_date', '>', now()->toDateString())
             ->where('activity_sessions.session_date', '<=', $endDate)
-            ->where('activity_sessions.status', 'scheduled')
+            ->where('activity_sessions.session_status', 'scheduled')
             ->count();
     }
     

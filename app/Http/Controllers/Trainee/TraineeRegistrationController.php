@@ -189,6 +189,40 @@ class TraineeRegistrationController extends Controller
             $trainee->trainee_phone_number = $request->input('trainee_phone_number');
             $trainee->trainee_date_of_birth = $request->input('trainee_date_of_birth');
             $trainee->centre_name = $request->input('centre_name'); // Just store the centre_name
+            
+            // Get centre_id from centre_name for proper ID generation
+            $centre = Centre::where('centre_name', $request->input('centre_name'))->first();
+            if ($centre) {
+                $trainee->centre_id = $centre->centre_id;
+            } else {
+                $trainee->centre_id = '001'; // Default fallback
+            }
+            
+            // Force generate trainee_id before saving to ensure it's set
+            if (!$trainee->trainee_id) {
+                $year = date('Y');
+                $centreId = $trainee->centre_id ?? '001';
+                
+                // Get the next sequence number for this year and centre
+                $lastTrainee = Trainee::where('trainee_id', 'LIKE', "TRN{$year}{$centreId}%")
+                    ->orderBy('trainee_id', 'desc')
+                    ->first();
+                    
+                if ($lastTrainee) {
+                    $lastSequence = intval(substr($lastTrainee->trainee_id, -4));
+                    $nextSequence = $lastSequence + 1;
+                } else {
+                    $nextSequence = 1;
+                }
+                
+                $trainee->trainee_id = 'TRN' . $year . $centreId . sprintf('%04d', $nextSequence);
+            }
+            
+            // Generate unique_identifier if not set
+            if (!$trainee->unique_identifier) {
+                $trainee->unique_identifier = $trainee->trainee_id;
+            }
+            
             $trainee->trainee_condition = $request->input('trainee_condition');
             // Note: trainee_attendance field removed as it doesn't exist in database
             
@@ -237,7 +271,7 @@ class TraineeRegistrationController extends Controller
                     ]);
                     
                     // Set default avatar but continue with registration
-                    $trainee->avatar = 'images/default-avatar.jpg';
+                    $trainee->avatar = 'images/default-avatar.png';
                     $trainee->save();
                 } catch (\Exception $e) {
                     $this->logUserAction('trainee avatar upload error', [
@@ -246,12 +280,12 @@ class TraineeRegistrationController extends Controller
                     ]);
                     
                     // Set default avatar but continue with registration
-                    $trainee->avatar = 'images/default-avatar.jpg';
+                    $trainee->avatar = 'images/default-avatar.png';
                     $trainee->save();
                 }
             } else {
                 // Set default avatar
-                $trainee->avatar = 'images/default-avatar.jpg';
+                $trainee->avatar = 'images/default-avatar.png';
                 $trainee->save();
             }
             

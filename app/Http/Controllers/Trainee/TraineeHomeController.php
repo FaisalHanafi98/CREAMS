@@ -7,11 +7,14 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Trainee;
 use App\Models\Centre;
+use App\Models\Attendance;
 use Illuminate\Support\Facades\Log;
 use Exception;
+use App\Traits\HandlesEncryptedIds;
 
 class TraineeHomeController extends Controller
 {
+    use HandlesEncryptedIds;
     /**
      * Display a listing of trainees with filtering capabilities
      *
@@ -52,8 +55,14 @@ class TraineeHomeController extends Controller
                 Log::debug('Filter applied: search = ' . $search);
             }
             
-            // Get the filtered trainees with eager loading
-            $trainees = $query->with(['centre', 'activities', 'enrollments'])->get();
+            // Get the filtered trainees with eager loading for relationships
+            $trainees = $query->with([
+                'centre', 
+                'activities', 
+                'enrollments' => function($query) {
+                    $query->whereIn('enrollment_status', ['enrolled', 'active']);
+                }
+            ])->get();
             
             // Get all active centers for filter dropdown
             // Check if we need to use status or centre_status based on your DB structure
@@ -94,7 +103,7 @@ class TraineeHomeController extends Controller
             
             // Count trainees enrolled in activities using the enrollments relationship
             $enrolledTrainees = $trainees->filter(function($trainee) {
-                return $trainee->enrollments && $trainee->enrollments->where('enrollment_status', 'enrolled')->count() > 0;
+                return $trainee->enrollments && $trainee->enrollments->count() > 0;
             })->count();
             
             // Calculate average progress based on actual enrollment data
@@ -103,9 +112,8 @@ class TraineeHomeController extends Controller
             
             foreach ($trainees as $trainee) {
                 if ($trainee->enrollments && $trainee->enrollments->count() > 0) {
-                    $enrolledActivities = $trainee->enrollments->where('enrollment_status', 'enrolled');
-                    if ($enrolledActivities->count() > 0) {
-                        $avgTraineeProgress = $enrolledActivities->avg('progress_percentage') ?? 0;
+                    $avgTraineeProgress = $trainee->enrollments->avg('progress_percentage') ?? 0;
+                    if ($avgTraineeProgress > 0) {
                         $totalProgress += $avgTraineeProgress;
                         $traineesWithProgress++;
                     }
@@ -430,17 +438,24 @@ class TraineeHomeController extends Controller
     /**
      * Display a specific trainee details
      */
-    public function show($id)
+    public function show($encrypted_id)
     {
         try {
             if (!session()->has('id')) {
                 return redirect()->route('login');
             }
 
+            // Decrypt the ID
+            $id = $this->decryptId($encrypted_id);
+            if (!$id) {
+                return redirect()->route('trainees.home')->with('error', 'Invalid or expired link.');
+            }
+
             $trainee = Trainee::findOrFail($id);
             
             Log::info('Viewing trainee details', [
                 'trainee_id' => $id,
+                'encrypted_id' => $encrypted_id,
                 'user_id' => session('id')
             ]);
 
@@ -448,12 +463,12 @@ class TraineeHomeController extends Controller
 
         } catch (Exception $e) {
             Log::error('Error showing trainee details', [
-                'trainee_id' => $id,
+                'encrypted_id' => $encrypted_id,
                 'error' => $e->getMessage(),
                 'user_id' => session('id')
             ]);
 
-            return redirect()->route('traineeshome')
+            return redirect()->route('trainees.home')
                 ->with('error', 'Trainee not found or an error occurred.');
         }
     }
@@ -461,17 +476,24 @@ class TraineeHomeController extends Controller
     /**
      * Display a specific trainee's schedule
      */
-    public function schedule($id)
+    public function schedule($encrypted_id)
     {
         try {
             if (!session()->has('id')) {
                 return redirect()->route('login');
             }
 
+            // Decrypt the ID
+            $id = $this->decryptId($encrypted_id);
+            if (!$id) {
+                return redirect()->route('trainees.home')->with('error', 'Invalid or expired link.');
+            }
+
             $trainee = Trainee::findOrFail($id);
             
             Log::info('Viewing trainee schedule', [
                 'trainee_id' => $id,
+                'encrypted_id' => $encrypted_id,
                 'user_id' => session('id')
             ]);
 
@@ -503,12 +525,12 @@ class TraineeHomeController extends Controller
 
         } catch (Exception $e) {
             Log::error('Error showing trainee schedule', [
-                'trainee_id' => $id,
+                'encrypted_id' => $encrypted_id,
                 'error' => $e->getMessage(),
                 'user_id' => session('id')
             ]);
 
-            return redirect()->route('trainees.show', $id)
+            return redirect()->route('trainees.home')
                 ->with('error', 'Could not load schedule. Please try again.');
         }
     }
@@ -516,17 +538,24 @@ class TraineeHomeController extends Controller
     /**
      * Display a specific trainee's attendance record
      */
-    public function attendance($id)
+    public function attendance($encrypted_id)
     {
         try {
             if (!session()->has('id')) {
                 return redirect()->route('login');
             }
 
+            // Decrypt the ID
+            $id = $this->decryptId($encrypted_id);
+            if (!$id) {
+                return redirect()->route('trainees.home')->with('error', 'Invalid or expired link.');
+            }
+
             $trainee = Trainee::findOrFail($id);
             
             Log::info('Viewing trainee attendance', [
                 'trainee_id' => $id,
+                'encrypted_id' => $encrypted_id,
                 'user_id' => session('id')
             ]);
 
@@ -542,13 +571,114 @@ class TraineeHomeController extends Controller
 
         } catch (Exception $e) {
             Log::error('Error showing trainee attendance', [
-                'trainee_id' => $id,
+                'encrypted_id' => $encrypted_id,
                 'error' => $e->getMessage(),
                 'user_id' => session('id')
             ]);
 
-            return redirect()->route('trainees.show', $id)
+            return redirect()->route('trainees.home')
                 ->with('error', 'Could not load attendance data. Please try again.');
+        }
+    }
+
+    /**
+     * Mark attendance for a specific trainee
+     */
+    public function markAttendance(Request $request, $encrypted_id)
+    {
+        try {
+            if (!session()->has('id')) {
+                return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
+            }
+
+            // Decrypt the ID
+            $id = $this->decryptId($encrypted_id);
+            if (!$id) {
+                return response()->json(['success' => false, 'message' => 'Invalid or expired link.'], 400);
+            }
+
+            $trainee = Trainee::findOrFail($id);
+            
+            // Validate request data
+            $validatedData = $request->validate([
+                'trainee_id' => 'required|integer',
+                'attendance_date' => 'required|date|before_or_equal:today',
+                'attendance_status' => 'required|in:present,late,absent,excused',
+                'check_in_time' => 'nullable|date_format:H:i',
+                'check_out_time' => 'nullable|date_format:H:i|after:check_in_time',
+                'attendance_remarks' => 'nullable|string|max:500',
+                'activity_type' => 'nullable|string|max:255'
+            ]);
+            
+            Log::info('Marking trainee attendance', [
+                'trainee_id' => $id,
+                'encrypted_id' => $encrypted_id,
+                'user_id' => session('id'),
+                'data' => $validatedData
+            ]);
+            
+            // Check if attendance already exists for this date
+            $existingAttendance = Attendance::where('trainee_id', $id)
+                ->whereDate('date', $validatedData['attendance_date'])
+                ->first();
+            
+            if ($existingAttendance) {
+                // Update existing attendance
+                $existingAttendance->update([
+                    'status' => $validatedData['attendance_status'],
+                    'remarks' => $validatedData['attendance_remarks'],
+                    'marked_by' => session('id'),
+                    'check_in_time' => $validatedData['check_in_time'],
+                    'check_out_time' => $validatedData['check_out_time'],
+                    'activity_type' => $validatedData['activity_type']
+                ]);
+                
+                $message = 'Attendance updated successfully';
+            } else {
+                // Create new attendance record
+                Attendance::create([
+                    'trainee_id' => $id,
+                    'date' => $validatedData['attendance_date'],
+                    'status' => $validatedData['attendance_status'],
+                    'remarks' => $validatedData['attendance_remarks'],
+                    'marked_by' => session('id'),
+                    'check_in_time' => $validatedData['check_in_time'],
+                    'check_out_time' => $validatedData['check_out_time'],
+                    'activity_type' => $validatedData['activity_type']
+                ]);
+                
+                $message = 'Attendance marked successfully';
+            }
+            
+            Log::info('Trainee attendance marked successfully', [
+                'trainee_id' => $id,
+                'date' => $validatedData['attendance_date'],
+                'status' => $validatedData['attendance_status'],
+                'marked_by' => session('id')
+            ]);
+            
+            return response()->json([
+                'success' => true,
+                'message' => $message
+            ]);
+            
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (Exception $e) {
+            Log::error('Error marking trainee attendance', [
+                'encrypted_id' => $encrypted_id,
+                'error' => $e->getMessage(),
+                'user_id' => session('id')
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to mark attendance: ' . $e->getMessage()
+            ], 500);
         }
     }
 }

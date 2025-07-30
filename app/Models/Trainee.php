@@ -542,11 +542,32 @@ class Trainee extends Model
     {
         parent::boot();
 
-        // Auto-generate unique identifier on creation
+        // Auto-generate unique identifier and trainee_id on creation
         static::creating(function ($trainee) {
+            // Generate trainee_id if not set
+            if (!$trainee->trainee_id) {
+                $year = date('Y');
+                $centreId = $trainee->centre_id ?? '001';
+                
+                // Get the next sequence number for this year and centre
+                $lastTrainee = static::where('trainee_id', 'LIKE', "TRN{$year}{$centreId}%")
+                    ->orderBy('trainee_id', 'desc')
+                    ->first();
+                    
+                if ($lastTrainee) {
+                    $lastSequence = intval(substr($lastTrainee->trainee_id, -4));
+                    $nextSequence = $lastSequence + 1;
+                } else {
+                    $nextSequence = 1;
+                }
+                
+                $trainee->trainee_id = 'TRN' . $year . $centreId . sprintf('%04d', $nextSequence);
+            }
+            
+            // Generate unique_identifier if not set
             if (!$trainee->unique_identifier) {
-                $service = new \App\Services\TraineeService();
-                $trainee->unique_identifier = $service->generateUniqueIdentifier();
+                // Use trainee_id as unique_identifier for consistency
+                $trainee->unique_identifier = $trainee->trainee_id;
             }
         });
 

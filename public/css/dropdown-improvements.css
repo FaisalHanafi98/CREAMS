@@ -1,0 +1,157 @@
+/* Dropdown Field Height Improvements for Better Visibility */
+
+/* Improve select dropdown option height */
+select option {
+    padding: 8px 12px;
+    min-height: 40px;
+    line-height: 1.5;
+}
+
+/* Improve form select elements */
+.form-select,
+.form-control select,
+select.form-control {
+    min-height: 42px;
+    padding: 10px 12px;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+/* Make select options more readable */
+select {
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+select option {
+    padding: 10px 12px;
+    font-size: 14px;
+    line-height: 1.6;
+    background-color: #fff;
+    color: #333;
+}
+
+select option:hover,
+select option:focus {
+    background-color: #f8f9fa;
+}
+
+/* Multi-select improvements */
+select[multiple] {
+    min-height: 120px;
+}
+
+select[multiple] option {
+    padding: 8px 12px;
+    margin: 2px 0;
+    border-radius: 4px;
+}
+
+/* Bootstrap dropdown improvements */
+.dropdown-menu {
+    padding: 8px 0;
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.dropdown-item {
+    padding: 10px 16px;
+    font-size: 14px;
+    line-height: 1.5;
+    color: #333;
+    transition: all 0.2s ease;
+}
+
+.dropdown-item:hover,
+.dropdown-item:focus {
+    background-color: #f8f9fa;
+    color: #495057;
+}
+
+.dropdown-item.active,
+.dropdown-item:active {
+    background-color: var(--primary-color, #007bff);
+    color: #fff;
+}
+
+/* Select2 improvements if used */
+.select2-container .select2-selection--single {
+    height: 42px;
+    padding: 8px 12px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+}
+
+.select2-container .select2-selection--single .select2-selection__rendered {
+    line-height: 24px;
+    padding-left: 0;
+}
+
+.select2-container .select2-selection--single .select2-selection__arrow {
+    height: 40px;
+}
+
+.select2-dropdown {
+    border-radius: 4px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.select2-results__option {
+    padding: 10px 12px;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+/* Custom select styling for better visibility */
+.custom-select {
+    min-height: 42px;
+    padding: 10px 30px 10px 12px;
+    font-size: 14px;
+    line-height: 1.5;
+    background-size: 12px;
+    background-position: right 12px center;
+}
+
+/* Responsive improvements */
+@media (max-width: 768px) {
+    select,
+    .form-select,
+    .custom-select {
+        min-height: 44px;
+        font-size: 15px;
+        padding: 12px 16px;
+    }
+    
+    select option {
+        padding: 12px 16px;
+        font-size: 15px;
+    }
+    
+    .dropdown-item {
+        padding: 12px 16px;
+        font-size: 15px;
+    }
+}
+
+/* Focus improvements */
+select:focus,
+.form-select:focus,
+.custom-select:focus {
+    border-color: var(--primary-color, #007bff);
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    outline: none;
+}
+
+/* Disabled state improvements */
+select:disabled,
+.form-select:disabled,
+.custom-select:disabled {
+    background-color: #f8f9fa;
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+select:disabled option {
+    background-color: #f8f9fa;
+    color: #6c757d;
+}

@@ -256,7 +256,7 @@
         <ol class="breadcrumb">
             <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Dashboard</a></li>
             <li class="breadcrumb-item"><a href="{{ route('staffs.home') }}">Staff Directory</a></li>
-            <li class="breadcrumb-item"><a href="{{ route('staffs.profile', $staffMember->encrypted_id ?? $staffMember->id) }}">{{ $staffMember->name }}</a></li>
+            <li class="breadcrumb-item"><a href="{{ route('staffs.profile', $encrypted_id) }}">{{ $staffMember->name }}</a></li>
             <li class="breadcrumb-item active">Edit Profile</li>
         </ol>
     </nav>
@@ -445,10 +445,10 @@
                         <button type="submit" class="action-btn btn-save">
                             <i class="fas fa-save me-2"></i>Save Changes
                         </button>
-                        <a href="{{ route('staffs.profile', $staffMember->encrypted_id ?? $staffMember->id) }}" class="action-btn btn-view">
+                        <a href="{{ route('staffs.profile', ['encrypted_id' => $encrypted_id]) }}" class="action-btn btn-view">
                             <i class="fas fa-eye me-2"></i>View Profile
                         </a>
-                        <a href="{{ route('staffs.home') }}" class="action-btn btn-cancel">
+                        <a href="{{ route('staffs.profile', ['encrypted_id' => $encrypted_id]) }}" class="action-btn btn-cancel">
                             <i class="fas fa-times me-2"></i>Cancel
                         </a>
                     </div>
@@ -465,7 +465,7 @@
                     
                     <div class="avatar-upload">
                         @if($staffMember->avatar)
-                            <img src="{{ asset('storage/avatars/' . $staffMember->avatar) }}" 
+                            <img src="{{ $staffMember->avatar_url }}" 
                                  alt="{{ $staffMember->name }}" class="current-avatar" id="avatar-preview">
                         @else
                             <div class="current-avatar bg-light d-flex align-items-center justify-content-center" id="avatar-preview">

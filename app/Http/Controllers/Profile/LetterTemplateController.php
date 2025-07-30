@@ -95,7 +95,13 @@ class LetterTemplateController extends Controller
             $template = LetterTemplate::create([
                 'template_name' => $validated['template_name'],
                 'template_content' => $templateContent ?: '<div class="main-content">[CONTENT]</div>',
+                'template_description' => $validated['template_name'] . ' - Custom Template',
                 'template_type' => 'letter',
+                'header_image_path' => $headerImagePath,
+                'footer_image_path' => $footerImagePath,
+                'header_text' => $validated['header_content'] ?? '',
+                'footer_text' => $validated['footer_content'] ?? '',
+                'centre_id' => session('centre_id') ?? '001',
                 'template_variables' => [
                     'header_content' => $validated['header_content'] ?? '',
                     'footer_content' => $validated['footer_content'] ?? '',
@@ -103,6 +109,7 @@ class LetterTemplateController extends Controller
                     'footer_image' => $footerImagePath,
                 ],
                 'created_by' => session('id'),
+                'usage_count' => 0,
                 'is_active' => true,
             ]);
 
@@ -743,10 +750,18 @@ class LetterTemplateController extends Controller
             
             $letters = $query->orderBy('created_at', 'desc')->paginate(15);
             
+            // Also get templates for the combined view
+            $templatesQuery = LetterTemplate::query();
+            if (session('role') !== 'admin') {
+                $templatesQuery->where('created_by', session('id'));
+            }
+            $templates = $templatesQuery->orderBy('created_at', 'desc')->get();
+            
             Log::info('Letter index accessed', [
                 'user_id' => session('id'),
                 'role' => session('role'),
                 'letters_count' => $letters->total(),
+                'templates_count' => $templates->count(),
                 'search_term' => $request->search,
                 'date_filters' => [
                     'from' => $request->date_from,
@@ -754,7 +769,7 @@ class LetterTemplateController extends Controller
                 ]
             ]);
             
-            return view('letters.index', compact('letters'));
+            return view('letters.home', compact('letters', 'templates'));
             
         } catch (\Exception $e) {
             Log::error('Error loading letters index', [

@@ -547,10 +547,10 @@
                                 <a href="{{ route('dashboard') }}">Dashboard</a>
                             </li>
                             <li class="breadcrumb-item">
-                                <a href="{{ route('trainees.index') }}">Trainee</a>
+                                <a href="{{ route('trainees.home') }}">Trainee</a>
                             </li>
                             <li class="breadcrumb-item">
-                                <a href="{{ route('trainees.show', $trainee->id) }}">{{ $trainee->trainee_first_name ?? 'Trainee' }}</a>
+                                <a href="{{ route('trainees.show', \App\Helpers\EncryptionHelper::generateEncryptedId($trainee->id)) }}">{{ $trainee->trainee_first_name ?? 'Trainee' }}</a>
                             </li>
                             <li class="breadcrumb-item active" aria-current="page">Edit</li>
                         </ol>
@@ -614,7 +614,7 @@
             <h6 class="m-0 font-weight-bold text-primary">{{ $trainee->trainee_first_name }} {{ $trainee->trainee_last_name }}</h6>
         </div>
         <div class="card-body">
-            <form action="{{ route('updatetraineeprofile', ['id' => $trainee->id]) }}" method="POST" enctype="multipart/form-data">
+            <form action="{{ route('updatetraineeprofile', ['encrypted_id' => \App\Helpers\EncryptionHelper::generateEncryptedId($trainee->id)]) }}" method="POST" enctype="multipart/form-data">
                 @csrf
                 @method('PUT')
                 
@@ -846,8 +846,9 @@
                             </div>
                             <div class="card-body text-center">
                                 <img id="avatar-preview" class="img-fluid rounded-circle mb-3" 
-                                     src="{{ $trainee->getAvatarUrlAttribute() }}" alt="Profile Picture" 
-                                     style="width: 150px; height: 150px; object-fit: cover;">
+                                     src="{{ $trainee->avatar_url }}" alt="Profile Picture" 
+                                     style="width: 150px; height: 150px; object-fit: cover;"
+                                     onerror="this.src='{{ asset('images/default-avatar.png') }}'">
                                 
                                 <div class="form-group">
                                     <div class="custom-file">
@@ -934,7 +935,7 @@
                                 <button type="submit" class="btn btn-primary btn-block">
                                     <i class="fas fa-save mr-1"></i> Save Changes
                                 </button>
-                                <a href="{{ route('traineeprofile', ['id' => $trainee->id]) }}" class="btn btn-secondary btn-block">
+                                <a href="{{ route('traineeprofile', ['encrypted_id' => \App\Helpers\EncryptionHelper::generateEncryptedId($trainee->id)]) }}" class="btn btn-secondary btn-block">
                                     <i class="fas fa-times mr-1"></i> Cancel
                                 </a>
                                 <hr>
@@ -972,7 +973,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                <form action="{{ route('traineeprofile.destroy', ['id' => $trainee->id]) }}" method="POST" style="display: inline;">
+                <form action="{{ route('traineeprofile.destroy', ['encrypted_id' => \App\Helpers\EncryptionHelper::generateEncryptedId($trainee->id)]) }}" method="POST" style="display: inline;">
                     @csrf
                     @method('DELETE')
                     <button type="submit" class="btn btn-danger">Delete Trainee</button>
@@ -1005,6 +1006,28 @@
         setTimeout(function() {
             $('.alert').fadeOut('slow');
         }, 5000);
+        
+        // Handle edit mode toggle
+        $('#editModeToggle').change(function() {
+            var isChecked = $(this).is(':checked');
+            var formElements = $('.form-control, .form-check-input:not(#editModeToggle), select, textarea');
+            
+            if (isChecked) {
+                // Enable editing mode
+                formElements.prop('readonly', false).prop('disabled', false);
+                $('.btn[type="submit"]').prop('disabled', false);
+                $('.form-check-input:not(#editModeToggle)').prop('disabled', false);
+            } else {
+                // Disable editing mode (read-only)
+                formElements.prop('readonly', true);
+                $('select').prop('disabled', true);
+                $('.btn[type="submit"]').prop('disabled', true);
+                $('.form-check-input:not(#editModeToggle)').prop('disabled', true);
+            }
+        });
+        
+        // Initialize edit mode state on page load
+        $('#editModeToggle').trigger('change');
     });
 </script>
 @endsection

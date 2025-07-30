@@ -10,6 +10,7 @@ use App\Models\ActivitySession;
 use App\Models\ActivitySchedule;
 use App\Models\ActivityEnrollment;
 use App\Models\SessionEnrollment;
+use App\Models\Attendance;
 use App\Models\User;
 use App\Models\Trainee;
 use App\Models\Centre;
@@ -797,7 +798,12 @@ class ActivityController extends Controller
                     ->with('error', 'Cannot mark attendance for ' . $session->status . ' sessions.');
             }
 
-            return view('activities.attendance', compact('session'));
+            // Check if attendance already exists for today
+            $attendanceExists = Attendance::where('activity_id', $activityId)
+                ->whereDate('date', now()->toDateString())
+                ->exists();
+
+            return view('activities.attendance', compact('session', 'attendanceExists'));
 
         } catch (Exception $e) {
             Log::error('Error loading attendance form: ' . $e->getMessage());
@@ -827,10 +833,9 @@ class ActivityController extends Controller
             $validated = $request->validate([
                 'attendance' => 'required|array',
                 'attendance.*' => 'required|in:present,absent,late,excused',
-                'participation_scores' => 'array',
-                'participation_scores.*' => 'nullable|integer|min:0|max:10',
-                'progress_notes' => 'array',
-                'progress_notes.*' => 'nullable|string|max:500'
+                'notes' => 'array',
+                'notes.*' => 'nullable|string|max:500',
+                'attendance_date' => 'required|date'
             ]);
 
             DB::beginTransaction();
@@ -845,16 +850,28 @@ class ActivityController extends Controller
 
             // Mark attendance for each trainee
             foreach ($validated['attendance'] as $traineeId => $status) {
-                $enrollment = SessionEnrollment::where('session_id', $sessionId)
+                $enrollment = ActivityEnrollment::where('activity_id', $activityId)
                     ->where('trainee_id', $traineeId)
                     ->first();
 
                 if ($enrollment) {
+                    // Update enrollment record
                     $enrollment->update([
-                        'attendance_status' => $status,
-                        'checked_in_at' => $status === 'present' ? now() : null,
-                        'participation_score' => $validated['participation_scores'][$traineeId] ?? null,
-                        'progress_notes' => $validated['progress_notes'][$traineeId] ?? null
+                        'attendance_marked' => true,
+                        'progress_notes' => $validated['notes'][$traineeId] ?? null
+                    ]);
+
+                    // Create or update attendance record
+                    Attendance::updateOrCreate([
+                        'trainee_id' => $traineeId,
+                        'activity_id' => $activityId,
+                        'date' => $validated['attendance_date'],
+                    ], [
+                        'status' => $status,
+                        'remarks' => $validated['notes'][$traineeId] ?? null,
+                        'marked_by' => $userId,
+                        'check_in_time' => $status === 'present' ? now() : null,
+                        'activity_type' => 'session'
                     ]);
                 }
             }

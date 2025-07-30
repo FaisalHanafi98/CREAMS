@@ -14,24 +14,32 @@ use App\Models\Centre;
 use Carbon\Carbon;
 use Exception;
 use App\Traits\HandlesErrors;
+use App\Traits\HandlesEncryptedIds;
 use Barryvdh\DomPDF\Facade\Pdf;
 
 class TraineeProfileController extends Controller
 {
-    use HandlesErrors;
+    use HandlesErrors, HandlesEncryptedIds;
     /**
      * Display the trainee profile dashboard.
      *
      * @param int $id
      * @return \Illuminate\View\View
      */
-    public function index($id)
+    public function index($encrypted_id)
     {
         try {
+            // Decrypt the ID
+            $id = $this->decryptId($encrypted_id);
+            if (!$id) {
+                return redirect()->route('trainees.home')->with('error', 'Invalid or expired link.');
+            }
+            
             Log::info('Accessing trainee profile dashboard', [
                 'user_id' => session('id'),
                 'user_role' => session('role'),
-                'trainee_id' => $id
+                'trainee_id' => $id,
+                'encrypted_id' => $encrypted_id
             ]);
             
             // Find the trainee by ID with comprehensive eager loading to prevent N+1 queries
@@ -195,7 +203,7 @@ class TraineeProfileController extends Controller
                 'user_id' => session('id')
             ]);
             
-            return redirect()->route('traineeprofile', ['id' => $id])
+            return redirect()->route('traineeprofile', ['encrypted_id' => \App\Helpers\EncryptionHelper::generateEncryptedId($id)])
                 ->with('error', 'Unable to access edit form. ' . $e->getMessage());
         }
     }
@@ -207,12 +215,19 @@ class TraineeProfileController extends Controller
      * @param int $id
      * @return \Illuminate\Http\RedirectResponse
      */
-    public function update(Request $request, $id)
+    public function update(Request $request, $encrypted_id)
     {
         try {
+            // Decrypt the ID
+            $id = $this->decryptId($encrypted_id);
+            if (!$id) {
+                return redirect()->route('trainees.home')->with('error', 'Invalid or expired link.');
+            }
+            
             Log::info('Updating trainee profile', [
                 'user_id' => session('id'),
                 'trainee_id' => $id,
+                'encrypted_id' => $encrypted_id,
                 'request_data' => $request->except(['trainee_avatar'])
             ]);
             
@@ -301,10 +316,10 @@ class TraineeProfileController extends Controller
                     Log::info('Processing trainee avatar update');
                     
                     // Delete old avatar if exists and is not default
-                    if ($trainee->trainee_avatar && 
-                        !str_contains($trainee->trainee_avatar, 'default-avatar') && 
-                        Storage::disk('public')->exists(str_replace('storage/', '', $trainee->trainee_avatar))) {
-                        Storage::disk('public')->delete(str_replace('storage/', '', $trainee->trainee_avatar));
+                    if ($trainee->avatar && 
+                        !str_contains($trainee->avatar, 'default-avatar') && 
+                        Storage::disk('public')->exists(str_replace('storage/', '', $trainee->avatar))) {
+                        Storage::disk('public')->delete(str_replace('storage/', '', $trainee->avatar));
                     }
                     
                     $avatar = $request->file('trainee_avatar');
@@ -363,8 +378,8 @@ class TraineeProfileController extends Controller
             // This was caused by guardian info, emergency contact, medical history, and consent fields
             // being in the guarded array and therefore not being saved to the database
 
-            // Redirect back to the profile page with success message
-            return redirect()->route('traineeprofile', ['id' => $trainee->id])
+            // Redirect back to the profile page with success message using encrypted ID
+            return redirect()->route('traineeprofile', ['encrypted_id' => \App\Helpers\EncryptionHelper::generateEncryptedId($trainee->id)])
                 ->with('success', 'Trainee profile updated successfully!');
         } catch (Exception $e) {
             // Log the error
@@ -375,8 +390,8 @@ class TraineeProfileController extends Controller
                 'user_id' => session('id')
             ]);
 
-            // Redirect with error message
-            return redirect()->route('traineeprofile', ['id' => $id])
+            // Redirect with error message using encrypted ID
+            return redirect()->route('traineeprofile', ['encrypted_id' => \App\Helpers\EncryptionHelper::generateEncryptedId($id)])
                 ->with('error', 'Failed to update profile: ' . $e->getMessage());
         }
     }
@@ -388,12 +403,19 @@ class TraineeProfileController extends Controller
      * @param int $id
      * @return \Illuminate\Http\RedirectResponse
      */
-    public function updateProgress(Request $request, $id)
+    public function updateProgress(Request $request, $encrypted_id)
     {
         try {
+            // Decrypt the ID
+            $id = $this->decryptId($encrypted_id);
+            if (!$id) {
+                return redirect()->route('trainees.home')->with('error', 'Invalid or expired link.');
+            }
+            
             Log::info('Updating trainee progress', [
                 'user_id' => session('id'),
                 'trainee_id' => $id,
+                'encrypted_id' => $encrypted_id,
                 'request_data' => $request->all()
             ]);
             
@@ -427,7 +449,7 @@ class TraineeProfileController extends Controller
                 'rating' => $validatedData['progress_rating']
             ]);
             
-            return redirect()->route('traineeprofile', ['id' => $id])
+            return redirect()->route('traineeprofile', ['encrypted_id' => \App\Helpers\EncryptionHelper::generateEncryptedId($id)])
                 ->with('success', 'Progress updated successfully');
         } catch (Exception $e) {
             Log::error('Error updating trainee progress', [
@@ -437,7 +459,7 @@ class TraineeProfileController extends Controller
                 'user_id' => session('id')
             ]);
             
-            return redirect()->route('traineeprofile', ['id' => $id])
+            return redirect()->route('traineeprofile', ['encrypted_id' => \App\Helpers\EncryptionHelper::generateEncryptedId($id)])
                 ->with('error', 'Failed to update progress: ' . $e->getMessage());
         }
     }
@@ -449,12 +471,19 @@ class TraineeProfileController extends Controller
      * @param int $id
      * @return \Illuminate\Http\RedirectResponse
      */
-    public function recordAttendance(Request $request, $id)
+    public function recordAttendance(Request $request, $encrypted_id)
     {
         try {
+            // Decrypt the ID
+            $id = $this->decryptId($encrypted_id);
+            if (!$id) {
+                return redirect()->route('trainees.home')->with('error', 'Invalid or expired link.');
+            }
+            
             Log::info('Recording trainee attendance', [
                 'user_id' => session('id'),
                 'trainee_id' => $id,
+                'encrypted_id' => $encrypted_id,
                 'request_data' => $request->all()
             ]);
             
@@ -475,7 +504,7 @@ class TraineeProfileController extends Controller
                 'recorded_by' => session('id')
             ]);
             
-            return redirect()->route('traineeprofile', ['id' => $id])
+            return redirect()->route('traineeprofile', ['encrypted_id' => \App\Helpers\EncryptionHelper::generateEncryptedId($id)])
                 ->with('success', 'Attendance recorded successfully');
         } catch (Exception $e) {
             Log::error('Error recording trainee attendance', [
@@ -485,7 +514,7 @@ class TraineeProfileController extends Controller
                 'user_id' => session('id')
             ]);
             
-            return redirect()->route('traineeprofile', ['id' => $id])
+            return redirect()->route('traineeprofile', ['encrypted_id' => \App\Helpers\EncryptionHelper::generateEncryptedId($id)])
                 ->with('error', 'Failed to record attendance: ' . $e->getMessage());
         }
     }
@@ -496,21 +525,28 @@ class TraineeProfileController extends Controller
      * @param int $id
      * @return \Illuminate\Http\RedirectResponse
      */
-    public function destroy($id)
+    public function destroy($encrypted_id)
     {
         try {
+            // Decrypt the ID
+            $id = $this->decryptId($encrypted_id);
+            if (!$id) {
+                return redirect()->route('trainees.home')->with('error', 'Invalid or expired link.');
+            }
+            
             Log::info('Deleting trainee profile', [
                 'user_id' => session('id'),
-                'trainee_id' => $id
+                'trainee_id' => $id,
+                'encrypted_id' => $encrypted_id
             ]);
             
             $trainee = Trainee::findOrFail($id);
             
             // Delete avatar file if exists and not default
-            if ($trainee->trainee_avatar && 
-                !str_contains($trainee->trainee_avatar, 'default-avatar') && 
-                Storage::disk('public')->exists(str_replace('storage/', '', $trainee->trainee_avatar))) {
-                Storage::disk('public')->delete(str_replace('storage/', '', $trainee->trainee_avatar));
+            if ($trainee->avatar && 
+                !str_contains($trainee->avatar, 'default-avatar') && 
+                Storage::disk('public')->exists(str_replace('storage/', '', $trainee->avatar))) {
+                Storage::disk('public')->delete(str_replace('storage/', '', $trainee->avatar));
             }
             
             // Delete related activities
@@ -534,7 +570,7 @@ class TraineeProfileController extends Controller
                 'user_id' => session('id')
             ]);
             
-            return redirect()->route('traineeprofile', ['id' => $id])
+            return redirect()->route('traineeprofile', ['encrypted_id' => \App\Helpers\EncryptionHelper::generateEncryptedId($id)])
                 ->with('error', 'Failed to delete trainee: ' . $e->getMessage());
         }
     }
@@ -546,12 +582,19 @@ class TraineeProfileController extends Controller
      * @param int $id
      * @return \Illuminate\Http\RedirectResponse
      */
-    public function addActivity(Request $request, $id)
+    public function addActivity(Request $request, $encrypted_id)
     {
         try {
+            // Decrypt the ID
+            $id = $this->decryptId($encrypted_id);
+            if (!$id) {
+                return redirect()->route('trainees.home')->with('error', 'Invalid or expired link.');
+            }
+            
             Log::info('Adding new activity for trainee', [
                 'user_id' => session('id'),
                 'trainee_id' => $id,
+                'encrypted_id' => $encrypted_id,
                 'request_data' => $request->all()
             ]);
             
@@ -585,7 +628,7 @@ class TraineeProfileController extends Controller
                 'activity_name' => $activity->activity_name
             ]);
             
-            return redirect()->route('traineeprofile', ['id' => $id])
+            return redirect()->route('traineeprofile', ['encrypted_id' => \App\Helpers\EncryptionHelper::generateEncryptedId($id)])
                 ->with('success', 'Activity added successfully');
         } catch (Exception $e) {
             Log::error('Error adding activity for trainee', [
@@ -595,7 +638,7 @@ class TraineeProfileController extends Controller
                 'user_id' => session('id')
             ]);
             
-            return redirect()->route('traineeprofile', ['id' => $id])
+            return redirect()->route('traineeprofile', ['encrypted_id' => \App\Helpers\EncryptionHelper::generateEncryptedId($id)])
                 ->with('error', 'Failed to add activity: ' . $e->getMessage());
         }
     }
@@ -606,12 +649,19 @@ class TraineeProfileController extends Controller
      * @param int $id
      * @return \Illuminate\Http\Response
      */
-    public function downloadProfile($id)
+    public function downloadProfile($encrypted_id)
     {
         try {
+            // Decrypt the ID
+            $id = $this->decryptId($encrypted_id);
+            if (!$id) {
+                return redirect()->route('trainees.home')->with('error', 'Invalid or expired link.');
+            }
+            
             Log::info('Downloading trainee profile', [
                 'user_id' => session('id'),
-                'trainee_id' => $id
+                'trainee_id' => $id,
+                'encrypted_id' => $encrypted_id
             ]);
             
             // Find the trainee with related data
@@ -662,7 +712,7 @@ class TraineeProfileController extends Controller
                 'user_id' => session('id')
             ]);
             
-            return redirect()->route('traineeprofile', ['id' => $id])
+            return redirect()->route('traineeprofile', ['encrypted_id' => \App\Helpers\EncryptionHelper::generateEncryptedId($id)])
                 ->with('error', 'Failed to download profile: ' . $e->getMessage());
         }
     }

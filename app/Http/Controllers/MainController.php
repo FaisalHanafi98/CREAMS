@@ -124,8 +124,8 @@ class MainController extends Controller
                 ],
                 'password' => [
                     'required',
-                    'min:5',
-                    'regex:/^(?=.*[a-zA-Z])(?=.*\d).{5,}$/',
+                    'min:8',
+                    'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/',
                 ],
                 'password_confirmation' => 'required|same:password',
                 'centre_id' => 'required|exists:centres,centre_id',
@@ -142,8 +142,8 @@ class MainController extends Controller
                 'email.email' => 'Please enter a valid email address.',
                 'email.unique' => 'This email address is already registered.',
                 'password.required' => 'Password is required.',
-                'password.min' => 'Password must be at least 5 characters.',
-                'password.regex' => 'Password must contain at least one letter and one number.',
+                'password.min' => 'Password must be at least 8 characters.',
+                'password.regex' => 'Password must include uppercase, lowercase, number, and special character.',
                 'password_confirmation.required' => 'Please confirm your password.',
                 'password_confirmation.same' => 'Password confirmation does not match.',
                 'centre_id.required' => 'Please select a centre location.',
@@ -231,7 +231,7 @@ class MainController extends Controller
                 ]);
 
                 $successMessage = "New " . ucfirst($validatedData['role']) . " has been registered";
-                return redirect()->route('auth.loginpage')->with('success', $successMessage);
+                return redirect()->route('staffs.register')->with('success', $successMessage);
             } catch (\PDOException $e) {
                 DB::rollBack();
                 Log::error('Database error during registration:', [

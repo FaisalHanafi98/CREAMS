@@ -363,6 +363,16 @@ class StaffController extends Controller
                 ->get();
                 
             $activitiesCreated = $activities->count();
+            
+            // Count actual active sessions where this staff member is the teacher
+            $activeSessions = 0;
+            if (\Schema::hasTable('activity_sessions')) {
+                $activeSessions = \DB::table('activity_sessions')
+                    ->where('teacher_id', $staffMember->id)
+                    ->where('session_status', 'scheduled')
+                    ->where('scheduled_date', '>=', now()->toDateString())
+                    ->count();
+            }
 
             // Count trainees in same centre using Eloquent
             $totalTrainees = Trainee::where('centre_id', $staffMember->centre_id)->count();
@@ -397,7 +407,7 @@ class StaffController extends Controller
             }
 
             return [
-                'active_sessions' => $activitiesCreated,
+                'active_sessions' => $activeSessions,
                 'total_trainees' => $totalTrainees,
                 'attendance_rate' => round($avgAttendance, 1),
                 'years_service' => $yearsServiceDisplay
@@ -478,10 +488,10 @@ class StaffController extends Controller
                     ->join('activities', 'activity_schedules.activity_id', '=', 'activities.id')
                     ->join('activity_sessions', 'activity_schedules.activity_id', '=', 'activity_sessions.activity_id')
                     ->where('activity_sessions.teacher_id', $staffMember->id)
-                    ->where('activity_schedules.status', 'active')
+                    ->where('activity_schedules.schedule_status', 'active')
                     ->select('activity_schedules.*', 'activities.activity_name')
                     ->distinct()
-                    ->orderBy('activity_schedules.day_of_week')
+                    ->orderBy('activity_schedules.start_date')
                     ->orderBy('activity_schedules.start_time')
                     ->get();
             }
@@ -546,53 +556,25 @@ class StaffController extends Controller
                 
                 // Add enrollment counts if table exists
                 if (\Schema::hasTable('activity_enrollments')) {
+                    // Use a subquery to get enrollment counts to avoid GROUP BY issues
                     $activities = $activitiesQuery
-                        ->leftJoin('activity_enrollments', function($join) {
-                            $join->on('activities.id', '=', 'activity_enrollments.activity_id')
-                                 ->whereIn('activity_enrollments.enrollment_status', ['enrolled', 'active']);
-                        })
-                        ->select(
-                            'activities.id',
-                            'activities.activity_id',
-                            'activities.activity_name',
-                            'activities.activity_description',
-                            'activities.activity_type',
-                            'activities.activity_date',
-                            'activities.activity_start_time',
-                            'activities.activity_end_time',
-                            'activities.activity_location',
-                            'activities.max_participants',
-                            'activities.current_participants',
-                            'activities.activity_status',
-                            'activities.centre_id',
-                            'activities.category_id',
-                            'activities.created_by',
-                            'activities.created_at',
-                            'activities.updated_at',
-                            \DB::raw('COUNT(activity_enrollments.id) as enrollment_count')
-                        )
-                        ->groupBy(
-                            'activities.id',
-                            'activities.activity_id',
-                            'activities.activity_name',
-                            'activities.activity_description',
-                            'activities.activity_type',
-                            'activities.activity_date',
-                            'activities.activity_start_time',
-                            'activities.activity_end_time',
-                            'activities.activity_location',
-                            'activities.max_participants',
-                            'activities.current_participants',
-                            'activities.activity_status',
-                            'activities.centre_id',
-                            'activities.category_id',
-                            'activities.created_by',
-                            'activities.created_at',
-                            'activities.updated_at'
-                        )
-                        ->get();
+                        ->select('activities.*')
+                        ->get()
+                        ->map(function($activity) {
+                            $enrollmentCount = \DB::table('activity_enrollments')
+                                ->where('activity_id', $activity->id)
+                                ->whereIn('enrollment_status', ['enrolled', 'active'])
+                                ->count();
+                            $activity->enrollment_count = $enrollmentCount;
+                            return $activity;
+                        });
                 } else {
                     $activities = $activitiesQuery->get();
+                    // Add enrollment_count property for consistency
+                    $activities = $activities->map(function($activity) {
+                        $activity->enrollment_count = 0;
+                        return $activity;
+                    });
                 }
             }
 

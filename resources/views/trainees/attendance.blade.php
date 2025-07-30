@@ -501,19 +501,101 @@
 
         <!-- Action Buttons -->
         <div class="action-buttons">
-            <a href="{{ route('trainees.show', $trainee->id) }}" class="btn btn-primary">
+            <a href="{{ route('trainees.show', \App\Helpers\EncryptionHelper::generateEncryptedId($trainee->id)) }}" class="btn btn-primary">
                 <i class="fas fa-user"></i>Back to Profile
             </a>
             
-            <a href="{{ route('trainees.schedule', $trainee->id) }}" class="btn btn-secondary">
+            <a href="{{ route('trainees.schedule', \App\Helpers\EncryptionHelper::generateEncryptedId($trainee->id)) }}" class="btn btn-secondary">
                 <i class="fas fa-calendar"></i>View Schedule
             </a>
+            
+            @if(in_array(session('role'), ['admin', 'supervisor', 'teacher']))
+            <button class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#markAttendanceModal">
+                <i class="fas fa-check-circle"></i>Mark Today's Attendance
+            </button>
+            @endif
             
             @if(in_array(session('role'), ['admin', 'supervisor']))
             <button class="btn btn-secondary" onclick="exportAttendance()">
                 <i class="fas fa-file-export"></i>Export Report
             </button>
             @endif
+        </div>
+    </div>
+</div>
+
+<!-- Mark Attendance Modal -->
+<div class="modal fade" id="markAttendanceModal" tabindex="-1" aria-labelledby="markAttendanceModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="markAttendanceModalLabel">
+                    <i class="fas fa-check-circle me-2"></i>Mark Attendance for {{ $trainee->trainee_first_name }} {{ $trainee->trainee_last_name }}
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="attendanceForm">
+                    @csrf
+                    <input type="hidden" name="trainee_id" value="{{ $trainee->id }}">
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="attendance_date" class="form-label">Date</label>
+                            <input type="date" class="form-control" id="attendance_date" name="attendance_date" 
+                                   value="{{ date('Y-m-d') }}" max="{{ date('Y-m-d') }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="attendance_status" class="form-label">Attendance Status</label>
+                            <select class="form-control" id="attendance_status" name="attendance_status" required>
+                                <option value="">Select Status</option>
+                                <option value="present">Present</option>
+                                <option value="late">Late</option>
+                                <option value="absent">Absent</option>
+                                <option value="excused">Excused</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3" id="timeFields" style="display: none;">
+                        <div class="col-md-6">
+                            <label for="check_in_time" class="form-label">Check-in Time</label>
+                            <input type="time" class="form-control" id="check_in_time" name="check_in_time">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="check_out_time" class="form-label">Check-out Time</label>
+                            <input type="time" class="form-control" id="check_out_time" name="check_out_time">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="attendance_remarks" class="form-label">Remarks (Optional)</label>
+                        <textarea class="form-control" id="attendance_remarks" name="attendance_remarks" 
+                                  rows="3" placeholder="Add any relevant notes about the attendance..."></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="activity_type" class="form-label">Activity/Session Type (Optional)</label>
+                        <select class="form-control" id="activity_type" name="activity_type">
+                            <option value="">General Attendance</option>
+                            <option value="Physical Therapy">Physical Therapy</option>
+                            <option value="Group Session">Group Session</option>
+                            <option value="Individual Session">Individual Session</option>
+                            <option value="Assessment">Assessment</option>
+                            <option value="Group Activity">Group Activity</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times"></i>Cancel
+                </button>
+                <button type="button" class="btn btn-primary" onclick="markAttendance()">
+                    <i class="fas fa-save"></i>Mark Attendance
+                </button>
+            </div>
         </div>
     </div>
 </div>
@@ -592,5 +674,78 @@ document.querySelectorAll('.stat-card').forEach(card => {
         this.style.transform = 'translateY(-5px) scale(1)';
     });
 });
+
+// Handle attendance status change to show/hide time fields
+document.getElementById('attendance_status').addEventListener('change', function() {
+    const timeFields = document.getElementById('timeFields');
+    const currentTime = new Date().toTimeString().slice(0, 5);
+    
+    if (this.value === 'present' || this.value === 'late') {
+        timeFields.style.display = 'block';
+        if (this.value === 'present') {
+            document.getElementById('check_in_time').value = currentTime;
+        } else if (this.value === 'late') {
+            // For late, set a slightly later time
+            const lateTime = new Date();
+            lateTime.setMinutes(lateTime.getMinutes() + 15);
+            document.getElementById('check_in_time').value = lateTime.toTimeString().slice(0, 5);
+        }
+    } else {
+        timeFields.style.display = 'none';
+        document.getElementById('check_in_time').value = '';
+        document.getElementById('check_out_time').value = '';
+    }
+});
+
+// Mark attendance function
+function markAttendance() {
+    const form = document.getElementById('attendanceForm');
+    const formData = new FormData(form);
+    const submitButton = document.querySelector('[onclick="markAttendance()"]');
+    
+    // Disable submit button to prevent double-click
+    submitButton.disabled = true;
+    submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i>Marking...';
+    
+    // Convert FormData to regular object for JSON
+    const data = {};
+    for (let [key, value] of formData.entries()) {
+        data[key] = value;
+    }
+    
+    fetch('{{ route("trainees.attendance.mark", ["encrypted_id" => \\App\\Helpers\\EncryptionHelper::generateEncryptedId($trainee->id)]) }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Show success message
+            alert('Attendance marked successfully!');
+            
+            // Close modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('markAttendanceModal'));
+            modal.hide();
+            
+            // Refresh page to show updated data
+            location.reload();
+        } else {
+            alert('Error: ' + (data.message || 'Failed to mark attendance'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while marking attendance. Please try again.');
+    })
+    .finally(() => {
+        // Re-enable submit button
+        submitButton.disabled = false;
+        submitButton.innerHTML = '<i class="fas fa-save"></i>Mark Attendance';
+    });
+}
 </script>
 @endsection

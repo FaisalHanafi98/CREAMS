@@ -112,7 +112,7 @@
         <ol class="breadcrumb">
             <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Dashboard</a></li>
             <li class="breadcrumb-item"><a href="{{ route('staffs.home') }}">Staff Directory</a></li>
-            <li class="breadcrumb-item"><a href="{{ route('staffs.profile', $staffMember->encrypted_id ?? $staffMember->id) }}">{{ $staffMember->name }}</a></li>
+            <li class="breadcrumb-item"><a href="{{ route('staffs.profile', \App\Helpers\EncryptionHelper::generateEncryptedId($staffMember->id)) }}">{{ $staffMember->name }}</a></li>
             <li class="breadcrumb-item active">Schedule</li>
         </ol>
     </nav>
@@ -142,7 +142,12 @@
                 <p class="mb-0 opacity-75">Weekly activity schedule and commitments</p>
             </div>
             <div class="col-md-4 text-end">
-                <a href="{{ route('staffs.profile', $staffMember->encrypted_id ?? $staffMember->id) }}" class="btn btn-light">
+                @if(in_array(session('role'), ['admin', 'supervisor']))
+                <a href="{{ route('activities.create') }}" class="btn btn-success me-2">
+                    <i class="fas fa-plus me-2"></i>Add Activity
+                </a>
+                @endif
+                <a href="{{ route('staffs.profile', \App\Helpers\EncryptionHelper::generateEncryptedId($staffMember->id)) }}" class="btn btn-light">
                     <i class="fas fa-arrow-left me-2"></i>Back to Profile
                 </a>
             </div>
@@ -182,7 +187,14 @@
                                                 </small>
                                             @endif
                                         </div>
-                                        <span class="badge bg-success">Active</span>
+                                        <div class="activity-actions">
+                                            <span class="badge bg-success me-2">Active</span>
+                                            @if(in_array(session('role'), ['admin', 'supervisor']))
+                                            <button class="btn btn-sm btn-outline-primary me-1" onclick="editActivity({{ $schedule->id ?? 0 }})">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            @endif
+                                        </div>
                                     </div>
                                 </div>
                             @endforeach
@@ -197,7 +209,12 @@
                     <div class="no-schedule">
                         <i class="fas fa-calendar-plus fa-3x mb-3 text-muted"></i>
                         <h4>No Schedule Available</h4>
-                        <p class="mb-0">No activities have been scheduled for this staff member yet.</p>
+                        <p class="mb-4">No activities have been scheduled for this staff member yet.</p>
+                        @if(in_array(session('role'), ['admin', 'supervisor']))
+                        <a href="{{ route('activities.create') }}" class="btn btn-primary">
+                            <i class="fas fa-plus me-2"></i>Create First Activity
+                        </a>
+                        @endif
                     </div>
                 @endif
             </div>
@@ -333,4 +350,16 @@
         </div>
     </div>
 </div>
+@endsection
+
+@section('scripts')
+<script>
+function editActivity(activityId) {
+    if (activityId && activityId > 0) {
+        window.location.href = `/activities/${activityId}/edit`;
+    } else {
+        alert('Activity ID not available. Please contact the administrator.');
+    }
+}
+</script>
 @endsection

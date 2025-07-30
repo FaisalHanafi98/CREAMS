@@ -930,6 +930,9 @@
         }
     </style>
     
+    <!-- Dropdown visibility improvements -->
+    <link rel="stylesheet" href="{{ asset('css/dropdown-improvements.css') }}">
+    
     @yield('styles')
 </head>
 <body>

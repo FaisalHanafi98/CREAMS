@@ -433,11 +433,11 @@
             <i class="fas fa-save mr-2"></i>
             {{ $isEdit ? 'Update Trainee' : 'Register Trainee' }}
         </button>
-        <a href="{{ route('trainees.index') }}" class="btn btn-secondary btn-lg ml-2">
+        <a href="{{ route('trainees.home') }}" class="btn btn-secondary btn-lg ml-2">
             <i class="fas fa-times mr-2"></i>Cancel
         </a>
         @if($isEdit && isset($trainee))
-            <a href="{{ route('trainees.show', $trainee->id) }}" class="btn btn-info btn-lg ml-2">
+            <a href="{{ route('trainees.show', \App\Helpers\EncryptionHelper::generateEncryptedId($trainee->id)) }}" class="btn btn-info btn-lg ml-2">
                 <i class="fas fa-eye mr-2"></i>View Profile
             </a>
         @endif

@@ -495,6 +495,46 @@
             font-size: 0.9rem;
         }
     }
+
+    .upload-area {
+        border: 2px dashed #ccc;
+        border-radius: 8px;
+        padding: 20px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        background: #f8f9fa;
+    }
+
+    .upload-area:hover {
+        border-color: #007bff;
+        background: #e7f3ff;
+    }
+
+    .preview-area {
+        min-height: 120px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+    }
+
+    .preview-area i {
+        font-size: 2rem;
+        color: #6c757d;
+        margin-bottom: 10px;
+    }
+
+    .preview-area p {
+        color: #6c757d;
+        margin: 0;
+        font-size: 0.9rem;
+    }
+
+    .preview-area img {
+        border-radius: 4px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
 </style>
 @endsection
 
@@ -539,11 +579,12 @@
             <div class="profile-header">
                 <div class="profile-user-info">
                     <div class="profile-avatar" id="avatar-container">
-                        @if(isset($user['avatar']) && $user['avatar'])
-                            <img src="{{ asset('storage/avatars/' . $user['avatar']) }}?v={{ time() }}" alt="{{ $user['name'] ?? 'User' }}" id="avatar-preview" onerror="this.onerror=null; this.src='{{ asset('images/default-avatar.svg') }}'; console.warn('Avatar not found, using default');">
-                        @else
-                            <img src="{{ asset('images/default-avatar.svg') }}" alt="{{ $user['name'] ?? 'User' }}" id="avatar-preview" onerror="this.onerror=null; this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxjaXJjbGUgY3g9IjUwIiBjeT0iNTAiIHI9IjUwIiBmaWxsPSIjRTVFN0VCIi8+CjxwYXRoIGQ9Ik01MCA1MEM1OC4yODQgNTAgNjUgNDMuMjg0IDY1IDM1QzY1IDI2LjcxNiA1OC4yODQgMjAgNTAgMjBDNDEuNzE2IDIwIDM1IDI2LjcxNiAzNSAzNUMzNSA0My4yODQgNDEuNzE2IDUwIDUwIDUwWiIgZmlsbD0iIzlDQTNBRiIvPgo8cGF0aCBkPSJNODAgODBDODAgNjcuODUgNjcuODUgNTcuNSA1MCA1Ny41QzMyLjE1IDU3LjUgMjAgNjcuODUgMjAgODBIMjBIODBaIiBmaWxsPSIjOUNBM0FGIi8+Cjwvc3ZnPgo=';">
-                        @endif
+                        @php
+                            $userModel = \App\Models\User::find(session('id'));
+                            $userModel = $userModel ? $userModel->fresh() : null; // Always get fresh data from database
+                            $avatarUrl = $userModel ? $userModel->avatar_url : asset('images/default-avatar.svg');
+                        @endphp
+                        <img src="{{ $avatarUrl }}" alt="{{ $user['name'] ?? 'User' }}" id="avatar-preview" onerror="this.onerror=null; this.src='{{ asset('images/default-avatar.svg') }}'; console.warn('Avatar not found, using default');">
                         <div class="avatar-overlay" id="avatar-upload-btn" title="Change Profile Photo">
                             <i class="fas fa-camera text-white"></i>
                         </div>
@@ -850,31 +891,79 @@
                     <div class="form-section">
                         <h4><i class="fas fa-layer-group"></i> Letter Template Management</h4>
                         
-                        <div class="row mb-4">
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="template_name">Template Name</label>
-                                    <input type="text" class="form-control" id="template_name" name="template_name" placeholder="e.g., Official Recommendation Letter">
-                                    <small class="form-text text-muted">Give your template a descriptive name</small>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="template_description">Template Description</label>
-                                    <input type="text" class="form-control" id="template_description" name="template_description" placeholder="Brief description of template purpose">
+                        <!-- Current Template Status -->
+                        <div class="alert alert-info mb-4">
+                            <h6><i class="fas fa-info-circle"></i> Current Active Template</h6>
+                            <p class="mb-0" id="current-template-info">
+                                @php
+                                    $activeTemplate = \App\Models\LetterTemplate::where('is_active', true)->latest()->first();
+                                @endphp
+                                @if($activeTemplate)
+                                    <strong>{{ $activeTemplate->template_name }}</strong>
+                                    @if($activeTemplate->template_description)
+                                        - {{ $activeTemplate->template_description }}
+                                    @endif
+                                    <br><small class="text-muted">Created: {{ $activeTemplate->created_at->format('d M Y H:i') }}</small>
+                                @else
+                                    <em>No active template found. Default template will be used.</em>
+                                @endif
+                            </p>
+                        </div>
+                        
+                        <!-- Template Name -->
+                        <div class="form-group mb-4">
+                            <label for="template_name">Template Name</label>
+                            <input type="text" class="form-control" id="template_name" name="template_name" placeholder="e.g., Official Recommendation Letter">
+                            <small class="form-text text-muted">Give your template a descriptive name</small>
+                        </div>
+
+                        <!-- Template Description -->
+                        <div class="form-group mb-4">
+                            <label for="template_description">Template Description</label>
+                            <input type="text" class="form-control" id="template_description" name="template_description" placeholder="Brief description of template purpose">
+                        </div>
+
+                        <!-- Letter Header Image -->
+                        <div class="form-group mb-4">
+                            <label>Letter Header (Image)</label>
+                            <input type="file" id="header-input" name="header_image" accept="image/*" style="display: none;">
+                            <div class="upload-area" onclick="document.getElementById('header-input').click();">
+                                <div id="header-preview" class="preview-area">
+                                    @if($activeTemplate && $activeTemplate->header_image_url)
+                                        <img src="{{ $activeTemplate->header_image_url }}" alt="Header Image" style="max-width: 100%; height: auto; max-height: 200px;">
+                                    @else
+                                        <i class="fas fa-cloud-upload-alt"></i>
+                                        <p>Click to upload header image</p>
+                                    @endif
                                 </div>
                             </div>
                         </div>
 
                         <!-- Header Text Option -->
-                        <div class="form-group">
+                        <div class="form-group mb-4">
                             <label for="header_text">Header Text (Optional)</label>
                             <textarea class="form-control" id="header_text" name="header_text" rows="2" placeholder="Optional text to overlay on header image or use as header if no image"></textarea>
                             <small class="form-text text-muted">This text will appear over the header image or replace it if no image is uploaded</small>
                         </div>
 
+                        <!-- Letter Footer Image -->
+                        <div class="form-group mb-4">
+                            <label>Letter Footer (Image)</label>
+                            <input type="file" id="footer-input" name="footer_image" accept="image/*" style="display: none;">
+                            <div class="upload-area" onclick="document.getElementById('footer-input').click();">
+                                <div id="footer-preview" class="preview-area">
+                                    @if($activeTemplate && $activeTemplate->footer_image_url)
+                                        <img src="{{ $activeTemplate->footer_image_url }}" alt="Footer Image" style="max-width: 100%; height: auto; max-height: 150px;">
+                                    @else
+                                        <i class="fas fa-cloud-upload-alt"></i>
+                                        <p>Click to upload footer image</p>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Footer Text Option -->
-                        <div class="form-group">
+                        <div class="form-group mb-4">
                             <label for="footer_text">Footer Text (Optional)</label>
                             <textarea class="form-control" id="footer_text" name="footer_text" rows="2" placeholder="Optional text to overlay on footer image or use as footer if no image"></textarea>
                             <small class="form-text text-muted">This text will appear over the footer image or replace it if no image is uploaded</small>
@@ -884,14 +973,8 @@
                             <button type="button" class="btn btn-outline-primary" id="save-template-btn">
                                 <i class="fas fa-save"></i> Save Template
                             </button>
-                            <button type="button" class="btn btn-outline-info" id="load-template-btn">
-                                <i class="fas fa-folder-open"></i> Load Template
-                            </button>
-                            <button type="button" class="btn btn-outline-secondary" id="view-templates-btn">
-                                <i class="fas fa-list"></i> View All Templates
-                            </button>
-                            <button type="button" class="btn btn-outline-warning" onclick="showLetterArchive()">
-                                <i class="fas fa-archive"></i> Letter Archive
+                            <button type="button" class="btn btn-outline-secondary" id="view-templates-archive-btn">
+                                <i class="fas fa-folder-open"></i> View Templates & Letter Archive
                             </button>
                         </div>
                     </div>
@@ -907,7 +990,12 @@
                                 <div class="col-md-6">
                                     <div class="form-group">
                                         <label for="letter_ref">Letter Reference ID</label>
-                                        <input type="text" class="form-control" id="letter_ref" name="reference_number" value="CREAMS-{{ date('Y') }}-{{ str_pad(rand(1, 9999), 4, '0', STR_PAD_LEFT) }}" required>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="letter_ref" name="reference_number" value="" required readonly>
+                                            <button type="button" class="btn btn-outline-secondary" id="generate-ref-btn" title="Generate New Reference">
+                                                <i class="fas fa-refresh"></i>
+                                            </button>
+                                        </div>
                                         <small class="form-text text-muted">Unique reference number for this letter</small>
                                     </div>
                                 </div>
@@ -917,21 +1005,6 @@
                                         <input type="date" class="form-control" id="letter_date" name="letter_date" value="{{ date('Y-m-d') }}" required>
                                     </div>
                                 </div>
-                            </div>
-                            
-                            <!-- Header Image Upload -->
-                            <div class="form-group">
-                                <label>Letter Header</label>
-                                <div class="letter-header" id="header-upload" onclick="$('#header-input').click()">
-                                    <div id="header-preview">
-                                        <div class="upload-placeholder">
-                                            <i class="fas fa-upload fa-2x mb-2"></i><br>
-                                            Click to upload header image<br>
-                                            <small>Recommended: 800x200px, PNG/JPG</small>
-                                        </div>
-                                    </div>
-                                </div>
-                                <input type="file" id="header-input" name="header_image" accept="image/*" style="display: none;">
                             </div>
                             
                             <!-- Recipient Information -->
@@ -955,21 +1028,6 @@
                                 <label for="letter_content">Letter Content</label>
                                 <textarea class="form-control" id="letter_content" name="content" rows="8" placeholder="Enter the main content of your letter..." required></textarea>
                                 <small class="form-text text-muted">You can use basic formatting. The content will be automatically formatted in the final letter.</small>
-                            </div>
-                            
-                            <!-- Footer Image Upload -->
-                            <div class="form-group">
-                                <label>Letter Footer</label>
-                                <div class="letter-footer" id="footer-upload" onclick="$('#footer-input').click()">
-                                    <div id="footer-preview">
-                                        <div class="upload-placeholder">
-                                            <i class="fas fa-upload fa-2x mb-2"></i><br>
-                                            Click to upload footer image<br>
-                                            <small>Recommended: 800x150px, PNG/JPG</small>
-                                        </div>
-                                    </div>
-                                </div>
-                                <input type="file" id="footer-input" name="footer_image" accept="image/*" style="display: none;">
                             </div>
                             
                             <!-- Letter Preview -->
@@ -1403,134 +1461,104 @@ $(document).ready(function() {
         generateLetterPreview();
     });
     
+    // Generate new reference number
+    $('#generate-ref-btn').click(function() {
+        generateNewReference();
+    });
+    
+    // Initialize with a reference number on page load
+    generateNewReference();
+    
+    function generateNewReference() {
+        const btn = $('#generate-ref-btn');
+        const input = $('#letter_ref');
+        
+        btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>');
+        
+        $.ajax({
+            url: '{{ route('profile.letter.newReference') }}',
+            method: 'GET',
+            success: function(response) {
+                if (response.success) {
+                    input.val(response.reference);
+                } else {
+                    // Fallback to client-side generation
+                    const fallbackRef = 'LTR/' + new Date().getFullYear() + '/' + 
+                                       String(new Date().getMonth() + 1).padStart(2, '0') + '/' +
+                                       String(Math.floor(Math.random() * 9999) + 1).padStart(4, '0');
+                    input.val(fallbackRef);
+                }
+            },
+            error: function() {
+                // Fallback to client-side generation
+                const fallbackRef = 'LTR/' + new Date().getFullYear() + '/' + 
+                                   String(new Date().getMonth() + 1).padStart(2, '0') + '/' +
+                                   String(Math.floor(Math.random() * 9999) + 1).padStart(4, '0');
+                input.val(fallbackRef);
+            },
+            complete: function() {
+                btn.prop('disabled', false).html('<i class="fas fa-refresh"></i>');
+            }
+        });
+    }
+    
     function generateLetterPreview() {
-        const letterRef = $('#letter_ref').val();
-        const letterDate = $('#letter_date').val();
-        const recipientName = $('#recipient_name').val();
-        const recipientAddress = $('#recipient_address').val();
-        const letterSubject = $('#letter_subject').val();
-        const letterContent = $('#letter_content').val();
+        const formData = {
+            subject: $('#letter_subject').val(),
+            content: $('#letter_content').val(),
+            letter_date: $('#letter_date').val(), 
+            recipient_name: $('#recipient_name').val(),
+            recipient_address: $('#recipient_address').val()
+        };
         
-        const userName = @json($user['name'] ?? 'Administrator');
-        const userRole = @json($roleDisplay ?? 'Administrator');
-        
-        // Get uploaded header and footer images
-        const headerImg = $('#header-preview img');
-        const footerImg = $('#footer-preview img');
-        
-        const headerImageSrc = headerImg.length > 0 ? headerImg.attr('src') : null;
-        const footerImageSrc = footerImg.length > 0 ? footerImg.attr('src') : null;
-        
-        // Get header and footer text
-        const headerText = $('#header_text').val();
-        const footerText = $('#footer_text').val();
-        
-        // Build header HTML
-        let headerHTML = '';
-        if (headerImageSrc || headerText) {
-            headerHTML = '<div style="text-align: center; margin-bottom: 30px; position: relative;">';
-            
-            if (headerImageSrc) {
-                headerHTML += `<img src="${headerImageSrc}" alt="Letter Header" style="max-width: 100%; height: auto; max-height: 200px;">`;
-            }
-            
-            if (headerText) {
-                const textStyle = headerImageSrc ? 
-                    'position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(255,255,255,0.9); padding: 10px; border-radius: 5px;' :
-                    'padding: 20px; border-bottom: 1px solid #ddd;';
-                    
-                headerHTML += `<div style="${textStyle} color: #333; font-weight: bold; text-align: center;">
-                    ${headerText.replace(/\n/g, '<br>')}
-                </div>`;
-            }
-            
-            headerHTML += '</div>';
-        } else {
-            // Fallback header if no image or text
-            headerHTML = `<div style="text-align: center; margin-bottom: 30px; border-bottom: 1px solid #ddd; padding-bottom: 20px;">
-                <h2 style="margin: 0; color: #333; font-size: 18px;">CREAMS - Community-based Rehabilitation Management System</h2>
-                <p style="margin: 5px 0 0 0; color: #666; font-size: 14px;">International Islamic University Malaysia (IIUM)</p>
-            </div>`;
+        // Validate required fields
+        if (!formData.subject || !formData.content) {
+            alert('Please fill in the subject and content fields to generate a preview.');
+            return;
         }
         
-        // Build footer HTML
-        let footerHTML = '';
-        if (footerImageSrc || footerText) {
-            footerHTML = '<div style="text-align: center; margin-top: 50px; position: relative;">';
-            
-            if (footerImageSrc) {
-                footerHTML += `<img src="${footerImageSrc}" alt="Letter Footer" style="max-width: 100%; height: auto; max-height: 150px;">`;
-            }
-            
-            if (footerText) {
-                const textStyle = footerImageSrc ? 
-                    'position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(255,255,255,0.9); padding: 10px; border-radius: 5px;' :
-                    'padding: 20px; border-top: 1px solid #ddd;';
+        const previewBtn = $('#preview-letter');
+        previewBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Generating Preview...');
+        
+        $.ajax({
+            url: '{{ route('profile.letter.preview') }}',
+            method: 'POST',
+            data: formData,
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            },
+            success: function(response) {
+                if (response.success) {
+                    $('#preview-content').html(response.html);
+                    $('#letter-preview').show();
                     
-                footerHTML += `<div style="${textStyle} color: #333; font-size: 12px; text-align: center;">
-                    ${footerText.replace(/\n/g, '<br>')}
-                </div>`;
+                    // Scroll to preview
+                    $('html, body').animate({
+                        scrollTop: $('#letter-preview').offset().top - 100
+                    }, 500);
+                } else {
+                    alert('Failed to generate preview: ' + (response.message || 'Unknown error'));
+                }
+            },
+            error: function(xhr) {
+                let errorMessage = 'Failed to generate preview.';
+                if (xhr.responseJSON && xhr.responseJSON.message) {
+                    errorMessage = xhr.responseJSON.message;
+                }
+                alert(errorMessage);
+            },
+            complete: function() {
+                previewBtn.prop('disabled', false).html('<i class="fas fa-eye"></i> Preview Letter');
             }
-            
-            footerHTML += '</div>';
-        } else {
-            // Fallback footer if no image or text
-            footerHTML = `<div style="text-align: center; margin-top: 50px; border-top: 1px solid #ddd; padding-top: 20px; font-size: 12px; color: #666;">
-                <p style="margin: 0;">CREAMS System - International Islamic University Malaysia</p>
-                <p style="margin: 2px 0 0 0;">Generated on: ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}</p>
-            </div>`;
-        }
-        
-        const previewHTML = `
-            <div style="font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; border: 1px solid #ddd;">
-                <!-- Header Image or Default -->
-                ${headerHTML}
-                
-                <!-- Date and Reference -->
-                <div style="text-align: right; margin-bottom: 20px;">
-                    <strong>Ref: ${letterRef}</strong><br>
-                    <strong>Date: ${new Date(letterDate).toLocaleDateString()}</strong>
-                </div>
-                
-                <!-- Recipient -->
-                <div style="margin-bottom: 20px;">
-                    <strong>To:</strong><br>
-                    ${recipientName}<br>
-                    ${recipientAddress.replace(/\n/g, '<br>')}
-                </div>
-                
-                <!-- Subject -->
-                <div style="margin-bottom: 20px;">
-                    <strong>Subject: ${letterSubject}</strong>
-                </div>
-                
-                <!-- Content -->
-                <div style="margin-bottom: 30px; line-height: 1.6; text-align: justify;">
-                    ${letterContent.replace(/\n/g, '<br>')}
-                </div>
-                
-                <!-- Signature -->
-                <div style="margin-top: 40px;">
-                    <p>Thank you for your attention.</p>
-                    <p style="margin-top: 40px;">
-                        <strong>${userName}</strong><br>
-                        ${userRole}<br>
-                        CREAMS System - IIUM
-                    </p>
-                </div>
-                
-                <!-- Footer Image or Default -->
-                ${footerHTML}
-            </div>
-        `;
-        
-        $('#preview-content').html(previewHTML);
-        $('#letter-preview').show();
+        });
     }
     
     // Initialize styling
     updateFieldStyling();
     disableEditing();
+    
+    // Check for selected template from letters archive page
+    checkForSelectedTemplate();
     
     // Template Management JavaScript
     $('#save-template-btn').click(function() {
@@ -1555,17 +1583,15 @@ $(document).ready(function() {
         }
     });
     
-    $('#load-template-btn').click(function() {
-        loadTemplatesModal();
-    });
-    
-    $('#view-templates-btn').click(function() {
-        loadTemplatesModal();
+    $('#view-templates-archive-btn').click(function() {
+        // Open templates and archive in same page instead of popup
+        window.location.href = '{{ route("letters.index") }}';
     });
     
     // Letter Archive Management 
     function showLetterArchive() {
-        loadLetterArchive();
+        // Open letter archive in same page instead of popup
+        window.location.href = '{{ route("letters.index") }}';
     }
     
     // Save template via AJAX
@@ -1582,9 +1608,13 @@ $(document).ready(function() {
             },
             success: function(response) {
                 if (response.success) {
-                    showSuccessAlert('Template saved successfully!');
+                    showSuccessAlert('Template saved successfully! The page will refresh to show the current template.');
                     $('#template_name').val('');
                     $('#template_description').val('');
+                    // Refresh page after short delay to show updated template
+                    setTimeout(function() {
+                        window.location.reload();
+                    }, 1500);
                 } else {
                     showErrorAlert('Failed to save template: ' + response.message);
                 }
@@ -1718,6 +1748,49 @@ $(document).ready(function() {
                 showErrorAlert('Failed to load template.');
             }
         });
+    }
+    
+    // Check for selected template from localStorage (from letters archive page)
+    function checkForSelectedTemplate() {
+        const selectedTemplate = localStorage.getItem('selectedTemplate');
+        if (selectedTemplate) {
+            try {
+                const templateData = JSON.parse(selectedTemplate);
+                
+                // Populate template fields
+                $('#template_name').val(templateData.name || '');
+                $('#template_description').val(templateData.description || '');
+                $('#header_text').val(templateData.headerText || '');
+                $('#footer_text').val(templateData.footerText || '');
+                
+                // Handle header image
+                if (templateData.headerImage) {
+                    $('#header-preview').html(`<img src="${templateData.headerImage}" alt="Header Image" style="max-width: 100%; height: auto; max-height: 200px;">`);
+                }
+                
+                // Handle footer image
+                if (templateData.footerImage) {
+                    $('#footer-preview').html(`<img src="${templateData.footerImage}" alt="Footer Image" style="max-width: 100%; height: auto; max-height: 150px;">`);
+                }
+                
+                // Clear localStorage
+                localStorage.removeItem('selectedTemplate');
+                
+                // Show success message
+                showSuccessAlert(`Template "${templateData.name}" loaded successfully! You can now modify the content and generate a new letter.`);
+                
+                // Scroll to letters section
+                if (window.location.hash === '#letters-tab') {
+                    $('html, body').animate({
+                        scrollTop: $('#letters-tab').offset().top - 100
+                    }, 500);
+                }
+                
+            } catch (e) {
+                console.error('Error parsing selected template:', e);
+                localStorage.removeItem('selectedTemplate');
+            }
+        }
     }
     
     // Load letter archive

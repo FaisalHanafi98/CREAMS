@@ -308,7 +308,7 @@ class CentreController extends Controller
         return DB::table('activity_sessions')
             ->join('activities', 'activity_sessions.activity_id', '=', 'activities.id')
             ->where('activities.centre_id', $centreId)
-            ->where('activity_sessions.status', 'scheduled')
+            ->where('activity_sessions.session_status', 'scheduled')
             ->where('activity_sessions.scheduled_date', '>=', now())
             ->count();
     }

@@ -538,27 +538,27 @@
                 <div class="stat-icon primary">
                     <i class="fas fa-users"></i>
                 </div>
-                <div class="stat-number">{{ $stats['total_users'] ?? 156 }}</div>
+                <div class="stat-number">{{ $stats['total_users'] ?? 0 }}</div>
                 <div class="stat-label">Total User</div>
                 <div class="stat-change">
-                    <i class="fas fa-arrow-up"></i> {{ $stats['user_growth_rate'] ?? 12 }}% increase
+                    <i class="fas fa-arrow-up"></i> {{ $stats['user_growth_rate'] ?? 0 }}% increase
                 </div>
             </div>
             <div class="stat-card trainees">
                 <div class="stat-icon success">
                     <i class="fas fa-user-graduate"></i>
                 </div>
-                <div class="stat-number">{{ $stats['total_trainees'] ?? 324 }}</div>
+                <div class="stat-number">{{ $stats['total_trainees'] ?? 0 }}</div>
                 <div class="stat-label">Active Trainee</div>
                 <div class="stat-change">
-                    <i class="fas fa-arrow-up"></i> {{ $stats['trainee_growth_rate'] ?? 8 }}% increase
+                    <i class="fas fa-arrow-up"></i> {{ $stats['trainee_growth_rate'] ?? 0 }}% increase
                 </div>
             </div>
             <div class="stat-card activities">
                 <div class="stat-icon warning">
                     <i class="fas fa-calendar-alt"></i>
                 </div>
-                <div class="stat-number">{{ $stats['total_activities'] ?? 89 }}</div>
+                <div class="stat-number">{{ $stats['total_activities'] ?? 0 }}</div>
                 <div class="stat-label">Active Programs</div>
                 <div class="stat-change">
                     <i class="fas fa-arrow-up"></i> 5% increase
@@ -568,7 +568,7 @@
                 <div class="stat-icon danger">
                     <i class="fas fa-building"></i>
                 </div>
-                <div class="stat-number">{{ $stats['active_centres'] ?? 4 }}</div>
+                <div class="stat-number">{{ $stats['active_centres'] ?? 0 }}</div>
                 <div class="stat-label">Active Centre</div>
                 <div class="stat-change">
                     <i class="fas fa-check"></i> All Operational
@@ -673,11 +673,11 @@
                     </h6>
                     <div class="row text-center">
                         <div class="col-6">
-                            <div class="text-primary"><strong>{{ $stats['total_teachers'] ?? 24 }}</strong></div>
+                            <div class="text-primary"><strong>{{ $stats['total_teachers'] ?? 0 }}</strong></div>
                             <small>Teacher</small>
                         </div>
                         <div class="col-6">
-                            <div class="text-success"><strong>{{ $stats['total_supervisors'] ?? 8 }}</strong></div>
+                            <div class="text-success"><strong>{{ $stats['total_supervisors'] ?? 0 }}</strong></div>
                             <small>Supervisor</small>
                         </div>
                     </div>
@@ -784,15 +784,15 @@
                     </h6>
                     <div class="row text-center">
                         <div class="col-4">
-                            <div class="text-primary"><strong>{{ $stats['weekly_enrollments'] ?? 18 }}</strong></div>
+                            <div class="text-primary"><strong>{{ $stats['weekly_enrollments'] ?? 0 }}</strong></div>
                             <small>New Enrollments</small>
                         </div>
                         <div class="col-4">
-                            <div class="text-success"><strong>{{ $stats['completed_sessions'] ?? 142 }}</strong></div>
+                            <div class="text-success"><strong>{{ $stats['completed_sessions'] ?? 0 }}</strong></div>
                             <small>Sessions Done</small>
                         </div>
                         <div class="col-4">
-                            <div class="text-warning"><strong>{{ $stats['pending_assessments'] ?? 7 }}</strong></div>
+                            <div class="text-warning"><strong>{{ $stats['pending_assessments'] ?? 0 }}</strong></div>
                             <small>Assessments</small>
                         </div>
                     </div>

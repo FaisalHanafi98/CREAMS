@@ -47,6 +47,12 @@
         margin-bottom: 40px;
         border-bottom: 2px solid #f0f0f0;
         overflow-x: auto;
+        scrollbar-width: none; /* Firefox */
+        -ms-overflow-style: none; /* IE and Edge */
+    }
+
+    .tab-nav::-webkit-scrollbar {
+        display: none; /* Safari and Chrome */
     }
     
     .tab-btn {
@@ -555,7 +561,7 @@
                                 <button type="button" class="toggle-password" id="togglePassword">
                                     <i class="fas fa-eye-slash"></i>
                                 </button>
-                                <div class="form-help">Must be at least 5 characters with at least one letter and one number</div>
+                                <div class="form-help">Password must be at least 8 characters and include uppercase, lowercase, number, and special character.</div>
                                 @error('password')
                                     <div class="form-error">{{ $message }}</div>
                                 @enderror
@@ -810,6 +816,7 @@ $(document).ready(function() {
     
     function validateSection1() {
         let isValid = true;
+        let errors = [];
         const email = $('#email').val();
         const iiumId = $('#iium_id').val();
         const password = $('#password').val();
@@ -817,21 +824,33 @@ $(document).ready(function() {
         
         // Basic validation
         if (!email || !iiumId || !password || !passwordConfirm) {
-            alert('Please fill in all required fields.');
-            return false;
+            errors.push('Please fill in all required fields.');
+            isValid = false;
+        }
+        
+        // Email format validation
+        const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (email && !emailPattern.test(email)) {
+            errors.push('Please enter a valid email address.');
+            isValid = false;
         }
         
         // Password match validation
-        if (password !== passwordConfirm) {
-            alert('Passwords do not match.');
-            return false;
+        if (password && passwordConfirm && password !== passwordConfirm) {
+            errors.push('Passwords do not match.');
+            isValid = false;
         }
         
         // IIUM ID format validation
         const iiumIdPattern = /^[A-Za-z]{4}[0-9]{4}$/;
-        if (!iiumIdPattern.test(iiumId)) {
-            alert('IIUM ID must be 4 letters followed by 4 digits.');
-            return false;
+        if (iiumId && !iiumIdPattern.test(iiumId)) {
+            errors.push('IIUM ID must be 4 letters followed by 4 digits.');
+            isValid = false;
+        }
+        
+        // Show all errors if any
+        if (!isValid) {
+            alert(errors.join('\n'));
         }
         
         return isValid;

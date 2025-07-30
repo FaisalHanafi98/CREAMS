@@ -296,7 +296,7 @@
                         
                         <li class="nav-item">
                             <a class="nav-link {{ request()->routeIs('trainees.*') ? 'active' : '' }}" 
-                               href="{{ route('trainees.index') }}">
+                               href="{{ route('trainees.home') }}">
                                 <i class="fas fa-child"></i> Trainee
                             </a>
                         </li>

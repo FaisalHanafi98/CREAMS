@@ -86,12 +86,12 @@ class User extends Authenticatable
      */
     public function getAvatarUrlAttribute()
     {
-        if ($this->avatar) {
-            return asset('storage/avatars/' . $this->avatar);
+        if ($this->avatar && file_exists(public_path('storage/avatars/' . $this->avatar))) {
+            return asset('storage/avatars/' . $this->avatar) . '?v=' . filemtime(public_path('storage/avatars/' . $this->avatar));
         }
         
         // Return default avatar if none is set
-        return asset('images/default-avatar.png');
+        return asset('images/default-avatar.svg');
     }
 
     /**

@@ -399,7 +399,7 @@ class DashboardService
             $alerts[] = [
                 'type' => 'info',
                 'message' => "{$inactiveTeachers} teacher(s) haven't logged in for over a week",
-                'action' => route('teachers.index')
+                'action' => route('staffs.home')
             ];
         }
 

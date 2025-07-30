@@ -131,7 +131,7 @@ class DatabaseSeeder extends Seeder
                     SELECT COUNT(*) 
                     FROM activity_sessions 
                     WHERE activity_sessions.activity_id = activities.id 
-                    AND activity_sessions.status = 'completed'
+                    AND activity_sessions.session_status = 'completed'
                 )
             ");
 

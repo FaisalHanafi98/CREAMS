@@ -21,6 +21,9 @@ class Attendance extends Model
         'status',
         'remarks',
         'marked_by',
+        'check_in_time',
+        'check_out_time',
+        'activity_type',
     ];
 
     /**

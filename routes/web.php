@@ -204,8 +204,8 @@ Route::middleware(['auth', 'validate.params'])->group(function () {
             Route::get('/{id}/edit', [ActivityController::class, 'edit'])->name('edit');
             Route::put('/{id}', [ActivityController::class, 'update'])->name('update');
             Route::delete('/{id}', [ActivityController::class, 'destroy'])->name('destroy');
-            Route::get('/{id}/sessions', [ActivityController::class, 'sessions'])->name('sessions');
-            Route::post('/{id}/sessions', [ActivityController::class, 'createSession'])->name('sessions.create');
+            Route::get('/{id}/sessions', [ActivityController::class, 'sessions'])->name('activities.sessions');
+            Route::post('/{id}/sessions', [ActivityController::class, 'createSession'])->name('activities.sessions.create');
         });
         
         Route::get('/{id}', [ActivityController::class, 'show'])->name('show');
@@ -220,8 +220,8 @@ Route::middleware(['auth', 'validate.params'])->group(function () {
         
         // Teacher routes
         Route::middleware(['role:teacher,admin,supervisor'])->group(function () {
-            Route::get('/{activityId}/sessions/{sessionId}/attendance', [ActivityController::class, 'markAttendance'])->name('attendance');
-            Route::post('/{activityId}/sessions/{sessionId}/attendance', [ActivityController::class, 'storeAttendance'])->name('attendance.store');
+            Route::get('/{activityId}/sessions/{sessionId}/attendance', [ActivityController::class, 'markAttendance'])->name('activities.attendance');
+            Route::post('/{activityId}/sessions/{sessionId}/attendance', [ActivityController::class, 'storeAttendance'])->name('activities.attendance.store');
             Route::get('/{activityId}/sessions/{sessionId}/enrollments', [ActivityController::class, 'manageEnrollments'])->name('enrollments');
             Route::post('/{activityId}/sessions/{sessionId}/enroll', [ActivityController::class, 'enrollTrainees'])->name('enroll.legacy');
             Route::post('/{activityId}/sessions/{sessionId}/enrollments/add', [ActivityController::class, 'addEnrollment'])->name('enrollments.add');
@@ -397,7 +397,7 @@ Route::middleware(['auth', 'validate.params'])->group(function () {
     });
 
     // Staff Daily Attendance Management
-    Route::prefix('staff-attendance')->name('staff-attendance.')->middleware(['auth'])->group(function () {
+    Route::prefix('staff-attendance')->name('staff-attendance.')->middleware(['enhanced.auth'])->group(function () {
         Route::get('/', [StaffAttendanceController::class, 'index'])->name('index');
         Route::post('/mark', [StaffAttendanceController::class, 'markAttendance'])->name('mark');
         Route::get('/user/{userId}', [StaffAttendanceController::class, 'getUserAttendance'])->name('user');
@@ -408,6 +408,7 @@ Route::middleware(['auth', 'validate.params'])->group(function () {
     // New Letter Management System - Complete Rewrite with Modern Architecture
     Route::prefix('letters')->name('letters.')->group(function () {
         Route::get('/', [ModernLetterController::class, 'dashboard'])->name('dashboard');
+        Route::get('/index', [LetterTemplateController::class, 'index'])->name('index');
         Route::post('/generate', [ModernLetterController::class, 'generate'])->name('generate');
         Route::get('/{id}/show', [ModernLetterController::class, 'show'])->name('show');
         Route::get('/{id}/download', [ModernLetterController::class, 'download'])->name('download');
@@ -518,15 +519,15 @@ Route::middleware(['auth', 'centre.access:trainee'])->group(function () {
     Route::get('/traineeshome', function() { return redirect()->route('trainees.home'); });
     
     // Trainee Profile Routes - specific routes first to avoid conflicts
-    Route::get('/traineeprofile/{id}', [TraineeProfileController::class, 'index'])->name('traineeprofile');
-    Route::get('/traineeprofile/{id}/edit', [TraineeProfileController::class, 'edit'])->name('traineeprofile.edit');
-    Route::put('/traineeprofile/{id}', [TraineeProfileController::class, 'update'])->name('traineeprofile.update');
-    Route::put('/traineeprofile/{id}', [TraineeProfileController::class, 'update'])->name('updatetraineeprofile');
-    Route::post('/traineeprofile/{id}/progress', [TraineeProfileController::class, 'updateProgress'])->name('traineeprofile.progress');
-    Route::post('/traineeprofile/{id}/attendance', [TraineeProfileController::class, 'recordAttendance'])->name('traineeprofile.attendance');
-    Route::post('/traineeprofile/{id}/activity', [TraineeProfileController::class, 'addActivity'])->name('traineeprofile.addActivity');
-    Route::get('/traineeprofile/{id}/download', [TraineeProfileController::class, 'downloadProfile'])->name('traineeprofile.download');
-    Route::delete('/traineeprofile/{id}', [TraineeProfileController::class, 'destroy'])->name('traineeprofile.destroy');
+    Route::get('/traineeprofile/{encrypted_id}', [TraineeProfileController::class, 'index'])->name('traineeprofile');
+    Route::get('/traineeprofile/{encrypted_id}/edit', [TraineeProfileController::class, 'edit'])->name('traineeprofile.edit');
+    Route::put('/traineeprofile/{encrypted_id}', [TraineeProfileController::class, 'update'])->name('traineeprofile.update');
+    Route::put('/traineeprofile/{encrypted_id}', [TraineeProfileController::class, 'update'])->name('updatetraineeprofile');
+    Route::post('/traineeprofile/{encrypted_id}/progress', [TraineeProfileController::class, 'updateProgress'])->name('traineeprofile.progress');
+    Route::post('/traineeprofile/{encrypted_id}/attendance', [TraineeProfileController::class, 'recordAttendance'])->name('traineeprofile.attendance');
+    Route::post('/traineeprofile/{encrypted_id}/activity', [TraineeProfileController::class, 'addActivity'])->name('traineeprofile.addActivity');
+    Route::get('/traineeprofile/{encrypted_id}/download', [TraineeProfileController::class, 'downloadProfile'])->name('traineeprofile.download');
+    Route::delete('/traineeprofile/{encrypted_id}', [TraineeProfileController::class, 'destroy'])->name('traineeprofile.destroy');
     
     Route::get('/traineesregistrationpage', [TraineeRegistrationController::class, 'index'])->name('traineesregistrationpage');
     Route::post('/traineesregistrationstore', [TraineeRegistrationController::class, 'store'])->name('traineesregistrationstore');
@@ -540,12 +541,12 @@ Route::middleware(['auth', 'centre.access:trainee'])->prefix('trainees')->name('
     Route::get('/create', [TraineeRegistrationController::class, 'index'])->name('create');
     Route::get('/register', [TraineeRegistrationController::class, 'index'])->name('register');
     Route::post('/', [TraineeRegistrationController::class, 'store'])->name('store');
-    Route::get('/{id}/profile', [TraineeProfileController::class, 'index'])->name('profile'); // Add missing profile route
-    Route::get('/{id}/schedule', [TraineeHomeController::class, 'schedule'])->name('schedule'); // Schedule route
-    Route::get('/{id}/attendance', [TraineeHomeController::class, 'attendance'])->name('attendance'); // Attendance route
+    Route::get('/schedule/{encrypted_id}', [TraineeHomeController::class, 'schedule'])->name('schedule'); // Schedule route with encrypted ID
+    Route::get('/attendance/{encrypted_id}', [TraineeHomeController::class, 'attendance'])->name('attendance'); // Attendance route with encrypted ID
+    Route::post('/attendance/{encrypted_id}/mark', [TraineeHomeController::class, 'markAttendance'])->name('attendance.mark'); // Mark attendance route
     Route::get('/{encrypted_id}/edit', [TraineeProfileController::class, 'edit'])->name('edit'); // Edit route with encrypted ID
-    Route::put('/{id}', [TraineeProfileController::class, 'update'])->name('update'); // Add missing update route
-    Route::get('/{id}', [TraineeHomeController::class, 'show'])->name('show'); // Show route (must be last)
+    Route::put('/{encrypted_id}', [TraineeProfileController::class, 'update'])->name('update'); // Update route with encrypted ID
+    Route::get('/{encrypted_id}', [TraineeHomeController::class, 'show'])->name('show'); // Show route with encrypted ID (must be last)
     // Note: Legacy profile routes use /traineeprofile/{id} for backward compatibility
 });
 

@@ -635,13 +635,13 @@
                 </div>
                 
                 <div class="action-buttons">
-                    <a href="{{ route('traineeprofile.edit', $trainee->id) }}" class="btn-primary">
+                    <a href="{{ route('traineeprofile.edit', \App\Helpers\EncryptionHelper::generateEncryptedId($trainee->id)) }}" class="btn-primary">
                         <i class="fas fa-edit"></i>Edit Profile
                     </a>
                     <a href="#" class="btn-outline" data-bs-toggle="modal" data-bs-target="#addActivityModal">
                         <i class="fas fa-plus"></i>Add Activity
                     </a>
-                    <a href="{{ route('traineeprofile.download', $trainee->id) }}" class="btn-outline">
+                    <a href="{{ route('traineeprofile.download', \App\Helpers\EncryptionHelper::generateEncryptedId($trainee->id)) }}" class="btn-outline">
                         <i class="fas fa-file-download"></i>Export PDF
                     </a>
                 </div>
@@ -685,7 +685,7 @@
                 <h5 class="modal-title" id="addActivityModalLabel">Add New Activity</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form action="{{ route('traineeprofile.addActivity', $trainee->id) }}" method="POST">
+            <form action="{{ route('traineeprofile.addActivity', \App\Helpers\EncryptionHelper::generateEncryptedId($trainee->id)) }}" method="POST">
                 @csrf
                 <div class="modal-body">
                     <div class="row">

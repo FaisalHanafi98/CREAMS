@@ -43,6 +43,79 @@
                 </div>
             </div>
 
+            <!-- Previous Letter Templates Section -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-layer-group mr-2"></i>Previous Letter Templates
+                        <small class="text-muted">- Reuse templates with different content</small>
+                    </h5>
+                </div>
+                <div class="card-body">
+                    @if(isset($templates) && $templates->count() > 0)
+                        <div class="row">
+                            @foreach($templates->take(6) as $template)
+                                <div class="col-md-4 mb-3">
+                                    <div class="card template-card h-100">
+                                        <div class="card-body d-flex flex-column">
+                                            <h6 class="card-title">{{ $template->template_name }}</h6>
+                                            <p class="card-text text-muted small flex-grow-1">
+                                                {{ $template->template_description ?? 'No description' }}
+                                            </p>
+                                            <div class="template-info mb-2">
+                                                <small class="text-muted">
+                                                    Created: {{ $template->created_at->format('d M Y') }}
+                                                </small>
+                                                @if($template->header_image_path || $template->footer_image_path)
+                                                    <br>
+                                                    <small class="text-success">
+                                                        @if($template->header_image_path)<i class="fas fa-image" title="Has header image"></i>@endif
+                                                        @if($template->footer_image_path)<i class="fas fa-image" title="Has footer image"></i>@endif
+                                                        Images included
+                                                    </small>
+                                                @endif
+                                            </div>
+                                            <div class="mt-auto">
+                                                <button type="button" 
+                                                        class="btn btn-sm btn-primary use-template-btn" 
+                                                        data-template-id="{{ $template->id }}"
+                                                        data-template-name="{{ $template->template_name }}"
+                                                        data-template-description="{{ $template->template_description ?? '' }}"
+                                                        data-header-text="{{ $template->header_text ?? '' }}"
+                                                        data-footer-text="{{ $template->footer_text ?? '' }}"
+                                                        data-header-image="{{ $template->header_image_url ?? '' }}"
+                                                        data-footer-image="{{ $template->footer_image_url ?? '' }}">
+                                                    <i class="fas fa-copy mr-1"></i>Use Template
+                                                </button>
+                                                @if($template->is_active)
+                                                    <span class="badge badge-success ml-2">Active</span>
+                                                @endif
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                        @if($templates->count() > 6)
+                            <div class="text-center">
+                                <button class="btn btn-outline-secondary" id="show-all-templates">
+                                    <i class="fas fa-eye mr-1"></i>Show All {{ $templates->count() }} Templates
+                                </button>
+                            </div>
+                        @endif
+                    @else
+                        <div class="text-center py-4">
+                            <i class="fas fa-layer-group fa-3x text-muted mb-3"></i>
+                            <h6>No Templates Found</h6>
+                            <p class="text-muted">You haven't created any letter templates yet.</p>
+                            <a href="/profile#letters-tab" class="btn btn-primary">
+                                <i class="fas fa-plus mr-2"></i>Create Your First Template
+                            </a>
+                        </div>
+                    @endif
+                </div>
+            </div>
+
             <!-- Letter Table -->
             <div class="card">
                 <div class="card-body">
@@ -171,6 +244,65 @@
 </div>
 @endsection
 
+@push('styles')
+<style>
+.template-card {
+    transition: all 0.3s ease;
+    border: 1px solid #e3e6f0;
+}
+
+.template-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    border-color: #32bdea;
+}
+
+.template-card .card-title {
+    color: #2c3e50;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.template-card .card-text {
+    font-size: 0.875rem;
+    line-height: 1.4;
+}
+
+.template-info {
+    border-top: 1px solid #f8f9fc;
+    padding-top: 0.5rem;
+}
+
+.use-template-btn {
+    background: linear-gradient(135deg, #32bdea, #25a6cf);
+    border: none;
+    font-weight: 500;
+    transition: transform 0.2s ease;
+}
+
+.use-template-btn:hover {
+    transform: scale(1.05);
+    background: linear-gradient(135deg, #25a6cf, #1a8aa8);
+}
+
+.badge-success {
+    background-color: #1cc88a;
+}
+
+#show-all-templates {
+    border: 2px dashed #32bdea;
+    color: #32bdea;
+    font-weight: 500;
+}
+
+#show-all-templates:hover {
+    background-color: #32bdea;
+    color: white;
+    border-style: solid;
+}
+</style>
+@endpush
+
 @push('scripts')
 <script>
 $(document).ready(function() {
@@ -205,6 +337,36 @@ $(document).ready(function() {
                 alert('Error deleting letter');
             }
         });
+    });
+
+    // Handle "Use Template" button clicks
+    $('.use-template-btn').on('click', function() {
+        const templateData = {
+            id: $(this).data('template-id'),
+            name: $(this).data('template-name'),
+            description: $(this).data('template-description'),
+            headerText: $(this).data('header-text'),
+            footerText: $(this).data('footer-text'),
+            headerImage: $(this).data('header-image'),
+            footerImage: $(this).data('footer-image')
+        };
+
+        // Confirm before redirecting
+        const confirmMessage = `Use template "${templateData.name}" for a new letter?\n\nThis will take you to the letter generator with this template's header and footer configuration loaded.`;
+        
+        if (confirm(confirmMessage)) {
+            // Store template data in localStorage to be used in the profile page
+            localStorage.setItem('selectedTemplate', JSON.stringify(templateData));
+            
+            // Redirect to profile page letter section
+            window.location.href = '/profile#letters-tab';
+        }
+    });
+
+    // Show all templates functionality
+    $('#show-all-templates').on('click', function() {
+        $('.col-md-4:hidden').show();
+        $(this).hide();
     });
 });
 </script>

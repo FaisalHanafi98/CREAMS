@@ -141,6 +141,20 @@
         gap: 10px;
     }
 
+    .filter-section .form-control {
+        height: 45px;
+        font-size: 14px;
+        border: 2px solid #e3e6f0;
+        border-radius: 10px;
+        padding: 10px 15px;
+        transition: all 0.3s ease;
+    }
+
+    .filter-section .form-control:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 0.2rem rgba(200, 80, 192, 0.25);
+    }
+
     .trainee-grid {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
@@ -232,6 +246,8 @@
         font-weight: 600;
         display: inline-block;
         margin-bottom: 15px;
+        text-align: center;
+        width: 100%;
     }
 
     .progress-section {
@@ -521,8 +537,8 @@
             @foreach($trainees as $trainee)
                 <div class="trainee-card">
                     <div class="trainee-card-header">
-                        <img src="{{ $trainee->avatar_url ?? asset('images/default-avatar.png') }}" 
-                             alt="{{ $trainee->name }}" 
+                        <img src="{{ $trainee->avatar_url }}" 
+                             alt="{{ $trainee->name ?? ($trainee->trainee_first_name . ' ' . $trainee->trainee_last_name) }}" 
                              class="trainee-avatar"
                              onerror="this.src='{{ asset('images/default-avatar.png') }}'">
                         <h6 class="trainee-name">{{ $trainee->name ?? ($trainee->trainee_first_name . ' ' . $trainee->trainee_last_name) }}</h6>
@@ -557,15 +573,23 @@
                         <div class="progress-section">
                             <div class="progress-label">
                                 <span>Overall Progress</span>
-                                <span>{{ $trainee->progress ?? rand(65, 95) }}%</span>
+                                <span>
+                                    @php
+                                        $progressPercentage = 0;
+                                        if ($trainee->enrollments && $trainee->enrollments->count() > 0) {
+                                            $progressPercentage = $trainee->enrollments->avg('progress_percentage') ?? 0;
+                                        }
+                                    @endphp
+                                    {{ round($progressPercentage) }}%
+                                </span>
                             </div>
                             <div class="progress">
-                                <div class="progress-bar" style="width: {{ $trainee->progress ?? rand(65, 95) }}%"></div>
+                                <div class="progress-bar" style="width: {{ round($progressPercentage) }}%"></div>
                             </div>
                         </div>
 
                         <div class="trainee-actions">
-                            <a href="{{ route('trainees.show', $trainee->id) }}" class="btn-action btn-view" title="View Complete Profile">
+                            <a href="{{ route('trainees.show', \App\Helpers\EncryptionHelper::generateEncryptedId($trainee->id)) }}" class="btn-action btn-view" title="View Complete Profile">
                                 <i class="fas fa-user"></i>Profile
                             </a>
                             @if(in_array(session('role'), ['admin', 'supervisor']))
@@ -573,14 +597,11 @@
                                 <i class="fas fa-edit"></i>Edit
                             </a>
                             @else
-                            <a href="{{ route('trainees.schedule', $trainee->id) }}" class="btn-action btn-schedule" title="View Schedule">
+                            <a href="{{ route('trainees.schedule', \App\Helpers\EncryptionHelper::generateEncryptedId($trainee->id)) }}" class="btn-action btn-schedule" title="View Schedule">
                                 <i class="fas fa-calendar"></i>Schedule
                             </a>
                             @endif
-                            <a href="{{ route('trainees.schedule', $trainee->id) }}" class="btn-action btn-schedule" title="View Schedule">
-                                <i class="fas fa-calendar"></i>Schedule
-                            </a>
-                            <a href="{{ route('trainees.attendance', $trainee->id) }}" class="btn-action btn-attendance" title="View Attendance">
+                            <a href="{{ route('trainees.attendance', \App\Helpers\EncryptionHelper::generateEncryptedId($trainee->id)) }}" class="btn-action btn-attendance" title="View Attendance">
                                 <i class="fas fa-clipboard-check"></i>Attendance
                             </a>
                         </div>

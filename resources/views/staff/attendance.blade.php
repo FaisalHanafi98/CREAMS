@@ -3,6 +3,7 @@
 @section('title', 'Attendance - ' . ($staffMember->name ?? 'Staff Member') . ' - CREAMS')
 
 @section('styles')
+<link href="{{ asset('css/dropdown-improvements.css') }}" rel="stylesheet">
 <style>
     :root {
         --primary-color: #32bdea;
@@ -315,7 +316,7 @@
                                 <a href="{{ route('staffs.home') }}">Staff</a>
                             </li>
                             <li class="breadcrumb-item">
-                                <a href="{{ route('staffs.profile', $staffMember->encrypted_id ?? $staffMember->id) }}">{{ $staffMember->name ?? 'Profile' }}</a>
+                                <a href="{{ route('staffs.profile', ['encrypted_id' => $staffMember->encrypted_id ?? \App\Helpers\EncryptionHelper::generateEncryptedId($staffMember->id)]) }}">{{ $staffMember->name ?? 'Profile' }}</a>
                             </li>
                             <li class="breadcrumb-item active" aria-current="page">Attendance</li>
                         </ol>
@@ -396,7 +397,7 @@
                     Recent Attendance History
                 </h5>
                 <div>
-                    <select class="form-control" id="monthFilter" style="width: auto; display: inline-block;">
+                    <select class="form-select" id="monthFilter" style="width: auto; display: inline-block; min-height: 42px; padding: 10px 12px;">
                         <option value="">This Month</option>
                         @for($i = 1; $i <= 6; $i++)
                             <option value="{{ $i }}">{{ \Carbon\Carbon::now()->subMonths($i)->format('F Y') }}</option>
@@ -457,11 +458,11 @@
 
         <!-- Action Buttons -->
         <div class="action-buttons">
-            <a href="{{ route('staffs.profile', $staffMember->encrypted_id ?? $staffMember->id) }}" class="btn btn-primary">
+            <a href="{{ route('staffs.profile', ['encrypted_id' => $staffMember->encrypted_id ?? \App\Helpers\EncryptionHelper::generateEncryptedId($staffMember->id)]) }}" class="btn btn-primary">
                 <i class="fas fa-user"></i>Back to Profile
             </a>
             
-            <a href="{{ route('staffs.schedule', $staffMember->iium_id) }}" class="btn btn-secondary">
+            <a href="{{ route('staffs.schedule', ['encrypted_id' => $staffMember->encrypted_id ?? \App\Helpers\EncryptionHelper::generateEncryptedId($staffMember->id)]) }}" class="btn btn-secondary">
                 <i class="fas fa-calendar"></i>View Schedule
             </a>
             

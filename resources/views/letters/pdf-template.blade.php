@@ -79,7 +79,7 @@
         <!-- Header Image -->
         @if(isset($headerImage) && $headerImage)
             <div class="header-image">
-                <img src="data:image/png;base64,{{ $headerImage }}" alt="Header">
+                <img src="{{ $headerImage }}" alt="Header" style="max-width: 100%; height: auto; display: block;">
             </div>
         @endif
 
@@ -132,7 +132,7 @@
         <!-- Footer Image -->
         @if(isset($footerImage) && $footerImage)
             <div class="footer-image">
-                <img src="data:image/png;base64,{{ $footerImage }}" alt="Footer">
+                <img src="{{ $footerImage }}" alt="Footer" style="max-width: 100%; height: auto; display: block;">
             </div>
         @endif
     </div>
