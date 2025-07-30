@@ -74,6 +74,9 @@ class StaffController extends Controller
             // Get real-time statistics for this staff member
             $stats = $this->getStaffStatistics($user);
 
+            // Add encrypted ID to staff member object for view links
+            $user->encrypted_id = $encrypted_id;
+
             return view('staff.view', [
                 'staffMember' => $user,
                 'centre' => $centre,
@@ -504,6 +507,9 @@ class StaffController extends Controller
                 'month_hours' => 160
             ];
 
+            // Add encrypted ID to staff member object for view links
+            $staffMember->encrypted_id = $encrypted_id;
+            
             return view('staff.schedule', [
                 'staffMember' => $staffMember,
                 'activities' => $activities,
@@ -578,6 +584,9 @@ class StaffController extends Controller
                 }
             }
 
+            // Add encrypted ID to staff member object for view links
+            $staffMember->encrypted_id = $encrypted_id;
+            
             return view('staff.activities', [
                 'staffMember' => $staffMember,
                 'activities' => $activities
@@ -635,6 +644,9 @@ class StaffController extends Controller
                 }
             }
 
+            // Add encrypted ID to staff member object for view links
+            $staffMember->encrypted_id = $encrypted_id;
+            
             return view('staff.trainees', [
                 'staffMember' => $staffMember,
                 'trainees' => $trainees
@@ -697,6 +709,9 @@ class StaffController extends Controller
 
             $workingDays = 22;
 
+            // Add encrypted ID to staff member object for view links
+            $staffMember->encrypted_id = $encrypted_id;
+            
             return view('staff.attendance', [
                 'staffMember' => $staffMember,
                 'attendanceStats' => $attendanceStats,

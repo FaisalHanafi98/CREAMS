@@ -112,7 +112,7 @@
         <ol class="breadcrumb">
             <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Dashboard</a></li>
             <li class="breadcrumb-item"><a href="{{ route('staffs.home') }}">Staff Directory</a></li>
-            <li class="breadcrumb-item"><a href="{{ route('staffs.profile', \App\Helpers\EncryptionHelper::generateEncryptedId($staffMember->id)) }}">{{ $staffMember->name }}</a></li>
+            <li class="breadcrumb-item"><a href="{{ route('staffs.profile', $staffMember->encrypted_id) }}">{{ $staffMember->name }}</a></li>
             <li class="breadcrumb-item active">Schedule</li>
         </ol>
     </nav>
@@ -147,7 +147,7 @@
                     <i class="fas fa-plus me-2"></i>Add Activity
                 </a>
                 @endif
-                <a href="{{ route('staffs.profile', \App\Helpers\EncryptionHelper::generateEncryptedId($staffMember->id)) }}" class="btn btn-light">
+                <a href="{{ route('staffs.profile', $staffMember->encrypted_id) }}" class="btn btn-light">
                     <i class="fas fa-arrow-left me-2"></i>Back to Profile
                 </a>
             </div>

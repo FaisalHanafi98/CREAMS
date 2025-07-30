@@ -316,7 +316,7 @@
                                 <a href="{{ route('staffs.home') }}">Staff</a>
                             </li>
                             <li class="breadcrumb-item">
-                                <a href="{{ route('staffs.profile', ['encrypted_id' => $staffMember->encrypted_id ?? \App\Helpers\EncryptionHelper::generateEncryptedId($staffMember->id)]) }}">{{ $staffMember->name ?? 'Profile' }}</a>
+                                <a href="{{ route('staffs.profile', $staffMember->encrypted_id) }}">{{ $staffMember->name ?? 'Profile' }}</a>
                             </li>
                             <li class="breadcrumb-item active" aria-current="page">Attendance</li>
                         </ol>
@@ -458,11 +458,11 @@
 
         <!-- Action Buttons -->
         <div class="action-buttons">
-            <a href="{{ route('staffs.profile', ['encrypted_id' => $staffMember->encrypted_id ?? \App\Helpers\EncryptionHelper::generateEncryptedId($staffMember->id)]) }}" class="btn btn-primary">
+            <a href="{{ route('staffs.profile', $staffMember->encrypted_id) }}" class="btn btn-primary">
                 <i class="fas fa-user"></i>Back to Profile
             </a>
             
-            <a href="{{ route('staffs.schedule', ['encrypted_id' => $staffMember->encrypted_id ?? \App\Helpers\EncryptionHelper::generateEncryptedId($staffMember->id)]) }}" class="btn btn-secondary">
+            <a href="{{ route('staffs.schedule', $staffMember->encrypted_id) }}" class="btn btn-secondary">
                 <i class="fas fa-calendar"></i>View Schedule
             </a>
             
