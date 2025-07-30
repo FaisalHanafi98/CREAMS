@@ -812,6 +812,7 @@ class UserProfileController extends Controller
             $template->template_name = $request->template_name;
             $template->template_description = $request->template_description ?? '';
             $template->template_content = '<div class="main-content">[CONTENT]</div>'; // Default template content
+            $template->template_type = 'letter'; // Add required template_type field
             $template->header_image_path = $headerImagePath;
             $template->footer_image_path = $footerImagePath;
             $template->header_text = $request->header_text ?? '';
