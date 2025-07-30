@@ -302,6 +302,7 @@ class StaffAttendanceController extends Controller
         return false;
     }
 
+
     /**
      * Get attendance statistics
      */

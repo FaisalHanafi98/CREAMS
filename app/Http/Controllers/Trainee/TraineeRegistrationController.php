@@ -98,6 +98,7 @@ class TraineeRegistrationController extends Controller
                 'trainee_first_name' => 'required|string|max:255',
                 'trainee_last_name' => 'required|string|max:255',
                 'trainee_email' => 'required|email|unique:trainees,trainee_email',
+                'ic_number' => 'required|string|max:20|unique:trainees,ic_number',
                 'trainee_phone_number' => 'required|string|max:20',
                 'trainee_date_of_birth' => 'required|date|before_or_equal:today',
                 'trainee_avatar' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
@@ -109,6 +110,8 @@ class TraineeRegistrationController extends Controller
                 'trainee_email.required' => 'The email field is required.',
                 'trainee_email.email' => 'Please enter a valid email address.',
                 'trainee_email.unique' => 'This email is already registered in our system.',
+                'ic_number.required' => 'The IC number field is required.',
+                'ic_number.unique' => 'This IC number is already registered in our system.',
                 'trainee_phone_number.required' => 'The phone number field is required.',
                 'trainee_date_of_birth.required' => 'The date of birth field is required.',
                 'trainee_date_of_birth.before_or_equal' => 'The date of birth cannot be in the future.',
@@ -186,6 +189,7 @@ class TraineeRegistrationController extends Controller
             $trainee->trainee_first_name = $request->input('trainee_first_name');
             $trainee->trainee_last_name = $request->input('trainee_last_name');
             $trainee->trainee_email = $request->input('trainee_email');
+            $trainee->ic_number = $request->input('ic_number');
             $trainee->trainee_phone_number = $request->input('trainee_phone_number');
             $trainee->trainee_date_of_birth = $request->input('trainee_date_of_birth');
             $trainee->centre_name = $request->input('centre_name'); // Just store the centre_name

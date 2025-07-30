@@ -116,6 +116,24 @@
                 </div>
                 <div class="col-md-6">
                     <div class="form-group">
+                        <label for="ic_number">IC Number <span class="text-danger">*</span></label>
+                        <input type="text" 
+                               name="ic_number" 
+                               id="ic_number" 
+                               class="form-control @error('ic_number') is-invalid @enderror" 
+                               value="{{ old('ic_number', isset($trainee) ? $trainee->ic_number : '') }}" 
+                               placeholder="e.g., 123456-78-9012"
+                               required>
+                        @error('ic_number')
+                            <span class="invalid-feedback">{{ $message }}</span>
+                        @enderror
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
                         <label for="trainee_phone_number">Phone Number <span class="text-danger">*</span></label>
                         <input type="text" 
                                name="trainee_phone_number" 
@@ -127,6 +145,9 @@
                             <span class="invalid-feedback">{{ $message }}</span>
                         @enderror
                     </div>
+                </div>
+                <div class="col-md-6">
+                    <!-- Empty column for layout balance -->
                 </div>
             </div>
 

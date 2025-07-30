@@ -713,7 +713,7 @@ function markAttendance() {
         data[key] = value;
     }
     
-    fetch('{{ route("trainees.attendance.mark", ["encrypted_id" => \\App\\Helpers\\EncryptionHelper::generateEncryptedId($trainee->id)]) }}', {
+    fetch('{{ route("trainees.attendance.mark", ["encrypted_id" => \App\Helpers\EncryptionHelper::generateEncryptedId($trainee->id)]) }}', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',

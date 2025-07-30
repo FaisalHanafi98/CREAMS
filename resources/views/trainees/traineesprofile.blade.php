@@ -14,7 +14,7 @@
                 <i class="fas fa-arrow-left fa-sm text-white-50 mr-1"></i>Back to Trainee
             </a>
             <div class="btn-group">
-                <a href="{{ route('traineeprofile.edit', ['id' => $trainee->id]) }}" class="btn btn-primary btn-sm shadow-sm">
+                <a href="{{ route('traineeprofile.edit', \App\Helpers\EncryptionHelper::generateEncryptedId($trainee->id)) }}" class="btn btn-primary btn-sm shadow-sm">
                     <i class="fas fa-edit fa-sm text-white-50 mr-1"></i>Edit Profile
                 </a>
                 <button type="button" class="btn btn-primary btn-sm dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">

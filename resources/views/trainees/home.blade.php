@@ -192,6 +192,18 @@
         box-shadow: 0 4px 15px rgba(200, 80, 192, 0.3);
         margin: 0 auto 15px;
         display: block;
+        transition: opacity 0.3s ease;
+        background: #f8f9fa; /* Fallback background */
+    }
+
+    .trainee-avatar.loading {
+        opacity: 0.7;
+    }
+
+    .trainee-avatar.error {
+        opacity: 1;
+        background: linear-gradient(135deg, #e9ecef, #dee2e6);
+        position: relative;
     }
 
     .trainee-name {
@@ -277,7 +289,7 @@
 
     .trainee-actions {
         display: grid;
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
         gap: 8px;
         margin-top: 15px;
     }
@@ -577,7 +589,9 @@
                                     @php
                                         $progressPercentage = 0;
                                         if ($trainee->enrollments && $trainee->enrollments->count() > 0) {
-                                            $progressPercentage = $trainee->enrollments->avg('progress_percentage') ?? 0;
+                                            // Use participation_score (0-10 scale) and convert to percentage (0-100)
+                                            $avgParticipationScore = $trainee->enrollments->avg('participation_score') ?? 0;
+                                            $progressPercentage = $avgParticipationScore * 10; // Convert 0-10 to 0-100
                                         }
                                     @endphp
                                     {{ round($progressPercentage) }}%
@@ -592,13 +606,12 @@
                             <a href="{{ route('trainees.show', \App\Helpers\EncryptionHelper::generateEncryptedId($trainee->id)) }}" class="btn-action btn-view" title="View Complete Profile">
                                 <i class="fas fa-user"></i>Profile
                             </a>
+                            <a href="{{ route('trainees.schedule', \App\Helpers\EncryptionHelper::generateEncryptedId($trainee->id)) }}" class="btn-action btn-schedule" title="View Schedule">
+                                <i class="fas fa-calendar"></i>Schedule
+                            </a>
                             @if(in_array(session('role'), ['admin', 'supervisor']))
                             <a href="{{ route('trainees.edit', \App\Helpers\EncryptionHelper::generateEncryptedId($trainee->id)) }}" class="btn-action btn-edit" title="Edit Trainee Information">
                                 <i class="fas fa-edit"></i>Edit
-                            </a>
-                            @else
-                            <a href="{{ route('trainees.schedule', \App\Helpers\EncryptionHelper::generateEncryptedId($trainee->id)) }}" class="btn-action btn-schedule" title="View Schedule">
-                                <i class="fas fa-calendar"></i>Schedule
                             </a>
                             @endif
                             <a href="{{ route('trainees.attendance', \App\Helpers\EncryptionHelper::generateEncryptedId($trainee->id)) }}" class="btn-action btn-attendance" title="View Attendance">
@@ -636,8 +649,29 @@
 
 @section('scripts')
 <script>
-// Auto-submit filter form on select change
+// Handle avatar loading and prevent flickering
 document.addEventListener('DOMContentLoaded', function() {
+    // Improve avatar loading experience
+    const avatars = document.querySelectorAll('.trainee-avatar');
+    avatars.forEach(function(avatar) {
+        // Add loading class initially
+        avatar.classList.add('loading');
+        
+        // Handle successful load
+        avatar.addEventListener('load', function() {
+            this.classList.remove('loading');
+        });
+        
+        // Improve error handling
+        avatar.addEventListener('error', function() {
+            this.classList.remove('loading');
+            this.classList.add('error');
+            // Use a more reliable fallback
+            this.src = '{{ asset("images/default-avatar.png") }}';
+        });
+    });
+
+    // Auto-submit filter form on select change
     const conditionSelect = document.getElementById('condition');
     const centreSelect = document.getElementById('centre');
     

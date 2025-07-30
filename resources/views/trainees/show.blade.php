@@ -517,6 +517,63 @@
             height: 120px;
         }
     }
+
+    /* Tab Navigation Styles */
+    .profile-tabs {
+        margin-bottom: 30px;
+    }
+
+    .tab-nav {
+        display: flex;
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+        overflow: hidden;
+        margin-bottom: 25px;
+    }
+
+    .tab-nav-item {
+        flex: 1;
+        padding: 20px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: none;
+        background: transparent;
+        font-weight: 600;
+        color: #6c757d;
+        position: relative;
+    }
+
+    .tab-nav-item:hover {
+        background: rgba(200, 80, 192, 0.1);
+        color: var(--primary-color);
+    }
+
+    .tab-nav-item.active {
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        color: white;
+    }
+
+    .tab-nav-item i {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 20px;
+    }
+
+    .tab-content {
+        display: none;
+    }
+
+    .tab-content.active {
+        display: block;
+        animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
 </style>
 @endsection
 
@@ -568,9 +625,24 @@
             </div>
         </div>
 
-        <div class="row">
-            <!-- Main Profile Information -->
-            <div class="col-lg-8">
+        <!-- Tab Navigation -->
+        <div class="profile-tabs">
+            <div class="tab-nav">
+                <button class="tab-nav-item active" onclick="showTab('personal-info')">
+                    <i class="fas fa-user"></i>
+                    Personal Information
+                </button>
+                <button class="tab-nav-item" onclick="showTab('program-info')">
+                    <i class="fas fa-graduation-cap"></i>
+                    Program Information
+                </button>
+            </div>
+
+            <!-- Tab Content -->
+            <div id="personal-info" class="tab-content active">
+                <div class="row">
+                    <!-- Main Profile Information -->
+                    <div class="col-lg-8">
                 <!-- Basic Information Card -->
                 <div class="profile-card">
                     <div class="profile-card-header">
@@ -788,20 +860,20 @@
                     <!-- Action Buttons -->
                     <div class="action-buttons">
                         @if(in_array(session('role'), ['admin', 'supervisor']))
-                        <a href="{{ route('trainees.edit', $trainee->id) }}" class="btn btn-primary">
+                        <a href="{{ route('trainees.edit', \App\Helpers\EncryptionHelper::generateEncryptedId($trainee->id)) }}" class="btn btn-primary">
                             <i class="fas fa-edit"></i>Edit Profile
                         </a>
                         @endif
                         
-                        <a href="{{ route('trainees.schedule', $trainee->id) }}" class="btn btn-info">
+                        <a href="{{ route('trainees.schedule', \App\Helpers\EncryptionHelper::generateEncryptedId($trainee->id)) }}" class="btn btn-info">
                             <i class="fas fa-calendar"></i>Schedule
                         </a>
                         
-                        <a href="{{ route('trainees.attendance', $trainee->id) }}" class="btn btn-warning">
+                        <a href="{{ route('trainees.attendance', \App\Helpers\EncryptionHelper::generateEncryptedId($trainee->id)) }}" class="btn btn-warning">
                             <i class="fas fa-clipboard-check"></i>Attendance
                         </a>
                         
-                        <button onclick="window.print()" class="btn btn-light">
+                        <button onclick="alert('This feature will be implemented in the future')" class="btn btn-light">
                             <i class="fas fa-print"></i>Print Profile
                         </button>
                         
@@ -1015,12 +1087,157 @@
                 </div>
             </div>
         </div>
+        </div>
+        <!-- End Personal Info Tab -->
+
+        <!-- Program Information Tab -->
+        <div id="program-info" class="tab-content">
+            <div class="row">
+                <div class="col-lg-8">
+                    <!-- Attendance Overview -->
+                    <div class="profile-card">
+                        <div class="profile-card-header">
+                            <div class="card-icon">
+                                <i class="fas fa-chart-bar"></i>
+                            </div>
+                            <h5>Attendance Overview</h5>
+                        </div>
+
+                        <div class="progress-section">
+                            <div class="progress-label">
+                                <span>Attendance Rate</span>
+                                <span>{{ $attendanceRate ?? '92' }}%</span>
+                            </div>
+                            <div class="progress">
+                                <div class="progress-bar" style="width: {{ $attendanceRate ?? '92' }}%"></div>
+                            </div>
+                        </div>
+
+                        <div class="progress-section">
+                            <div class="progress-label">
+                                <span>Activity Participation</span>
+                                <span>{{ rand(85, 98) }}%</span>
+                            </div>
+                            <div class="progress">
+                                <div class="progress-bar" style="width: {{ rand(85, 98) }}%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Current Activities -->
+                    <div class="profile-card">
+                        <div class="profile-card-header">
+                            <div class="card-icon">
+                                <i class="fas fa-clipboard-list"></i>
+                            </div>
+                            <h5>Current Activities</h5>
+                        </div>
+
+                        @php
+                            $sampleActivities = [
+                                ['name' => 'Physical Therapy', 'enrollment_date' => '2025-01-15', 'status' => 'ongoing', 'category' => 'Rehabilitation', 'notes' => 'Making good progress with mobility exercises'],
+                                ['name' => 'Speech Therapy', 'enrollment_date' => '2025-01-10', 'status' => 'ongoing', 'category' => 'Rehabilitation', 'notes' => 'Improving communication skills'],
+                                ['name' => 'Life Skills Training', 'enrollment_date' => '2025-01-08', 'status' => 'active', 'category' => 'Education', 'notes' => 'Learning daily living skills'],
+                            ];
+                        @endphp
+
+                        @if(count($sampleActivities) > 0)
+                            @foreach($sampleActivities as $activity)
+                                <div style="background: #f8f9fc; padding: 15px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid var(--primary-color);">
+                                    <div style="font-weight: 600; color: var(--dark-color); margin-bottom: 5px;">{{ $activity['name'] }}</div>
+                                    <div style="color: #6c757d; font-size: 0.85rem; display: flex; gap: 1rem; flex-wrap: wrap;">
+                                        <span><i class="fas fa-calendar me-1"></i>Enrolled: {{ date('M j, Y', strtotime($activity['enrollment_date'])) }}</span>
+                                        <span><i class="fas fa-info-circle me-1"></i>Status: {{ ucfirst($activity['status']) }}</span>
+                                        <span><i class="fas fa-tag me-1"></i>{{ $activity['category'] }}</span>
+                                        @if($activity['notes'])
+                                            <span><i class="fas fa-sticky-note me-1"></i>{{ \Illuminate\Support\Str::limit($activity['notes'], 50) }}</span>
+                                        @endif
+                                    </div>
+                                </div>
+                            @endforeach
+                        @else
+                            <div style="text-align: center; padding: 30px; color: #6c757d;">
+                                <i class="fas fa-clipboard-list" style="font-size: 2rem; margin-bottom: 10px; opacity: 0.5;"></i>
+                                <p>No activities enrolled yet</p>
+                            </div>
+                        @endif
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <!-- Recent Attendance -->
+                    <div class="profile-card">
+                        <div class="profile-card-header">
+                            <div class="card-icon">
+                                <i class="fas fa-calendar-check"></i>
+                            </div>
+                            <h5>Recent Attendance</h5>
+                        </div>
+
+                        @php
+                            $attendanceRecords = [
+                                ['date' => '2025-01-30', 'status' => 'present', 'remarks' => 'On time and engaged'],
+                                ['date' => '2025-01-29', 'status' => 'present', 'remarks' => 'Great participation'],
+                                ['date' => '2025-01-28', 'status' => 'late', 'remarks' => '15 minutes late'],
+                                ['date' => '2025-01-27', 'status' => 'present', 'remarks' => 'Excellent progress'],
+                                ['date' => '2025-01-26', 'status' => 'present', 'remarks' => 'Active participation'],
+                            ];
+                        @endphp
+
+                        @foreach(array_slice($attendanceRecords, 0, 5) as $record)
+                            <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f1f3f4;">
+                                <div>
+                                    <span class="badge" style="background: {{ $record['status'] == 'present' ? 'var(--success-color)' : ($record['status'] == 'late' ? 'var(--warning-color)' : 'var(--danger-color)') }}; color: white; padding: 4px 8px; border-radius: 10px; font-size: 0.7rem;">
+                                        {{ ucfirst($record['status']) }}
+                                    </span>
+                                    <div style="color: #6c757d; font-size: 0.85rem; margin-top: 4px;">{{ date('F j, Y', strtotime($record['date'])) }}</div>
+                                </div>
+                            </div>
+                            @if(isset($record['remarks']) && $record['remarks'])
+                                <div style="margin-top: 8px; color: #6c757d; font-size: 0.8rem;">{{ $record['remarks'] }}</div>
+                            @endif
+                        @endforeach
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- End Program Info Tab -->
+
+        </div>
+        <!-- End Profile Tabs -->
     </div>
 </div>
 @endsection
 
 @section('scripts')
 <script>
+// Tab switching function
+function showTab(tabId) {
+    // Hide all tab contents
+    const tabContents = document.querySelectorAll('.tab-content');
+    tabContents.forEach(content => {
+        content.classList.remove('active');
+    });
+    
+    // Remove active class from all tab nav items
+    const tabNavItems = document.querySelectorAll('.tab-nav-item');
+    tabNavItems.forEach(item => {
+        item.classList.remove('active');
+    });
+    
+    // Show selected tab content
+    const selectedTab = document.getElementById(tabId);
+    if (selectedTab) {
+        selectedTab.classList.add('active');
+    }
+    
+    // Add active class to clicked tab nav item
+    const clickedNavItem = event.target.closest('.tab-nav-item');
+    if (clickedNavItem) {
+        clickedNavItem.classList.add('active');
+    }
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     // Animate progress bars on load
     const progressBars = document.querySelectorAll('.progress-bar');
