@@ -28,6 +28,74 @@
 
     <div class="row">
         <div class="col-lg-8">
+            {{-- Centre Image Gallery Carousel --}}
+            @if($centre->centre_image || isset($centre_images))
+            <div class="detail-card">
+                <div class="detail-card-header">
+                    <h3>Centre Gallery</h3>
+                    <button class="btn btn-sm btn-outline-light" onclick="toggleFullscreen()">
+                        <i class="fas fa-expand"></i> Fullscreen
+                    </button>
+                </div>
+                <div class="detail-card-body p-0">
+                    <div id="centreCarousel" class="carousel slide" data-ride="carousel">
+                        <div class="carousel-inner">
+                            @php
+                                $images = [];
+                                if($centre->centre_image) {
+                                    $images[] = $centre->centre_image;
+                                }
+                                if(isset($centre_images)) {
+                                    $images = array_merge($images, $centre_images);
+                                }
+                                // Add some placeholder images if no images exist
+                                if(empty($images)) {
+                                    $images = [
+                                        'default-centre-1.jpg',
+                                        'default-centre-2.jpg',
+                                        'default-centre-3.jpg'
+                                    ];
+                                }
+                            @endphp
+                            
+                            @foreach($images as $index => $image)
+                            <div class="carousel-item {{ $index === 0 ? 'active' : '' }}">
+                                <img class="d-block w-100 carousel-image" 
+                                     src="{{ file_exists(public_path('storage/centres/' . $image)) ? asset('storage/centres/' . $image) : asset('images/centre-placeholder.jpg') }}" 
+                                     alt="{{ $centre->centre_name }} - Image {{ $index + 1 }}"
+                                     onerror="this.src='{{ asset('images/centre-placeholder.jpg') }}'">
+                                <div class="carousel-caption d-none d-md-block">
+                                    <h5>{{ $centre->centre_name }}</h5>
+                                    <p>{{ $centre->centre_address ?? 'Centre Location' }}</p>
+                                </div>
+                            </div>
+                            @endforeach
+                        </div>
+                        
+                        <!-- Carousel Controls -->
+                        @if(count($images) > 1)
+                        <a class="carousel-control-prev" href="#centreCarousel" role="button" data-slide="prev">
+                            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                            <span class="sr-only">Previous</span>
+                        </a>
+                        <a class="carousel-control-next" href="#centreCarousel" role="button" data-slide="next">
+                            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                            <span class="sr-only">Next</span>
+                        </a>
+                        
+                        <!-- Carousel Indicators -->
+                        <ol class="carousel-indicators">
+                            @foreach($images as $index => $image)
+                            <li data-target="#centreCarousel" data-slide-to="{{ $index }}" 
+                                class="{{ $index === 0 ? 'active' : '' }}"></li>
+                            @endforeach
+                        </ol>
+                        @endif
+                    </div>
+                </div>
+            </div>
+            @endif
+
             {{-- Centre Details Card --}}
             <div class="detail-card">
                 <div class="detail-card-header">
@@ -456,6 +524,133 @@
     color: white;
 }
 
+/* Carousel Specific Styles */
+.carousel-image {
+    height: 400px;
+    object-fit: cover;
+    border-radius: 0;
+}
+
+.carousel-caption {
+    background: linear-gradient(transparent, rgba(0,0,0,0.7));
+    border-radius: 0 0 10px 10px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 30px 20px 20px;
+}
+
+.carousel-caption h5 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+}
+
+.carousel-caption p {
+    font-size: 1rem;
+    margin-bottom: 0;
+    opacity: 0.9;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+}
+
+.carousel-control-prev,
+.carousel-control-next {
+    width: 8%;
+    opacity: 0;
+    transition: all 0.3s ease;
+}
+
+.carousel:hover .carousel-control-prev,
+.carousel:hover .carousel-control-next {
+    opacity: 0.8;
+}
+
+.carousel-control-prev:hover,
+.carousel-control-next:hover {
+    opacity: 1;
+}
+
+.carousel-control-prev-icon,
+.carousel-control-next-icon {
+    width: 30px;
+    height: 30px;
+    background-size: 100%;
+    background-color: rgba(0,0,0,0.5);
+    border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.8);
+}
+
+.carousel-indicators {
+    bottom: 15px;
+    margin-bottom: 0;
+}
+
+.carousel-indicators li {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background-color: rgba(255,255,255,0.5);
+    border: 2px solid rgba(255,255,255,0.8);
+    margin: 0 4px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.carousel-indicators .active {
+    background-color: var(--primary-color, #007bff);
+    border-color: var(--primary-color, #007bff);
+    transform: scale(1.2);
+}
+
+/* Fullscreen Modal Styles */
+.fullscreen-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.95);
+    z-index: 9999;
+    display: none;
+    align-items: center;
+    justify-content: center;
+}
+
+.fullscreen-modal.active {
+    display: flex;
+}
+
+.fullscreen-carousel {
+    width: 90%;
+    height: 90%;
+    max-width: 1200px;
+}
+
+.fullscreen-carousel .carousel-image {
+    height: 80vh;
+    object-fit: contain;
+}
+
+.fullscreen-close {
+    position: absolute;
+    top: 20px;
+    right: 30px;
+    color: white;
+    font-size: 2rem;
+    cursor: pointer;
+    z-index: 10000;
+    padding: 10px;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.5);
+    transition: all 0.3s ease;
+}
+
+.fullscreen-close:hover {
+    background: rgba(0,0,0,0.8);
+    transform: scale(1.1);
+}
+
 @media (max-width: 768px) {
     .page-header {
         flex-direction: column;
@@ -478,6 +673,250 @@
         align-items: flex-start;
         gap: 8px;
     }
+    
+    .carousel-image {
+        height: 250px;
+    }
+    
+    .carousel-caption {
+        padding: 20px 15px 15px;
+    }
+    
+    .carousel-caption h5 {
+        font-size: 1.2rem;
+    }
+    
+    .carousel-caption p {
+        font-size: 0.9rem;
+    }
+    
+    .carousel-control-prev,
+    .carousel-control-next {
+        width: 12%;
+    }
+    
+    .fullscreen-carousel .carousel-image {
+        height: 60vh;
+    }
 }
 </style>
+@endsection
+
+<!-- Fullscreen Modal -->
+<div id="fullscreenModal" class="fullscreen-modal">
+    <div class="fullscreen-close" onclick="toggleFullscreen()">
+        <i class="fas fa-times"></i>
+    </div>
+    <div id="fullscreenCarousel" class="carousel slide fullscreen-carousel" data-ride="carousel">
+        <!-- Content will be dynamically populated -->
+    </div>
+</div>
+
+@section('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize carousel with auto-play
+    $('#centreCarousel').carousel({
+        interval: 5000,
+        pause: 'hover',
+        wrap: true
+    });
+    
+    // Enhanced carousel controls
+    initializeCarouselKeyboard();
+    initializeCarouselTouch();
+    initializeCarouselProgressIndicator();
+});
+
+// Fullscreen functionality
+function toggleFullscreen() {
+    const modal = document.getElementById('fullscreenModal');
+    const isActive = modal.classList.contains('active');
+    
+    if (isActive) {
+        closeFullscreen();
+    } else {
+        openFullscreen();
+    }
+}
+
+function openFullscreen() {
+    const modal = document.getElementById('fullscreenModal');
+    const fullscreenCarousel = document.getElementById('fullscreenCarousel');
+    const originalCarousel = document.getElementById('centreCarousel');
+    
+    // Clone the carousel content
+    const carouselInner = originalCarousel.querySelector('.carousel-inner').cloneNode(true);
+    const carouselControls = originalCarousel.querySelectorAll('.carousel-control-prev, .carousel-control-next');
+    const carouselIndicators = originalCarousel.querySelector('.carousel-indicators');
+    
+    // Clear and populate fullscreen carousel
+    fullscreenCarousel.innerHTML = '';
+    fullscreenCarousel.appendChild(carouselInner);
+    
+    // Clone controls if they exist
+    if (carouselControls.length > 0) {
+        carouselControls.forEach(control => {
+            const clonedControl = control.cloneNode(true);
+            clonedControl.setAttribute('href', '#fullscreenCarousel');
+            fullscreenCarousel.appendChild(clonedControl);
+        });
+    }
+    
+    // Clone indicators if they exist
+    if (carouselIndicators) {
+        const clonedIndicators = carouselIndicators.cloneNode(true);
+        const indicatorItems = clonedIndicators.querySelectorAll('li');
+        indicatorItems.forEach(item => {
+            item.setAttribute('data-target', '#fullscreenCarousel');
+        });
+        fullscreenCarousel.appendChild(clonedIndicators);
+    }
+    
+    // Show modal
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+    
+    // Initialize fullscreen carousel
+    setTimeout(() => {
+        $('#fullscreenCarousel').carousel({
+            interval: 8000,
+            pause: 'hover',
+            wrap: true
+        });
+    }, 100);
+}
+
+function closeFullscreen() {
+    const modal = document.getElementById('fullscreenModal');
+    modal.classList.remove('active');
+    document.body.style.overflow = 'auto';
+}
+
+// Keyboard navigation for carousel
+function initializeCarouselKeyboard() {
+    document.addEventListener('keydown', function(e) {
+        const modal = document.getElementById('fullscreenModal');
+        const isFullscreen = modal.classList.contains('active');
+        const targetCarousel = isFullscreen ? '#fullscreenCarousel' : '#centreCarousel';
+        
+        switch(e.key) {
+            case 'ArrowLeft':
+                e.preventDefault();
+                $(targetCarousel).carousel('prev');
+                break;
+            case 'ArrowRight':
+                e.preventDefault();
+                $(targetCarousel).carousel('next');
+                break;
+            case 'Escape':
+                if (isFullscreen) {
+                    e.preventDefault();
+                    closeFullscreen();
+                }
+                break;
+            case ' ':
+                if (isFullscreen) {
+                    e.preventDefault();
+                    $(targetCarousel).carousel('next');
+                }
+                break;
+        }
+    });
+}
+
+// Touch gesture support for mobile
+function initializeCarouselTouch() {
+    let startX = null;
+    let startY = null;
+    
+    document.addEventListener('touchstart', function(e) {
+        const touch = e.touches[0];
+        startX = touch.clientX;
+        startY = touch.clientY;
+    });
+    
+    document.addEventListener('touchend', function(e) {
+        if (!startX || !startY) return;
+        
+        const touch = e.changedTouches[0];
+        const deltaX = touch.clientX - startX;
+        const deltaY = touch.clientY - startY;
+        
+        // Check if it's a horizontal swipe (more horizontal than vertical)
+        if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 50) {
+            const modal = document.getElementById('fullscreenModal');
+            const isFullscreen = modal.classList.contains('active');
+            const targetCarousel = isFullscreen ? '#fullscreenCarousel' : '#centreCarousel';
+            
+            if (deltaX > 0) {
+                $(targetCarousel).carousel('prev');
+            } else {
+                $(targetCarousel).carousel('next');
+            }
+        }
+        
+        startX = null;
+        startY = null;
+    });
+}
+
+// Progress indicator for auto-play
+function initializeCarouselProgressIndicator() {
+    const carousel = $('#centreCarousel');
+    let progressInterval;
+    
+    function startProgress() {
+        const activeIndicator = document.querySelector('.carousel-indicators .active');
+        if (activeIndicator) {
+            activeIndicator.style.transform = 'scale(1.2)';
+            activeIndicator.style.transition = 'transform 5s linear';
+        }
+    }
+    
+    function resetProgress() {
+        const indicators = document.querySelectorAll('.carousel-indicators li');
+        indicators.forEach(indicator => {
+            indicator.style.transform = 'scale(1)';
+            indicator.style.transition = 'all 0.3s ease';
+        });
+    }
+    
+    carousel.on('slide.bs.carousel', function() {
+        resetProgress();
+    });
+    
+    carousel.on('slid.bs.carousel', function() {
+        startProgress();
+    });
+    
+    // Start initial progress
+    startProgress();
+}
+
+// Auto-hide controls after inactivity
+let controlsTimeout;
+function showControls() {
+    const modal = document.getElementById('fullscreenModal');
+    if (modal.classList.contains('active')) {
+        const controls = modal.querySelectorAll('.carousel-control-prev, .carousel-control-next, .carousel-indicators, .fullscreen-close');
+        controls.forEach(control => {
+            control.style.opacity = '1';
+        });
+        
+        clearTimeout(controlsTimeout);
+        controlsTimeout = setTimeout(() => {
+            controls.forEach(control => {
+                if (!control.classList.contains('fullscreen-close')) {
+                    control.style.opacity = '0.3';
+                }
+            });
+        }, 3000);
+    }
+}
+
+// Show controls on mouse movement in fullscreen
+document.addEventListener('mousemove', showControls);
+document.addEventListener('touchstart', showControls);
+</script>
 @endsection
