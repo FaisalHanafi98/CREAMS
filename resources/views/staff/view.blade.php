@@ -603,7 +603,7 @@ $(document).ready(function() {
             showAlert('', '', false);
             
             // Check today's status
-            fetch(`/staff-attendance/status/${userId}`)
+            fetch(`/centres/attendance/status/${userId}`)
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
@@ -651,7 +651,7 @@ $(document).ready(function() {
             submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Marking...';
             
             // Submit attendance
-            fetch('/staff-attendance/mark', {
+            fetch('/centres/attendance/mark', {
                 method: 'POST',
                 headers: {
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),

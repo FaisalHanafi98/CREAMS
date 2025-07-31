@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Staff Attendance Management')
+@section('title', 'Attendance Management')
 
 @section('styles')
 <style>
@@ -220,7 +220,7 @@
     <nav aria-label="breadcrumb">
         <ol class="breadcrumb">
             <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Dashboard</a></li>
-            <li class="breadcrumb-item active">Staff Attendance</li>
+            <li class="breadcrumb-item active">Attendance Management</li>
         </ol>
     </nav>
 
@@ -230,9 +230,9 @@
             <div class="row align-items-center">
                 <div class="col-md-8">
                     <h1 class="mb-2">
-                        <i class="fas fa-clock me-2"></i>Staff Attendance Management
+                        <i class="fas fa-clock mr-2"></i>Attendance Management
                     </h1>
-                    <p class="mb-0">Monitor and manage daily staff attendance across your centre</p>
+                    <p class="mb-0">Monitor and manage daily attendance for staff and trainees across your centre</p>
                 </div>
                 <div class="col-md-4 text-center">
                     <div class="time-display">
@@ -459,7 +459,9 @@
                 <h5 class="modal-title" id="markAttendanceModalLabel">
                     <i class="fas fa-clock me-2"></i>Mark Attendance
                 </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
             </div>
             <div class="modal-body">
                 <div id="attendanceStatusAlert" class="alert" style="display: none;"></div>
@@ -511,7 +513,7 @@
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
                 <button type="button" class="btn btn-primary" id="submitAttendance">
                     <i class="fas fa-check me-2"></i>Mark Attendance
                 </button>
@@ -519,12 +521,74 @@
         </div>
     </div>
 </div>
+
+<!-- Weekly Report Modal -->
+<div class="modal fade" id="weeklyReportModal" tabindex="-1" aria-labelledby="weeklyReportModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title" id="weeklyReportModalLabel">
+                    <i class="fas fa-calendar-week mr-2"></i>Weekly Report
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body text-center">
+                <i class="fas fa-calendar-week fa-3x text-info mb-3"></i>
+                <h4>Weekly Reporting Feature</h4>
+                <p class="lead">Weekly reporting feature will be available in future updates.</p>
+                <p>This feature will include:</p>
+                <ul class="text-left">
+                    <li>Comprehensive weekly attendance summaries</li>
+                    <li>Staff and trainee attendance analytics</li>
+                    <li>Centre-specific performance metrics</li>
+                    <li>Downloadable PDF reports</li>
+                </ul>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-info" data-dismiss="modal">Got it!</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Export Data Modal -->
+<div class="modal fade" id="exportDataModal" tabindex="-1" aria-labelledby="exportDataModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="exportDataModalLabel">
+                    <i class="fas fa-download mr-2"></i>Export Data
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body text-center">
+                <i class="fas fa-download fa-3x text-success mb-3"></i>
+                <h4>Data Export Functionality</h4>
+                <p class="lead">Data export functionality will be implemented in upcoming releases.</p>
+                <p>This feature will support:</p>
+                <ul class="text-left">
+                    <li>Excel (.xlsx) and CSV format exports</li>
+                    <li>Customizable date range selection</li>
+                    <li>Filtered exports by centre, role, or individual</li>
+                    <li>Automated scheduled reports via email</li>
+                </ul>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-success" data-dismiss="modal">Understood!</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @endsection
 
 @push('scripts')
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const attendanceModal = new bootstrap.Modal(document.getElementById('markAttendanceModal'));
+$(document).ready(function() {
     const attendanceForm = document.getElementById('attendanceForm');
     const submitBtn = document.getElementById('submitAttendance');
     
@@ -575,7 +639,7 @@ document.addEventListener('DOMContentLoaded', function() {
         showAlert('', '', false);
         
         // Check today's status
-        fetch(`/staff-attendance/status/${userId}`)
+        fetch(`/centres/attendance/status/${userId}`)
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
@@ -604,7 +668,7 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .catch(error => console.error('Error checking status:', error));
         
-        attendanceModal.show();
+        $('#markAttendanceModal').modal('show');
     };
     
     // Submit attendance
@@ -619,7 +683,7 @@ document.addEventListener('DOMContentLoaded', function() {
         submitBtn.disabled = true;
         submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Marking...';
         
-        fetch('/staff-attendance/mark', {
+        fetch('/centres/attendance/mark', {
             method: 'POST',
             headers: {
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
@@ -632,7 +696,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (data.success) {
                 showAlert(data.message, 'success', true);
                 setTimeout(() => {
-                    attendanceModal.hide();
+                    $('#markAttendanceModal').modal('hide');
                     location.reload();
                 }, 1500);
             } else {
@@ -667,13 +731,11 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     
     window.showWeeklyReport = function() {
-        // Future enhancement for weekly reports
-        alert('Weekly report feature coming soon!');
+        $('#weeklyReportModal').modal('show');
     };
     
     window.exportAttendance = function() {
-        // Future enhancement for data export
-        alert('Export feature coming soon!');
+        $('#exportDataModal').modal('show');
     };
     
     window.refreshData = function() {

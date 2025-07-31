@@ -105,6 +105,19 @@ class StaffAttendanceController extends Controller
                 ], 403);
             }
 
+            // Get target user and centre for policy validation
+            $targetUser = User::find($targetUserId);
+            $centre = Centre::find($targetUser->centre_id);
+            
+            // Validate attendance against centre policies
+            $policyValidation = $this->validateAgainstCentrePolicies($centre, $validated, $targetUser);
+            if (!$policyValidation['valid']) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $policyValidation['message']
+                ]);
+            }
+
             // Check if already marked today for this type
             $alreadyMarked = StaffAttendance::where('user_id', $targetUserId)
                 ->whereDate('attendance_date', Carbon::today())
@@ -323,5 +336,83 @@ class StaffAttendanceController extends Controller
             'today_late' => (clone $query)->today()->where('status', 'late')->count(),
             'month_total' => (clone $query)->whereMonth('attendance_date', $today->month)->count(),
         ];
+    }
+
+    /**
+     * Validate attendance against centre-specific policies
+     *
+     * @param Centre $centre
+     * @param array $validated
+     * @param User $targetUser
+     * @return array
+     */
+    private function validateAgainstCentrePolicies($centre, $validated, $targetUser)
+    {
+        if (!$centre) {
+            return ['valid' => true, 'message' => '']; // No centre policies to validate
+        }
+
+        $policies = $centre->getAttendancePolicies();
+        $currentTime = Carbon::now();
+        $today = Carbon::today();
+
+        // Check if it's a work day
+        if (!$centre->isWorkDay($today)) {
+            return [
+                'valid' => false,
+                'message' => 'Today is not a scheduled work day for this centre.'
+            ];
+        }
+
+        // Check office hours for check-in/check-out
+        if ($validated['attendance_type'] === 'check_in') {
+            $officeStart = Carbon::parse($today->format('Y-m-d') . ' ' . $policies['office_hours']['start_time']);
+            $officeEnd = Carbon::parse($today->format('Y-m-d') . ' ' . $policies['office_hours']['end_time']);
+            
+            // Allow check-in up to 2 hours before office start
+            $earliestCheckIn = $officeStart->copy()->subHours(2);
+            
+            if ($currentTime->lessThan($earliestCheckIn)) {
+                return [
+                    'valid' => false,
+                    'message' => 'Check-in is too early. Office hours start at ' . $policies['office_hours']['start_time'] . '.'
+                ];
+            }
+
+            // Auto-suggest late status if checking in late
+            if ($centre->isLateCheckIn($currentTime) && $validated['status'] === 'present') {
+                return [
+                    'valid' => false,
+                    'message' => 'You are checking in late. Please select "Late" status or check-in before ' . 
+                                 $officeStart->addMinutes($policies['office_hours']['late_threshold_minutes'])->format('H:i') . '.'
+                ];
+            }
+        }
+
+        // Check leave policies
+        if (in_array($validated['status'], ['sick_leave', 'emergency_leave', 'authorized_leave'])) {
+            $leaveType = $validated['status'];
+            $requiresApproval = $policies['leave_policies'][$leaveType . '_require_approval'] ?? false;
+            
+            if ($requiresApproval && session('role') !== 'admin') {
+                return [
+                    'valid' => false,
+                    'message' => ucfirst(str_replace('_', ' ', $leaveType)) . ' requires supervisor or admin approval.'
+                ];
+            }
+        }
+
+        // Check self-marking policy
+        if ($targetUser->id === session('id')) {
+            $allowSelfMarking = $policies['attendance_rules']['allow_self_marking'] ?? true;
+            if (!$allowSelfMarking && session('role') !== 'admin') {
+                return [
+                    'valid' => false,
+                    'message' => 'Self-marking attendance is not allowed in this centre. Please contact your supervisor.'
+                ];
+            }
+        }
+
+        return ['valid' => true, 'message' => ''];
     }
 }

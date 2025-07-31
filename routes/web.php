@@ -396,12 +396,20 @@ Route::middleware(['auth', 'validate.params'])->group(function () {
         Route::post('/export', [App\Http\Controllers\Activity\AttendanceController::class, 'export'])->name('export');
     });
 
-    // Staff Daily Attendance Management
-    Route::prefix('staff-attendance')->name('staff-attendance.')->middleware(['enhanced.auth'])->group(function () {
+    // Staff Daily Attendance Management (moved under centres)
+    Route::prefix('centres/attendance')->name('centres.attendance.')->middleware(['enhanced.auth'])->group(function () {
         Route::get('/', [StaffAttendanceController::class, 'index'])->name('index');
         Route::post('/mark', [StaffAttendanceController::class, 'markAttendance'])->name('mark');
         Route::get('/user/{userId}', [StaffAttendanceController::class, 'getUserAttendance'])->name('user');
         Route::get('/status/{userId}', [StaffAttendanceController::class, 'getTodayStatus'])->name('status');
+    });
+    
+    // Legacy staff-attendance routes (backward compatibility redirects)
+    Route::prefix('staff-attendance')->middleware(['enhanced.auth'])->group(function () {
+        Route::get('/', function() { return redirect()->route('centres.attendance.index'); });
+        Route::post('/mark', function() { return redirect()->route('centres.attendance.index'); });
+        Route::get('/user/{userId}', function($userId) { return redirect()->route('centres.attendance.user', $userId); });
+        Route::get('/status/{userId}', function($userId) { return redirect()->route('centres.attendance.status', $userId); });
     });
 
 
