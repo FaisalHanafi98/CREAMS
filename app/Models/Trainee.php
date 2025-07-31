@@ -220,6 +220,14 @@ class Trainee extends Model
     }
 
     /**
+     * Get the session attendance records for the trainee.
+     */
+    public function sessionAttendances()
+    {
+        return $this->hasMany(SessionAttendance::class, 'trainee_id');
+    }
+
+    /**
      * Get the course that the trainee is enrolled in.
      */
     public function course()
@@ -289,6 +297,66 @@ class Trainee extends Model
     public function scopeByCondition($query, $condition)
     {
         return $query->where('trainee_condition', $condition);
+    }
+
+    /**
+     * Calculate academic progress percentage for a specific activity based on time and attendance
+     * Your logic: Activity 7/31/2025 → 12/31/2025, 2 sessions/week = 40 total sessions, each attendance = 2.5%
+     */
+    public function calculateActivityProgress($activity)
+    {
+        // Get activity with required fields
+        if (!$activity->start_date || !$activity->end_date || !$activity->sessions_per_week) {
+            return 0; // Cannot calculate without required fields
+        }
+
+        // Calculate total expected sessions
+        $start = Carbon::parse($activity->start_date);
+        $end = Carbon::parse($activity->end_date);
+        $total_weeks = $start->diffInWeeks($end);
+        $total_sessions = $total_weeks * $activity->sessions_per_week;
+
+        if ($total_sessions <= 0) {
+            return 0;
+        }
+
+        // Get attended sessions for this trainee and activity
+        $attended_sessions = $this->sessionAttendances()
+            ->whereHas('session', function($query) use ($activity) {
+                $query->where('activity_id', $activity->id);
+            })
+            ->where('attended', true)
+            ->count();
+
+        // Calculate progress percentage
+        $progress = ($attended_sessions / $total_sessions) * 100;
+        
+        return min(round($progress, 1), 100); // Cap at 100%
+    }
+
+    /**
+     * Calculate average progress across all enrolled activities
+     */
+    public function calculateAverageProgress()
+    {
+        $enrolled_activities = $this->activities;
+        
+        if ($enrolled_activities->isEmpty()) {
+            return 0;
+        }
+
+        $total_progress = 0;
+        $activities_with_progress = 0;
+
+        foreach ($enrolled_activities as $activity) {
+            $progress = $this->calculateActivityProgress($activity);
+            if ($progress > 0) {
+                $total_progress += $progress;
+                $activities_with_progress++;
+            }
+        }
+
+        return $activities_with_progress > 0 ? round($total_progress / $activities_with_progress, 1) : 0;
     }
 
     // =============================================

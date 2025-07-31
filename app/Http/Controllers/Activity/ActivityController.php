@@ -54,6 +54,10 @@ class ActivityController extends Controller
             
             // Get categories for the view
             $categories = $this->getActivityCategories();
+            
+            // Get data for new academic filters
+            $trainees = Trainee::select('id', 'trainee_first_name', 'trainee_last_name')->get();
+            $venues = Activity::distinct()->pluck('activity_location')->filter();
 
             Log::info('Successfully loaded activities', [
                 'user_id' => $userId,
@@ -62,7 +66,7 @@ class ActivityController extends Controller
                 'stats' => $stats
             ]);
 
-            return view('activities.home', compact('activities', 'stats', 'role', 'categories'));
+            return view('activities.home', compact('activities', 'stats', 'role', 'categories', 'trainees', 'venues'));
 
         } catch (Exception $e) {
             Log::error('Error loading activities index: ' . $e->getMessage());

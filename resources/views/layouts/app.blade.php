@@ -1210,7 +1210,7 @@
                     </li>
                     @if(in_array(session('role'), ['admin', 'supervisor']))
                     <li>
-                        <a href="{{ route('staff-attendance.index') }}" class="sidebar-submenu-link {{ strpos(Route::currentRouteName(), 'staff-attendance') !== false ? 'active' : '' }}">
+                        <a href="{{ route('centres.attendance.index') }}" class="sidebar-submenu-link {{ strpos(Route::currentRouteName(), 'centres.attendance') !== false ? 'active' : '' }}">
                             Attendance
                         </a>
                     </li>

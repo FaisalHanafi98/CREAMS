@@ -104,45 +104,55 @@
         </div>
     </div>
 
-    <!-- Filters Section -->
+    <!-- Academic Class Filters Section -->
     <div class="filter-section">
         <div class="filter-row">
             <div class="filter-group">
-                <label class="filter-label">Category</label>
-                <select id="categoryFilter" class="form-select">
-                    <option value="">All Category</option>
-                    @foreach($categories as $category)
-                    <option value="{{ $category }}">{{ $category }}</option>
+                <label class="filter-label">Participant</label>
+                <select id="participantFilter" class="form-select">
+                    <option value="">All Participants</option>
+                    @foreach($trainees as $trainee)
+                    <option value="{{ $trainee->id }}">{{ $trainee->trainee_first_name }} {{ $trainee->trainee_last_name }}</option>
                     @endforeach
                 </select>
             </div>
             
             <div class="filter-group">
-                <label class="filter-label">Status</label>
-                <select id="statusFilter" class="form-select">
-                    <option value="">All Status</option>
-                    <option value="active">Active</option>
-                    <option value="inactive">Inactive</option>
+                <label class="filter-label">Place/Venue</label>
+                <select id="placeFilter" class="form-select">
+                    <option value="">All Places</option>
+                    @foreach($venues as $venue)
+                    <option value="{{ $venue }}">{{ $venue }}</option>
+                    @endforeach
                 </select>
             </div>
             
             <div class="filter-group">
-                <label class="filter-label">Age Group</label>
-                <select id="ageFilter" class="form-select">
-                    <option value="">All Ages</option>
-                    <option value="3-6">3-6 years</option>
-                    <option value="7-12">7-12 years</option>
-                    <option value="13-18">13-18 years</option>
-                    <option value="All Ages">All Ages</option>
+                <label class="filter-label">Time</label>
+                <select id="timeFilter" class="form-select">
+                    <option value="">All Times</option>
+                    <option value="morning">Morning (8AM-12PM)</option>
+                    <option value="afternoon">Afternoon (12PM-5PM)</option>
+                    <option value="evening">Evening (5PM-8PM)</option>
                 </select>
             </div>
             
             <div class="filter-group">
-                <label class="filter-label">Search</label>
+                <label class="filter-label">Activity ID</label>
                 <div class="search-input">
-                    <input type="text" id="searchInput" class="form-control" placeholder="Search activities...">
-                    <i class="fas fa-search"></i>
+                    <input type="text" id="activityIdFilter" class="form-control" placeholder="Search by Activity ID...">
+                    <i class="fas fa-hashtag"></i>
                 </div>
+            </div>
+            
+            <div class="filter-group">
+                <label class="filter-label">Category</label>
+                <select id="categoryFilter" class="form-select">
+                    <option value="">All Categories</option>
+                    @foreach($categories as $category)
+                    <option value="{{ $category }}">{{ $category }}</option>
+                    @endforeach
+                </select>
             </div>
         </div>
     </div>

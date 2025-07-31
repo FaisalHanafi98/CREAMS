@@ -113,8 +113,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/logout', [MainController::class, 'logout'])->name('logout');
     Route::post('/logout', [MainController::class, 'logout'])->name('logout.post');
     
-    // Enhanced logout route
-    Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
+    // Enhanced logout route (alternative endpoint)
+    Route::post('/logout-enhanced', [LoginController::class, 'logout'])->name('logout.enhanced');
 });
 
 // Enhanced authentication API routes
@@ -204,8 +204,8 @@ Route::middleware(['auth', 'validate.params'])->group(function () {
             Route::get('/{id}/edit', [ActivityController::class, 'edit'])->name('edit');
             Route::put('/{id}', [ActivityController::class, 'update'])->name('update');
             Route::delete('/{id}', [ActivityController::class, 'destroy'])->name('destroy');
-            Route::get('/{id}/sessions', [ActivityController::class, 'sessions'])->name('activities.sessions');
-            Route::post('/{id}/sessions', [ActivityController::class, 'createSession'])->name('activities.sessions.create');
+            Route::get('/{id}/sessions', [ActivityController::class, 'sessions'])->name('sessions');
+            Route::post('/{id}/sessions', [ActivityController::class, 'createSession'])->name('sessions.create');
         });
         
         Route::get('/{id}', [ActivityController::class, 'show'])->name('show');
@@ -552,6 +552,11 @@ Route::middleware(['auth', 'centre.access:trainee'])->prefix('trainees')->name('
     Route::get('/schedule/{encrypted_id}', [TraineeHomeController::class, 'schedule'])->name('schedule'); // Schedule route with encrypted ID
     Route::get('/attendance/{encrypted_id}', [TraineeHomeController::class, 'attendance'])->name('attendance'); // Attendance route with encrypted ID
     Route::post('/attendance/{encrypted_id}/mark', [TraineeHomeController::class, 'markAttendance'])->name('attendance.mark'); // Mark attendance route
+    
+    // Academic Progress Routes
+    Route::get('/progress/{encrypted_id}', [App\Http\Controllers\Trainee\TraineeProgressController::class, 'show'])->name('progress.show');
+    Route::get('/progress/{encrypted_id}/schedule', [App\Http\Controllers\Trainee\TraineeProgressController::class, 'weeklySchedule'])->name('progress.schedule');
+    
     Route::get('/{encrypted_id}/edit', [TraineeProfileController::class, 'edit'])->name('edit'); // Edit route with encrypted ID
     Route::put('/{encrypted_id}', [TraineeProfileController::class, 'update'])->name('update'); // Update route with encrypted ID
     Route::get('/{encrypted_id}', [TraineeHomeController::class, 'show'])->name('show'); // Show route with encrypted ID (must be last)

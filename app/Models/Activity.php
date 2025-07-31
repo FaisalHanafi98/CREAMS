@@ -17,6 +17,11 @@ class Activity extends Model
         'activity_description',
         'activity_type',
         'activity_date',
+        'start_date',
+        'end_date',
+        'sessions_per_week',
+        'pass_threshold',
+        'is_active',
         'activity_start_time',
         'activity_end_time',
         'activity_location',
@@ -39,6 +44,10 @@ class Activity extends Model
         'activity_goals' => 'array',
         'activity_outcomes' => 'array',
         'activity_date' => 'date',
+        'start_date' => 'date',
+        'end_date' => 'date',
+        'pass_threshold' => 'decimal:2',
+        'is_active' => 'boolean',
         'activity_start_time' => 'datetime:H:i',
         'activity_end_time' => 'datetime:H:i'
     ];

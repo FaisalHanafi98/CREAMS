@@ -61,7 +61,7 @@
                             <a href="{{ route('centres.edit', $centre->centre_id) }}" class="btn btn-warning">
                                 <i class="fas fa-edit"></i> Edit
                             </a>
-                            <a href="{{ route('staff-attendance.index') }}?centre={{ $centre->centre_id }}" class="btn btn-success">
+                            <a href="{{ route('centres.attendance.index') }}?centre={{ $centre->centre_id }}" class="btn btn-success">
                                 <i class="fas fa-clock"></i> Attendance
                             </a>
                             @endif

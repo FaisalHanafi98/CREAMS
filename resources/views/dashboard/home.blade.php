@@ -1094,7 +1094,7 @@ $(document).ready(function() {
     function checkTodayAttendanceStatus() {
         const userId = {{ session('id') }};
         
-        $.get(`/staff-attendance/today/${userId}`)
+        $.get(`/centres/attendance/status/${userId}`)
             .done(function(response) {
                 if (response.success) {
                     showAttendanceModal(response);
@@ -1199,7 +1199,7 @@ $(document).ready(function() {
             }
         });
         
-        $.post('/staff-attendance/mark', data)
+        $.post('/centres/attendance/mark', data)
             .done(function(response) {
                 if (response.success) {
                     $('#attendanceModal').modal('hide');

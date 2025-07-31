@@ -106,22 +106,20 @@ class TraineeHomeController extends Controller
                 return $trainee->enrollments && $trainee->enrollments->count() > 0;
             })->count();
             
-            // Calculate average progress based on actual enrollment data using participation_score
+            // Calculate average progress using new time-based academic progress system
             $totalProgress = 0;
             $traineesWithProgress = 0;
             
             foreach ($trainees as $trainee) {
-                if ($trainee->enrollments && $trainee->enrollments->count() > 0) {
-                    // Use participation_score as progress indicator (scale from 0-10 to 0-100)
-                    $avgTraineeProgress = $trainee->enrollments->avg('participation_score') ?? 0;
-                    if ($avgTraineeProgress > 0) {
-                        $totalProgress += ($avgTraineeProgress * 10); // Convert 0-10 scale to 0-100 percentage
-                        $traineesWithProgress++;
-                    }
+                // Use the new calculateAverageProgress method from Trainee model
+                $traineeProgress = $trainee->calculateAverageProgress();
+                if ($traineeProgress > 0) {
+                    $totalProgress += $traineeProgress;
+                    $traineesWithProgress++;
                 }
             }
             
-            $avgProgress = $traineesWithProgress > 0 ? round($totalProgress / $traineesWithProgress) : 75; // Default to 75% if no data
+            $avgProgress = $traineesWithProgress > 0 ? round($totalProgress / $traineesWithProgress, 1) : 0;
             
             $stats = [
                 'total' => $totalTrainees,
