@@ -789,8 +789,10 @@ class UserProfileController extends Controller
                 ], 401);
             }
 
-            // Deactivate all previous templates first
-            LetterTemplate::where('is_active', true)->update(['is_active' => false]);
+            // Only deactivate templates by current user for better performance
+            LetterTemplate::where('created_by', $roleId)
+                          ->where('is_active', true)
+                          ->update(['is_active' => false]);
 
             // Handle base64 image conversion to files
             $headerImagePath = null;
@@ -821,9 +823,8 @@ class UserProfileController extends Controller
             $template->created_by = $roleId;
             $template->is_active = true;
             $template->usage_count = 0;
+            // Simplified template variables for better performance
             $template->template_variables = [
-                'header_content' => $request->header_text ?? '',
-                'footer_content' => $request->footer_text ?? '',
                 'header_image' => $headerImagePath,
                 'footer_image' => $footerImagePath,
             ];
@@ -1009,16 +1010,28 @@ class UserProfileController extends Controller
                     return null;
                 }
                 
+                // Compress image for better performance
+                $compressedImageData = $this->compressImage($imageData, $imageType);
+                
                 // Generate unique filename
-                $filename = $type . '_' . time() . '_' . uniqid() . '.' . $imageType;
+                $filename = $type . '_' . time() . '_' . uniqid() . '.jpeg'; // Always save as JPEG for consistency
                 
                 // Ensure template_images directory exists
                 Storage::makeDirectory('public/template_images');
                 
-                // Save the image
-                $saved = Storage::put('public/template_images/' . $filename, $imageData);
+                // Save the compressed image
+                $saved = Storage::put('public/template_images/' . $filename, $compressedImageData);
                 
                 if ($saved) {
+                    $savedSize = Storage::size('public/template_images/' . $filename);
+                    Log::info('Template image saved and compressed', [
+                        'type' => $type,
+                        'filename' => $filename,
+                        'original_size' => strlen($imageData),
+                        'compressed_size' => $savedSize,
+                        'compression_ratio' => round((1 - $savedSize / strlen($imageData)) * 100, 1) . '%'
+                    ]);
+                    
                     return 'template_images/' . $filename;
                 } else {
                     Log::error('Failed to save base64 image', ['type' => $type]);
@@ -1034,6 +1047,83 @@ class UserProfileController extends Controller
                 'error' => $e->getMessage()
             ]);
             return null;
+        }
+    }
+    
+    /**
+     * Compress image data for better performance
+     */
+    private function compressImage($imageData, $imageType)
+    {
+        try {
+            // Create image resource from string
+            $image = imagecreatefromstring($imageData);
+            
+            if (!$image) {
+                Log::warning('Failed to create image resource for compression');
+                return $imageData; // Return original if compression fails
+            }
+            
+            // Get original dimensions
+            $originalWidth = imagesx($image);
+            $originalHeight = imagesy($image);
+            
+            // Calculate new dimensions (max width: 800px for performance)
+            $maxWidth = 800;
+            $maxHeight = 600;
+            
+            if ($originalWidth <= $maxWidth && $originalHeight <= $maxHeight) {
+                // Image is already small enough, just compress quality
+                ob_start();
+                imagejpeg($image, null, 75); // 75% quality for good balance
+                $compressedData = ob_get_contents();
+                ob_end_clean();
+                imagedestroy($image);
+                return $compressedData;
+            }
+            
+            // Calculate scaling ratio
+            $widthRatio = $maxWidth / $originalWidth;
+            $heightRatio = $maxHeight / $originalHeight;
+            $ratio = min($widthRatio, $heightRatio);
+            
+            $newWidth = intval($originalWidth * $ratio);
+            $newHeight = intval($originalHeight * $ratio);
+            
+            // Create new image with calculated dimensions
+            $resizedImage = imagecreatetruecolor($newWidth, $newHeight);
+            
+            // Preserve transparency for PNG/GIF
+            if ($imageType === 'png' || $imageType === 'gif') {
+                imagealphablending($resizedImage, false);
+                imagesavealpha($resizedImage, true);
+                $transparent = imagecolorallocatealpha($resizedImage, 255, 255, 255, 127);
+                imagefilledrectangle($resizedImage, 0, 0, $newWidth, $newHeight, $transparent);
+            }
+            
+            // Resize the image
+            imagecopyresampled(
+                $resizedImage, $image,
+                0, 0, 0, 0,
+                $newWidth, $newHeight,
+                $originalWidth, $originalHeight
+            );
+            
+            // Output compressed image
+            ob_start();
+            imagejpeg($resizedImage, null, 75); // 75% quality
+            $compressedData = ob_get_contents();
+            ob_end_clean();
+            
+            // Clean up
+            imagedestroy($image);
+            imagedestroy($resizedImage);
+            
+            return $compressedData;
+            
+        } catch (Exception $e) {
+            Log::error('Image compression failed', ['error' => $e->getMessage()]);
+            return $imageData; // Return original on error
         }
     }
 }

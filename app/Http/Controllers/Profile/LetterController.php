@@ -398,7 +398,7 @@ class LetterController extends Controller
     }
 
     /**
-     * Generate unique reference number
+     * Generate unique reference number with collision protection
      */
     private function generateUniqueReference()
     {
@@ -406,19 +406,40 @@ class LetterController extends Controller
         $year = date('Y');
         $month = date('m');
         
-        // Get last sequence number for this month
-        $lastLetter = Letter::where('letter_reference', 'LIKE', "{$prefix}/{$year}/{$month}/%")
-            ->orderBy('id', 'desc')
-            ->first();
+        $maxAttempts = 10;
+        
+        for ($attempt = 1; $attempt <= $maxAttempts; $attempt++) {
+            // Get last sequence number for this month with database lock
+            $lastLetter = Letter::where('letter_reference', 'LIKE', "{$prefix}/{$year}/{$month}/%")
+                ->orderBy('letter_reference', 'desc')
+                ->lockForUpdate()
+                ->first();
 
-        if ($lastLetter) {
-            $parts = explode('/', $lastLetter->letter_reference);
-            $sequence = intval(end($parts)) + 1;
-        } else {
-            $sequence = 1;
+            if ($lastLetter) {
+                $parts = explode('/', $lastLetter->letter_reference);
+                $sequence = intval(end($parts)) + 1;
+            } else {
+                $sequence = 1;
+            }
+
+            $reference = sprintf("{$prefix}/{$year}/{$month}/%05d", $sequence);
+            
+            // Check if this reference already exists
+            if (!Letter::where('letter_reference', $reference)->exists()) {
+                return $reference;
+            }
+            
+            // If exists, add microseconds for uniqueness
+            $microtime = substr(microtime(), 2, 6);
+            $reference = sprintf("{$prefix}/{$year}/{$month}/%05d-%s", $sequence, $microtime);
+            
+            if (!Letter::where('letter_reference', $reference)->exists()) {
+                return $reference;
+            }
         }
-
-        return sprintf("{$prefix}/{$year}/{$month}/%05d", $sequence);
+        
+        // Fallback: Use timestamp
+        return $prefix . '-' . date('Y-m-d-His') . '-' . uniqid();
     }
 
     /**
