@@ -429,6 +429,7 @@ class ActivityController extends Controller
             'duration_hours' => 'required|numeric|min:0.5|max:3',
             'start_date' => 'required|date|after_or_equal:today',
             'start_time' => 'required|date_format:H:i',
+            'activity_period' => 'required|integer|min:1|max:24', // Duration in months
             'schedule_days' => 'required|array|min:1',
             'schedule_days.*' => 'in:Monday,Tuesday,Wednesday,Thursday,Friday,Saturday,Sunday'
         ]);
@@ -440,18 +441,34 @@ class ActivityController extends Controller
             $startTime = Carbon::parse($validated['start_time']);
             $endTime = $startTime->copy()->addHours($validated['duration_hours']);
 
+            // Calculate end date based on start date + activity period (months)
+            $startDate = Carbon::parse($validated['start_date']);
+            $endDate = $startDate->copy()->addMonths($validated['activity_period']);
+
+            // Find category by name to get category_id
+            $category = Category::where('category_name', $validated['category'])->first();
+            $categoryId = $category ? $category->id : null;
+
             $activity = Activity::create([
-                'name' => $validated['activity_name'],
-                'activity_code' => strtoupper($validated['activity_id']),
-                'description' => $validated['description'],
-                'category' => $validated['category'],
-                'difficulty_level' => $validated['difficulty_level'],
+                'activity_id' => strtoupper($validated['activity_id']),
+                'activity_name' => $validated['activity_name'],
+                'activity_description' => $validated['description'],
+                'activity_type' => $validated['category'],
+                'activity_date' => $validated['start_date'],
+                'activity_start_time' => $validated['start_time'],
+                'activity_end_time' => $endTime->format('H:i:s'),
+                'activity_location' => $validated['location'],
                 'max_participants' => $validated['max_participants'],
-                'min_participants' => $validated['min_participants'],
-                'duration_minutes' => $validated['duration_hours'] * 60, // Convert hours to minutes
-                'is_active' => true,
+                'activity_status' => 'scheduled',
+                'centre_id' => $validated['centre_id'],
+                'category_id' => $categoryId,
                 'created_by' => session('id'),
-                'centre_id' => $validated['centre_id']
+                'instructor_id' => $validated['instructor_id'],
+                'start_date' => $validated['start_date'],
+                'end_date' => $endDate->format('Y-m-d'),
+                'activity_period' => $validated['activity_period'],
+                'sessions_per_week' => $validated['sessions_per_week'],
+                'is_active' => true
             ]);
 
             // Create activity sessions based on schedule
@@ -1303,7 +1320,7 @@ class ActivityController extends Controller
         try {
             $trainees = Trainee::where('centre_id', $centreId)
                 ->where('status', 'active')
-                ->select('id', 'trainee_first_name as first_name', 'trainee_last_name as last_name', 'condition')
+                ->select('id', 'trainee_first_name as first_name', 'trainee_last_name as last_name', 'trainee_condition as condition')
                 ->orderBy('trainee_first_name')
                 ->get();
 
@@ -1320,6 +1337,118 @@ class ActivityController extends Controller
 
         } catch (Exception $e) {
             Log::error('Error fetching trainees: ' . $e->getMessage());
+            return response()->json([], 500);
+        }
+    }
+
+    /**
+     * Get disability-appropriate activity recommendations
+     * Maps trainee conditions to suitable activity categories
+     */
+    private function getConditionActivityMapping()
+    {
+        return [
+            // Physical conditions work well with adaptive programs
+            'Physical Disability' => [
+                'Physical Therapy', 'Occupational Therapy', 'Art & Creativity', 
+                'Computer Skills', 'Mathematics', 'Literacy', 'Music Therapy', 'Vocational Training'
+            ],
+            'Cerebral Palsy' => [
+                'Physical Therapy', 'Occupational Therapy', 'Speech Therapy', 
+                'Computer Skills', 'Art & Creativity', 'Music Therapy', 'Mathematics', 'Literacy'
+            ],
+            
+            // Cognitive/Learning conditions benefit from structured learning
+            'Autism Spectrum Disorder' => [
+                'Mathematics', 'Computer Skills', 'Art & Creativity', 'Music Therapy',
+                'Sensory Integration', 'Behavioral Therapy', 'Life Skills', 'Science'
+            ],
+            'ADHD' => [
+                'Physical Therapy', 'Behavioral Therapy', 'Art & Creativity', 
+                'Music Therapy', 'Social Skills', 'Life Skills', 'Vocational Training'
+            ],
+            'Learning Disabilities' => [
+                'Mathematics', 'Literacy', 'Computer Skills', 'Art & Creativity',
+                'Occupational Therapy', 'Life Skills', 'Vocational Training'
+            ],
+            'Intellectual Disability' => [
+                'Life Skills', 'Social Skills', 'Art & Creativity', 'Music Therapy',
+                'Physical Therapy', 'Occupational Therapy', 'Vocational Training'
+            ],
+            'Down Syndrome' => [
+                'Social Skills', 'Life Skills', 'Music Therapy', 'Art & Creativity',
+                'Physical Therapy', 'Mathematics', 'Literacy'
+            ],
+            
+            // Communication conditions need specialized support
+            'Speech and Language Disorders' => [
+                'Speech Therapy', 'Art & Creativity', 'Music Therapy', 'Computer Skills',
+                'Social Skills', 'Mathematics', 'Literacy'
+            ],
+            'Hearing Impairment' => [
+                'Art & Creativity', 'Computer Skills', 'Mathematics', 'Science',
+                'Vocational Training', 'Life Skills', 'Physical Therapy'
+            ],
+            'Visual Impairment' => [
+                'Music Therapy', 'Computer Skills', 'Mathematics', 'Literacy',
+                'Life Skills', 'Vocational Training', 'Physical Therapy'
+            ],
+            
+            // Multiple conditions need comprehensive support
+            'Multiple Disabilities' => [
+                'Music Therapy', 'Sensory Integration', 'Life Skills', 'Art & Creativity',
+                'Physical Therapy', 'Occupational Therapy', 'Social Skills'
+            ],
+            
+            // Sensory conditions benefit from specialized interventions
+            'Sensory Processing Disorder' => [
+                'Sensory Integration', 'Occupational Therapy', 'Art & Creativity',
+                'Music Therapy', 'Physical Therapy', 'Behavioral Therapy'
+            ]
+        ];
+    }
+
+    /**
+     * API: Get filtered trainees based on activity category appropriateness
+     */
+    public function getFilteredTrainees($centreId, $categoryId = null)
+    {
+        try {
+            $query = Trainee::where('centre_id', $centreId)
+                ->where('status', 'active')
+                ->select('id', 'trainee_first_name as first_name', 'trainee_last_name as last_name', 'trainee_condition as condition')
+                ->orderBy('trainee_first_name');
+
+            $trainees = $query->get();
+            
+            // If category is provided, filter trainees by condition appropriateness
+            if ($categoryId) {
+                $category = Category::find($categoryId);
+                if ($category) {
+                    $conditionMapping = $this->getConditionActivityMapping();
+                    $categoryName = $category->category_name;
+                    
+                    $trainees = $trainees->filter(function ($trainee) use ($conditionMapping, $categoryName) {
+                        $condition = $trainee->condition;
+                        return isset($conditionMapping[$condition]) && 
+                               in_array($categoryName, $conditionMapping[$condition]);
+                    });
+                }
+            }
+
+            // Format the response to include full name and appropriateness indicator
+            $trainees = $trainees->map(function ($trainee) {
+                return [
+                    'id' => $trainee->id,
+                    'name' => trim($trainee->first_name . ' ' . $trainee->last_name),
+                    'condition' => $trainee->condition
+                ];
+            });
+
+            return response()->json($trainees->values()); // values() resets array keys
+
+        } catch (Exception $e) {
+            Log::error('Error fetching filtered trainees: ' . $e->getMessage());
             return response()->json([], 500);
         }
     }
@@ -2113,4 +2242,142 @@ class ActivityController extends Controller
                 ->count() > 0;
         })->count();
     }
+    
+    /**
+     * Check for scheduling conflicts during activity creation
+     */
+    public function checkScheduleConflicts(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'instructor_id' => 'required|exists:users,id',
+                'schedule_days' => 'required|array',
+                'start_time' => 'required|date_format:H:i',
+                'duration_hours' => 'required|numeric|min:0.5|max:8',
+                'start_date' => 'required|date|after_or_equal:today',
+                'location' => 'nullable|string',
+                'participants' => 'nullable|array',
+                'participants.*' => 'exists:trainees,trainee_id'
+            ]);
+
+            $conflicts = [];
+            $hasConflicts = false;
+
+            // Calculate end time
+            $startTime = Carbon::parse($validated['start_time']);
+            $endTime = $startTime->copy()->addHours($validated['duration_hours']);
+
+            // Get start date for the activity
+            $startDate = Carbon::parse($validated['start_date']);
+
+            // Check conflicts for each scheduled day
+            foreach ($validated['schedule_days'] as $dayOfWeek) {
+                // Find the first occurrence of this day from start date
+                $nextOccurrence = $startDate->copy();
+                while ($nextOccurrence->format('l') !== $dayOfWeek) {
+                    $nextOccurrence->addDay();
+                }
+
+                // Check instructor conflicts using ActivitySessions
+                $instructorConflicts = ActivitySession::whereHas('activity', function ($query) use ($validated) {
+                        $query->where('instructor_id', $validated['instructor_id'])
+                              ->where('activity_status', '!=', 'cancelled');
+                    })
+                    ->where('day_of_week', $dayOfWeek)
+                    ->whereIn('status', ['scheduled', 'ongoing'])
+                    ->with('activity')
+                    ->get();
+
+                foreach ($instructorConflicts as $session) {
+                    $existingStart = Carbon::parse($session->start_time);
+                    $existingEnd = Carbon::parse($session->end_time);
+                    
+                    if ($this->timesOverlap($startTime, $endTime, $existingStart, $existingEnd)) {
+                        $hasConflicts = true;
+                        $conflicts[] = [
+                            'type' => 'instructor',
+                            'day' => $dayOfWeek,
+                            'message' => "Instructor conflict on {$dayOfWeek}: Already scheduled for '{$session->activity->activity_name}' from {$existingStart->format('g:i A')} to {$existingEnd->format('g:i A')}"
+                        ];
+                    }
+                }
+
+                // Check location conflicts if location is specified
+                if (!empty($validated['location'])) {
+                    $locationConflicts = ActivitySession::whereHas('activity', function ($query) use ($validated) {
+                            $query->where('activity_location', $validated['location'])
+                                  ->where('activity_status', '!=', 'cancelled');
+                        })
+                        ->where('day_of_week', $dayOfWeek)
+                        ->whereIn('status', ['scheduled', 'ongoing'])
+                        ->with('activity')
+                        ->get();
+
+                    foreach ($locationConflicts as $session) {
+                        $existingStart = Carbon::parse($session->start_time);
+                        $existingEnd = Carbon::parse($session->end_time);
+                        
+                        if ($this->timesOverlap($startTime, $endTime, $existingStart, $existingEnd)) {
+                            $hasConflicts = true;
+                            $conflicts[] = [
+                                'type' => 'location',
+                                'day' => $dayOfWeek,
+                                'message' => "Location conflict on {$dayOfWeek}: {$validated['location']} is already booked for '{$session->activity->activity_name}' from {$existingStart->format('g:i A')} to {$existingEnd->format('g:i A')}"
+                            ];
+                        }
+                    }
+                }
+
+                // Check participant conflicts if participants are specified
+                if (!empty($validated['participants'])) {
+                    foreach ($validated['participants'] as $traineeId) {
+                        $participantConflicts = SessionEnrollment::whereHas('session', function ($query) use ($dayOfWeek) {
+                                $query->where('day_of_week', $dayOfWeek)
+                                      ->whereIn('status', ['scheduled', 'ongoing']);
+                            })
+                            ->whereHas('session.activity', function ($query) {
+                                $query->where('activity_status', '!=', 'cancelled');
+                            })
+                            ->where('trainee_id', $traineeId)
+                            ->with(['session.activity'])
+                            ->get();
+
+                        foreach ($participantConflicts as $enrollment) {
+                            $session = $enrollment->session;
+                            $existingStart = Carbon::parse($session->start_time);
+                            $existingEnd = Carbon::parse($session->end_time);
+                            
+                            if ($this->timesOverlap($startTime, $endTime, $existingStart, $existingEnd)) {
+                                $hasConflicts = true;
+                                $trainee = Trainee::find($traineeId);
+                                $traineeName = $trainee ? $trainee->trainee_first_name . ' ' . $trainee->trainee_last_name : "Trainee #{$traineeId}";
+                                
+                                $conflicts[] = [
+                                    'type' => 'participant',
+                                    'day' => $dayOfWeek,
+                                    'trainee_id' => $traineeId,
+                                    'message' => "Participant conflict on {$dayOfWeek}: {$traineeName} is already enrolled in '{$session->activity->activity_name}' from {$existingStart->format('g:i A')} to {$existingEnd->format('g:i A')}"
+                                ];
+                            }
+                        }
+                    }
+                }
+            }
+
+            return response()->json([
+                'hasConflicts' => $hasConflicts,
+                'conflicts' => $conflicts,
+                'summary' => $hasConflicts ? count($conflicts) . ' conflict(s) detected' : 'No conflicts detected'
+            ]);
+
+        } catch (Exception $e) {
+            Log::error('Error checking schedule conflicts: ' . $e->getMessage());
+            return response()->json([
+                'error' => 'Unable to check conflicts. Please try again.',
+                'hasConflicts' => false,
+                'conflicts' => []
+            ], 500);
+        }
+    }
+
 }

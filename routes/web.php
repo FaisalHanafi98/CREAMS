@@ -314,6 +314,14 @@ Route::middleware(['auth', 'validate.params'])->group(function () {
     // General centre assets route
     Route::get('/centre/assets', [AssetController::class, 'index'])->name('centre.assets');
 
+    // Staff Daily Attendance Management (must be BEFORE generic {id} routes)
+    Route::prefix('centres/attendance')->name('centres.attendance.')->middleware(['enhanced.auth'])->group(function () {
+        Route::get('/', [StaffAttendanceController::class, 'index'])->name('index');
+        Route::post('/mark', [StaffAttendanceController::class, 'markAttendance'])->name('mark');
+        Route::get('/user/{userId}', [StaffAttendanceController::class, 'getUserAttendance'])->name('user');
+        Route::get('/status/{userId}', [StaffAttendanceController::class, 'getTodayStatus'])->name('status');
+    });
+
     // Centre
     Route::prefix('centres')->name('centres.')->middleware(['centre.access:centre'])->group(function () {
         Route::get('/home', [CentreController::class, 'index'])->name('index');
@@ -396,13 +404,6 @@ Route::middleware(['auth', 'validate.params'])->group(function () {
         Route::post('/export', [App\Http\Controllers\Activity\AttendanceController::class, 'export'])->name('export');
     });
 
-    // Staff Daily Attendance Management (moved under centres)
-    Route::prefix('centres/attendance')->name('centres.attendance.')->middleware(['enhanced.auth'])->group(function () {
-        Route::get('/', [StaffAttendanceController::class, 'index'])->name('index');
-        Route::post('/mark', [StaffAttendanceController::class, 'markAttendance'])->name('mark');
-        Route::get('/user/{userId}', [StaffAttendanceController::class, 'getUserAttendance'])->name('user');
-        Route::get('/status/{userId}', [StaffAttendanceController::class, 'getTodayStatus'])->name('status');
-    });
     
     // Legacy staff-attendance routes (backward compatibility redirects)
     Route::prefix('staff-attendance')->middleware(['enhanced.auth'])->group(function () {
@@ -701,11 +702,13 @@ Route::prefix('parent')->middleware(['auth', 'role:parent'])->group(function () 
 Route::middleware(['auth'])->prefix('api')->name('api.')->group(function () {
     Route::get('/activities', [ActivityController::class, 'apiIndex'])->name('activities');
     Route::get('/activities/categories', [ActivityController::class, 'getCategories'])->name('activities.categories');
+    Route::post('/activities/check-conflicts', [ActivityController::class, 'checkScheduleConflicts'])->name('activities.check-conflicts');
     Route::get('/assets', [AssetController::class, 'getAssetsJson'])->name('assets');
     
     // Centre-based API endpoints for activity creation
     Route::get('/centres/{centreId}/instructors', [ActivityController::class, 'getInstructors'])->name('centres.instructors');
     Route::get('/centres/{centreId}/trainees', [ActivityController::class, 'getTrainees'])->name('centres.trainees');
+    Route::get('/centres/{centreId}/trainees/filtered/{categoryId?}', [ActivityController::class, 'getFilteredTrainees'])->name('centres.trainees.filtered');
 });
 
 /*

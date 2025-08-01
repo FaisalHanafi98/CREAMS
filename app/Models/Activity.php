@@ -20,6 +20,7 @@ class Activity extends Model
         'start_date',
         'end_date',
         'sessions_per_week',
+        'activity_period',
         'pass_threshold',
         'is_active',
         'activity_start_time',

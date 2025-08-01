@@ -18,50 +18,56 @@ class StaffAttendanceController extends Controller
     public function index(Request $request)
     {
         try {
-            // Get current user's centre for data isolation
-            $centreId = $request->get('centre') ?? session('centre_id');
+            // Auto-select Gombak centre (01) by default, but allow switching
+            $selectedCentreId = $request->get('centre') ?? '01'; // Default to Gombak
             $userRole = session('role');
             $userId = session('id');
 
-            // Determine which users to show based on role
-            $query = User::query();
-            
-            if ($userRole === 'admin') {
-                // Admin can see all users, filter by centre if specified
-                if ($centreId) {
-                    $query->where('centre_id', $centreId);
-                } else {
-                    $query->whereNotNull('id');
-                }
-            } elseif ($userRole === 'supervisor') {
-                // Supervisor can see users in their centre or specified centre
-                $query->where('centre_id', $centreId);
-            } else {
-                // Teachers and AJK can only see themselves
-                $query->where('id', $userId);
-            }
+            // Get all centres for navigation
+            $centres = Centre::where('centre_status', 'active')->orderBy('centre_name')->get();
+            $selectedCentre = Centre::find($selectedCentreId);
 
-            $users = $query->with(['staffAttendances' => function($q) {
+            // Get staff for the selected centre
+            $staffQuery = User::where('centre_id', $selectedCentreId)
+                ->whereIn('role', ['admin', 'supervisor', 'teacher', 'ajk']);
+            
+            $staff = $staffQuery->with(['staffAttendances' => function($q) {
                 $q->whereDate('attendance_date', Carbon::today())
                   ->orderBy('attendance_time', 'desc');
             }])->get();
 
-            // Get today's attendance summary
-            $todayAttendanceQuery = StaffAttendance::whereDate('attendance_date', Carbon::today());
-            
-            if ($userRole !== 'admin' && $centreId) {
-                $todayAttendanceQuery->where('centre_id', $centreId);
-            }
-            
-            $todayAttendance = $todayAttendanceQuery
+            // Get trainees for the selected centre
+            $trainees = \App\Models\Trainee::where('centre_id', $selectedCentreId)
+                ->with(['attendances' => function($q) {
+                    $q->whereDate('date', Carbon::today());
+                }])
+                ->get();
+
+            // Get today's staff attendance summary
+            $todayStaffAttendance = StaffAttendance::whereDate('attendance_date', Carbon::today())
+                ->whereHas('user', function($q) use ($selectedCentreId) {
+                    $q->where('centre_id', $selectedCentreId);
+                })
                 ->with(['user', 'markedBy'])
                 ->orderBy('attendance_time', 'desc')
-                ->get() ?? collect([]);
+                ->get();
 
-            // Get attendance statistics
-            $stats = $this->getAttendanceStatistics($centreId, $userRole);
+            // Get attendance statistics for the selected centre
+            $stats = $this->getAttendanceStatistics($selectedCentreId, $userRole);
+            
+            // Add trainee statistics
+            $traineeStats = $this->getTraineeAttendanceStatistics($selectedCentreId);
 
-            return view('attendance.staffdashboard', compact('users', 'todayAttendance', 'stats'));
+            return view('attendance.dashboard', compact(
+                'staff', 
+                'trainees', 
+                'centres', 
+                'selectedCentre', 
+                'selectedCentreId',
+                'todayStaffAttendance', 
+                'stats',
+                'traineeStats'
+            ));
 
         } catch (\Exception $e) {
             Log::error('Error loading staff attendance dashboard', [
@@ -317,7 +323,31 @@ class StaffAttendanceController extends Controller
 
 
     /**
-     * Get attendance statistics
+     * Get trainee attendance statistics
+     */
+    private function getTraineeAttendanceStatistics($centreId)
+    {
+        $today = Carbon::today();
+        
+        $totalTrainees = \App\Models\Trainee::where('centre_id', $centreId)->count();
+        
+        $todayAttendance = \App\Models\Attendance::whereDate('date', $today)
+            ->whereHas('trainee', function($q) use ($centreId) {
+                $q->where('centre_id', $centreId);
+            })
+            ->get();
+
+        return [
+            'total_trainees' => $totalTrainees,
+            'today_present' => $todayAttendance->where('status', 'present')->count(),
+            'today_absent' => $todayAttendance->where('status', 'absent')->count(),
+            'today_late' => $todayAttendance->where('status', 'late')->count(),
+            'today_excused' => $todayAttendance->where('status', 'excused')->count(),
+        ];
+    }
+
+    /**
+     * Get staff attendance statistics
      */
     private function getAttendanceStatistics($centreId, $userRole)
     {
