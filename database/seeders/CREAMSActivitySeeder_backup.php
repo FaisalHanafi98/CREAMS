@@ -1,0 +1,678 @@
+<?php
+
+namespace Database\Seeders;
+
+use Illuminate\Database\Seeder;
+use App\Models\Activity;
+use App\Models\ActivitySession;
+use App\Models\ActivityEnrollment;
+use App\Models\Trainee;
+use App\Models\User;
+use App\Models\Category;
+use App\Models\Centre;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
+
+class CREAMSActivitySeeder extends Seeder
+{
+    /**
+     * Activity templates for 100 different activities
+     */
+    private array $activityTemplates = [
+        // Rehabilitation Activities (25)
+        'rehabilitation' => [
+            'Speech Therapy - Basic Communication',
+            'Speech Therapy - Articulation Training',
+            'Speech Therapy - Language Development',
+            'Speech Therapy - Voice Training',
+            'Speech Therapy - Swallowing Therapy',
+            'Occupational Therapy - Fine Motor Skills',
+            'Occupational Therapy - Daily Living Skills',
+            'Occupational Therapy - Cognitive Training',
+            'Occupational Therapy - Sensory Processing',
+            'Occupational Therapy - Hand-Eye Coordination',
+            'Physical Therapy - Gross Motor Development',
+            'Physical Therapy - Balance and Coordination',
+            'Physical Therapy - Strength Training',
+            'Physical Therapy - Gait Training',
+            'Physical Therapy - Flexibility Exercises',
+            'Behavioral Therapy - Social Skills Training',
+            'Behavioral Therapy - Anger Management',
+            'Behavioral Therapy - Self-Regulation',
+            'Behavioral Therapy - Communication Skills',
+            'Behavioral Therapy - Adaptive Behavior',
+            'Sensory Integration - Tactile Stimulation',
+            'Sensory Integration - Vestibular Training',
+            'Sensory Integration - Proprioceptive Activities',
+            'Sensory Integration - Auditory Processing',
+            'Sensory Integration - Visual Processing'
+        ],
+        
+        // Academic Activities (25)  
+        'academic' => [
+            'Mathematics - Basic Counting',
+            'Mathematics - Addition and Subtraction',
+            'Mathematics - Multiplication Tables',
+            'Mathematics - Problem Solving',
+            'Mathematics - Geometry Basics',
+            'Literacy - Phonics Training',
+            'Literacy - Reading Comprehension',
+            'Literacy - Writing Skills',
+            'Literacy - Vocabulary Building',
+            'Literacy - Story Telling',
+            'Science - Nature Exploration',
+            'Science - Simple Experiments',
+            'Science - Weather Learning',
+            'Science - Animal Studies',
+            'Science - Plant Life Cycles',
+            'Computer Skills - Basic Mouse Training',
+            'Computer Skills - Keyboard Practice',
+            'Computer Skills - Educational Games',
+            'Computer Skills - Drawing Software',
+            'Computer Skills - Internet Safety',
+            'Life Skills - Personal Hygiene',
+            'Life Skills - Money Management',
+            'Life Skills - Time Management',
+            'Life Skills - Cooking Basics',
+            'Life Skills - Safety Awareness'
+        ],
+        
+        // Creative & Social Activities (25)
+        'creative_social' => [
+            'Art & Creativity - Painting Workshop',
+            'Art & Creativity - Clay Modeling',
+            'Art & Creativity - Collage Making',
+            'Art & Creativity - Drawing Techniques',
+            'Art & Creativity - Craft Projects',
+            'Music Therapy - Rhythm Training',
+            'Music Therapy - Singing Sessions',
+            'Music Therapy - Instrument Playing',
+            'Music Therapy - Movement to Music',
+            'Music Therapy - Music Appreciation',
+            'Social Skills - Friendship Building',
+            'Social Skills - Group Interaction',
+            'Social Skills - Conflict Resolution',
+            'Social Skills - Communication Practice',
+            'Social Skills - Teamwork Activities',
+            'Recreational Therapy - Indoor Games',
+            'Recreational Therapy - Outdoor Activities',
+            'Recreational Therapy - Sports Training',
+            'Recreational Therapy - Dance Movement',
+            'Recreational Therapy - Gardening',
+            'Drama Therapy - Role Playing',
+            'Drama Therapy - Expression Training',
+            'Drama Therapy - Storytelling',
+            'Drama Therapy - Confidence Building',
+            'Drama Therapy - Creative Expression'
+        ],
+        
+        // Faith-Based Activities (25)
+        'faith' => [
+            'Pembelajaran Solat - Rukun Solat',
+            'Pembelajaran Solat - Wudhu Training',
+            'Pembelajaran Solat - Bacaan Solat',
+            'Pembelajaran Solat - Gerakan Solat',
+            'Pembelajaran Solat - Doa Selepas Solat',
+            'Tilawah Al-Quran - Huruf Hijaiyah',
+            'Tilawah Al-Quran - Bacaan Surah Pendek',
+            'Tilawah Al-Quran - Tajwid Asas',
+            'Tilawah Al-Quran - Hafazan Surah',
+            'Tilawah Al-Quran - Fahaman Al-Quran',
+            'Adab dan Akhlak - Sopan Santun',
+            'Adab dan Akhlak - Hormat Menghormati',
+            'Adab dan Akhlak - Tolong Menolong',
+            'Adab dan Akhlak - Kejujuran',
+            'Adab dan Akhlak - Kasih Sayang',
+            'Sejarah Islam - Kisah Nabi',
+            'Sejarah Islam - Sahabat Nabi',
+            'Sejarah Islam - Peristiwa Penting',
+            'Sejarah Islam - Nilai Murni',
+            'Sejarah Islam - Teladan Hidup',
+            'Doa dan Zikir - Doa Harian',
+            'Doa dan Zikir - Zikir Asas',
+            'Doa dan Zikir - Doa Makan',
+            'Doa dan Zikir - Doa Tidur',
+            'Doa dan Zikir - Istighfar dan Tasbih'
+        ]
+    ];
+
+    /**
+     * Time slots based on centre opening time + 30 minutes for first session
+     */
+    private array $timeSlots = [
+        ['start' => '09:30', 'end' => '10:30'], // 30 min after 9AM opening
+        ['start' => '10:30', 'end' => '11:30'],
+        ['start' => '11:30', 'end' => '12:30'],
+        ['start' => '14:00', 'end' => '15:00'], // After lunch
+        ['start' => '15:00', 'end' => '16:00'],
+        ['start' => '16:00', 'end' => '17:00'],
+    ];
+
+    /**
+     * Session duration ranges for different activity types (in minutes)
+     */
+    private array $sessionDurations = [
+        'rehabilitation' => [30, 45, 60], // Individual therapy sessions
+        'academic' => [45, 60, 90], // Learning sessions  
+        'creative_social' => [60, 90, 120], // Group activities
+        'faith' => [30, 45, 60] // Religious learning
+    ];
+
+    /**
+     * Venues for activities
+     */
+    private array $venues = [
+        'Bilik Terapi Pertuturan',
+        'Bilik Terapi Okupasi', 
+        'Bilik Fisioterapi',
+        'Bilik Integrasi Sensori',
+        'Bilik Aktiviti Kumpulan',
+        'Makmal Komputer',
+        'Bilik Kemahiran Hidup',
+        'Bilik Seni',
+        'Bilik Muzik',
+        'Dewan Serbaguna',
+        'Taman Sensori',
+        'Bengkel Vokasional'
+    ];
+
+    public function run(): void
+    {
+        $this->command->info('🎯 Creating 100 Activities with 300 Sessions for CREAMS System...');
+
+        // Get all categories, centres, users, and trainees
+        $categories = Category::all()->keyBy('category_type');
+        $centres = Centre::all();
+        $users = User::whereIn('role', ['admin', 'supervisor', 'teacher'])->get();
+        $trainees = Trainee::all();
+        
+        if ($centres->isEmpty() || $users->isEmpty()) {
+            $this->command->error('No centres or users found! Please run centre and user seeders first.');
+            return;
+        }
+
+        // Step 1: Create 100 Activities (25 per category)
+        $this->command->info('🏗️ Creating 100 diverse activities...');
+        $activities = $this->createActivities($categories, $centres, $users);
+        
+        // Step 2: Create 300 Sessions (150 ongoing, 150 starting)
+        $this->command->info('📅 Creating 300 sessions (150 ongoing, 150 starting)...');
+        $sessions = $this->createSessions($activities, $centres);
+        
+        // Step 3: Enroll trainees in sessions
+        if (!$trainees->isEmpty()) {
+            $this->command->info('👥 Enrolling trainees in activities...');
+            $enrollments = $this->createEnrollments($sessions, $trainees);
+        }
+
+        $this->showCompletionSummary(count($activities), count($sessions));
+    }
+
+    private function createActivities($categories, $centres, $users): array
+    {
+        $activities = [];
+        $activityCounter = 1;
+
+        foreach ($this->activityTemplates as $categoryType => $activityList) {
+            $category = $categories->get($categoryType);
+            if (!$category) continue;
+
+            foreach ($activityList as $activityName) {
+                $centre = $centres->random();
+                $instructor = $users->random();
+                
+                $activityId = $this->generateActivityId($categoryType, $activityCounter);
+                
+                $activity = Activity::create([
+                    'activity_id' => $activityId,
+                    'activity_name' => $activityName,
+                    'activity_description' => $this->generateActivityDescription($activityName),
+                    'activity_type' => $this->getActivityType($activityName),
+                    'activity_date' => Carbon::now()->subDays(rand(30, 90)),
+                    'start_date' => Carbon::now()->subDays(rand(30, 90)),
+                    'end_date' => Carbon::now()->addDays(rand(60, 180)),
+                    'sessions_per_week' => rand(1, 3),
+                    'activity_period' => rand(3, 12),
+                    'activity_start_time' => $this->getRandomTime(),
+                    'activity_end_time' => $this->getRandomEndTime(),
+                    'activity_location' => $this->getVenueForCategory($categoryType),
+                    'max_participants' => $this->getMaxParticipants($categoryType),
+                    'current_participants' => 0,
+                    'activity_goals' => $this->generateActivityGoals($activityName),
+                    'activity_outcomes' => $this->generateActivityOutcomes($activityName),
+                    'required_resources' => $this->generateRequiredResources($activityName),
+                    'activity_status' => 'scheduled',
+                    'centre_id' => $centre->centre_id,
+                    'category_id' => $category->id,
+                    'created_by' => $instructor->id,
+                    'instructor_id' => $instructor->id,
+                    'times_conducted' => 0,
+                    'is_active' => true
+                ]);
+
+                $activities[] = $activity;
+                $activityCounter++;
+                
+                if ($activityCounter % 10 == 0) {
+                    $this->command->line("   Created {$activityCounter} activities...");
+                }
+            }
+        }
+
+        return $activities;
+    }
+
+    private function selectDayForActivity(Activity $activity): string
+    {
+        // Distribute activities across weekdays
+        // Therapy sessions typically in the morning, group activities in afternoon
+        $dayDistribution = match($activity->category) {
+            'Speech Therapy', 'Occupational Therapy', 'Physical Therapy' => 
+                ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
+            'Behavioral Therapy', 'Sensory Integration' => 
+                ['Monday', 'Tuesday', 'Wednesday', 'Thursday'],
+            'Social Skills', 'Art & Creativity', 'Music Therapy' => 
+                ['Tuesday', 'Wednesday', 'Thursday', 'Friday'],
+            'Mathematics', 'Literacy', 'Computer Skills' => 
+                ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
+            'Life Skills', 'Vocational Training' => 
+                ['Wednesday', 'Thursday', 'Friday'],
+            default => $this->daysOfWeek
+        };
+
+        return $dayDistribution[array_rand($dayDistribution)];
+    }
+
+    private function selectTimeSlotForActivity(Activity $activity): array
+    {
+        // Morning slots for therapy, afternoon for group activities
+        if (in_array($activity->category, ['Speech Therapy', 'Occupational Therapy', 'Physical Therapy', 'Sensory Integration'])) {
+            // Therapy sessions: 8AM-12PM
+            $morningSlots = array_slice($this->timeSlots, 0, 4);
+            return $morningSlots[array_rand($morningSlots)];
+        } elseif (in_array($activity->category, ['Social Skills', 'Art & Creativity', 'Music Therapy', 'Life Skills'])) {
+            // Group activities: 2PM-5PM
+            $afternoonSlots = array_slice($this->timeSlots, 4);
+            return $afternoonSlots[array_rand($afternoonSlots)];
+        } else {
+            // Academic subjects: spread throughout the day
+            return $this->timeSlots[array_rand($this->timeSlots)];
+        }
+    }
+
+    private function selectVenueForActivity(Activity $activity): string
+    {
+        $venueMapping = [
+            'Speech Therapy' => 'Bilik Terapi Pertuturan / Speech Therapy Room',
+            'Occupational Therapy' => 'Bilik Terapi Okupasi / Occupational Therapy Room',
+            'Physical Therapy' => 'Bilik Fisioterapi / Physiotherapy Room',
+            'Sensory Integration' => 'Bilik Integrasi Sensori / Sensory Integration Room',
+            'Behavioral Therapy' => 'Bilik Aktiviti Kumpulan / Group Activity Room',
+            'Social Skills' => 'Bilik Aktiviti Kumpulan / Group Activity Room',
+            'Art & Creativity' => 'Bilik Seni / Art Room',
+            'Music Therapy' => 'Bilik Muzik / Music Room',
+            'Computer Skills' => 'Makmal Komputer / Computer Lab',
+            'Life Skills' => 'Bilik Kemahiran Hidup / Life Skills Room',
+            'Vocational Training' => 'Bengkel Vokasional / Vocational Workshop',
+            'Mathematics' => 'Bilik Aktiviti Kumpulan / Group Activity Room',
+            'Literacy' => 'Bilik Aktiviti Kumpulan / Group Activity Room',
+        ];
+
+        return $venueMapping[$activity->category] ?? $this->venues[array_rand($this->venues)];
+    }
+
+    private function generateRoomNumber(): string
+    {
+        $letters = ['A', 'B', 'C', 'D'];
+        $letter = $letters[array_rand($letters)];
+        $number = rand(101, 350);
+        return "{$letter}{$number}";
+    }
+
+    private function createSessionsForActivity(Activity $activity, ActivitySchedule $schedule): array
+    {
+        $sessions = [];
+        $startDate = Carbon::now()->subMonths(3)->startOfWeek();
+        $endDate = Carbon::now()->addMonths(2)->endOfWeek();
+
+        // Find all occurrences of the scheduled day between start and end dates
+        $dayOfWeek = $schedule->recurrence_pattern['day_of_week'] ?? 'Monday';
+        $current = $startDate->copy();
+        while ($current <= $endDate) {
+            if ($current->format('l') === $dayOfWeek) {
+                $sessionDate = $current->copy();
+                
+                // Determine session status based on date
+                $status = $this->getSessionStatus($sessionDate);
+                
+                // Skip some sessions randomly (holidays, cancellations, etc.)
+                if (rand(1, 100) <= 85) { // 85% of sessions actually happen
+                    $session = $this->createSession($activity, $schedule, $sessionDate, $status);
+                    $sessions[] = $session;
+                }
+            }
+            $current->addDay();
+        }
+
+        return $sessions;
+    }
+
+    private function getSessionStatus(Carbon $date): string
+    {
+        $now = Carbon::now();
+        
+        if ($date < $now->copy()->subWeek()) {
+            return 'completed';
+        } elseif ($date < $now) {
+            return rand(1, 100) <= 90 ? 'completed' : 'cancelled';
+        } else {
+            return 'scheduled';
+        }
+    }
+
+    private function createSession(Activity $activity, ActivitySchedule $schedule, Carbon $date, string $status): ActivitySession
+    {
+        // Generate unique session ID
+        $sessionId = 'SES-' . $activity->id . '-' . $date->format('Ymd') . '-' . substr(uniqid(), -4);
+        
+        $session = ActivitySession::create([
+            'activity_id' => $activity->id,
+            'session_id' => $sessionId,
+            'teacher_id' => $activity->created_by,
+            'instructor_id' => $activity->created_by,
+            'session_date' => $date->format('Y-m-d'),
+            'scheduled_date' => $date->format('Y-m-d'),
+            'session_name' => $activity->name . ' - ' . $date->format('M d'),
+            'start_time' => $schedule->start_time,
+            'end_time' => $schedule->end_time,
+            'session_start_time' => $schedule->start_time,
+            'session_end_time' => $schedule->end_time,
+            'venue' => $schedule->location,
+            'session_location' => $schedule->location,
+            'max_participants' => $activity->max_participants,
+            'current_participants' => 0, // Will be updated when enrollments are created
+            'status' => $status,
+            'session_status' => $status,
+            'notes' => $this->generateSessionNotes($activity, $status),
+            'session_notes' => $this->generateSessionNotes($activity, $status),
+            'attendance_marked' => $status === 'completed',
+            'session_materials' => $status !== 'cancelled' ? $activity->required_materials : [],
+            'created_at' => $date->copy()->subDays(rand(1, 7)),
+        ]);
+
+        return $session;
+    }
+
+    private function generateSessionNotes(Activity $activity, string $status): ?string
+    {
+        if ($status === 'cancelled') {
+            $reasons = [
+                'Cuti sekolah / School holiday',
+                'Juruterapi tidak hadir / Therapist absent',
+                'Peralatan rosak / Equipment malfunction',
+                'Cuaca buruk / Bad weather',
+                'Aktiviti kecemasan / Emergency activity'
+            ];
+            return $reasons[array_rand($reasons)];
+        }
+
+        $notes = [
+            'Sesi berjalan lancar. Semua peserta aktif terlibat. / Session went smoothly. All participants actively engaged.',
+            'Beberapa peserta menunjukkan kemajuan yang baik. / Several participants showed good progress.',
+            'Perlu lebih fokus pada kemahiran tertentu minggu depan. / Need more focus on specific skills next week.',
+            'Peserta sangat responsif hari ini. / Participants were very responsive today.',
+            'Aktiviti disesuaikan mengikut keperluan kumpulan. / Activity adapted according to group needs.'
+        ];
+
+        return $notes[array_rand($notes)];
+    }
+
+    private function generateSessionReport(Activity $activity): string
+    {
+        $templates = [
+            'Speech Therapy' => 'Peserta menunjukkan peningkatan dalam artikulasi dan komunikasi. Objektif sesi tercapai dengan baik.',
+            'Occupational Therapy' => 'Kemahiran motor halus peserta bertambah baik. Latihan koordinasi mata-tangan memberikan hasil positif.',
+            'Physical Therapy' => 'Kekuatan dan keseimbangan peserta menunjukkan penambahbaikan. Aktiviti mobiliti berjaya dilaksanakan.',
+            'Behavioral Therapy' => 'Tingkah laku positif peserta semakin konsisten. Strategi pengurusan tingkah laku berkesan.',
+            'Social Skills' => 'Interaksi sosial peserta bertambah baik. Aktiviti kumpulan mencapai objektif yang ditetapkan.',
+            'Mathematics' => 'Pemahaman konsep matematik asas peserta bertambah baik. Kemajuan yang memberangsangkan.',
+            'Literacy' => 'Kemahiran membaca dan menulis peserta menunjukkan peningkatan yang ketara.',
+            'Life Skills' => 'Kemandirian peserta dalam aktiviti harian semakin meningkat.',
+            'Art & Creativity' => 'Kreativiti dan ekspresi diri peserta berkembang dengan baik melalui aktiviti seni.',
+            'Music Therapy' => 'Respons peserta terhadap aktiviti muzik sangat positif. Kemahiran komunikasi bertambah baik.'
+        ];
+
+        return $templates[$activity->category] ?? 'Sesi berjalan dengan baik dan objektif tercapai.';
+    }
+
+    private function createEnrollmentsForActivity(Activity $activity, array $sessions, $trainees): int
+    {
+        if (empty($sessions)) {
+            return 0;
+        }
+
+        // Filter trainees appropriate for this activity
+        $appropriateTrainees = $this->filterAppropriateTrainees($activity, $trainees);
+        
+        if ($appropriateTrainees->isEmpty()) {
+            return 0;
+        }
+
+        // Determine number of trainees to enroll (based on activity type and capacity)
+        $enrollmentCount = $this->getEnrollmentCount($activity, $appropriateTrainees->count());
+        
+        // Select random trainees to enroll
+        $selectedTrainees = $appropriateTrainees->random(min($enrollmentCount, $appropriateTrainees->count()));
+        
+        $totalEnrollments = 0;
+
+        foreach ($selectedTrainees as $trainee) {
+            // Enroll in individual sessions
+            foreach ($sessions as $session) {
+                $this->enrollTraineeInSession($session, $trainee);
+                $totalEnrollments++;
+            }
+        }
+
+        // Update participant count for sessions
+        foreach ($sessions as $session) {
+            $session->update([
+                'current_participants' => SessionEnrollment::where('session_id', $session->id)->count()
+            ]);
+        }
+
+        return $totalEnrollments;
+    }
+
+    private function filterAppropriateTrainees(Activity $activity, $trainees)
+    {
+        return $trainees->filter(function ($trainee) use ($activity) {
+            // Age appropriateness
+            $age = Carbon::parse($trainee->trainee_date_of_birth)->age;
+            $ageRange = explode('-', explode(' ', $activity->age_group)[0]);
+            $minAge = (int)$ageRange[0];
+            $maxAge = isset($ageRange[1]) ? (int)$ageRange[1] : 18;
+            
+            if ($age < $minAge || $age > $maxAge) {
+                return false;
+            }
+
+            // Condition appropriateness
+            $appropriateConditions = $this->getAppropriateConditions($activity);
+            return in_array($trainee->trainee_condition, $appropriateConditions);
+        });
+    }
+
+    private function getAppropriateConditions(Activity $activity): array
+    {
+        $conditionMapping = [
+            'Speech Therapy' => ['Autism Spectrum Disorder', 'Speech and Language Disorder', 'Down Syndrome', 'Cerebral Palsy'],
+            'Occupational Therapy' => ['Cerebral Palsy', 'Autism Spectrum Disorder', 'Down Syndrome', 'Physical Disability'],
+            'Physical Therapy' => ['Cerebral Palsy', 'Physical Disability', 'Down Syndrome'],
+            'Behavioral Therapy' => ['Autism Spectrum Disorder', 'ADHD', 'Intellectual Disability'],
+            'Sensory Integration' => ['Autism Spectrum Disorder', 'ADHD', 'Sensory Processing Disorder'],
+            'Social Skills' => ['Autism Spectrum Disorder', 'ADHD', 'Learning Disability', 'Intellectual Disability'],
+            'Mathematics' => ['Learning Disability', 'Intellectual Disability', 'ADHD', 'Down Syndrome'],
+            'Literacy' => ['Learning Disability', 'Intellectual Disability', 'Speech and Language Disorder'],
+            'Computer Skills' => ['Learning Disability', 'Intellectual Disability', 'Physical Disability'],
+            'Life Skills' => ['Intellectual Disability', 'Down Syndrome', 'Autism Spectrum Disorder', 'Cerebral Palsy'],
+            'Vocational Training' => ['Intellectual Disability', 'Learning Disability', 'Physical Disability'],
+            'Art & Creativity' => ['All conditions'],
+            'Music Therapy' => ['All conditions'],
+        ];
+
+        $appropriate = $conditionMapping[$activity->category] ?? ['All conditions'];
+        
+        if (in_array('All conditions', $appropriate)) {
+            return [
+                'Autism Spectrum Disorder', 'Cerebral Palsy', 'Down Syndrome', 
+                'Intellectual Disability', 'ADHD', 'Learning Disability', 
+                'Speech and Language Disorder', 'Physical Disability'
+            ];
+        }
+
+        return $appropriate;
+    }
+
+    private function getEnrollmentCount(Activity $activity, int $availableTrainees): int
+    {
+        $maxParticipants = $activity->max_participants;
+        $minParticipants = $activity->min_participants;
+        
+        // Target 70-90% capacity for group activities, 80-100% for individual
+        if ($activity->activity_type === 'Individual') {
+            return min(rand($minParticipants, $maxParticipants), $availableTrainees);
+        } else {
+            $targetMin = max($minParticipants, (int)($maxParticipants * 0.7));
+            $targetMax = (int)($maxParticipants * 0.9);
+            return min(rand($targetMin, $targetMax), $availableTrainees);
+        }
+    }
+
+    private function generateEnrollmentGoals(Activity $activity, Trainee $trainee): string
+    {
+        $goalTemplates = [
+            'Speech Therapy' => 'Meningkatkan kemahiran komunikasi dan pertuturan yang jelas.',
+            'Occupational Therapy' => 'Meningkatkan kemahiran motor halus dan kemandirian dalam aktiviti harian.',
+            'Physical Therapy' => 'Meningkatkan kekuatan, keseimbangan, dan mobiliti.',
+            'Behavioral Therapy' => 'Mengurangkan tingkah laku mencabar dan meningkatkan kemahiran sosial.',
+            'Social Skills' => 'Meningkatkan kemahiran berinteraksi dan berkomunikasi dengan rakan sebaya.',
+            'Mathematics' => 'Menguasai kemahiran matematik asas yang sesuai dengan tahap perkembangan.',
+            'Literacy' => 'Meningkatkan kemahiran membaca dan menulis.',
+            'Life Skills' => 'Meningkatkan kemandirian dalam aktiviti kehidupan seharian.',
+            'Computer Skills' => 'Menguasai kemahiran teknologi asas untuk pembelajaran dan komunikasi.',
+            'Vocational Training' => 'Mempersiapkan kemahiran kerja untuk kehidupan dewasa.',
+        ];
+
+        return $goalTemplates[$activity->category] ?? 'Mencapai objektif pembelajaran yang ditetapkan.';
+    }
+
+    private function generateEnrollmentNotes(Trainee $trainee): string
+    {
+        $notes = [
+            "Pelajar bermotivasi tinggi dan suka belajar. Perlukan galakan berterusan.",
+            "Memerlukan sokongan tambahan dalam persekitaran yang bising. Lebih fokus dalam kumpulan kecil.",
+            "Menunjukkan minat yang tinggi dalam aktiviti hands-on. Responsive terhadap pembelajaran visual.",
+            "Personality yang mesra dan suka berinteraksi dengan orang lain. Potensi yang baik untuk kemajuan.",
+            "Memerlukan masa lebih untuk memproses maklumat. Memberikan respons yang baik dengan pendekatan yang sabar."
+        ];
+
+        return $notes[array_rand($notes)];
+    }
+
+    private function enrollTraineeInSession(ActivitySession $session, Trainee $trainee): SessionEnrollment
+    {
+        $attendanceStatus = $this->getAttendanceStatus($session->status);
+        
+        $enrollmentStatus = match($attendanceStatus) {
+            'present' => 'attended',
+            'absent' => 'absent', 
+            'excused' => 'excused',
+            default => 'enrolled'
+        };
+
+        return SessionEnrollment::create([
+            'session_id' => $session->id,
+            'trainee_id' => $trainee->id,
+            'enrollment_date' => $session->created_at,
+            'enrolled_by' => $session->teacher_id,
+            'enrollment_status' => $enrollmentStatus,
+            'participation_score' => $attendanceStatus === 'present' ? rand(6, 10) : null,
+            'enrollment_notes' => $attendanceStatus === 'present' ? $this->generateProgressNotes() : null,
+            'feedback' => $attendanceStatus === 'present' ? $this->generateProgressNotes() : null,
+        ]);
+    }
+
+    private function getAttendanceStatus(string $sessionStatus): string
+    {
+        if ($sessionStatus !== 'completed') {
+            return 'enrolled'; // Future sessions
+        }
+
+        // For completed sessions, generate realistic attendance
+        $random = rand(1, 100);
+        if ($random <= 85) return 'present';
+        if ($random <= 92) return 'absent';
+        return 'excused';
+    }
+
+    private function generateProgressNotes(): string
+    {
+        $notes = [
+            'Menunjukkan kemajuan yang memberangsangkan hari ini.',
+            'Aktif terlibat dalam semua aktiviti yang diberikan.',
+            'Memerlukan galakan tambahan untuk beberapa tugasan.',
+            'Menunjukkan peningkatan dalam kemahiran yang disasarkan.',
+            'Responsive terhadap arahan dan bimbingan juruterapi.',
+            'Berinteraksi dengan baik bersama rakan dalam kumpulan.',
+            'Menunjukkan motivasi yang tinggi untuk belajar.',
+            'Mencapai objektif sesi dengan jayanya.'
+        ];
+
+        return $notes[array_rand($notes)];
+    }
+
+    private function showSessionSummary(int $totalSessions, int $totalEnrollments): void
+    {
+        $this->command->info("\n📊 Activity Sessions & Enrollments Summary:");
+        
+        // Session statistics
+        $sessionStats = ActivitySession::selectRaw('status, COUNT(*) as count')
+            ->groupBy('status')
+            ->get();
+            
+        $this->command->info("\n📅 Session Status:");
+        foreach ($sessionStats as $stat) {
+            $this->command->line("   ⏰ {$stat->status}: {$stat->count} sessions");
+        }
+        
+        // Enrollment statistics
+        $enrollmentStats = SessionEnrollment::selectRaw('enrollment_status, COUNT(*) as count')
+            ->groupBy('enrollment_status')
+            ->get();
+            
+        $this->command->info("\n👥 Enrollment Distribution:");
+        foreach ($enrollmentStats as $stat) {
+            $this->command->line("   📊 {$stat->enrollment_status}: {$stat->count} enrollments");
+        }
+        
+        // Activity participation
+        $participationStats = DB::table('activities_new')
+            ->join('activity_sessions', 'activities_new.id', '=', 'activity_sessions.activity_id')
+            ->join('session_enrollments', 'activity_sessions.id', '=', 'session_enrollments.session_id')
+            ->selectRaw('activities_new.category, COUNT(DISTINCT session_enrollments.trainee_id) as unique_trainees')
+            ->groupBy('activities_new.category')
+            ->orderBy('unique_trainees', 'desc')
+            ->get();
+            
+        $this->command->info("\n🎯 Trainee Participation by Category:");
+        foreach ($participationStats as $stat) {
+            $this->command->line("   📚 {$stat->category}: {$stat->unique_trainees} trainees");
+        }
+
+        $this->command->info("\n🎯 Total: {$totalSessions} sessions with {$totalEnrollments} enrollments created!");
+        $this->command->info("✅ Realistic scheduling with Malaysian context and proper attendance patterns!");
+        $this->command->info("🇲🇾 Sessions distributed across appropriate venues and time slots!");
+        $this->command->info("👨‍⚕️ Enrollments based on trainee-activity compatibility and capacity management!");
+    }
+}

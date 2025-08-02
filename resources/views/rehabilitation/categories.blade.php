@@ -1,23 +1,45 @@
 @extends('layouts.app')
 
-@section('title', 'Rehabilitation Category')
+@section('title', 'Activity Categories')
 
 @section('content')
 <div class="container-fluid">
     <div class="d-sm-flex align-items-center justify-content-between mb-4">
-        <h1 class="h3 mb-0 text-gray-800">Rehabilitation Category</h1>
+        <h1 class="h3 mb-0 text-gray-800">Activity Categories</h1>
         <a href="{{ route('activities.home') }}" class="btn btn-secondary btn-sm">
             <i class="fas fa-arrow-left"></i> Back to Activity
         </a>
     </div>
 
     @foreach($categories as $type => $typeCategories)
+        @if($typeCategories->count() > 0)
         <div class="row mb-4">
             <div class="col-12">
                 <h3 class="text-capitalize mb-3">
-                    <i class="fas fa-{{ $type === 'rehabilitation' ? 'heartbeat' : 'graduation-cap' }} mr-2"></i>
-                    {{ ucfirst($type) }} Activity
+                    @php
+                        $typeIcons = [
+                            'rehabilitation' => 'heartbeat',
+                            'academic' => 'graduation-cap', 
+                            'creative_social' => 'palette'
+                        ];
+                        $typeLabels = [
+                            'rehabilitation' => 'Rehabilitation',
+                            'academic' => 'Academic',
+                            'creative_social' => 'Creative & Social'
+                        ];
+                    @endphp
+                    <i class="fas fa-{{ $typeIcons[$type] ?? 'tasks' }} mr-2"></i>
+                    {{ $typeLabels[$type] ?? ucfirst(str_replace('_', ' ', $type)) }} Activities
                 </h3>
+                <p class="text-muted mb-4">
+                    @if($type === 'rehabilitation')
+                        Health and therapy-focused activities to improve physical, cognitive, and behavioral functions.
+                    @elseif($type === 'academic') 
+                        Educational activities focused on learning and skill development.
+                    @elseif($type === 'creative_social')
+                        Creative expression and social development activities.
+                    @endif
+                </p>
             </div>
         </div>
         <div class="row">
@@ -53,6 +75,7 @@
                 </div>
             @endforeach
         </div>
+        @endif
     @endforeach
 
     @if(empty($categories) || count($categories) === 0)

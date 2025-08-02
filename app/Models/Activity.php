@@ -80,6 +80,14 @@ class Activity extends Model
     }
 
     /**
+     * Get the category that owns this activity
+     */
+    public function category()
+    {
+        return $this->belongsTo(Category::class, 'category_id');
+    }
+
+    /**
      * Get all sessions for this activity
      */
     public function sessions()
@@ -166,6 +174,38 @@ class Activity extends Model
         
         $completedSessions = $this->sessions()->where('status', 'completed')->count();
         return round(($completedSessions / $totalSessions) * 100, 1);
+    }
+
+    /**
+     * Get the overarching activity type (rehabilitation, academic, creative_social)
+     */
+    public function getOverarchingTypeAttribute()
+    {
+        return $this->category?->category_type ?? 'general';
+    }
+
+    /**
+     * Check if activity is rehabilitation type
+     */
+    public function isRehabilitation()
+    {
+        return $this->overarching_type === 'rehabilitation';
+    }
+
+    /**
+     * Check if activity is academic type
+     */
+    public function isAcademic()
+    {
+        return $this->overarching_type === 'academic';
+    }
+
+    /**
+     * Check if activity is creative/social type
+     */
+    public function isCreativeSocial()
+    {
+        return $this->overarching_type === 'creative_social';
     }
 
     /**

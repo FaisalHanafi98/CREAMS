@@ -16,6 +16,7 @@ class Category extends Model
         'category_color',
         'category_icon',
         'category_status',
+        'category_type',
         'sort_order'
     ];
 
@@ -51,12 +52,17 @@ class Category extends Model
 
     public function scopeRehabilitation($query)
     {
-        return $query->where('type', 'rehabilitation');
+        return $query->where('category_type', 'rehabilitation');
     }
 
     public function scopeAcademic($query)
     {
-        return $query->where('type', 'academic');
+        return $query->where('category_type', 'academic');
+    }
+
+    public function scopeCreativeSocial($query)
+    {
+        return $query->where('category_type', 'creative_social');
     }
 
     public function scopeOrdered($query)
@@ -77,7 +83,7 @@ class Category extends Model
 
     public function getTypeDisplayAttribute()
     {
-        return ucfirst($this->type);
+        return ucfirst(str_replace('_', ' ', $this->category_type));
     }
 
     public function getIconClassAttribute()
@@ -93,12 +99,17 @@ class Category extends Model
     // Helper methods
     public function isRehabilitation()
     {
-        return $this->type === 'rehabilitation';
+        return $this->category_type === 'rehabilitation';
     }
 
     public function isAcademic()
     {
-        return $this->type === 'academic';
+        return $this->category_type === 'academic';
+    }
+
+    public function isCreativeSocial()
+    {
+        return $this->category_type === 'creative_social';
     }
 
     public function getRouteKeyName()

@@ -12,19 +12,21 @@ class StaffAttendance extends Model
 
     protected $fillable = [
         'user_id',
-        'marked_by_user_id',
-        'marked_by_email',
         'attendance_date',
-        'attendance_time',
-        'centre_id',
+        'check_in_time',
+        'check_out_time',
         'status',
-        'remarks',
-        'attendance_type'
+        'notes',
+        'marked_by',
+        'centre_id',
+        'is_self_marked'
     ];
 
     protected $casts = [
         'attendance_date' => 'date',
-        'attendance_time' => 'datetime:H:i:s',
+        'check_in_time' => 'datetime:H:i:s',
+        'check_out_time' => 'datetime:H:i:s',
+        'is_self_marked' => 'boolean'
     ];
 
     /**
@@ -40,7 +42,7 @@ class StaffAttendance extends Model
      */
     public function markedBy()
     {
-        return $this->belongsTo(User::class, 'marked_by_user_id');
+        return $this->belongsTo(User::class, 'marked_by');
     }
 
     /**
@@ -56,7 +58,7 @@ class StaffAttendance extends Model
      */
     public function isSelfMarked()
     {
-        return $this->user_id === $this->marked_by_user_id;
+        return $this->is_self_marked || $this->user_id === $this->marked_by;
     }
 
     /**
@@ -98,48 +100,64 @@ class StaffAttendance extends Model
     {
         return self::where('user_id', $userId)
             ->whereDate('attendance_date', Carbon::today())
-            ->orderBy('attendance_time', 'desc')
-            ->get();
+            ->first();
     }
 
     /**
-     * Check if user already checked in today
+     * Check if user already marked attendance today
      */
-    public static function hasCheckedInToday($userId)
+    public static function hasMarkedAttendanceToday($userId)
     {
         return self::where('user_id', $userId)
             ->whereDate('attendance_date', Carbon::today())
-            ->where('attendance_type', 'check_in')
-            ->exists();
-    }
-
-    /**
-     * Check if user already checked out today
-     */
-    public static function hasCheckedOutToday($userId)
-    {
-        return self::where('user_id', $userId)
-            ->whereDate('attendance_date', Carbon::today())
-            ->where('attendance_type', 'check_out')
             ->exists();
     }
 
     /**
      * Mark attendance for a user
      */
-    public static function markAttendance($userId, $markedByUserId, $markedByEmail, $centreId, $status = 'present', $type = 'check_in', $remarks = null)
+    public static function markAttendance($userId, $centreId, $markedBy = null, $isSelfMarked = true, $notes = null)
     {
+        $currentTime = Carbon::now();
+        $centreOpeningTime = $currentTime->copy()->setTimeFromTimeString('09:00:00'); // Default 9 AM
+        $lateThreshold = $centreOpeningTime->copy()->addMinutes(15); // 15 minutes after opening
+        
+        // Determine status based on time
+        $status = 'present';
+        if ($currentTime->gt($lateThreshold)) {
+            $status = 'late';
+        }
+        
         return self::create([
             'user_id' => $userId,
-            'marked_by_user_id' => $markedByUserId,
-            'marked_by_email' => $markedByEmail,
             'attendance_date' => Carbon::today(),
-            'attendance_time' => Carbon::now()->format('H:i:s'),
+            'check_in_time' => $currentTime->format('H:i:s'),
             'centre_id' => $centreId,
             'status' => $status,
-            'attendance_type' => $type,
-            'remarks' => $remarks
+            'marked_by' => $markedBy ?: $userId,
+            'is_self_marked' => $isSelfMarked,
+            'notes' => $notes
         ]);
+    }
+
+    /**
+     * Mark check out for a user
+     */
+    public static function markCheckOut($userId, $markedBy = null, $isSelfMarked = true)
+    {
+        $attendance = self::where('user_id', $userId)
+            ->whereDate('attendance_date', Carbon::today())
+            ->first();
+            
+        if ($attendance) {
+            $attendance->update([
+                'check_out_time' => Carbon::now()->format('H:i:s'),
+                'marked_by' => $markedBy ?: $userId,
+                'is_self_marked' => $isSelfMarked && $attendance->is_self_marked
+            ]);
+        }
+        
+        return $attendance;
     }
 
     /**
@@ -151,17 +169,39 @@ class StaffAttendance extends Model
             ->whereBetween('attendance_date', [$startDate, $endDate])
             ->get();
 
-        $totalDays = Carbon::parse($startDate)->diffInDays(Carbon::parse($endDate)) + 1;
+        $totalWorkDays = self::getWorkDaysCount($startDate, $endDate);
         $presentDays = $records->where('status', 'present')->count();
-        $absentDays = $records->where('status', 'absent')->count();
         $lateDays = $records->where('status', 'late')->count();
+        $excusedDays = $records->where('status', 'excused')->count();
+        $absentDays = $totalWorkDays - $records->count();
 
         return [
-            'total_days' => $totalDays,
+            'total_work_days' => $totalWorkDays,
             'present_days' => $presentDays,
-            'absent_days' => $absentDays,
             'late_days' => $lateDays,
-            'attendance_rate' => $totalDays > 0 ? round(($presentDays / $totalDays) * 100, 2) : 0
+            'excused_days' => $excusedDays,
+            'absent_days' => $absentDays,
+            'attendance_rate' => $totalWorkDays > 0 ? round((($presentDays + $lateDays) / $totalWorkDays) * 100, 2) : 0,
+            'punctuality_rate' => ($presentDays + $lateDays) > 0 ? round(($presentDays / ($presentDays + $lateDays)) * 100, 2) : 0
         ];
+    }
+
+    /**
+     * Get work days count (excluding weekends)
+     */
+    private static function getWorkDaysCount($startDate, $endDate)
+    {
+        $start = Carbon::parse($startDate);
+        $end = Carbon::parse($endDate);
+        $workDays = 0;
+        
+        while ($start->lte($end)) {
+            if ($start->isWeekday()) {
+                $workDays++;
+            }
+            $start->addDay();
+        }
+        
+        return $workDays;
     }
 }

@@ -574,31 +574,66 @@ class DashboardController extends Controller
     {
         try {
             $query = DB::table('activities')
-                ->select('activity_name', 'created_at', 'activity_status', 'activity_type')
-                ->orderBy('created_at', 'desc')
+                ->leftJoin('categories', 'activities.category_id', '=', 'categories.id')
+                ->select('activities.activity_name', 'activities.created_at', 'activities.activity_status', 
+                        'activities.activity_type', 'categories.category_type', 'categories.category_name')
+                ->orderBy('activities.created_at', 'desc')
                 ->limit(5);
                 
             if ($centreId && $centreId !== 'admin') {
-                $query->where('centre_id', $centreId);
-            }
-            
-            // Filter by activity type if specified (rehabilitation or academic)
-            if ($role && in_array($role, ['teacher', 'supervisor'])) {
-                $query->whereIn('activity_type', ['rehabilitation', 'academic']);
+                $query->where('activities.centre_id', $centreId);
             }
             
             return $query->get()->map(function ($activity) {
+                // Use category_type if available, otherwise fallback to old mapping
+                $mappedType = $activity->category_type ?? $this->mapActivityTypeToCategory($activity->activity_type ?? '');
+                
                 return [
-                    'title' => $activity->activity_name,
+                    'title' => $activity->activity_name ?? 'Activity',
                     'time' => Carbon::parse($activity->created_at)->diffForHumans(),
-                    'status' => $activity->activity_status,
-                    'type' => $activity->activity_type ?? 'general'
+                    'status' => $activity->activity_status ?? 'active',
+                    'type' => $mappedType,
+                    'category_name' => $activity->category_name ?? 'General',
+                    'original_type' => $activity->activity_type ?? ''
                 ];
-            });
+            })->toArray();
         } catch (\Exception $e) {
             Log::error('Recent activities error', ['error' => $e->getMessage()]);
-            return collect();
+            return [];
         }
+    }
+
+    /**
+     * Map activity_type to rehabilitation/academic categories for filtering
+     */
+    private function mapActivityTypeToCategory($activityType)
+    {
+        // Define rehabilitation categories
+        $rehabilitationTypes = [
+            'Physical Therapy', 'Occupational Therapy', 'Speech Therapy', 
+            'Behavioral Therapy', 'Sensory Integration', 'Physiotherapy',
+            'Speech and Language Therapy', 'Occupational Rehabilitation'
+        ];
+        
+        // Define academic categories  
+        $academicTypes = [
+            'Mathematics', 'Literacy', 'Science', 'Computer Skills', 
+            'Art & Creativity', 'Music Therapy', 'Social Skills', 
+            'Life Skills', 'Vocational Training', 'Reading', 'Writing'
+        ];
+        
+        // Check if activity type matches rehabilitation categories
+        if (in_array($activityType, $rehabilitationTypes)) {
+            return 'rehabilitation';
+        }
+        
+        // Check if activity type matches academic categories
+        if (in_array($activityType, $academicTypes)) {
+            return 'academic';
+        }
+        
+        // Default to general for unknown types
+        return 'general';
     }
 
     /**

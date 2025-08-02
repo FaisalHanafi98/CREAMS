@@ -106,26 +106,76 @@
     <div class="dashboard-book" id="dashboardBook">
         <!-- General Page (Left Page) -->
         <div class="dashboard-page general-page active" id="generalPage">
-            <!-- Smart Notifications Bar -->
-            @if(isset($system_alerts) && count($system_alerts) > 0)
-    <div class="smart-notifications-bar mb-4">
-        <div class="notification-carousel" id="notificationCarousel">
-            @foreach($system_alerts as $alert)
-            <div class="notification-item notification-{{ $alert['type'] }}" data-type="{{ $alert['type'] }}">
-                <div class="notification-icon">
-                    <i class="{{ $alert['icon'] }}"></i>
-                </div>
-                <div class="notification-content">
-                    <span class="notification-message">{{ $alert['message'] }}</span>
-                    @if(isset($alert['action_url']))
-                    <a href="{{ $alert['action_url'] }}" class="notification-action">{{ $alert['action_text'] }}</a>
-                    @endif
-                </div>
-                <button class="notification-close" onclick="dismissNotification(this)">
-                    <i class="fas fa-times"></i>
+            <!-- Unified Smart Notifications -->
+            @if((isset($system_alerts) && count($system_alerts) > 0) || (isset($notifications) && count($notifications) > 0))
+    <div class="unified-notifications-bar mb-4">
+        <div class="notification-header">
+            <h5 class="notification-title">
+                <i class="fas fa-bell me-2"></i>
+                Important Updates & Alerts
+                <span class="notification-count-badge">{{ (count($system_alerts ?? []) + count($notifications ?? [])) }}</span>
+            </h5>
+            <div class="notification-actions">
+                <button class="btn btn-sm btn-outline-secondary" onclick="markAllRead()">
+                    <i class="fas fa-check-double me-1"></i> Mark All Read
+                </button>
+                <button class="btn btn-sm btn-outline-primary" onclick="toggleNotificationView()">
+                    <i class="fas fa-expand-alt me-1"></i> Expand
                 </button>
             </div>
-            @endforeach
+        </div>
+        <div class="notification-carousel" id="notificationCarousel">
+            @if(isset($system_alerts))
+                @foreach($system_alerts as $alert)
+                <div class="notification-item notification-{{ $alert['type'] }} system-alert" data-type="{{ $alert['type'] }}">
+                    <div class="notification-priority priority-high">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <div class="notification-icon">
+                        <i class="{{ $alert['icon'] }}"></i>
+                    </div>
+                    <div class="notification-content">
+                        <div class="notification-header-info">
+                            <span class="notification-type-label">System Alert</span>
+                            <span class="notification-time">{{ now()->diffForHumans() }}</span>
+                        </div>
+                        <div class="notification-message">{{ $alert['message'] }}</div>
+                        @if(isset($alert['action_url']))
+                        <div class="notification-actions-inline">
+                            <a href="{{ $alert['action_url'] }}" class="notification-action btn btn-sm btn-primary">
+                                <i class="fas fa-arrow-right me-1"></i>{{ $alert['action_text'] }}
+                            </a>
+                        </div>
+                        @endif
+                    </div>
+                    <button class="notification-close" onclick="dismissNotification(this)">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                @endforeach
+            @endif
+            @if(isset($notifications))
+                @foreach(array_slice((array)$notifications, 0, 3) as $notification)
+                <div class="notification-item notification-{{ $notification['type'] ?? 'info' }} user-notification" data-type="{{ $notification['type'] ?? 'info' }}">
+                    <div class="notification-priority priority-normal">
+                        <i class="fas fa-info-circle"></i>
+                    </div>
+                    <div class="notification-icon">
+                        <i class="fas fa-bell"></i>
+                    </div>
+                    <div class="notification-content">
+                        <div class="notification-header-info">
+                            <span class="notification-type-label">Notification</span>
+                            <span class="notification-time">{{ $notification['time'] }}</span>
+                        </div>
+                        <div class="notification-message">{{ $notification['message'] }}</div>
+                    </div>
+                    <button class="notification-close" onclick="dismissNotification(this)">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                @endforeach
+            @endif
         </div>
     </div>
     @endif
@@ -244,18 +294,27 @@
                     <div class="widget-content">
                         <div class="activity-timeline-enhanced">
                             @foreach($recent_activities as $activity)
-                            <div class="timeline-item-enhanced" data-category="{{ strtolower($activity['status']) }}">
+                            @php
+                                $activityType = $activity['type'] ?? 'general';
+                                $activityStatus = $activity['status'] ?? 'active';
+                                $activityTitle = $activity['title'] ?? 'Activity';
+                                $activityTime = $activity['time'] ?? 'Recently';
+                            @endphp
+                            <div class="timeline-item-enhanced" data-category="{{ $activityType }}" data-status="{{ strtolower($activityStatus) }}">
                                 <div class="timeline-marker-enhanced">
                                     <div class="marker-dot"></div>
                                 </div>
                                 <div class="timeline-content-enhanced">
                                     <div class="timeline-header">
-                                        <h6 class="timeline-title">{{ $activity['title'] }}</h6>
-                                        <span class="timeline-time">{{ $activity['time'] }}</span>
+                                        <h6 class="timeline-title">{{ $activityTitle }}</h6>
+                                        <span class="timeline-time">{{ $activityTime }}</span>
                                     </div>
                                     <div class="timeline-status">
-                                        <span class="status-badge status-{{ $activity['status'] }}">
-                                            {{ ucfirst($activity['status']) }}
+                                        <span class="status-badge status-{{ $activityStatus }}">
+                                            {{ ucfirst($activityStatus) }}
+                                        </span>
+                                        <span class="type-badge type-{{ $activityType }}">
+                                            {{ ucfirst($activityType) }}
                                         </span>
                                     </div>
                                 </div>
@@ -342,36 +401,45 @@
                     </div>
                 </div>
 
-                <!-- Smart Notifications Panel -->
-                @if(isset($notifications) && count($notifications) > 0)
-                <div class="dashboard-widget notifications-widget" id="notificationsWidget">
+                <!-- Additional Notifications Widget (if more notifications exist) -->
+                @if(isset($notifications) && count($notifications) > 3)
+                <div class="dashboard-widget additional-notifications-widget" id="additionalNotificationsWidget">
                     <div class="widget-header">
                         <h5 class="widget-title">
-                            <span class="title-icon">🔔</span>
-                            Notifications
-                            <span class="notification-count">{{ count($notifications) }}</span>
+                            <span class="title-icon">📬</span>
+                            More Notifications
+                            <span class="notification-count">{{ count($notifications) - 3 }}</span>
                         </h5>
                         <div class="widget-actions">
-                            <button class="btn btn-sm btn-outline-secondary" onclick="markAllRead()">
-                                Mark All Read
+                            <button class="btn btn-sm btn-outline-primary" onclick="showAllNotifications()">
+                                <i class="fas fa-list me-1"></i> View All
                             </button>
                         </div>
                     </div>
                     <div class="widget-content">
-                        <div class="notifications-list-enhanced">
-                            @foreach($notifications as $notification)
-                            <div class="notification-item-enhanced notification-{{ $notification['type'] }}" 
-                                 data-notification-id="{{ $notification['id'] ?? '' }}">
-                                <div class="notification-indicator"></div>
-                                <div class="notification-content-enhanced">
-                                    <p class="notification-message">{{ $notification['message'] }}</p>
-                                    <small class="notification-time">{{ $notification['time'] }}</small>
+                        <div class="notifications-summary">
+                            <div class="notification-stats">
+                                <div class="stat-item">
+                                    <i class="fas fa-envelope text-primary"></i>
+                                    <span>{{ count(array_filter((array)$notifications, function($n) { return ($n['type'] ?? '') === 'info'; })) }} Info</span>
                                 </div>
-                                <button class="notification-dismiss" onclick="dismissNotification(this)">
-                                    <i class="fas fa-times"></i>
+                                <div class="stat-item">
+                                    <i class="fas fa-exclamation-triangle text-warning"></i>
+                                    <span>{{ count(array_filter((array)$notifications, function($n) { return ($n['type'] ?? '') === 'warning'; })) }} Warnings</span>
+                                </div>
+                                <div class="stat-item">
+                                    <i class="fas fa-check-circle text-success"></i>
+                                    <span>{{ count(array_filter((array)$notifications, function($n) { return ($n['type'] ?? '') === 'success'; })) }} Updates</span>
+                                </div>
+                            </div>
+                            <div class="quick-actions-notifications">
+                                <button class="btn btn-sm btn-outline-success" onclick="markAllRead()">
+                                    <i class="fas fa-check-double me-1"></i> Mark All Read
+                                </button>
+                                <button class="btn btn-sm btn-outline-info" onclick="openNotificationCenter()">
+                                    <i class="fas fa-cog me-1"></i> Settings
                                 </button>
                             </div>
-                            @endforeach
                         </div>
                     </div>
                 </div>
@@ -459,375 +527,293 @@
 
         <!-- Personal Page (Right Page) -->
         <div class="dashboard-page personal-page" id="personalPage">
-            <div class="personal-dashboard-content">
-                <!-- Personal Header -->
-                <div class="personal-header mb-4">
-                    <div class="row align-items-center">
-                        <div class="col-md-8">
-                            <h2 class="personal-title">
-                                <i class="fas fa-user-circle me-2"></i>
-                                My Personal Dashboard
-                            </h2>
-                            <p class="personal-subtitle">Your personalized workspace and insights</p>
+            <div class="personal-dashboard-redesign">
+                <!-- Modern Personal Header with Gradient -->
+                <div class="personal-hero-section">
+                    <div class="hero-background">
+                        <div class="hero-pattern"></div>
+                    </div>
+                    <div class="hero-content">
+                        <div class="personal-avatar-modern">
+                            @php
+                                $avatarPath = session('user_avatar') ?? session('avatar');
+                                $avatarUrl = $avatarPath ? asset('storage/avatars/' . $avatarPath) : asset('images/default-avatar.svg');
+                            @endphp
+                            <div class="avatar-container">
+                                <img src="{{ $avatarUrl }}" alt="Profile" class="avatar-img" 
+                                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                <div class="avatar-fallback" style="display: none;">
+                                    {{ substr($user_name, 0, 1) }}
+                                </div>
+                                <div class="avatar-status"></div>
+                            </div>
                         </div>
-                        <div class="col-md-4 text-end">
-                            <div class="personal-avatar">
-                                @php
-                                    $avatarPath = session('user_avatar') ?? session('avatar');
-                                    $avatarUrl = $avatarPath ? asset('storage/avatars/' . $avatarPath) : asset('images/default-avatar.svg');
-                                @endphp
-                                <img src="{{ $avatarUrl }}" alt="Profile" class="avatar-img">
-                                <div class="avatar-info">
-                                    <h5>{{ $user_name }}</h5>
-                                    <span class="role-badge">{{ ucfirst($role) }}</span>
+                        <div class="hero-text">
+                            <h1 class="hero-greeting">
+                                <span class="greeting-time">{{ date('H') < 12 ? 'Good Morning' : (date('H') < 18 ? 'Good Afternoon' : 'Good Evening') }}</span>,
+                                <span class="user-name">{{ $user_name }}! 👋</span>
+                            </h1>
+                            <p class="hero-subtitle">
+                                <i class="fas fa-shield-alt me-2"></i>{{ ucfirst($role) }} Dashboard
+                                <span class="mx-2">•</span>
+                                <i class="fas fa-building me-2"></i>{{ $centre_info->centre_name ?? 'System Wide' }}
+                            </p>
+                            <div class="hero-actions">
+                                <a href="{{ route('profile') }}" class="btn-hero btn-hero-primary">
+                                    <i class="fas fa-user-edit me-2"></i>Edit Profile
+                                </a>
+                                <button class="btn-hero btn-hero-secondary" onclick="openQuickSettings()">
+                                    <i class="fas fa-cog me-2"></i>Settings
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Modern Statistics Cards -->
+                <div class="personal-stats-modern">
+                    <div class="stats-grid-modern">
+                        <div class="stat-card-modern stat-primary">
+                            <div class="stat-icon-modern">
+                                <i class="fas fa-tasks"></i>
+                            </div>
+                            <div class="stat-content-modern">
+                                <div class="stat-number-modern" data-count="{{ $quick_stats[0]['value'] ?? 0 }}">0</div>
+                                <div class="stat-label-modern">My Activities</div>
+                                <div class="stat-trend-modern">
+                                    <i class="fas fa-arrow-up"></i>
+                                    <span>+12% this week</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-card-modern stat-success">
+                            <div class="stat-icon-modern">
+                                <i class="fas fa-calendar-check"></i>
+                            </div>
+                            <div class="stat-content-modern">
+                                <div class="stat-number-modern" data-count="{{ count($upcoming_sessions ?? []) }}">0</div>
+                                <div class="stat-label-modern">Upcoming Sessions</div>
+                                <div class="stat-trend-modern">
+                                    <i class="fas fa-calendar-alt"></i>
+                                    <span>{{ count($upcoming_sessions ?? []) > 0 ? 'Next: Today' : 'None scheduled' }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-card-modern stat-warning">
+                            <div class="stat-icon-modern">
+                                <i class="fas fa-bell"></i>
+                            </div>
+                            <div class="stat-content-modern">
+                                <div class="stat-number-modern" data-count="{{ count($notifications ?? []) }}">0</div>
+                                <div class="stat-label-modern">Notifications</div>
+                                <div class="stat-trend-modern">
+                                    <i class="fas fa-clock"></i>
+                                    <span>{{ count($notifications ?? []) > 0 ? 'Latest: 1h ago' : 'All caught up!' }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-card-modern stat-info">
+                            <div class="stat-icon-modern">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                            <div class="stat-content-modern">
+                                <div class="stat-number-modern" data-count="{{ $progress_summary['percentage'] ?? 85 }}">0</div>
+                                <div class="stat-label-modern">Overall Progress</div>
+                                <div class="stat-trend-modern">
+                                    <i class="fas fa-trophy"></i>
+                                    <span>Excellent work!</span>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Personal Statistics -->
-                <div class="row mb-4">
-                    <div class="col-md-3">
-                        <div class="personal-stat-card">
-                            <div class="stat-icon bg-primary">
-                                <i class="fas fa-tasks"></i>
+                <!-- Modern Content Grid -->
+                <div class="personal-content-modern">
+                    <div class="content-grid-modern">
+                        
+                        <!-- Recent Activities Card -->
+                        <div class="content-card-modern activities-card">
+                            <div class="card-header-modern">
+                                <div class="header-icon">
+                                    <i class="fas fa-history"></i>
+                                </div>
+                                <div class="header-text">
+                                    <h3>Recent Activities</h3>
+                                    <p>Your latest interactions</p>
+                                </div>
+                                <div class="header-action">
+                                    <button class="btn-icon-modern" onclick="refreshActivities()">
+                                        <i class="fas fa-sync-alt"></i>
+                                    </button>
+                                </div>
                             </div>
-                            <div class="stat-details">
-                                <h3 id="personalTasks">{{ $quick_stats[0]['value'] ?? 0 }}</h3>
-                                <p>My Tasks</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="personal-stat-card">
-                            <div class="stat-icon bg-success">
-                                <i class="fas fa-calendar-check"></i>
-                            </div>
-                            <div class="stat-details">
-                                <h3 id="personalSessions">{{ isset($upcoming_sessions) ? count($upcoming_sessions) : 0 }}</h3>
-                                <p>My Sessions</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="personal-stat-card">
-                            <div class="stat-icon bg-warning">
-                                <i class="fas fa-bell"></i>
-                            </div>
-                            <div class="stat-details">
-                                <h3 id="personalNotifications">{{ isset($notifications) ? count($notifications) : 0 }}</h3>
-                                <p>Notifications</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="personal-stat-card">
-                            <div class="stat-icon bg-info">
-                                <i class="fas fa-chart-line"></i>
-                            </div>
-                            <div class="stat-details">
-                                <h3 id="personalProgress">{{ $progress_summary['percentage'] ?? 0 }}%</h3>
-                                <p>Progress</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Personal Content Sections -->
-                <div class="row">
-                    <div class="col-md-6">
-                        <!-- My Recent Activities -->
-                        <div class="personal-widget mb-4">
-                            <div class="widget-header">
-                                <h5><i class="fas fa-history me-2"></i>My Recent Activities</h5>
-                            </div>
-                            <div class="widget-content">
+                            <div class="card-content-modern">
                                 @if(isset($recent_activities) && count($recent_activities) > 0)
-                                    @foreach((is_array($recent_activities) ? array_slice($recent_activities, 0, 5) : $recent_activities->take(5)) as $activity)
-                                    <div class="personal-activity-item">
-                                        <div class="activity-icon">
-                                            <i class="fas fa-circle" style="color: {{ $activity['status'] === 'active' ? '#28a745' : '#6c757d' }}"></i>
+                                    @foreach(array_slice((array)$recent_activities, 0, 4) as $activity)
+                                    @php
+                                        $activityType = $activity['type'] ?? 'general';
+                                        $activityTitle = $activity['title'] ?? 'Activity';
+                                        $activityTime = $activity['time'] ?? 'Recently';
+                                        $activityStatus = $activity['status'] ?? 'active';
+                                    @endphp
+                                    <div class="activity-item-modern">
+                                        <div class="activity-icon-modern activity-{{ $activityType }}">
+                                            <i class="fas fa-{{ $activityType === 'rehabilitation' ? 'heartbeat' : ($activityType === 'academic' ? 'graduation-cap' : 'circle') }}"></i>
                                         </div>
-                                        <div class="activity-content">
-                                            <h6>{{ $activity['title'] }}</h6>
-                                            <small class="text-muted">{{ $activity['time'] }}</small>
+                                        <div class="activity-details-modern">
+                                            <div class="activity-title-modern">{{ $activityTitle }}</div>
+                                            <div class="activity-meta-modern">
+                                                <span class="time">{{ $activityTime }}</span>
+                                                <span class="separator">•</span>
+                                                <span class="status status-{{ $activityStatus }}">
+                                                    {{ ucfirst($activityStatus) }}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div class="activity-action-modern">
+                                            <button class="btn-sm-modern">View</button>
                                         </div>
                                     </div>
                                     @endforeach
                                 @else
-                                    <div class="no-data">
-                                        <i class="fas fa-inbox"></i>
-                                        <p>No recent activities</p>
+                                    <div class="empty-state-modern">
+                                        <i class="fas fa-clipboard"></i>
+                                        <h4>No Recent Activities</h4>
+                                        <p>Your activities will appear here once you start using the system.</p>
                                     </div>
                                 @endif
                             </div>
                         </div>
 
-                        <!-- Quick Actions -->
-                        <div class="personal-widget">
-                            <div class="widget-header">
-                                <h5><i class="fas fa-rocket me-2"></i>Quick Actions</h5>
+                        <!-- Schedule Card -->
+                        <div class="content-card-modern schedule-card">
+                            <div class="card-header-modern">
+                                <div class="header-icon">
+                                    <i class="fas fa-calendar-alt"></i>
+                                </div>
+                                <div class="header-text">
+                                    <h3>My Schedule</h3>
+                                    <p>Upcoming sessions & events</p>
+                                </div>
+                                <div class="header-action">
+                                    <button class="btn-icon-modern" onclick="openFullCalendar()">
+                                        <i class="fas fa-expand"></i>
+                                    </button>
+                                </div>
                             </div>
-                            <div class="widget-content">
-                                <div class="personal-actions-grid">
-                                    <a href="{{ route('profile') }}" class="personal-action">
+                            <div class="card-content-modern">
+                                @if(isset($calendar_events) && count($calendar_events) > 0)
+                                    @foreach(array_slice((array)$calendar_events, 0, 4) as $event)
+                                    <div class="schedule-item-modern">
+                                        <div class="schedule-date-modern">
+                                            <div class="date-day">{{ $event['day'] ?? 'Mon' }}</div>
+                                            <div class="date-num">{{ $event['date'] ?? '01' }}</div>
+                                        </div>
+                                        <div class="schedule-details-modern">
+                                            <div class="schedule-title-modern">{{ $event['title'] ?? 'Event' }}</div>
+                                            <div class="schedule-time-modern">
+                                                <i class="fas fa-clock me-1"></i>{{ $event['time'] ?? '10:00 AM' }}
+                                            </div>
+                                        </div>
+                                        <div class="schedule-status-modern">
+                                            <div class="status-dot-modern status-{{ $event['color'] ?? 'primary' }}"></div>
+                                        </div>
+                                    </div>
+                                    @endforeach
+                                @else
+                                    <div class="empty-state-modern">
+                                        <i class="fas fa-calendar-times"></i>
+                                        <h4>No Upcoming Events</h4>
+                                        <p>Your calendar is clear. Time to plan something!</p>
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
+
+                        <!-- Quick Actions Card -->
+                        <div class="content-card-modern actions-card">
+                            <div class="card-header-modern">
+                                <div class="header-icon">
+                                    <i class="fas fa-rocket"></i>
+                                </div>
+                                <div class="header-text">
+                                    <h3>Quick Actions</h3>
+                                    <p>Common tasks & shortcuts</p>
+                                </div>
+                            </div>
+                            <div class="card-content-modern">
+                                <div class="actions-grid-modern">
+                                    <a href="{{ route('profile') }}" class="action-btn-modern action-primary">
                                         <i class="fas fa-user-edit"></i>
                                         <span>Edit Profile</span>
                                     </a>
-                                    @if($role === 'admin')
-                                    <a href="{{ route('staffs.register') }}" class="personal-action">
-                                        <i class="fas fa-user-plus"></i>
-                                        <span>Add User</span>
+                                    @if(in_array($role, ['admin', 'supervisor', 'teacher']))
+                                    <a href="{{ route('activities.create') }}" class="action-btn-modern action-success">
+                                        <i class="fas fa-plus-circle"></i>
+                                        <span>New Activity</span>
                                     </a>
                                     @endif
-                                    <a href="{{ route('profile') }}#letter-generator" class="personal-action">
-                                        <i class="fas fa-file-alt"></i>
-                                        <span>Generate Letter</span>
-                                    </a>
-                                    <a href="#" class="personal-action" onclick="toggleTheme()">
-                                        <i class="fas fa-palette"></i>
-                                        <span>Change Theme</span>
-                                    </a>
+                                    <button onclick="openReports()" class="action-btn-modern action-info">
+                                        <i class="fas fa-chart-bar"></i>
+                                        <span>Reports</span>
+                                    </button>
+                                    <button onclick="openHelp()" class="action-btn-modern action-warning">
+                                        <i class="fas fa-question-circle"></i>
+                                        <span>Help</span>
+                                    </button>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                    <div class="col-md-6">
-                        <!-- Personal Calendar -->
-                        <div class="personal-widget mb-4">
-                            <div class="widget-header">
-                                <h5><i class="fas fa-calendar me-2"></i>My Schedule</h5>
-                            </div>
-                            <div class="widget-content">
-                                @if(isset($calendar_events) && count($calendar_events) > 0)
-                                    @foreach((is_array($calendar_events) ? array_slice($calendar_events, 0, 5) : $calendar_events->take(5)) as $event)
-                                    <div class="personal-event-item">
-                                        <div class="event-date">
-                                            <span class="event-day">{{ $event['day'] }}</span>
-                                            <span class="event-date-num">{{ $event['date'] }}</span>
-                                        </div>
-                                        <div class="event-details">
-                                            <h6>{{ $event['title'] }}</h6>
-                                            <small>{{ $event['time'] }}</small>
-                                        </div>
-                                        <div class="event-status">
-                                            <span class="status-dot status-{{ $event['color'] }}"></span>
-                                        </div>
-                                    </div>
-                                    @endforeach
-                                @else
-                                    <div class="no-data">
-                                        <i class="fas fa-calendar-alt"></i>
-                                        <p>No upcoming events</p>
-                                    </div>
-                                @endif
-                            </div>
-                        </div>
 
-                        <!-- Personal Notifications -->
-                        <div class="personal-widget">
-                            <div class="widget-header">
-                                <h5><i class="fas fa-bell me-2"></i>My Notifications</h5>
+                        <!-- Notifications Card -->
+                        <div class="content-card-modern notifications-modern-card">
+                            <div class="card-header-modern">
+                                <div class="header-icon">
+                                    <i class="fas fa-bell"></i>
+                                </div>
+                                <div class="header-text">
+                                    <h3>Recent Notifications</h3>
+                                    <p>Stay updated on important changes</p>
+                                </div>
+                                <div class="header-action">
+                                    <button class="btn-icon-modern" onclick="markAllNotificationsRead()">
+                                        <i class="fas fa-check-double"></i>
+                                    </button>
+                                </div>
                             </div>
-                            <div class="widget-content">
+                            <div class="card-content-modern">
                                 @if(isset($notifications) && count($notifications) > 0)
-                                    @foreach((is_array($notifications) ? array_slice($notifications, 0, 4) : $notifications->take(4)) as $notification)
-                                    <div class="personal-notification-item">
-                                        <div class="notification-dot {{ $notification['type'] }}"></div>
-                                        <div class="notification-content">
-                                            <p>{{ $notification['message'] }}</p>
-                                            <small class="text-muted">{{ $notification['time'] }}</small>
+                                    @foreach(array_slice((array)$notifications, 0, 3) as $notification)
+                                    <div class="notification-item-modern notification-{{ $notification['type'] ?? 'info' }}">
+                                        <div class="notification-icon-modern">
+                                            <i class="fas fa-{{ $notification['type'] === 'warning' ? 'exclamation-triangle' : ($notification['type'] === 'success' ? 'check-circle' : 'info-circle') }}"></i>
+                                        </div>
+                                        <div class="notification-content-modern">
+                                            <div class="notification-message-modern">{{ $notification['message'] ?? 'Notification message' }}</div>
+                                            <div class="notification-time-modern">{{ $notification['time'] ?? 'Recently' }}</div>
+                                        </div>
+                                        <div class="notification-action-modern">
+                                            <button class="btn-dismiss-modern" onclick="dismissNotificationPersonal(this)">
+                                                <i class="fas fa-times"></i>
+                                            </button>
                                         </div>
                                     </div>
                                     @endforeach
                                 @else
-                                    <div class="no-data">
+                                    <div class="empty-state-modern">
                                         <i class="fas fa-bell-slash"></i>
-                                        <p>No new notifications</p>
+                                        <h4>All Caught Up!</h4>
+                                        <p>No new notifications at the moment.</p>
                                     </div>
                                 @endif
                             </div>
                         </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Personal Page (Right Page) -->
-        <div class="dashboard-page personal-page" id="personalPage">
-            <!-- Personal Header -->
-            <div class="personal-header">
-                <div class="personal-avatar">
-                    {{ substr($user_name, 0, 1) }}
-                </div>
-                <div class="personal-greeting">Hello, {{ $user_name }}!</div>
-                <div class="personal-subtitle">Your personal dashboard</div>
-            </div>
 
-            <!-- Personal Statistics -->
-            <div class="personal-stats-grid">
-                <div class="personal-stat-card">
-                    <div class="personal-stat-header">
-                        <div class="personal-stat-icon">
-                            <i class="fas fa-tasks"></i>
-                        </div>
                     </div>
-                    <div class="personal-stat-value">{{ $quick_stats[0]['value'] ?? '0' }}</div>
-                    <div class="personal-stat-label">My Activities</div>
-                </div>
-                
-                <div class="personal-stat-card">
-                    <div class="personal-stat-header">
-                        <div class="personal-stat-icon">
-                            <i class="fas fa-calendar-check"></i>
-                        </div>
-                    </div>
-                    <div class="personal-stat-value">{{ count($upcoming_sessions ?? []) }}</div>
-                    <div class="personal-stat-label">Upcoming Sessions</div>
-                </div>
-                
-                <div class="personal-stat-card">
-                    <div class="personal-stat-header">
-                        <div class="personal-stat-icon">
-                            <i class="fas fa-bell"></i>
-                        </div>
-                    </div>
-                    <div class="personal-stat-value">{{ count($notifications ?? []) }}</div>
-                    <div class="personal-stat-label">Notifications</div>
-                </div>
-            </div>
-
-            <!-- Personal Widgets Row -->
-            <div class="row">
-                <!-- My Recent Activities -->
-                <div class="col-lg-6 mb-4">
-                    <div class="personal-widget">
-                        <div class="personal-widget-header">
-                            <h5 class="personal-widget-title">
-                                <i class="fas fa-history"></i>
-                                My Recent Activities
-                            </h5>
-                        </div>
-                        <div class="personal-widget-content">
-                            @if(isset($recent_activities) && count($recent_activities) > 0)
-                                @foreach((is_array($recent_activities) ? array_slice($recent_activities, 0, 4) : $recent_activities->take(4)) as $activity)
-                                <div class="personal-activity-item">
-                                    <div class="personal-activity-icon">
-                                        <i class="fas fa-play"></i>
-                                    </div>
-                                    <div class="personal-activity-content">
-                                        <div class="personal-activity-title">{{ $activity->title ?? 'Activity' }}</div>
-                                        <div class="personal-activity-time">{{ $activity->time ?? 'Recently' }}</div>
-                                    </div>
-                                </div>
-                                @endforeach
-                            @else
-                                <div class="text-center text-muted py-3">
-                                    <i class="fas fa-clipboard"></i>
-                                    <p class="mb-0 mt-2">No recent activities</p>
-                                </div>
-                            @endif
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Personal Calendar -->
-                <div class="col-lg-6 mb-4">
-                    <div class="personal-widget">
-                        <div class="personal-widget-header">
-                            <h5 class="personal-widget-title">
-                                <i class="fas fa-calendar-alt"></i>
-                                My Schedule
-                            </h5>
-                        </div>
-                        <div class="personal-widget-content">
-                            @if(isset($upcoming_sessions) && count($upcoming_sessions) > 0)
-                                @foreach((is_array($upcoming_sessions) ? array_slice($upcoming_sessions, 0, 4) : $upcoming_sessions->take(4)) as $session)
-                                <div class="personal-activity-item">
-                                    <div class="personal-activity-icon">
-                                        <i class="fas fa-clock"></i>
-                                    </div>
-                                    <div class="personal-activity-content">
-                                        <div class="personal-activity-title">{{ $session->activity ?? 'Session' }}</div>
-                                        <div class="personal-activity-time">{{ $session->date ?? 'Soon' }} at {{ $session->time ?? 'TBA' }}</div>
-                                    </div>
-                                </div>
-                                @endforeach
-                            @else
-                                <div class="text-center text-muted py-3">
-                                    <i class="fas fa-calendar-times"></i>
-                                    <p class="mb-0 mt-2">No upcoming sessions</p>
-                                </div>
-                            @endif
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Quick Actions Personal -->
-            <div class="personal-widget">
-                <div class="personal-widget-header">
-                    <h5 class="personal-widget-title">
-                        <i class="fas fa-rocket"></i>
-                        Quick Actions
-                    </h5>
-                </div>
-                <div class="personal-widget-content">
-                    <div class="row">
-                        <div class="col-md-3 col-6 mb-3">
-                            <a href="{{ route('profile') }}" class="btn btn-outline-primary btn-sm w-100">
-                                <i class="fas fa-user me-2"></i>My Profile
-                            </a>
-                        </div>
-                        @if(in_array($role, ['admin', 'supervisor', 'teacher']))
-                        <div class="col-md-3 col-6 mb-3">
-                            <a href="{{ route('activities.create') }}" class="btn btn-outline-success btn-sm w-100">
-                                <i class="fas fa-plus me-2"></i>New Activity
-                            </a>
-                        </div>
-                        @endif
-                        <div class="col-md-3 col-6 mb-3">
-                            <a href="#" onclick="showFullCalendar()" class="btn btn-outline-info btn-sm w-100">
-                                <i class="fas fa-calendar me-2"></i>Calendar
-                            </a>
-                        </div>
-                        <div class="col-md-3 col-6 mb-3">
-                            <a href="#" onclick="showNotifications()" class="btn btn-outline-warning btn-sm w-100">
-                                <i class="fas fa-bell me-2"></i>Notifications
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Personal Notifications -->
-            <div class="personal-widget">
-                <div class="personal-widget-header">
-                    <h5 class="personal-widget-title">
-                        <i class="fas fa-envelope"></i>
-                        My Notifications
-                    </h5>
-                </div>
-                <div class="personal-widget-content">
-                    @if(isset($notifications) && count($notifications) > 0)
-                        @foreach((is_array($notifications) ? array_slice($notifications, 0, 3) : $notifications->take(3)) as $notification)
-                        <div class="personal-activity-item">
-                            <div class="personal-activity-icon">
-                                <i class="fas fa-info-circle"></i>
-                            </div>
-                            <div class="personal-activity-content">
-                                <div class="personal-activity-title">{{ $notification['title'] ?? 'Notification' }}</div>
-                                <div class="personal-activity-time">{{ $notification['time'] ?? 'Recently' }}</div>
-                            </div>
-                        </div>
-                        @endforeach
-                    @else
-                        <div class="text-center text-muted py-3">
-                            <i class="fas fa-bell-slash"></i>
-                            <p class="mb-0 mt-2">No new notifications</p>
-                        </div>
-                    @endif
                 </div>
             </div>
         </div>
@@ -1118,27 +1104,147 @@ input:checked + .toggle-slider::before {
     transform: translateY(-2px);
 }
 
-/* Smart Notifications Bar */
-.smart-notifications-bar {
-    background: white;
+/* Unified Smart Notifications */
+.unified-notifications-bar {
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
     border-radius: var(--border-radius);
     box-shadow: var(--card-shadow);
-    padding: 20px;
+    padding: 0;
+    border: 1px solid var(--border-light);
+    overflow: hidden;
+}
+
+.notification-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 16px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.notification-title {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+}
+
+.notification-count-badge {
+    background: rgba(255,255,255,0.2);
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    margin-left: 10px;
+    font-weight: 700;
+}
+
+.notification-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.notification-actions .btn {
+    color: white;
+    border-color: rgba(255,255,255,0.3);
+    font-size: 0.8rem;
+    padding: 6px 12px;
+}
+
+.notification-actions .btn:hover {
+    background: rgba(255,255,255,0.1);
+    border-color: rgba(255,255,255,0.5);
+    color: white;
 }
 
 .notification-carousel {
+    padding: 20px;
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 14px;
+    max-height: 400px;
+    overflow-y: auto;
 }
 
 .notification-item {
     display: flex;
-    align-items: center;
-    padding: 12px 16px;
-    border-radius: 8px;
+    align-items: flex-start;
+    padding: 16px;
+    border-radius: 12px;
     border-left: 4px solid;
     transition: var(--transition);
+    position: relative;
+    background: #fafbfc;
+    border: 1px solid #e2e8f0;
+}
+
+.notification-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.system-alert {
+    background: linear-gradient(135deg, #fff5f5 0%, #fed7d7 100%);
+    border-left-color: #e53e3e;
+}
+
+.user-notification {
+    background: linear-gradient(135deg, #ebf8ff 0%, #bee3f8 100%);
+    border-left-color: #3182ce;
+}
+
+.notification-priority {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+}
+
+.priority-high {
+    background: #fed7d7;
+    color: #c53030;
+}
+
+.priority-normal {
+    background: #e6fffa;
+    color: #319795;
+}
+
+.notification-header-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.notification-type-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #4a5568;
+}
+
+.notification-time {
+    font-size: 0.75rem;
+    color: #718096;
+}
+
+.notification-actions-inline {
+    margin-top: 12px;
+}
+
+.notification-actions-inline .btn {
+    font-size: 0.8rem;
+    padding: 6px 12px;
 }
 
 .notification-warning {
@@ -1511,6 +1617,39 @@ input:checked + .toggle-slider::before {
     white-space: nowrap;
 }
 
+.timeline-status {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.type-badge {
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: capitalize;
+}
+
+.type-rehabilitation {
+    background: #e6fffa;
+    color: #065f46;
+    border: 1px solid #10b981;
+}
+
+.type-academic {
+    background: #dbeafe;
+    color: #1e40af;
+    border: 1px solid #3b82f6;
+}
+
+.type-general {
+    background: #f3f4f6;
+    color: #4b5563;
+    border: 1px solid #9ca3af;
+}
+
 /* Enhanced Quick Actions */
 .quick-actions-enhanced {
     display: flex;
@@ -1646,6 +1785,51 @@ input:checked + .toggle-slider::before {
     padding: 2px 8px;
     font-size: 0.7rem;
     margin-left: 8px;
+}
+
+/* Additional Notifications Widget */
+.additional-notifications-widget .widget-content {
+    padding: 16px;
+}
+
+.notifications-summary {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.notification-stats {
+    display: flex;
+    justify-content: space-around;
+    padding: 12px;
+    background: #f8fafc;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+}
+
+.stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.8rem;
+    text-align: center;
+}
+
+.stat-item i {
+    font-size: 1.2rem;
+}
+
+.quick-actions-notifications {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+}
+
+.quick-actions-notifications .btn {
+    flex: 1;
+    font-size: 0.8rem;
+    padding: 8px 12px;
 }
 
 /* Enhanced Calendar Events */
@@ -1971,7 +2155,10 @@ input:checked + .toggle-slider::before {
 
 /* Personal Page Specific Styles */
 .personal-page {
-    padding: 25px;
+    padding: 0;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    overflow-y: auto;
+    max-height: 100vh;
 }
 
 .personal-header {
@@ -2163,6 +2350,629 @@ input:checked + .toggle-slider::before {
     color: var(--text-muted);
 }
 
+/* Modern Personal Dashboard Styles */
+.personal-dashboard-redesign {
+    height: 100%;
+    overflow-y: auto;
+    background: #f8fafc;
+}
+
+/* Hero Section */
+.personal-hero-section {
+    position: relative;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 40px 30px;
+    margin-bottom: 30px;
+    overflow: hidden;
+}
+
+.hero-background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    opacity: 0.1;
+}
+
+.hero-pattern {
+    background-image: radial-gradient(circle at 25% 25%, white 2px, transparent 2px),
+                      radial-gradient(circle at 75% 75%, white 2px, transparent 2px);
+    background-size: 50px 50px;
+    height: 100%;
+    width: 100%;
+}
+
+.hero-content {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: 30px;
+}
+
+.personal-avatar-modern .avatar-container {
+    position: relative;
+    width: 90px;
+    height: 90px;
+}
+
+.personal-avatar-modern .avatar-img,
+.personal-avatar-modern .avatar-fallback {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    border: 4px solid rgba(255,255,255,0.3);
+    object-fit: cover;
+}
+
+.personal-avatar-modern .avatar-fallback {
+    background: rgba(255,255,255,0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: white;
+}
+
+.avatar-status {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    width: 20px;
+    height: 20px;
+    background: #48bb78;
+    border: 3px solid white;
+    border-radius: 50%;
+}
+
+.hero-text {
+    flex: 1;
+}
+
+.hero-greeting {
+    font-size: 2.2rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+    line-height: 1.2;
+}
+
+.greeting-time {
+    color: rgba(255,255,255,0.9);
+}
+
+.user-name {
+    color: white;
+}
+
+.hero-subtitle {
+    font-size: 1.1rem;
+    color: rgba(255,255,255,0.8);
+    margin-bottom: 25px;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.hero-actions {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.btn-hero {
+    padding: 12px 24px;
+    border-radius: 25px;
+    font-weight: 600;
+    text-decoration: none;
+    border: 2px solid;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    font-size: 0.9rem;
+}
+
+.btn-hero-primary {
+    background: white;
+    color: #667eea;
+    border-color: white;
+}
+
+.btn-hero-primary:hover {
+    background: transparent;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+.btn-hero-secondary {
+    background: transparent;
+    color: white;
+    border-color: rgba(255,255,255,0.5);
+    cursor: pointer;
+}
+
+.btn-hero-secondary:hover {
+    background: rgba(255,255,255,0.1);
+    border-color: white;
+    transform: translateY(-2px);
+}
+
+/* Modern Statistics */
+.personal-stats-modern {
+    padding: 0 30px;
+    margin-bottom: 30px;
+}
+
+.stats-grid-modern {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+}
+
+.stat-card-modern {
+    background: white;
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    border: 1px solid #e2e8f0;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.stat-card-modern:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+}
+
+.stat-card-modern::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+}
+
+.stat-primary::before { background: linear-gradient(90deg, #667eea, #764ba2); }
+.stat-success::before { background: linear-gradient(90deg, #48bb78, #38a169); }
+.stat-warning::before { background: linear-gradient(90deg, #ed8936, #dd6b20); }
+.stat-info::before { background: linear-gradient(90deg, #4299e1, #3182ce); }
+
+.stat-icon-modern {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    margin-bottom: 16px;
+    color: white;
+}
+
+.stat-primary .stat-icon-modern { background: linear-gradient(135deg, #667eea, #764ba2); }
+.stat-success .stat-icon-modern { background: linear-gradient(135deg, #48bb78, #38a169); }
+.stat-warning .stat-icon-modern { background: linear-gradient(135deg, #ed8936, #dd6b20); }
+.stat-info .stat-icon-modern { background: linear-gradient(135deg, #4299e1, #3182ce); }
+
+.stat-number-modern {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #1a202c;
+    margin-bottom: 8px;
+    line-height: 1;
+}
+
+.stat-label-modern {
+    font-size: 1rem;
+    color: #4a5568;
+    font-weight: 600;
+    margin-bottom: 12px;
+}
+
+.stat-trend-modern {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85rem;
+    color: #48bb78;
+    font-weight: 500;
+}
+
+/* Modern Content Grid */
+.personal-content-modern {
+    padding: 0 30px 30px;
+}
+
+.content-grid-modern {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 24px;
+}
+
+.content-card-modern {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    border: 1px solid #e2e8f0;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.content-card-modern:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+}
+
+.card-header-modern {
+    padding: 20px 24px;
+    border-bottom: 1px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: #f8fafc;
+}
+
+.header-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+}
+
+.header-text {
+    flex: 1;
+}
+
+.header-text h3 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #1a202c;
+    margin: 0 0 4px 0;
+}
+
+.header-text p {
+    font-size: 0.85rem;
+    color: #718096;
+    margin: 0;
+}
+
+.btn-icon-modern {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: #e2e8f0;
+    border: none;
+    color: #4a5568;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-icon-modern:hover {
+    background: #cbd5e0;
+    color: #2d3748;
+}
+
+.card-content-modern {
+    padding: 24px;
+}
+
+/* Activity Items */
+.activity-item-modern {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 0;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.activity-item-modern:last-child {
+    border-bottom: none;
+}
+
+.activity-icon-modern {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    color: white;
+}
+
+.activity-rehabilitation { background: linear-gradient(135deg, #48bb78, #38a169); }
+.activity-academic { background: linear-gradient(135deg, #4299e1, #3182ce); }
+.activity-general { background: linear-gradient(135deg, #a0aec0, #718096); }
+
+.activity-details-modern {
+    flex: 1;
+}
+
+.activity-title-modern {
+    font-weight: 600;
+    color: #1a202c;
+    margin-bottom: 4px;
+}
+
+.activity-meta-modern {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8rem;
+    color: #718096;
+}
+
+.separator {
+    color: #cbd5e0;
+}
+
+.status {
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 500;
+    font-size: 0.75rem;
+}
+
+.status-active { background: #c6f6d5; color: #22543d; }
+.status-scheduled { background: #bee3f8; color: #2a4365; }
+.status-completed { background: #d6f5d6; color: #22543d; }
+
+.btn-sm-modern {
+    padding: 6px 12px;
+    border-radius: 6px;
+    background: #e2e8f0;
+    border: none;
+    color: #4a5568;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-sm-modern:hover {
+    background: #cbd5e0;
+}
+
+/* Schedule Items */
+.schedule-item-modern {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 0;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.schedule-item-modern:last-child {
+    border-bottom: none;
+}
+
+.schedule-date-modern {
+    text-align: center;
+    background: #f7fafc;
+    border-radius: 10px;
+    padding: 12px;
+    min-width: 60px;
+}
+
+.date-day {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #718096;
+    text-transform: uppercase;
+}
+
+.date-num {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1a202c;
+}
+
+.schedule-details-modern {
+    flex: 1;
+}
+
+.schedule-title-modern {
+    font-weight: 600;
+    color: #1a202c;
+    margin-bottom: 4px;
+}
+
+.schedule-time-modern {
+    font-size: 0.85rem;
+    color: #718096;
+}
+
+.status-dot-modern {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+}
+
+.status-primary { background: #667eea; }
+.status-success { background: #48bb78; }
+.status-warning { background: #ed8936; }
+.status-info { background: #4299e1; }
+
+/* Action Buttons */
+.actions-grid-modern {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+}
+
+.action-btn-modern {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 20px 16px;
+    border-radius: 12px;
+    text-decoration: none;
+    border: 2px solid;
+    transition: all 0.2s ease;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.action-primary {
+    background: #667eea;
+    color: white;
+    border-color: #667eea;
+}
+
+.action-primary:hover {
+    background: #5a6fd8;
+    transform: translateY(-2px);
+    color: white;
+    text-decoration: none;
+}
+
+.action-success {
+    background: #48bb78;
+    color: white;
+    border-color: #48bb78;
+}
+
+.action-success:hover {
+    background: #38a169;
+    transform: translateY(-2px);
+    color: white;
+    text-decoration: none;
+}
+
+.action-info {
+    background: #4299e1;
+    color: white;
+    border-color: #4299e1;
+}
+
+.action-info:hover {
+    background: #3182ce;
+    transform: translateY(-2px);
+}
+
+.action-warning {
+    background: #ed8936;
+    color: white;
+    border-color: #ed8936;
+}
+
+.action-warning:hover {
+    background: #dd6b20;
+    transform: translateY(-2px);
+}
+
+/* Notification Items */
+.notification-item-modern {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px 0;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.notification-item-modern:last-child {
+    border-bottom: none;
+}
+
+.notification-icon-modern {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+}
+
+.notification-info .notification-icon-modern {
+    background: #bee3f8;
+    color: #2b6cb0;
+}
+
+.notification-warning .notification-icon-modern {
+    background: #fbb6ce;
+    color: #c53030;
+}
+
+.notification-success .notification-icon-modern {
+    background: #c6f6d5;
+    color: #22543d;
+}
+
+.notification-content-modern {
+    flex: 1;
+}
+
+.notification-message-modern {
+    font-weight: 500;
+    color: #1a202c;
+    margin-bottom: 4px;
+    line-height: 1.4;
+}
+
+.notification-time-modern {
+    font-size: 0.8rem;
+    color: #718096;
+}
+
+.btn-dismiss-modern {
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    background: transparent;
+    border: none;
+    color: #a0aec0;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-dismiss-modern:hover {
+    background: #e2e8f0;
+    color: #4a5568;
+}
+
+/* Empty States */
+.empty-state-modern {
+    text-align: center;
+    padding: 40px 20px;
+    color: #a0aec0;
+}
+
+.empty-state-modern i {
+    font-size: 3rem;
+    margin-bottom: 16px;
+    opacity: 0.6;
+}
+
+.empty-state-modern h4 {
+    font-size: 1.1rem;
+    color: #4a5568;
+    margin-bottom: 8px;
+}
+
+.empty-state-modern p {
+    font-size: 0.9rem;
+    color: #718096;
+    margin: 0;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
     .dashboard-book {
@@ -2190,6 +3000,48 @@ input:checked + .toggle-slider::before {
     
     .personal-widget-content {
         padding: 20px;
+    }
+    
+    /* Modern Personal Dashboard Mobile */
+    .hero-content {
+        flex-direction: column;
+        text-align: center;
+        gap: 20px;
+    }
+    
+    .hero-greeting {
+        font-size: 1.8rem;
+    }
+    
+    .personal-hero-section {
+        padding: 30px 20px;
+    }
+    
+    .personal-stats-modern,
+    .personal-content-modern {
+        padding: 0 20px 20px;
+    }
+    
+    .stats-grid-modern {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
+    }
+    
+    .content-grid-modern {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    
+    .actions-grid-modern {
+        grid-template-columns: 1fr;
+    }
+    
+    .stat-card-modern {
+        padding: 20px;
+    }
+    
+    .stat-number-modern {
+        font-size: 2rem;
     }
 }
 </style>
@@ -2559,5 +3411,99 @@ const addTransitions = () => {
 
 // Initialize everything when DOM is loaded
 document.addEventListener('DOMContentLoaded', addTransitions);
+
+// Unified Notifications Functions
+function toggleNotificationView() {
+    const carousel = document.getElementById('notificationCarousel');
+    carousel.classList.toggle('expanded');
+    
+    if (carousel.classList.contains('expanded')) {
+        carousel.style.maxHeight = 'none';
+    } else {
+        carousel.style.maxHeight = '400px';
+    }
+}
+
+function showAllNotifications() {
+    // Redirect to notifications page or show modal
+    window.location.href = '/notifications';
+}
+
+function openNotificationCenter() {
+    // Open notification settings modal
+    alert('Notification settings would open here');
+}
+
+// Modern Personal Dashboard Functions
+function initializePersonalCounters() {
+    const counters = document.querySelectorAll('.stat-number-modern[data-count]');
+    
+    counters.forEach(counter => {
+        const target = parseInt(counter.getAttribute('data-count'));
+        const duration = 2000;
+        const step = target / (duration / 50);
+        let current = 0;
+        
+        const timer = setInterval(() => {
+            current += step;
+            if (current >= target) {
+                counter.textContent = target;
+                clearInterval(timer);
+            } else {
+                counter.textContent = Math.floor(current);
+            }
+        }, 50);
+    });
+}
+
+function refreshActivities() {
+    const btn = event.target;
+    btn.classList.add('fa-spin');
+    
+    // Simulate refresh
+    setTimeout(() => {
+        btn.classList.remove('fa-spin');
+        // Could add API call here to refresh activities
+    }, 1500);
+}
+
+function openFullCalendar() {
+    window.location.href = '/calendar';
+}
+
+function openReports() {
+    window.location.href = '/reports';
+}
+
+function openHelp() {
+    window.location.href = '/help';
+}
+
+function openQuickSettings() {
+    // Open settings modal or redirect
+    alert('Quick settings would open here');
+}
+
+function markAllNotificationsRead() {
+    const notifications = document.querySelectorAll('.notification-item-modern');
+    notifications.forEach(notification => {
+        notification.style.opacity = '0.6';
+    });
+}
+
+function dismissNotificationPersonal(button) {
+    const notification = button.closest('.notification-item-modern');
+    notification.style.opacity = '0';
+    notification.style.transform = 'translateX(100%)';
+    
+    setTimeout(() => {
+        notification.remove();
+    }, 300);
+}
+
+// Initialize personal dashboard when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    initializePersonalCounters();
+});
 </script>
 @endsection

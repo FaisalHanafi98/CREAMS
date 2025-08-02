@@ -214,6 +214,27 @@
         background: #e8f5e8;
         border-color: var(--success-color);
     }
+    
+    .participant-item.warning-participant {
+        border-left: 4px solid var(--warning-color);
+        background: linear-gradient(45deg, #fffaf0, #fff3cd);
+    }
+    
+    .participant-item.warning-participant:hover {
+        background: #fff3cd;
+        border-color: var(--warning-color);
+    }
+    
+    .compatibility-warnings {
+        margin-top: 6px;
+    }
+    
+    .compatibility-warnings small {
+        font-size: 0.75rem;
+        line-height: 1.3;
+        display: block;
+        margin-bottom: 2px;
+    }
 
     .conflict-warning {
         background: linear-gradient(45deg, #fff3cd, #ffeaa7);
@@ -425,24 +446,34 @@
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="form-group">
-                                        <label for="category" class="form-label">
-                                            Category<span class="required">*</span>
+                                        <label for="category_id" class="form-label">
+                                            Activity Category<span class="required">*</span>
                                         </label>
-                                        <select class="form-select @error('category') is-invalid @enderror" 
-                                                id="category" name="category" required>
+                                        <select class="form-select @error('category_id') is-invalid @enderror" 
+                                                id="category_id" name="category_id" required>
                                             <option value="">Select Category</option>
-                                            <option value="Science" {{ old('category') == 'Science' ? 'selected' : '' }}>Science (SC)</option>
-                                            <option value="Physical" {{ old('category') == 'Physical' ? 'selected' : '' }}>Physical Therapy (PT)</option>
-                                            <option value="Occupational" {{ old('category') == 'Occupational' ? 'selected' : '' }}>Occupational Therapy (OT)</option>
-                                            <option value="Speech" {{ old('category') == 'Speech' ? 'selected' : '' }}>Speech Therapy (ST)</option>
-                                            <option value="Cognitive" {{ old('category') == 'Cognitive' ? 'selected' : '' }}>Cognitive Training (CT)</option>
-                                            <option value="Social" {{ old('category') == 'Social' ? 'selected' : '' }}>Social Skills (SS)</option>
-                                            <option value="Arts" {{ old('category') == 'Arts' ? 'selected' : '' }}>Arts & Crafts (AC)</option>
-                                            <option value="Music" {{ old('category') == 'Music' ? 'selected' : '' }}>Music Therapy (MT)</option>
+                                            @php
+                                                $categories = \App\Models\Category::active()->ordered()->get()->groupBy('category_type');
+                                            @endphp
+                                            @foreach($categories as $type => $typeCategories)
+                                                <optgroup label="{{ ucfirst(str_replace('_', ' ', $type)) }} Activities">
+                                                    @foreach($typeCategories as $category)
+                                                        <option value="{{ $category->id }}" 
+                                                                data-type="{{ $category->category_type }}"
+                                                                data-name="{{ $category->category_name }}"
+                                                                {{ old('category_id') == $category->id ? 'selected' : '' }}>
+                                                            {{ $category->category_name }}
+                                                        </option>
+                                                    @endforeach
+                                                </optgroup>
+                                            @endforeach
                                         </select>
-                                        @error('category')
+                                        @error('category_id')
                                             <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror
+                                        <small class="form-text text-muted">
+                                            Select the primary category that best describes this activity's focus area.
+                                        </small>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
@@ -788,42 +819,34 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Initialize category-based ID generation
-    const categorySelect = document.getElementById('category');
+    const categorySelect = document.getElementById('category_id');
     const activityIdInput = document.getElementById('activity_id');
     
     categorySelect.addEventListener('change', function() {
         generateActivityId();
-        // Reload participants with disability-appropriate filtering
+        // Reload participants with compatibility warnings
         if (centreSelect && centreSelect.value) {
             loadParticipants();
         }
+        // Check instructor compatibility
+        checkInstructorCompatibility();
     });
 
     function generateActivityId() {
-        const category = categorySelect.value;
-        if (!category) {
+        const categoryId = categorySelect.value;
+        if (!categoryId) {
             activityIdInput.value = '';
             return;
         }
         
-        const categoryMap = {
-            'Physical Therapy': 'PT',
-            'Occupational Therapy': 'OT',
-            'Speech Therapy': 'ST',
-            'Behavioral Therapy': 'BT',
-            'Sensory Integration': 'SI',
-            'Mathematics': 'MA',
-            'Literacy': 'LT',
-            'Science': 'SC',
-            'Computer Skills': 'CS',
-            'Art & Creativity': 'AC',
-            'Music Therapy': 'MT',
-            'Social Skills': 'SS',
-            'Life Skills': 'LS',
-            'Vocational Training': 'VT'
-        };
+        // Get category name from selected option
+        const selectedOption = categorySelect.options[categorySelect.selectedIndex];
+        const categoryName = selectedOption.getAttribute('data-name');
         
-        const prefix = categoryMap[category] || 'GN';
+        if (!categoryName) return;
+        
+        // Generate prefix from category name
+        const prefix = generateCategoryPrefix(categoryName);
         const currentValue = activityIdInput.value;
         
         // If there's already a value, preserve the last 4 digits if they exist
@@ -839,6 +862,135 @@ document.addEventListener('DOMContentLoaded', function() {
         // Focus on the number part for easy editing
         activityIdInput.focus();
         activityIdInput.setSelectionRange(2, activityIdInput.value.length);
+    }
+    
+    function generateCategoryPrefix(categoryName) {
+        const categoryMap = {
+            'Physical Therapy': 'PT',
+            'Occupational Therapy': 'OT',
+            'Speech Therapy': 'ST',
+            'Behavioral Therapy': 'BT',
+            'Sensory Integration': 'SI',
+            'Mathematics': 'MA',
+            'Literacy': 'LI',
+            'Science': 'SC',
+            'Computer Skills': 'CS',
+            'Art & Creativity': 'AC',
+            'Music Therapy': 'MT',
+            'Social Skills': 'SS',
+            'Life Skills': 'LS',
+            'Vocational Training': 'VT'
+        };
+        
+        return categoryMap[categoryName] || categoryName.substring(0, 2).toUpperCase();
+    }
+    
+    // Check instructor compatibility with activity category
+    function checkInstructorCompatibility() {
+        const instructorSelect = document.getElementById('instructor_id');
+        const categorySelect = document.getElementById('category_id');
+        const warningContainer = document.getElementById('instructor-warning') || createInstructorWarningContainer();
+        
+        if (!instructorSelect.value || !categorySelect.value) {
+            warningContainer.style.display = 'none';
+            return;
+        }
+        
+        const selectedCategory = categorySelect.options[categorySelect.selectedIndex];
+        const categoryType = selectedCategory.getAttribute('data-type');
+        const categoryName = selectedCategory.getAttribute('data-name');
+        
+        // Get instructor data (we'll need to fetch this via API)
+        fetchInstructorCompatibility(instructorSelect.value, categoryType, categoryName);
+    }
+    
+    function createInstructorWarningContainer() {
+        const container = document.createElement('div');
+        container.id = 'instructor-warning';
+        container.className = 'alert alert-warning mt-2';
+        container.style.display = 'none';
+        document.getElementById('instructor_id').parentElement.appendChild(container);
+        return container;
+    }
+    
+    function fetchInstructorCompatibility(instructorId, categoryType, categoryName) {
+        fetch(`/api/instructors/${instructorId}/compatibility?category_type=${categoryType}&category_name=${encodeURIComponent(categoryName)}`)
+            .then(response => response.json())
+            .then(data => {
+                const warningContainer = document.getElementById('instructor-warning');
+                if (data.warnings && data.warnings.length > 0) {
+                    let warningHtml = '<strong><i class="fas fa-exclamation-triangle"></i> Instructor Compatibility Warnings:</strong><ul>';
+                    data.warnings.forEach(warning => {
+                        warningHtml += `<li>${warning}</li>`;
+                    });
+                    warningHtml += '</ul><small>You can still proceed, but consider if this instructor is the best fit for this activity.</small>';
+                    warningContainer.innerHTML = warningHtml;
+                    warningContainer.style.display = 'block';
+                } else {
+                    warningContainer.style.display = 'none';
+                }
+            })
+            .catch(error => {
+                console.error('Error checking instructor compatibility:', error);
+            });
+    }
+    
+    // Check trainee compatibility with activity category
+    function checkTraineeCompatibility(trainee, categoryType, categoryName) {
+        const result = {
+            suitable: false,
+            warnings: [],
+            indicator: ''
+        };
+        
+        if (!categoryType || !categoryName) {
+            result.indicator = '<small class="text-muted"><i class="fas fa-info-circle"></i> Select a category to see compatibility</small>';
+            return result;
+        }
+        
+        const condition = (trainee.condition || '').toLowerCase();
+        const conditionWords = condition.split(/\s+/);
+        
+        // Define compatibility rules
+        const compatibilityRules = {
+            'rehabilitation': {
+                suitable: ['autism', 'cerebral palsy', 'down syndrome', 'intellectual disability', 'physical disability', 'speech delay', 'developmental delay'],
+                warnings: ['adhd', 'behavioral issues', 'severe autism']
+            },
+            'academic': {
+                suitable: ['mild autism', 'learning disability', 'adhd', 'dyslexia', 'mild intellectual disability'],
+                warnings: ['severe intellectual disability', 'non-verbal', 'severe autism', 'behavioral issues']
+            },
+            'creative_social': {
+                suitable: ['autism', 'social anxiety', 'mild intellectual disability', 'adhd', 'shyness'],
+                warnings: ['severe behavioral issues', 'aggressive behavior']
+            }
+        };
+        
+        const rules = compatibilityRules[categoryType] || { suitable: [], warnings: [] };
+        
+        // Check for suitable conditions
+        const isSuitable = rules.suitable.some(suitable => 
+            conditionWords.some(word => word.includes(suitable.toLowerCase()) || suitable.toLowerCase().includes(word))
+        );
+        
+        // Check for warning conditions
+        const hasWarnings = rules.warnings.some(warning => 
+            conditionWords.some(word => word.includes(warning.toLowerCase()) || warning.toLowerCase().includes(word))
+        );
+        
+        if (isSuitable) {
+            result.suitable = true;
+            result.indicator = '<small class="text-success"><i class="fas fa-check-circle"></i> Well-suited for this activity</small>';
+        } else if (hasWarnings) {
+            result.warnings.push(`May face challenges with ${categoryName} activities`);
+            result.warnings.push('Consider additional support or modified approach');
+        } else if (condition) {
+            result.warnings.push('Compatibility with this activity type is unclear');
+            result.warnings.push('Please review trainee\'s specific needs');
+        }
+        
+        return result;
     }
     
     // Add input validation for activity ID format
@@ -906,6 +1058,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.error('Error in centre change handler:', error);
             }
         });
+        
+        // Add instructor compatibility checking
+        if (instructorSelect) {
+            instructorSelect.addEventListener('change', function() {
+                checkInstructorCompatibility();
+            });
+        }
     } else {
         console.error('Centre select element not found!');
     }
@@ -964,6 +1123,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function loadParticipants() {
         const centreId = centreSelect.value;
+        const categorySelect = document.getElementById('category_id');
         const categoryId = categorySelect ? categorySelect.value : null;
         const participantsList = document.getElementById('participantsList');
         
@@ -975,10 +1135,17 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
-        // Use filtered API if category is selected for better matching
-        const apiUrl = categoryId ? 
-            `/api/centres/${centreId}/trainees/filtered/${categoryId}` : 
-            `/api/centres/${centreId}/trainees`;
+        // Get category info for compatibility checking
+        let categoryType = null;
+        let categoryName = null;
+        if (categoryId && categorySelect.selectedIndex > 0) {
+            const selectedOption = categorySelect.options[categorySelect.selectedIndex];
+            categoryType = selectedOption.getAttribute('data-type');
+            categoryName = selectedOption.getAttribute('data-name');
+        }
+        
+        // Use basic API and add client-side compatibility checking
+        const apiUrl = `/api/centres/${centreId}/trainees`;
             
         console.log('Fetching trainees from:', apiUrl);
 
@@ -1006,20 +1173,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (data && Array.isArray(data)) {
                     console.log('Processing', data.length, 'trainees');
                     data.forEach(trainee => {
-                        const suitabilityIndicator = categoryId ? 
-                            '<small class="text-success"><i class="fas fa-check-circle"></i> Well-suited for this activity</small>' : 
-                            '';
+                        // Check compatibility with selected category
+                        const compatibility = checkTraineeCompatibility(trainee, categoryType, categoryName);
                         
                         // Properly escape name for JavaScript
                         const escapedName = trainee.name.replace(/'/g, "\\'").replace(/"/g, '\\"');
                         
                         html += `
-                            <div class="participant-item ${categoryId ? 'suitable-participant' : ''}" data-id="${trainee.id}" data-name="${escapedName}" onclick="toggleParticipant(${trainee.id}, '${escapedName}')">
-                                <div class="d-flex justify-content-between align-items-center">
+                            <div class="participant-item ${compatibility.suitable ? 'suitable-participant' : (compatibility.warnings.length > 0 ? 'warning-participant' : '')}" data-id="${trainee.id}" data-name="${escapedName}" onclick="toggleParticipant(${trainee.id}, '${escapedName}')">
+                                <div class="d-flex justify-content-between align-items-start">
                                     <div>
                                         <strong>${trainee.name}</strong>
                                         <br><small class="text-muted">${trainee.condition || 'No condition specified'}</small>
-                                        ${suitabilityIndicator}
+                                        ${compatibility.indicator}
+                                        ${compatibility.warnings.length > 0 ? `<div class="compatibility-warnings mt-1">${compatibility.warnings.map(w => `<small class="text-warning d-block"><i class="fas fa-exclamation-triangle"></i> ${w}</small>`).join('')}</div>` : ''}
                                     </div>
                                     <div class="form-check">
                                         <input class="form-check-input" type="checkbox" id="participant_${trainee.id}">

@@ -151,6 +151,7 @@ Route::post('/forgot-password', [ForgotPasswordController::class, 'forgot'])->na
 
 // API Controller for system endpoints
 use App\Http\Controllers\Api\ApiController;
+use App\Http\Controllers\Api\InstructorCompatibilityController;
 
 // Public API endpoints
 Route::get('/health', [ApiController::class, 'healthCheck']);
@@ -160,4 +161,5 @@ Route::get('/search', [ApiController::class, 'search']);
 // Protected API endpoints (require session authentication)
 Route::middleware(['web'])->group(function () {
     Route::get('/dashboard-data', [ApiController::class, 'getDashboardData']);
+    Route::get('/instructors/{instructorId}/compatibility', [InstructorCompatibilityController::class, 'checkCompatibility']);
 });

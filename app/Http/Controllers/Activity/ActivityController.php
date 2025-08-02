@@ -225,92 +225,53 @@ class ActivityController extends Controller
     }
 
     /**
-     * Display activity categories for rehabilitation module
+     * Display activity categories using the proper hierarchical model
      */
     public function categories()
     {
         try {
-            // Check if we have any activities at all
-            $totalActivities = Activity::count();
-            Log::info('Categories debug: total activities', ['total' => $totalActivities]);
-            
-            // Get all activity types for debugging
-            $allTypes = Activity::select('activity_type')->distinct()->pluck('activity_type')->toArray();
-            Log::info('Categories debug: all activity types', ['types' => $allTypes]);
-            
-            // Get unique categories from activities with their counts
-            $allActivities = Activity::all();
-            $categoryNames = $allActivities->pluck('category')->unique()->filter();
-            
-            $activityCategories = $categoryNames->map(function($categoryName) use ($allActivities) {
-                $count = $allActivities->where('category', $categoryName)->count();
-                return (object)[
-                    'name' => $categoryName,
-                    'slug' => \Illuminate\Support\Str::slug($categoryName),
-                    'description' => "Activities in the {$categoryName} category",
-                    'activities_count' => $count,
-                    'color_code' => $this->getCategoryColor($categoryName),
-                    'icon_class' => $this->getCategoryIcon($categoryName)
-                ];
-            });
-            
-            Log::info('Categories debug: found categories', ['count' => $activityCategories->count()]);
+            // Get all categories with their activity counts using the proper relationship
+            $allCategories = Category::active()
+                ->withCount(['activities as activities_count' => function($query) {
+                    $query->whereIn('activity_status', ['scheduled', 'ongoing', 'completed']);
+                }])
+                ->ordered()
+                ->get();
 
-            // Group categories by type
-            $rehabilitationCategories = ['Physical Therapy', 'Occupational Therapy', 'Speech Therapy', 'Sensory Integration'];
-            $academicCategories = ['Mathematics', 'Literacy', 'Science', 'Computer Skills'];
-            
-            // If no activities found, create default categories
-            if ($activityCategories->isEmpty()) {
-                $defaultCategories = collect();
-                
-                // Add rehabilitation categories
-                foreach ($rehabilitationCategories as $category) {
-                    $defaultCategories->push((object)[
-                        'name' => $category,
-                        'slug' => \Illuminate\Support\Str::slug($category),
-                        'description' => "Activities in the {$category} category",
-                        'activities_count' => 0,
-                        'color_code' => $this->getCategoryColor($category),
-                        'icon_class' => $this->getCategoryIcon($category)
-                    ]);
-                }
-                
-                // Add academic categories
-                foreach ($academicCategories as $category) {
-                    $defaultCategories->push((object)[
-                        'name' => $category,
-                        'slug' => \Illuminate\Support\Str::slug($category),
-                        'description' => "Activities in the {$category} category",
-                        'activities_count' => 0,
-                        'color_code' => $this->getCategoryColor($category),
-                        'icon_class' => $this->getCategoryIcon($category)
-                    ]);
-                }
-                
-                $categoriesGrouped = [
-                    'rehabilitation' => $defaultCategories->filter(function($cat) use ($rehabilitationCategories) {
-                        return in_array($cat->name, $rehabilitationCategories);
-                    }),
-                    'academic' => $defaultCategories->filter(function($cat) use ($academicCategories) {
-                        return in_array($cat->name, $academicCategories);
-                    })
-                ];
-            } else {
-                $categoriesGrouped = [
-                    'rehabilitation' => $activityCategories->filter(function($cat) use ($rehabilitationCategories) {
-                        return in_array($cat->name, $rehabilitationCategories);
-                    }),
-                    'academic' => $activityCategories->filter(function($cat) use ($academicCategories) {
-                        return in_array($cat->name, $academicCategories);
-                    })
-                ];
+            // Group categories by their overarching type
+            $categoriesGrouped = [
+                'rehabilitation' => $allCategories->where('category_type', 'rehabilitation'),
+                'academic' => $allCategories->where('category_type', 'academic'),
+                'creative_social' => $allCategories->where('category_type', 'creative_social')
+            ];
+
+            // Transform categories to include proper data structure
+            foreach ($categoriesGrouped as $type => $categories) {
+                $categoriesGrouped[$type] = $categories->map(function($category) {
+                    return (object)[
+                        'id' => $category->id,
+                        'name' => $category->category_name,
+                        'slug' => \Illuminate\Support\Str::slug($category->category_name),
+                        'description' => $category->category_description ?? "Activities in the {$category->category_name} category",
+                        'activities_count' => $category->activities_count,
+                        'color_code' => $category->category_color,
+                        'icon_class' => $category->category_icon ?: $this->getCategoryIcon($category->category_name),
+                        'type' => $category->category_type,
+                        'type_display' => $category->type_display
+                    ];
+                });
             }
+
+            Log::info('Categories loaded successfully', [
+                'rehabilitation_count' => $categoriesGrouped['rehabilitation']->count(),
+                'academic_count' => $categoriesGrouped['academic']->count(),
+                'creative_social_count' => $categoriesGrouped['creative_social']->count()
+            ]);
 
             return view('rehabilitation.categories', ['categories' => $categoriesGrouped]);
 
         } catch (Exception $e) {
-            Log::error('Error loading rehabilitation categories: ' . $e->getMessage());
+            Log::error('Error loading activity categories: ' . $e->getMessage());
             return redirect()->route('activities.home')
                 ->with('error', 'Unable to load categories.');
         }
