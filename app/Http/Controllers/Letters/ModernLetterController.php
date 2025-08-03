@@ -65,12 +65,11 @@ class ModernLetterController extends Controller
 
             DB::beginTransaction();
 
-            // Generate unique reference number
-            $reference = $this->generateReference();
+            // Let the model generate the unique reference number automatically
+            // Remove manual reference generation to avoid conflicts
             
             // Create letter record
             $letter = Letter::create([
-                'letter_reference' => $reference,
                 'letter_subject' => $validated['letter_subject'],
                 'letter_content' => $validated['letter_content'],
                 'letter_date' => now(),
@@ -96,7 +95,7 @@ class ModernLetterController extends Controller
 
             Log::info('Letter generated successfully', [
                 'letter_id' => $letter->id,
-                'reference' => $reference,
+                'reference' => $letter->letter_reference,
                 'user_id' => session('id')
             ]);
 
@@ -104,7 +103,7 @@ class ModernLetterController extends Controller
                 'success' => true,
                 'message' => 'Letter generated successfully',
                 'letter_id' => $letter->id,
-                'reference' => $reference,
+                'reference' => $letter->letter_reference,
                 'download_url' => route('letters.download', $letter->id)
             ]);
 
@@ -286,17 +285,6 @@ class ModernLetterController extends Controller
         }
     }
 
-    /**
-     * Generate unique reference number
-     */
-    private function generateReference()
-    {
-        $year = date('Y');
-        $month = date('m');
-        $random = str_pad(rand(1000, 9999), 4, '0', STR_PAD_LEFT);
-        
-        return "CREAMS-{$year}-{$month}-{$random}";
-    }
 
     /**
      * Download letter PDF

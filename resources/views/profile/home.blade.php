@@ -1065,6 +1065,19 @@
 $(document).ready(function() {
     let editMode = false;
     
+    // Handle hash navigation on page load
+    if (window.location.hash === '#letters' || window.location.hash === '#letter') {
+        // Activate the letters tab
+        $('#letters-tab').tab('show');
+        
+        // Scroll to letters section after a short delay to allow tab to load
+        setTimeout(function() {
+            $('html, body').animate({
+                scrollTop: $('#letters-tab').offset().top - 100
+            }, 500);
+        }, 300);
+    }
+    
     // Initially hide avatar upload overlay
     $('.avatar-overlay').hide();
     
@@ -1788,11 +1801,17 @@ $(document).ready(function() {
                 // Show success message
                 showSuccessAlert(`Template "${templateData.name}" loaded successfully! You can now modify the content and generate a new letter.`);
                 
-                // Scroll to letters section
-                if (window.location.hash === '#letters-tab') {
-                    $('html, body').animate({
-                        scrollTop: $('#letters-tab').offset().top - 100
-                    }, 500);
+                // Handle letters section navigation
+                if (window.location.hash === '#letters' || window.location.hash === '#letters-tab') {
+                    // Activate the letters tab
+                    $('#letters-tab').tab('show');
+                    
+                    // Scroll to letters section after a short delay to allow tab to load
+                    setTimeout(function() {
+                        $('html, body').animate({
+                            scrollTop: $('#letters-tab').offset().top - 100
+                        }, 500);
+                    }, 100);
                 }
                 
             } catch (e) {

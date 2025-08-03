@@ -10,7 +10,7 @@
                     <i class="fas fa-file-alt mr-2"></i>Letter Archive
                 </h2>
                 <div>
-                    <a href="/profile#letters-tab" class="btn btn-primary">
+                    <a href="/profile#letters" class="btn btn-primary">
                         <i class="fas fa-plus mr-2"></i>Generate New Letter
                     </a>
                     <a href="{{ route('dashboard') }}" class="btn btn-secondary">
@@ -108,7 +108,7 @@
                             <i class="fas fa-layer-group fa-3x text-muted mb-3"></i>
                             <h6>No Templates Found</h6>
                             <p class="text-muted">You haven't created any letter templates yet.</p>
-                            <a href="/profile#letters-tab" class="btn btn-primary">
+                            <a href="/profile#letters" class="btn btn-primary">
                                 <i class="fas fa-plus mr-2"></i>Create Your First Template
                             </a>
                         </div>
@@ -214,7 +214,7 @@
                                     You haven't generated any letters yet.
                                 @endif
                             </p>
-                            <a href="/profile#letters-tab" class="btn btn-primary mt-3">
+                            <a href="/profile#letters" class="btn btn-primary mt-3">
                                 <i class="fas fa-plus mr-2"></i>Generate Your First Letter
                             </a>
                         </div>
@@ -363,7 +363,7 @@ $(document).ready(function() {
             localStorage.setItem('selectedTemplate', JSON.stringify(templateData));
             
             // Redirect to profile page letter section
-            window.location.href = '/profile#letters-tab';
+            window.location.href = '/profile#letters';
         }
     });
 

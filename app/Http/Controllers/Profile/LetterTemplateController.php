@@ -160,7 +160,7 @@ class LetterTemplateController extends Controller
             ]);
 
             $validated = $request->validate([
-                'reference_number' => 'required|string|max:50|unique:letters,letter_reference',
+                'reference_number' => 'nullable|string|max:50',
                 'letter_name' => 'required|string|max:255',
                 'letter_date' => 'required|date',
                 'subject' => 'required|string|max:255',
@@ -212,9 +212,9 @@ class LetterTemplateController extends Controller
                 throw new \Exception('User not found');
             }
 
-            // Create letter record
+            // Create letter record - let model generate reference if not provided
             $letter = Letter::create([
-                'letter_reference' => $validated['reference_number'],
+                'letter_reference' => !empty($validated['reference_number']) ? $validated['reference_number'] : null,
                 'letter_name' => $validated['letter_name'],
                 'letter_date' => $validated['letter_date'],
                 'letter_subject' => $validated['subject'],
