@@ -25,15 +25,21 @@ class ActivitySession extends Model
         'end_time',
         'session_end_time',
         'venue',
+        'room_number',
         'max_participants',
         'current_participants',
         'attendance_marked',
         'teacher_id',
         'supervisor_id',
         'status',
+        'priority',
         'session_objectives',
         'notes',
-        'session_materials'
+        'session_notes',
+        'session_materials',
+        'recurring_pattern',
+        'color_code',
+        'encrypted_id'
     ];
 
     protected $casts = [
@@ -42,6 +48,7 @@ class ActivitySession extends Model
         'start_time' => 'datetime:H:i',
         'end_time' => 'datetime:H:i',
         'session_materials' => 'array',
+        'recurring_pattern' => 'array',
         'attendance_marked' => 'boolean'
     ];
 
@@ -486,5 +493,77 @@ class ActivitySession extends Model
         ];
 
         return $colors[$this->status] ?? '#6c757d';
+    }
+
+    /**
+     * Get room details for display
+     */
+    public function getRoomDetailsAttribute()
+    {
+        $details = $this->venue;
+        if ($this->room_number) {
+            $details .= " - Room {$this->room_number}";
+        }
+        return $details;
+    }
+
+    /**
+     * Generate encrypted ID on creation
+     */
+    protected static function boot()
+    {
+        parent::boot();
+        
+        static::creating(function ($session) {
+            if (!$session->encrypted_id) {
+                $session->encrypted_id = encrypt($session->id ?: uniqid('session_'));
+            }
+            
+            // Set default color if not provided
+            if (!$session->color_code) {
+                $session->color_code = '#3498db';
+            }
+        });
+    }
+
+    /**
+     * Find session by encrypted ID
+     */
+    public static function findByEncryptedId($encryptedId)
+    {
+        try {
+            $id = decrypt($encryptedId);
+            return static::find($id);
+        } catch (\Exception $e) {
+            return null;
+        }
+    }
+
+    /**
+     * Get display date for calendar
+     */
+    public function getDisplayDateAttribute()
+    {
+        return $this->session_date ? $this->session_date->format('Y-m-d') : 
+               ($this->scheduled_date ? $this->scheduled_date->format('Y-m-d') : null);
+    }
+
+    /**
+     * Get calendar event data
+     */
+    public function getCalendarEventAttribute()
+    {
+        return [
+            'id' => $this->encrypted_id,
+            'title' => $this->activity->activity_name ?? 'Session',
+            'start' => $this->display_date . 'T' . $this->start_time,
+            'end' => $this->display_date . 'T' . $this->end_time,
+            'color' => $this->color_code,
+            'textColor' => '#ffffff',
+            'description' => $this->session_description,
+            'location' => $this->room_details,
+            'status' => $this->status,
+            'participants' => $this->current_participants . '/' . $this->max_participants
+        ];
     }
 }
