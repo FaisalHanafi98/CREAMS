@@ -288,6 +288,21 @@ Route::middleware(['auth', 'validate.params'])->group(function () {
     });
     */
 
+    // Individual Education Plans (IEP) Management (Teacher, Admin, Supervisor)
+    Route::prefix('iep')->name('iep.')->middleware(['role:teacher,admin,supervisor'])->group(function () {
+        Route::get('/', [App\Http\Controllers\IepController::class, 'index'])->name('index');
+        Route::get('/create', [App\Http\Controllers\IepController::class, 'create'])->name('create');
+        Route::post('/', [App\Http\Controllers\IepController::class, 'store'])->name('store');
+        Route::get('/{id}', [App\Http\Controllers\IepController::class, 'show'])->name('show');
+        Route::get('/{id}/edit', [App\Http\Controllers\IepController::class, 'edit'])->name('edit');
+        Route::put('/{id}', [App\Http\Controllers\IepController::class, 'update'])->name('update');
+        Route::delete('/{id}', [App\Http\Controllers\IepController::class, 'destroy'])->name('destroy');
+        
+        // IEP Goals Management
+        Route::post('/{iepId}/goals', [App\Http\Controllers\IepController::class, 'storeGoal'])->name('goals.store');
+        Route::put('/goals/{goalId}/progress', [App\Http\Controllers\IepController::class, 'updateGoalProgress'])->name('goals.update-progress');
+    });
+
     // ENHANCED ASSET MANAGEMENT SYSTEM - Removed duplicate, using main assets route group below
 
 

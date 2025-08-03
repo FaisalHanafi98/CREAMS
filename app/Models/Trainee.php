@@ -272,6 +272,40 @@ class Trainee extends Model
     }
 
     /**
+     * Get the trainee's education plans (IEPs)
+     */
+    public function educationPlans()
+    {
+        return $this->hasMany(TraineeEducationPlan::class);
+    }
+
+    /**
+     * Get the trainee's active education plan
+     */
+    public function activeEducationPlan()
+    {
+        return $this->hasOne(TraineeEducationPlan::class)->where('status', 'Active');
+    }
+
+    /**
+     * Get the trainee's progress reports
+     */
+    public function progressReports()
+    {
+        return $this->hasMany(ProgressReport::class);
+    }
+
+    /**
+     * Get progress reports accessible to parents/guardians
+     */
+    public function parentAccessibleReports()
+    {
+        return $this->hasMany(ProgressReport::class)
+                    ->where('parent_accessible', true)
+                    ->where('status', 'Shared');
+    }
+
+    /**
      * Scope a query to only include active trainees.
      *
      * @param  \Illuminate\Database\Eloquent\Builder  $query
