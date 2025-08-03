@@ -700,9 +700,9 @@
                                     <p>Upcoming sessions & events</p>
                                 </div>
                                 <div class="header-action">
-                                    <button class="btn-icon-modern" onclick="openFullCalendar()">
+                                    <a href="{{ route('activities.schedule.personal') }}" class="btn-icon-modern" title="View Full Schedule">
                                         <i class="fas fa-expand"></i>
-                                    </button>
+                                    </a>
                                 </div>
                             </div>
                             <div class="card-content-modern">
@@ -714,21 +714,45 @@
                                             <div class="date-num">{{ $event['date'] ?? '01' }}</div>
                                         </div>
                                         <div class="schedule-details-modern">
-                                            <div class="schedule-title-modern">{{ $event['title'] ?? 'Event' }}</div>
+                                            <div class="schedule-title-modern">{{ $event['title'] ?? 'Session' }}</div>
                                             <div class="schedule-time-modern">
                                                 <i class="fas fa-clock me-1"></i>{{ $event['time'] ?? '10:00 AM' }}
                                             </div>
+                                            @if(isset($event['location']) && $event['location'])
+                                                <div class="schedule-location-modern">
+                                                    <i class="fas fa-map-marker-alt me-1"></i>{{ $event['location'] }}
+                                                </div>
+                                            @endif
                                         </div>
                                         <div class="schedule-status-modern">
-                                            <div class="status-dot-modern status-{{ $event['color'] ?? 'primary' }}"></div>
+                                            @if($event['is_today'] ?? false)
+                                                <span class="badge bg-success">Today</span>
+                                            @elseif($event['is_tomorrow'] ?? false)
+                                                <span class="badge bg-info">Tomorrow</span>
+                                            @else
+                                                <div class="status-dot-modern status-{{ $event['color'] ?? 'primary' }}"></div>
+                                            @endif
                                         </div>
                                     </div>
                                     @endforeach
+                                    
+                                    @if(count($calendar_events) > 4)
+                                        <div class="schedule-footer-modern mt-3 text-center">
+                                            <a href="{{ route('activities.schedule.personal') }}" class="btn btn-outline-primary btn-sm">
+                                                <i class="fas fa-calendar me-1"></i>
+                                                View all {{ count($calendar_events) }} sessions
+                                            </a>
+                                        </div>
+                                    @endif
                                 @else
                                     <div class="empty-state-modern">
                                         <i class="fas fa-calendar-times"></i>
-                                        <h4>No Upcoming Events</h4>
-                                        <p>Your calendar is clear. Time to plan something!</p>
+                                        <h4>No Upcoming Sessions</h4>
+                                        <p>Your schedule is clear for the next week.</p>
+                                        <a href="{{ route('activities.schedule') }}" class="btn btn-outline-primary btn-sm mt-2">
+                                            <i class="fas fa-calendar-plus me-1"></i>
+                                            View All Sessions
+                                        </a>
                                     </div>
                                 @endif
                             </div>
@@ -2792,6 +2816,23 @@ input:checked + .toggle-slider::before {
 .schedule-time-modern {
     font-size: 0.85rem;
     color: #718096;
+}
+
+.schedule-location-modern {
+    font-size: 0.8rem;
+    color: #a0aec0;
+    margin-top: 2px;
+}
+
+.schedule-footer-modern {
+    border-top: 1px solid #e2e8f0;
+    padding-top: 12px;
+}
+
+.badge {
+    font-size: 0.7rem;
+    padding: 4px 8px;
+    border-radius: 12px;
 }
 
 .status-dot-modern {

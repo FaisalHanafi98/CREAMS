@@ -777,39 +777,58 @@ class DashboardController extends Controller
     private function getCalendarEvents($role, $userId, $centreId)
     {
         try {
-            $startDate = now()->startOfWeek();
-            $endDate = now()->endOfWeek();
+            $startDate = now()->startOfDay();
+            $endDate = now()->addDays(7)->endOfDay();
 
-            $query = DB::table('activity_sessions')
-                ->join('activities', 'activity_sessions.activity_id', '=', 'activities.id')
-                ->select(
-                    'activities.activity_name',
-                    'activity_sessions.scheduled_date',
-                    'activity_sessions.start_time',
-                    'activity_sessions.end_time',
-                    'activity_sessions.session_status'
-                )
-                ->whereBetween('activity_sessions.scheduled_date', [$startDate, $endDate])
-                ->where('activity_sessions.session_status', '!=', 'cancelled');
+            $query = ActivitySession::with(['activity', 'teacher'])
+                ->select([
+                    'id',
+                    'activity_id', 
+                    'session_date',
+                    'start_time',
+                    'end_time',
+                    'status',
+                    'venue',
+                    'room_number',
+                    'current_participants',
+                    'max_participants',
+                    'teacher_id'
+                ])
+                ->whereBetween('session_date', [$startDate, $endDate])
+                ->where('status', '!=', 'cancelled');
 
+            // Role-based filtering
             if ($role === 'teacher') {
-                $query->where('activity_sessions.teacher_id', $userId);
+                $query->where('teacher_id', $userId);
+            } elseif ($role === 'trainee') {
+                $query->whereHas('enrollments', function($q) use ($userId) {
+                    $q->where('trainee_id', $userId);
+                });
             } elseif ($role === 'supervisor' && $centreId) {
-                $query->where('activities.centre_id', $centreId);
+                $query->whereHas('activity', function($q) use ($centreId) {
+                    $q->where('centre_id', $centreId);
+                });
             }
 
-            return $query->orderBy('activity_sessions.scheduled_date')
-                ->orderBy('activity_sessions.start_time')
-                ->limit(10)
+            return $query->orderBy('session_date', 'asc')
+                ->orderBy('start_time', 'asc')
+                ->limit(8)
                 ->get()
-                ->map(function ($event) {
+                ->map(function ($session) {
+                    $sessionDate = Carbon::parse($session->session_date);
                     return [
-                        'title' => $event->activity_name,
-                        'date' => Carbon::parse($event->scheduled_date)->format('M j'),
-                        'day' => Carbon::parse($event->scheduled_date)->format('D'),
-                        'time' => Carbon::parse($event->start_time)->format('g:i A'),
-                        'status' => $event->status,
-                        'color' => $this->getStatusColor($event->status)
+                        'id' => $session->id,
+                        'title' => $session->activity->activity_name ?? 'Session',
+                        'day' => $sessionDate->format('D'),
+                        'date' => $sessionDate->format('d'),
+                        'month' => $sessionDate->format('M'),
+                        'time' => Carbon::parse($session->start_time)->format('g:i A'),
+                        'location' => $session->venue . ($session->room_number ? ' - Room ' . $session->room_number : ''),
+                        'participants' => $session->current_participants . '/' . $session->max_participants,
+                        'status' => $session->status,
+                        'is_today' => $sessionDate->isToday(),
+                        'is_tomorrow' => $sessionDate->isTomorrow(),
+                        'color' => $this->getStatusColor($session->status)
                     ];
                 });
         } catch (\Exception $e) {
