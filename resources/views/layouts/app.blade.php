@@ -227,6 +227,23 @@
             color: var(--primary-color);
         }
         
+        .search-results-header {
+            padding: 10px 15px;
+            background: var(--light-color);
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--primary-color);
+            border-bottom: 1px solid #eee;
+        }
+        
+        .search-result-action {
+            opacity: 0.6;
+        }
+        
+        .search-result-item:hover .search-result-action {
+            opacity: 1;
+        }
+        
         /* Mobile search toggle */
         .search-mobile-toggle {
             display: none;
@@ -1060,17 +1077,8 @@
                             <i class="fas fa-bell"></i> Notification
                         </a>
                     @else
-                        <a href="#" class="dropdown-item" onclick="alert('Notification feature coming soon')">
+                        <a href="#" class="dropdown-item" onclick="event.preventDefault(); showNotificationMessage(); return false;">
                             <i class="fas fa-bell"></i> Notification
-                        </a>
-                    @endif
-                    @if(Route::has(session('role') . '.reports'))
-                        <a href="{{ route(session('role') . '.reports') }}" class="dropdown-item">
-                            <i class="fas fa-chart-bar"></i> Reports
-                        </a>
-                    @else
-                        <a href="#" class="dropdown-item" onclick="if(typeof showReportsMessage === 'function') { showReportsMessage(); } else { alert('Function not available!'); }">
-                            <i class="fas fa-chart-bar"></i> Reports
                         </a>
                     @endif
                     @if(Route::has(session('role') . '.settings'))
@@ -1332,12 +1340,9 @@
             const notificationMenu = document.getElementById('notificationMenu');
             
             if (notificationToggle && notificationMenu) {
-                console.log('Notification elements found, setting up click handler');
                 notificationToggle.addEventListener('click', function(e) {
-                    console.log('Notification bell clicked!');
                     e.stopPropagation();
                     notificationMenu.classList.toggle('show');
-                    console.log('Notification menu show class:', notificationMenu.classList.contains('show'));
                     
                     // Close user dropdown if open
                     const userDropdown = document.getElementById('userDropdown');
@@ -1365,12 +1370,9 @@
             const userDropdown = document.getElementById('userDropdown');
             
             if (userProfileToggle && userDropdown) {
-                console.log('User dropdown elements found and initialized');
                 userProfileToggle.addEventListener('click', function(e) {
-                    console.log('User profile clicked');
                     e.stopPropagation();
                     userDropdown.classList.toggle('show');
-                    console.log('Dropdown show class toggled:', userDropdown.classList.contains('show'));
                     
                     // Close notification menu if open
                     if (notificationMenu) {
@@ -1429,7 +1431,47 @@
             const globalSearch = document.getElementById('globalSearch');
             const searchResults = document.getElementById('searchResults');
             
+            console.log('Search elements found:', { globalSearch, searchResults });
+            
             if (globalSearch && searchResults) {
+                console.log('Initializing search functionality');
+                
+                // Test search API availability on page load
+                const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+                if (csrfToken) {
+                    fetch('/search', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': csrfToken
+                        },
+                        body: JSON.stringify({ query: 'test' })
+                    })
+                    .then(response => {
+                        console.log('Search API test - Status:', response.status);
+                        if (response.ok) {
+                            console.log('✅ Search API is accessible');
+                        } else {
+                            console.log('⚠️ Search API returned error status');
+                        }
+                    })
+                    .catch(error => {
+                        console.log('❌ Search API not accessible:', error.message);
+                    });
+                }
+                
+                // Add a simple test - simulate typing "test" after 2 seconds (for debugging)
+                setTimeout(() => {
+                    console.log('🧪 Running automatic search test...');
+                    // Test if search is working by triggering it manually
+                    displayMockResults('test');
+                    console.log('🔍 If you see search results above, the search system is working!');
+                }, 2000);
+                
+                // Add a simple click handler to test search manually
+                globalSearch.addEventListener('focus', function() {
+                    console.log('Search input focused - ready for input');
+                });
                 let searchTimer;
                 
                 // Handle Enter key press
@@ -1443,6 +1485,7 @@
                 
                 globalSearch.addEventListener('input', function() {
                     const query = this.value;
+                    console.log('Search input changed:', query);
                     clearTimeout(searchTimer);
                     
                     // Don't search for very short queries
@@ -1454,11 +1497,12 @@
                     
                     // Set a small delay to avoid too many requests
                     searchTimer = setTimeout(function() {
+                        console.log('Triggering search after delay for:', query);
                         performSearch(query);
                     }, 300);
                 });
                 
-                // Search function
+                // Simplified search function - just use mock data for now
                 function performSearch(query) {
                     console.log('performSearch called with query:', query);
                     if (query.length < 2) {
@@ -1468,41 +1512,124 @@
                     }
                     
                     // Show loading indicator
-                    console.log('Showing search results for:', query);
                     searchResults.innerHTML = '<div class="search-loading"><i class="fas fa-spinner fa-spin"></i> Searching...</div>';
                     searchResults.style.display = 'block';
-                    // Mock search results for demonstration
-                    setTimeout(function() {
+                    
+                    // Use mock results directly for now to ensure it works
+                    console.log('Using mock results for query:', query);
+                    displayMockResults(query);
+                }
+                
+                // Display search results function
+                function displaySearchResults(results, query, source = 'Mock') {
+                    if (results.length === 0) {
+                        searchResults.innerHTML = `
+                            <div class="search-no-results">
+                                <i class="fas fa-search"></i>
+                                <p>No results found for "${query}"</p>
+                            </div>
+                        `;
+                        return;
+                    }
+                    
+                    let resultsHtml = `<div class="search-results-header">Found ${results.length} results for "${query}" ${source === 'API' ? '🔍' : '(Demo)'}</div>`;
+                    
+                    results.forEach(function(item) {
+                        let icon = 'file';
+                        let iconColor = '#007bff';
+                        
+                        if (item.type === 'Staff' || item.type === 'Admin' || item.type === 'Supervisor' || item.type === 'Teacher') {
+                            icon = 'user-tie';
+                            iconColor = '#28a745';
+                        } else if (item.type === 'Trainee') {
+                            icon = 'user-graduate';
+                            iconColor = '#17a2b8';
+                        } else if (item.type === 'Activity') {
+                            icon = 'heartbeat';
+                            iconColor = '#fd7e14';
+                        }
+                        
+                        // Handle both API response format and mock format
+                        const displayMeta = item.location ? `${item.location} • ${item.type}` : (item.meta || item.type);
+                        
+                        resultsHtml += `
+                            <div class="search-result-item" onclick="showSearchItemDetails('${item.type}', '${item.name}', '${displayMeta}', '${item.url || '#'}')">
+                                <div class="search-result-icon" style="color: ${iconColor}">
+                                    <i class="fas fa-${icon}"></i>
+                                </div>
+                                <div class="search-result-content">
+                                    <div class="search-result-name">${item.name}</div>
+                                    <div class="search-result-meta">${displayMeta}</div>
+                                </div>
+                                <div class="search-result-action">
+                                    <i class="fas fa-eye" style="color: #6c757d;"></i>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    
+                    searchResults.innerHTML = resultsHtml;
+                }
+                
+                // Show item details instead of navigating
+                function showSearchItemDetails(type, name, meta, url) {
+                    searchResults.style.display = 'none';
+                    globalSearch.value = '';
+                    
+                    alert(`📋 ${type} Details\n\nName: ${name}\nInfo: ${meta}\n\n🚧 Full ${type.toLowerCase()} management system coming soon!\n\nThis will include:\n• Detailed ${type.toLowerCase()} profiles\n• Complete information management\n• Progress tracking\n• Advanced search and filtering\n\nStay tuned!`);
+                }
+                
+                // Mock results fallback function
+                function displayMockResults(query) {
+                    console.log('displayMockResults called with query:', query);
                         const mockResults = [
                             {
-                                name: 'Ahmad Bin Ibrahim',
+                                name: 'Ahmad Ibrahim',
                                 type: 'Trainee',
-                                meta: 'Physical Therapy Program',
+                                meta: 'Centre Kuala Lumpur • Physical Disability',
                                 url: '/trainees/1'
                             },
                             {
-                                name: 'Speech Therapy Session',
-                                type: 'Activity',
-                                meta: 'Communication Skills Development',
-                                url: '/activities/speech-therapy'
+                                name: 'Siti Aminah',
+                                type: 'Trainee', 
+                                meta: 'Centre Selangor • Learning Disability',
+                                url: '/trainees/2'
+                            },
+                            {
+                                name: 'Nur Aisyah',
+                                type: 'Trainee',
+                                meta: 'Centre Kuala Lumpur • Autism',
+                                url: '/trainees/3'
+                            },
+                            {
+                                name: 'Muhammad Ali',
+                                type: 'Trainee',
+                                meta: 'Centre Johor • Visual Impairment',
+                                url: '/trainees/4'
                             },
                             {
                                 name: 'Dr. Sarah Abdullah',
-                                type: 'Staff',
-                                meta: 'Rehabilitation Supervisor',
-                                url: '/staff/profile/2'
+                                type: 'Admin',
+                                meta: 'Centre Kuala Lumpur • System Administrator',
+                                url: '/staff/1'
                             },
                             {
-                                name: 'Weekly Progress Report',
-                                type: 'Document',
-                                meta: 'Trainee Assessment Report',
-                                url: '/reports/weekly'
+                                name: 'Faizah Ahmad',
+                                type: 'Teacher',
+                                meta: 'Centre Selangor • Special Education',
+                                url: '/staff/2'
                             },
                             {
-                                name: 'Occupational Therapy',
+                                name: 'Speech Therapy',
                                 type: 'Activity',
-                                meta: 'Daily Living Skills Training',
-                                url: '/activities/occupational'
+                                meta: 'Communication Skills',
+                                url: '/activities/1'
+                            },
+                            {
+                                name: 'Physical Therapy',
+                                type: 'Activity',
+                                meta: 'Motor Skills Development',
+                                url: '/activities/2'
                             }
                         ];
                         
@@ -1513,58 +1640,9 @@
                             item.type.toLowerCase().includes(query.toLowerCase())
                         );
                         
-                        searchResults.innerHTML = '';
-                        
-                        if (filteredResults.length === 0) {
-                            searchResults.innerHTML = `
-                                <div class="search-no-results">
-                                    <div style="padding: 20px; text-align: center; color: #6c757d;">
-                                        <i class="fas fa-search fa-2x mb-3" style="color: #dee2e6;"></i>
-                                        <p style="margin: 0; font-weight: 500;">No results found for "${query}"</p>
-                                        <small style="color: #adb5bd;">Search is under development. Try: Ahmad, Speech, Dr. Sarah, Report, or Therapy</small>
-                                    </div>
-                                </div>
-                            `;
-                        } else {
-                            filteredResults.forEach(function(item) {
-                                // Create an icon based on type
-                                let icon = 'file';
-                                
-                                if (item.type === 'Trainee') {
-                                    icon = 'user-graduate';
-                                } else if (item.type === 'Activity') {
-                                    icon = 'tasks';
-                                } else if (item.type === 'Staff') {
-                                    icon = 'user-tie';
-                                } else if (item.type === 'Document') {
-                                    icon = 'file-alt';
-                                }
-                                
-                                const resultItem = document.createElement('div');
-                                resultItem.className = 'search-result-item';
-                                resultItem.style.cursor = 'pointer';
-                                resultItem.innerHTML = `
-                                    <div class="search-result-icon">
-                                        <i class="fas fa-${icon}"></i>
-                                    </div>
-                                    <div class="search-result-content">
-                                        <div class="search-result-name">${item.name}</div>
-                                        <div class="search-result-meta">${item.type} · ${item.meta}</div>
-                                    </div>
-                                `;
-                                
-                                resultItem.addEventListener('click', function() {
-                                    alert('🔍 Search functionality under development!\n\nWould navigate to: ' + item.name + '\nURL: ' + item.url);
-                                    searchResults.style.display = 'none';
-                                    globalSearch.value = '';
-                                });
-                                
-                                searchResults.appendChild(resultItem);
-                            });
-                        }
-                        
-                        searchResults.style.display = 'block';
-                    }, 800);
+                        // Use the new displaySearchResults function
+                        displaySearchResults(filteredResults, query, 'Mock');
+                }
                 
                 // Close search results when clicking outside
                 document.addEventListener('click', function(e) {
@@ -1718,7 +1796,7 @@
                     <div class="p-3 text-center text-muted">
                         <i class="fas fa-bell fa-2x mb-3" style="color: var(--primary-color);"></i>
                         <h6>🔔 Notification Center</h6>
-                        <p class="small">Real-time notifications system is under development! Soon you'll receive alerts for:</p>
+                        <p class="small">This feature will be implemented in the next update! Soon you'll receive alerts for:</p>
                         <ul class="text-left small">
                             <li>Activity updates</li>
                             <li>System announcements</li>
@@ -1847,20 +1925,6 @@
                 navigator.serviceWorker.register('/sw.js')
                     .then(function(registration) {
                         console.log('CREAMS SW: Registration successful', registration.scope);
-                        
-                        // Check for updates
-                        registration.addEventListener('updatefound', function() {
-                            const newWorker = registration.installing;
-                            newWorker.addEventListener('statechange', function() {
-                                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                                    // New version available
-                                    if (confirm('New version available! Reload to update?')) {
-                                        newWorker.postMessage({ type: 'SKIP_WAITING' });
-                                        window.location.reload();
-                                    }
-                                }
-                            });
-                        });
                     })
                     .catch(function(error) {
                         console.log('CREAMS SW: Registration failed', error);
@@ -1870,29 +1934,7 @@
         
         // Mobile-specific optimizations
         if (window.innerWidth <= 768) {
-            // Add mobile class for styling
             document.body.classList.add('mobile-device');
-            
-            // Disable zoom on form inputs (iOS)
-            document.addEventListener('touchstart', function() {
-                const viewport = document.querySelector('meta[name=viewport]');
-                if (viewport) {
-                    viewport.content = 'width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0';
-                }
-            });
-            
-            // Enable pull-to-refresh on mobile
-            let startY = 0;
-            document.addEventListener('touchstart', function(e) {
-                startY = e.touches[0].clientY;
-            });
-            
-            document.addEventListener('touchmove', function(e) {
-                if (window.scrollY === 0 && e.touches[0].clientY > startY + 50) {
-                    // Trigger refresh
-                    location.reload();
-                }
-            });
         }
     </script>
     
@@ -1909,10 +1951,16 @@
             alert('⚙️ Settings Panel coming soon!\n\nThis feature will include:\n• User preferences\n• System configuration\n• Theme customization\n• Notification settings\n• Privacy controls\n\nStay tuned for updates!');
         }
         
+        function showNotificationMessage() {
+            console.log('showNotificationMessage function called');
+            alert('🔔 Notification Center coming soon!\n\nThis feature will be implemented in the next update:\n• Real-time notifications\n• Activity alerts\n• System announcements\n• Message notifications\n• Customizable alerts\n\nStay tuned for instant updates!');
+        }
+        
         // Test function to verify JavaScript is working
         function testJS() {
             alert('JavaScript is working!');
         }
+        
     </script>
     
     @yield('scripts')

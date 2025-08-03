@@ -261,9 +261,10 @@
         border-radius: 15px;
         font-size: 0.8rem;
         font-weight: 600;
-        display: inline-block;
-        margin-bottom: 15px;
+        display: block;
+        margin: 0 auto 15px auto;
         text-align: center;
+        width: fit-content;
     }
 
     .btn-primary {
@@ -508,8 +509,8 @@
                                  alt="{{ $user->user_name }}" 
                                  class="staff-avatar"
                                  onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                            <div class="staff-avatar bg-light d-flex align-items-center justify-content-center" style="display: none;">
-                                <i class="fas fa-user fa-2x text-muted"></i>
+                            <div class="avatar-placeholder" style="display: none;">
+                                {{ strtoupper(substr($user->user_name, 0, 1)) }}
                             </div>
                         @else
                             <div class="avatar-placeholder">
