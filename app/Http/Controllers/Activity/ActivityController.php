@@ -1976,95 +1976,142 @@ class ActivityController extends Controller
             $userId = session('id');
             $userCentreId = session('centre_id');
 
-            // Get filter parameters with defaults
-            $dateFilter = $request->get('date', today()->format('Y-m-d'));
+            // Get filter parameters
+            $searchType = $request->get('search_type', 'activity');
+            $searchValue = $request->get('search_value');
             $centreFilter = $request->get('centre');
-            $dayFilter = $request->get('day');
             $categoryFilter = $request->get('category');
-            $participantFilter = $request->get('participant');
-            $teacherFilter = $request->get('teacher');
+            $statusFilter = $request->get('status');
+            $dateRangeFilter = $request->get('date_range');
 
-            // Base query for sessions with role-based access
+            // Base query for sessions with eager loading
             $query = ActivitySession::with(['activity.centre', 'teacher', 'enrollments.trainee']);
 
-            // Role-based filtering
-            if ($role === 'admin') {
-                // Admin can see all sessions across centres
-                if ($centreFilter) {
-                    $query->whereHas('activity', function($q) use ($centreFilter) {
-                        $q->where('centre_id', $centreFilter);
-                    });
+            // Apply search filters
+            if ($searchValue) {
+                switch ($searchType) {
+                    case 'activity':
+                        $query->whereHas('activity', function($q) use ($searchValue) {
+                            $q->where('activity_name', 'LIKE', "%{$searchValue}%");
+                        });
+                        break;
+                    case 'staff':
+                        $query->whereHas('teacher', function($q) use ($searchValue) {
+                            $q->where('name', 'LIKE', "%{$searchValue}%");
+                        });
+                        break;
+                    case 'trainee':
+                        $query->whereHas('enrollments.trainee', function($q) use ($searchValue) {
+                            $q->where('trainee_first_name', 'LIKE', "%{$searchValue}%")
+                              ->orWhere('trainee_last_name', 'LIKE', "%{$searchValue}%");
+                        });
+                        break;
+                    case 'room':
+                        $query->where(function($q) use ($searchValue) {
+                            $q->where('venue', 'LIKE', "%{$searchValue}%")
+                              ->orWhere('room_number', 'LIKE', "%{$searchValue}%");
+                        });
+                        break;
                 }
-            } elseif ($role === 'supervisor') {
-                // Supervisor can only see their centre
-                $query->whereHas('activity', function($q) use ($userCentreId) {
-                    $q->where('centre_id', $userCentreId);
-                });
-            } elseif ($role === 'teacher') {
-                // Teacher can only see sessions they are assigned to
-                $query->where('teacher_id', $userId);
-            } else {
-                // Other roles (parent/ajk) - limited access
-                $query->whereHas('activity', function($q) use ($userCentreId) {
-                    $q->where('centre_id', $userCentreId);
+            }
+
+            // Apply centre filter
+            if ($centreFilter) {
+                $query->whereHas('activity', function($q) use ($centreFilter) {
+                    $q->where('centre_id', $centreFilter);
                 });
             }
 
-            // Default to today's sessions if no specific date filter
-            if (!$dayFilter && !$request->has('show_all')) {
-                $query->whereDate('scheduled_date', '>=', today());
-            }
-
-            // Apply filters
-            if ($dayFilter) {
-                $query->whereRaw('DAYNAME(scheduled_date) = ?', [ucfirst($dayFilter)]);
-            }
-
+            // Apply category filter
             if ($categoryFilter) {
                 $query->whereHas('activity', function($q) use ($categoryFilter) {
                     $q->where('activity_type', $categoryFilter);
                 });
             }
 
-            if ($participantFilter) {
-                $query->whereHas('enrollments.trainee', function($q) use ($participantFilter) {
-                    $q->where('id', $participantFilter)
-                      ->orWhere('trainee_id', 'LIKE', "%{$participantFilter}%");
-                });
-            }
-
-            if ($teacherFilter && in_array($role, ['admin', 'supervisor'])) {
-                $query->where('teacher_id', $teacherFilter);
-            }
-
-            // Get sessions with pagination
-            $sessions = $query->orderBy('scheduled_date', 'asc')
-                             ->orderBy('start_time', 'asc')
-                             ->paginate(25);
-
-            // Get filter options based on role
-            if ($role === 'admin') {
-                $centres = Centre::active()->get();
-            } else {
-                $centres = Centre::where('centre_id', $userCentreId)->active()->get();
-            }
-
-            // Get teachers for filter (admin/supervisor only)
-            $teachers = [];
-            if (in_array($role, ['admin', 'supervisor'])) {
-                $teachersQuery = User::where('role', 'teacher')->where('status', 'active');
-                if ($role === 'supervisor') {
-                    $teachersQuery->where('centre_id', $userCentreId);
+            // Apply status filter
+            if ($statusFilter) {
+                switch ($statusFilter) {
+                    case 'future':
+                        $query->where('status', 'scheduled')
+                              ->where('session_date', '>', Carbon::now());
+                        break;
+                    case 'progress':
+                        $query->where('status', 'ongoing');
+                        break;
+                    case 'done':
+                        $query->where('status', 'completed');
+                        break;
+                    case 'cancelled':
+                        $query->where('status', 'cancelled');
+                        break;
                 }
-                $teachers = $teachersQuery->get(['id', 'name']);
             }
 
-            return view('activities.schedule', compact('sessions', 'centres', 'teachers', 'role'));
+            // Apply date range filter
+            if ($dateRangeFilter) {
+                switch ($dateRangeFilter) {
+                    case 'today':
+                        $query->whereDate('session_date', Carbon::today());
+                        break;
+                    case 'week':
+                        $query->whereBetween('session_date', [
+                            Carbon::now()->startOfWeek(),
+                            Carbon::now()->endOfWeek()
+                        ]);
+                        break;
+                    case 'month':
+                        $query->whereBetween('session_date', [
+                            Carbon::now()->startOfMonth(),
+                            Carbon::now()->endOfMonth()
+                        ]);
+                        break;
+                    case 'past':
+                        $query->where('session_date', '<', Carbon::today());
+                        break;
+                }
+            }
+
+            // Default ordering - show upcoming sessions first, then recent past
+            $sessions = $query->orderByRaw('
+                CASE 
+                    WHEN session_date >= CURDATE() THEN 0 
+                    ELSE 1 
+                END, 
+                session_date ASC, 
+                start_time ASC
+            ')->paginate(25);
+
+            // Get filter options
+            $centres = Centre::active()->orderBy('centre_name')->get();
+            
+            // Get categories from existing activities
+            $categories = Activity::distinct()
+                ->whereNotNull('activity_type')
+                ->pluck('activity_type')
+                ->filter()
+                ->sort()
+                ->values();
+
+            Log::info('Schedule index loaded successfully', [
+                'user_id' => $userId,
+                'role' => $role,
+                'sessions_count' => $sessions->count(),
+                'total_sessions' => $sessions->total(),
+                'filters' => compact('searchType', 'searchValue', 'centreFilter', 'categoryFilter', 'statusFilter', 'dateRangeFilter')
+            ]);
+
+            return view('activities.schedule.index', compact('sessions', 'centres', 'categories', 'role'));
 
         } catch (Exception $e) {
-            return $this->handleException($e, 'loading schedule index', [
-                'filters' => $request->all()
+            Log::error('Error loading schedule index: ' . $e->getMessage(), [
+                'user_id' => $userId ?? null,
+                'filters' => $request->all(),
+                'trace' => $e->getTraceAsString()
             ]);
+            
+            return redirect()->route('dashboard')
+                ->with('error', 'Unable to load schedule. Please try again.');
         }
     }
 
