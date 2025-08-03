@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CREAMS Topbar Debug Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5; }
+        .test-section { background: white; padding: 20px; margin: 20px 0; border-radius: 8px; border: 1px solid #ddd; }
+        .test-btn { background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; margin: 5px; }
+        .test-btn:hover { background: #0056b3; }
+        .status { padding: 10px; margin: 10px 0; border-radius: 4px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .info { background: #d1ecf1; color: #0c5460; }
+        #console-output { background: #000; color: #0f0; padding: 15px; border-radius: 4px; font-family: monospace; max-height: 300px; overflow-y: auto; }
+    </style>
+</head>
+<body>
+    <h1>🔧 CREAMS Topbar Debug Tool</h1>
+    
+    <div class="status info">
+        <strong>Instructions:</strong>
+        <ol>
+            <li>Open this page alongside the CREAMS dashboard</li>
+            <li>Use the test buttons below to verify functionality</li>
+            <li>Check browser console for debug messages</li>
+            <li>Test on the actual CREAMS dashboard: <a href="http://127.0.0.1:8000/login" target="_blank">Login Here</a></li>
+        </ol>
+    </div>
+
+    <div class="test-section">
+        <h3>🔍 Search Bar Tests</h3>
+        <p>Test these scenarios on the CREAMS dashboard:</p>
+        <button class="test-btn" onclick="testSearch()">Test Search Function</button>
+        <button class="test-btn" onclick="testEnterKey()">Test Enter Key</button>
+        <button class="test-btn" onclick="testSearchQueries()">Test Sample Queries</button>
+        
+        <div id="search-results"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>🔔 Notification Bell Tests</h3>
+        <p>Test notification functionality:</p>
+        <button class="test-btn" onclick="testNotificationBell()">Test Notification Bell</button>
+        <button class="test-btn" onclick="testNotificationMessage()">Test Message Function</button>
+        
+        <div id="notification-results"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>📊 Debug Console</h3>
+        <button class="test-btn" onclick="clearConsole()">Clear Console</button>
+        <button class="test-btn" onclick="showDebugInfo()">Show Debug Info</button>
+        <div id="console-output">Ready for testing...</div>
+    </div>
+
+    <script>
+        function log(message) {
+            const output = document.getElementById('console-output');
+            const timestamp = new Date().toLocaleTimeString();
+            output.innerHTML += `[${timestamp}] ${message}\n`;
+            output.scrollTop = output.scrollHeight;
+        }
+
+        function clearConsole() {
+            document.getElementById('console-output').innerHTML = 'Console cleared...\n';
+        }
+
+        function testSearch() {
+            log('🔍 Testing search functionality...');
+            log('1. Go to CREAMS dashboard');
+            log('2. Click in the search bar');
+            log('3. Type "ahmad" or "therapy"');
+            log('4. Press Enter');
+            log('5. Check if dropdown appears below search bar');
+            log('Expected: Dropdown with mock results should appear');
+        }
+
+        function testEnterKey() {
+            log('⌨️ Testing Enter key functionality...');
+            log('1. Focus on search bar in CREAMS');
+            log('2. Type any query (2+ characters)');
+            log('3. Press Enter key');
+            log('Expected: Console should show "Enter key pressed, searching for: [query]"');
+        }
+
+        function testSearchQueries() {
+            const queries = ['ahmad', 'therapy', 'speech', 'doctor', 'report'];
+            log('📝 Test these search queries on CREAMS:');
+            queries.forEach((query, index) => {
+                log(`${index + 1}. "${query}" - should show relevant results`);
+            });
+        }
+
+        function testNotificationBell() {
+            log('🔔 Testing notification bell...');
+            log('1. Go to CREAMS dashboard');
+            log('2. Look for bell icon (🔔) in topbar');
+            log('3. Click the notification bell');
+            log('Expected: Dropdown should appear with development message');
+        }
+
+        function testNotificationMessage() {
+            log('📨 Testing notification message function...');
+            log('Expected message content:');
+            log('- Title: "🔔 Notification Center"');
+            log('- Content: Development message about upcoming features');
+            log('- Features list: Activity updates, System announcements, etc.');
+        }
+
+        function showDebugInfo() {
+            log('🔧 Debug Information:');
+            log('Server: http://127.0.0.1:8000');
+            log('Login URL: http://127.0.0.1:8000/login');
+            log('Test Credentials:');
+            log('  Email: muhammad.syafiq.ismail.gombak@iium.edu.my');
+            log('  Password: password123');
+            log('Modified file: resources/views/layouts/app.blade.php');
+            log('Key functions: performSearch(), renderNotificationDevelopmentMessage()');
+        }
+
+        // Auto-show debug info on load
+        window.onload = function() {
+            showDebugInfo();
+            log('');
+            log('📌 Quick Test Steps:');
+            log('1. Login to CREAMS dashboard');
+            log('2. Open browser dev tools (F12)');
+            log('3. Check Console tab for debug messages');
+            log('4. Test search bar and notification bell');
+        };
+    </script>
+</body>
+</html>

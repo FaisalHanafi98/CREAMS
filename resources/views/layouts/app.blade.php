@@ -16,7 +16,7 @@
     <link rel="manifest" href="/manifest.json">
     
     <!-- iOS Icons -->
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/favicon.ico">
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
     
@@ -216,10 +216,15 @@
             color: #777;
         }
         
-        .search-no-results {
+        .search-no-results, .search-loading {
             padding: 15px;
             text-align: center;
             color: #777;
+        }
+        
+        .search-loading i {
+            margin-right: 5px;
+            color: var(--primary-color);
         }
         
         /* Mobile search toggle */
@@ -365,7 +370,7 @@
         .user-name {
             font-size: 14px;
             font-weight: 500;
-            color: #333;
+            color: #888 !important;
         }
         
         .user-role {
@@ -962,7 +967,7 @@
         
         <div class="topbar-spacer"></div>
         
-        <div class="search-container d-none d-md-block">
+        <div class="search-container" style="display: block !important;">
             <form id="searchForm" action="{{ Route::has('search') ? route('search') : '#' }}" method="GET">
                 <div class="search-box">
                     <input type="text" name="query" id="globalSearch" placeholder="Search..." class="form-control">
@@ -1059,16 +1064,24 @@
                             <i class="fas fa-bell"></i> Notification
                         </a>
                     @endif
+                    @if(Route::has(session('role') . '.reports'))
+                        <a href="{{ route(session('role') . '.reports') }}" class="dropdown-item">
+                            <i class="fas fa-chart-bar"></i> Reports
+                        </a>
+                    @else
+                        <a href="#" class="dropdown-item" onclick="if(typeof showReportsMessage === 'function') { showReportsMessage(); } else { alert('Function not available!'); }">
+                            <i class="fas fa-chart-bar"></i> Reports
+                        </a>
+                    @endif
                     @if(Route::has(session('role') . '.settings'))
                         <a href="{{ route(session('role') . '.settings') }}" class="dropdown-item">
                             <i class="fas fa-cog"></i> Settings
                         </a>
                     @else
-                        <a href="#" class="dropdown-item" onclick="alert('Settings feature coming soon')">
+                        <a href="#" class="dropdown-item" onclick="if(typeof showSettingsMessage === 'function') { showSettingsMessage(); } else { alert('Function not available!'); }">
                             <i class="fas fa-cog"></i> Settings
                         </a>
                     @endif
-                    </a>
                     <div class="dropdown-divider"></div>
                     <a href="{{ route('logout') }}" class="dropdown-item text-danger">
                         <i class="fas fa-sign-out-alt"></i> Logout
@@ -1230,7 +1243,7 @@
                         <span class="feature-badge">Development</span>
                     </a>
                 @else
-                    <a href="#" class="sidebar-link" onclick="alert('Reports feature coming soon')">
+                    <a href="#" class="sidebar-link" onclick="if(typeof showReportsMessage === 'function') { showReportsMessage(); } else { alert('Function not available!'); }">
                         <span class="sidebar-icon"><i class="fas fa-chart-bar"></i></span>
                         <span class="sidebar-text">Reports</span>
                         <span class="feature-badge">Development</span>
@@ -1245,9 +1258,10 @@
                         <span class="sidebar-text">Settings</span>
                     </a>
                 @else
-                    <a href="#" class="sidebar-link" onclick="alert('Settings feature coming soon')">
+                    <a href="#" class="sidebar-link" onclick="if(typeof showSettingsMessage === 'function') { showSettingsMessage(); } else { alert('Function not available!'); }">
                         <span class="sidebar-icon"><i class="fas fa-cog"></i></span>
                         <span class="sidebar-text">Settings</span>
+                        <span class="feature-badge">Development</span>
                     </a>
                 @endif
             </li>
@@ -1318,9 +1332,12 @@
             const notificationMenu = document.getElementById('notificationMenu');
             
             if (notificationToggle && notificationMenu) {
+                console.log('Notification elements found, setting up click handler');
                 notificationToggle.addEventListener('click', function(e) {
+                    console.log('Notification bell clicked!');
                     e.stopPropagation();
                     notificationMenu.classList.toggle('show');
+                    console.log('Notification menu show class:', notificationMenu.classList.contains('show'));
                     
                     // Close user dropdown if open
                     const userDropdown = document.getElementById('userDropdown');
@@ -1330,8 +1347,16 @@
                     
                     // Load notifications if menu is showing
                     if (notificationMenu.classList.contains('show')) {
-                        loadNotifications();
+                        console.log('Notification menu opened, calling renderNotificationDevelopmentMessage');
+                        renderNotificationDevelopmentMessage();
+                    } else {
+                        console.log('Notification menu closed');
                     }
+                });
+            } else {
+                console.log('Notification elements not found:', {
+                    notificationToggle: notificationToggle,
+                    notificationMenu: notificationMenu
                 });
             }
             
@@ -1340,14 +1365,22 @@
             const userDropdown = document.getElementById('userDropdown');
             
             if (userProfileToggle && userDropdown) {
+                console.log('User dropdown elements found and initialized');
                 userProfileToggle.addEventListener('click', function(e) {
+                    console.log('User profile clicked');
                     e.stopPropagation();
                     userDropdown.classList.toggle('show');
+                    console.log('Dropdown show class toggled:', userDropdown.classList.contains('show'));
                     
                     // Close notification menu if open
                     if (notificationMenu) {
                         notificationMenu.classList.remove('show');
                     }
+                });
+            } else {
+                console.error('User dropdown elements not found:', {
+                    userProfileToggle: userProfileToggle,
+                    userDropdown: userDropdown
                 });
             }
             
@@ -1399,6 +1432,15 @@
             if (globalSearch && searchResults) {
                 let searchTimer;
                 
+                // Handle Enter key press
+                globalSearch.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        console.log('Enter key pressed, searching for:', this.value);
+                        performSearch(this.value);
+                    }
+                });
+                
                 globalSearch.addEventListener('input', function() {
                     const query = this.value;
                     clearTimeout(searchTimer);
@@ -1412,25 +1454,79 @@
                     
                     // Set a small delay to avoid too many requests
                     searchTimer = setTimeout(function() {
-                        // Make AJAX request to search endpoint
-                        fetch('/search?query=' + encodeURIComponent(query), {
-                            method: 'GET',
-                            headers: {
-                                'X-Requested-With': 'XMLHttpRequest',
-                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                        performSearch(query);
+                    }, 300);
+                });
+                
+                // Search function
+                function performSearch(query) {
+                    console.log('performSearch called with query:', query);
+                    if (query.length < 2) {
+                        searchResults.innerHTML = '';
+                        searchResults.style.display = 'none';
+                        return;
+                    }
+                    
+                    // Show loading indicator
+                    console.log('Showing search results for:', query);
+                    searchResults.innerHTML = '<div class="search-loading"><i class="fas fa-spinner fa-spin"></i> Searching...</div>';
+                    searchResults.style.display = 'block';
+                    // Mock search results for demonstration
+                    setTimeout(function() {
+                        const mockResults = [
+                            {
+                                name: 'Ahmad Bin Ibrahim',
+                                type: 'Trainee',
+                                meta: 'Physical Therapy Program',
+                                url: '/trainees/1'
+                            },
+                            {
+                                name: 'Speech Therapy Session',
+                                type: 'Activity',
+                                meta: 'Communication Skills Development',
+                                url: '/activities/speech-therapy'
+                            },
+                            {
+                                name: 'Dr. Sarah Abdullah',
+                                type: 'Staff',
+                                meta: 'Rehabilitation Supervisor',
+                                url: '/staff/profile/2'
+                            },
+                            {
+                                name: 'Weekly Progress Report',
+                                type: 'Document',
+                                meta: 'Trainee Assessment Report',
+                                url: '/reports/weekly'
+                            },
+                            {
+                                name: 'Occupational Therapy',
+                                type: 'Activity',
+                                meta: 'Daily Living Skills Training',
+                                url: '/activities/occupational'
                             }
-                        })
-                        .then(response => response.json())
-                        .then(data => {
-                            searchResults.innerHTML = '';
-                            
-                            if (!data.results || data.results.length === 0) {
-                                searchResults.innerHTML = '<div class="search-no-results"><p>No results found for "' + query + '"</p></div>';
-                                searchResults.style.display = 'block';
-                                return;
-                            }
-                            
-                            data.results.forEach(function(item) {
+                        ];
+                        
+                        // Filter results based on query
+                        const filteredResults = mockResults.filter(item => 
+                            item.name.toLowerCase().includes(query.toLowerCase()) ||
+                            item.meta.toLowerCase().includes(query.toLowerCase()) ||
+                            item.type.toLowerCase().includes(query.toLowerCase())
+                        );
+                        
+                        searchResults.innerHTML = '';
+                        
+                        if (filteredResults.length === 0) {
+                            searchResults.innerHTML = `
+                                <div class="search-no-results">
+                                    <div style="padding: 20px; text-align: center; color: #6c757d;">
+                                        <i class="fas fa-search fa-2x mb-3" style="color: #dee2e6;"></i>
+                                        <p style="margin: 0; font-weight: 500;">No results found for "${query}"</p>
+                                        <small style="color: #adb5bd;">Search is under development. Try: Ahmad, Speech, Dr. Sarah, Report, or Therapy</small>
+                                    </div>
+                                </div>
+                            `;
+                        } else {
+                            filteredResults.forEach(function(item) {
                                 // Create an icon based on type
                                 let icon = 'file';
                                 
@@ -1438,38 +1534,37 @@
                                     icon = 'user-graduate';
                                 } else if (item.type === 'Activity') {
                                     icon = 'tasks';
-                                } else if (item.type === 'Admin' || item.type === 'Teacher' || item.type === 'Supervisor' || item.type === 'Ajk') {
-                                    icon = 'user';
+                                } else if (item.type === 'Staff') {
+                                    icon = 'user-tie';
+                                } else if (item.type === 'Document') {
+                                    icon = 'file-alt';
                                 }
                                 
-                                const resultItem = document.createElement('a');
-                                resultItem.href = item.url;
+                                const resultItem = document.createElement('div');
                                 resultItem.className = 'search-result-item';
+                                resultItem.style.cursor = 'pointer';
                                 resultItem.innerHTML = `
                                     <div class="search-result-icon">
                                         <i class="fas fa-${icon}"></i>
                                     </div>
                                     <div class="search-result-content">
                                         <div class="search-result-name">${item.name}</div>
-                                        <div class="search-result-meta">
-                                            <span class="search-result-role">${item.type}</span> · 
-                                            <span class="search-result-location">${item.location}</span>
-                                        </div>
+                                        <div class="search-result-meta">${item.type} · ${item.meta}</div>
                                     </div>
                                 `;
                                 
+                                resultItem.addEventListener('click', function() {
+                                    alert('🔍 Search functionality under development!\n\nWould navigate to: ' + item.name + '\nURL: ' + item.url);
+                                    searchResults.style.display = 'none';
+                                    globalSearch.value = '';
+                                });
+                                
                                 searchResults.appendChild(resultItem);
                             });
-                            
-                            searchResults.style.display = 'block';
-                        })
-                        .catch(error => {
-                            console.error('Search error:', error);
-                            searchResults.innerHTML = '<div class="search-no-results"><p>Search temporarily unavailable</p></div>';
-                            searchResults.style.display = 'block';
-                        });
-                    }, 300);
-                });
+                        }
+                        
+                        searchResults.style.display = 'block';
+                    }, 800);
                 
                 // Close search results when clicking outside
                 document.addEventListener('click', function(e) {
@@ -1477,15 +1572,21 @@
                         searchResults.style.display = 'none';
                     }
                 });
-                
-                // Prevent search form submission
-                const searchForm = document.getElementById('searchForm');
-                if (searchForm) {
-                    searchForm.addEventListener('submit', function(e) {
-                        e.preventDefault();
-                        // Implement full search page redirect if needed
-                    });
-                }
+            }
+            
+            // Prevent search form submission
+            const searchForm = document.getElementById('searchForm');
+            if (searchForm) {
+                searchForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    // Trigger search instead of redirecting
+                    const query = document.getElementById('globalSearch').value;
+                    if (query.trim()) {
+                        const event = new Event('keydown');
+                        event.key = 'Enter';
+                        document.getElementById('globalSearch').dispatchEvent(event);
+                    }
+                });
             }
             
             // Function to load notifications
@@ -1519,7 +1620,7 @@
                 })
                 .catch(error => {
                     console.error('Error loading notifications:', error);
-                    renderNotificationError();
+                    renderNotificationDevelopmentMessage();
                 });
             }
             
@@ -1599,6 +1700,32 @@
                         <button class="btn btn-sm btn-outline-primary" onclick="loadNotifications()">
                             Try Again
                         </button>
+                    </div>
+                `;
+            }
+            
+            // Function to render notification development message
+            function renderNotificationDevelopmentMessage() {
+                console.log('renderNotificationDevelopmentMessage called');
+                const notificationMenu = document.getElementById('notificationMenu');
+                if (!notificationMenu) {
+                    console.log('notificationMenu element not found!');
+                    return;
+                }
+                
+                console.log('Setting notification menu content');
+                notificationMenu.innerHTML = `
+                    <div class="p-3 text-center text-muted">
+                        <i class="fas fa-bell fa-2x mb-3" style="color: var(--primary-color);"></i>
+                        <h6>🔔 Notification Center</h6>
+                        <p class="small">Real-time notifications system is under development! Soon you'll receive alerts for:</p>
+                        <ul class="text-left small">
+                            <li>Activity updates</li>
+                            <li>System announcements</li>
+                            <li>Task reminders</li>
+                            <li>Letter status changes</li>
+                        </ul>
+                        <small class="text-muted">Feature coming soon!</small>
                     </div>
                 `;
             }
@@ -1766,6 +1893,25 @@
                     location.reload();
                 }
             });
+        }
+    </script>
+    
+    <!-- Global development message functions -->
+    <script>
+        // Global development message functions for sidebar and topbar buttons
+        function showReportsMessage() {
+            console.log('showReportsMessage function called');
+            alert('📊 Advanced Reports coming soon!\n\nUpcoming features:\n• Activity analytics\n• Performance metrics\n• Attendance reports\n• Progress tracking\n• Data export options\n\nStay tuned for comprehensive insights!');
+        }
+        
+        function showSettingsMessage() {
+            console.log('showSettingsMessage function called');
+            alert('⚙️ Settings Panel coming soon!\n\nThis feature will include:\n• User preferences\n• System configuration\n• Theme customization\n• Notification settings\n• Privacy controls\n\nStay tuned for updates!');
+        }
+        
+        // Test function to verify JavaScript is working
+        function testJS() {
+            alert('JavaScript is working!');
         }
     </script>
     
