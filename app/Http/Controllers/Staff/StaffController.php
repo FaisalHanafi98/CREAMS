@@ -572,6 +572,10 @@ class StaffController extends Controller
                                 ->whereIn('enrollment_status', ['enrolled', 'active'])
                                 ->count();
                             $activity->enrollment_count = $enrollmentCount;
+                            
+                            // Add description property for view compatibility
+                            $activity->description = $activity->activity_description ?? null;
+                            
                             return $activity;
                         });
                 } else {
@@ -579,6 +583,10 @@ class StaffController extends Controller
                     // Add enrollment_count property for consistency
                     $activities = $activities->map(function($activity) {
                         $activity->enrollment_count = 0;
+                        
+                        // Add description property for view compatibility
+                        $activity->description = $activity->activity_description ?? null;
+                        
                         return $activity;
                     });
                 }

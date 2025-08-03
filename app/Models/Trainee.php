@@ -253,6 +253,25 @@ class Trainee extends Model
     }
 
     /**
+     * Get the trainee's competency progress records.
+     */
+    public function competencyProgress()
+    {
+        return $this->hasMany(TraineeCompetencyProgress::class);
+    }
+
+    /**
+     * Get competency progress for a specific activity
+     */
+    public function competencyProgressForActivity($activityId)
+    {
+        return $this->competencyProgress()
+                    ->whereHas('learningOutcome', function ($query) use ($activityId) {
+                        $query->where('activity_id', $activityId);
+                    });
+    }
+
+    /**
      * Scope a query to only include active trainees.
      *
      * @param  \Illuminate\Database\Eloquent\Builder  $query

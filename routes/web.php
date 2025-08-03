@@ -33,6 +33,7 @@ use App\Http\Controllers\Trainee\TraineeManagementController;
 
 // Activity and Resource Controllers
 use App\Http\Controllers\Activity\ActivityController;
+use App\Http\Controllers\Activity\ScheduleTemplateController;
 use App\Http\Controllers\Centre\CentreController;
 use App\Http\Controllers\Centre\AssetController;
 use App\Http\Controllers\ClassController;
@@ -197,6 +198,21 @@ Route::middleware(['auth', 'validate.params'])->group(function () {
         Route::get('/categories/{categorySlug}', [ActivityController::class, 'categoryShow'])->name('categories.show');
         Route::get('/schedule', [ActivityController::class, 'scheduleIndex'])->name('schedule');
         
+        // Template routes
+        Route::prefix('templates')->name('templates.')->group(function () {
+            Route::get('/', [ScheduleTemplateController::class, 'index'])->name('index');
+            Route::get('/get-templates', [ScheduleTemplateController::class, 'getTemplates'])->name('get');
+            Route::get('/{id}', [ScheduleTemplateController::class, 'show'])->name('show');
+            
+            // Admin and Supervisor can create/manage templates
+            Route::middleware(['role:admin,supervisor'])->group(function () {
+                Route::get('/create', [ScheduleTemplateController::class, 'create'])->name('create');
+                Route::post('/', [ScheduleTemplateController::class, 'store'])->name('store');
+                Route::post('/apply', [ScheduleTemplateController::class, 'applyTemplate'])->name('apply');
+                Route::delete('/{id}', [ScheduleTemplateController::class, 'destroy'])->name('destroy');
+            });
+        });
+        
         // Admin and Supervisor routes
         Route::middleware(['role:admin,supervisor'])->group(function () {
             Route::get('/create', [ActivityController::class, 'create'])->name('create');
@@ -206,6 +222,18 @@ Route::middleware(['auth', 'validate.params'])->group(function () {
             Route::delete('/{id}', [ActivityController::class, 'destroy'])->name('destroy');
             Route::get('/{id}/sessions', [ActivityController::class, 'sessions'])->name('sessions');
             Route::post('/{id}/sessions', [ActivityController::class, 'createSession'])->name('sessions.create');
+        });
+        
+        // Learning Outcomes routes (Teacher, Admin, Supervisor)
+        Route::prefix('learning-outcomes')->name('learning-outcomes.')->middleware(['role:teacher,admin,supervisor'])->group(function () {
+            Route::get('/', [App\Http\Controllers\LearningOutcomeController::class, 'index'])->name('index');
+            Route::get('/create', [App\Http\Controllers\LearningOutcomeController::class, 'create'])->name('create');
+            Route::post('/', [App\Http\Controllers\LearningOutcomeController::class, 'store'])->name('store');
+            Route::get('/{id}', [App\Http\Controllers\LearningOutcomeController::class, 'show'])->name('show');
+            Route::get('/{id}/edit', [App\Http\Controllers\LearningOutcomeController::class, 'edit'])->name('edit');
+            Route::put('/{id}', [App\Http\Controllers\LearningOutcomeController::class, 'update'])->name('update');
+            Route::delete('/{id}', [App\Http\Controllers\LearningOutcomeController::class, 'destroy'])->name('destroy');
+            Route::post('/update-order', [App\Http\Controllers\LearningOutcomeController::class, 'updateOrder'])->name('update-order');
         });
         
         Route::get('/{id}', [ActivityController::class, 'show'])->name('show');

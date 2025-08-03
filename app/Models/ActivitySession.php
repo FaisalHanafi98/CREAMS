@@ -74,6 +74,16 @@ class ActivitySession extends Model
             } elseif (!$session->session_date && $session->scheduled_date) {
                 $session->session_date = $session->scheduled_date;
             }
+            
+            // Generate encrypted ID if not provided
+            if (!$session->encrypted_id) {
+                $session->encrypted_id = encrypt($session->id ?: uniqid('session_'));
+            }
+            
+            // Set default color if not provided
+            if (!$session->color_code) {
+                $session->color_code = '#3498db';
+            }
         });
 
         static::updating(function ($session) {
@@ -507,24 +517,6 @@ class ActivitySession extends Model
         return $details;
     }
 
-    /**
-     * Generate encrypted ID on creation
-     */
-    protected static function boot()
-    {
-        parent::boot();
-        
-        static::creating(function ($session) {
-            if (!$session->encrypted_id) {
-                $session->encrypted_id = encrypt($session->id ?: uniqid('session_'));
-            }
-            
-            // Set default color if not provided
-            if (!$session->color_code) {
-                $session->color_code = '#3498db';
-            }
-        });
-    }
 
     /**
      * Find session by encrypted ID
