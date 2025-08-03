@@ -2341,4 +2341,258 @@ class ActivityController extends Controller
         }
     }
 
+    // ========================================
+    // ENHANCED SCHEDULE MANAGEMENT METHODS
+    // ========================================
+
+    /**
+     * Display personal schedule for current user
+     */
+    public function personalSchedule()
+    {
+        try {
+            $userId = session('id');
+            $role = session('role');
+            
+            if (!$userId) {
+                return redirect()->route('login');
+            }
+
+            Log::info('Loading personal schedule', ['user_id' => $userId, 'role' => $role]);
+
+            // Get user's sessions based on role
+            $query = ActivitySession::with(['activity', 'enrollments.trainee']);
+            
+            if ($role === 'teacher') {
+                $query->where('teacher_id', $userId);
+            } elseif ($role === 'trainee') {
+                $query->whereHas('enrollments', function($q) use ($userId) {
+                    $q->where('trainee_id', $userId);
+                });
+            } else {
+                // For other roles, show centre-specific sessions
+                $centreId = session('centre_id');
+                $query->whereHas('activity', function($q) use ($centreId) {
+                    $q->where('centre_id', $centreId);
+                });
+            }
+
+            $sessions = $query->where('session_date', '>=', Carbon::now()->subDays(30))
+                             ->orderBy('session_date', 'asc')
+                             ->orderBy('start_time', 'asc')
+                             ->get();
+
+            return view('activities.schedule.personal', compact('sessions', 'role'));
+
+        } catch (Exception $e) {
+            Log::error('Error loading personal schedule: ' . $e->getMessage());
+            return redirect()->route('dashboard')
+                ->with('error', 'Unable to load personal schedule.');
+        }
+    }
+
+    /**
+     * Display staff schedule by encrypted ID (admin only)
+     */
+    public function staffSchedule($encryptedId)
+    {
+        try {
+            $currentRole = session('role');
+            
+            // Only admin can view other staff schedules
+            if ($currentRole !== 'admin') {
+                return redirect()->route('activities.schedule.personal')
+                    ->with('error', 'Access denied. You can only view your own schedule.');
+            }
+
+            $staffId = decrypt($encryptedId);
+            $staff = User::findOrFail($staffId);
+            
+            Log::info('Admin viewing staff schedule', [
+                'admin_id' => session('id'),
+                'staff_id' => $staffId,
+                'staff_name' => $staff->name
+            ]);
+
+            $sessions = ActivitySession::with(['activity', 'enrollments.trainee'])
+                ->where('teacher_id', $staffId)
+                ->where('session_date', '>=', Carbon::now()->subDays(30))
+                ->orderBy('session_date', 'asc')
+                ->orderBy('start_time', 'asc')
+                ->get();
+
+            return view('activities.schedule.staff', compact('sessions', 'staff'));
+
+        } catch (Exception $e) {
+            Log::error('Error loading staff schedule: ' . $e->getMessage());
+            return redirect()->route('activities.schedule')
+                ->with('error', 'Unable to load staff schedule.');
+        }
+    }
+
+    /**
+     * Display trainee schedule by encrypted ID (admin/supervisor/parent)
+     */
+    public function traineeSchedule($encryptedId)
+    {
+        try {
+            $currentRole = session('role');
+            $currentUserId = session('id');
+            
+            $traineeId = decrypt($encryptedId);
+            $trainee = Trainee::findOrFail($traineeId);
+            
+            // Check access permissions
+            if ($currentRole === 'parent') {
+                // Parents can only view their own child's schedule
+                // This would need parent-child relationship check
+                // For now, allowing if they have the encrypted ID
+            } elseif (!in_array($currentRole, ['admin', 'supervisor'])) {
+                return redirect()->route('activities.schedule.personal')
+                    ->with('error', 'Access denied.');
+            }
+
+            Log::info('Viewing trainee schedule', [
+                'viewer_id' => $currentUserId,
+                'viewer_role' => $currentRole,
+                'trainee_id' => $traineeId,
+                'trainee_name' => $trainee->full_name
+            ]);
+
+            $sessions = ActivitySession::with(['activity', 'enrollments'])
+                ->whereHas('enrollments', function($q) use ($traineeId) {
+                    $q->where('trainee_id', $traineeId);
+                })
+                ->where('session_date', '>=', Carbon::now()->subDays(30))
+                ->orderBy('session_date', 'asc')
+                ->orderBy('start_time', 'asc')
+                ->get();
+
+            return view('activities.schedule.trainee', compact('sessions', 'trainee'));
+
+        } catch (Exception $e) {
+            Log::error('Error loading trainee schedule: ' . $e->getMessage());
+            return redirect()->route('activities.schedule')
+                ->with('error', 'Unable to load trainee schedule.');
+        }
+    }
+
+    /**
+     * Get calendar data for AJAX requests
+     */
+    public function getCalendarData(Request $request)
+    {
+        try {
+            $userId = session('id');
+            $role = session('role');
+            $start = $request->get('start');
+            $end = $request->get('end');
+            $view = $request->get('view', 'personal'); // personal, staff, trainee
+            $targetId = $request->get('target_id'); // for staff/trainee views
+
+            $query = ActivitySession::with(['activity']);
+
+            // Date filtering
+            if ($start && $end) {
+                $query->whereBetween('session_date', [
+                    Carbon::parse($start)->startOfDay(),
+                    Carbon::parse($end)->endOfDay()
+                ]);
+            }
+
+            // Role-based filtering
+            if ($view === 'personal') {
+                if ($role === 'teacher') {
+                    $query->where('teacher_id', $userId);
+                } elseif ($role === 'trainee') {
+                    $query->whereHas('enrollments', function($q) use ($userId) {
+                        $q->where('trainee_id', $userId);
+                    });
+                } else {
+                    $centreId = session('centre_id');
+                    $query->whereHas('activity', function($q) use ($centreId) {
+                        $q->where('centre_id', $centreId);
+                    });
+                }
+            } elseif ($view === 'staff' && $role === 'admin' && $targetId) {
+                $staffId = decrypt($targetId);
+                $query->where('teacher_id', $staffId);
+            } elseif ($view === 'trainee' && in_array($role, ['admin', 'supervisor', 'parent']) && $targetId) {
+                $traineeId = decrypt($targetId);
+                $query->whereHas('enrollments', function($q) use ($traineeId) {
+                    $q->where('trainee_id', $traineeId);
+                });
+            }
+
+            $sessions = $query->get();
+            
+            $events = $sessions->map(function($session) {
+                return $session->calendar_event;
+            });
+
+            return response()->json($events);
+
+        } catch (Exception $e) {
+            Log::error('Error fetching calendar data: ' . $e->getMessage());
+            return response()->json([]);
+        }
+    }
+
+    /**
+     * Get dashboard schedule widget data
+     */
+    public function getDashboardScheduleData()
+    {
+        try {
+            $userId = session('id');
+            $role = session('role');
+            
+            $query = ActivitySession::with(['activity']);
+
+            // Get today's and upcoming sessions
+            if ($role === 'teacher') {
+                $query->where('teacher_id', $userId);
+            } elseif ($role === 'trainee') {
+                $query->whereHas('enrollments', function($q) use ($userId) {
+                    $q->where('trainee_id', $userId);
+                });
+            } else {
+                $centreId = session('centre_id');
+                $query->whereHas('activity', function($q) use ($centreId) {
+                    $q->where('centre_id', $centreId);
+                });
+            }
+
+            $todaySessions = $query->clone()
+                ->whereDate('session_date', Carbon::today())
+                ->orderBy('start_time')
+                ->limit(3)
+                ->get();
+
+            $upcomingSessions = $query->clone()
+                ->where('session_date', '>', Carbon::today())
+                ->where('session_date', '<=', Carbon::today()->addDays(7))
+                ->orderBy('session_date')
+                ->orderBy('start_time')
+                ->limit(5)
+                ->get();
+
+            return [
+                'today' => $todaySessions,
+                'upcoming' => $upcomingSessions,
+                'total_today' => $todaySessions->count(),
+                'total_week' => $upcomingSessions->count()
+            ];
+
+        } catch (Exception $e) {
+            Log::error('Error fetching dashboard schedule data: ' . $e->getMessage());
+            return [
+                'today' => collect([]),
+                'upcoming' => collect([]),
+                'total_today' => 0,
+                'total_week' => 0
+            ];
+        }
+    }
+
 }

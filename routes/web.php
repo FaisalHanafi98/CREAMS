@@ -227,9 +227,13 @@ Route::middleware(['auth', 'validate.params'])->group(function () {
             Route::post('/{activityId}/sessions/{sessionId}/enrollments/add', [ActivityController::class, 'addEnrollment'])->name('enrollments.add');
         });
         
-        // Schedule routes (moved under activities)
+        // Enhanced Schedule routes
         Route::get('/schedule', [ActivityController::class, 'scheduleIndex'])->name('schedule');
+        Route::get('/schedule/personal', [ActivityController::class, 'personalSchedule'])->name('schedule.personal');
+        Route::get('/schedule/staff/{encryptedId}', [ActivityController::class, 'staffSchedule'])->name('schedule.staff');
+        Route::get('/schedule/trainee/{encryptedId}', [ActivityController::class, 'traineeSchedule'])->name('schedule.trainee');
         Route::get('/schedule/weekly', [ActivityController::class, 'weeklySchedule'])->name('schedule.weekly');
+        Route::get('/schedule/calendar-data', [ActivityController::class, 'getCalendarData'])->name('schedule.calendar-data');
         Route::get('/schedule/teacher/{teacherId}', [ActivityController::class, 'teacherSchedule'])->name('schedule.teacher');
     });
 
