@@ -363,7 +363,7 @@ $(document).ready(function() {
             localStorage.setItem('selectedTemplate', JSON.stringify(templateData));
             
             // Redirect to profile page letter section
-            window.location.href = '/profile#letters';
+            window.location.href = '/profile#letter';
         }
     });
 

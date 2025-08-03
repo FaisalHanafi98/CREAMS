@@ -70,22 +70,46 @@ class Letter extends Model
         $prefix = 'LTR';
         $year = date('Y');
         $month = date('m');
+        $maxAttempts = 100;
         
-        try {
-            // Get the last letter number for this month
-            $lastLetter = self::whereYear('created_at', $year)
-                              ->whereMonth('created_at', $month)
-                              ->latest()
-                              ->first();
-            
-            $sequence = $lastLetter ? (intval(substr($lastLetter->letter_reference, -4)) + 1) : 1;
-            
-        } catch (\Exception $e) {
-            // If database query fails, use random sequence
-            $sequence = rand(1000, 9999);
+        for ($attempt = 1; $attempt <= $maxAttempts; $attempt++) {
+            try {
+                // Get the highest sequence number for this month
+                $lastSequence = self::where('letter_reference', 'like', "{$prefix}/{$year}/{$month}/%")
+                    ->orderByRaw('CAST(SUBSTRING_INDEX(letter_reference, "/", -1) AS UNSIGNED) DESC')
+                    ->value('letter_reference');
+                
+                if ($lastSequence) {
+                    $sequence = intval(substr($lastSequence, -4)) + 1;
+                } else {
+                    $sequence = 1;
+                }
+                
+                $reference = sprintf('%s/%s/%s/%04d', $prefix, $year, $month, $sequence);
+                
+                // Check if this reference already exists
+                if (!self::where('letter_reference', $reference)->exists()) {
+                    return $reference;
+                }
+                
+                // If it exists, try with next sequence number
+                $sequence++;
+                
+            } catch (\Exception $e) {
+                // If database query fails, use timestamp-based sequence
+                $sequence = intval(substr(time(), -4));
+                $reference = sprintf('%s/%s/%s/%04d', $prefix, $year, $month, $sequence);
+                
+                if (!self::where('letter_reference', $reference)->exists()) {
+                    return $reference;
+                }
+            }
         }
         
-        return sprintf('%s/%s/%s/%04d', $prefix, $year, $month, $sequence);
+        // Fallback: use timestamp + random if all attempts fail
+        $timestamp = time();
+        $random = rand(10, 99);
+        return sprintf('%s/%s/%s/%s%s', $prefix, $year, $month, substr($timestamp, -2), $random);
     }
 
     /**

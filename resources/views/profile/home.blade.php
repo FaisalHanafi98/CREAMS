@@ -1802,7 +1802,7 @@ $(document).ready(function() {
                 showSuccessAlert(`Template "${templateData.name}" loaded successfully! You can now modify the content and generate a new letter.`);
                 
                 // Handle letters section navigation
-                if (window.location.hash === '#letters' || window.location.hash === '#letters-tab') {
+                if (window.location.hash === '#letters' || window.location.hash === '#letters-tab' || window.location.hash === '#letter') {
                     // Activate the letters tab
                     $('#letters-tab').tab('show');
                     
