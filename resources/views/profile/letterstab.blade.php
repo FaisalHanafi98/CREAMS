@@ -108,9 +108,9 @@
                 <div class="form-group">
                     <label for="reference_number"><i class="fas fa-hashtag"></i> Reference Number</label>
                     <input type="text" id="reference_number" class="form-control" 
-                           value="{{ \App\Models\Letter::generateReferenceNumber() }}"
-                           placeholder="Auto-generated reference" required>
-                    <small class="form-text text-muted">Unique reference for this letter</small>
+                           value="Auto-generated on save"
+                           placeholder="Auto-generated reference" readonly disabled>
+                    <small class="form-text text-muted">Reference will be automatically generated when letter is created</small>
                 </div>
             </div>
             <div class="col-md-6">
@@ -335,7 +335,6 @@ function directGenerateLetter() {
     
     // Get form data
     const data = {
-        reference_number: document.getElementById('reference_number').value,
         letter_date: document.getElementById('letter_date').value,
         recipient_name: document.getElementById('recipient_name').value,
         recipient_address: document.getElementById('recipient_address').value,
@@ -373,7 +372,7 @@ function directGenerateLetter() {
                 console.log('Parsed Response:', response);
                 
                 if (response.success) {
-                    alert(`SUCCESS! Letter ${response.reference_number} generated successfully! Check your downloads folder.`);
+                    alert(`SUCCESS! Letter ${response.reference || 'generated'} successfully! Check your downloads folder.`);
                     
                     // Try to trigger download
                     if (response.download_url) {

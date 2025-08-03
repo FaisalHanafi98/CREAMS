@@ -183,9 +183,9 @@ Route::middleware(['auth', 'validate.params'])->group(function () {
 
     // Profile Letter Generation Routes (All authenticated users)
     Route::post('/letters/generate', [LetterController::class, 'generate'])->name('letters.generate');
-    Route::post('/profile/letters/generate', [LetterController::class, 'store'])->name('profile.letters.generate');
-    Route::get('/profile/letters/{letter}/preview', [LetterController::class, 'show'])->name('profile.letters.preview');
-    Route::get('/profile/letters/{letter}/download', [LetterController::class, 'download'])->name('profile.letters.download');
+    Route::post('/profile/letters/generate', [LetterTemplateController::class, 'generate'])->name('profile.letters.generate');
+    Route::get('/profile/letters/{letter}/preview', [LetterTemplateController::class, 'viewLetter'])->name('profile.letters.preview');
+    Route::get('/profile/letters/{letter}/download', [LetterTemplateController::class, 'downloadLetter'])->name('profile.letters.download');
 
 
     // Activity Management

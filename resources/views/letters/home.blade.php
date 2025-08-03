@@ -344,7 +344,10 @@ $(document).ready(function() {
     });
 
     // Handle "Use Template" button clicks
-    $('.use-template-btn').on('click', function() {
+    $('.use-template-btn').on('click', function(e) {
+        e.preventDefault();
+        console.log('Use Template button clicked');
+        
         const templateData = {
             id: $(this).data('template-id'),
             name: $(this).data('template-name'),
@@ -355,12 +358,15 @@ $(document).ready(function() {
             footerImage: $(this).data('footer-image')
         };
 
+        console.log('Template data:', templateData);
+
         // Confirm before redirecting
         const confirmMessage = `Use template "${templateData.name}" for a new letter?\n\nThis will take you to the letter generator with this template's header and footer configuration loaded.`;
         
         if (confirm(confirmMessage)) {
             // Store template data in localStorage to be used in the profile page
             localStorage.setItem('selectedTemplate', JSON.stringify(templateData));
+            console.log('Template data saved to localStorage');
             
             // Redirect to profile page letter section
             window.location.href = '/profile#letter';
