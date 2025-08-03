@@ -247,8 +247,15 @@
                                 <div class="activity-title">{{ $activity->activity_name }}</div>
                             </div>
                             
-                            @if($activity->description)
+                            @if($activity->activity_description)
+                                <p class="text-muted mb-2">{{ Str::limit($activity->activity_description, 120) }}</p>
+                            @elseif(isset($activity->description))
                                 <p class="text-muted mb-2">{{ Str::limit($activity->description, 120) }}</p>
+                            @else
+                                <p class="text-muted mb-2">
+                                    <i class="fas fa-exclamation-triangle me-1 text-warning"></i>
+                                    <em>Description not provided - Please add activity description</em>
+                                </p>
                             @endif
                             
                             <div class="activity-meta">

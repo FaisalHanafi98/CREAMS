@@ -246,7 +246,13 @@
                                         <br>
                                         <small class="text-muted">
                                             <i class="fas fa-map-marker-alt me-1"></i>{{ $session->venue }}
-                                            @if($session->room_number) - Room {{ $session->room_number }}@endif
+                                            @if(isset($session->room_number) && $session->room_number) 
+                                                - Room {{ $session->room_number }}
+                                            @else
+                                                <span class="text-warning ms-1">
+                                                    <i class="fas fa-exclamation-triangle"></i> Room TBD
+                                                </span>
+                                            @endif
                                         </small>
                                     @endif
                                 </div>
