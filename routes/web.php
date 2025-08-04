@@ -213,6 +213,15 @@ Route::middleware(['auth', 'validate.params'])->group(function () {
             });
         });
         
+        // Activity Creation Wizard routes (Admin, Supervisor, Teacher)
+        Route::prefix('wizard')->name('wizard.')->middleware(['role:admin,supervisor,teacher'])->group(function () {
+            Route::get('/', [App\Http\Controllers\Activity\ActivityWizardController::class, 'index'])->name('index');
+            Route::post('/validate-step', [App\Http\Controllers\Activity\ActivityWizardController::class, 'validateStep'])->name('validate-step');
+            Route::post('/store', [App\Http\Controllers\Activity\ActivityWizardController::class, 'store'])->name('store');
+            Route::get('/template-preview', [App\Http\Controllers\Activity\ActivityWizardController::class, 'getTemplatePreview'])->name('template-preview');
+            Route::get('/suggested-iep-goals', [App\Http\Controllers\Activity\ActivityWizardController::class, 'getSuggestedIepGoals'])->name('suggested-iep-goals');
+        });
+        
         // Admin and Supervisor routes
         Route::middleware(['role:admin,supervisor'])->group(function () {
             Route::get('/create', [ActivityController::class, 'create'])->name('create');
@@ -234,6 +243,33 @@ Route::middleware(['auth', 'validate.params'])->group(function () {
             Route::put('/{id}', [App\Http\Controllers\LearningOutcomeController::class, 'update'])->name('update');
             Route::delete('/{id}', [App\Http\Controllers\LearningOutcomeController::class, 'destroy'])->name('destroy');
             Route::post('/update-order', [App\Http\Controllers\LearningOutcomeController::class, 'updateOrder'])->name('update-order');
+        });
+        
+        // Session-Level Learning Outcomes Management (Teacher, Admin, Supervisor)
+        Route::prefix('sessions')->name('sessions.')->middleware(['role:teacher,admin,supervisor'])->group(function () {
+            Route::get('/{sessionId}/learning-outcomes', [App\Http\Controllers\Activity\SessionLearningOutcomeController::class, 'index'])->name('learning-outcomes.index');
+            Route::post('/{sessionId}/learning-outcomes', [App\Http\Controllers\Activity\SessionLearningOutcomeController::class, 'store'])->name('learning-outcomes.store');
+            Route::post('/{sessionId}/learning-outcomes/progress', [App\Http\Controllers\Activity\SessionLearningOutcomeController::class, 'updateTraineeProgress'])->name('learning-outcomes.update-progress');
+            Route::get('/{sessionId}/learning-outcomes/analytics', [App\Http\Controllers\Activity\SessionLearningOutcomeController::class, 'getSessionAnalytics'])->name('learning-outcomes.analytics');
+            Route::get('/{sessionId}/learning-outcomes/available', [App\Http\Controllers\Activity\SessionLearningOutcomeController::class, 'getAvailableOutcomes'])->name('learning-outcomes.available');
+            
+            // Template Modification Routes (Admin, Supervisor only)
+            Route::middleware(['role:admin,supervisor'])->group(function () {
+                Route::get('/{sessionId}/template-data', [App\Http\Controllers\Activity\SessionTemplateController::class, 'getTemplateData'])->name('template-data');
+                Route::post('/{sessionId}/template-preview', [App\Http\Controllers\Activity\SessionTemplateController::class, 'previewTemplateChanges'])->name('template-preview');
+                Route::post('/{sessionId}/template-modify', [App\Http\Controllers\Activity\SessionTemplateController::class, 'applyTemplateModifications'])->name('template-modify');
+                Route::post('/{sessionId}/create-template', [App\Http\Controllers\Activity\SessionTemplateController::class, 'createTemplateFromSession'])->name('create-template');
+            });
+        });
+        
+        // Template Application Routes (Admin, Supervisor only)
+        Route::middleware(['role:admin,supervisor'])->group(function () {
+            Route::post('/{activityId}/apply-template-similar', [App\Http\Controllers\Activity\SessionTemplateController::class, 'applyTemplateToSimilar'])->name('apply-template-similar');
+            
+            // Bulk Session Operations
+            Route::post('/bulk/reschedule', [App\Http\Controllers\Activity\SessionTemplateController::class, 'bulkReschedule'])->name('bulk-reschedule');
+            Route::post('/bulk/change-venue', [App\Http\Controllers\Activity\SessionTemplateController::class, 'bulkChangeVenue'])->name('bulk-change-venue');
+            Route::post('/bulk/cancel', [App\Http\Controllers\Activity\SessionTemplateController::class, 'bulkCancel'])->name('bulk-cancel');
         });
         
         Route::get('/{id}', [ActivityController::class, 'show'])->name('show');
@@ -263,6 +299,16 @@ Route::middleware(['auth', 'validate.params'])->group(function () {
         Route::get('/schedule/weekly', [ActivityController::class, 'weeklySchedule'])->name('schedule.weekly');
         Route::get('/schedule/calendar-data', [ActivityController::class, 'getCalendarData'])->name('schedule.calendar-data');
         Route::get('/schedule/teacher/{teacherId}', [ActivityController::class, 'teacherSchedule'])->name('schedule.teacher');
+    });
+
+    // Enhanced Attendance Management (Activity-Centre Integration)
+    Route::prefix('centre/attendance')->name('centre.enhanced-attendance.')
+         ->middleware(['role:admin,supervisor,teacher'])->group(function () {
+        Route::get('/', [App\Http\Controllers\Centre\EnhancedAttendanceController::class, 'index'])->name('index');
+        Route::get('/analytics', [App\Http\Controllers\Centre\EnhancedAttendanceController::class, 'analytics'])->name('analytics');
+        Route::get('/export', [App\Http\Controllers\Centre\EnhancedAttendanceController::class, 'export'])->name('export');
+        Route::get('/session/{sessionId}/mark', [App\Http\Controllers\Centre\EnhancedAttendanceController::class, 'markActivityAttendance'])->name('mark-session');
+        Route::post('/session/{sessionId}/store', [App\Http\Controllers\Centre\EnhancedAttendanceController::class, 'storeActivityAttendance'])->name('store-session');
     });
 
     // NEW ENHANCED ACTIVITY MANAGEMENT SYSTEM - COMMENTED OUT FOR NOW

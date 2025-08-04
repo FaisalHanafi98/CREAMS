@@ -44,11 +44,11 @@ return new class extends Migration
             }
         });
 
-        // Add performance indexes
-        DB::statement('CREATE INDEX IF NOT EXISTS idx_sessions_date_teacher ON activity_sessions(session_date, teacher_id)');
-        DB::statement('CREATE INDEX IF NOT EXISTS idx_sessions_venue_time ON activity_sessions(venue, session_date, start_time)');
-        DB::statement('CREATE INDEX IF NOT EXISTS idx_sessions_status_date ON activity_sessions(status, session_date)');
-        DB::statement('CREATE INDEX IF NOT EXISTS idx_sessions_encrypted_id ON activity_sessions(encrypted_id)');
+        // Add performance indexes (compatible with older MySQL versions)
+        $this->createIndexIfNotExists('idx_sessions_date_teacher', 'activity_sessions', ['session_date', 'teacher_id']);
+        $this->createIndexIfNotExists('idx_sessions_venue_time', 'activity_sessions', ['venue', 'session_date', 'start_time']);
+        $this->createIndexIfNotExists('idx_sessions_status_date', 'activity_sessions', ['status', 'session_date']);
+        $this->createIndexIfNotExists('idx_sessions_encrypted_id', 'activity_sessions', ['encrypted_id']);
         
         // Generate encrypted IDs for existing sessions
         $this->generateEncryptedIds();
@@ -82,12 +82,48 @@ return new class extends Migration
         });
 
         // Drop indexes
-        DB::statement('DROP INDEX IF EXISTS idx_sessions_date_teacher');
-        DB::statement('DROP INDEX IF EXISTS idx_sessions_venue_time');
-        DB::statement('DROP INDEX IF EXISTS idx_sessions_status_date');
-        DB::statement('DROP INDEX IF EXISTS idx_sessions_encrypted_id');
+        $this->dropIndexIfExists('idx_sessions_date_teacher', 'activity_sessions');
+        $this->dropIndexIfExists('idx_sessions_venue_time', 'activity_sessions');
+        $this->dropIndexIfExists('idx_sessions_status_date', 'activity_sessions');
+        $this->dropIndexIfExists('idx_sessions_encrypted_id', 'activity_sessions');
     }
     
+    /**
+     * Create index if it doesn't exist (MySQL compatibility)
+     */
+    private function createIndexIfNotExists(string $indexName, string $tableName, array $columns): void
+    {
+        try {
+            $columnList = implode(',', $columns);
+            
+            // Check if index exists
+            $exists = DB::select("SHOW INDEX FROM {$tableName} WHERE Key_name = ?", [$indexName]);
+            
+            if (empty($exists)) {
+                DB::statement("CREATE INDEX {$indexName} ON {$tableName}({$columnList})");
+            }
+        } catch (\Exception $e) {
+            \Log::warning("Could not create index {$indexName}: " . $e->getMessage());
+        }
+    }
+    
+    /**
+     * Drop index if it exists (MySQL compatibility)
+     */
+    private function dropIndexIfExists(string $indexName, string $tableName): void
+    {
+        try {
+            // Check if index exists
+            $exists = DB::select("SHOW INDEX FROM {$tableName} WHERE Key_name = ?", [$indexName]);
+            
+            if (!empty($exists)) {
+                DB::statement("DROP INDEX {$indexName} ON {$tableName}");
+            }
+        } catch (\Exception $e) {
+            \Log::warning("Could not drop index {$indexName}: " . $e->getMessage());
+        }
+    }
+
     /**
      * Generate encrypted IDs for existing sessions
      */

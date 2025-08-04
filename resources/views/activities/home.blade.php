@@ -21,8 +21,13 @@
                     </h1>
                     <p class="header-subtitle">Manage rehabilitation activities and track student progress in real-time</p>
                 </div>
-                @if(in_array(session('role'), ['admin', 'supervisor']))
+                @if(in_array(session('role'), ['admin', 'supervisor', 'teacher']))
                 <div class="header-actions">
+                    <a href="{{ route('activities.wizard.index') }}" class="btn-modern btn-success">
+                        <i class="fas fa-magic"></i>
+                        <span>Activity Wizard</span>
+                    </a>
+                    @if(in_array(session('role'), ['admin', 'supervisor']))
                     <a href="{{ route('activities.create') }}" class="btn-modern btn-primary">
                         <i class="fas fa-plus"></i>
                         <span>Create Activity</span>
@@ -31,6 +36,7 @@
                         <i class="fas fa-th-large"></i>
                         <span>Categories</span>
                     </a>
+                    @endif
                 </div>
                 @endif
             </div>
