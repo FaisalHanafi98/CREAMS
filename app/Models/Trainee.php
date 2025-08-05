@@ -358,31 +358,23 @@ class Trainee extends Model
      */
     public function calculateActivityProgress($activity)
     {
-        // Get activity with required fields
-        if (!$activity->start_date || !$activity->end_date || !$activity->sessions_per_week) {
-            return 0; // Cannot calculate without required fields
-        }
-
-        // Calculate total expected sessions
-        $start = Carbon::parse($activity->start_date);
-        $end = Carbon::parse($activity->end_date);
-        $total_weeks = $start->diffInWeeks($end);
-        $total_sessions = $total_weeks * $activity->sessions_per_week;
-
-        if ($total_sessions <= 0) {
-            return 0;
-        }
-
-        // Get attended sessions for this trainee and activity
-        $attended_sessions = $this->sessionAttendances()
-            ->whereHas('session', function($query) use ($activity) {
-                $query->where('activity_id', $activity->id);
-            })
-            ->where('attended', true)
+        // Use actual attendance data from attendances table
+        $totalSessions = $this->attendances()
+            ->where('activity_id', $activity->id)
             ->count();
 
-        // Calculate progress percentage
-        $progress = ($attended_sessions / $total_sessions) * 100;
+        if ($totalSessions <= 0) {
+            return 0; // No sessions recorded yet
+        }
+
+        // Get attended sessions (present + late)
+        $attendedSessions = $this->attendances()
+            ->where('activity_id', $activity->id)
+            ->whereIn('status', ['present', 'late'])
+            ->count();
+
+        // Calculate progress percentage based on attendance rate
+        $progress = ($attendedSessions / $totalSessions) * 100;
         
         return min(round($progress, 1), 100); // Cap at 100%
     }

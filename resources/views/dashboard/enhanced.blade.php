@@ -359,7 +359,7 @@
                                 <div class="notification-indicator"></div>
                                 <div class="notification-content-enhanced">
                                     <p class="notification-message">{{ $notification['message'] }}</p>
-                                    <small class="notification-time">{{ $notification['time'] }}</small>
+                                    <small class="notification-time">{{ $notification['time'] ?? 'recently' }}</small>
                                 </div>
                                 <button class="notification-dismiss" onclick="dismissNotification(this)">
                                     <i class="fas fa-times"></i>

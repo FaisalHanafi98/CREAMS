@@ -86,8 +86,12 @@ class SearchController extends Controller
             // Search for activities
             $activities = Activity::where(function ($q) use ($query) {
                 $q->where('activity_name', 'LIKE', "%{$query}%")
-                  ->orWhere('category', 'LIKE', "%{$query}%");
+                  ->orWhere('activity_description', 'LIKE', "%{$query}%")
+                  ->orWhereHas('category', function($subQuery) use ($query) {
+                      $subQuery->where('category_name', 'LIKE', "%{$query}%");
+                  });
             })
+            ->with('category')
             ->limit(5)
             ->get();
 
@@ -105,11 +109,17 @@ class SearchController extends Controller
 
             // Format activities results
             foreach ($activities as $activity) {
+                // Get category name safely
+                $categoryName = 'Uncategorized';
+                if ($activity->relationLoaded('category') && $activity->category) {
+                    $categoryName = $activity->category->category_name ?? 'Uncategorized';
+                }
+                
                 $results[] = [
                     'id' => $activity->id,
                     'name' => $activity->activity_name,
                     'type' => 'Activity',
-                    'location' => $activity->category,
+                    'location' => $categoryName,
                     'avatar' => asset('images/activity-icon.png'),
                     'url' => route('activities.show', ['id' => $activity->id])
                 ];

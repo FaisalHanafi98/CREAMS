@@ -322,7 +322,7 @@
                                 <i class="fas fa-calendar-check"></i>
                             </div>
                             <div class="metric-content">
-                                <span class="metric-value">{{ $activity->active_sessions_count ?? 0 }}</span>
+                                <span class="metric-value">{{ $activity->sessions_count ?? 0 }}</span>
                                 <span class="metric-label">Sessions</span>
                             </div>
                         </div>

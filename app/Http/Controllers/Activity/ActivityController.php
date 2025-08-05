@@ -225,7 +225,12 @@ class ActivityController extends Controller
                 $query->whereIn('activity_status', ['scheduled', 'ongoing']);
             }
 
-            $activities = $query->orderBy('created_at', 'desc')->paginate(12);
+            // Get activities with proper ordering - simplified approach
+            $activities = $query->with(['sessions', 'enrollments', 'creator', 'centre'])
+                ->withCount(['sessions', 'enrollments'])
+                ->orderByRaw('(sessions_count + enrollments_count) DESC')
+                ->orderBy('created_at', 'desc')
+                ->paginate(12);
 
             // Get statistics
             $stats = $this->getActivityStats($role, $userId);
@@ -1242,11 +1247,30 @@ class ActivityController extends Controller
                 });
             }
 
+            // Get total sessions and enrollments
+            $totalSessions = DB::table('activity_sessions')->count();
+            $totalEnrollments = DB::table('activity_enrollments')->count();
+            
+            // If teacher role, filter sessions by teacher
+            if ($role === 'teacher') {
+                $totalSessions = DB::table('activity_sessions')->where('teacher_id', $userId)->count();
+                $totalEnrollments = DB::table('activity_enrollments')
+                    ->whereIn('activity_id', function($subQuery) use ($userId) {
+                        $subQuery->select('activity_id')
+                            ->from('activity_sessions')
+                            ->where('teacher_id', $userId);
+                    })->count();
+            }
+
             return [
                 'total_activities' => $query->count(),
                 'active_activities' => $query->whereIn('activity_status', ['scheduled', 'ongoing'])->count(),
+                'total_sessions' => $totalSessions,
+                'total_enrollments' => $totalEnrollments,
                 'total' => $query->count(), // Backward compatibility
                 'active' => $query->whereIn('activity_status', ['scheduled', 'ongoing'])->count(), // Backward compatibility
+                'sessions' => $totalSessions, // For activities home view
+                'enrollments' => $totalEnrollments, // For activities home view
                 'rehabilitation' => $query->get()->filter(function($activity) {
                     return in_array($activity->category, ['Physical Therapy', 'Occupational Therapy', 'Speech Therapy', 'Sensory Integration']);
                 })->count(),

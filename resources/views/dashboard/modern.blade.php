@@ -154,8 +154,8 @@
                 </div>
                 @endforeach
             @endif
-            @if(isset($notifications))
-                @foreach(array_slice((array)$notifications, 0, 3) as $notification)
+            @if(isset($notifications) && count($notifications) > 0)
+                @foreach((is_array($notifications) ? collect($notifications) : $notifications)->take(3) as $notification)
                 <div class="notification-item notification-{{ $notification['type'] ?? 'info' }} user-notification" data-type="{{ $notification['type'] ?? 'info' }}">
                     <div class="notification-priority priority-normal">
                         <i class="fas fa-info-circle"></i>
@@ -166,9 +166,9 @@
                     <div class="notification-content">
                         <div class="notification-header-info">
                             <span class="notification-type-label">Notification</span>
-                            <span class="notification-time">{{ $notification['time'] }}</span>
+                            <span class="notification-time">{{ $notification['time'] ?? 'recently' }}</span>
                         </div>
-                        <div class="notification-message">{{ $notification['message'] }}</div>
+                        <div class="notification-message">{{ $notification['message'] ?? 'No message' }}</div>
                     </div>
                     <button class="notification-close" onclick="dismissNotification(this)">
                         <i class="fas fa-times"></i>
@@ -814,7 +814,7 @@
                                     @foreach(array_slice((array)$notifications, 0, 3) as $notification)
                                     <div class="notification-item-modern notification-{{ $notification['type'] ?? 'info' }}">
                                         <div class="notification-icon-modern">
-                                            <i class="fas fa-{{ $notification['type'] === 'warning' ? 'exclamation-triangle' : ($notification['type'] === 'success' ? 'check-circle' : 'info-circle') }}"></i>
+                                            <i class="fas fa-{{ ($notification['type'] ?? 'info') === 'warning' ? 'exclamation-triangle' : (($notification['type'] ?? 'info') === 'success' ? 'check-circle' : 'info-circle') }}"></i>
                                         </div>
                                         <div class="notification-content-modern">
                                             <div class="notification-message-modern">{{ $notification['message'] ?? 'Notification message' }}</div>

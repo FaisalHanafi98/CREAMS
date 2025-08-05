@@ -255,7 +255,7 @@
                                 <th>Asset ID</th>
                                 <th>Name</th>
                                 <th>Category</th>
-                                <th>Quantity</th>
+                                <th>Condition</th>
                                 <th>Status</th>
                                 <th>Current User</th>
                                 <th>Actions</th>
@@ -264,25 +264,32 @@
                         <tbody>
                             @forelse($assets ?? [] as $asset)
                             <tr>
-                                <td><strong>{{ $asset->asset_id ?? 'N/A' }}</strong></td>
+                                <td><strong>{{ $asset->asset_code ?? $asset->id }}</strong></td>
                                 <td>{{ $asset->name ?? 'Unnamed Asset' }}</td>
                                 <td>
-                                    <span class="badge badge-info">{{ ucfirst($asset->category ?? 'General') }}</span>
+                                    <span class="badge badge-info">{{ ucfirst($asset->category->name ?? 'General') }}</span>
                                 </td>
                                 <td>
-                                    {{ $asset->available_quantity ?? 0 }} / {{ $asset->total_quantity ?? 0 }}
+                                    @php
+                                        $condition = $asset->condition ?? 'unknown';
+                                        $conditionClass = $condition === 'new' ? 'badge-success' : 
+                                                         ($condition === 'good' ? 'badge-primary' : 
+                                                         ($condition === 'fair' ? 'badge-warning' : 'badge-danger'));
+                                    @endphp
+                                    <span class="badge {{ $conditionClass }}">{{ ucfirst($condition) }}</span>
                                 </td>
                                 <td>
                                     @php
                                         $status = $asset->status ?? 'available';
                                         $statusClass = $status === 'available' ? 'status-available' : 
-                                                      ($status === 'rented' ? 'status-rented' : 'status-maintenance');
+                                                      ($status === 'in_use' ? 'status-rented' : 'status-maintenance');
+                                        $statusDisplay = str_replace('_', ' ', ucwords($status, '_'));
                                     @endphp
-                                    <span class="asset-status {{ $statusClass }}">{{ ucfirst($status) }}</span>
+                                    <span class="asset-status {{ $statusClass }}">{{ $statusDisplay }}</span>
                                 </td>
                                 <td>
-                                    @if($asset->current_user ?? false)
-                                        <small class="text-muted">{{ $asset->current_user }}</small>
+                                    @if($asset->assigned_to && $asset->assignedTo)
+                                        <small class="text-muted">{{ $asset->assignedTo->name ?? 'User #' . $asset->assigned_to }}</small>
                                     @else
                                         <small class="text-muted">None</small>
                                     @endif
