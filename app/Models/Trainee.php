@@ -412,6 +412,102 @@ class Trainee extends Model
         return $activities_with_progress > 0 ? round($total_progress / $activities_with_progress, 1) : 0;
     }
 
+    /**
+     * Calculate comprehensive attendance statistics for trainee
+     */
+    public function getAttendanceStatistics($activityId = null, $dateFrom = null, $dateTo = null)
+    {
+        $query = $this->attendances();
+        
+        if ($activityId) {
+            $query->where('activity_id', $activityId);
+        }
+        
+        if ($dateFrom) {
+            $query->whereDate('date', '>=', $dateFrom);
+        }
+        
+        if ($dateTo) {
+            $query->whereDate('date', '<=', $dateTo);
+        }
+        
+        $attendances = $query->get();
+        
+        $stats = [
+            'total_sessions' => $attendances->count(),
+            'present' => $attendances->where('status', 'present')->count(),
+            'late' => $attendances->where('status', 'late')->count(),
+            'absent' => $attendances->where('status', 'absent')->count(),
+            'excused' => $attendances->where('status', 'excused')->count(),
+            'attendance_rate' => 0,
+            'meets_threshold' => false,
+            'threshold_percentage' => 50
+        ];
+        
+        if ($stats['total_sessions'] > 0) {
+            $attended = $stats['present'] + $stats['late'];
+            $stats['attendance_rate'] = round(($attended / $stats['total_sessions']) * 100, 2);
+            $stats['meets_threshold'] = $stats['attendance_rate'] >= $stats['threshold_percentage'];
+        }
+        
+        return $stats;
+    }
+
+    /**
+     * Check if trainee meets 50% attendance threshold for specific activity
+     */
+    public function meetsAttendanceThreshold($activityId, $threshold = 50)
+    {
+        $stats = $this->getAttendanceStatistics($activityId);
+        return $stats['attendance_rate'] >= $threshold;
+    }
+
+    /**
+     * Get overall attendance average across all activities
+     */
+    public function getOverallAttendanceAverage()
+    {
+        $activities = $this->activities;
+        
+        if ($activities->isEmpty()) {
+            return 0;
+        }
+        
+        $totalRate = 0;
+        $activityCount = 0;
+        
+        foreach ($activities as $activity) {
+            $stats = $this->getAttendanceStatistics($activity->id);
+            if ($stats['total_sessions'] > 0) {
+                $totalRate += $stats['attendance_rate'];
+                $activityCount++;
+            }
+        }
+        
+        return $activityCount > 0 ? round($totalRate / $activityCount, 2) : 0;
+    }
+
+    /**
+     * Get activities where trainee doesn't meet attendance threshold
+     */
+    public function getActivitiesBelowThreshold($threshold = 50)
+    {
+        $activities = $this->activities;
+        $belowThreshold = [];
+        
+        foreach ($activities as $activity) {
+            $stats = $this->getAttendanceStatistics($activity->id);
+            if ($stats['total_sessions'] > 0 && $stats['attendance_rate'] < $threshold) {
+                $belowThreshold[] = [
+                    'activity' => $activity,
+                    'stats' => $stats
+                ];
+            }
+        }
+        
+        return $belowThreshold;
+    }
+
     // =============================================
     // ENHANCED RELATIONSHIPS
     // =============================================

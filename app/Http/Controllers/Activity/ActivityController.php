@@ -24,6 +24,184 @@ use Exception;
 class ActivityController extends Controller
 {
     use HandlesErrors;
+
+    /**
+     * Check for activity overlaps and conflicts
+     */
+    private function checkActivityConflicts($activityData, $sessionData = null, $excludeActivityId = null)
+    {
+        $conflicts = [];
+        
+        try {
+            // Check for instructor conflicts
+            if (isset($sessionData) && isset($sessionData['teacher_id'])) {
+                $instructorConflicts = $this->checkInstructorAvailability(
+                    $sessionData['teacher_id'],
+                    $sessionData['session_date'] ?? null,
+                    $sessionData['start_time'] ?? null,
+                    $sessionData['end_time'] ?? null,
+                    $excludeActivityId
+                );
+                
+                if (!empty($instructorConflicts)) {
+                    $conflicts['instructor'] = $instructorConflicts;
+                }
+            }
+            
+            // Check for venue conflicts
+            if (isset($activityData['activity_location'])) {
+                $venueConflicts = $this->checkVenueAvailability(
+                    $activityData['activity_location'],
+                    $sessionData['session_date'] ?? null,
+                    $sessionData['start_time'] ?? null,
+                    $sessionData['end_time'] ?? null,
+                    $excludeActivityId
+                );
+                
+                if (!empty($venueConflicts)) {
+                    $conflicts['venue'] = $venueConflicts;
+                }
+            }
+            
+            // Check for participant overlaps
+            if (isset($sessionData['participants'])) {
+                $participantConflicts = $this->checkParticipantAvailability(
+                    $sessionData['participants'],
+                    $sessionData['session_date'] ?? null,
+                    $sessionData['start_time'] ?? null,
+                    $sessionData['end_time'] ?? null,
+                    $excludeActivityId
+                );
+                
+                if (!empty($participantConflicts)) {
+                    $conflicts['participants'] = $participantConflicts;
+                }
+            }
+            
+        } catch (Exception $e) {
+            Log::error('Error checking activity conflicts: ' . $e->getMessage());
+            $conflicts['system'] = ['message' => 'Unable to verify conflicts. Please check manually.'];
+        }
+        
+        return $conflicts;
+    }
+
+    /**
+     * Check instructor availability for given time slot
+     */
+    private function checkInstructorAvailability($teacherId, $date, $startTime, $endTime, $excludeActivityId = null)
+    {
+        if (!$teacherId || !$date || !$startTime || !$endTime) {
+            return [];
+        }
+
+        $conflicts = ActivitySession::where('teacher_id', $teacherId)
+            ->where('session_date', $date)
+            ->where(function($query) use ($startTime, $endTime) {
+                $query->whereBetween('start_time', [$startTime, $endTime])
+                      ->orWhereBetween('end_time', [$startTime, $endTime])
+                      ->orWhere(function($q) use ($startTime, $endTime) {
+                          $q->where('start_time', '<=', $startTime)
+                            ->where('end_time', '>=', $endTime);
+                      });
+            });
+
+        if ($excludeActivityId) {
+            $conflicts->where('activity_id', '!=', $excludeActivityId);
+        }
+
+        return $conflicts->with('activity')->get()->map(function($session) {
+            return [
+                'activity' => $session->activity->activity_name,
+                'time' => $session->start_time . ' - ' . $session->end_time,
+                'date' => $session->session_date->format('Y-m-d')
+            ];
+        })->toArray();
+    }
+
+    /**
+     * Check venue availability for given time slot
+     */
+    private function checkVenueAvailability($venue, $date, $startTime, $endTime, $excludeActivityId = null)
+    {
+        if (!$venue || !$date || !$startTime || !$endTime) {
+            return [];
+        }
+
+        $conflicts = Activity::where('activity_location', $venue)
+            ->whereHas('sessions', function($query) use ($date, $startTime, $endTime) {
+                $query->where('session_date', $date)
+                      ->where(function($q) use ($startTime, $endTime) {
+                          $q->whereBetween('start_time', [$startTime, $endTime])
+                            ->orWhereBetween('end_time', [$startTime, $endTime])
+                            ->orWhere(function($subQ) use ($startTime, $endTime) {
+                                $subQ->where('start_time', '<=', $startTime)
+                                     ->where('end_time', '>=', $endTime);
+                            });
+                      });
+            });
+
+        if ($excludeActivityId) {
+            $conflicts->where('id', '!=', $excludeActivityId);
+        }
+
+        return $conflicts->with('sessions')->get()->map(function($activity) {
+            return [
+                'activity' => $activity->activity_name,
+                'sessions' => $activity->sessions->map(function($session) {
+                    return $session->start_time . ' - ' . $session->end_time;
+                })->toArray()
+            ];
+        })->toArray();
+    }
+
+    /**
+     * Check participant availability for given time slot
+     */
+    private function checkParticipantAvailability($participants, $date, $startTime, $endTime, $excludeActivityId = null)
+    {
+        if (empty($participants) || !$date || !$startTime || !$endTime) {
+            return [];
+        }
+
+        $conflicts = [];
+        
+        foreach ($participants as $participantId) {
+            $participantConflicts = SessionEnrollment::where('trainee_id', $participantId)
+                ->whereHas('session', function($query) use ($date, $startTime, $endTime, $excludeActivityId) {
+                    $query->where('session_date', $date)
+                          ->where(function($q) use ($startTime, $endTime) {
+                              $q->whereBetween('start_time', [$startTime, $endTime])
+                                ->orWhereBetween('end_time', [$startTime, $endTime])
+                                ->orWhere(function($subQ) use ($startTime, $endTime) {
+                                    $subQ->where('start_time', '<=', $startTime)
+                                         ->where('end_time', '>=', $endTime);
+                                });
+                          });
+                    
+                    if ($excludeActivityId) {
+                        $query->where('activity_id', '!=', $excludeActivityId);
+                    }
+                })
+                ->with(['trainee', 'session.activity'])
+                ->get();
+
+            if ($participantConflicts->isNotEmpty()) {
+                $trainee = Trainee::find($participantId);
+                $conflicts[] = [
+                    'trainee' => $trainee ? $trainee->trainee_first_name . ' ' . $trainee->trainee_last_name : 'Unknown',
+                    'conflicts' => $participantConflicts->map(function($enrollment) {
+                        return [
+                            'activity' => $enrollment->session->activity->activity_name,
+                            'time' => $enrollment->session->start_time . ' - ' . $enrollment->session->end_time
+                        ];
+                    })->toArray()
+                ];
+            }
+        }
+
+        return $conflicts;
+    }
     /**
      * Display a listing of activities
      */
@@ -967,6 +1145,65 @@ class ActivityController extends Controller
         }
     }
 
+    /**
+     * Remove enrollment from a session
+     */
+    public function removeEnrollment($activityId, $sessionId, $traineeId)
+    {
+        try {
+            $session = ActivitySession::findOrFail($sessionId);
+            $role = session('role');
+
+            if (!in_array($role, ['admin', 'supervisor'])) {
+                return redirect()->route('activities.enrollments', [$activityId, $sessionId])
+                    ->with('error', 'You do not have permission to remove enrollments.');
+            }
+
+            // Find the enrollment
+            $enrollment = SessionEnrollment::where('session_id', $sessionId)
+                ->where('trainee_id', $traineeId)
+                ->first();
+
+            if (!$enrollment) {
+                return redirect()->route('activities.enrollments', [$activityId, $sessionId])
+                    ->with('error', 'Enrollment not found.');
+            }
+
+            // Remove the enrollment
+            $enrollment->delete();
+
+            // Check if trainee has any other session enrollments for this activity
+            $remainingSessionEnrollments = SessionEnrollment::whereHas('session', function($query) use ($activityId) {
+                $query->where('activity_id', $activityId);
+            })->where('trainee_id', $traineeId)->count();
+
+            // If no more session enrollments for this activity, remove activity-level enrollment
+            if ($remainingSessionEnrollments === 0) {
+                ActivityEnrollment::where('activity_id', $activityId)
+                    ->where('trainee_id', $traineeId)
+                    ->delete();
+            }
+
+            // Update session enrolled count
+            $currentEnrollments = SessionEnrollment::where('session_id', $sessionId)->count();
+            $session->enrolled_count = $currentEnrollments;
+            $session->save();
+
+            Log::info('Trainee removed from session', [
+                'session_id' => $sessionId,
+                'trainee_id' => $traineeId,
+                'removed_by' => session('id')
+            ]);
+
+            return redirect()->route('activities.enrollments', [$activityId, $sessionId])
+                ->with('success', 'Trainee removed from session successfully.');
+
+        } catch (Exception $e) {
+            Log::error('Error removing enrollment: ' . $e->getMessage());
+            return redirect()->route('activities.enrollments', [$activityId, $sessionId])
+                ->with('error', 'An error occurred while removing the trainee.');
+        }
+    }
 
     /**
      * Get activity categories

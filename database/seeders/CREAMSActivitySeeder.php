@@ -6,6 +6,7 @@ use Illuminate\Database\Seeder;
 use App\Models\Activity;
 use App\Models\ActivitySession;
 use App\Models\ActivityEnrollment;
+use App\Models\SessionEnrollment;
 use App\Models\Trainee;
 use App\Models\User;
 use App\Models\Category;
@@ -323,34 +324,67 @@ class CREAMSActivitySeeder extends Seeder
     private function createEnrollments($sessions, $trainees): int
     {
         $totalEnrollments = 0;
+        $activityEnrollments = collect(); // Track created activity enrollments
         
-        foreach ($sessions as $session) {
-            // Enroll 60-90% of max participants randomly
+        // Ensure sessions is a collection
+        if (is_array($sessions)) {
+            $sessions = collect($sessions);
+        }
+        
+        // Group sessions by activity
+        $sessionsByActivity = $sessions->groupBy('activity_id');
+        
+        foreach ($sessionsByActivity as $activityId => $activitySessions) {
+            // First, create activity-level enrollments (once per activity-trainee pair)
             $enrollmentCount = rand(
-                (int)($session->max_participants * 0.6), 
-                (int)($session->max_participants * 0.9)
+                (int)($activitySessions->first()->max_participants * 0.6), 
+                (int)($activitySessions->first()->max_participants * 0.9)
             );
             
             $selectedTrainees = $trainees->random(min($enrollmentCount, $trainees->count()));
             
             foreach ($selectedTrainees as $trainee) {
-                $attendanceStatus = $this->getAttendanceStatus($session->status);
-                
-                ActivityEnrollment::create([
-                    'activity_id' => $session->activity_id,
+                // Create activity enrollment only once per activity-trainee pair
+                $activityEnrollment = ActivityEnrollment::firstOrCreate([
+                    'activity_id' => $activityId,
                     'trainee_id' => $trainee->id,
-                    'enrollment_status' => $attendanceStatus,
-                    'enrollment_date' => $session->created_at,
-                    'progress_percentage' => $attendanceStatus === 'enrolled' ? rand(70, 95) : 0,
-                    'attendance_count' => $attendanceStatus === 'enrolled' ? 1 : 0,
-                    'enrolled_by' => $session->teacher_id,
+                ], [
+                    'enrollment_status' => 'enrolled',
+                    'enrollment_date' => $activitySessions->first()->created_at,
+                    'progress_percentage' => rand(70, 95),
+                    'attendance_count' => $activitySessions->count(),
+                    'enrolled_by' => $activitySessions->first()->teacher_id,
                 ]);
                 
-                $totalEnrollments++;
+                if ($activityEnrollment->wasRecentlyCreated) {
+                    $totalEnrollments++;
+                }
+                
+                // Create session enrollments for each session this trainee will attend
+                foreach ($activitySessions as $session) {
+                    // 80% chance trainee attends each session
+                    if (rand(1, 100) <= 80) {
+                        $attendanceStatus = $this->getAttendanceStatus($session->status);
+                        
+                        SessionEnrollment::create([
+                            'session_id' => $session->id,
+                            'trainee_id' => $trainee->id,
+                            'enrollment_date' => $session->created_at,
+                            'enrolled_by' => $session->teacher_id,
+                            'enrollment_status' => $attendanceStatus === 'present' ? 'attended' : 'enrolled',
+                            'participation_score' => $session->status === 'completed' ? rand(6, 10) : null,
+                            'enrollment_notes' => $this->generateProgressNotes($attendanceStatus),
+                            'feedback' => $session->status === 'completed' ? 'Session completed successfully' : null,
+                        ]);
+                    }
+                }
             }
             
-            // Update session participant count
-            $session->update(['current_participants' => $enrollmentCount]);
+            // Update session participant counts based on session enrollments
+            foreach ($activitySessions as $session) {
+                $sessionParticipants = SessionEnrollment::where('session_id', $session->id)->count();
+                $session->update(['current_participants' => $sessionParticipants]);
+            }
         }
         
         return $totalEnrollments;
@@ -545,5 +579,32 @@ class CREAMSActivitySeeder extends Seeder
         
         $this->command->info("\n✅ Ready for comprehensive attendance tracking implementation!");
         $this->command->info("🚀 All activities include proper category distribution and realistic scheduling!");
+    }
+
+    private function generateProgressNotes($attendanceStatus): string
+    {
+        $notes = [
+            'present' => [
+                'Active participation throughout the session',
+                'Showed good engagement with activities',
+                'Made progress on targeted skills',
+                'Collaborated well with peers',
+                'Demonstrated understanding of concepts'
+            ],
+            'absent' => [
+                'Unable to attend session',
+                'Will need catch-up activities',
+                'Family scheduling conflict',
+                'Health-related absence'
+            ],
+            'late' => [
+                'Arrived late but participated well',
+                'Caught up quickly with activities',
+                'Transportation delay'
+            ]
+        ];
+
+        $statusNotes = $notes[$attendanceStatus] ?? $notes['present'];
+        return $statusNotes[array_rand($statusNotes)];
     }
 }

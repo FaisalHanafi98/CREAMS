@@ -88,7 +88,7 @@ class ActivityWizardController extends Controller
                 'trace' => $e->getTraceAsString()
             ]);
             
-            return redirect()->route('activities.index')
+            return redirect()->route('activities.home')
                            ->with('error', 'Unable to load activity creation wizard.');
         }
     }

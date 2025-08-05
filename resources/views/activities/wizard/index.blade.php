@@ -14,7 +14,7 @@
                                 <p class="text-muted mb-0">Create comprehensive educational activities with integrated learning outcomes, schedules, and IEP goals</p>
                             </div>
                             <div>
-                                <a href="{{ route('activities.index') }}" class="btn btn-outline-secondary">
+                                <a href="{{ route('activities.home') }}" class="btn btn-outline-secondary">
                                     <i class="fas fa-arrow-left"></i> Back to Activities
                                 </a>
                             </div>

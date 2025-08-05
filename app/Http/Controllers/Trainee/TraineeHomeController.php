@@ -108,7 +108,9 @@ class TraineeHomeController extends Controller
             
             // Calculate average progress using new time-based academic progress system
             $totalProgress = 0;
+            $totalAttendance = 0;
             $traineesWithProgress = 0;
+            $traineesWithAttendance = 0;
             
             foreach ($trainees as $trainee) {
                 // Use the new calculateAverageProgress method from Trainee model
@@ -117,15 +119,30 @@ class TraineeHomeController extends Controller
                     $totalProgress += $traineeProgress;
                     $traineesWithProgress++;
                 }
+                
+                // Calculate attendance average for each trainee
+                $attendanceAvg = $trainee->getOverallAttendanceAverage();
+                $trainee->attendance_average = $attendanceAvg;
+                $trainee->meets_attendance_threshold = $attendanceAvg >= 50;
+                
+                if ($attendanceAvg > 0) {
+                    $totalAttendance += $attendanceAvg;
+                    $traineesWithAttendance++;
+                }
             }
             
             $avgProgress = $traineesWithProgress > 0 ? round($totalProgress / $traineesWithProgress, 1) : 0;
+            $avgAttendance = $traineesWithAttendance > 0 ? round($totalAttendance / $traineesWithAttendance, 1) : 0;
             
             $stats = [
                 'total' => $totalTrainees,
                 'active' => $activeTrainees,
                 'enrolled' => $enrolledTrainees,
-                'avg_progress' => $avgProgress
+                'avg_progress' => $avgProgress,
+                'avg_attendance' => $avgAttendance,
+                'below_threshold' => $trainees->filter(function($trainee) {
+                    return isset($trainee->attendance_average) && $trainee->attendance_average < 50;
+                })->count()
             ];
             
             Log::info('Trainee retrieved successfully', [

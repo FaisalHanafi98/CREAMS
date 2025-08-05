@@ -287,6 +287,24 @@
         transition: width 0.3s ease;
     }
 
+    .attendance-section {
+        border-top: 1px solid #f1f3f4;
+        padding-top: 15px;
+        margin-bottom: 15px;
+    }
+
+    .attendance-label {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 5px;
+        font-size: 0.85rem;
+    }
+
+    .attendance-percentage {
+        font-weight: 600;
+    }
+
     .trainee-actions {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
@@ -494,6 +512,20 @@
             <div class="stat-value">{{ $stats['avg_progress'] ?? 0 }}%</div>
             <div class="stat-label">Average Progress</div>
         </div>
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-calendar-check"></i>
+            </div>
+            <div class="stat-value">{{ $stats['avg_attendance'] ?? 0 }}%</div>
+            <div class="stat-label">Average Attendance</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-exclamation-triangle text-warning"></i>
+            </div>
+            <div class="stat-value">{{ $stats['below_threshold'] ?? 0 }}</div>
+            <div class="stat-label">Below 50% Attendance</div>
+        </div>
     </div>
 
     <!-- Filters -->
@@ -600,6 +632,29 @@
                             <div class="progress">
                                 <div class="progress-bar" style="width: {{ round($progressPercentage) }}%"></div>
                             </div>
+                        </div>
+
+                        <!-- Attendance Tracking Section -->
+                        <div class="attendance-section mt-3">
+                            <div class="attendance-label">
+                                <span>Attendance Average</span>
+                                <span class="attendance-percentage {{ isset($trainee->meets_attendance_threshold) && $trainee->meets_attendance_threshold ? 'text-success' : 'text-warning' }}">
+                                    {{ isset($trainee->attendance_average) ? round($trainee->attendance_average, 1) : 0 }}%
+                                </span>
+                            </div>
+                            <div class="progress mt-1">
+                                <div class="progress-bar {{ isset($trainee->meets_attendance_threshold) && $trainee->meets_attendance_threshold ? 'bg-success' : 'bg-warning' }}" 
+                                     style="width: {{ isset($trainee->attendance_average) ? round($trainee->attendance_average) : 0 }}%"></div>
+                            </div>
+                            @if(isset($trainee->meets_attendance_threshold) && !$trainee->meets_attendance_threshold)
+                                <small class="text-warning mt-1 d-block">
+                                    <i class="fas fa-exclamation-triangle"></i> Below 50% threshold
+                                </small>
+                            @elseif(isset($trainee->meets_attendance_threshold) && $trainee->meets_attendance_threshold)
+                                <small class="text-success mt-1 d-block">
+                                    <i class="fas fa-check-circle"></i> Meets attendance requirement
+                                </small>
+                            @endif
                         </div>
 
                         <div class="trainee-actions">

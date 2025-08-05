@@ -599,7 +599,7 @@ class AssetController extends Controller
 
             $validated = $request->validate([
                 'asset_ids' => 'required|array',
-                'asset_ids.*' => 'exists:assets_enhanced,id',
+                'asset_ids.*' => 'exists:assets,id',
                 'action' => 'required|in:update_status,update_location,schedule_maintenance',
                 'status' => 'required_if:action,update_status|in:available,in_use,maintenance,disposed',
                 'location' => 'required_if:action,update_location|string|max:255',

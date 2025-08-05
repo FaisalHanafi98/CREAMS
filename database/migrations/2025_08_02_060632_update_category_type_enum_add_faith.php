@@ -12,7 +12,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        DB::statement("ALTER TABLE categories MODIFY COLUMN category_type ENUM('rehabilitation', 'academic', 'creative_social', 'faith') DEFAULT 'rehabilitation'");
+        // This migration is now handled in the previous migration (2025_08_02_060134)
+        // No action needed here as ENUM update is done when faith categories are added
     }
 
     /**
@@ -20,6 +21,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        DB::statement("ALTER TABLE categories MODIFY COLUMN category_type ENUM('rehabilitation', 'academic', 'creative_social') DEFAULT 'rehabilitation'");
+        // No action needed here as ENUM revert is handled in the previous migration rollback
     }
 };

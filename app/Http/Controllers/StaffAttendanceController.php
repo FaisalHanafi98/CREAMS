@@ -188,9 +188,19 @@ class StaffAttendanceController extends Controller
     /**
      * Get attendance for specific user
      */
-    public function getUserAttendance(Request $request, $userId)
+    public function getUserAttendance(Request $request, $encryptedUserId)
     {
         try {
+            // Decrypt the user ID for security
+            try {
+                $userId = decrypt($encryptedUserId);
+            } catch (\Exception $e) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid or expired link.'
+                ], 400);
+            }
+            
             // Check permissions
             if (!$this->canViewAttendanceFor($userId, session('id'))) {
                 return response()->json([
@@ -234,9 +244,19 @@ class StaffAttendanceController extends Controller
     /**
      * Get today's attendance status for user
      */
-    public function getTodayStatus($userId)
+    public function getTodayStatus($encryptedUserId)
     {
         try {
+            // Decrypt the user ID for security
+            try {
+                $userId = decrypt($encryptedUserId);
+            } catch (\Exception $e) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid or expired link.'
+                ], 400);
+            }
+            
             if (!$this->canViewAttendanceFor($userId, session('id'))) {
                 return response()->json(['success' => false, 'message' => 'Access denied.'], 403);
             }

@@ -15,7 +15,7 @@
 {{-- Custom Styles --}}
 <link rel="stylesheet" href="{{ asset('css/homestyle.css') }}">
 <link rel="stylesheet" href="{{ asset('css/headerstyle.css') }}">
-<link rel="stylesheet" href="{{ asset('css/volunteerstyle.css') }}">
+<link rel="stylesheet" href="{{ asset('css/volunteerstyle.css?v=' . time()) }}">
 <link rel="stylesheet" href="{{ asset('css/footerstyle.css') }}">
 </head>
 <body>
@@ -29,7 +29,7 @@
 {{-- Video Hero Section --}}
 <section class="video-hero" id="videoHeroSection">
     <div class="video-container">
-        <video autoplay muted loop playsinline id="volunteerVideo" poster="{{ asset('images/volunteerhero.jpg') }}">
+        <video autoplay muted loop playsinline id="volunteerVideo" poster="{{ asset('images/20250521.jpg') }}">
             <source src="{{ asset('videos/volunteerpage.mp4') }}" type="video/mp4">
             Your browser does not support HTML5 video.
         </video>

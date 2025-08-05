@@ -12,7 +12,7 @@ use App\Models\Trainee;
 use App\Models\User;
 use Carbon\Carbon;
 
-class TimeBasedProgressSeeder extends Seeder
+class CREAMSTimeBasedProgressSeeder extends Seeder
 {
     /**
      * Run the database seeds.

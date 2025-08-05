@@ -65,15 +65,30 @@ class DatabaseSeeder extends Seeder
                 CREAMSActivitySeeder::class,                  // Comprehensive activity sessions and enrollments
             ]);
 
-            // Phase 7: Additional Data (Optional)
-            $this->command->info("\n📝 PHASE 7: Adding supplementary data...");
+            // Phase 7: Enhanced System Features
+            $this->command->info("\n🎯 PHASE 7: Adding enhanced system features...");
+            $this->call([
+                CREAMSStaffExpertiseSeeder::class,      // Staff expertise and qualifications
+                CREAMSRealisticAttendanceSeeder::class,  // Realistic attendance data based on actual enrollments
+            ]);
+
+            // Phase 8: Asset Management and Enhanced Systems
+            $this->command->info("\n🏗️ PHASE 8: Setting up asset management and enhanced systems...");
+            $this->call([
+                CREAMSAssetManagementSeeder::class,  // Comprehensive asset management
+                CREAMSIEPProgressSeeder::class,      // IEP and progress tracking
+                // CREAMSCommunicationSeeder::class, // Communication system (schema needs fixing)
+            ]);
+
+            // Phase 9: Additional Data (Optional)
+            $this->command->info("\n📝 PHASE 9: Adding supplementary data...");
             $this->call([
                 CREAMSMessageSeeder::class,       // Sample messages between staff
                 CREAMSNotificationSeeder::class,  // System notifications
             ]);
 
             // Post-seeding operations
-            $this->command->info("\n🔧 PHASE 8: Post-seeding optimizations...");
+            $this->command->info("\n🔧 PHASE 10: Post-seeding optimizations...");
             
             // Run centre diversification if command exists
             try {

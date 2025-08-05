@@ -100,7 +100,7 @@ class SystemHealthCheck extends Command
             }
             
             // Check enhanced asset tables
-            $enhancedTables = ['assets_enhanced', 'asset_locations', 'asset_movements', 'asset_maintenance'];
+            $enhancedTables = ['assets', 'asset_locations', 'asset_movements', 'asset_maintenance'];
             foreach ($enhancedTables as $table) {
                 if (Schema::hasTable($table)) {
                     $count = DB::table($table)->count();

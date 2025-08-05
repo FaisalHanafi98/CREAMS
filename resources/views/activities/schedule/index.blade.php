@@ -210,11 +210,12 @@
                                             </div>
                                             <!-- IEP Goals Progress -->
                                             @php
-                                                $iepGoalsCount = $session->sessionEnrollments->sum(function($enrollment) {
-                                                    return $enrollment->trainee->iep ? $enrollment->trainee->iep->iepGoals->count() : 0;
+                                                $enrollments = $session->enrollments ?? collect();
+                                                $iepGoalsCount = $enrollments->sum(function($enrollment) {
+                                                    return optional($enrollment->trainee)->iep ? optional($enrollment->trainee->iep)->iepGoals->count() ?? 0 : 0;
                                                 });
-                                                $activeIepGoals = $session->sessionEnrollments->sum(function($enrollment) {
-                                                    return $enrollment->trainee->iep ? $enrollment->trainee->iep->iepGoals->where('goal_status', 'active')->count() : 0;
+                                                $activeIepGoals = $enrollments->sum(function($enrollment) {
+                                                    return optional($enrollment->trainee)->iep ? optional($enrollment->trainee->iep)->iepGoals->where('goal_status', 'active')->count() ?? 0 : 0;
                                                 });
                                             @endphp
                                             @if($iepGoalsCount > 0)
@@ -305,19 +306,19 @@
                                                         </ul>
                                                     </div>
                                                 @endif
-                                                @if($session->sessionEnrollments->count() > 0)
+                                                @if($enrollments->count() > 0)
                                                     <div class="competency-progress-mini mt-1">
                                                         @php
                                                             $competencyLevels = ['beginner' => '#ffc107', 'intermediate' => '#17a2b8', 'advanced' => '#28a745'];
-                                                            $sessionCompetencyData = $session->sessionEnrollments->flatMap(function($enrollment) {
-                                                                return $enrollment->trainee->learningProgress ?? [];
+                                                            $sessionCompetencyData = $enrollments->flatMap(function($enrollment) {
+                                                                return optional($enrollment->trainee)->learningProgress ?? [];
                                                             })->groupBy('competency_level');
                                                         @endphp
                                                         @if($sessionCompetencyData->count() > 0)
                                                             <div class="competency-bars">
                                                                 @foreach($competencyLevels as $level => $color)
                                                                     @if($sessionCompetencyData->has($level))
-                                                                        <div class="competency-bar" style="background-color: {{ $color }}; width: {{ ($sessionCompetencyData[$level]->count() / $session->sessionEnrollments->count()) * 30 }}px; height: 3px; display: inline-block; margin-right: 2px;" title="{{ ucfirst($level) }}: {{ $sessionCompetencyData[$level]->count() }} trainees"></div>
+                                                                        <div class="competency-bar" style="background-color: {{ $color }}; width: {{ ($sessionCompetencyData[$level]->count() / max($enrollments->count(), 1)) * 30 }}px; height: 3px; display: inline-block; margin-right: 2px;" title="{{ ucfirst($level) }}: {{ $sessionCompetencyData[$level]->count() }} trainees"></div>
                                                                     @endif
                                                                 @endforeach
                                                             </div>

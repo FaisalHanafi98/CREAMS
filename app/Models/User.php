@@ -95,6 +95,125 @@ class User extends Authenticatable
     }
 
     /**
+     * Get suitable trainees for this staff member based on expertise and category
+     */
+    public function getSuitableTrainees($categoryId = null)
+    {
+        $query = Trainee::query();
+        
+        // Filter by centre
+        if ($this->centre_id) {
+            $query->where('centre_id', $this->centre_id);
+        }
+        
+        // Match based on staff specialization and trainee condition
+        if ($this->teaching_specialization) {
+            $specializations = explode(',', $this->teaching_specialization);
+            $specializations = array_map('trim', $specializations);
+            
+            $query->where(function($q) use ($specializations) {
+                foreach ($specializations as $specialization) {
+                    $q->orWhere('trainee_condition', 'like', '%' . $specialization . '%');
+                }
+            });
+        }
+        
+        // Filter by category if specified
+        if ($categoryId) {
+            $query->whereHas('activities', function($q) use ($categoryId) {
+                $q->where('category_id', $categoryId);
+            });
+        }
+        
+        return $query->get();
+    }
+
+    /**
+     * Check if staff member is qualified for specific activity category
+     */
+    public function isQualifiedForCategory($categoryId)
+    {
+        $category = \App\Models\Category::find($categoryId);
+        
+        if (!$category) {
+            return false;
+        }
+        
+        // Map category types to required qualifications
+        $qualificationMap = [
+            'rehabilitation' => ['physical therapy', 'occupational therapy', 'physiotherapy', 'rehabilitation'],
+            'academic' => ['education', 'teaching', 'academic', 'special education'],
+            'creative_social' => ['arts', 'social work', 'psychology', 'creative', 'music', 'art'],
+            'faith' => ['religious studies', 'islam', 'theology', 'faith', 'spiritual']
+        ];
+        
+        $requiredQuals = $qualificationMap[$category->category_type] ?? [];
+        
+        // Check education specialization
+        if ($this->education_specialization) {
+            $eduSpecs = explode(',', strtolower($this->education_specialization));
+            $eduSpecs = array_map('trim', $eduSpecs);
+            
+            foreach ($requiredQuals as $qual) {
+                foreach ($eduSpecs as $spec) {
+                    if (strpos($spec, $qual) !== false) {
+                        return true;
+                    }
+                }
+            }
+        }
+        
+        // Check teaching specialization
+        if ($this->teaching_specialization) {
+            $teachSpecs = explode(',', strtolower($this->teaching_specialization));
+            $teachSpecs = array_map('trim', $teachSpecs);
+            
+            foreach ($requiredQuals as $qual) {
+                foreach ($teachSpecs as $spec) {
+                    if (strpos($spec, $qual) !== false) {
+                        return true;
+                    }
+                }
+            }
+        }
+        
+        // Admin and supervisors are qualified for all categories
+        if (in_array($this->role, ['admin', 'supervisor'])) {
+            return true;
+        }
+        
+        return false;
+    }
+
+    /**
+     * Get recommended activities for this staff member based on expertise
+     */
+    public function getRecommendedActivities()
+    {
+        $query = \App\Models\Activity::where('centre_id', $this->centre_id);
+        
+        // Filter by staff qualifications
+        if ($this->teaching_specialization || $this->education_specialization) {
+            $query->whereHas('category', function($q) {
+                $categories = \App\Models\Category::all();
+                $qualifiedCategoryIds = [];
+                
+                foreach ($categories as $category) {
+                    if ($this->isQualifiedForCategory($category->id)) {
+                        $qualifiedCategoryIds[] = $category->id;
+                    }
+                }
+                
+                if (!empty($qualifiedCategoryIds)) {
+                    $q->whereIn('id', $qualifiedCategoryIds);
+                }
+            });
+        }
+        
+        return $query->where('is_active', true)->get();
+    }
+
+    /**
      * Get role
      * 
      * @return string

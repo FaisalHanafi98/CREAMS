@@ -218,6 +218,53 @@
     .attendance-card.absent { border-left-color: var(--danger-color); }
     .attendance-card.late { border-left-color: var(--warning-color); }
     .attendance-card.excused { border-left-color: var(--info-color); }
+    
+    /* Clickable card styles */
+    .card-link {
+        text-decoration: none;
+        color: inherit;
+        display: block;
+    }
+    
+    .card-link:hover {
+        text-decoration: none;
+        color: inherit;
+    }
+    
+    .attendance-card.clickable {
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .attendance-card.clickable:hover {
+        background: #e9ecef;
+        transform: translateX(5px) scale(1.02);
+        box-shadow: 0 8px 25px rgba(50, 189, 234, 0.2);
+    }
+    
+    .card-overlay {
+        position: absolute;
+        top: 0;
+        right: 0;
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 0 12px 0 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        opacity: 0;
+        transform: translateY(-100%);
+        transition: var(--transition);
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+    
+    .attendance-card.clickable:hover .card-overlay {
+        opacity: 1;
+        transform: translateY(0);
+    }
 
     .person-info {
         display: flex;
@@ -462,7 +509,8 @@
                         $status = $attendance ? $attendance->status : 'not-marked';
                         $statusLabel = $attendance ? ucfirst($attendance->status) : 'Not Marked';
                     @endphp
-                    <div class="attendance-card {{ $status }}">
+                    <a href="{{ route('centres.attendance.user', encrypt($member->id)) }}" class="card-link">
+                        <div class="attendance-card {{ $status }} clickable">
                         <div class="person-info">
                             <div class="person-avatar">
                                 {{ strtoupper(substr($member->first_name, 0, 1) . substr($member->last_name, 0, 1)) }}
@@ -483,7 +531,12 @@
                                 </small>
                             @endif
                         </div>
-                    </div>
+                            <div class="card-overlay">
+                                <i class="fas fa-external-link-alt"></i>
+                                <span>View Details</span>
+                            </div>
+                        </div>
+                    </a>
                 @empty
                     <div class="col-12 text-center py-5">
                         <i class="fas fa-users-slash fa-3x text-muted mb-3"></i>
@@ -513,28 +566,34 @@
                         $status = $attendance ? $attendance->status : 'not-marked';
                         $statusLabel = $attendance ? ucfirst($attendance->status) : 'Not Marked';
                     @endphp
-                    <div class="attendance-card {{ $status }}">
-                        <div class="person-info">
-                            <div class="person-avatar">
-                                {{ strtoupper(substr($trainee->trainee_first_name, 0, 1) . substr($trainee->trainee_last_name, 0, 1)) }}
+                    <a href="{{ route('trainees.attendance', encrypt($trainee->id)) }}" class="card-link">
+                        <div class="attendance-card {{ $status }} clickable">
+                            <div class="person-info">
+                                <div class="person-avatar">
+                                    {{ strtoupper(substr($trainee->trainee_first_name, 0, 1) . substr($trainee->trainee_last_name, 0, 1)) }}
+                                </div>
+                                <div class="person-details">
+                                    <h4>{{ $trainee->trainee_first_name }} {{ $trainee->trainee_last_name }}</h4>
+                                    <p>{{ $trainee->trainee_condition }} • ID: {{ $trainee->trainee_id }}</p>
+                                </div>
                             </div>
-                            <div class="person-details">
-                                <h4>{{ $trainee->trainee_first_name }} {{ $trainee->trainee_last_name }}</h4>
-                                <p>{{ $trainee->trainee_condition }} • ID: {{ $trainee->trainee_id }}</p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="attendance-status {{ $status }}">
+                                    <i class="fas fa-circle"></i>
+                                    {{ $statusLabel }}
+                                </span>
+                                @if($attendance)
+                                    <small class="text-muted">
+                                        {{ Carbon\Carbon::parse($attendance->created_at)->format('g:i A') }}
+                                    </small>
+                                @endif
+                            </div>
+                            <div class="card-overlay">
+                                <i class="fas fa-external-link-alt"></i>
+                                <span>View Details</span>
                             </div>
                         </div>
-                        <div class="d-flex justify-content-between align-items-center">
-                            <span class="attendance-status {{ $status }}">
-                                <i class="fas fa-circle"></i>
-                                {{ $statusLabel }}
-                            </span>
-                            @if($attendance)
-                                <small class="text-muted">
-                                    {{ Carbon\Carbon::parse($attendance->created_at)->format('g:i A') }}
-                                </small>
-                            @endif
-                        </div>
-                    </div>
+                    </a>
                 @empty
                     <div class="col-12 text-center py-5">
                         <i class="fas fa-user-graduate fa-3x text-muted mb-3"></i>

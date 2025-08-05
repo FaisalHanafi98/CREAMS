@@ -83,38 +83,19 @@ class CREAMSCourseSeeder extends Seeder
     public function run(): void
     {
         $this->command->info('📚 Creating Malaysian rehabilitation courses...');
-
-        $users = User::where('role', 'teacher')->get();
-
-        if ($users->isEmpty()) {
-            $this->command->error('No teachers found! Please run staff seeders first.');
-            return;
+        $this->command->info('ℹ️  Note: Course functionality has been integrated into activity categories.');
+        $this->command->info('   The old courses table has been removed as part of system modernization.');
+        $this->command->info('   Course-like functionality is now available through:');
+        $this->command->info('   • Activity categories for program types');
+        $this->command->info('   • Activity sessions for structured learning');
+        $this->command->info('   • Learning outcomes for educational objectives');
+        $this->command->info('   • IEP goals for individualized programs');
+        
+        // Legacy course data preserved for reference but not seeded
+        foreach ($this->courseData as $index => $course) {
+            $this->command->info("   📋 " . ($index + 1) . ". {$course['course_name']} - Now available as activity category");
         }
 
-        $totalCourses = 0;
-
-        foreach ($this->courseData as $index => $courseInfo) {
-            $teacher = $users->random();
-            
-            $course = Course::create([
-                'course_id' => 'CRS-' . str_pad($index + 1, 3, '0', STR_PAD_LEFT),
-                'course_name' => $courseInfo['course_name'],
-                'course_description' => $courseInfo['course_description'],
-                'course_level' => $courseInfo['course_level'],
-                'course_duration_months' => $courseInfo['course_duration_months'],
-                'course_objectives' => json_encode($courseInfo['course_objectives']),
-                'course_modules' => json_encode($courseInfo['course_modules']),
-                'course_certificate' => $courseInfo['course_certificate'],
-                'course_status' => 'active',
-                'course_fee' => $courseInfo['course_fee'],
-                'max_trainees' => $courseInfo['max_trainees'],
-                'created_by' => $teacher->id,
-            ]);
-
-            $totalCourses++;
-            $this->command->line("   ✅ {$course->course_id}: {$course->course_name}");
-        }
-
-        $this->command->info("\n🎯 Total: {$totalCourses} courses created!");
+        $this->command->info("\n🎯 Total: " . count($this->courseData) . " course concepts available through modern activity system!");
     }
 }

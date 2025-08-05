@@ -1,7 +1,7 @@
 // CREAMS Dashboard Service Worker
 // Version 1.0.0 - Mobile-Optimized Dashboard
 
-const CACHE_NAME = 'creams-dashboard-v1';
+const CACHE_NAME = 'creams-dashboard-v2';
 const CACHE_URLS = [
     '/',
     '/dashboard',

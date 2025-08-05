@@ -12,21 +12,19 @@ class StaffAttendance extends Model
 
     protected $fillable = [
         'user_id',
+        'marked_by_user_id',
+        'marked_by_email',
         'attendance_date',
-        'check_in_time',
-        'check_out_time',
-        'status',
-        'notes',
-        'marked_by',
+        'attendance_time',
         'centre_id',
-        'is_self_marked'
+        'status',
+        'remarks',
+        'attendance_type'
     ];
 
     protected $casts = [
         'attendance_date' => 'date',
-        'check_in_time' => 'datetime:H:i:s',
-        'check_out_time' => 'datetime:H:i:s',
-        'is_self_marked' => 'boolean'
+        'attendance_time' => 'datetime:H:i:s'
     ];
 
     /**
@@ -42,7 +40,7 @@ class StaffAttendance extends Model
      */
     public function markedBy()
     {
-        return $this->belongsTo(User::class, 'marked_by');
+        return $this->belongsTo(User::class, 'marked_by_user_id');
     }
 
     /**
@@ -58,7 +56,7 @@ class StaffAttendance extends Model
      */
     public function isSelfMarked()
     {
-        return $this->is_self_marked || $this->user_id === $this->marked_by;
+        return $this->user_id === $this->marked_by_user_id;
     }
 
     /**

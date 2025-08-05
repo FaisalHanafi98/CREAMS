@@ -12,6 +12,9 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // First, update the ENUM to include 'faith' type
+        DB::statement("ALTER TABLE categories MODIFY COLUMN category_type ENUM('rehabilitation', 'academic', 'creative_social', 'faith') DEFAULT 'rehabilitation'");
+        
         // Add faith-based activities to categories
         $faithCategories = [
             [
@@ -79,6 +82,10 @@ return new class extends Migration
      */
     public function down(): void
     {
+        // Remove faith category records first
         DB::table('categories')->where('category_type', 'faith')->delete();
+        
+        // Then revert the ENUM to remove 'faith' type
+        DB::statement("ALTER TABLE categories MODIFY COLUMN category_type ENUM('rehabilitation', 'academic', 'creative_social') DEFAULT 'rehabilitation'");
     }
 };

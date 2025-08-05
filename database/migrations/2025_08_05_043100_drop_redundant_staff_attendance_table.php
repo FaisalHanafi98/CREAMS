@@ -11,6 +11,17 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // Drop the redundant staff_attendance table (singular)
+        // We're keeping staff_attendances (plural) as the main table
+        Schema::dropIfExists('staff_attendance');
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        // Recreate the staff_attendance table if needed
         Schema::create('staff_attendance', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('user_id');
@@ -30,13 +41,5 @@ return new class extends Migration
             $table->index(['attendance_date', 'centre_id']);
             $table->index(['user_id', 'attendance_date']);
         });
-    }
-
-    /**
-     * Reverse the migrations.
-     */
-    public function down(): void
-    {
-        Schema::dropIfExists('staff_attendance');
     }
 };

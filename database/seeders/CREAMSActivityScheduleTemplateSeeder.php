@@ -8,7 +8,7 @@ use App\Models\ActivityScheduleTemplate;
 use App\Models\User;
 use App\Models\Centre;
 
-class ActivityScheduleTemplateSeeder extends Seeder
+class CREAMSActivityScheduleTemplateSeeder extends Seeder
 {
     /**
      * Run the database seeds.

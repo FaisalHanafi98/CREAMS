@@ -289,6 +289,7 @@ Route::middleware(['auth', 'validate.params'])->group(function () {
             Route::get('/{activityId}/sessions/{sessionId}/enrollments', [ActivityController::class, 'manageEnrollments'])->name('enrollments');
             Route::post('/{activityId}/sessions/{sessionId}/enroll', [ActivityController::class, 'enrollTrainees'])->name('enroll.legacy');
             Route::post('/{activityId}/sessions/{sessionId}/enrollments/add', [ActivityController::class, 'addEnrollment'])->name('enrollments.add');
+            Route::delete('/{activityId}/sessions/{sessionId}/enrollments/{traineeId}', [ActivityController::class, 'removeEnrollment'])->name('enrollments.remove');
         });
         
         // Enhanced Schedule routes
@@ -411,8 +412,8 @@ Route::middleware(['auth', 'validate.params'])->group(function () {
     Route::prefix('centres/attendance')->name('centres.attendance.')->middleware(['enhanced.auth'])->group(function () {
         Route::get('/', [StaffAttendanceController::class, 'index'])->name('index');
         Route::post('/mark', [StaffAttendanceController::class, 'markAttendance'])->name('mark');
-        Route::get('/user/{userId}', [StaffAttendanceController::class, 'getUserAttendance'])->name('user');
-        Route::get('/status/{userId}', [StaffAttendanceController::class, 'getTodayStatus'])->name('status');
+        Route::get('/user/{encryptedUserId}', [StaffAttendanceController::class, 'getUserAttendance'])->name('user');
+        Route::get('/status/{encryptedUserId}', [StaffAttendanceController::class, 'getTodayStatus'])->name('status');
     });
 
     // Centre
@@ -502,8 +503,8 @@ Route::middleware(['auth', 'validate.params'])->group(function () {
     Route::prefix('staff-attendance')->middleware(['enhanced.auth'])->group(function () {
         Route::get('/', function() { return redirect()->route('centres.attendance.index'); });
         Route::post('/mark', function() { return redirect()->route('centres.attendance.index'); });
-        Route::get('/user/{userId}', function($userId) { return redirect()->route('centres.attendance.user', $userId); });
-        Route::get('/status/{userId}', function($userId) { return redirect()->route('centres.attendance.status', $userId); });
+        Route::get('/user/{userId}', function($userId) { return redirect()->route('centres.attendance.user', encrypt($userId)); });
+        Route::get('/status/{userId}', function($userId) { return redirect()->route('centres.attendance.status', encrypt($userId)); });
     });
 
 

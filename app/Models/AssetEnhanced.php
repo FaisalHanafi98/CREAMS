@@ -19,7 +19,7 @@ class AssetEnhanced extends Model
 {
     use HasFactory, SoftDeletes;
 
-    protected $table = 'assets_enhanced';
+    protected $table = 'assets';
 
     protected $fillable = [
         'asset_code', 'name', 'description', 'asset_type_id', 'centre_id',

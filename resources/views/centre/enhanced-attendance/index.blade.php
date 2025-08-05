@@ -134,7 +134,7 @@
                                         </div>
                                         <div class="col-md-2 text-center">
                                             <div class="participants-info">
-                                                <span class="badge badge-info">{{ $session->sessionEnrollments->count() }} enrolled</span>
+                                                <span class="badge badge-info">{{ optional($session->enrollments)->count() ?? 0 }} enrolled</span>
                                             </div>
                                         </div>
                                         <div class="col-md-2 text-center">
@@ -151,17 +151,17 @@
                                         </div>
                                     </div>
                                     
-                                    @if($session->sessionEnrollments->count() > 0)
+                                    @if(optional($session->enrollments)->count() > 0)
                                         <div class="enrolled-trainees mt-2">
                                             <small class="text-muted">Enrolled Trainees:</small>
                                             <div class="trainee-avatars">
-                                                @foreach($session->sessionEnrollments->take(5) as $enrollment)
+                                                @foreach(optional($session->enrollments)->take(5) ?? collect() as $enrollment)
                                                     <span class="avatar-sm" title="{{ $enrollment->trainee->trainee_name }}">
                                                         {{ substr($enrollment->trainee->trainee_name, 0, 2) }}
                                                     </span>
                                                 @endforeach
-                                                @if($session->sessionEnrollments->count() > 5)
-                                                    <span class="avatar-sm more">+{{ $session->sessionEnrollments->count() - 5 }}</span>
+                                                @if(optional($session->enrollments)->count() > 5)
+                                                    <span class="avatar-sm more">+{{ optional($session->enrollments)->count() - 5 }}</span>
                                                 @endif
                                             </div>
                                         </div>
