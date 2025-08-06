@@ -76,6 +76,16 @@ Route::get('/contact', [ContactController::class, 'index'])->name('contact');
 Route::post('/contact/submit', [ContactController::class, 'submit'])->name('contact.submit');
 Route::get('/volunteer', [VolunteerController::class, 'index'])->name('volunteer');
 Route::post('/volunteer/submit', [VolunteerController::class, 'submit'])->name('volunteer.submit');
+
+// Admin routes for volunteer management
+Route::middleware('auth')->group(function () {
+    Route::get('/admin/volunteers', [VolunteerController::class, 'adminIndex'])->name('admin.volunteers.index');
+    Route::get('/volunteer/applications', [VolunteerController::class, 'getApplications'])->name('volunteer.applications');
+    Route::get('/volunteer/applications/{id}', [VolunteerController::class, 'show'])->name('volunteer.applications.show');
+    Route::post('/volunteer/applications/{id}/approve', [VolunteerController::class, 'approve'])->name('volunteer.applications.approve');
+    Route::post('/volunteer/applications/{id}/reject', [VolunteerController::class, 'reject'])->name('volunteer.applications.reject');
+    Route::post('/volunteer/applications/{id}/status', [VolunteerController::class, 'updateStatus'])->name('volunteer.applications.status');
+});
 Route::get('/trademark', function () {
     return view('trademarks');
 })->name('trademark');

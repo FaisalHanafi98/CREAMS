@@ -341,19 +341,19 @@
 
             <div class="stats-grid">
                 <div class="stat-card present">
-                    <div class="stat-number">{{ $attendanceStats['present_days'] ?? 20 }}</div>
+                    <div class="stat-number">{{ $attendanceStats['present_days'] ?? 0 }}</div>
                     <div class="stat-label">Present Days</div>
                 </div>
                 <div class="stat-card late">
-                    <div class="stat-number">{{ $attendanceStats['late_arrivals'] ?? 2 }}</div>
+                    <div class="stat-number">{{ $attendanceStats['late_arrivals'] ?? 0 }}</div>
                     <div class="stat-label">Late Arrivals</div>
                 </div>
                 <div class="stat-card early-leave">
-                    <div class="stat-number">{{ $attendanceStats['early_leaves'] ?? 1 }}</div>
-                    <div class="stat-label">Early Leaves</div>
+                    <div class="stat-number">{{ $attendanceStats['sick_leaves'] ?? 0 }}</div>
+                    <div class="stat-label">Sick Leaves</div>
                 </div>
                 <div class="stat-card rate">
-                    <div class="stat-number">{{ $attendanceStats['attendance_rate'] ?? 95 }}%</div>
+                    <div class="stat-number">{{ $attendanceStats['attendance_rate'] ?? 0 }}%</div>
                     <div class="stat-label">Attendance Rate</div>
                 </div>
             </div>
@@ -363,26 +363,26 @@
         <div class="row mb-4">
             <div class="col-md-3">
                 <div class="attendance-card text-center">
-                    <h6 class="text-muted mb-2">Total Hours This Month</h6>
-                    <h3 class="text-primary">{{ $monthlyStats['total_hours'] ?? '168' }}h</h3>
+                    <h6 class="text-muted mb-2">Total Check-ins This Month</h6>
+                    <h3 class="text-primary">{{ $monthlyStats['total_checkins'] ?? 0 }}</h3>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="attendance-card text-center">
-                    <h6 class="text-muted mb-2">Average Daily Hours</h6>
-                    <h3 class="text-success">{{ $monthlyStats['avg_daily'] ?? '8.2' }}h</h3>
+                    <h6 class="text-muted mb-2">Total Check-outs This Month</h6>
+                    <h3 class="text-success">{{ $monthlyStats['total_checkouts'] ?? 0 }}</h3>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="attendance-card text-center">
-                    <h6 class="text-muted mb-2">Overtime Hours</h6>
-                    <h3 class="text-warning">{{ $monthlyStats['overtime'] ?? '12' }}h</h3>
+                    <h6 class="text-muted mb-2">Authorized Leaves</h6>
+                    <h3 class="text-warning">{{ $monthlyStats['authorized_leaves'] ?? 0 }}</h3>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="attendance-card text-center">
-                    <h6 class="text-muted mb-2">This Week</h6>
-                    <h3 class="text-info">{{ $weeklyStats['hours'] ?? '40' }}h</h3>
+                    <h6 class="text-muted mb-2">Emergency Leaves</h6>
+                    <h3 class="text-info">{{ $monthlyStats['emergency_leaves'] ?? 0 }}</h3>
                 </div>
             </div>
         </div>
@@ -412,45 +412,52 @@
                         <tr>
                             <th>Date</th>
                             <th>Day</th>
-                            <th>Check In</th>
-                            <th>Check Out</th>
-                            <th>Hours Worked</th>
+                            <th>Time</th>
+                            <th>Type</th>
                             <th>Status</th>
+                            <th>Marked By</th>
                             <th>Remarks</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @php
-                            // Sample staff attendance data
-                            $sampleStaffAttendance = [
-                                ['date' => '2025-01-27', 'day' => 'Monday', 'check_in' => '08:00 AM', 'check_out' => '05:00 PM', 'hours' => '9.0', 'status' => 'present', 'remarks' => 'Regular day'],
-                                ['date' => '2025-01-26', 'day' => 'Sunday', 'check_in' => '08:30 AM', 'check_out' => '05:15 PM', 'hours' => '8.75', 'status' => 'late', 'remarks' => 'Traffic jam'],
-                                ['date' => '2025-01-25', 'day' => 'Saturday', 'check_in' => '07:45 AM', 'check_out' => '06:00 PM', 'hours' => '10.25', 'status' => 'overtime', 'remarks' => 'Project deadline'],
-                                ['date' => '2025-01-24', 'day' => 'Friday', 'check_in' => '08:00 AM', 'check_out' => '04:30 PM', 'hours' => '8.5', 'status' => 'early-leave', 'remarks' => 'Medical appointment'],
-                                ['date' => '2025-01-23', 'day' => 'Thursday', 'check_in' => '08:00 AM', 'check_out' => '05:00 PM', 'hours' => '9.0', 'status' => 'present', 'remarks' => 'Normal working day'],
-                                ['date' => '2025-01-22', 'day' => 'Wednesday', 'check_in' => '08:15 AM', 'check_out' => '05:30 PM', 'hours' => '9.25', 'status' => 'late', 'remarks' => 'Meeting preparation'],
-                                ['date' => '2025-01-21', 'day' => 'Tuesday', 'check_in' => '07:55 AM', 'check_out' => '05:00 PM', 'hours' => '9.08', 'status' => 'present', 'remarks' => 'Early arrival'],
-                                ['date' => '2025-01-20', 'day' => 'Monday', 'check_in' => '08:00 AM', 'check_out' => '05:45 PM', 'hours' => '9.75', 'status' => 'overtime', 'remarks' => 'Extra training session'],
-                            ];
-                        @endphp
-
-                        @foreach($sampleStaffAttendance as $record)
-                        <tr>
-                            <td>
-                                <strong>{{ \Carbon\Carbon::parse($record['date'])->format('M j, Y') }}</strong>
-                            </td>
-                            <td>{{ $record['day'] }}</td>
-                            <td>{{ $record['check_in'] }}</td>
-                            <td>{{ $record['check_out'] }}</td>
-                            <td><strong>{{ $record['hours'] }}h</strong></td>
-                            <td>
-                                <span class="status-badge status-{{ $record['status'] }}">
-                                    {{ ucfirst(str_replace('-', ' ', $record['status'])) }}
-                                </span>
-                            </td>
-                            <td>{{ $record['remarks'] }}</td>
-                        </tr>
-                        @endforeach
+                        @if(isset($recentAttendances) && $recentAttendances->count() > 0)
+                            @foreach($recentAttendances as $record)
+                                <tr>
+                                    <td>
+                                        <strong>{{ \Carbon\Carbon::parse($record->attendance_date)->format('M j, Y') }}</strong>
+                                    </td>
+                                    <td>{{ \Carbon\Carbon::parse($record->attendance_date)->format('l') }}</td>
+                                    <td>
+                                        <strong>{{ \Carbon\Carbon::parse($record->attendance_time)->format('g:i A') }}</strong>
+                                    </td>
+                                    <td>
+                                        <span class="badge badge-{{ $record->attendance_type === 'check_in' ? 'success' : 'info' }}">
+                                            {{ ucfirst(str_replace('_', ' ', $record->attendance_type)) }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="status-badge status-{{ strtolower($record->status) }}">
+                                            {{ ucfirst(str_replace('_', ' ', $record->status)) }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        @if($record->marked_by_email)
+                                            {{ $record->marked_by_email }}
+                                        @else
+                                            <span class="text-muted">Self</span>
+                                        @endif
+                                    </td>
+                                    <td>{{ $record->remarks ?? 'No remarks' }}</td>
+                                </tr>
+                            @endforeach
+                        @else
+                            <tr>
+                                <td colspan="7" class="text-center text-muted py-4">
+                                    <i class="fas fa-calendar-times fa-2x mb-2"></i>
+                                    <br>No attendance records found for the last 30 days
+                                </td>
+                            </tr>
+                        @endif
                     </tbody>
                 </table>
             </div>

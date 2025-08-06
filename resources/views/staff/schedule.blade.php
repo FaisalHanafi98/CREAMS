@@ -342,9 +342,15 @@
                     <div class="col-12">
                         <div class="text-center">
                             @php
-                                $totalMinutes = collect($schedules)->sum(function($schedule) {
-                                    return (strtotime($schedule->end_time) - strtotime($schedule->start_time)) / 60;
+                                // Calculate hours from both schedules and sessions
+                                $scheduleMinutes = collect($schedules)->sum(function($schedule) {
+                                    return (strtotime($schedule->end_time ?? '00:00') - strtotime($schedule->start_time ?? '00:00')) / 60;
                                 });
+                                
+                                $sessionMinutes = isset($sessions) ? collect($sessions)->sum('duration_minutes') : 0;
+                                
+                                // Use session minutes if available, otherwise fall back to schedule minutes
+                                $totalMinutes = $sessionMinutes > 0 ? $sessionMinutes : $scheduleMinutes;
                                 $totalHours = round($totalMinutes / 60, 1);
                             @endphp
                             <div class="h4 text-warning mb-1">{{ $totalHours }}h</div>

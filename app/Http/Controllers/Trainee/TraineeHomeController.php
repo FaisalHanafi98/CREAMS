@@ -475,7 +475,68 @@ class TraineeHomeController extends Controller
                 'user_id' => session('id')
             ]);
 
-            return view('trainees.show', compact('trainee'));
+            // Get real data from database
+            $totalActivities = \DB::table('activity_enrollments')
+                ->where('trainee_id', $id)
+                ->where('enrollment_status', 'enrolled')
+                ->count();
+
+            // Calculate real attendance rate
+            $totalSessions = \DB::table('session_enrollments')
+                ->where('trainee_id', $id)
+                ->count();
+                
+            $attendedSessions = \DB::table('session_enrollments')
+                ->where('trainee_id', $id)
+                ->where('attendance_status', 'present')
+                ->count();
+                
+            $attendanceRate = $totalSessions > 0 ? round(($attendedSessions / $totalSessions) * 100, 1) : 0;
+
+            // Get activities this week
+            $recentActivities = \DB::table('activity_sessions')
+                ->join('session_enrollments', 'activity_sessions.id', '=', 'session_enrollments.session_id')
+                ->join('activities', 'activity_sessions.activity_id', '=', 'activities.id')
+                ->where('session_enrollments.trainee_id', $id)
+                ->whereBetween('activity_sessions.session_date', [now()->startOfWeek(), now()->endOfWeek()])
+                ->count();
+
+            // Calculate enrollment duration in months
+            $enrollmentDuration = $trainee->created_at ? $trainee->created_at->diffInMonths(now()) : 0;
+
+            // Get current activities from database
+            $currentActivities = \DB::table('activities')
+                ->join('activity_enrollments', 'activities.id', '=', 'activity_enrollments.activity_id')
+                ->where('activity_enrollments.trainee_id', $id)
+                ->where('activity_enrollments.enrollment_status', 'enrolled')
+                ->select('activities.*', 'activity_enrollments.enrollment_date', 'activity_enrollments.enrollment_status')
+                ->get();
+
+            // Get recent attendance records
+            $recentAttendance = \DB::table('session_enrollments')
+                ->join('activity_sessions', 'session_enrollments.session_id', '=', 'activity_sessions.id')
+                ->join('activities', 'activity_sessions.activity_id', '=', 'activities.id')
+                ->where('session_enrollments.trainee_id', $id)
+                ->where('activity_sessions.session_date', '>=', now()->subDays(30))
+                ->select(
+                    'activity_sessions.session_date as date',
+                    'session_enrollments.attendance_status as status',
+                    'session_enrollments.progress_notes as remarks',
+                    'activities.activity_name'
+                )
+                ->orderBy('activity_sessions.session_date', 'desc')
+                ->limit(10)
+                ->get();
+
+            return view('trainees.show', compact(
+                'trainee', 
+                'totalActivities', 
+                'attendanceRate', 
+                'recentActivities', 
+                'enrollmentDuration',
+                'currentActivities',
+                'recentAttendance'
+            ));
 
         } catch (Exception $e) {
             Log::error('Error showing trainee details', [
@@ -513,29 +574,45 @@ class TraineeHomeController extends Controller
                 'user_id' => session('id')
             ]);
 
-            // Sample weekly schedule data - this would come from database in real implementation
-            $weeklySchedule = [
-                'Monday' => [
-                    ['time' => '09:00 AM', 'activity' => 'Physical Therapy', 'location' => 'Therapy Room A'],
-                    ['time' => '02:00 PM', 'activity' => 'Group Session', 'location' => 'Main Hall']
-                ],
-                'Tuesday' => [
-                    ['time' => '10:00 AM', 'activity' => 'Individual Counseling', 'location' => 'Counseling Room'],
-                    ['time' => '03:00 PM', 'activity' => 'Assessment', 'location' => 'Assessment Center']
-                ],
-                'Wednesday' => [
-                    ['time' => '09:30 AM', 'activity' => 'Therapy Session', 'location' => 'Therapy Room B'],
-                ],
-                'Thursday' => [
-                    ['time' => '11:00 AM', 'activity' => 'Progress Review', 'location' => 'Office'],
-                    ['time' => '02:30 PM', 'activity' => 'Group Activity', 'location' => 'Recreation Hall']
-                ],
-                'Friday' => [
-                    ['time' => '09:00 AM', 'activity' => 'Final Assessment', 'location' => 'Assessment Center'],
-                ],
-                'Saturday' => [],
-                'Sunday' => []
-            ];
+            // Get real weekly schedule from database
+            $weeklySchedule = [];
+            $daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+            
+            // Initialize empty schedule
+            foreach ($daysOfWeek as $day) {
+                $weeklySchedule[$day] = [];
+            }
+            
+            // Get this week's sessions for the trainee
+            $thisWeekSessions = \DB::table('activity_sessions')
+                ->join('session_enrollments', 'activity_sessions.id', '=', 'session_enrollments.session_id')
+                ->join('activities', 'activity_sessions.activity_id', '=', 'activities.id')
+                ->where('session_enrollments.trainee_id', $id)
+                ->where('session_enrollments.enrollment_status', 'enrolled')
+                ->whereBetween('activity_sessions.session_date', [now()->startOfWeek(), now()->endOfWeek()])
+                ->select(
+                    'activity_sessions.session_date',
+                    'activity_sessions.session_start_time',
+                    'activity_sessions.session_end_time', 
+                    'activity_sessions.session_location',
+                    'activities.activity_name'
+                )
+                ->orderBy('activity_sessions.session_date')
+                ->orderBy('activity_sessions.session_start_time')
+                ->get();
+
+            // Organize sessions by day of week
+            foreach ($thisWeekSessions as $session) {
+                $dayName = \Carbon\Carbon::parse($session->session_date)->format('l'); // Get day name (Monday, Tuesday, etc.)
+                $startTime = \Carbon\Carbon::parse($session->session_start_time)->format('h:i A');
+                $endTime = \Carbon\Carbon::parse($session->session_end_time)->format('h:i A');
+                
+                $weeklySchedule[$dayName][] = [
+                    'time' => $startTime . ' - ' . $endTime,
+                    'activity' => $session->activity_name,
+                    'location' => $session->session_location
+                ];
+            }
 
             return view('trainees.schedule', compact('trainee', 'weeklySchedule'));
 

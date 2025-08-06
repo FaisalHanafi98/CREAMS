@@ -270,14 +270,16 @@ class CentreController extends Controller
                 ->orderBy('name')
                 ->paginate(20);
             
-            // Get asset statistics (simplified for current table structure)
-            $totalAssets = Asset::where('centre_id', $centre->centre_id)->count();
+            // Get real asset statistics from database
+            $baseQuery = Asset::where('centre_id', $centre->centre_id);
             $stats = [
-                'total_assets' => $totalAssets,
-                'available' => $totalAssets, // Simplified - assume all available
-                'in_use' => 0,
-                'maintenance' => 0,
-                'total_value' => Asset::where('centre_id', $centre->centre_id)->sum('purchase_price') ?? 0
+                'total_assets' => $baseQuery->count(),
+                'available' => $baseQuery->clone()->where('status', 'available')->count(),
+                'in_use' => $baseQuery->clone()->where('status', 'in_use')->count(),
+                'maintenance' => $baseQuery->clone()->where('status', 'maintenance')->count(),
+                'disposed' => $baseQuery->clone()->where('status', 'disposed')->count(),
+                'damaged' => $baseQuery->clone()->where('status', 'damaged')->count(),
+                'total_value' => $baseQuery->clone()->sum('purchase_price') ?? 0
             ];
             
             Log::info('Successfully loaded centre assets', [

@@ -103,7 +103,8 @@
                                 <select class="form-select @error('centre_id') is-invalid @enderror" id="centre_id" name="centre_id" required>
                                     <option value="">Select Centre</option>
                                     @foreach($centres as $centre)
-                                        <option value="{{ $centre->centre_id }}" {{ old('centre_id') == $centre->centre_id ? 'selected' : '' }}>
+                                        <option value="{{ $centre->centre_id }}" 
+                                            {{ (old('centre_id', $selectedCentre ?? '') == $centre->centre_name || old('centre_id', $selectedCentre ?? '') == $centre->centre_id) ? 'selected' : '' }}>
                                             {{ $centre->centre_name }}
                                         </option>
                                     @endforeach

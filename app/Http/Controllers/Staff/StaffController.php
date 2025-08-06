@@ -367,13 +367,13 @@ class StaffController extends Controller
                 
             $activitiesCreated = $activities->count();
             
-            // Count actual active sessions where this staff member is the teacher
+            // Count sessions where this staff member is the teacher (including recent ones)
             $activeSessions = 0;
             if (\Schema::hasTable('activity_sessions')) {
                 $activeSessions = \DB::table('activity_sessions')
                     ->where('teacher_id', $staffMember->id)
-                    ->where('session_status', 'scheduled')
-                    ->where('scheduled_date', '>=', now()->toDateString())
+                    ->whereIn('session_status', ['scheduled', 'ongoing', 'completed'])
+                    ->where('scheduled_date', '>=', now()->subDays(30)) // Last 30 days
                     ->count();
             }
 
@@ -465,24 +465,40 @@ class StaffController extends Controller
                     ->get();
             }
 
-            // Get scheduled sessions where this staff member is the teacher
+            // Get all sessions where this staff member is the teacher (recent and upcoming)
             if (\Schema::hasTable('activity_sessions')) {
                 $sessions = \DB::table('activity_sessions')
                     ->join('activities', 'activity_sessions.activity_id', '=', 'activities.id')
                     ->leftJoin('categories', 'activities.category_id', '=', 'categories.id')
                     ->where('activity_sessions.teacher_id', $staffMember->id)
-                    ->where('activity_sessions.session_status', 'scheduled')
-                    ->where('activity_sessions.scheduled_date', '>=', now())
+                    ->whereIn('activity_sessions.session_status', ['scheduled', 'ongoing', 'completed'])
+                    ->where('activity_sessions.scheduled_date', '>=', now()->subDays(30)) // Show last 30 days
                     ->select(
                         'activity_sessions.*',
                         'activities.activity_name',
                         'activities.category_id',
-                        'categories.category_name as category'
+                        'categories.category_name as category',
+                        'activity_sessions.scheduled_date',
+                        'activity_sessions.start_time',
+                        'activity_sessions.end_time',
+                        'activity_sessions.venue'
                     )
-                    ->orderBy('activity_sessions.scheduled_date')
-                    ->orderBy('activity_sessions.start_time')
-                    ->limit(20) // Limit to next 20 sessions
+                    ->orderBy('activity_sessions.scheduled_date', 'desc')
+                    ->orderBy('activity_sessions.start_time', 'desc')
+                    ->limit(20) // Limit to 20 recent sessions
                     ->get();
+                    
+                // Add computed properties for view compatibility
+                $sessions = $sessions->map(function($session) {
+                    $session->duration_minutes = 60; // Default duration
+                    if ($session->start_time && $session->end_time) {
+                        $start = \Carbon\Carbon::parse($session->start_time);
+                        $end = \Carbon\Carbon::parse($session->end_time);
+                        $session->duration_minutes = $end->diffInMinutes($start);
+                    }
+                    $session->enrolled_count = 0; // Will be calculated from enrollments if needed
+                    return $session;
+                });
             }
 
             // Check for recurring schedule table
@@ -499,13 +515,35 @@ class StaffController extends Controller
                     ->get();
             }
 
-            // Sample schedule statistics for the view
+            // Calculate real schedule statistics based on actual data
             $scheduleStats = [
-                'total_hours' => 40,
-                'today_sessions' => 3,
-                'week_sessions' => 15,
-                'month_hours' => 160
+                'total_hours' => 0,
+                'today_sessions' => 0,
+                'week_sessions' => 0,
+                'month_hours' => 0
             ];
+            
+            if (isset($sessions) && count($sessions) > 0) {
+                // Calculate total hours from sessions
+                $totalMinutes = $sessions->sum('duration_minutes');
+                $scheduleStats['total_hours'] = round($totalMinutes / 60, 1);
+                
+                // Count today's sessions
+                $scheduleStats['today_sessions'] = $sessions->filter(function($session) {
+                    return \Carbon\Carbon::parse($session->scheduled_date)->isToday();
+                })->count();
+                
+                // Count this week's sessions
+                $scheduleStats['week_sessions'] = $sessions->filter(function($session) {
+                    return \Carbon\Carbon::parse($session->scheduled_date)->isCurrentWeek();
+                })->count();
+                
+                // Calculate monthly hours (approximate)
+                $monthlyMinutes = $sessions->filter(function($session) {
+                    return \Carbon\Carbon::parse($session->scheduled_date)->isCurrentMonth();
+                })->sum('duration_minutes');
+                $scheduleStats['month_hours'] = round($monthlyMinutes / 60, 1);
+            }
 
             // Add encrypted ID to staff member object for view links
             $staffMember->encrypted_id = $encrypted_id;
@@ -697,25 +735,31 @@ class StaffController extends Controller
                     ->with('error', 'You do not have permission to view this attendance record.');
             }
 
-            // Sample attendance statistics - this would come from database in real implementation
-            $attendanceStats = [
-                'present_days' => 20,
-                'late_arrivals' => 2,
-                'early_leaves' => 1,
-                'attendance_rate' => 95
-            ];
-
-            $monthlyStats = [
-                'total_hours' => '168',
-                'avg_daily' => '8.2',
-                'overtime' => '12'
-            ];
-
-            $weeklyStats = [
-                'hours' => '40'
-            ];
-
-            $workingDays = 22;
+            // Calculate real attendance statistics from database
+            $attendanceStats = $this->calculateAttendanceStats($staffMember->id);
+            $monthlyStats = $this->calculateMonthlyStats($staffMember->id);
+            $weeklyStats = $this->calculateWeeklyStats($staffMember->id);
+            
+            // Calculate working days for current month
+            $currentMonth = now()->startOfMonth();
+            $endOfMonth = now()->endOfMonth();
+            $workingDays = 0;
+            
+            // Count weekdays (Monday to Friday) in current month
+            for ($date = $currentMonth->copy(); $date->lte($endOfMonth); $date->addDay()) {
+                if ($date->isWeekday()) {
+                    $workingDays++;
+                }
+            }
+            
+            // Get recent attendance records for detailed view
+            $recentAttendances = \DB::table('staff_attendances')
+                ->where('user_id', $staffMember->id)
+                ->where('attendance_date', '>=', now()->subDays(30))
+                ->orderBy('attendance_date', 'desc')
+                ->orderBy('attendance_time', 'desc')
+                ->limit(50)
+                ->get();
 
             // Add encrypted ID to staff member object for view links
             $staffMember->encrypted_id = $encrypted_id;
@@ -725,7 +769,8 @@ class StaffController extends Controller
                 'attendanceStats' => $attendanceStats,
                 'monthlyStats' => $monthlyStats,
                 'weeklyStats' => $weeklyStats,
-                'workingDays' => $workingDays
+                'workingDays' => $workingDays,
+                'recentAttendances' => $recentAttendances
             ]);
 
         } catch (\Exception $e) {
@@ -736,6 +781,158 @@ class StaffController extends Controller
 
             return redirect()->route('staffs.home')
                 ->with('error', 'Unable to load attendance record.');
+        }
+    }
+
+    /**
+     * Calculate attendance statistics for a staff member
+     *
+     * @param int $staffId
+     * @return array
+     */
+    private function calculateAttendanceStats($staffId)
+    {
+        try {
+            $currentMonth = now()->startOfMonth();
+            $endOfMonth = now()->endOfMonth();
+            
+            // Get all attendance records for current month
+            $monthlyAttendances = \DB::table('staff_attendances')
+                ->where('user_id', $staffId)
+                ->whereBetween('attendance_date', [$currentMonth->toDateString(), $endOfMonth->toDateString()])
+                ->get();
+                
+            // Count working days this month (weekdays only, up to today)
+            $workingDaysThisMonth = 0;
+            for ($date = $currentMonth->copy(); $date->lte($endOfMonth) && $date->lte(now()); $date->addDay()) {
+                if ($date->isWeekday()) {
+                    $workingDaysThisMonth++;
+                }
+            }
+            
+            // Count unique attendance dates (present days)
+            $presentDays = $monthlyAttendances->pluck('attendance_date')->unique()->count();
+            
+            // Count records by status (using the actual status field from database)
+            $lateArrivals = $monthlyAttendances->where('status', 'late')->count();
+            
+            // Count sick leaves (this status actually exists in the enum)
+            $sickLeaves = $monthlyAttendances->where('status', 'sick_leave')->count();
+            
+            // Calculate attendance rate based on present days vs working days
+            $attendanceRate = $workingDaysThisMonth > 0 ? round(($presentDays / $workingDaysThisMonth) * 100, 1) : 0;
+            
+            return [
+                'present_days' => $presentDays,
+                'late_arrivals' => $lateArrivals,
+                'sick_leaves' => $sickLeaves,
+                'attendance_rate' => $attendanceRate
+            ];
+            
+        } catch (\Exception $e) {
+            Log::error('Error calculating attendance stats: ' . $e->getMessage());
+            return [
+                'present_days' => 0,
+                'late_arrivals' => 0,
+                'sick_leaves' => 0,
+                'attendance_rate' => 0
+            ];
+        }
+    }
+
+    /**
+     * Calculate monthly statistics for a staff member
+     *
+     * @param int $staffId
+     * @return array
+     */
+    private function calculateMonthlyStats($staffId)
+    {
+        try {
+            $currentMonth = now()->startOfMonth();
+            $endOfMonth = now()->endOfMonth();
+            
+            // Get attendance records for current month
+            $monthlyAttendances = \DB::table('staff_attendances')
+                ->where('user_id', $staffId)
+                ->whereBetween('attendance_date', [$currentMonth->toDateString(), $endOfMonth->toDateString()])
+                ->get();
+                
+            // Count check-ins and check-outs (actual data from attendance_type column)
+            $totalCheckins = $monthlyAttendances->where('attendance_type', 'check_in')->count();
+            $totalCheckouts = $monthlyAttendances->where('attendance_type', 'check_out')->count();
+            
+            // Count different leave types (actual statuses from the enum)
+            $authorizedLeaves = $monthlyAttendances->where('status', 'authorized_leave')->count();
+            $emergencyLeaves = $monthlyAttendances->where('status', 'emergency_leave')->count();
+            
+            return [
+                'total_checkins' => $totalCheckins,
+                'total_checkouts' => $totalCheckouts,
+                'authorized_leaves' => $authorizedLeaves,
+                'emergency_leaves' => $emergencyLeaves
+            ];
+            
+        } catch (\Exception $e) {
+            Log::error('Error calculating monthly stats: ' . $e->getMessage());
+            return [
+                'total_checkins' => 0,
+                'total_checkouts' => 0,
+                'authorized_leaves' => 0,
+                'emergency_leaves' => 0
+            ];
+        }
+    }
+
+    /**
+     * Calculate weekly statistics for a staff member
+     *
+     * @param int $staffId
+     * @return array
+     */
+    private function calculateWeeklyStats($staffId)
+    {
+        try {
+            $startOfWeek = now()->startOfWeek();
+            $endOfWeek = now()->endOfWeek();
+            
+            // Get this week's attendance records
+            $weeklyAttendances = \DB::table('staff_attendances')
+                ->where('user_id', $staffId)
+                ->whereBetween('attendance_date', [$startOfWeek->toDateString(), $endOfWeek->toDateString()])
+                ->orderBy('attendance_date')
+                ->orderBy('attendance_time')
+                ->get();
+                
+            $totalMinutes = 0;
+            
+            // Group by date to calculate daily hours
+            $dailyRecords = $weeklyAttendances->groupBy('attendance_date');
+            
+            foreach ($dailyRecords as $date => $records) {
+                $checkIn = $records->where('attendance_type', 'check_in')->first();
+                $checkOut = $records->where('attendance_type', 'check_out')->first();
+                
+                if ($checkIn && $checkOut) {
+                    $checkInTime = \Carbon\Carbon::parse($date . ' ' . $checkIn->attendance_time);
+                    $checkOutTime = \Carbon\Carbon::parse($date . ' ' . $checkOut->attendance_time);
+                    
+                    $dailyMinutes = $checkOutTime->diffInMinutes($checkInTime);
+                    $totalMinutes += $dailyMinutes;
+                }
+            }
+            
+            $weeklyHours = round($totalMinutes / 60, 1);
+            
+            return [
+                'hours' => $weeklyHours
+            ];
+            
+        } catch (\Exception $e) {
+            Log::error('Error calculating weekly stats: ' . $e->getMessage());
+            return [
+                'hours' => 0
+            ];
         }
     }
 }

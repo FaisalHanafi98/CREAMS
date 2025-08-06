@@ -608,19 +608,19 @@
         <!-- Statistics Overview -->
         <div class="stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px;">
             <div class="stat-card" style="background: white; border-radius: 12px; padding: 20px; text-align: center; box-shadow: 0 5px 20px rgba(0,0,0,0.08); border: 1px solid #f1f3f4;">
-                <div class="stat-number" style="font-size: 2rem; font-weight: 700; color: var(--primary-color); margin-bottom: 5px;">{{ $totalActivities ?? rand(3, 8) }}</div>
+                <div class="stat-number" style="font-size: 2rem; font-weight: 700; color: var(--primary-color); margin-bottom: 5px;">{{ $totalActivities ?? 0 }}</div>
                 <div class="stat-label" style="color: #6c757d; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; font-size: 0.85rem;">Total Activities</div>
             </div>
             <div class="stat-card" style="background: white; border-radius: 12px; padding: 20px; text-align: center; box-shadow: 0 5px 20px rgba(0,0,0,0.08); border: 1px solid #f1f3f4;">
-                <div class="stat-number" style="font-size: 2rem; font-weight: 700; color: var(--success-color); margin-bottom: 5px;">{{ $attendanceRate ?? rand(85, 98) }}%</div>
+                <div class="stat-number" style="font-size: 2rem; font-weight: 700; color: var(--success-color); margin-bottom: 5px;">{{ $attendanceRate ?? 0 }}%</div>
                 <div class="stat-label" style="color: #6c757d; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; font-size: 0.85rem;">Attendance Rate</div>
             </div>
             <div class="stat-card" style="background: white; border-radius: 12px; padding: 20px; text-align: center; box-shadow: 0 5px 20px rgba(0,0,0,0.08); border: 1px solid #f1f3f4;">
-                <div class="stat-number" style="font-size: 2rem; font-weight: 700; color: var(--secondary-color); margin-bottom: 5px;">{{ $recentActivities ?? rand(2, 5) }}</div>
+                <div class="stat-number" style="font-size: 2rem; font-weight: 700; color: var(--secondary-color); margin-bottom: 5px;">{{ $recentActivities ?? 0 }}</div>
                 <div class="stat-label" style="color: #6c757d; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; font-size: 0.85rem;">This Week</div>
             </div>
             <div class="stat-card" style="background: white; border-radius: 12px; padding: 20px; text-align: center; box-shadow: 0 5px 20px rgba(0,0,0,0.08); border: 1px solid #f1f3f4;">
-                <div class="stat-number" style="font-size: 2rem; font-weight: 700; color: var(--warning-color); margin-bottom: 5px;">{{ $enrollmentDuration ?? rand(2, 12) }}mo</div>
+                <div class="stat-number" style="font-size: 2rem; font-weight: 700; color: var(--warning-color); margin-bottom: 5px;">{{ $enrollmentDuration ?? 0 }}mo</div>
                 <div class="stat-label" style="color: #6c757d; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; font-size: 0.85rem;">Enrolled Since</div>
             </div>
         </div>
@@ -883,208 +883,10 @@
                     </div>
                 </div>
 
-                <!-- Attendance Overview -->
-                <div class="profile-card">
-                    <div class="profile-card-header">
-                        <div class="card-icon">
-                            <i class="fas fa-chart-bar"></i>
-                        </div>
-                        <h5>Attendance Overview</h5>
-                    </div>
 
-                    @php
-                        $attendanceDays = [
-                            'present' => rand(15, 20),
-                            'late' => rand(1, 4),
-                            'absent' => rand(0, 3),
-                            'excused' => rand(0, 2)
-                        ];
-                    @endphp
 
-                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-top: 15px;">
-                        <div style="text-align: center; padding: 15px; border-radius: 8px; background: rgba(40, 167, 69, 0.1);">
-                            <div style="font-size: 1.5rem; font-weight: 700; color: var(--success-color); margin-bottom: 5px;">{{ $attendanceDays['present'] }}</div>
-                            <div style="font-size: 0.75rem; text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px; color: #6c757d;">Present</div>
-                        </div>
-                        <div style="text-align: center; padding: 15px; border-radius: 8px; background: rgba(255, 193, 7, 0.1);">
-                            <div style="font-size: 1.5rem; font-weight: 700; color: var(--warning-color); margin-bottom: 5px;">{{ $attendanceDays['late'] }}</div>
-                            <div style="font-size: 0.75rem; text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px; color: #6c757d;">Late</div>
-                        </div>
-                        <div style="text-align: center; padding: 15px; border-radius: 8px; background: rgba(220, 53, 69, 0.1);">
-                            <div style="font-size: 1.5rem; font-weight: 700; color: var(--danger-color); margin-bottom: 5px;">{{ $attendanceDays['absent'] }}</div>
-                            <div style="font-size: 0.75rem; text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px; color: #6c757d;">Absent</div>
-                        </div>
-                        <div style="text-align: center; padding: 15px; border-radius: 8px; background: rgba(108, 117, 125, 0.1);">
-                            <div style="font-size: 1.5rem; font-weight: 700; color: #6c757d; margin-bottom: 5px;">{{ $attendanceDays['excused'] }}</div>
-                            <div style="font-size: 0.75rem; text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px; color: #6c757d;">Excused</div>
-                        </div>
-                    </div>
-                </div>
 
-                <!-- Progress Tracking -->
-                <div class="profile-card">
-                    <div class="profile-card-header">
-                        <div class="card-icon">
-                            <i class="fas fa-chart-line"></i>
-                        </div>
-                        <h5>Progress Tracking</h5>
-                    </div>
 
-                    <div class="progress-section">
-                        <div class="progress-item">
-                            <div class="progress-label">
-                                <span>Overall Progress</span>
-                                <span>{{ $trainee->progress ?? rand(65, 95) }}%</span>
-                            </div>
-                            <div class="progress">
-                                <div class="progress-bar" style="width: {{ $trainee->progress ?? rand(65, 95) }}%"></div>
-                            </div>
-                        </div>
-
-                        <div class="progress-item">
-                            <div class="progress-label">
-                                <span>Profile Completion</span>
-                                <span>{{ calculateProfileCompletion($trainee) }}%</span>
-                            </div>
-                            <div class="progress">
-                                <div class="progress-bar" style="width: {{ calculateProfileCompletion($trainee) }}%"></div>
-                            </div>
-                        </div>
-
-                        <div class="progress-item">
-                            <div class="progress-label">
-                                <span>Attendance Rate</span>
-                                <span>{{ $trainee->attendance_rate ?? rand(80, 98) }}%</span>
-                            </div>
-                            <div class="progress">
-                                <div class="progress-bar" style="width: {{ $trainee->attendance_rate ?? rand(80, 98) }}%"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Current Activities Card -->
-                <div class="profile-card">
-                    <div class="profile-card-header">
-                        <div class="card-icon">
-                            <i class="fas fa-tasks"></i>
-                        </div>
-                        <h5>Current Activities</h5>
-                    </div>
-
-                    @php
-                        // Sample activity data - this would come from database in real implementation
-                        $sampleActivities = [
-                            ['name' => 'Physical Therapy', 'enrollment_date' => '2025-01-15', 'status' => 'active', 'category' => 'Therapy', 'notes' => 'Good progress in mobility exercises'],
-                            ['name' => 'Group Counseling', 'enrollment_date' => '2025-01-10', 'status' => 'active', 'category' => 'Mental Health', 'notes' => 'Excellent participation'],
-                            ['name' => 'Skills Training', 'enrollment_date' => '2025-01-08', 'status' => 'active', 'category' => 'Education', 'notes' => 'Learning new computer skills'],
-                            ['name' => 'Art Therapy', 'enrollment_date' => '2025-01-05', 'status' => 'completed', 'category' => 'Recreation', 'notes' => 'Creative expression activities'],
-                        ];
-                    @endphp
-
-                    @if(count($sampleActivities) > 0)
-                        @foreach(array_slice($sampleActivities, 0, 5) as $activity)
-                            <div style="background: #f8f9fc; padding: 15px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid var(--primary-color);">
-                                <div style="font-weight: 600; color: var(--dark-color); margin-bottom: 5px;">{{ $activity['name'] }}</div>
-                                <div style="color: #6c757d; font-size: 0.85rem; display: flex; gap: 1rem; flex-wrap: wrap;">
-                                    <span><i class="fas fa-calendar me-1"></i>Enrolled: {{ date('M j, Y', strtotime($activity['enrollment_date'])) }}</span>
-                                    <span><i class="fas fa-info-circle me-1"></i>Status: {{ ucfirst($activity['status']) }}</span>
-                                    <span><i class="fas fa-tag me-1"></i>{{ $activity['category'] }}</span>
-                                    @if($activity['notes'])
-                                        <span><i class="fas fa-sticky-note me-1"></i>{{ \Illuminate\Support\Str::limit($activity['notes'], 50) }}</span>
-                                    @endif
-                                </div>
-                            </div>
-                        @endforeach
-                    @else
-                        <div style="text-align: center; padding: 30px; color: #6c757d;">
-                            <i class="fas fa-clipboard-list" style="font-size: 2rem; margin-bottom: 10px; opacity: 0.5;"></i>
-                            <p>No activities enrolled yet</p>
-                        </div>
-                    @endif
-                </div>
-
-                <!-- Activity Timeline -->
-                <div class="profile-card">
-                    <div class="profile-card-header">
-                        <div class="card-icon">
-                            <i class="fas fa-history"></i>
-                        </div>
-                        <h5>Recent Activity</h5>
-                    </div>
-
-                    <div class="timeline-section">
-                        <div class="timeline">
-                            <div class="timeline-item">
-                                <div class="timeline-date">{{ $trainee->created_at ? $trainee->created_at->format('M j, Y') : 'Unknown' }}</div>
-                                <div class="timeline-title">Trainee Registered</div>
-                                <div class="timeline-content">
-                                    Initial registration completed and profile created in the system.
-                                </div>
-                            </div>
-
-                            @if($trainee->updated_at && $trainee->updated_at != $trainee->created_at)
-                            <div class="timeline-item">
-                                <div class="timeline-date">{{ $trainee->updated_at->format('M j, Y') }}</div>
-                                <div class="timeline-title">Profile Updated</div>
-                                <div class="timeline-content">
-                                    Trainee information was last updated {{ $trainee->updated_at->diffForHumans() }}.
-                                </div>
-                            </div>
-                            @endif
-
-                            @if($trainee->centre_name)
-                            <div class="timeline-item">
-                                <div class="timeline-date">Recent</div>
-                                <div class="timeline-title">Centre Assignment</div>
-                                <div class="timeline-content">
-                                    Assigned to {{ $trainee->centre_name }} for rehabilitation activities.
-                                </div>
-                            </div>
-                            @endif
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Recent Attendance History -->
-                <div class="profile-card">
-                    <div class="profile-card-header">
-                        <div class="card-icon">
-                            <i class="fas fa-history"></i>
-                        </div>
-                        <h5>Recent Attendance</h5>
-                    </div>
-
-                    @php
-                        $attendanceHistory = [
-                            ['date' => '2025-01-27', 'day_name' => 'Monday', 'status' => 'present', 'remarks' => 'Good participation'],
-                            ['date' => '2025-01-26', 'day_name' => 'Sunday', 'status' => 'late', 'remarks' => 'Traffic delay'],
-                            ['date' => '2025-01-25', 'day_name' => 'Saturday', 'status' => 'present', 'remarks' => null],
-                            ['date' => '2025-01-24', 'day_name' => 'Friday', 'status' => 'absent', 'remarks' => 'Sick leave'],
-                            ['date' => '2025-01-23', 'day_name' => 'Thursday', 'status' => 'present', 'remarks' => 'Excellent progress'],
-                        ];
-                    @endphp
-
-                    @foreach(array_slice($attendanceHistory, 0, 5) as $record)
-                        <div style="background: #f8f9fc; padding: 15px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid var(--primary-color);">
-                            <div style="display: flex; justify-content: space-between; align-items: center;">
-                                <div>
-                                    <div style="font-weight: 600; color: var(--dark-color);">{{ $record['day_name'] }}</div>
-                                    <div style="color: #6c757d; font-size: 0.85rem;">{{ date('F j, Y', strtotime($record['date'])) }}</div>
-                                </div>
-                                <span style="padding: 4px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; 
-                                    {{ $record['status'] == 'present' ? 'background: rgba(40, 167, 69, 0.1); color: var(--success-color); border: 1px solid var(--success-color);' : 
-                                       ($record['status'] == 'late' ? 'background: rgba(255, 193, 7, 0.1); color: var(--warning-color); border: 1px solid var(--warning-color);' : 
-                                        'background: rgba(108, 117, 125, 0.1); color: #6c757d; border: 1px solid #6c757d;') }}">
-                                    {{ ucfirst($record['status']) }}
-                                </span>
-                            </div>
-                            @if(isset($record['remarks']) && $record['remarks'])
-                                <div style="margin-top: 8px; color: #6c757d; font-size: 0.8rem;">{{ $record['remarks'] }}</div>
-                            @endif
-                        </div>
-                    @endforeach
-                </div>
             </div>
         </div>
         </div>
@@ -1106,22 +908,31 @@
                         <div class="progress-section">
                             <div class="progress-label">
                                 <span>Attendance Rate</span>
-                                <span>{{ $attendanceRate ?? '92' }}%</span>
+                                <span>{{ $attendanceRate ?? 0 }}%</span>
                             </div>
                             <div class="progress">
-                                <div class="progress-bar" style="width: {{ $attendanceRate ?? '92' }}%"></div>
+                                <div class="progress-bar" style="width: {{ $attendanceRate ?? 0 }}%"></div>
                             </div>
                         </div>
 
+                        @if($totalActivities > 0)
                         <div class="progress-section">
                             <div class="progress-label">
-                                <span>Activity Participation</span>
-                                <span>{{ rand(85, 98) }}%</span>
+                                <span>Activities Enrolled</span>
+                                <span>{{ $totalActivities }}</span>
                             </div>
-                            <div class="progress">
-                                <div class="progress-bar" style="width: {{ rand(85, 98) }}%"></div>
+                            <div class="info-value" style="margin-top: 10px; font-size: 14px; color: #6c757d;">
+                                Currently enrolled in {{ $totalActivities }} {{ $totalActivities == 1 ? 'activity' : 'activities' }}
                             </div>
                         </div>
+                        @else
+                        <div class="progress-section">
+                            <div style="text-align: center; padding: 20px; color: #6c757d;">
+                                <i class="fas fa-info-circle" style="font-size: 1.5rem; margin-bottom: 10px; opacity: 0.5;"></i>
+                                <p style="margin: 0; font-size: 14px;">No activities enrolled yet</p>
+                            </div>
+                        </div>
+                        @endif
                     </div>
 
                     <!-- Current Activities -->
@@ -1133,24 +944,16 @@
                             <h5>Current Activities</h5>
                         </div>
 
-                        @php
-                            $sampleActivities = [
-                                ['name' => 'Physical Therapy', 'enrollment_date' => '2025-01-15', 'status' => 'ongoing', 'category' => 'Rehabilitation', 'notes' => 'Making good progress with mobility exercises'],
-                                ['name' => 'Speech Therapy', 'enrollment_date' => '2025-01-10', 'status' => 'ongoing', 'category' => 'Rehabilitation', 'notes' => 'Improving communication skills'],
-                                ['name' => 'Life Skills Training', 'enrollment_date' => '2025-01-08', 'status' => 'active', 'category' => 'Education', 'notes' => 'Learning daily living skills'],
-                            ];
-                        @endphp
-
-                        @if(count($sampleActivities) > 0)
-                            @foreach($sampleActivities as $activity)
+                        @if(isset($currentActivities) && $currentActivities->count() > 0)
+                            @foreach($currentActivities as $activity)
                                 <div style="background: #f8f9fc; padding: 15px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid var(--primary-color);">
-                                    <div style="font-weight: 600; color: var(--dark-color); margin-bottom: 5px;">{{ $activity['name'] }}</div>
+                                    <div style="font-weight: 600; color: var(--dark-color); margin-bottom: 5px;">{{ $activity->activity_name }}</div>
                                     <div style="color: #6c757d; font-size: 0.85rem; display: flex; gap: 1rem; flex-wrap: wrap;">
-                                        <span><i class="fas fa-calendar me-1"></i>Enrolled: {{ date('M j, Y', strtotime($activity['enrollment_date'])) }}</span>
-                                        <span><i class="fas fa-info-circle me-1"></i>Status: {{ ucfirst($activity['status']) }}</span>
-                                        <span><i class="fas fa-tag me-1"></i>{{ $activity['category'] }}</span>
-                                        @if($activity['notes'])
-                                            <span><i class="fas fa-sticky-note me-1"></i>{{ \Illuminate\Support\Str::limit($activity['notes'], 50) }}</span>
+                                        <span><i class="fas fa-calendar me-1"></i>Enrolled: {{ $activity->enrollment_date ? date('M j, Y', strtotime($activity->enrollment_date)) : 'N/A' }}</span>
+                                        <span><i class="fas fa-info-circle me-1"></i>Status: {{ ucfirst($activity->enrollment_status ?? 'active') }}</span>
+                                        <span><i class="fas fa-tag me-1"></i>{{ ucfirst($activity->category ?? 'General') }}</span>
+                                        @if($activity->activity_description)
+                                            <span><i class="fas fa-sticky-note me-1"></i>{{ \Illuminate\Support\Str::limit($activity->activity_description, 50) }}</span>
                                         @endif
                                     </div>
                                 </div>
@@ -1174,29 +977,29 @@
                             <h5>Recent Attendance</h5>
                         </div>
 
-                        @php
-                            $attendanceRecords = [
-                                ['date' => '2025-01-30', 'status' => 'present', 'remarks' => 'On time and engaged'],
-                                ['date' => '2025-01-29', 'status' => 'present', 'remarks' => 'Great participation'],
-                                ['date' => '2025-01-28', 'status' => 'late', 'remarks' => '15 minutes late'],
-                                ['date' => '2025-01-27', 'status' => 'present', 'remarks' => 'Excellent progress'],
-                                ['date' => '2025-01-26', 'status' => 'present', 'remarks' => 'Active participation'],
-                            ];
-                        @endphp
-
-                        @foreach(array_slice($attendanceRecords, 0, 5) as $record)
-                            <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f1f3f4;">
-                                <div>
-                                    <span class="badge" style="background: {{ $record['status'] == 'present' ? 'var(--success-color)' : ($record['status'] == 'late' ? 'var(--warning-color)' : 'var(--danger-color)') }}; color: white; padding: 4px 8px; border-radius: 10px; font-size: 0.7rem;">
-                                        {{ ucfirst($record['status']) }}
-                                    </span>
-                                    <div style="color: #6c757d; font-size: 0.85rem; margin-top: 4px;">{{ date('F j, Y', strtotime($record['date'])) }}</div>
+                        @if(isset($recentAttendance) && $recentAttendance->count() > 0)
+                            @foreach($recentAttendance->take(5) as $record)
+                                <div style="background: #f8f9fc; padding: 15px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid var(--primary-color);">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                        <div>
+                                            <div style="font-weight: 600; color: var(--dark-color);">{{ $record->activity_name }}</div>
+                                            <div style="color: #6c757d; font-size: 0.85rem;">{{ $record->date ? date('F j, Y', strtotime($record->date)) : 'N/A' }}</div>
+                                        </div>
+                                        <span class="badge" style="background: {{ $record->status == 'present' ? 'var(--success-color)' : ($record->status == 'late' ? 'var(--warning-color)' : 'var(--danger-color)') }}; color: white; padding: 4px 8px; border-radius: 10px; font-size: 0.7rem;">
+                                            {{ ucfirst($record->status ?? 'unknown') }}
+                                        </span>
+                                    </div>
+                                    @if($record->remarks)
+                                        <div style="color: #6c757d; font-size: 0.8rem;">{{ $record->remarks }}</div>
+                                    @endif
                                 </div>
+                            @endforeach
+                        @else
+                            <div style="text-align: center; padding: 30px; color: #6c757d;">
+                                <i class="fas fa-calendar-check" style="font-size: 2rem; margin-bottom: 10px; opacity: 0.5;"></i>
+                                <p style="margin: 0; font-size: 14px;">No attendance records yet</p>
                             </div>
-                            @if(isset($record['remarks']) && $record['remarks'])
-                                <div style="margin-top: 8px; color: #6c757d; font-size: 0.8rem;">{{ $record['remarks'] }}</div>
-                            @endif
-                        @endforeach
+                        @endif
                     </div>
                 </div>
             </div>

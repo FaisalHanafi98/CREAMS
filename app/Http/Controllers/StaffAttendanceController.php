@@ -376,7 +376,8 @@ class StaffAttendanceController extends Controller
 
         $query = StaffAttendance::query();
 
-        if ($userRole !== 'admin') {
+        // Always filter by centre when a centre is selected
+        if ($centreId) {
             $query->forCentre($centreId);
         }
 

@@ -2724,8 +2724,8 @@ class ActivityController extends Controller
 
             $sessions = ActivitySession::with(['activity', 'enrollments.trainee'])
                 ->where('teacher_id', $staffId)
-                ->where('session_date', '>=', Carbon::now()->subDays(30))
-                ->orderBy('session_date', 'asc')
+                ->where('scheduled_date', '>=', Carbon::now()->subDays(30))
+                ->orderBy('scheduled_date', 'asc')
                 ->orderBy('start_time', 'asc')
                 ->get();
 

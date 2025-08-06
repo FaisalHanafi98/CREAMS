@@ -1109,18 +1109,32 @@
                 </a>
             </li>
 
-            <li class="sidebar-item">
-                @if(Route::has('profile'))
-                    <a href="{{ Route::has('profile') ? route('profile') : '#' }}" class="sidebar-link {{ Route::has('profile') && Route::currentRouteName() == 'profile' ? 'active' : '' }}">
-                        <span class="sidebar-icon"><i class="fas fa-user-circle"></i></span>
-                        <span class="sidebar-text">My Profile</span>
-                    </a>
-                @else
-                    <a href="#" class="sidebar-link" onclick="alert('Profile feature coming soon')">
-                        <span class="sidebar-icon"><i class="fas fa-user-circle"></i></span>
-                        <span class="sidebar-text">My Profile</span>
-                    </a>
-                @endif
+            <li class="sidebar-item {{ strpos(Route::currentRouteName(), 'profile') !== false || (in_array(session('role'), ['admin', 'supervisor']) && strpos(Route::currentRouteName(), 'volunteer') !== false) ? 'submenu-open' : '' }}">
+                <a href="#" class="sidebar-link">
+                    <span class="sidebar-icon"><i class="fas fa-user-circle"></i></span>
+                    <span class="sidebar-text">My Profile</span>
+                    <i class="fas fa-chevron-right sidebar-toggle-submenu"></i>
+                </a>
+                <ul class="sidebar-submenu">
+                    <li>
+                        @if(Route::has('profile'))
+                            <a href="{{ route('profile') }}" class="sidebar-submenu-link {{ Route::currentRouteName() == 'profile' ? 'active' : '' }}">
+                                Personal Info
+                            </a>
+                        @else
+                            <a href="#" class="sidebar-submenu-link" onclick="alert('Profile feature coming soon')">
+                                Personal Info
+                            </a>
+                        @endif
+                    </li>
+                    @if(in_array(session('role'), ['admin', 'supervisor']))
+                    <li>
+                        <a href="{{ route('admin.volunteers.index') }}" class="sidebar-submenu-link {{ Route::currentRouteName() == 'admin.volunteers.index' ? 'active' : '' }}">
+                            Volunteer Applications
+                        </a>
+                    </li>
+                    @endif
+                </ul>
             </li>
 
             <li class="sidebar-divider"></li>

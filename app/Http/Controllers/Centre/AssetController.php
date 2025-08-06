@@ -18,6 +18,85 @@ use Exception;
 class AssetController extends Controller
 {
     /**
+     * Display assets for a specific centre
+     */
+    public function centreAssets(Request $request, $centreId)
+    {
+        try {
+            // Check authentication
+            if (!session()->has('id')) {
+                return redirect()->route('login');
+            }
+
+            $role = session('role');
+            
+            // Check if user can view this centre's assets
+            if ($role !== 'admin' && session('centre_id') !== $centreId) {
+                abort(403, 'Unauthorized access to centre assets');
+            }
+
+            // Get centre information
+            $centre = Centre::where('centre_id', $centreId)->firstOrFail();
+
+            // Get filter parameters
+            $search = $request->get('search');
+            $category = $request->get('category');
+            $status = $request->get('status');
+            $condition = $request->get('condition');
+
+            // Build asset query for this specific centre
+            $assetsQuery = Asset::with(['category', 'centre', 'assignedTo', 'latestMaintenance'])
+                ->where('centre_id', $centreId);
+
+            // Apply filters
+            if ($search) {
+                $assetsQuery->where(function($query) use ($search) {
+                    $query->where('name', 'like', "%{$search}%")
+                          ->orWhere('asset_code', 'like', "%{$search}%")
+                          ->orWhere('description', 'like', "%{$search}%");
+                });
+            }
+            
+            if ($category) {
+                $assetsQuery->where('category_id', $category);
+            }
+            
+            if ($status) {
+                $assetsQuery->where('status', $status);
+            }
+            
+            if ($condition) {
+                $assetsQuery->where('condition', $condition);
+            }
+
+            $assets = $assetsQuery->paginate(20);
+
+            // Get statistics for this centre
+            $statsQuery = Asset::where('centre_id', $centreId);
+            $statistics = [
+                'total_assets' => $statsQuery->count(),
+                'available' => $statsQuery->clone()->where('status', 'available')->count(),
+                'in_use' => $statsQuery->clone()->where('status', 'in_use')->count(),
+                'maintenance' => $statsQuery->clone()->where('status', 'maintenance')->count(),
+                'disposed' => $statsQuery->clone()->where('status', 'disposed')->count(),
+            ];
+
+            // Get categories for filter dropdown
+            $categories = AssetCategory::where('status', 'active')->get();
+
+            return view('centres.assets.index', compact('assets', 'centre', 'categories', 'statistics'));
+
+        } catch (Exception $e) {
+            Log::error('Error displaying centre assets: ' . $e->getMessage(), [
+                'centre_id' => $centreId,
+                'user_id' => session('id')
+            ]);
+            
+            return redirect()->back()->with('error', 'Unable to load centre assets.');
+        }
+    }
+
+    /**
      * Display asset dashboard based on user role
      */
     public function index(Request $request)
@@ -130,7 +209,7 @@ class AssetController extends Controller
     /**
      * Show the form for creating a new asset
      */
-    public function create()
+    public function create(Request $request)
     {
         if (!session()->has('id')) {
             return redirect()->route('login');
@@ -140,10 +219,13 @@ class AssetController extends Controller
             abort(403, 'Unauthorized access');
         }
 
+        // Get pre-selected centre from URL parameter
+        $selectedCentre = $request->get('centre');
+        
         $categories = AssetCategory::active()->get();
-        $centres = session('role') === 'admin' ? Centre::all() : Centre::where('id', session('centre_id'))->get();
+        $centres = session('role') === 'admin' ? Centre::all() : Centre::where('centre_id', session('centre_id'))->get();
 
-        return view('assets.create', compact('categories', 'centres'));
+        return view('assets.create', compact('categories', 'centres', 'selectedCentre'));
     }
 
     /**
