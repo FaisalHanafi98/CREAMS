@@ -115,6 +115,7 @@ class AssetController extends Controller
             $category = $request->get('category');
             $status = $request->get('status');
             $condition = $request->get('condition');
+            $centreFilter = $request->get('centre');
 
             // Build asset query
             $assetsQuery = Asset::with(['category', 'centre', 'assignedTo', 'latestMaintenance']);
@@ -122,6 +123,9 @@ class AssetController extends Controller
             // Apply centre scoping for non-admin users
             if ($role !== 'admin') {
                 $assetsQuery->where('centre_id', $centreId);
+            } elseif ($centreFilter) {
+                // Admin users can filter by centre
+                $assetsQuery->where('centre_id', $centreFilter);
             }
 
             // Apply filters
@@ -242,28 +246,42 @@ class AssetController extends Controller
                 abort(403, 'Unauthorized access');
             }
 
+            // Determine centre_id for validation and assignment
+            $userRole = session('role');
+            $sessionCentreId = session('centre_id');
+            
+            // For non-admin users, force centre_id to their assigned centre
+            if ($userRole !== 'admin' && $sessionCentreId) {
+                $request->merge(['centre_id' => $sessionCentreId]);
+            }
+
             // Validate input
             $validated = $request->validate([
                 'name' => 'required|string|max:255',
                 'description' => 'nullable|string',
                 'category_id' => 'required|exists:asset_categories,id',
-                'centre_id' => 'required|exists:centres,id',
+                'centre_id' => 'required|exists:centres,centre_id',
+                'asset_code' => 'nullable|string|max:255',
                 'brand' => 'nullable|string|max:255',
                 'model' => 'nullable|string|max:255',
                 'serial_number' => 'nullable|string|max:255',
                 'purchase_price' => 'nullable|numeric|min:0',
                 'purchase_date' => 'nullable|date',
                 'warranty_months' => 'nullable|integer|min:0|max:120',
-                'condition' => 'required|in:new,good,fair,poor,broken',
+                'condition' => 'required|in:new,excellent,good,fair,poor,broken',
+                'status' => 'required|in:available,in_use,maintenance,retired',
                 'location' => 'nullable|string|max:255',
                 'specifications' => 'nullable|array',
                 'images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
                 'notes' => 'nullable|string'
             ]);
 
-            // Generate asset code
-            $category = AssetCategory::find($validated['category_id']);
-            $assetCode = $this->generateAssetCode($category->code);
+            // Generate asset code if not provided
+            $assetCode = $validated['asset_code'];
+            if (empty($assetCode)) {
+                $category = AssetCategory::find($validated['category_id']);
+                $assetCode = $this->generateAssetCode($category->code ?? 'AST');
+            }
 
             // Handle warranty expiry calculation
             $warrantyExpiry = null;
@@ -297,7 +315,7 @@ class AssetController extends Controller
                 'warranty_months' => $validated['warranty_months'] ?? 12,
                 'warranty_expiry' => $warrantyExpiry,
                 'condition' => $validated['condition'],
-                'status' => 'available',
+                'status' => $validated['status'],
                 'location' => $validated['location'],
                 'depreciation_rate' => $category->depreciation_rate ?? 20,
                 'current_value' => $validated['purchase_price'],

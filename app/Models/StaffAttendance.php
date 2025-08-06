@@ -112,29 +112,33 @@ class StaffAttendance extends Model
     }
 
     /**
-     * Mark attendance for a user
+     * Mark attendance for a user with the correct schema fields
+     * Parameters match what StaffAttendanceController calls
      */
-    public static function markAttendance($userId, $centreId, $markedBy = null, $isSelfMarked = true, $notes = null)
+    public static function markAttendance($targetUserId, $currentUserId, $currentUserEmail, $centreId, $status, $attendanceType, $remarks = null)
     {
         $currentTime = Carbon::now();
-        $centreOpeningTime = $currentTime->copy()->setTimeFromTimeString('09:00:00'); // Default 9 AM
-        $lateThreshold = $centreOpeningTime->copy()->addMinutes(15); // 15 minutes after opening
         
-        // Determine status based on time
-        $status = 'present';
-        if ($currentTime->gt($lateThreshold)) {
-            $status = 'late';
+        // If no specific status provided, determine based on time for check_in
+        if ($status === 'present' && $attendanceType === 'check_in') {
+            $centreOpeningTime = $currentTime->copy()->setTimeFromTimeString('09:00:00'); // Default 9 AM
+            $lateThreshold = $centreOpeningTime->copy()->addMinutes(15); // 15 minutes after opening
+            
+            if ($currentTime->gt($lateThreshold)) {
+                $status = 'late';
+            }
         }
         
         return self::create([
-            'user_id' => $userId,
+            'user_id' => $targetUserId,
+            'marked_by_user_id' => $currentUserId,
+            'marked_by_email' => $currentUserEmail,
             'attendance_date' => Carbon::today(),
-            'check_in_time' => $currentTime->format('H:i:s'),
+            'attendance_time' => $currentTime->format('H:i:s'),
             'centre_id' => $centreId,
             'status' => $status,
-            'marked_by' => $markedBy ?: $userId,
-            'is_self_marked' => $isSelfMarked,
-            'notes' => $notes
+            'remarks' => $remarks,
+            'attendance_type' => $attendanceType
         ]);
     }
 

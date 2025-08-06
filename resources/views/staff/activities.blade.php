@@ -259,12 +259,12 @@
                             @endif
                             
                             <div class="activity-meta">
-                                <i class="fas fa-clock me-1"></i>Duration: {{ $activity->duration_minutes ?? 60 }} minutes
-                                @if($activity->age_group)
-                                    | <i class="fas fa-users me-1"></i>Age Group: {{ $activity->age_group }}
-                                @endif
-                                @if($activity->difficulty_level)
+                                <i class="fas fa-clock me-1"></i>Duration: {{ $activity->activity_start_time && $activity->activity_end_time ? \Carbon\Carbon::parse($activity->activity_start_time)->diffInMinutes(\Carbon\Carbon::parse($activity->activity_end_time)) : 60 }} minutes
+                                @if(isset($activity->difficulty_level))
                                     | <i class="fas fa-signal me-1"></i>Level: {{ ucfirst($activity->difficulty_level) }}
+                                @endif
+                                @if(isset($activity->activity_location))
+                                    | <i class="fas fa-map-marker-alt me-1"></i>{{ $activity->activity_location }}
                                 @endif
                             </div>
                         </div>

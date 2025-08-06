@@ -203,7 +203,7 @@ class TraineeProfileController extends Controller
                 'user_id' => session('id')
             ]);
             
-            return redirect()->route('traineeprofile', ['encrypted_id' => \App\Helpers\EncryptionHelper::generateEncryptedId($id)])
+            return redirect()->route('trainees.show', ['encrypted_id' => $encrypted_id])
                 ->with('error', 'Unable to access edit form. ' . $e->getMessage());
         }
     }
@@ -248,7 +248,7 @@ class TraineeProfileController extends Controller
                 'centre_name' => 'required|string|exists:centres,centre_name',
                 'trainee_condition' => 'required|string|max:255',
                 'guardian_name' => 'required|string|max:255',
-                'guardian_relationship' => 'required|string|max:255',
+                'guardian_relationship' => 'nullable|string|max:255',
                 'guardian_phone' => 'required|string|max:20',
                 'guardian_email' => 'required|email|max:255',
                 'guardian_address' => 'nullable|string|max:500',
@@ -379,7 +379,7 @@ class TraineeProfileController extends Controller
             // being in the guarded array and therefore not being saved to the database
 
             // Redirect back to the profile page with success message using encrypted ID
-            return redirect()->route('traineeprofile', ['encrypted_id' => \App\Helpers\EncryptionHelper::generateEncryptedId($trainee->id)])
+            return redirect()->route('trainees.show', ['encrypted_id' => $encrypted_id])
                 ->with('success', 'Trainee profile updated successfully!');
         } catch (Exception $e) {
             // Log the error
@@ -391,7 +391,7 @@ class TraineeProfileController extends Controller
             ]);
 
             // Redirect with error message using encrypted ID
-            return redirect()->route('traineeprofile', ['encrypted_id' => \App\Helpers\EncryptionHelper::generateEncryptedId($id)])
+            return redirect()->route('trainees.show', ['encrypted_id' => $encrypted_id])
                 ->with('error', 'Failed to update profile: ' . $e->getMessage());
         }
     }

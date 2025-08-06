@@ -130,10 +130,37 @@
 
     .filter-card {
         background: white;
-        border-radius: 10px;
-        padding: 20px;
-        margin-bottom: 25px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        border-radius: 15px;
+        padding: 25px;
+        margin-bottom: 30px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.07);
+        border: 1px solid var(--border-color);
+    }
+
+    .form-control:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 0.2rem rgba(50, 189, 234, 0.25);
+    }
+
+    .badge-secondary {
+        background-color: #6c757d;
+    }
+
+    .section-divider {
+        border-left: 4px solid var(--primary-color);
+        padding-left: 15px;
+        margin: 20px 0 10px 0;
+    }
+
+    .modal-xl {
+        max-width: 1200px;
+    }
+
+    .table th {
+        background-color: #f8f9fa;
+        border-top: none;
+        font-weight: 600;
+        color: #495057;
     }
 </style>
 @endpush
@@ -223,23 +250,36 @@
                         <option value="technology" {{ request('category') == 'technology' ? 'selected' : '' }}>Technology</option>
                     </select>
                 </div>
+                @if(session('role') === 'admin')
+                <div class="col-md-2">
+                    <label>Centre</label>
+                    <select name="centre" class="form-control">
+                        <option value="">All Centres</option>
+                        @foreach(\App\Models\Centre::where('centre_status', 'active')->get() as $centre)
+                            <option value="{{ $centre->centre_id }}" {{ request('centre') == $centre->centre_id ? 'selected' : '' }}>
+                                {{ $centre->centre_name }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+                @endif
                 <div class="col-md-2">
                     <label>Status</label>
                     <select name="status" class="form-control">
                         <option value="">All Status</option>
                         <option value="available" {{ request('status') == 'available' ? 'selected' : '' }}>Available</option>
-                        <option value="rented" {{ request('status') == 'rented' ? 'selected' : '' }}>In Use</option>
+                        <option value="in_use" {{ request('status') == 'in_use' ? 'selected' : '' }}>In Use</option>
                         <option value="maintenance" {{ request('status') == 'maintenance' ? 'selected' : '' }}>Maintenance</option>
                     </select>
                 </div>
-                <div class="col-md-2">
+                <div class="col-md-1">
                     <button type="submit" class="btn btn-primary btn-block">
-                        <i class="fas fa-search mr-1"></i>Filter
+                        <i class="fas fa-search"></i>
                     </button>
                 </div>
-                <div class="col-md-3 text-right">
-                    <a href="{{ route('centres.assets', session('centre_id', 1)) }}" class="btn btn-outline-secondary">
-                        <i class="fas fa-times mr-1"></i>Clear Filters
+                <div class="col-md-2 text-right">
+                    <a href="{{ request()->url() }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-times mr-1"></i>Clear
                     </a>
                 </div>
             </form>
@@ -255,6 +295,7 @@
                                 <th>Asset ID</th>
                                 <th>Name</th>
                                 <th>Category</th>
+                                <th>Centre</th>
                                 <th>Condition</th>
                                 <th>Status</th>
                                 <th>Current User</th>
@@ -268,6 +309,9 @@
                                 <td>{{ $asset->name ?? 'Unnamed Asset' }}</td>
                                 <td>
                                     <span class="badge badge-info">{{ ucfirst($asset->category->name ?? 'General') }}</span>
+                                </td>
+                                <td>
+                                    <span class="badge badge-secondary">{{ $asset->centre->centre_name ?? 'Unassigned' }}</span>
                                 </td>
                                 <td>
                                     @php
@@ -342,7 +386,7 @@
 
 <!-- Add Asset Modal -->
 <div class="modal fade" id="addAssetModal" tabindex="-1" role="dialog">
-    <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-dialog modal-xl" role="document">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title"><i class="fas fa-plus mr-2"></i>Add New Asset</h5>
@@ -350,18 +394,37 @@
                     <span>&times;</span>
                 </button>
             </div>
-            <form id="addAssetForm" method="POST" action="{{ route('assets.store') }}">
-                <input type="hidden" name="centre_id" value="{{ session('centre_id', request()->route('id')) }}">
+            <form id="addAssetForm" method="POST" action="{{ route('centre.assets.store') }}">
                 @csrf
                 <div class="modal-body">
+                    @if($errors->any())
+                        <div class="alert alert-danger">
+                            <ul class="mb-0">
+                                @foreach($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
+                    <!-- Basic Information -->
+                    <h6 class="text-primary mb-3"><i class="fas fa-info-circle mr-2"></i>Basic Information</h6>
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label>Asset Name <span class="text-danger">*</span></label>
-                                <input type="text" name="name" class="form-control" required>
+                                <input type="text" name="name" class="form-control" required placeholder="Enter asset name">
                             </div>
                         </div>
                         <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Asset Code</label>
+                                <input type="text" name="asset_code" class="form-control" placeholder="Auto-generated if empty">
+                                <small class="form-text text-muted">Leave blank for auto-generation</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4">
                             <div class="form-group">
                                 <label>Category <span class="text-danger">*</span></label>
                                 <select name="category_id" class="form-control" required>
@@ -379,12 +442,78 @@
                                 </select>
                             </div>
                         </div>
+                        @if(session('role') === 'admin' && !session('centre_id'))
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label>Centre <span class="text-danger">*</span></label>
+                                <select name="centre_id" class="form-control" required>
+                                    <option value="">Select Centre</option>
+                                    @foreach(\App\Models\Centre::where('centre_status', 'active')->get() as $centre)
+                                        <option value="{{ $centre->centre_id }}">{{ $centre->centre_name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+                        @else
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label>Centre</label>
+                                <input type="text" class="form-control" value="{{ \App\Models\Centre::where('centre_id', session('centre_id', '01'))->first()->centre_name ?? 'Unknown Centre' }}" readonly>
+                                <input type="hidden" name="centre_id" value="{{ session('centre_id', '01') }}">
+                            </div>
+                        </div>
+                        @endif
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label>Status <span class="text-danger">*</span></label>
+                                <select name="status" class="form-control" required>
+                                    <option value="available" selected>Available</option>
+                                    <option value="in_use">In Use</option>
+                                    <option value="maintenance">Under Maintenance</option>
+                                    <option value="retired">Retired</option>
+                                </select>
+                            </div>
+                        </div>
                     </div>
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea name="description" class="form-control" rows="2" placeholder="Brief description of the asset"></textarea>
+                    </div>
+
+                    <!-- Technical Details -->
+                    <h6 class="text-primary mb-3 mt-4"><i class="fas fa-cogs mr-2"></i>Technical Details</h6>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label>Brand</label>
+                                <input type="text" name="brand" class="form-control" placeholder="e.g., Dell, HP">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label>Model</label>
+                                <input type="text" name="model" class="form-control" placeholder="Model number">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label>Serial Number</label>
+                                <input type="text" name="serial_number" class="form-control" placeholder="Serial/ID number">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Specifications</label>
+                        <textarea name="specifications" class="form-control" rows="2" placeholder="Technical specifications, features, etc."></textarea>
+                    </div>
+
+                    <!-- Financial Information -->
+                    <h6 class="text-primary mb-3 mt-4"><i class="fas fa-dollar-sign mr-2"></i>Financial Information</h6>
                     <div class="row">
                         <div class="col-md-4">
                             <div class="form-group">
                                 <label>Purchase Price</label>
-                                <input type="number" name="purchase_price" class="form-control" min="0" step="0.01">
+                                <input type="number" name="purchase_price" class="form-control" min="0" step="0.01" placeholder="0.00">
                             </div>
                         </div>
                         <div class="col-md-4">
@@ -395,10 +524,22 @@
                         </div>
                         <div class="col-md-4">
                             <div class="form-group">
+                                <label>Warranty (Months)</label>
+                                <input type="number" name="warranty_months" class="form-control" min="0" placeholder="12">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Physical Condition & Location -->
+                    <h6 class="text-primary mb-3 mt-4"><i class="fas fa-map-marker-alt mr-2"></i>Condition & Location</h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
                                 <label>Condition <span class="text-danger">*</span></label>
                                 <select name="condition" class="form-control" required>
                                     <option value="">Select Condition</option>
                                     <option value="new">New</option>
+                                    <option value="excellent">Excellent</option>
                                     <option value="good">Good</option>
                                     <option value="fair">Fair</option>
                                     <option value="poor">Poor</option>
@@ -406,28 +547,16 @@
                                 </select>
                             </div>
                         </div>
-                    </div>
-                    <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label>Brand</label>
-                                <input type="text" name="brand" class="form-control">
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label>Model</label>
-                                <input type="text" name="model" class="form-control">
+                                <label>Location</label>
+                                <input type="text" name="location" class="form-control" placeholder="e.g., Room 101, Storage Area">
                             </div>
                         </div>
                     </div>
                     <div class="form-group">
-                        <label>Description</label>
-                        <textarea name="description" class="form-control" rows="3"></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label>Location</label>
-                        <input type="text" name="location" class="form-control" placeholder="e.g., Room 101, Storage Area">
+                        <label>Additional Notes</label>
+                        <textarea name="notes" class="form-control" rows="2" placeholder="Any additional notes or comments"></textarea>
                     </div>
                 </div>
                 <div class="modal-footer">

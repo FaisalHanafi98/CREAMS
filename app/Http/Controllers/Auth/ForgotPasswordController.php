@@ -164,7 +164,7 @@ class ForgotPasswordController extends Controller
                 ->with('error', 'Password reset token has expired. Please request a new one.');
         }
             
-        return view('auth.reset-password', [
+        return view('auth.resetpassword', [
             'token' => $token,
             'email' => $tokenData->email
         ]);

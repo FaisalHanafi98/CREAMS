@@ -47,7 +47,7 @@ class PasswordResetEmail extends Mailable implements ShouldQueue
     public function content(): Content
     {
         return new Content(
-            view: 'emails.forgot-password',
+            view: 'emails.forgotpassword',
         );
     }
 

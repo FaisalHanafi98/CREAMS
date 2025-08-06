@@ -614,7 +614,7 @@
             <h6 class="m-0 font-weight-bold text-primary">{{ $trainee->trainee_first_name }} {{ $trainee->trainee_last_name }}</h6>
         </div>
         <div class="card-body">
-            <form action="{{ route('updatetraineeprofile', ['encrypted_id' => \App\Helpers\EncryptionHelper::generateEncryptedId($trainee->id)]) }}" method="POST" enctype="multipart/form-data">
+            <form action="{{ route('trainees.update', ['encrypted_id' => $trainee->encrypted_id ?? \App\Helpers\EncryptionHelper::generateEncryptedId($trainee->id)]) }}" method="POST" enctype="multipart/form-data">
                 @csrf
                 @method('PUT')
                 
@@ -935,7 +935,7 @@
                                 <button type="submit" class="btn btn-primary btn-block">
                                     <i class="fas fa-save mr-1"></i> Save Changes
                                 </button>
-                                <a href="{{ route('traineeprofile', ['encrypted_id' => \App\Helpers\EncryptionHelper::generateEncryptedId($trainee->id)]) }}" class="btn btn-secondary btn-block">
+                                <a href="{{ route('trainees.show', ['encrypted_id' => $trainee->encrypted_id ?? \App\Helpers\EncryptionHelper::generateEncryptedId($trainee->id)]) }}" class="btn btn-secondary btn-block">
                                     <i class="fas fa-times mr-1"></i> Cancel
                                 </a>
                                 <hr>
@@ -973,7 +973,8 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                <form action="{{ route('traineeprofile.destroy', ['encrypted_id' => \App\Helpers\EncryptionHelper::generateEncryptedId($trainee->id)]) }}" method="POST" style="display: inline;">
+                {{-- Delete functionality temporarily disabled - route not available in new structure --}}
+                <form action="#" method="POST" style="display: inline;" onsubmit="alert('Delete functionality not available'); return false;">
                     @csrf
                     @method('DELETE')
                     <button type="submit" class="btn btn-danger">Delete Trainee</button>

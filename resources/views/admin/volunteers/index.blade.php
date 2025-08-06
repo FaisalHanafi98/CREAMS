@@ -653,8 +653,33 @@ function showError(message) {
 
 // Load centres for filters and approval modal
 function loadCentres() {
-    // This would typically load from an API endpoint
-    // For now, we'll assume the centres are available
+    $.ajax({
+        url: '{{ route("volunteer.centres") }}',
+        method: 'GET',
+        headers: {
+            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+        },
+        success: function(response) {
+            if (response.success && response.data) {
+                const centreFilter = $('#centreFilter');
+                const approveCentreId = $('#approveCentreId');
+                
+                // Populate filter dropdown
+                centreFilter.empty().append('<option value="">All Centres</option>');
+                
+                // Populate approve modal dropdown
+                approveCentreId.empty().append('<option value="">Select Centre</option>');
+                
+                response.data.forEach(function(centre) {
+                    centreFilter.append(`<option value="${centre.centre_id}">${centre.centre_name}</option>`);
+                    approveCentreId.append(`<option value="${centre.centre_id}">${centre.centre_name}</option>`);
+                });
+            }
+        },
+        error: function(xhr) {
+            console.error('Error loading centres:', xhr.responseJSON?.message || 'Unknown error');
+        }
+    });
 }
 </script>
 @endpush

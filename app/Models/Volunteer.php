@@ -46,7 +46,7 @@ class Volunteer extends Model
      */
     public function centre()
     {
-        return $this->belongsTo(Centre::class, 'centre_id');
+        return $this->belongsTo(Centre::class, 'centre_id', 'centre_id');
     }
 
     public function approvedByUser()

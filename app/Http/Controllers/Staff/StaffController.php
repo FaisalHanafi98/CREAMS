@@ -12,6 +12,7 @@ use App\Models\User;
 use App\Models\Centre;
 use App\Models\Activity;
 use App\Models\Trainee;
+use App\Models\StaffAttendance;
 use App\Traits\HandlesErrors;
 use App\Traits\HandlesEncryptedIds;
 
@@ -354,59 +355,80 @@ class StaffController extends Controller
     private function getStaffStatistics($staffMember)
     {
         try {
-            // Fix N+1 queries: Use Eloquent with relationships instead of raw DB queries
-            $activitiesCreated = 0;
-            $totalTrainees = 0;
-            $avgAttendance = 0;
-            
-            // Get activities created by this staff member with relationships
-            $activities = Activity::with(['sessions', 'enrollments.trainee'])
-                ->where('created_by', $staffMember->id)
-                ->whereIn('activity_status', ['scheduled', 'ongoing'])
+            // Get activities where this staff is assigned as teacher/instructor (not just created by)
+            $staffActivities = Activity::with(['enrollments.trainee', 'sessions'])
+                ->where(function($query) use ($staffMember) {
+                    $query->where('created_by', $staffMember->id)
+                          ->orWhereHas('sessions', function($q) use ($staffMember) {
+                              $q->where('teacher_id', $staffMember->id);
+                          });
+                })
+                ->whereIn('activity_status', ['scheduled', 'ongoing', 'completed'])
                 ->get();
-                
-            $activitiesCreated = $activities->count();
             
-            // Count sessions where this staff member is the teacher (including recent ones)
+            // Count unique trainees enrolled in activities where this staff is instructor
+            $traineeIds = collect();
+            foreach ($staffActivities as $activity) {
+                $activityTraineeIds = $activity->enrollments
+                    ->whereIn('enrollment_status', ['enrolled', 'completed'])
+                    ->pluck('trainee_id');
+                $traineeIds = $traineeIds->merge($activityTraineeIds);
+            }
+            $totalTrainees = $traineeIds->unique()->count();
+            
+            // Count active sessions where this staff member is the teacher
             $activeSessions = 0;
             if (\Schema::hasTable('activity_sessions')) {
                 $activeSessions = \DB::table('activity_sessions')
                     ->where('teacher_id', $staffMember->id)
-                    ->whereIn('session_status', ['scheduled', 'ongoing', 'completed'])
-                    ->where('scheduled_date', '>=', now()->subDays(30)) // Last 30 days
+                    ->whereIn('session_status', ['scheduled', 'ongoing'])
+                    ->where('scheduled_date', '>=', now()->startOfMonth()) // Current month
                     ->count();
             }
 
-            // Count trainees in same centre using Eloquent
-            $totalTrainees = Trainee::where('centre_id', $staffMember->centre_id)->count();
-
-            // Calculate enrollments and attendance using loaded relationships
-            if ($activities->isNotEmpty()) {
-                $totalEnrollments = $activities->sum(function($activity) {
-                    return $activity->enrollments->whereIn('status', ['enrolled', 'active'])->count();
+            // Calculate average progress percentage from enrollments (as attendance proxy)
+            $avgAttendance = 0;
+            if ($staffActivities->isNotEmpty()) {
+                $progressRates = $staffActivities->flatMap(function($activity) {
+                    return $activity->enrollments->whereIn('enrollment_status', ['enrolled', 'completed'])
+                        ->pluck('progress_percentage')
+                        ->filter(function($rate) { return !is_null($rate) && $rate > 0; });
                 });
                 
-                if ($totalEnrollments > 0) {
-                    $totalTrainees = $totalEnrollments;
-                }
-
-                // Calculate average attendance using relationships
-                $attendanceRates = $activities->flatMap(function($activity) {
-                    return $activity->enrollments->where('status', 'active')
-                        ->pluck('attendance_rate')
-                        ->filter(function($rate) { return !is_null($rate); });
-                });
-                
-                $avgAttendance = $attendanceRates->avg() ?: 0;
+                $avgAttendance = $progressRates->avg() ?: 0;
             }
 
-            // Calculate years of service
-            $yearsService = \Carbon\Carbon::parse($staffMember->created_at)->diffInYears(\Carbon\Carbon::now());
-            if ($yearsService == 0) {
-                $monthsService = \Carbon\Carbon::parse($staffMember->created_at)->diffInMonths(\Carbon\Carbon::now());
-                $yearsServiceDisplay = $monthsService . ' month' . ($monthsService != 1 ? 's' : '');
+            // Calculate service period from first day in staff attendance to now
+            $serviceStartDate = null;
+            if (\Schema::hasTable('staff_attendances')) {
+                $firstAttendance = \DB::table('staff_attendances')
+                    ->where('user_id', $staffMember->id)
+                    ->orderBy('attendance_date', 'asc')
+                    ->first();
+                
+                if ($firstAttendance) {
+                    $serviceStartDate = \Carbon\Carbon::parse($firstAttendance->attendance_date);
+                }
+            }
+            
+            // Fallback to user creation date if no attendance records
+            if (!$serviceStartDate) {
+                $serviceStartDate = \Carbon\Carbon::parse($staffMember->created_at);
+            }
+            
+            $servicePeriod = $serviceStartDate->diffInDays(\Carbon\Carbon::now());
+            if ($servicePeriod < 30) {
+                $yearsServiceDisplay = $servicePeriod . ' day' . ($servicePeriod != 1 ? 's' : '');
+            } elseif ($servicePeriod < 365) {
+                $months = floor($servicePeriod / 30);
+                $yearsServiceDisplay = $months . ' month' . ($months != 1 ? 's' : '');
             } else {
-                $yearsServiceDisplay = $yearsService . ' year' . ($yearsService != 1 ? 's' : '');
+                $years = floor($servicePeriod / 365);
+                $remainingMonths = floor(($servicePeriod % 365) / 30);
+                $yearsServiceDisplay = $years . ' year' . ($years != 1 ? 's' : '');
+                if ($remainingMonths > 0) {
+                    $yearsServiceDisplay .= ', ' . $remainingMonths . ' month' . ($remainingMonths != 1 ? 's' : '');
+                }
             }
 
             return [
@@ -614,6 +636,29 @@ class StaffController extends Controller
                             // Add description property for view compatibility
                             $activity->description = $activity->activity_description ?? null;
                             
+                            // Add category information
+                            if ($activity->category_id) {
+                                $category = \DB::table('categories')->where('id', $activity->category_id)->first();
+                                $activity->category = $category ? $category->category_name : null;
+                            } else {
+                                $activity->category = null;
+                            }
+                            
+                            // Add missing properties for view compatibility
+                            $requiredResources = $activity->required_resources;
+                            if (is_string($requiredResources)) {
+                                $requiredResources = json_decode($requiredResources, true);
+                            }
+                            $activity->requires_equipment = !empty($requiredResources) && is_array($requiredResources) && count($requiredResources) > 0;
+                            
+                            $activity->objectives = $activity->activity_goals ?? $activity->activity_outcomes ?? null;
+                            if (is_string($activity->objectives)) {
+                                $objectives = json_decode($activity->objectives, true);
+                                if (is_array($objectives)) {
+                                    $activity->objectives = implode('; ', $objectives);
+                                }
+                            }
+                            
                             return $activity;
                         });
                 } else {
@@ -624,6 +669,29 @@ class StaffController extends Controller
                         
                         // Add description property for view compatibility
                         $activity->description = $activity->activity_description ?? null;
+                        
+                        // Add category information
+                        if ($activity->category_id) {
+                            $category = \DB::table('categories')->where('id', $activity->category_id)->first();
+                            $activity->category = $category ? $category->category_name : null;
+                        } else {
+                            $activity->category = null;
+                        }
+                        
+                        // Add missing properties for view compatibility
+                        $requiredResources = $activity->required_resources;
+                        if (is_string($requiredResources)) {
+                            $requiredResources = json_decode($requiredResources, true);
+                        }
+                        $activity->requires_equipment = !empty($requiredResources) && is_array($requiredResources) && count($requiredResources) > 0;
+                        
+                        $activity->objectives = $activity->activity_goals ?? $activity->activity_outcomes ?? null;
+                        if (is_string($activity->objectives)) {
+                            $objectives = json_decode($activity->objectives, true);
+                            if (is_array($objectives)) {
+                                $activity->objectives = implode('; ', $objectives);
+                            }
+                        }
                         
                         return $activity;
                     });

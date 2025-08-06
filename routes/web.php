@@ -85,6 +85,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/volunteer/applications/{id}/approve', [VolunteerController::class, 'approve'])->name('volunteer.applications.approve');
     Route::post('/volunteer/applications/{id}/reject', [VolunteerController::class, 'reject'])->name('volunteer.applications.reject');
     Route::post('/volunteer/applications/{id}/status', [VolunteerController::class, 'updateStatus'])->name('volunteer.applications.status');
+    Route::get('/api/centres', [VolunteerController::class, 'getCentres'])->name('volunteer.centres');
 });
 Route::get('/trademark', function () {
     return view('trademarks');
@@ -417,6 +418,7 @@ Route::middleware(['auth', 'validate.params'])->group(function () {
     
     // General centre assets route
     Route::get('/centre/assets', [AssetController::class, 'index'])->name('centre.assets');
+    Route::post('/centre/assets', [AssetController::class, 'store'])->name('centre.assets.store');
 
     // Staff Daily Attendance Management (must be BEFORE generic {id} routes)
     Route::prefix('centres/attendance')->name('centres.attendance.')->middleware(['enhanced.auth'])->group(function () {

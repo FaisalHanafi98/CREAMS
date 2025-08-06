@@ -2,6 +2,7 @@
 namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Volunteer;
+use App\Models\Centre;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
@@ -359,7 +360,7 @@ public function approve(Request $request, $id)
         }
 
         $validator = Validator::make($request->all(), [
-            'centre_id' => ($userRole === 'admin' && !$centreId) ? 'required|exists:centres,id' : 'nullable|exists:centres,id',
+            'centre_id' => ($userRole === 'admin' && !$centreId) ? 'required|exists:centres,centre_id' : 'nullable|exists:centres,centre_id',
             'notes' => 'nullable|string|max:1000'
         ]);
 
@@ -592,6 +593,34 @@ public function adminIndex()
         ]);
         
         return redirect()->route('dashboard')->with('error', 'Error loading volunteer management');
+    }
+}
+
+/**
+ * Get centres for dropdown population
+ *
+ * @return \Illuminate\Http\JsonResponse
+ */
+public function getCentres()
+{
+    try {
+        $centres = \App\Models\Centre::select('centre_id', 'centre_name')
+            ->orderBy('centre_name')
+            ->get();
+        
+        return response()->json([
+            'success' => true,
+            'data' => $centres
+        ]);
+    } catch (\Exception $e) {
+        Log::error('Error loading centres for volunteer management', [
+            'error' => $e->getMessage()
+        ]);
+        
+        return response()->json([
+            'success' => false,
+            'message' => 'Error loading centres'
+        ], 500);
     }
 }
 }
