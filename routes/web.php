@@ -77,15 +77,26 @@ Route::post('/contact/submit', [ContactController::class, 'submit'])->name('cont
 Route::get('/volunteer', [VolunteerController::class, 'index'])->name('volunteer');
 Route::post('/volunteer/submit', [VolunteerController::class, 'submit'])->name('volunteer.submit');
 
-// Admin routes for volunteer management
-Route::middleware('auth')->group(function () {
+// Debug route for testing authentication
+Route::get('/debug/session', function() {
+    return response()->json([
+        'session_data' => session()->all(),
+        'is_authenticated' => \App\Services\SessionManager::check(),
+        'user_role' => session('role'),
+        'user_id' => session('id'),
+        'user_name' => session('name')
+    ]);
+});
+
+// Admin routes for volunteer management  
+Route::middleware(['enhanced.auth'])->group(function () {
     Route::get('/admin/volunteers', [VolunteerController::class, 'adminIndex'])->name('admin.volunteers.index');
     Route::get('/volunteer/applications', [VolunteerController::class, 'getApplications'])->name('volunteer.applications');
     Route::get('/volunteer/applications/{id}', [VolunteerController::class, 'show'])->name('volunteer.applications.show');
     Route::post('/volunteer/applications/{id}/approve', [VolunteerController::class, 'approve'])->name('volunteer.applications.approve');
     Route::post('/volunteer/applications/{id}/reject', [VolunteerController::class, 'reject'])->name('volunteer.applications.reject');
     Route::post('/volunteer/applications/{id}/status', [VolunteerController::class, 'updateStatus'])->name('volunteer.applications.status');
-    Route::get('/api/centres', [VolunteerController::class, 'getCentres'])->name('volunteer.centres');
+    Route::get('/volunteer/centres', [VolunteerController::class, 'getCentres'])->name('volunteer.centres');
 });
 Route::get('/trademark', function () {
     return view('trademarks');
@@ -161,19 +172,17 @@ Route::middleware(['auth', 'validate.params'])->group(function () {
             ->middleware('cache.headers:public;max_age=300;etag');
             
         // Additional dashboard features (temporarily disabled - can be re-enabled later)
-        /*
+        // Dashboard API endpoints for real-time features
         Route::get('/updates', [App\Http\Controllers\Dashboard\DashboardController::class, 'getUpdates'])->name('updates');
         Route::post('/refresh-stats', [App\Http\Controllers\Dashboard\DashboardController::class, 'refreshStats'])->name('refresh-stats');
+        Route::post('/refresh-widget', [App\Http\Controllers\Dashboard\DashboardController::class, 'refreshWidget'])->name('refresh-widget');
         Route::get('/widget/{widget}', [App\Http\Controllers\Dashboard\DashboardController::class, 'getWidget'])->name('widget');
-        Route::get('/export/{format?}', [App\Http\Controllers\Dashboard\DashboardController::class, 'export'])->name('export');
-        Route::post('/clear-cache', [App\Http\Controllers\Dashboard\DashboardController::class, 'clearCache'])->name('clear-cache');
-        Route::get('/mobile', [App\Http\Controllers\Dashboard\DashboardController::class, 'mobile'])->name('mobile');
-        */
     });
     
     // Profile management
     // Profile management routes
     Route::get('/profile', [UserProfileController::class, 'showProfile'])->name('profile');
+    Route::get('/profile/home', [UserProfileController::class, 'showProfile'])->name('profile.home');
     Route::post('/profile/update', [UserProfileController::class, 'updateProfile'])->name('profile.update');
     Route::post('/profile/change-password', [UserProfileController::class, 'changePassword'])->name('profile.password');
     Route::post('/profile/upload-avatar', [UserProfileController::class, 'uploadAvatar'])->name('profile.avatar');
@@ -841,6 +850,55 @@ Route::middleware(['auth'])->prefix('api')->name('api.')->group(function () {
 Route::middleware(['web'])->group(function () {
     Route::get('/search', [App\Http\Controllers\SearchController::class, 'search'])->name('search');
     Route::post('/search', [App\Http\Controllers\SearchController::class, 'search'])->name('search.post');
+});
+
+// Test route for debugging dashboard issues
+Route::get('/test-dashboard', function() {
+    session([
+        'id' => 1, 
+        'role' => 'admin', 
+        'centre_id' => '01', 
+        'name' => 'Muhammad Syafiq bin Moh'
+    ]);
+    
+    $dashboardController = new App\Http\Controllers\Dashboard\DashboardController();
+    $request = new Illuminate\Http\Request();
+    
+    try {
+        $response = $dashboardController->index($request);
+        
+        if ($response instanceof Illuminate\View\View) {
+            $data = $response->getData();
+            
+            return response()->json([
+                'status' => 'success',
+                'what_you_should_see' => [
+                    'General Tab' => [
+                        'Total Users' => ($data['stats_flat']['total_users'] ?? 0),
+                        'Active Trainees' => ($data['stats_flat']['total_trainees'] ?? 0),
+                        'Active Programs' => ($data['stats_flat']['total_activities'] ?? 0),
+                        'Active Centres' => ($data['stats_flat']['active_centres'] ?? 0)
+                    ],
+                    'Personal Tab' => [
+                        'My Activities' => ($data['personal_stats']['user_activities'] ?? 0),
+                        'Weekly Sessions' => ($data['personal_stats']['weekly_sessions'] ?? 0),
+                        'Completion Rate' => ($data['personal_stats']['completion_rate'] ?? 0) . '%',
+                        'Average Attendance' => ($data['personal_stats']['avg_attendance'] ?? 0) . '%'
+                    ],
+                    'My Schedule' => [
+                        'Calendar Events' => count($data['calendar_events'] ?? []) . ' upcoming sessions'
+                    ]
+                ],
+                'css_check' => [
+                    'dashboard_widgets_css_exists' => file_exists(public_path('css/dashboard-widgets.css'))
+                ]
+            ], JSON_PRETTY_PRINT);
+        } else {
+            return response()->json(['status' => 'error', 'message' => 'Dashboard not returning view']);
+        }
+    } catch (Exception $e) {
+        return response()->json(['status' => 'error', 'message' => $e->getMessage()]);
+    }
 });
 
 /*

@@ -955,6 +955,9 @@
     <!-- Dropdown visibility improvements -->
     <link rel="stylesheet" href="{{ asset('css/dropdown-improvements.css') }}">
     
+    <!-- Dashboard widgets styling -->
+    <link rel="stylesheet" href="{{ asset('css/dashboard-widgets.css') }}">
+    
     @yield('styles')
 </head>
 <body>

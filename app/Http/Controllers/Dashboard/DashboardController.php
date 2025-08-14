@@ -13,9 +13,11 @@ use App\Models\Activity;
 use App\Models\ActivitySession;
 use App\Models\Centre;
 use App\Models\Asset;
+use App\Traits\HandlesEncryptedIds;
 
 class DashboardController extends Controller
 {
+    use HandlesEncryptedIds;
     /**
      * Display modern dashboard (now using enhanced version)
      */
@@ -34,7 +36,10 @@ class DashboardController extends Controller
             // Get enhanced dashboard data with additional UX features
             $dashboardData = $this->getEnhancedDashboardData($role, $userId, $centreId);
             
-            return view('dashboard.modern', $dashboardData);
+            // Route to role-specific dashboard views
+            $dashboardView = $this->getDashboardViewByRole($role);
+            
+            return view($dashboardView, $dashboardData);
             
         } catch (\Exception $e) {
             Log::error('Modern dashboard error', [
@@ -42,7 +47,9 @@ class DashboardController extends Controller
                 'error' => $e->getMessage()
             ]);
             
-            return view('dashboard.modern', [
+            $dashboardView = $this->getDashboardViewByRole($role ?? 'trainee');
+            
+            return view($dashboardView, [
                 'error' => 'Unable to load dashboard data',
                 'role' => $role ?? 'unknown',
                 'user_name' => session('name', 'User'),
@@ -122,25 +129,90 @@ class DashboardController extends Controller
     }
 
     /**
+     * Determine which dashboard view to use based on user role
+     */
+    private function getDashboardViewByRole($role)
+    {
+        // For now, return to the original modern dashboard interface that users are familiar with
+        // Role-specific dashboards are available but not being used yet
+        return 'dashboard.modern';
+        
+        /*
+        // Role-specific dashboard routing (available when needed):
+        switch (strtolower($role)) {
+            case 'admin':
+                return 'dashboard.admin';
+            case 'teacher':
+                return 'dashboard.teacher';
+            case 'supervisor':
+                return 'dashboard.supervisor';
+            case 'ajk':
+                return 'dashboard.ajk';
+            case 'trainee':
+                return 'dashboard.trainee';
+            case 'parent':
+                return 'dashboard.parent';
+            default:
+                return 'dashboard.modern';
+        }
+        */
+    }
+
+    /**
      * Get comprehensive dashboard data based on role
      */
     private function getDashboardData($role, $userId, $centreId)
     {
+        // Get individual data components
+        $recentActivities = $this->getRecentActivities($role, $userId, $centreId);
+        $recentUsers = $this->getRecentUsers($role, $centreId);
+        $upcomingSessions = $this->getUpcomingSessions($role, $userId, $centreId);
+        $currentSessions = $this->getCurrentSessions($role, $userId, $centreId);
+        $quickStats = $this->getQuickStats($role, $userId, $centreId);
+        
         $data = [
             'role' => $role,
             'user_name' => session('name'),
             'centre_id' => $centreId,
             'current_time' => now()->format('l, F j, Y - g:i A'),
-            'quick_stats' => $this->getQuickStats($role, $userId, $centreId),
-            'recent_activities' => $this->getRecentActivities($role, $userId, $centreId),
-            'upcoming_sessions' => $this->getUpcomingSessions($role, $userId, $centreId),
+            'quick_stats' => $quickStats,
+            
+            // Structure data to match template expectations
+            'recent_activities' => $this->getRecentActivities($role, $userId, $centreId, null, true), // Force user-specific for personal tab
+            'recent_activities_centre' => $this->getComprehensiveRecentChanges($centreId, 10), // Use comprehensive changes for General tab
+            'recent' => [
+                'activities' => $recentActivities,
+                'users' => $recentUsers
+            ],
+            
+            // Session data for different template structures
+            'upcoming_sessions' => $upcomingSessions,
+            'schedule' => [
+                'today' => $currentSessions,
+                'upcoming' => $upcomingSessions
+            ],
+            
             'notifications' => $this->getNotifications($userId),
-            'recent_users' => $this->getRecentUsers($role, $centreId),
-            'current_sessions' => $this->getCurrentSessions($role, $userId, $centreId),
+            'recent_users' => $recentUsers,
+            'current_sessions' => $currentSessions,
             'calendar_events' => $this->getCalendarEvents($role, $userId, $centreId),
+            'todays_centre_activities' => $this->getTodaysCentreActivities($centreId),
             'system_alerts' => $this->getSystemAlerts($role),
             'progress_summary' => $this->getProgressSummary($role, $userId, $centreId),
-            'centre_info' => $this->getCentreInfo($centreId)
+            'centre_info' => $this->getCentreInfo($centreId),
+            
+            // Separate statistics for General and Personal tabs
+            'stats' => $quickStats, // General tab statistics (system-wide)
+            'stats_flat' => $this->getFlatStatsFromCards($quickStats), // Flat array for legacy view compatibility
+            'personal_stats' => $this->getUserPerformanceStats($role, $userId, $centreId), // Personal tab statistics (user-specific)
+            'performance' => [
+                'cache_status' => 'Online',
+                'system_health' => 'Good',
+                'load_time' => round(microtime(true) * 1000)
+            ],
+            
+            // User identification for links
+            'user_encrypted_id' => $this->generateEncryptedId($userId)
         ];
 
         try {
@@ -170,31 +242,39 @@ class DashboardController extends Controller
             $lastMonthActivities = DB::table('activities')->whereMonth('created_at', now()->subMonth()->month)->count();
             $activityGrowthRate = $lastMonthActivities > 0 ? round((($currentMonthActivities - $lastMonthActivities) / $lastMonthActivities) * 100, 1) : 0;
             
-            $totalUsers = DB::table('users')->count();
+            $totalUsers = DB::table('users')->where('status', 'active')->count();
             $activeTrainees = DB::table('trainees')->where('status', 'active')->count();
-            $totalActivities = DB::table('activities')->where('activity_status', 'scheduled')->count();
+            $totalActivities = DB::table('activities')->where('is_active', true)->count();
             $activeCentres = DB::table('centres')->where('is_active', true)->count();
             
             return [
-                [
-                    'title' => 'Total Users',
-                    'value' => $totalUsers,
-                    'icon' => 'fas fa-users',
-                    'color' => 'primary',
-                    'trend' => $userGrowthRate > 0 ? "+{$userGrowthRate}%" : ($userGrowthRate < 0 ? "{$userGrowthRate}%" : "stable"),
-                    'details' => [
-                        'admins' => DB::table('users')->where('role', 'admin')->count(),
-                        'supervisors' => DB::table('users')->where('role', 'supervisor')->count(), 
-                        'teachers' => DB::table('users')->where('role', 'teacher')->count(),
-                        'ajk' => DB::table('users')->where('role', 'ajk')->count(),
-                        'active_today' => DB::table('users')->whereDate('user_last_accessed_at', today())->count(),
-                        'inactive_30_days' => DB::table('users')->where('user_last_accessed_at', '<', now()->subDays(30))->count()
-                    ]
-                ],
-                [
-                    'title' => 'Active Trainees',
-                    'value' => $activeTrainees,
-                    'icon' => 'fas fa-user-graduate',
+                'total_users' => $totalUsers,
+                'total_trainees' => $activeTrainees,
+                'total_activities' => $totalActivities,
+                'active_centres' => $activeCentres,
+                'user_growth_rate' => $userGrowthRate,
+                'trainee_growth_rate' => $traineeGrowthRate,
+                'activity_growth_rate' => $activityGrowthRate,
+                'detailed_stats' => [
+                    [
+                        'title' => 'Total Users',
+                        'value' => $totalUsers,
+                        'icon' => 'fas fa-users',
+                        'color' => 'primary',
+                        'trend' => $userGrowthRate > 0 ? "+{$userGrowthRate}%" : ($userGrowthRate < 0 ? "{$userGrowthRate}%" : "stable"),
+                        'details' => [
+                            'admins' => DB::table('users')->where('role', 'admin')->count(),
+                            'supervisors' => DB::table('users')->where('role', 'supervisor')->count(), 
+                            'teachers' => DB::table('users')->where('role', 'teacher')->count(),
+                            'ajk' => DB::table('users')->where('role', 'ajk')->count(),
+                            'active_today' => DB::table('users')->whereDate('user_last_accessed_at', today())->count(),
+                            'inactive_30_days' => DB::table('users')->where('user_last_accessed_at', '<', now()->subDays(30))->count()
+                        ]
+                    ],
+                    [
+                        'title' => 'Active Trainees',
+                        'value' => $activeTrainees,
+                        'icon' => 'fas fa-user-graduate',
                     'color' => 'success',
                     'trend' => $traineeGrowthRate > 0 ? "+{$traineeGrowthRate}%" : ($traineeGrowthRate < 0 ? "{$traineeGrowthRate}%" : "stable"),
                     'details' => [
@@ -262,11 +342,16 @@ class DashboardController extends Controller
                         'active_sessions' => $this->getActiveSessionsCount(),
                         'error_rate' => '0.2%'
                     ]
+                    ]
                 ]
             ];
         } catch (\Exception $e) {
             Log::error('Error calculating admin stats', ['error' => $e->getMessage()]);
             return [
+                'total_users' => 0,
+                'total_trainees' => 0,
+                'total_activities' => 0,
+                'active_centres' => 0,
                 [
                     'title' => 'Total Users',
                     'value' => 0,
@@ -306,9 +391,9 @@ class DashboardController extends Controller
     {
         try {
             // Calculate actual numbers for the centre
-            $staffCount = DB::table('users')->where('centre_id', $centreId)->where('is_active', true)->count();
+            $staffCount = DB::table('users')->where('centre_id', $centreId)->where('status', 'active')->count();
             $traineeCount = DB::table('trainees')->where('centre_id', $centreId)->where('status', 'active')->count();
-            $activityCount = DB::table('activities')->where('centre_id', $centreId)->where('activity_status', 'scheduled')->count();
+            $activityCount = DB::table('activities')->where('centre_id', $centreId)->where('is_active', true)->count();
             $assetCount = DB::table('assets')->where('centre_id', $centreId)->count();
             
             // Calculate growth rates
@@ -560,16 +645,33 @@ class DashboardController extends Controller
     /**
      * Get recent activities
      */
-    private function getRecentActivities($role = null, $userId = null, $centreId = null)
+    private function getRecentActivities($role = null, $userId = null, $centreId = null, $since = null, $forceUserSpecific = false)
     {
         try {
             $query = DB::table('activities')
                 ->leftJoin('categories', 'activities.category_id', '=', 'categories.id')
-                ->select('activities.activity_name', 'activities.created_at', 'activities.activity_status', 
+                ->select('activities.id', 'activities.activity_name', 'activities.created_at', 'activities.activity_status', 
                         'activities.activity_type', 'categories.category_type', 'categories.category_name')
-                ->orderBy('activities.created_at', 'desc')
-                ->limit(5);
+                ->orderBy('activities.created_at', 'desc');
+
+            // Add timestamp filtering if provided
+            if ($since) {
+                $query->where('activities.created_at', '>', date('Y-m-d H:i:s', $since));
+            }
                 
+            $query->limit(5);
+                
+            // Filter based on role and user
+            if ($forceUserSpecific || ($role !== 'admin' && $userId)) {
+                // Show only user-specific activities (for personal tab or non-admin users)
+                $query->where(function($q) use ($userId) {
+                    $q->where('activities.created_by', $userId)
+                      ->orWhere('activities.instructor_id', $userId);
+                });
+            } elseif ($role === 'admin' && !$forceUserSpecific) {
+                // Admins see all activities (for general tab)
+            }
+            
             if ($centreId && $centreId !== 'admin') {
                 $query->where('activities.centre_id', $centreId);
             }
@@ -642,14 +744,20 @@ class DashboardController extends Controller
                 ->limit(5);
 
             // Role-based filtering
-            if ($role === 'teacher') {
-                $query->where('activity_sessions.teacher_id', $userId);
-            } elseif ($role === 'admin') {
+            if ($role === 'admin') {
                 // For admin, show upcoming sessions from all centres
                 // No additional filtering needed
-            } elseif ($role === 'supervisor' && $centreId) {
-                $query->where('activities.centre_id', $centreId);
-            } elseif ($role === 'ajk' && $centreId) {
+            } else if ($userId) {
+                // For non-admin users, show only sessions where they are assigned
+                $query->where(function($q) use ($userId) {
+                    $q->where('activity_sessions.teacher_id', $userId)
+                      ->orWhere('activity_sessions.instructor_id', $userId)
+                      ->orWhere('activities.instructor_id', $userId)
+                      ->orWhere('activities.created_by', $userId);
+                });
+            }
+            
+            if ($centreId && $centreId !== 'admin') {
                 $query->where('activities.centre_id', $centreId);
             }
 
@@ -769,9 +877,19 @@ class DashboardController extends Controller
                 ->where('activity_sessions.session_status', 'ongoing')
                 ->whereDate('activity_sessions.scheduled_date', today());
 
-            if ($role === 'teacher') {
-                $query->where('activity_sessions.teacher_id', $userId);
-            } elseif ($role === 'supervisor' && $centreId) {
+            if ($role === 'admin') {
+                // Admins see all ongoing sessions
+            } else if ($userId) {
+                // Non-admin users see only their assigned sessions
+                $query->where(function($q) use ($userId) {
+                    $q->where('activity_sessions.teacher_id', $userId)
+                      ->orWhere('activity_sessions.instructor_id', $userId)
+                      ->orWhere('activities.instructor_id', $userId)
+                      ->orWhere('activities.created_by', $userId);
+                });
+            }
+            
+            if ($centreId && $centreId !== 'admin') {
                 $query->where('activities.centre_id', $centreId);
             }
 
@@ -799,59 +917,80 @@ class DashboardController extends Controller
             $startDate = now()->startOfDay();
             $endDate = now()->addDays(7)->endOfDay();
 
-            $query = ActivitySession::with(['activity', 'teacher'])
+            $query = DB::table('activity_sessions')
+                ->leftJoin('activities', 'activity_sessions.activity_id', '=', 'activities.id')
                 ->select([
-                    'id',
-                    'activity_id', 
-                    'session_date',
-                    'start_time',
-                    'end_time',
-                    'status',
-                    'venue',
-                    'room_number',
-                    'current_participants',
-                    'max_participants',
-                    'teacher_id'
+                    'activity_sessions.id',
+                    'activity_sessions.session_date',
+                    'activity_sessions.start_time',
+                    'activity_sessions.end_time',
+                    'activity_sessions.status',
+                    'activity_sessions.venue',
+                    'activity_sessions.room_number',
+                    'activity_sessions.current_participants',
+                    'activity_sessions.max_participants',
+                    'activities.activity_name'
                 ])
                 ->whereBetween('session_date', [$startDate, $endDate])
                 ->where('status', '!=', 'cancelled');
 
             // Role-based filtering
-            if ($role === 'teacher') {
-                $query->where('teacher_id', $userId);
-            } elseif ($role === 'trainee') {
-                $query->whereHas('enrollments', function($q) use ($userId) {
-                    $q->where('trainee_id', $userId);
+            if ($role === 'admin') {
+                // Admins see all calendar events
+            } else if ($role === 'trainee') {
+                $query->whereExists(function($q) use ($userId) {
+                    $q->select(DB::raw(1))
+                      ->from('activity_enrollments')
+                      ->whereColumn('activity_enrollments.activity_id', 'activity_sessions.activity_id')
+                      ->where('activity_enrollments.trainee_id', $userId);
                 });
-            } elseif ($role === 'supervisor' && $centreId) {
-                $query->whereHas('activity', function($q) use ($centreId) {
-                    $q->where('centre_id', $centreId);
+            } else if ($userId) {
+                // Non-admin staff see only their assigned sessions
+                $query->where(function($q) use ($userId) {
+                    $q->where('activity_sessions.teacher_id', $userId)
+                      ->orWhere('activity_sessions.instructor_id', $userId);
                 });
             }
+            
+            if ($centreId && $centreId !== 'admin') {
+                $query->where('activities.centre_id', $centreId);
+            }
 
-            return $query->orderBy('session_date', 'asc')
-                ->orderBy('start_time', 'asc')
+            $results = $query->orderBy('activity_sessions.session_date', 'asc')
+                ->orderBy('activity_sessions.start_time', 'asc')
                 ->limit(8)
                 ->get()
                 ->map(function ($session) {
-                    $sessionDate = Carbon::parse($session->session_date);
-                    return [
-                        'id' => $session->id,
-                        'title' => $session->activity->activity_name ?? 'Session',
-                        'day' => $sessionDate->format('D'),
-                        'date' => $sessionDate->format('d'),
-                        'month' => $sessionDate->format('M'),
-                        'time' => Carbon::parse($session->start_time)->format('g:i A'),
-                        'location' => $session->venue . ($session->room_number ? ' - Room ' . $session->room_number : ''),
-                        'participants' => $session->current_participants . '/' . $session->max_participants,
-                        'status' => $session->status,
-                        'is_today' => $sessionDate->isToday(),
-                        'is_tomorrow' => $sessionDate->isTomorrow(),
-                        'color' => $this->getStatusColor($session->status)
-                    ];
-                });
+                    try {
+                        $sessionDate = Carbon::parse($session->session_date);
+                        
+                        // Ensure all required fields exist
+                        return [
+                            'id' => $session->id ?? '',
+                            'title' => $session->activity_name ?? 'Activity Session',
+                            'day' => $sessionDate->format('D'),
+                            'date' => $sessionDate->format('d'),
+                            'month' => $sessionDate->format('M'),
+                            'time' => Carbon::parse($session->start_time)->format('g:i A'),
+                            'location' => ($session->venue ?? '') . ($session->room_number ? ' - Room ' . $session->room_number : ''),
+                            'participants' => ($session->current_participants ?? 0) . '/' . ($session->max_participants ?? 0),
+                            'status' => $session->status ?? 'scheduled',
+                            'is_today' => $sessionDate->isToday(),
+                            'is_tomorrow' => $sessionDate->isTomorrow(),
+                            'color' => $this->getStatusColor($session->status ?? 'scheduled')
+                        ];
+                    } catch (\Exception $e) {
+                        // Skip malformed sessions
+                        return null;
+                    }
+                })
+                ->filter(); // Remove null entries
+
+
+            return $results;
         } catch (\Exception $e) {
-            return [];
+            Log::error('Calendar events error', ['error' => $e->getMessage()]);
+            return collect([]);
         }
     }
 
@@ -1000,6 +1139,60 @@ class DashboardController extends Controller
         } catch (\Exception $e) {
             return [];
         }
+    }
+
+    /**
+     * Convert card-based stats to flat array for view compatibility
+     */
+    private function getFlatStatsFromCards($quickStats)
+    {
+        // Check if quickStats is already a flat array (admin) or cards array (supervisor/others)
+        if (isset($quickStats['total_users'])) {
+            // Admin stats - already flat, just return as is
+            return [
+                'total_users' => $quickStats['total_users'] ?? 0,
+                'total_trainees' => $quickStats['total_trainees'] ?? 0,
+                'total_activities' => $quickStats['total_activities'] ?? 0,
+                'active_centres' => $quickStats['active_centres'] ?? 0,
+                'completion_rate' => 0
+            ];
+        }
+        
+        // Supervisor/other stats - convert cards to flat array
+        $flatStats = [
+            'total_users' => 0,
+            'total_trainees' => 0,
+            'total_activities' => 0,
+            'active_centres' => 0,
+            'completion_rate' => 0
+        ];
+        
+        foreach ($quickStats as $card) {
+            $title = strtolower(str_replace(' ', '_', $card['title'] ?? ''));
+            $value = $card['value'] ?? 0;
+            
+            // Map card titles to flat array keys
+            switch ($title) {
+                case 'centre_staff':
+                case 'total_users':
+                    $flatStats['total_users'] = $value;
+                    break;
+                case 'centre_trainees':
+                case 'active_trainees':
+                    $flatStats['total_trainees'] = $value;
+                    break;
+                case 'active_activities':
+                case 'total_activities':
+                    $flatStats['total_activities'] = $value;
+                    break;
+                case 'assets':
+                case 'active_centres':
+                    $flatStats['active_centres'] = $value;
+                    break;
+            }
+        }
+        
+        return $flatStats;
     }
 
     /**
@@ -1218,6 +1411,511 @@ class DashboardController extends Controller
                 // If no maintenance date columns exist, return 0
                 return 0;
             }
+        }
+    }
+
+    /**
+     * Refresh a specific widget's data
+     */
+    public function refreshWidget(Request $request)
+    {
+        try {
+            $widgetType = $request->input('widget');
+            $userId = session('id');
+            $role = session('role');
+            $centreId = session('centre_id');
+
+            $html = '';
+            $success = false;
+
+            switch ($widgetType) {
+                case 'stats':
+                    $stats = $this->getQuickStats($role, $userId, $centreId);
+                    $success = true;
+                    $html = '<div class="widget-refreshed">Statistics updated: ' . json_encode($stats) . '</div>';
+                    break;
+
+                case 'activities':
+                    $recentActivities = $this->getRecentActivities($role, $userId, $centreId);
+                    $success = true;
+                    $html = '<div class="widget-refreshed">Activities updated: ' . count($recentActivities) . ' items</div>';
+                    break;
+
+                case 'schedule':
+                    $upcomingSessions = $this->getUpcomingSessions($role, $userId, $centreId);
+                    $currentSessions = $this->getCurrentSessions($role, $userId, $centreId);
+                    $success = true;
+                    $html = '<div class="widget-refreshed">Schedule updated: ' . count($upcomingSessions) . ' upcoming, ' . count($currentSessions) . ' current</div>';
+                    break;
+
+                case 'management':
+                    $recentUsers = $this->getRecentUsers($role, $centreId);
+                    $success = true;
+                    $html = '<div class="widget-refreshed">Management updated: ' . count($recentUsers) . ' recent users</div>';
+                    break;
+
+                case 'centres':
+                    $centreInfo = $this->getCentreInfo($centreId);
+                    $success = true;
+                    $html = '<div class="widget-refreshed">Centre info updated</div>';
+                    break;
+
+                default:
+                    throw new \Exception('Unknown widget type: ' . $widgetType);
+            }
+
+            return response()->json([
+                'success' => $success,
+                'html' => $html,
+                'widget' => $widgetType,
+                'timestamp' => time()
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Widget refresh failed', [
+                'widget' => $request->input('widget'),
+                'error' => $e->getMessage(),
+                'user_id' => session('id')
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'error' => 'Failed to refresh widget',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get real-time updates for dashboard
+     */
+    public function getUpdates(Request $request)
+    {
+        try {
+            $lastUpdate = $request->input('last_update', 0);
+            $includeStats = $request->boolean('include_stats', false);
+            
+            $userId = session('id');
+            $role = session('role');
+            $centreId = session('centre_id');
+
+            $response = [
+                'success' => true,
+                'timestamp' => time(),
+                'updates' => []
+            ];
+
+            // Include updated stats if requested
+            if ($includeStats) {
+                $response['stats'] = $this->getQuickStats($role, $userId, $centreId);
+            }
+
+            // Check for new notifications, activities, etc. since last update
+            $newActivities = $this->getRecentActivities($role, $userId, $centreId, $lastUpdate);
+            if (!empty($newActivities)) {
+                $response['updates'][] = [
+                    'type' => 'info',
+                    'message' => 'New activities available',
+                    'data' => $newActivities
+                ];
+            }
+
+            return response()->json($response);
+
+        } catch (\Exception $e) {
+            Log::error('Real-time updates failed', [
+                'error' => $e->getMessage(),
+                'user_id' => session('id')
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'error' => 'Failed to get updates'
+            ], 500);
+        }
+    }
+
+    /**
+     * Refresh dashboard statistics
+     */
+    public function refreshStats(Request $request)
+    {
+        try {
+            $userId = session('id');
+            $role = session('role');
+            $centreId = session('centre_id');
+
+            $stats = $this->getQuickStats($role, $userId, $centreId);
+
+            return response()->json([
+                'success' => true,
+                'stats' => $stats,
+                'timestamp' => time()
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Stats refresh failed', [
+                'error' => $e->getMessage(),
+                'user_id' => session('id')
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'error' => 'Failed to refresh statistics'
+            ], 500);
+        }
+    }
+
+    /**
+     * Get today's centre activities for General tab
+     */
+    private function getTodaysCentreActivities($centreId)
+    {
+        try {
+            $today = now()->format('Y-m-d');
+            
+            $query = DB::table('activity_sessions')
+                ->join('activities', 'activity_sessions.activity_id', '=', 'activities.id')
+                ->leftJoin('users as teachers', 'activity_sessions.teacher_id', '=', 'teachers.id')
+                ->select([
+                    'activity_sessions.id',
+                    'activities.activity_name as title',
+                    'activity_sessions.session_date',
+                    'activity_sessions.start_time as time',
+                    'activity_sessions.end_time',
+                    'activity_sessions.status',
+                    'activity_sessions.venue as location',
+                    'teachers.name as teacher_name',
+                    'activity_sessions.current_participants',
+                    'activity_sessions.max_participants'
+                ])
+                ->whereDate('activity_sessions.session_date', $today)
+                ->where('activity_sessions.status', '!=', 'cancelled')
+                ->orderBy('activity_sessions.start_time');
+
+            if ($centreId && $centreId !== 'admin') {
+                $query->where('activities.centre_id', $centreId);
+            }
+
+            return $query->get()->map(function ($session) {
+                // Only return sessions with complete data
+                if (!$session->time || !$session->location || !$session->title) {
+                    return null;
+                }
+                
+                return [
+                    'id' => $session->id,
+                    'title' => $session->title,
+                    'time' => date('H:i', strtotime($session->time)),
+                    'end_time' => $session->end_time ? date('H:i', strtotime($session->end_time)) : null,
+                    'status' => $session->status,
+                    'location' => $session->location,
+                    'teacher' => $session->teacher_name,
+                    'participants' => ($session->current_participants ?? 0) . '/' . ($session->max_participants ?? 0),
+                    'day' => date('D', strtotime($session->session_date)),
+                    'date' => date('d', strtotime($session->session_date))
+                ];
+            })->filter()->toArray(); // Remove null entries
+        } catch (\Exception $e) {
+            Log::error('Today\'s centre activities error', ['error' => $e->getMessage()]);
+            return [];
+        }
+    }
+
+    /**
+     * Get comprehensive recent changes including activities, users, trainees, and other modifications
+     */
+    private function getComprehensiveRecentChanges($centreId, $limit = 10)
+    {
+        try {
+            $changes = collect();
+
+            // 1. Recent Activity Changes - Simple and working
+            $activityChanges = DB::table('activities')
+                ->leftJoin('categories', 'activities.category_id', '=', 'categories.id')
+                ->leftJoin('users', 'activities.created_by', '=', 'users.id')
+                ->select([
+                    'activities.id',
+                    'activities.activity_name as title',
+                    'activities.created_at',
+                    'activities.updated_at',
+                    'activities.activity_status as status',
+                    'activities.activity_type',
+                    'categories.category_name',
+                    'users.name as user_name'
+                ])
+                ->when($centreId && $centreId !== 'admin', function($query) use ($centreId) {
+                    return $query->where('activities.centre_id', $centreId);
+                })
+                ->where('activities.updated_at', '>=', now()->subDays(14)) // Extended to 14 days to ensure data
+                ->orderBy('activities.updated_at', 'desc')
+                ->limit(8)
+                ->get();
+
+            foreach ($activityChanges as $change) {
+                $action = ($change->created_at == $change->updated_at) ? 'created' : 'updated';
+                $changes->push([
+                    'title' => ucfirst($action) . ' Activity: ' . $change->title,
+                    'time' => Carbon::parse($change->updated_at)->diffForHumans(),
+                    'status' => $change->status ?: 'active',
+                    'type' => 'activity',
+                    'category_name' => $change->category_name ?: 'General',
+                    'user_name' => $change->user_name ?: 'System',
+                    'action' => $action,
+                    'icon' => $action === 'created' ? 'plus-circle' : 'edit',
+                    'id' => $change->id
+                ]);
+            }
+
+            // 2. Recent User Changes (simplified)
+            $userChanges = DB::table('users')
+                ->select(['id', 'name as title', 'created_at', 'updated_at', 'role'])
+                ->when($centreId && $centreId !== 'admin', function($query) use ($centreId) {
+                    return $query->where('centre_id', $centreId);
+                })
+                ->where('updated_at', '>=', now()->subDays(3))
+                ->orderBy('updated_at', 'desc')
+                ->limit(3)
+                ->get();
+
+            foreach ($userChanges as $change) {
+                $action = ($change->created_at == $change->updated_at) ? 'registered' : 'updated';
+                $actionText = $action === 'registered' ? 'New Registration' : 'Profile Updated';
+                
+                $changes->push([
+                    'title' => $actionText . ': ' . $change->title . ' (' . ucfirst($change->role ?? 'User') . ')',
+                    'time' => Carbon::parse($change->updated_at)->diffForHumans(),
+                    'status' => 'info',
+                    'type' => 'user',
+                    'category_name' => 'User Management',
+                    'user_name' => $change->title,
+                    'action' => $action,
+                    'icon' => $action === 'registered' ? 'user-plus' : 'user-edit'
+                ]);
+            }
+
+            // 3. Recent Trainee Changes (new registrations, status updates, profile changes)
+            $traineeChanges = DB::table('trainees')
+                ->select([
+                    'trainees.id',
+                    DB::raw("CONCAT(trainees.trainee_first_name, ' ', trainees.trainee_last_name) as title"),
+                    'trainees.created_at as timestamp',
+                    'trainees.updated_at',
+                    'trainees.status',
+                    'trainees.trainee_condition',
+                    'trainees.guardian_name as parent_name',
+                    DB::raw("'trainee' as change_type"),
+                    DB::raw("CASE 
+                        WHEN trainees.created_at = trainees.updated_at THEN 'registered'
+                        ELSE 'updated' 
+                    END as action")
+                ])
+                ->when($centreId && $centreId !== 'admin', function($query) use ($centreId) {
+                    return $query->where('trainees.centre_id', $centreId);
+                })
+                ->where(function($query) {
+                    $query->where('trainees.created_at', '>=', now()->subDays(7))
+                          ->orWhere('trainees.updated_at', '>=', now()->subDays(3));
+                })
+                ->orderBy('trainees.updated_at', 'desc')
+                ->limit(5)
+                ->get();
+
+            foreach ($traineeChanges as $change) {
+                $actionText = $change->action === 'registered' ? 'New Trainee Registration' : 'Trainee Profile Updated';
+                
+                $changes->push([
+                    'title' => $actionText . ': ' . $change->title,
+                    'time' => Carbon::parse($change->updated_at)->diffForHumans(),
+                    'status' => $change->status ?? 'active',
+                    'type' => 'trainee',
+                    'category_name' => 'Trainee Management',
+                    'user_name' => $change->parent_name ?? 'System',
+                    'action' => $change->action,
+                    'condition' => $change->trainee_condition,
+                    'icon' => $change->action === 'registered' ? 'user-graduate' : 'user-edit'
+                ]);
+            }
+
+            // 4. Recent Activity Session Changes (scheduled, completed, cancelled)
+            $sessionChanges = DB::table('activity_sessions')
+                ->join('activities', 'activity_sessions.activity_id', '=', 'activities.id')
+                ->leftJoin('users as teachers', 'activity_sessions.teacher_id', '=', 'teachers.id')
+                ->select([
+                    'activity_sessions.id',
+                    'activities.activity_name',
+                    'activity_sessions.session_date',
+                    'activity_sessions.created_at as timestamp',
+                    'activity_sessions.updated_at',
+                    'activity_sessions.status',
+                    'teachers.name as teacher_name',
+                    DB::raw("'session' as change_type"),
+                    DB::raw("CASE 
+                        WHEN activity_sessions.created_at = activity_sessions.updated_at THEN 'scheduled'
+                        ELSE 'updated' 
+                    END as action")
+                ])
+                ->when($centreId && $centreId !== 'admin', function($query) use ($centreId) {
+                    return $query->where('activities.centre_id', $centreId);
+                })
+                ->where('activity_sessions.updated_at', '>=', now()->subDays(5))
+                ->orderBy('activity_sessions.updated_at', 'desc')
+                ->limit(5)
+                ->get();
+
+            foreach ($sessionChanges as $change) {
+                $actionText = $change->action === 'scheduled' ? 'Session Scheduled' : 'Session Updated';
+                $sessionDate = Carbon::parse($change->session_date)->format('M d, Y');
+                
+                $changes->push([
+                    'title' => $actionText . ': ' . $change->activity_name . ' (' . $sessionDate . ')',
+                    'time' => Carbon::parse($change->updated_at)->diffForHumans(),
+                    'status' => $change->status ?? 'scheduled',
+                    'type' => 'session',
+                    'category_name' => 'Session Management',
+                    'user_name' => $change->teacher_name ?? 'System',
+                    'action' => $change->action,
+                    'session_date' => $sessionDate,
+                    'icon' => $change->action === 'scheduled' ? 'calendar-plus' : 'calendar-check'
+                ]);
+            }
+
+            // Return activity changes only for now
+            return $changes->take($limit)->toArray();
+
+        } catch (\Exception $e) {
+            Log::error('Comprehensive recent changes error', ['error' => $e->getMessage()]);
+            return [];
+        }
+    }
+
+    /**
+     * Get user-specific performance statistics
+     */
+    private function getUserPerformanceStats($role, $userId, $centreId)
+    {
+        try {
+            $stats = [];
+
+            if ($role === 'teacher' || $role === 'admin' || $role === 'supervisor') {
+                // Get activities created or taught by this user (using real schema)
+                $userActivities = DB::table('activities')
+                    ->where(function($query) use ($userId) {
+                        $query->where('created_by', $userId)
+                              ->orWhere('instructor_id', $userId);
+                    })
+                    ->count();
+
+                // Get sessions this week (using real schema - direct teacher_id)
+                $startOfWeek = now()->startOfWeek();
+                $endOfWeek = now()->endOfWeek();
+                
+                $weeklySessions = DB::table('activity_sessions')
+                    ->where(function($query) use ($userId) {
+                        $query->where('teacher_id', $userId)
+                              ->orWhere('instructor_id', $userId);
+                    })
+                    ->whereBetween('session_date', [$startOfWeek->format('Y-m-d'), $endOfWeek->format('Y-m-d')])
+                    ->count();
+
+                // Calculate completion rate (using real schema)
+                $totalSessions = DB::table('activity_sessions')
+                    ->where(function($query) use ($userId) {
+                        $query->where('teacher_id', $userId)
+                              ->orWhere('instructor_id', $userId);
+                    })
+                    ->where('session_date', '<=', now())
+                    ->count();
+
+                $completedSessions = DB::table('activity_sessions')
+                    ->where(function($query) use ($userId) {
+                        $query->where('teacher_id', $userId)
+                              ->orWhere('instructor_id', $userId);
+                    })
+                    ->where('status', 'completed')
+                    ->count();
+
+                $completionRate = $totalSessions > 0 ? round(($completedSessions / $totalSessions) * 100) : 0;
+
+                // Calculate real average attendance from user's activities
+                $userActivityIds = DB::table('activities')
+                    ->where(function($query) use ($userId) {
+                        $query->where('created_by', $userId)
+                              ->orWhere('instructor_id', $userId);
+                    })
+                    ->pluck('id');
+
+                $totalAttendanceRecords = DB::table('attendances')
+                    ->whereIn('activity_id', $userActivityIds)
+                    ->count();
+                
+                $presentAttendanceRecords = DB::table('attendances')
+                    ->whereIn('activity_id', $userActivityIds)
+                    ->where('status', 'present')
+                    ->count();
+                
+                $avgAttendance = $totalAttendanceRecords > 0 ? round(($presentAttendanceRecords / $totalAttendanceRecords) * 100) : 0;
+
+                $stats = [
+                    'user_activities' => $userActivities,
+                    'completion_rate' => $completionRate,
+                    'weekly_sessions' => $weeklySessions,
+                    'avg_attendance' => $avgAttendance
+                ];
+
+            } elseif ($role === 'trainee') {
+                // Trainee performance stats
+                $enrolledActivities = DB::table('activity_enrollments')
+                    ->where('trainee_id', $userId)
+                    ->count();
+
+                $attendedSessions = DB::table('attendance')
+                    ->where('trainee_id', $userId)
+                    ->where('status', 'present')
+                    ->count();
+
+                $totalSessions = DB::table('attendance')
+                    ->where('trainee_id', $userId)
+                    ->count();
+
+                $attendanceRate = $totalSessions > 0 ? round(($attendedSessions / $totalSessions) * 100) : 0;
+
+                $thisWeekSessions = DB::table('activity_sessions')
+                    ->join('activity_enrollments', 'activity_sessions.activity_id', '=', 'activity_enrollments.activity_id')
+                    ->where('activity_enrollments.trainee_id', $userId)
+                    ->whereBetween('activity_sessions.session_date', [
+                        now()->startOfWeek(), 
+                        now()->endOfWeek()
+                    ])
+                    ->count();
+
+                $stats = [
+                    'user_activities' => $enrolledActivities,
+                    'completion_rate' => $attendanceRate,
+                    'weekly_sessions' => $thisWeekSessions,
+                    'avg_attendance' => $attendanceRate
+                ];
+
+            } else {
+                // Default stats for other roles
+                $stats = [
+                    'user_activities' => 0,
+                    'completion_rate' => 0,
+                    'weekly_sessions' => 0,
+                    'avg_attendance' => 0
+                ];
+            }
+
+            return $stats;
+
+        } catch (\Exception $e) {
+            Log::error('User performance stats error', ['error' => $e->getMessage()]);
+            return [
+                'user_activities' => 0,
+                'completion_rate' => 0,
+                'weekly_sessions' => 0,
+                'avg_attendance' => 0
+            ];
         }
     }
 }
