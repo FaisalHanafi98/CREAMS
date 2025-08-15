@@ -378,66 +378,171 @@
         <!-- Personal Tab -->
         <div class="tab-pane fade" id="personal" role="tabpanel">
             
-            <!-- Personal Statistics Section -->
+            <!-- Personal Statistics Section - DATA-BASED -->
             <div class="row g-4 mb-4">
+                @php
+                    // Dynamic stat card configurations based on role
+                    if ($role === 'trainee') {
+                        $statCards = [
+                            [
+                                'icon' => 'fas fa-graduation-cap',
+                                'value' => $personal_stats['user_activities'] ?? 0,
+                                'label' => 'Enrolled Activities',
+                                'sublabel' => 'Currently participating in',
+                                'trend_icon' => 'fas fa-book-open',
+                                'trend_text' => $personal_stats['user_activities'] > 0 ? 'Active Learner' : 'Ready to Start',
+                                'color' => 'primary'
+                            ],
+                            [
+                                'icon' => 'fas fa-calendar-week',
+                                'value' => $personal_stats['weekly_sessions'] ?? 0,
+                                'label' => 'This Week\'s Sessions',
+                                'sublabel' => 'Scheduled activities',
+                                'trend_icon' => 'fas fa-clock',
+                                'trend_text' => $personal_stats['weekly_sessions'] > 0 ? 'Busy Week' : 'Light Schedule',
+                                'color' => 'success'
+                            ],
+                            [
+                                'icon' => 'fas fa-chart-line',
+                                'value' => ($personal_stats['completion_rate'] ?? 0) . '%',
+                                'label' => 'Activity Completion',
+                                'sublabel' => 'Progress in enrolled activities',
+                                'trend_icon' => ($personal_stats['completion_rate'] ?? 0) >= 70 ? 'fas fa-trophy' : 'fas fa-target',
+                                'trend_text' => ($personal_stats['completion_rate'] ?? 0) >= 70 ? 'Great Progress' : 'Building Up',
+                                'color' => 'info'
+                            ],
+                            [
+                                'icon' => 'fas fa-user-check',
+                                'value' => ($personal_stats['avg_attendance'] ?? 0) . '%',
+                                'label' => 'Attendance Rate',
+                                'sublabel' => 'Present in scheduled sessions',
+                                'trend_icon' => ($personal_stats['avg_attendance'] ?? 0) >= 90 ? 'fas fa-star' : 'fas fa-thumbs-up',
+                                'trend_text' => ($personal_stats['avg_attendance'] ?? 0) >= 90 ? 'Excellent' : 'Good',
+                                'color' => 'warning'
+                            ]
+                        ];
+                    } elseif ($role === 'ajk') {
+                        $statCards = [
+                            [
+                                'icon' => 'fas fa-tools',
+                                'value' => $personal_stats['user_activities'] ?? 0,
+                                'label' => 'Facilities Managed',
+                                'sublabel' => 'Assets under your care',
+                                'trend_icon' => 'fas fa-building',
+                                'trend_text' => $personal_stats['user_activities'] > 0 ? 'Facility Manager' : 'Ready to Manage',
+                                'color' => 'primary'
+                            ],
+                            [
+                                'icon' => 'fas fa-tasks',
+                                'value' => $personal_stats['weekly_sessions'] ?? 0,
+                                'label' => 'This Week\'s Tasks',
+                                'sublabel' => 'Maintenance & facility tasks',
+                                'trend_icon' => 'fas fa-wrench',
+                                'trend_text' => $personal_stats['weekly_sessions'] > 0 ? 'Active Tasks' : 'All Clear',
+                                'color' => 'success'
+                            ],
+                            [
+                                'icon' => 'fas fa-percentage',
+                                'value' => ($personal_stats['completion_rate'] ?? 0) . '%',
+                                'label' => 'Task Completion',
+                                'sublabel' => 'Facility management efficiency',
+                                'trend_icon' => ($personal_stats['completion_rate'] ?? 0) >= 80 ? 'fas fa-check-circle' : 'fas fa-clock',
+                                'trend_text' => ($personal_stats['completion_rate'] ?? 0) >= 80 ? 'Efficient' : 'In Progress',
+                                'color' => 'info'
+                            ],
+                            [
+                                'icon' => 'fas fa-clipboard-check',
+                                'value' => $personal_stats['avg_attendance'] ?? 0,
+                                'label' => 'Tasks Completed',
+                                'sublabel' => 'Maintenance tasks finished',
+                                'trend_icon' => 'fas fa-medal',
+                                'trend_text' => $personal_stats['avg_attendance'] > 10 ? 'Productive' : 'Getting Started',
+                                'color' => 'warning'
+                            ]
+                        ];
+                    } else {
+                        // For teacher, admin, supervisor
+                        $statCards = [
+                            [
+                                'icon' => 'fas fa-chalkboard-teacher',
+                                'value' => $personal_stats['user_activities'] ?? 0,
+                                'label' => 'My Activities',
+                                'sublabel' => 'Activities I created/teach',
+                                'trend_icon' => 'fas fa-lightbulb',
+                                'trend_text' => $personal_stats['user_activities'] > 0 ? 'Active Educator' : 'Ready to Create',
+                                'color' => 'primary'
+                            ],
+                            [
+                                'icon' => 'fas fa-calendar-day',
+                                'value' => $personal_stats['weekly_sessions'] ?? 0,
+                                'label' => 'This Week\'s Sessions',
+                                'sublabel' => 'Sessions I\'m conducting',
+                                'trend_icon' => 'fas fa-users',
+                                'trend_text' => $personal_stats['weekly_sessions'] > 0 ? 'Teaching Week' : 'Planning Time',
+                                'color' => 'success'
+                            ],
+                            [
+                                'icon' => 'fas fa-chart-bar',
+                                'value' => ($personal_stats['completion_rate'] ?? 0) . '%',
+                                'label' => 'Session Completion',
+                                'sublabel' => 'Scheduled sessions conducted',
+                                'trend_icon' => ($personal_stats['completion_rate'] ?? 0) >= 85 ? 'fas fa-award' : 'fas fa-chart-line',
+                                'trend_text' => ($personal_stats['completion_rate'] ?? 0) >= 85 ? 'Excellent' : 'Good Progress',
+                                'color' => 'info'
+                            ],
+                            [
+                                'icon' => 'fas fa-user-graduate',
+                                'value' => ($personal_stats['avg_attendance'] ?? 0) . '%',
+                                'label' => 'Student Attendance',
+                                'sublabel' => 'Avg attendance in my sessions',
+                                'trend_icon' => ($personal_stats['avg_attendance'] ?? 0) >= 90 ? 'fas fa-star' : 'fas fa-thumbs-up',
+                                'trend_text' => ($personal_stats['avg_attendance'] ?? 0) >= 90 ? 'Outstanding' : 'Good Engagement',
+                                'color' => 'warning'
+                            ]
+                        ];
+                    }
+                @endphp
+
+                @foreach($statCards as $index => $card)
                 <div class="col-xl-3 col-lg-6 col-md-6">
-                    <div class="stats-card-enhanced primary-card">
+                    <div class="stats-card-enhanced {{ $card['color'] }}-card" data-stat-type="{{ strtolower(str_replace(' ', '-', $card['label'])) }}">
                         <div class="stats-icon-enhanced">
-                            <i class="fas fa-user-check"></i>
+                            <i class="{{ $card['icon'] }}"></i>
                         </div>
                         <div class="stats-content-enhanced">
-                            <h3 class="stats-number-enhanced">{{ $personal_stats['user_activities'] }}</h3>
-                            <p class="stats-label-enhanced">My {{ $role === 'trainee' ? 'Enrolled Activities' : 'Activities' }}</p>
+                            <h3 class="stats-number-enhanced" id="stat-{{ $index }}">{{ $card['value'] }}</h3>
+                            <p class="stats-label-enhanced">{{ $card['label'] }}</p>
+                            <small class="stats-sublabel">{{ $card['sublabel'] }}</small>
                             <div class="stats-trend-enhanced positive">
-                                <i class="fas fa-arrow-up"></i> {{ $role === 'trainee' ? 'Enrolled' : 'Active' }}
+                                <i class="{{ $card['trend_icon'] }}"></i> {{ $card['trend_text'] }}
+                            </div>
+                        </div>
+                        <div class="stats-overlay">
+                            <div class="stats-detail-icon">
+                                <i class="fas fa-info-circle"></i>
                             </div>
                         </div>
                     </div>
                 </div>
+                @endforeach
+            </div>
 
-                <div class="col-xl-3 col-lg-6 col-md-6">
-                    <div class="stats-card-enhanced success-card">
-                        <div class="stats-icon-enhanced">
-                            <i class="fas fa-calendar-check"></i>
-                        </div>
-                        <div class="stats-content-enhanced">
-                            <h3 class="stats-number-enhanced">{{ $personal_stats['weekly_sessions'] }}</h3>
-                            <p class="stats-label-enhanced">This Week's Sessions</p>
-                            <div class="stats-trend-enhanced positive">
-                                <i class="fas fa-plus"></i> Scheduled
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-xl-3 col-lg-6 col-md-6">
-                    <div class="stats-card-enhanced info-card">
-                        <div class="stats-icon-enhanced">
-                            <i class="fas fa-chart-line"></i>
-                        </div>
-                        <div class="stats-content-enhanced">
-                            <h3 class="stats-number-enhanced">{{ $personal_stats['completion_rate'] }}%</h3>
-                            <p class="stats-label-enhanced">{{ $role === 'trainee' ? 'Attendance Rate' : 'Completion Rate' }}</p>
-                            <div class="stats-trend-enhanced {{ ($personal_stats['completion_rate'] ?? 0) >= 80 ? 'positive' : 'neutral' }}">
-                                <i class="fas fa-{{ ($personal_stats['completion_rate'] ?? 0) >= 80 ? 'arrow-up' : 'minus' }}"></i> 
-                                {{ ($personal_stats['completion_rate'] ?? 0) >= 80 ? 'Excellent' : 'Average' }}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-xl-3 col-lg-6 col-md-6">
-                    <div class="stats-card-enhanced warning-card">
-                        <div class="stats-icon-enhanced">
-                            <i class="fas fa-clock"></i>
-                        </div>
-                        <div class="stats-content-enhanced">
-                            <h3 class="stats-number-enhanced">{{ $personal_stats['avg_attendance'] }}%</h3>
-                            <p class="stats-label-enhanced">Average {{ $role === 'trainee' ? 'Participation' : 'Teaching' }}</p>
-                            <div class="stats-trend-enhanced {{ ($personal_stats['avg_attendance'] ?? 0) >= 90 ? 'positive' : 'neutral' }}">
-                                <i class="fas fa-{{ ($personal_stats['avg_attendance'] ?? 0) >= 90 ? 'star' : 'circle' }}"></i> 
-                                {{ ($personal_stats['avg_attendance'] ?? 0) >= 90 ? 'Outstanding' : 'Good' }}
-                            </div>
+            <!-- Data Source Indicator -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="data-source-indicator">
+                        <div class="data-source-content">
+                            <i class="fas fa-database"></i>
+                            <span class="data-source-text">
+                                <strong>Live Data:</strong> 
+                                Statistics updated from database records • 
+                                Centre: {{ session('centre_name', 'Your Centre') }} • 
+                                Last updated: {{ now()->format('M j, Y \a\t g:i A') }}
+                            </span>
+                            <button class="data-refresh-btn" onclick="refreshPersonalStats()">
+                                <i class="fas fa-sync-alt"></i>
+                                Refresh
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -501,163 +606,206 @@
                                     </div>
                                 </div>
 
-                                <!-- My Schedule Card -->
-                                <div class="content-card-modern schedule-card">
-                                    <div class="card-header-modern">
-                                        <div class="header-icon">
-                                            <i class="fas fa-calendar-alt"></i>
-                                        </div>
-                                        <div class="header-text">
-                                            <h3>My Schedule</h3>
-                                            <p>Upcoming sessions & events</p>
-                                        </div>
-                                        <div class="header-action">
-                                            <a href="{{ route('staffs.schedule', ['encrypted_id' => $user_encrypted_id]) }}" class="btn-icon-modern" title="View Full Schedule">
-                                                <i class="fas fa-expand"></i>
-                                            </a>
-                                        </div>
-                                    </div>
-                                    <div class="card-content-modern">
-                                        @if(isset($calendar_events) && count($calendar_events) > 0)
-                                            <!-- Calendar Header -->
-                                            <div class="calendar-header-modern mb-3">
-                                                <div class="current-week-info">
-                                                    <h5 class="text-primary mb-1">{{ now()->format('F Y') }}</h5>
-                                                    <small class="text-muted">Week {{ now()->format('W') }} • {{ now()->startOfWeek()->format('M j') }} - {{ now()->endOfWeek()->format('M j') }}</small>
+                                <!-- My Schedule Card - REDESIGNED -->
+                                <div class="content-card-modern schedule-card-redesigned">
+                                    <div class="card-header-redesigned">
+                                        <div class="header-content-flex">
+                                            <div class="header-left">
+                                                <div class="header-icon-redesigned">
+                                                    <i class="fas fa-calendar-week"></i>
+                                                </div>
+                                                <div class="header-text-redesigned">
+                                                    <h3 class="card-title-redesigned">My Schedule</h3>
+                                                    <p class="card-subtitle-redesigned">Today • {{ now()->format('l, M j, Y') }}</p>
                                                 </div>
                                             </div>
+                                            <div class="header-actions-redesigned">
+                                                <button class="action-btn today-btn" onclick="scrollToToday()">
+                                                    <i class="fas fa-calendar-day"></i>
+                                                    Today
+                                                </button>
+                                                <a href="{{ route('staffs.schedule', ['encrypted_id' => $user_encrypted_id]) }}" class="action-btn view-all-btn">
+                                                    <i class="fas fa-external-link-alt"></i>
+                                                    View All
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
 
-                                            <!-- Modern Schedule Timeline -->
-                                            <div class="schedule-timeline-modern">
-                                                @if(count($calendar_events) > 0)
-                                                    @php
-                                                        // Group events by date for timeline display
-                                                        $eventsByDate = [];
-                                                        foreach($calendar_events as $event) {
-                                                            $eventDate = \Carbon\Carbon::parse($event['date'] . ' ' . $event['month'] . ' ' . now()->format('Y'));
-                                                            $dateKey = $eventDate->format('Y-m-d');
-                                                            if (!isset($eventsByDate[$dateKey])) {
-                                                                $eventsByDate[$dateKey] = [
-                                                                    'date' => $eventDate,
-                                                                    'events' => []
-                                                                ];
-                                                            }
-                                                            $eventsByDate[$dateKey]['events'][] = $event;
+                                    <div class="card-content-redesigned">
+                                        @if(isset($calendar_events) && count($calendar_events) > 0)
+                                            <!-- Week Navigation -->
+                                            <div class="week-navigation">
+                                                <button class="nav-btn prev-week" onclick="changeWeek(-1)">
+                                                    <i class="fas fa-chevron-left"></i>
+                                                </button>
+                                                <div class="current-week-display">
+                                                    <span class="week-text">Week {{ now()->format('W') }}</span>
+                                                    <span class="week-range">{{ now()->startOfWeek()->format('M j') }} - {{ now()->endOfWeek()->format('M j') }}</span>
+                                                </div>
+                                                <button class="nav-btn next-week" onclick="changeWeek(1)">
+                                                    <i class="fas fa-chevron-right"></i>
+                                                </button>
+                                            </div>
+
+                                            <!-- Schedule Grid Layout -->
+                                            <div class="schedule-grid-container">
+                                                @php
+                                                    // Group events by date for grid display
+                                                    $eventsByDate = [];
+                                                    $weekDays = [];
+                                                    
+                                                    // Generate current week days
+                                                    for ($i = 0; $i < 7; $i++) {
+                                                        $date = now()->startOfWeek()->addDays($i);
+                                                        $dateKey = $date->format('Y-m-d');
+                                                        $weekDays[$dateKey] = [
+                                                            'date' => $date,
+                                                            'events' => []
+                                                        ];
+                                                    }
+                                                    
+                                                    // Add events to respective days
+                                                    foreach($calendar_events as $event) {
+                                                        $eventDate = \Carbon\Carbon::parse($event['date'] . ' ' . $event['month'] . ' ' . now()->format('Y'));
+                                                        $dateKey = $eventDate->format('Y-m-d');
+                                                        if (isset($weekDays[$dateKey])) {
+                                                            $weekDays[$dateKey]['events'][] = $event;
                                                         }
-                                                        
-                                                        // Sort by date
-                                                        ksort($eventsByDate);
-                                                    @endphp
+                                                    }
+                                                @endphp
 
-                                                    <div class="timeline-container">
-                                                        @foreach($eventsByDate as $dateKey => $dayData)
-                                                            <div class="timeline-day {{ $dayData['date']->isToday() ? 'today' : '' }}">
-                                                                <div class="timeline-date">
-                                                                    <div class="date-badge">
-                                                                        <span class="day-number">{{ $dayData['date']->format('d') }}</span>
-                                                                        <span class="day-name">{{ $dayData['date']->format('D') }}</span>
-                                                                        <span class="month-name">{{ $dayData['date']->format('M') }}</span>
-                                                                    </div>
-                                                                    @if($dayData['date']->isToday())
-                                                                        <span class="today-indicator">Today</span>
-                                                                    @elseif($dayData['date']->isTomorrow())
-                                                                        <span class="tomorrow-indicator">Tomorrow</span>
-                                                                    @endif
+                                                <div class="schedule-week-grid">
+                                                    @foreach($weekDays as $dateKey => $dayData)
+                                                        <div class="day-column {{ $dayData['date']->isToday() ? 'today-column' : '' }} {{ count($dayData['events']) > 0 ? 'has-events' : '' }}">
+                                                            <!-- Day Header -->
+                                                            <div class="day-header">
+                                                                <div class="day-info">
+                                                                    <span class="day-name">{{ $dayData['date']->format('D') }}</span>
+                                                                    <span class="day-number {{ $dayData['date']->isToday() ? 'today-number' : '' }}">
+                                                                        {{ $dayData['date']->format('j') }}
+                                                                    </span>
                                                                 </div>
-                                                                
-                                                                <div class="timeline-events">
-                                                                    @foreach($dayData['events'] as $event)
-                                                                        <div class="timeline-event">
-                                                                            <div class="event-time-badge">
-                                                                                <i class="fas fa-clock"></i>
-                                                                                {{ $event['time'] }}
-                                                                            </div>
-                                                                            <div class="event-content">
-                                                                                <h6 class="event-title">{{ $event['title'] }}</h6>
-                                                                                <div class="event-details">
-                                                                                    @if(isset($event['location']) && $event['location'])
-                                                                                        <span class="event-location">
-                                                                                            <i class="fas fa-map-marker-alt"></i>
-                                                                                            {{ $event['location'] }}
-                                                                                        </span>
-                                                                                    @endif
-                                                                                    @if(isset($event['participants']) && $event['participants'])
-                                                                                        <span class="event-participants">
-                                                                                            <i class="fas fa-users"></i>
-                                                                                            {{ $event['participants'] }}
-                                                                                        </span>
-                                                                                    @endif
+                                                                @if($dayData['date']->isToday())
+                                                                    <div class="today-badge">Today</div>
+                                                                @endif
+                                                            </div>
+
+                                                            <!-- Day Events -->
+                                                            <div class="day-events">
+                                                                @if(count($dayData['events']) > 0)
+                                                                    @foreach(array_slice($dayData['events'], 0, 3) as $event)
+                                                                        <div class="event-card event-{{ $event['color'] ?? 'primary' }} clickable-event" 
+                                                                             onclick="navigateToSession('{{ $event['activity_id'] ?? '' }}', '{{ $event['session_id'] ?? $event['id'] ?? '' }}')"
+                                                                             style="cursor: pointer;"
+                                                                             title="Click to view session details">
+                                                                            <div class="event-time">{{ $event['time'] }}</div>
+                                                                            <div class="event-title-short">{{ Str::limit($event['title'], 20) }}</div>
+                                                                            @if(isset($event['location']) && $event['location'])
+                                                                                <div class="event-location-short">
+                                                                                    <i class="fas fa-map-pin"></i>
+                                                                                    {{ Str::limit($event['location'], 15) }}
                                                                                 </div>
-                                                                                <div class="event-status">
-                                                                                    <span class="status-badge status-{{ $event['color'] ?? 'primary' }}">
-                                                                                        {{ ucfirst($event['status'] ?? 'scheduled') }}
-                                                                                    </span>
-                                                                                </div>
+                                                                            @endif
+                                                                            <div class="click-indicator">
+                                                                                <i class="fas fa-external-link-alt"></i>
                                                                             </div>
                                                                         </div>
                                                                     @endforeach
+                                                                    @if(count($dayData['events']) > 3)
+                                                                        <div class="more-events-indicator">
+                                                                            +{{ count($dayData['events']) - 3 }} more
+                                                                        </div>
+                                                                    @endif
+                                                                @else
+                                                                    <div class="no-events">
+                                                                        <i class="fas fa-coffee"></i>
+                                                                        <span>Free Day</span>
+                                                                    </div>
+                                                                @endif
+                                                            </div>
+                                                        </div>
+                                                    @endforeach
+                                                </div>
+                                            </div>
+
+                                            <!-- Today's Agenda (if today has events) -->
+                                            @if(isset($weekDays[now()->format('Y-m-d')]) && count($weekDays[now()->format('Y-m-d')]['events']) > 0)
+                                                <div class="today-agenda">
+                                                    <div class="agenda-header">
+                                                        <h4>
+                                                            <i class="fas fa-star"></i>
+                                                            Today's Agenda
+                                                        </h4>
+                                                    </div>
+                                                    <div class="agenda-events">
+                                                        @foreach($weekDays[now()->format('Y-m-d')]['events'] as $event)
+                                                            <div class="agenda-event clickable-agenda" 
+                                                                 onclick="navigateToSession('{{ $event['activity_id'] ?? '' }}', '{{ $event['session_id'] ?? $event['id'] ?? '' }}')"
+                                                                 style="cursor: pointer;"
+                                                                 title="Click to view session details">
+                                                                <div class="agenda-time">
+                                                                    <span class="time-badge">{{ $event['time'] }}</span>
+                                                                </div>
+                                                                <div class="agenda-content">
+                                                                    <h5 class="agenda-title">{{ $event['title'] }}</h5>
+                                                                    <div class="agenda-details">
+                                                                        @if(isset($event['location']) && $event['location'])
+                                                                            <span class="detail-item">
+                                                                                <i class="fas fa-location-dot"></i>
+                                                                                {{ $event['location'] }}
+                                                                            </span>
+                                                                        @endif
+                                                                        @if(isset($event['participants']) && $event['participants'])
+                                                                            <span class="detail-item">
+                                                                                <i class="fas fa-users"></i>
+                                                                                {{ $event['participants'] }} participants
+                                                                            </span>
+                                                                        @endif
+                                                                    </div>
+                                                                </div>
+                                                                <div class="agenda-status">
+                                                                    <span class="status-dot status-{{ $event['color'] ?? 'primary' }}"></span>
+                                                                    <span class="status-text">{{ ucfirst($event['status'] ?? 'scheduled') }}</span>
                                                                 </div>
                                                             </div>
                                                         @endforeach
                                                     </div>
-                                                @else
-                                                    <div class="schedule-empty-state">
-                                                        <div class="empty-illustration">
-                                                            <i class="fas fa-calendar-day"></i>
+                                                </div>
+                                            @endif
+
+                                        @else
+                                            <!-- Enhanced Empty State -->
+                                            <div class="schedule-empty-state-redesigned">
+                                                <div class="empty-illustration-redesigned">
+                                                    <div class="empty-calendar-icon">
+                                                        <i class="fas fa-calendar-check"></i>
+                                                        <div class="floating-elements">
+                                                            <div class="floating-dot dot-1"></div>
+                                                            <div class="floating-dot dot-2"></div>
+                                                            <div class="floating-dot dot-3"></div>
                                                         </div>
-                                                        <h5>No Upcoming Sessions</h5>
-                                                        <p>Your schedule is clear for the next week. Enjoy your free time!</p>
-                                                        <a href="{{ route('staffs.schedule', ['encrypted_id' => $user_encrypted_id]) }}" class="btn btn-outline-primary">
-                                                            <i class="fas fa-calendar-plus"></i>
-                                                            View Full Calendar
+                                                    </div>
+                                                </div>
+                                                <div class="empty-content">
+                                                    <h4>All Clear! 🎉</h4>
+                                                    <p>You have no scheduled sessions for this week. Perfect time to plan ahead or take a well-deserved break!</p>
+                                                    <div class="empty-actions">
+                                                        <a href="{{ route('staffs.schedule', ['encrypted_id' => $user_encrypted_id]) }}" class="btn btn-primary-modern">
+                                                            <i class="fas fa-plus"></i>
+                                                            Add New Session
+                                                        </a>
+                                                        <a href="{{ route('activities.home') }}" class="btn btn-outline-modern">
+                                                            <i class="fas fa-eye"></i>
+                                                            Browse Activities
                                                         </a>
                                                     </div>
-                                                @endif
+                                                </div>
                                             </div>
-
+                                        @endif
                                     </div>
                                 </div>
 
-                                <!-- Personal Performance Card -->
-                                <div class="content-card-modern performance-card">
-                                    <div class="card-header-modern">
-                                        <div class="header-icon">
-                                            <i class="fas fa-chart-bar"></i>
-                                        </div>
-                                        <div class="header-text">
-                                            <h3>My Performance</h3>
-                                            <p>Your activity statistics</p>
-                                        </div>
-                                    </div>
-                                    <div class="card-content-modern">
-                                        <div class="row g-3">
-                                            <div class="col-6">
-                                                <div class="performance-metric">
-                                                    <div class="metric-number">{{ $personal_stats['user_activities'] }}</div>
-                                                    <div class="metric-label">My Activities</div>
-                                                </div>
-                                            </div>
-                                            <div class="col-6">
-                                                <div class="performance-metric">
-                                                    <div class="metric-number">{{ $personal_stats['completion_rate'] }}%</div>
-                                                    <div class="metric-label">Completion Rate</div>
-                                                </div>
-                                            </div>
-                                            <div class="col-6">
-                                                <div class="performance-metric">
-                                                    <div class="metric-number">{{ $personal_stats['weekly_sessions'] }}</div>
-                                                    <div class="metric-label">This Week</div>
-                                                </div>
-                                            </div>
-                                            <div class="col-6">
-                                                <div class="performance-metric">
-                                                    <div class="metric-number">{{ $personal_stats['avg_attendance'] }}%</div>
-                                                    <div class="metric-label">Attendance</div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
 
                                 <!-- Quick Actions Card -->
                                 <div class="content-card-modern actions-card">
@@ -1804,6 +1952,815 @@
         display: none;
     }
 }
+
+/* ===== REDESIGNED SCHEDULE STYLES ===== */
+
+.schedule-card-redesigned {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 20px;
+    border: none;
+    box-shadow: 0 10px 40px rgba(102, 126, 234, 0.15);
+    overflow: hidden;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.schedule-card-redesigned:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 60px rgba(102, 126, 234, 0.25);
+}
+
+.card-header-redesigned {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border: none;
+    padding: 1.5rem;
+}
+
+.header-content-flex {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.header-icon-redesigned {
+    width: 50px;
+    height: 50px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.25rem;
+}
+
+.header-text-redesigned .card-title-redesigned {
+    color: white;
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+.header-text-redesigned .card-subtitle-redesigned {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+.header-actions-redesigned {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.action-btn {
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.action-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    color: white;
+    text-decoration: none;
+    transform: translateY(-1px);
+}
+
+.card-content-redesigned {
+    padding: 1.5rem;
+    background: white;
+}
+
+/* Week Navigation */
+.week-navigation {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    background: #f8f9fc;
+    border-radius: 12px;
+}
+
+.nav-btn {
+    width: 40px;
+    height: 40px;
+    border: none;
+    border-radius: 10px;
+    background: #667eea;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.nav-btn:hover {
+    background: #5a67d8;
+    transform: scale(1.1);
+}
+
+.current-week-display {
+    text-align: center;
+}
+
+.week-text {
+    display: block;
+    font-weight: 600;
+    font-size: 1.1rem;
+    color: #2d3748;
+}
+
+.week-range {
+    display: block;
+    font-size: 0.875rem;
+    color: #718096;
+    margin-top: 0.25rem;
+}
+
+/* Schedule Grid */
+.schedule-week-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+}
+
+.day-column {
+    background: #f7fafc;
+    border-radius: 12px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+
+.day-column.today-column {
+    border-color: #667eea;
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+}
+
+.day-column.has-events {
+    background: white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.day-column:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.day-header {
+    padding: 1rem 0.75rem;
+    background: rgba(255, 255, 255, 0.7);
+    text-align: center;
+    position: relative;
+}
+
+.day-column.today-column .day-header {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+}
+
+.day-name {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.25rem;
+    opacity: 0.8;
+}
+
+.day-number {
+    display: block;
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.day-number.today-number {
+    color: white;
+}
+
+.today-badge {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    background: rgba(255, 255, 255, 0.3);
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    font-size: 0.625rem;
+    font-weight: 600;
+}
+
+.day-events {
+    padding: 0.75rem;
+    min-height: 120px;
+}
+
+.event-card {
+    background: #667eea;
+    color: white;
+    padding: 0.5rem;
+    border-radius: 6px;
+    margin-bottom: 0.5rem;
+    font-size: 0.75rem;
+    position: relative;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.event-card:hover {
+    transform: scale(1.02);
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.event-card.event-primary { background: #667eea; }
+.event-card.event-success { background: #48bb78; }
+.event-card.event-warning { background: #ed8936; }
+.event-card.event-danger { background: #f56565; }
+.event-card.event-info { background: #4299e1; }
+
+.event-time {
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+    opacity: 0.9;
+}
+
+.event-title-short {
+    font-weight: 500;
+    line-height: 1.3;
+    margin-bottom: 0.25rem;
+}
+
+.event-location-short {
+    opacity: 0.8;
+    font-size: 0.625rem;
+}
+
+.event-location-short i {
+    margin-right: 0.25rem;
+}
+
+.more-events-indicator {
+    background: #e2e8f0;
+    color: #4a5568;
+    padding: 0.375rem 0.5rem;
+    border-radius: 6px;
+    font-size: 0.625rem;
+    font-weight: 600;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.more-events-indicator:hover {
+    background: #cbd5e0;
+}
+
+.no-events {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100px;
+    color: #a0aec0;
+    font-size: 0.75rem;
+}
+
+.no-events i {
+    font-size: 1.25rem;
+    margin-bottom: 0.5rem;
+}
+
+/* Today's Agenda */
+.today-agenda {
+    background: linear-gradient(135deg, #ffeaa7, #fab1a0);
+    border-radius: 15px;
+    padding: 1.5rem;
+    margin-top: 1.5rem;
+}
+
+.agenda-header h4 {
+    color: #2d3748;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.agenda-header i {
+    color: #ed8936;
+}
+
+.agenda-event {
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 10px;
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    transition: all 0.3s ease;
+}
+
+.agenda-event:hover {
+    transform: translateX(5px);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.agenda-time .time-badge {
+    background: #667eea;
+    color: white;
+    padding: 0.5rem 0.75rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.875rem;
+    white-space: nowrap;
+}
+
+.agenda-content {
+    flex-grow: 1;
+}
+
+.agenda-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #2d3748;
+    margin-bottom: 0.25rem;
+}
+
+.agenda-details {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.detail-item {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    color: #718096;
+    font-size: 0.875rem;
+}
+
+.detail-item i {
+    font-size: 0.75rem;
+}
+
+.agenda-status {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+.status-dot.status-primary { background: #667eea; }
+.status-dot.status-success { background: #48bb78; }
+.status-dot.status-warning { background: #ed8936; }
+.status-dot.status-danger { background: #f56565; }
+
+.status-text {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #4a5568;
+    text-transform: capitalize;
+}
+
+/* Enhanced Empty State */
+.schedule-empty-state-redesigned {
+    text-align: center;
+    padding: 3rem 2rem;
+}
+
+.empty-illustration-redesigned {
+    position: relative;
+    margin-bottom: 2rem;
+}
+
+.empty-calendar-icon {
+    position: relative;
+    display: inline-block;
+    font-size: 4rem;
+    color: #e2e8f0;
+}
+
+.floating-elements {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.floating-dot {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background: #667eea;
+    border-radius: 50%;
+    animation: float 2s ease-in-out infinite;
+}
+
+.floating-dot.dot-1 {
+    top: 20%;
+    left: 20%;
+    animation-delay: 0s;
+}
+
+.floating-dot.dot-2 {
+    top: 30%;
+    right: 25%;
+    animation-delay: 0.7s;
+}
+
+.floating-dot.dot-3 {
+    bottom: 25%;
+    left: 30%;
+    animation-delay: 1.4s;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+}
+
+.empty-content h4 {
+    color: #2d3748;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+}
+
+.empty-content p {
+    color: #718096;
+    margin-bottom: 2rem;
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
+    line-height: 1.6;
+}
+
+.empty-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.btn-primary-modern {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border: none;
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 10px;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.btn-primary-modern:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 20px rgba(102, 126, 234, 0.3);
+    color: white;
+    text-decoration: none;
+}
+
+.btn-outline-modern {
+    background: transparent;
+    border: 2px solid #e2e8f0;
+    color: #4a5568;
+    padding: 0.75rem 1.5rem;
+    border-radius: 10px;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.btn-outline-modern:hover {
+    background: #f7fafc;
+    border-color: #cbd5e0;
+    color: #2d3748;
+    text-decoration: none;
+    transform: translateY(-2px);
+}
+
+/* Clickable Event Styles */
+.clickable-event {
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.clickable-event:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    border-left: 4px solid #667eea;
+}
+
+.clickable-agenda {
+    transition: all 0.3s ease;
+    border-radius: 8px;
+    padding: 0.5rem;
+    margin: 0.25rem 0;
+}
+
+.clickable-agenda:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: translateX(5px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.click-indicator {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    color: #667eea;
+    font-size: 0.7rem;
+}
+
+.clickable-event:hover .click-indicator {
+    opacity: 1;
+}
+
+/* Responsive Design for New Schedule */
+@media (max-width: 768px) {
+    .schedule-week-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.5rem;
+    }
+    
+    .day-header {
+        padding: 0.75rem 0.5rem;
+    }
+    
+    .day-number {
+        font-size: 1.25rem;
+    }
+    
+    .agenda-event {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+    
+    .agenda-details {
+        gap: 0.5rem;
+    }
+    
+    .empty-actions {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .header-content-flex {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+
+@media (max-width: 480px) {
+    .schedule-week-grid {
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
+    }
+    
+    .day-column {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 0.75rem;
+    }
+    
+    .day-header {
+        padding: 0;
+        background: none;
+        min-width: 60px;
+    }
+    
+    .day-column.today-column .day-header {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        border-radius: 10px;
+        padding: 0.5rem;
+    }
+    
+    .day-events {
+        padding: 0;
+        min-height: auto;
+        flex-grow: 1;
+    }
+}
+
+/* ===== DATA-BASED STATISTICS ENHANCEMENTS ===== */
+
+.stats-card-enhanced {
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.stats-card-enhanced:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.stats-card-enhanced:hover .stats-overlay {
+    opacity: 1;
+}
+
+.stats-sublabel {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.75rem;
+    margin-top: 0.25rem;
+    display: block;
+}
+
+.stats-overlay {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 0 0 0 20px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.stats-detail-icon {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.875rem;
+}
+
+.data-source-indicator {
+    background: linear-gradient(135deg, #f8f9fc, #e9ecef);
+    border: 1px solid #dee2e6;
+    border-radius: 12px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.data-source-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.data-source-content i {
+    color: #32bdea;
+    font-size: 1.1rem;
+    margin-right: 0.5rem;
+}
+
+.data-source-text {
+    flex-grow: 1;
+    color: #495057;
+    font-size: 0.875rem;
+    line-height: 1.4;
+}
+
+.data-refresh-btn {
+    background: #32bdea;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.data-refresh-btn:hover {
+    background: #2ba3d4;
+    transform: translateY(-1px);
+}
+
+.data-refresh-btn i {
+    font-size: 0.75rem;
+}
+
+.data-refresh-btn:disabled {
+    background: #6c757d;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.data-refresh-btn.refreshing i {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* Enhanced stat card animations */
+.stats-number-enhanced {
+    transition: all 0.3s ease;
+}
+
+.stats-card-enhanced:hover .stats-number-enhanced {
+    transform: scale(1.05);
+}
+
+/* Role-specific stat card colors */
+.stats-card-enhanced[data-stat-type="enrolled-activities"] {
+    border-left: 4px solid #28a745;
+}
+
+.stats-card-enhanced[data-stat-type="facilities-managed"] {
+    border-left: 4px solid #ffc107;
+}
+
+.stats-card-enhanced[data-stat-type="my-activities"] {
+    border-left: 4px solid #007bff;
+}
+
+.stats-card-enhanced[data-stat-type*="completion"] {
+    border-left: 4px solid #17a2b8;
+}
+
+.stats-card-enhanced[data-stat-type*="attendance"] {
+    border-left: 4px solid #fd7e14;
+}
+
+/* Loading states for real-time updates */
+.stat-loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.stat-loading .stats-number-enhanced {
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+}
+
+/* Responsive improvements */
+@media (max-width: 768px) {
+    .data-source-content {
+        flex-direction: column;
+        align-items: flex-start;
+        text-align: left;
+    }
+    
+    .data-source-text {
+        margin-bottom: 0.5rem;
+    }
+    
+    .stats-sublabel {
+        font-size: 0.7rem;
+    }
+    
+    .stats-overlay {
+        display: none;
+    }
+}
 </style>
 
 <script>
@@ -1871,10 +2828,15 @@ function showFullCalendar() {
     window.location.href = "{{ route('staffs.schedule', ['encrypted_id' => $user_encrypted_id]) }}";
 }
 
-function navigateToActivity(sessionId) {
-    if (sessionId) {
-        // Navigate to the attendance marking for the specific session
-        window.location.href = `/enhanced-attendance/session/${sessionId}/form`;
+
+function navigateToSession(activityId, sessionId) {
+    if (activityId && sessionId) {
+        console.log('Navigating to session:', activityId, sessionId);
+        // Navigate to the session-specific attendance page
+        window.location.href = `{{ url('activities') }}/${activityId}/sessions/${sessionId}/attendance`;
+    } else {
+        console.error('Missing activity ID or session ID:', activityId, sessionId);
+        alert('Session information not available');
     }
 }
 
@@ -1888,5 +2850,216 @@ setInterval(() => {
     console.log('Auto-refreshing dashboard...');
     // Add auto-refresh logic
 }, 300000);
+
+// ===== NEW SCHEDULE FUNCTIONALITY =====
+
+function scrollToToday() {
+    const todayColumn = document.querySelector('.today-column');
+    if (todayColumn) {
+        todayColumn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        // Add a brief highlight effect
+        todayColumn.style.transform = 'scale(1.02)';
+        setTimeout(() => {
+            todayColumn.style.transform = '';
+        }, 300);
+    }
+}
+
+let currentWeekOffset = 0;
+
+function changeWeek(direction) {
+    currentWeekOffset += direction;
+    
+    // Update week display
+    const now = new Date();
+    const weekStart = new Date(now);
+    weekStart.setDate(now.getDate() - now.getDay() + (currentWeekOffset * 7));
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekStart.getDate() + 6);
+    
+    // Calculate week number
+    const onejan = new Date(weekStart.getFullYear(), 0, 1);
+    const weekNumber = Math.ceil((((weekStart - onejan) / 86400000) + onejan.getDay() + 1) / 7);
+    
+    // Update displays
+    const weekTextElement = document.querySelector('.week-text');
+    const weekRangeElement = document.querySelector('.week-range');
+    
+    if (weekTextElement) {
+        weekTextElement.textContent = `Week ${weekNumber}`;
+    }
+    
+    if (weekRangeElement) {
+        const formatOptions = { month: 'short', day: 'numeric' };
+        const startStr = weekStart.toLocaleDateString('en-US', formatOptions);
+        const endStr = weekEnd.toLocaleDateString('en-US', formatOptions);
+        weekRangeElement.textContent = `${startStr} - ${endStr}`;
+    }
+    
+    // Add loading effect
+    const scheduleGrid = document.querySelector('.schedule-week-grid');
+    if (scheduleGrid) {
+        scheduleGrid.style.opacity = '0.5';
+        scheduleGrid.style.transform = 'translateY(10px)';
+        
+        // Simulate loading new data (in real app, this would fetch from server)
+        setTimeout(() => {
+            scheduleGrid.style.opacity = '';
+            scheduleGrid.style.transform = '';
+        }, 300);
+    }
+    
+    // In a real application, you would fetch new calendar events for the selected week here
+    console.log(`Loading week ${weekNumber} (offset: ${currentWeekOffset})`);
+}
+
+// Add click handlers for event cards
+document.addEventListener('DOMContentLoaded', function() {
+    // Add hover effects to event cards
+    const eventCards = document.querySelectorAll('.event-card');
+    eventCards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'scale(1.02)';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = '';
+        });
+        
+        card.addEventListener('click', function(e) {
+            // Handle event card click - could open modal or navigate
+            const eventTitle = this.querySelector('.event-title-short')?.textContent;
+            console.log(`Clicked event: ${eventTitle}`);
+            
+            // Add click animation
+            this.style.transform = 'scale(0.98)';
+            setTimeout(() => {
+                this.style.transform = 'scale(1.02)';
+            }, 100);
+        });
+    });
+    
+    // Add click handlers for "more events" indicators
+    const moreEventIndicators = document.querySelectorAll('.more-events-indicator');
+    moreEventIndicators.forEach(indicator => {
+        indicator.addEventListener('click', function(e) {
+            e.stopPropagation();
+            // This could open a modal showing all events for the day
+            console.log('Show all events for this day');
+        });
+    });
+    
+    // Add smooth hover animation to day columns
+    const dayColumns = document.querySelectorAll('.day-column');
+    dayColumns.forEach(column => {
+        column.addEventListener('mouseenter', function() {
+            if (!this.classList.contains('today-column')) {
+                this.style.transform = 'translateY(-2px)';
+            }
+        });
+        
+        column.addEventListener('mouseleave', function() {
+            if (!this.classList.contains('today-column')) {
+                this.style.transform = '';
+            }
+        });
+    });
+});
+
+// ===== PERSONAL STATISTICS FUNCTIONALITY =====
+
+function refreshPersonalStats() {
+    const refreshBtn = document.querySelector('.data-refresh-btn');
+    const statCards = document.querySelectorAll('.stats-card-enhanced');
+    
+    if (refreshBtn) {
+        refreshBtn.disabled = true;
+        refreshBtn.classList.add('refreshing');
+        refreshBtn.innerHTML = '<i class="fas fa-sync-alt"></i> Refreshing...';
+    }
+    
+    // Add loading state to all stat cards
+    statCards.forEach(card => {
+        card.classList.add('stat-loading');
+    });
+    
+    // In a real application, you would make an AJAX call to refresh the data
+    // For now, we'll simulate the refresh process
+    setTimeout(() => {
+        // Simulate data refresh with slight changes to show it's working
+        const statNumbers = document.querySelectorAll('.stats-number-enhanced');
+        statNumbers.forEach((number, index) => {
+            const currentValue = number.textContent;
+            
+            // Add a subtle animation to show the refresh worked
+            number.style.transform = 'scale(1.1)';
+            number.style.color = '#32bdea';
+            
+            setTimeout(() => {
+                number.style.transform = '';
+                number.style.color = '';
+            }, 300);
+        });
+        
+        // Remove loading states
+        statCards.forEach(card => {
+            card.classList.remove('stat-loading');
+        });
+        
+        // Reset refresh button
+        if (refreshBtn) {
+            refreshBtn.disabled = false;
+            refreshBtn.classList.remove('refreshing');
+            refreshBtn.innerHTML = '<i class="fas fa-sync-alt"></i> Refresh';
+        }
+        
+        // Update the timestamp
+        const dataSourceText = document.querySelector('.data-source-text');
+        if (dataSourceText) {
+            const now = new Date();
+            const timeString = now.toLocaleDateString('en-US', { 
+                month: 'short', 
+                day: 'numeric', 
+                year: 'numeric',
+                hour: 'numeric',
+                minute: '2-digit',
+                hour12: true
+            });
+            dataSourceText.innerHTML = dataSourceText.innerHTML.replace(
+                /Last updated: .+$/,
+                `Last updated: ${timeString}`
+            );
+        }
+        
+        console.log('Personal statistics refreshed successfully');
+    }, 2000);
+}
+
+// Add click handlers for stat cards to show more details
+document.addEventListener('DOMContentLoaded', function() {
+    const statCards = document.querySelectorAll('.stats-card-enhanced');
+    
+    statCards.forEach((card, index) => {
+        card.addEventListener('click', function() {
+            const statType = this.dataset.statType;
+            const statValue = this.querySelector('.stats-number-enhanced').textContent;
+            const statLabel = this.querySelector('.stats-label-enhanced').textContent;
+            
+            // Here you could show a modal with more detailed information
+            console.log(`Clicked on ${statLabel}: ${statValue}`);
+            
+            // Add click animation
+            this.style.transform = 'scale(0.98)';
+            setTimeout(() => {
+                this.style.transform = '';
+            }, 150);
+            
+            // In a real implementation, you might:
+            // - Show a detailed modal with historical data
+            // - Navigate to a detailed report page
+            // - Display a tooltip with more information
+        });
+    });
+});
 </script>
 @endsection

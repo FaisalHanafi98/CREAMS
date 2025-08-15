@@ -78,11 +78,11 @@
                                 </div>
                                 <div class="col-md-4">
                                     <div class="form-group">
-                                        <label for="activity_code">Activity Code <span class="text-danger">*</span></label>
-                                        <input type="text" class="form-control @error('activity_code') is-invalid @enderror" 
-                                               id="activity_code" name="activity_code" 
-                                               value="{{ old('activity_code', $activity->activity_code) }}" required>
-                                        @error('activity_code')
+                                        <label for="activity_id">Activity ID <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control @error('activity_id') is-invalid @enderror" 
+                                               id="activity_id" name="activity_id" 
+                                               value="{{ old('activity_id', $activity->activity_id) }}" required>
+                                        @error('activity_id')
                                             <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror
                                     </div>
@@ -90,19 +90,20 @@
                             </div>
 
                             <div class="form-group">
-                                <label for="description">Description <span class="text-danger">*</span></label>
-                                <textarea class="form-control @error('description') is-invalid @enderror" 
-                                          id="description" name="description" rows="4" required>{{ old('description', $activity->description) }}</textarea>
-                                @error('description')
+                                <label for="activity_description">Description <span class="text-danger">*</span></label>
+                                <textarea class="form-control @error('activity_description') is-invalid @enderror" 
+                                          id="activity_description" name="activity_description" rows="4" required>{{ old('activity_description', $activity->activity_description) }}</textarea>
+                                @error('activity_description')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
 
                             <div class="form-group">
-                                <label for="objectives">Learning Objectives</label>
-                                <textarea class="form-control @error('objectives') is-invalid @enderror" 
-                                          id="objectives" name="objectives" rows="3">{{ old('objectives', $activity->objectives) }}</textarea>
-                                @error('objectives')
+                                <label for="activity_goals">Learning Goals</label>
+                                <textarea class="form-control @error('activity_goals') is-invalid @enderror" 
+                                          id="activity_goals" name="activity_goals" rows="3" 
+                                          placeholder="Enter goals as JSON array or comma-separated list">{{ old('activity_goals', is_array($activity->activity_goals) ? json_encode($activity->activity_goals) : $activity->activity_goals) }}</textarea>
+                                @error('activity_goals')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>

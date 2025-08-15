@@ -655,7 +655,7 @@ class ActivityController extends Controller
         try {
             Log::info('Loading activity details', ['activity_id' => $id, 'user_id' => session('id')]);
 
-            $activity = Activity::with(['sessions.teacher', 'sessions.enrollments.trainee', 'creator', 'centre'])
+            $activity = Activity::with(['sessions.teacher', 'enrollments.trainee', 'creator', 'centre'])
                 ->findOrFail($id);
 
             $role = session('role');
@@ -677,10 +677,10 @@ class ActivityController extends Controller
             // Get activity statistics
             $stats = [
                 'totalSessions' => $activity->sessions->count(),
-                'activeSessions' => $activity->sessions->where('status', 'active')->count(),
-                'upcomingSessions' => $activity->upcomingSessions->count(),
-                'completedSessions' => $activity->completedSessions->count(),
-                'totalEnrollments' => SessionEnrollment::whereIn('session_id', $activity->sessions->pluck('id'))->count(),
+                'activeSessions' => $activity->sessions->whereIn('status', ['active', 'scheduled'])->count(),
+                'upcomingSessions' => $activity->sessions->where('session_date', '>', now())->count(),
+                'completedSessions' => $activity->sessions->where('status', 'completed')->count(),
+                'totalEnrollments' => $activity->enrollments->count(),
                 'averageAttendance' => $this->calculateAverageAttendance($activity)
             ];
 
@@ -880,9 +880,9 @@ class ActivityController extends Controller
     {
         $role = session('role');
         
-        if (!in_array($role, ['admin', 'supervisor'])) {
+        if ($role !== 'admin') {
             return redirect()->route('activities.sessions', $id)
-                ->with('error', 'You do not have permission to create sessions.');
+                ->with('error', 'Only centre administrators can create sessions.');
         }
 
         try {
@@ -1392,27 +1392,20 @@ class ActivityController extends Controller
      */
     private function calculateAverageAttendance($activity)
     {
-        // Fix N+1 query: Eager load enrollments for all completed sessions
-        $completedSessions = $activity->completedSessions()->with(['enrollments'])->get();
+        // Get total attendance records for this activity
+        $totalAttendanceRecords = \App\Models\Attendance::where('activity_id', $activity->id)->count();
         
-        if ($completedSessions->count() === 0) {
+        if ($totalAttendanceRecords === 0) {
             return 0;
         }
-
-        $totalAttendance = 0;
-        $totalEnrollments = 0;
-
-        foreach ($completedSessions as $session) {
-            $presentCount = $session->enrollments->where('attendance_status', 'present')->count();
-            $totalCount = $session->enrollments->count();
-            
-            if ($totalCount > 0) {
-                $totalAttendance += $presentCount;
-                $totalEnrollments += $totalCount;
-            }
-        }
-
-        return $totalEnrollments > 0 ? round(($totalAttendance / $totalEnrollments) * 100, 2) : 0;
+        
+        // Count present and late (both considered as attended)
+        $attendedCount = \App\Models\Attendance::where('activity_id', $activity->id)
+            ->whereIn('status', ['present', 'late'])
+            ->count();
+        
+        // Calculate percentage
+        return round(($attendedCount / $totalAttendanceRecords) * 100, 2);
     }
 
     // Rehabilitation module methods

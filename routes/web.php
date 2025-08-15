@@ -242,8 +242,8 @@ Route::middleware(['auth', 'validate.params'])->group(function () {
             Route::get('/suggested-iep-goals', [App\Http\Controllers\Activity\ActivityWizardController::class, 'getSuggestedIepGoals'])->name('suggested-iep-goals');
         });
         
-        // Admin and Supervisor routes
-        Route::middleware(['role:admin,supervisor'])->group(function () {
+        // Admin only routes - Activity creation and management
+        Route::middleware(['role:admin'])->group(function () {
             Route::get('/create', [ActivityController::class, 'create'])->name('create');
             Route::post('/', [ActivityController::class, 'store'])->name('store');
             Route::get('/{id}/edit', [ActivityController::class, 'edit'])->name('edit');

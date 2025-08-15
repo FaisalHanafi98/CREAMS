@@ -10,9 +10,11 @@
             <p class="page-subtitle">{{ $activity->activity_name }} ({{ $activity->activity_code }})</p>
         </div>
         <div class="page-actions">
+            @if(session('role') === 'admin')
             <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#createSessionModal">
                 <i class="fas fa-plus"></i> Schedule New Session
             </button>
+            @endif
             <a href="{{ route('activities.show', $activity->id) }}" class="btn btn-outline-secondary">
                 <i class="fas fa-arrow-left"></i> Back to Activity
             </a>
@@ -80,13 +82,13 @@
                                             <i class="fas fa-users"></i>
                                         </a>
                                         @if($session->scheduled_date >= now() && in_array($role, ['admin', 'supervisor', 'teacher']))
-                                            <a href="{{ route('activities.attendance', [$activity->id, $session->id]) }}" 
+                                            <a href="{{ route('activities.activities.attendance', [$activity->id, $session->id]) }}" 
                                                class="btn btn-sm btn-outline-success" 
                                                title="Mark Attendance">
                                                 <i class="fas fa-clipboard-check"></i>
                                             </a>
                                         @endif
-                                        @if(in_array($role, ['admin', 'supervisor']))
+                                        @if($role === 'admin')
                                             <button class="btn btn-sm btn-outline-danger" 
                                                     onclick="cancelSession({{ $session->id }})"
                                                     title="Cancel Session">

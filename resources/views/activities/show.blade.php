@@ -9,10 +9,10 @@
     <div class="page-header">
         <div>
             <h1 class="page-title">{{ $activity->activity_name }}</h1>
-            <p class="activity-code">{{ $activity->activity_code }}</p>
+            <p class="activity-code">{{ $activity->activity_id }}</p>
         </div>
         <div class="page-actions">
-            @if(in_array($role, ['admin', 'supervisor']))
+            @if($role === 'admin')
                 <a href="{{ route('activities.edit', $activity->id) }}" class="btn btn-outline-primary">
                     <i class="fas fa-edit"></i> Edit Activity
                 </a>
@@ -41,13 +41,21 @@
                 <div class="detail-card-body">
                     <div class="detail-section">
                         <h3>Description</h3>
-                        <p>{{ $activity->description ?? 'No description available.' }}</p>
+                        <p>{{ $activity->activity_description ?? 'No description available.' }}</p>
                     </div>
 
-                    @if($activity->objectives)
+                    @if($activity->activity_goals)
                         <div class="detail-section">
-                            <h3>Learning Objectives</h3>
-                            <p>{{ $activity->objectives }}</p>
+                            <h3>Learning Goals</h3>
+                            @if(is_array($activity->activity_goals))
+                                <ul>
+                                    @foreach($activity->activity_goals as $goal)
+                                        <li>{{ $goal }}</li>
+                                    @endforeach
+                                </ul>
+                            @else
+                                <p>{{ $activity->activity_goals }}</p>
+                            @endif
                         </div>
                     @endif
 
@@ -103,10 +111,10 @@
                                 <tbody>
                                     @foreach($activity->sessions->take(5) as $session)
                                         <tr>
-                                            <td>{{ $session->date ? $session->date->format('M d, Y') : 'Not scheduled' }}</td>
+                                            <td>{{ $session->session_date ? \Carbon\Carbon::parse($session->session_date)->format('M d, Y') : 'Not scheduled' }}</td>
                                             <td>{{ $session->start_time ? \Carbon\Carbon::parse($session->start_time)->format('h:i A') : 'Not scheduled' }}</td>
                                             <td>{{ $session->teacher?->name ?? 'Not assigned' }}</td>
-                                            <td>{{ $session->enrollments->count() ?? 0 }}/{{ $session->max_capacity ?? 'N/A' }}</td>
+                                            <td>{{ $activity->enrollments->count() }}/{{ $session->max_participants ?? 'N/A' }}</td>
                                             <td>
                                                 <span class="badge badge-{{ $session->status == 'active' ? 'success' : 'secondary' }}">
                                                     {{ ucfirst($session->status) }}
@@ -137,7 +145,7 @@
                     </div>
                     <div class="stat-item">
                         <div class="stat-value">{{ $stats['activeSessions'] ?? 0 }}</div>
-                        <div class="stat-label">Active Sessions</div>
+                        <div class="stat-label">Active/Scheduled</div>
                     </div>
                     <div class="stat-item">
                         <div class="stat-value">{{ $stats['totalEnrollments'] ?? 0 }}</div>

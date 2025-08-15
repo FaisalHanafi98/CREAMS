@@ -21,13 +21,12 @@
                     </h1>
                     <p class="header-subtitle">Manage rehabilitation activities and track student progress in real-time</p>
                 </div>
-                @if(in_array(session('role'), ['admin', 'supervisor', 'teacher']))
+                @if(session('role') === 'admin')
                 <div class="header-actions">
                     <a href="{{ route('activities.wizard.index') }}" class="btn-modern btn-success">
                         <i class="fas fa-magic"></i>
                         <span>Activity Wizard</span>
                     </a>
-                    @if(in_array(session('role'), ['admin', 'supervisor']))
                     <a href="{{ route('activities.create') }}" class="btn-modern btn-primary">
                         <i class="fas fa-plus"></i>
                         <span>Create Activity</span>
@@ -36,7 +35,6 @@
                         <i class="fas fa-th-large"></i>
                         <span>Categories</span>
                     </a>
-                    @endif
                 </div>
                 @endif
             </div>
@@ -276,7 +274,7 @@
                                     <i class="fas fa-eye"></i>
                                     View Details
                                 </a>
-                                @if(in_array(session('role'), ['admin', 'supervisor']))
+                                @if(session('role') === 'admin')
                                 <a href="{{ route('activities.edit', $activity->id) }}" class="menu-item">
                                     <i class="fas fa-edit"></i>
                                     Edit Activity
@@ -375,7 +373,7 @@
                 </div>
                 <h3 class="empty-title">No Activities Found</h3>
                 <p class="empty-description">Start by creating your first activity to begin managing rehabilitation sessions.</p>
-                @if(in_array(session('role'), ['admin', 'supervisor']))
+                @if(session('role') === 'admin')
                 <a href="{{ route('activities.create') }}" class="btn-modern btn-primary">
                     <i class="fas fa-plus"></i>
                     <span>Create First Activity</span>
