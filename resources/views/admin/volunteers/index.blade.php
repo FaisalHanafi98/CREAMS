@@ -106,6 +106,7 @@
                                     <th>Applied Date</th>
                                     <th>Status</th>
                                     <th>Centre</th>
+                                    <th>Reviewed By</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -128,6 +129,7 @@
                                                 @endif
                                             </td>
                                             <td>{{ $app->centre ? $app->centre->centre_name : 'Unassigned' }}</td>
+                                            <td>{{ $app->approvedByUser ? $app->approvedByUser->name : 'Not reviewed' }}</td>
                                             <td>
                                                 <div class="btn-group btn-group-sm">
                                                     <button class="btn btn-outline-primary" onclick="viewApplication({{ $app->id }})" title="View Details">
@@ -179,15 +181,13 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="applicationModalLabel">Application Details</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body" id="applicationModalBody">
                 <!-- Will be populated via AJAX -->
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                 <div id="modalActions">
                     <!-- Action buttons will be added here -->
                 </div>
@@ -204,9 +204,7 @@
                 <h5 class="modal-title text-success" id="approveModalLabel">
                     <i class="fas fa-check-circle"></i> Approve Application
                 </h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <form id="approveForm">
@@ -238,7 +236,7 @@
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                 <button type="button" class="btn btn-success" onclick="submitApproval()">
                     <i class="fas fa-check"></i> Approve Application
                 </button>
@@ -255,9 +253,7 @@
                 <h5 class="modal-title text-danger" id="rejectModalLabel">
                     <i class="fas fa-times-circle"></i> Reject Application
                 </h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <form id="rejectForm">
@@ -276,7 +272,7 @@
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                 <button type="button" class="btn btn-danger" onclick="submitRejection()">
                     <i class="fas fa-times"></i> Reject Application
                 </button>
@@ -285,158 +281,10 @@
     </div>
 </div>
 
-@push('scripts')
+
 <script>
-// Global functions for button clicks
-function viewApplication(applicationId) {
-    console.log('viewApplication called with ID:', applicationId);
-    
-    // Use Bootstrap 4 modal method
-    $('#applicationModal').modal('show');
-    
-    $('#applicationModalBody').html('<div class="text-center py-4"><div class="spinner-border" role="status"></div><p class="mt-2">Loading application details...</p></div>');
-    
-    // Load application details
-    $.ajax({
-        url: `/volunteer/applications/${applicationId}`,
-        method: 'GET',
-        headers: {
-            'Accept': 'application/json',
-            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-        },
-        success: function(response) {
-            if (response.success) {
-                displayApplicationDetails(response.data);
-            } else {
-                $('#applicationModalBody').html('<div class="alert alert-danger">Error loading application details</div>');
-            }
-        },
-        error: function(xhr) {
-            $('#applicationModalBody').html('<div class="alert alert-danger">Error loading application details</div>');
-        }
-    });
-}
-
-function showApproveModal(applicationId) {
-    console.log('showApproveModal called with ID:', applicationId);
-    $('#approveApplicationId').val(applicationId);
-    
-    // Use Bootstrap 4 modal method
-    $('#approveModal').modal('show');
-}
-
-function showRejectModal(applicationId) {
-    console.log('showRejectModal called with ID:', applicationId);
-    $('#rejectApplicationId').val(applicationId);
-    
-    // Use Bootstrap 4 modal method
-    $('#rejectModal').modal('show');
-}
-
-// Application management functions
-let currentApplications = [];
-
-// Initialize page
-$(document).ready(function() {
-    console.log('Document ready - initializing volunteer page');
-    
-    // Applications are already loaded server-side
-    // Initialize other functionality
-    loadCentres();
-    
-    // Test if functions are accessible
-    console.log('viewApplication function:', typeof viewApplication);
-    console.log('showApproveModal function:', typeof showApproveModal);
-    console.log('showRejectModal function:', typeof showRejectModal);
-});
-
-function loadApplications() {
-    showLoading();
-    
-    const filters = {
-        status: $('#statusFilter').val(),
-        centre_id: $('#centreFilter').val(),
-        date_from: $('#dateFromFilter').val(),
-        date_to: $('#dateToFilter').val()
-    };
-
-    $.ajax({
-        url: '{{ route("volunteer.applications") }}',
-        method: 'GET',
-        data: filters,
-        success: function(response) {
-            if (response.success) {
-                currentApplications = response.data.data;
-                renderApplications(currentApplications);
-            } else {
-                showError('Failed to load applications');
-            }
-        },
-        error: function(xhr) {
-            showError('Error loading applications: ' + (xhr.responseJSON?.message || 'Unknown error'));
-        },
-        complete: function() {
-            hideLoading();
-        }
-    });
-}
-
-function renderApplications(applications) {
-    const tbody = $('#applicationsTableBody');
-    tbody.empty();
-
-    if (applications.length === 0) {
-        $('#emptyState').show();
-        return;
-    }
-
-    $('#emptyState').hide();
-
-    applications.forEach(function(app) {
-        const statusBadge = getStatusBadge(app.volunteer_status);
-        const centreName = app.centre ? app.centre.centre_name : 'Unassigned';
-        const appliedDate = new Date(app.created_at).toLocaleDateString();
-
-        const row = `
-            <tr>
-                <td><strong>#VA${String(app.id).padStart(6, '0')}</strong></td>
-                <td>${app.volunteer_name}</td>
-                <td>${app.volunteer_email}</td>
-                <td>${app.volunteer_phone}</td>
-                <td>${appliedDate}</td>
-                <td>${statusBadge}</td>
-                <td>${centreName}</td>
-                <td>
-                    <div class="btn-group btn-group-sm">
-                        <button class="btn btn-outline-primary" onclick="viewApplication(${app.id})" title="View Details">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                        ${app.volunteer_status === 'pending' ? `
-                            <button class="btn btn-outline-success" onclick="showApproveModal(${app.id})" title="Approve">
-                                <i class="fas fa-check"></i>
-                            </button>
-                            <button class="btn btn-outline-danger" onclick="showRejectModal(${app.id})" title="Reject">
-                                <i class="fas fa-times"></i>
-                            </button>
-                        ` : ''}
-                    </div>
-                </td>
-            </tr>
-        `;
-        tbody.append(row);
-    });
-}
-
-function getStatusBadge(status) {
-    const badges = {
-        'pending': '<span class="badge bg-warning">Pending</span>',
-        'active': '<span class="badge bg-success">Approved</span>',
-        'inactive': '<span class="badge bg-danger">Rejected</span>'
-    };
-    return badges[status] || '<span class="badge bg-secondary">Unknown</span>';
-}
-
-function displayApplicationDetails(app) {
+// Helper function to display application details (must be defined first)
+window.displayApplicationDetails = function(app) {
     const statusBadge = app.volunteer_status === 'pending' ? '<span class="badge bg-warning">Pending</span>' :
                         app.volunteer_status === 'active' ? '<span class="badge bg-success">Approved</span>' :
                         '<span class="badge bg-danger">Rejected</span>';
@@ -521,91 +369,322 @@ function displayApplicationDetails(app) {
     // Add action buttons if pending
     if (app.volunteer_status === 'pending') {
         $('#modalActions').html(`
-            <button type="button" class="btn btn-success" onclick="showApproveModal(${app.id})" data-dismiss="modal">
+            <button type="button" class="btn btn-success" onclick="window.showApproveModal(${app.id})" data-bs-dismiss="modal">
                 <i class="fas fa-check"></i> Approve
             </button>
-            <button type="button" class="btn btn-danger" onclick="showRejectModal(${app.id})" data-dismiss="modal">
+            <button type="button" class="btn btn-danger" onclick="window.showRejectModal(${app.id})" data-bs-dismiss="modal">
                 <i class="fas fa-times"></i> Reject
             </button>
         `);
     } else {
         $('#modalActions').html('');
     }
-}
+};
 
-function submitApproval() {
-    const formData = {
-        centre_id: $('#approveCentreId').val(),
-        notes: $('#approveNotes').val()
-    };
-
-    const applicationId = $('#approveApplicationId').val();
-
+// Global functions for button clicks - explicitly declare in window scope
+window.viewApplication = function(applicationId) {
+    console.log('viewApplication called with ID:', applicationId);
+    
+    // Validate applicationId
+    if (!applicationId || applicationId === 'undefined' || applicationId === 'null') {
+        console.error('Invalid applicationId:', applicationId);
+        alert('Error: Invalid application ID');
+        return;
+    }
+    
+    // Check if modal exists
+    const modal = $('#applicationModal');
+    if (modal.length === 0) {
+        console.error('Modal #applicationModal not found');
+        alert('Error: Modal not found on page');
+        return;
+    }
+    
+    // Show modal first
+    modal.modal('show');
+    
+    // Set loading content
+    $('#applicationModalBody').html('<div class="text-center py-4"><div class="spinner-border" role="status"></div><p class="mt-2">Loading application details...</p></div>');
+    
+    // Prepare AJAX call
+    const ajaxUrl = `/volunteer/applications/${applicationId}`;
+    console.log('Making AJAX call to:', ajaxUrl);
+    
+    // Load application details with better error handling
     $.ajax({
-        url: `/volunteer/applications/${applicationId}/approve`,
-        method: 'POST',
-        data: formData,
+        url: ajaxUrl,
+        method: 'GET',
         headers: {
-            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            'Accept': 'application/json',
+            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+            'X-Requested-With': 'XMLHttpRequest'
         },
+        timeout: 10000,
         success: function(response) {
-            if (response.success) {
-                showSuccess('Application approved successfully!');
-                
-                // Hide modal using Bootstrap 4 method
-                $('#approveModal').modal('hide');
-                
-                // Reload page to show updated data
-                window.location.reload();
+            console.log('AJAX success response:', response);
+            if (response && response.success) {
+                window.displayApplicationDetails(response.data);
             } else {
-                showError(response.message || 'Error approving application');
+                console.error('Invalid response format:', response);
+                $('#applicationModalBody').html('<div class="alert alert-danger">Error: Invalid response format</div>');
             }
         },
-        error: function(xhr) {
-            showError('Error approving application: ' + (xhr.responseJSON?.message || 'Unknown error'));
+        error: function(xhr, status, error) {
+            console.error('AJAX Error Details:');
+            console.error('Status:', status);
+            console.error('Error:', error);
+            console.error('Response:', xhr.responseText);
+            console.error('Status Code:', xhr.status);
+            
+            let errorMessage = 'Error loading application details';
+            if (xhr.status === 401) {
+                errorMessage = 'Authentication required. Please log in again.';
+            } else if (xhr.status === 403) {
+                errorMessage = 'Access denied. You do not have permission to view this application.';
+            } else if (xhr.status === 404) {
+                errorMessage = 'Application not found.';
+            } else if (xhr.status >= 500) {
+                errorMessage = 'Server error. Please try again later.';
+            }
+            
+            $('#applicationModalBody').html(`<div class="alert alert-danger">${errorMessage}<br><small>Status: ${xhr.status} ${error}</small></div>`);
         }
     });
 }
 
-function submitRejection() {
-    const formData = {
-        notes: $('#rejectNotes').val()
+window.showApproveModal = function(applicationId) {
+    console.log('🟢 showApproveModal called with ID:', applicationId);
+    
+    try {
+        $('#approveApplicationId').val(applicationId);
+        $('#approveModal').modal('show');
+        console.log('✅ Modal opened successfully');
+    } catch (error) {
+        console.error('❌ Error:', error);
+        alert('Error: ' + error.message);
+    }
+}
+
+window.showRejectModal = function(applicationId) {
+    console.log('🔴 showRejectModal called with ID:', applicationId);
+    
+    try {
+        $('#rejectApplicationId').val(applicationId);
+        $('#rejectNotes').val('');
+        $('#rejectModal').modal('show');
+        console.log('✅ Reject modal opened successfully');
+    } catch (error) {
+        console.error('❌ Error:', error);
+        alert('Error: ' + error.message);
+    }
+}
+
+// Refresh and Export functions - define early
+window.refreshApplications = function() {
+    console.log('Refresh button clicked');
+    window.location.reload();
+}
+
+window.exportApplications = function() {
+    console.log('Export button clicked');
+    // Show warning that export will be implemented in the future
+    if (confirm('📊 Export Functionality\n\nThe export feature is planned for future implementation. This will allow you to export volunteer applications data in various formats (Excel, PDF, CSV).\n\nWould you like to be notified when this feature becomes available?')) {
+        alert('Success: Thank you for your interest! You will be notified when the export functionality is implemented.');
+    }
+}
+
+// Application management functions
+let currentApplications = [];
+
+// Initialize page - wait for jQuery to be available
+$(document).ready(function() {
+    console.log('Document ready - initializing volunteer page');
+    console.log('jQuery version:', $.fn.jquery);
+    console.log('Bootstrap loaded:', typeof $.fn.modal);
+    
+    // Test if functions are accessible
+    console.log('viewApplication function:', typeof viewApplication);
+    console.log('showApproveModal function:', typeof showApproveModal);
+    console.log('showRejectModal function:', typeof showRejectModal);
+    
+    // Check if modals exist
+    console.log('Application modal exists:', $('#applicationModal').length > 0);
+    console.log('Approve modal exists:', $('#approveModal').length > 0);
+    console.log('Reject modal exists:', $('#rejectModal').length > 0);
+    
+    // Check if CSRF token exists
+    const csrfToken = $('meta[name="csrf-token"]').attr('content');
+    console.log('CSRF token exists:', !!csrfToken);
+    console.log('CSRF token:', csrfToken ? csrfToken.substring(0, 10) + '...' : 'NOT FOUND');
+    
+    // Check if buttons exist
+    const buttons = $('.btn[onclick*="viewApplication"], .btn[onclick*="showApproveModal"], .btn[onclick*="showRejectModal"]');
+    console.log('Action buttons found:', buttons.length);
+    
+    // Add click listeners for debugging
+    $(document).on('click', 'button[onclick*="showApproveModal"]', function(e) {
+        console.log('🟢 Approve button ACTUALLY clicked!', this);
+        console.log('Button onclick:', $(this).attr('onclick'));
+    });
+    
+    $(document).on('click', 'button[onclick*="showRejectModal"]', function(e) {
+        console.log('🔴 Reject button ACTUALLY clicked!', this);
+        console.log('Button onclick:', $(this).attr('onclick'));
+    });
+    
+    // Add test button for debugging
+    if (window.location.search.includes('debug=1')) {
+        const testButton = '<button class="btn btn-info btn-sm" onclick="testButtonFunctionality()">🔧 Test Buttons</button>';
+        $('.page-header .d-flex').append(testButton);
+    }
+    
+    // Add simple test buttons for troubleshooting
+    const debugButtons = `
+        <div class="alert alert-info mt-3">
+            <strong>Debug Tools:</strong>
+            <button class="btn btn-sm btn-primary ms-2" onclick="window.showApproveModal(3)">Test Approve Modal</button>
+            <button class="btn btn-sm btn-danger ms-2" onclick="window.showRejectModal(3)">Test Reject Modal</button>
+            <button class="btn btn-sm btn-info ms-2" onclick="console.log('Functions loaded:', {approve: typeof window.showApproveModal, reject: typeof window.showRejectModal})">Check Functions</button>
+        </div>
+    `;
+    $('.page-header').after(debugButtons);
+    
+    // Applications are already loaded server-side
+    // Initialize other functionality
+    window.loadCentres();
+    
+    // Verify functions are in global scope
+    console.log('✅ Functions loaded in global scope:');
+    console.log('- viewApplication:', typeof window.viewApplication);
+    console.log('- showApproveModal:', typeof window.showApproveModal);
+    console.log('- showRejectModal:', typeof window.showRejectModal);
+    console.log('- submitApproval (global):', typeof submitApproval);
+    console.log('- submitRejection (global):', typeof submitRejection);
+    console.log('- refreshApplications:', typeof window.refreshApplications);
+    console.log('- exportApplications:', typeof window.exportApplications);
+    
+    // Functions should be available in global scope already
+});
+
+// Test function for debugging
+window.testButtonFunctionality = function() {
+    console.log('=== BUTTON FUNCTIONALITY TEST ===');
+    
+    // Test if we can find the first volunteer
+    const firstButton = $('button[onclick*="viewApplication"]').first();
+    if (firstButton.length > 0) {
+        const onclickAttr = firstButton.attr('onclick');
+        console.log('First button onclick:', onclickAttr);
+        
+        // Extract ID from onclick
+        const match = onclickAttr.match(/viewApplication\((\d+)\)/);
+        if (match) {
+            const testId = match[1];
+            console.log('Testing with ID:', testId);
+            
+            // Test each function
+            console.log('Testing viewApplication...');
+            window.viewApplication(testId);
+        } else {
+            console.error('Could not extract ID from onclick');
+        }
+    } else {
+        console.error('No view buttons found');
+    }
+}
+
+window.loadApplications = function() {
+    window.showLoading();
+    
+    const filters = {
+        status: $('#statusFilter').val(),
+        centre_id: $('#centreFilter').val(),
+        date_from: $('#dateFromFilter').val(),
+        date_to: $('#dateToFilter').val()
     };
 
-    if (!formData.notes.trim()) {
-        showError('Please provide a reason for rejection');
+    $.ajax({
+        url: '{{ route("volunteer.applications") }}',
+        method: 'GET',
+        data: filters,
+        success: function(response) {
+            if (response.success) {
+                currentApplications = response.data.data;
+                window.renderApplications(currentApplications);
+            } else {
+                window.showError('Failed to load applications');
+            }
+        },
+        error: function(xhr) {
+            window.showError('Error loading applications: ' + (xhr.responseJSON?.message || 'Unknown error'));
+        },
+        complete: function() {
+            window.hideLoading();
+        }
+    });
+}
+
+window.renderApplications = function(applications) {
+    const tbody = $('#applicationsTableBody');
+    tbody.empty();
+
+    if (applications.length === 0) {
+        $('#emptyState').show();
         return;
     }
 
-    const applicationId = $('#rejectApplicationId').val();
+    $('#emptyState').hide();
 
-    $.ajax({
-        url: `/volunteer/applications/${applicationId}/reject`,
-        method: 'POST',
-        data: formData,
-        headers: {
-            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-        },
-        success: function(response) {
-            if (response.success) {
-                showSuccess('Application rejected');
-                
-                // Hide modal using Bootstrap 4 method
-                $('#rejectModal').modal('hide');
-                
-                // Reload page to show updated data
-                window.location.reload();
-            } else {
-                showError(response.message || 'Error rejecting application');
-            }
-        },
-        error: function(xhr) {
-            showError('Error rejecting application: ' + (xhr.responseJSON?.message || 'Unknown error'));
-        }
+    applications.forEach(function(app) {
+        const statusBadge = window.getStatusBadge(app.volunteer_status);
+        const centreName = app.centre ? app.centre.centre_name : 'Unassigned';
+        const appliedDate = new Date(app.created_at).toLocaleDateString();
+
+        const row = `
+            <tr>
+                <td><strong>#VA${String(app.id).padStart(6, '0')}</strong></td>
+                <td>${app.volunteer_name}</td>
+                <td>${app.volunteer_email}</td>
+                <td>${app.volunteer_phone}</td>
+                <td>${appliedDate}</td>
+                <td>${statusBadge}</td>
+                <td>${centreName}</td>
+                <td>
+                    <div class="btn-group btn-group-sm">
+                        <button class="btn btn-outline-primary" onclick="viewApplication(${app.id})" title="View Details">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        ${app.volunteer_status === 'pending' ? `
+                            <button class="btn btn-outline-success" onclick="showApproveModal(${app.id})" title="Approve">
+                                <i class="fas fa-check"></i>
+                            </button>
+                            <button class="btn btn-outline-danger" onclick="showRejectModal(${app.id})" title="Reject">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        ` : ''}
+                    </div>
+                </td>
+            </tr>
+        `;
+        tbody.append(row);
     });
 }
 
-function filterApplications() {
+window.getStatusBadge = function(status) {
+    const badges = {
+        'pending': '<span class="badge bg-warning">Pending</span>',
+        'active': '<span class="badge bg-success">Approved</span>',
+        'inactive': '<span class="badge bg-danger">Rejected</span>'
+    };
+    return badges[status] || '<span class="badge bg-secondary">Unknown</span>';
+}
+
+
+// Old submitApproval function removed - using global function instead
+
+// Old submitRejection function removed - using global function instead
+
+window.filterApplications = function() {
     // Since we're using server-side rendering, reload the page with filters
     const status = $('#statusFilter').val();
     const centreId = $('#centreFilter').val();
@@ -627,32 +706,28 @@ function filterApplications() {
     window.location.href = url;
 }
 
-function refreshApplications() {
-    window.location.reload();
-}
-
-function showLoading() {
+window.showLoading = function() {
     $('#loadingSpinner').show();
     $('#applicationsTableBody').empty();
     $('#emptyState').hide();
 }
 
-function hideLoading() {
+window.hideLoading = function() {
     $('#loadingSpinner').hide();
 }
 
-function showSuccess(message) {
+window.showSuccess = function(message) {
     // You can replace this with your preferred notification system
     alert('Success: ' + message);
 }
 
-function showError(message) {
+window.showError = function(message) {
     // You can replace this with your preferred notification system
     alert('Error: ' + message);
 }
 
 // Load centres for filters and approval modal
-function loadCentres() {
+window.loadCentres = function() {
     $.ajax({
         url: '{{ route("volunteer.centres") }}',
         method: 'GET',
@@ -681,6 +756,96 @@ function loadCentres() {
         }
     });
 }
+
+// Create global functions for onclick handlers
+function submitApproval() {
+    console.log('🟢 Global submitApproval called');
+    
+    if (typeof $ === 'undefined') {
+        alert('jQuery is not available. Please refresh the page.');
+        return;
+    }
+    
+    const formData = {
+        centre_id: document.getElementById('approveCentreId').value,
+        notes: document.getElementById('approveNotes').value
+    };
+    
+    const applicationId = document.getElementById('approveApplicationId').value;
+    
+    console.log('Submitting approval for ID:', applicationId, 'with data:', formData);
+    
+    // Use jQuery for AJAX
+    $.ajax({
+        url: `/volunteer/applications/${applicationId}/approve`,
+        method: 'POST',
+        data: formData,
+        headers: {
+            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+        },
+        success: function(response) {
+            if (response.success) {
+                alert('Application approved successfully!');
+                $('#approveModal').modal('hide');
+                window.location.reload();
+            } else {
+                alert('Error: ' + (response.message || 'Error approving application'));
+            }
+        },
+        error: function(xhr) {
+            alert('Error approving application: ' + (xhr.responseJSON?.message || 'Unknown error'));
+        }
+    });
+}
+
+function submitRejection() {
+    console.log('🔴 Global submitRejection called');
+    
+    if (typeof $ === 'undefined') {
+        alert('jQuery is not available. Please refresh the page.');
+        return;
+    }
+    
+    const formData = {
+        notes: document.getElementById('rejectNotes').value
+    };
+    
+    if (!formData.notes.trim()) {
+        alert('Please provide a reason for rejection');
+        return;
+    }
+    
+    const applicationId = document.getElementById('rejectApplicationId').value;
+    
+    console.log('Submitting rejection for ID:', applicationId, 'with data:', formData);
+    
+    // Use jQuery for AJAX
+    $.ajax({
+        url: `/volunteer/applications/${applicationId}/reject`,
+        method: 'POST',
+        data: formData,
+        headers: {
+            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+        },
+        success: function(response) {
+            if (response.success) {
+                alert('Application rejected successfully!');
+                $('#rejectModal').modal('hide');
+                window.location.reload();
+            } else {
+                alert('Error: ' + (response.message || 'Error rejecting application'));
+            }
+        },
+        error: function(xhr) {
+            alert('Error rejecting application: ' + (xhr.responseJSON?.message || 'Unknown error'));
+        }
+    });
+}
+
+console.log('🔧 Global functions defined:');
+console.log('submitApproval:', typeof submitApproval);
+console.log('submitRejection:', typeof submitRejection);
+
 </script>
-@endpush
+
 @endsection

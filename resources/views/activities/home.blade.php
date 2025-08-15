@@ -23,10 +23,6 @@
                 </div>
                 @if(session('role') === 'admin')
                 <div class="header-actions">
-                    <a href="{{ route('activities.wizard.index') }}" class="btn-modern btn-success">
-                        <i class="fas fa-magic"></i>
-                        <span>Activity Wizard</span>
-                    </a>
                     <a href="{{ route('activities.create') }}" class="btn-modern btn-primary">
                         <i class="fas fa-plus"></i>
                         <span>Create Activity</span>

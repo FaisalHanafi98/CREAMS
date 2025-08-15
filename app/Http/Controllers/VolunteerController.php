@@ -258,7 +258,19 @@ public function getApplications(Request $request)
 public function show($id)
 {
     try {
+        Log::info('Volunteer show method called', [
+            'id' => $id,
+            'wants_json' => request()->wantsJson(),
+            'session_role' => session('role'),
+            'session_user_id' => session('id')
+        ]);
+        
         $application = Volunteer::with(['centre', 'approvedByUser'])->findOrFail($id);
+        
+        Log::info('Volunteer application found', [
+            'application_id' => $application->id,
+            'application_name' => $application->volunteer_name
+        ]);
         
         // Return JSON for AJAX requests
         if (request()->wantsJson()) {
@@ -271,10 +283,17 @@ public function show($id)
         // Return view for direct access
         return view('admin.volunteers.show', compact('application'));
     } catch (\Exception $e) {
+        Log::error('Error in volunteer show method', [
+            'id' => $id,
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString()
+        ]);
+        
         if (request()->wantsJson()) {
             return response()->json([
                 'success' => false,
-                'message' => 'Volunteer application not found.'
+                'message' => 'Volunteer application not found.',
+                'error' => $e->getMessage()
             ], 404);
         }
         
@@ -473,27 +492,75 @@ public function reject(Request $request, $id)
 private function sendApprovalEmail($application)
 {
     try {
-        $centreName = $application->centre ? $application->centre->centre_name : 'IIUM PD-CARE';
+        // Refresh the application to get updated relationships
+        $application->refresh();
         
-        Mail::send('emails.volunteer-approval', [
-            'volunteer' => $application,
-            'centreName' => $centreName
-        ], function ($message) use ($application) {
-            $message->to($application->volunteer_email, $application->volunteer_name)
-                    ->from(config('mail.from.address'), config('mail.from.name'))
-                    ->subject('Volunteer Application Approved - Welcome to IIUM PD-CARE!');
-        });
-
-        Log::info('Volunteer approval email sent', [
+        // Get centre information
+        $centre = $application->centre;
+        $centreName = $centre ? $centre->centre_name : 'IIUM PD-CARE';
+        $centreAddress = $centre ? $centre->centre_address : 'IIUM Campus, Gombak';
+        $centrePhone = $centre ? $centre->centre_phone : '+60 3-6196 4000';
+        
+        // Parse volunteer availability first to determine appropriate start date
+        $availability = $application->volunteer_availability;
+        $today = \Carbon\Carbon::today();
+        
+        // Calculate start date based on volunteer's availability
+        $startDate = $this->calculateStartDate($availability, $today);
+        
+        // Create schedule details
+        $scheduleDetails = $this->parseVolunteerSchedule($availability, $startDate);
+        
+        Log::info('Sending approval email', [
             'application_id' => $application->id,
-            'email' => $application->volunteer_email
+            'email' => $application->volunteer_email,
+            'centre' => $centreName,
+            'start_date' => $startDate->format('Y-m-d'),
+            'schedule' => $scheduleDetails
+        ]);
+        
+        // Prepare email data
+        $emailData = [
+            'volunteer' => $application,
+            'centreName' => $centreName,
+            'centreAddress' => $centreAddress,
+            'centrePhone' => $centrePhone,
+            'startDate' => $startDate,
+            'scheduleDetails' => $scheduleDetails
+        ];
+        
+        // Use queue for better performance (if configured)
+        if (config('queue.default') !== 'sync') {
+            Mail::queue('emails.volunteer-approval', $emailData, function ($message) use ($application) {
+                $message->to($application->volunteer_email, $application->volunteer_name)
+                        ->from(config('mail.from.address'), config('mail.from.name'))
+                        ->subject('🎉 Volunteer Application Approved - Welcome to IIUM PD-CARE!');
+            });
+        } else {
+            Mail::send('emails.volunteer-approval', $emailData, function ($message) use ($application) {
+                $message->to($application->volunteer_email, $application->volunteer_name)
+                        ->from(config('mail.from.address'), config('mail.from.name'))
+                        ->subject('🎉 Volunteer Application Approved - Welcome to IIUM PD-CARE!');
+            });
+        }
+
+        Log::info('Volunteer approval email sent successfully', [
+            'application_id' => $application->id,
+            'email' => $application->volunteer_email,
+            'centre' => $centreName,
+            'start_date' => $startDate->format('Y-m-d')
         ]);
 
     } catch (\Exception $e) {
         Log::error('Failed to send volunteer approval email', [
             'application_id' => $application->id,
-            'error' => $e->getMessage()
+            'email' => $application->volunteer_email ?? 'unknown',
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString()
         ]);
+        
+        // Don't throw exception to avoid breaking the approval process
+        // Admin will see the log error and can manually contact the volunteer
     }
 }
 
@@ -506,15 +573,37 @@ private function sendApprovalEmail($application)
 private function sendRejectionEmail($application)
 {
     try {
-        Mail::send('emails.volunteer-rejection', [
-            'volunteer' => $application
-        ], function ($message) use ($application) {
-            $message->to($application->volunteer_email, $application->volunteer_name)
-                    ->from(config('mail.from.address'), config('mail.from.name'))
-                    ->subject('Volunteer Application Update - IIUM PD-CARE');
-        });
+        // Refresh the application to get updated data
+        $application->refresh();
+        
+        Log::info('Sending rejection email', [
+            'application_id' => $application->id,
+            'email' => $application->volunteer_email,
+            'rejection_reason' => $application->admin_notes ? 'Provided' : 'Not provided'
+        ]);
+        
+        // Use queue for better performance (if configured)
+        if (config('queue.default') !== 'sync') {
+            Mail::queue('emails.volunteer-rejection', [
+                'volunteer' => $application
+            ], function ($message) use ($application) {
+                $message->to($application->volunteer_email, $application->volunteer_name)
+                        ->from(config('mail.from.address'), config('mail.from.name'))
+                        ->subject('📧 Volunteer Application Update - IIUM PD-CARE')
+                        ->priority(3); // Normal priority
+            });
+        } else {
+            Mail::send('emails.volunteer-rejection', [
+                'volunteer' => $application
+            ], function ($message) use ($application) {
+                $message->to($application->volunteer_email, $application->volunteer_name)
+                        ->from(config('mail.from.address'), config('mail.from.name'))
+                        ->subject('📧 Volunteer Application Update - IIUM PD-CARE')
+                        ->priority(3); // Normal priority
+            });
+        }
 
-        Log::info('Volunteer rejection email sent', [
+        Log::info('Volunteer rejection email sent successfully', [
             'application_id' => $application->id,
             'email' => $application->volunteer_email
         ]);
@@ -522,8 +611,13 @@ private function sendRejectionEmail($application)
     } catch (\Exception $e) {
         Log::error('Failed to send volunteer rejection email', [
             'application_id' => $application->id,
-            'error' => $e->getMessage()
+            'email' => $application->volunteer_email ?? 'unknown',
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString()
         ]);
+        
+        // Don't throw exception to avoid breaking the rejection process
+        // Admin will see the log error and can manually contact the volunteer
     }
 }
 
@@ -604,7 +698,8 @@ public function adminIndex()
 public function getCentres()
 {
     try {
-        $centres = \App\Models\Centre::select('centre_id', 'centre_name')
+        $centres = Centre::select('centre_id', 'centre_name')
+            ->where('centre_status', 'active') // Only get active centres
             ->orderBy('centre_name')
             ->get();
         
@@ -621,6 +716,262 @@ public function getCentres()
             'success' => false,
             'message' => 'Error loading centres'
         ], 500);
+    }
+}
+
+
+/**
+ * Parse volunteer availability and create schedule details
+ *
+ * @param string $availability
+ * @param \Carbon\Carbon $startDate
+ * @return array
+ */
+private function parseVolunteerSchedule($availability, $startDate)
+{
+    $scheduleDetails = [
+        'formatted_schedule' => [],
+        'summary' => ''
+    ];
+    
+    try {
+        // Common availability patterns
+        $availabilityLower = strtolower($availability);
+        
+        // Time patterns
+        $morningTimes = ['morning', 'am', '9:00', '10:00', '8:00'];
+        $afternoonTimes = ['afternoon', 'pm', '2:00', '3:00', '1:00', '4:00'];
+        $eveningTimes = ['evening', '6:00', '7:00', '5:00'];
+        
+        // Day patterns  
+        $weekdayPatterns = ['weekdays', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday'];
+        $weekendPatterns = ['weekend', 'saturday', 'sunday'];
+        $specificDays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+        
+        $isWeekdays = false;
+        $isWeekends = false;
+        $isMorning = false;
+        $isAfternoon = false;
+        $isEvening = false;
+        $foundDays = [];
+        
+        // Check for time preferences
+        foreach ($morningTimes as $time) {
+            if (strpos($availabilityLower, $time) !== false) {
+                $isMorning = true;
+                break;
+            }
+        }
+        
+        foreach ($afternoonTimes as $time) {
+            if (strpos($availabilityLower, $time) !== false) {
+                $isAfternoon = true;
+                break;
+            }
+        }
+        
+        foreach ($eveningTimes as $time) {
+            if (strpos($availabilityLower, $time) !== false) {
+                $isEvening = true;
+                break;
+            }
+        }
+        
+        // Check for day preferences
+        foreach ($weekdayPatterns as $pattern) {
+            if (strpos($availabilityLower, $pattern) !== false) {
+                if (in_array($pattern, ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'])) {
+                    $foundDays[] = ucfirst($pattern);
+                } else {
+                    $isWeekdays = true;
+                }
+                break;
+            }
+        }
+        
+        foreach ($weekendPatterns as $pattern) {
+            if (strpos($availabilityLower, $pattern) !== false) {
+                if (in_array($pattern, ['saturday', 'sunday'])) {
+                    $foundDays[] = ucfirst($pattern);
+                } else {
+                    $isWeekends = true;
+                }
+                break;
+            }
+        }
+        
+        // Default time if none specified
+        if (!$isMorning && !$isAfternoon && !$isEvening) {
+            $isMorning = true; // Default to morning
+        }
+        
+        // Determine time slot
+        $timeSlot = '';
+        if ($isMorning) {
+            $timeSlot = '9:00 AM - 12:00 PM';
+        } elseif ($isAfternoon) {
+            $timeSlot = '2:00 PM - 5:00 PM';
+        } elseif ($isEvening) {
+            $timeSlot = '6:00 PM - 8:00 PM';
+        }
+        
+        // Determine days
+        $workingDays = [];
+        if ($isWeekdays || empty($foundDays)) {
+            $workingDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+        } elseif ($isWeekends) {
+            $workingDays = ['Saturday', 'Sunday'];
+        } else {
+            $workingDays = $foundDays;
+        }
+        
+        // Create schedule for the week starting from next Monday
+        $currentDate = $startDate->copy();
+        for ($i = 0; $i < 7; $i++) {
+            $dayName = $currentDate->format('l'); // Full day name
+            if (in_array($dayName, $workingDays)) {
+                $scheduleDetails['formatted_schedule'][] = [
+                    'date' => $currentDate->format('F j, Y'),
+                    'day' => $dayName,
+                    'time' => $timeSlot,
+                    'carbon_date' => $currentDate->copy()
+                ];
+            }
+            $currentDate->addDay();
+        }
+        
+        // Create summary
+        $daysSummary = implode(', ', $workingDays);
+        $scheduleDetails['summary'] = "{$daysSummary} from {$timeSlot}";
+        
+    } catch (\Exception $e) {
+        Log::error('Error parsing volunteer schedule', [
+            'availability' => $availability,
+            'error' => $e->getMessage()
+        ]);
+        
+        // Fallback schedule
+        $scheduleDetails['formatted_schedule'] = [
+            [
+                'date' => $startDate->format('F j, Y'),
+                'day' => 'Monday',
+                'time' => '9:00 AM - 12:00 PM',
+                'carbon_date' => $startDate->copy()
+            ]
+        ];
+        $scheduleDetails['summary'] = 'Monday - Friday from 9:00 AM - 12:00 PM';
+    }
+    
+    return $scheduleDetails;
+}
+
+/**
+ * Calculate appropriate start date based on volunteer availability
+ *
+ * @param string $availability
+ * @param \Carbon\Carbon $today
+ * @return \Carbon\Carbon
+ */
+private function calculateStartDate($availability, $today)
+{
+    try {
+        $availabilityLower = strtolower($availability);
+        
+        // Weekend patterns
+        $weekendPatterns = ['weekend', 'saturday', 'sunday'];
+        $weekdayPatterns = ['weekday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday'];
+        
+        $isWeekendVolunteer = false;
+        $isWeekdayVolunteer = false;
+        $specificDays = [];
+        
+        // Check for weekend preferences
+        foreach ($weekendPatterns as $pattern) {
+            if (strpos($availabilityLower, $pattern) !== false) {
+                if (in_array($pattern, ['saturday', 'sunday'])) {
+                    $specificDays[] = ucfirst($pattern);
+                } else {
+                    $isWeekendVolunteer = true;
+                }
+                break;
+            }
+        }
+        
+        // Check for weekday preferences  
+        foreach ($weekdayPatterns as $pattern) {
+            if (strpos($availabilityLower, $pattern) !== false) {
+                if (in_array($pattern, ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'])) {
+                    $specificDays[] = ucfirst($pattern);
+                } else {
+                    $isWeekdayVolunteer = true;
+                }
+                break;
+            }
+        }
+        
+        // Calculate start date based on availability
+        if ($isWeekendVolunteer || (!empty($specificDays) && (in_array('Saturday', $specificDays) || in_array('Sunday', $specificDays)))) {
+            // Weekend volunteer - start on next Saturday
+            $startDate = $today->copy();
+            
+            // If today is already Saturday or Sunday, start this weekend
+            if ($today->isSaturday()) {
+                $startDate = $today->copy(); // Start this Saturday
+            } elseif ($today->isSunday()) {
+                $startDate = $today->copy(); // Start this Sunday
+            } else {
+                // Start next Saturday
+                $startDate = $today->next(\Carbon\Carbon::SATURDAY);
+            }
+            
+            Log::info('Weekend volunteer start date calculated', [
+                'today' => $today->format('Y-m-d l'),
+                'start_date' => $startDate->format('Y-m-d l'),
+                'availability' => $availability
+            ]);
+            
+        } elseif ($isWeekdayVolunteer || (!empty($specificDays) && array_intersect($specificDays, ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']))) {
+            // Weekday volunteer - start on next Monday
+            $startDate = $today->copy();
+            
+            // If today is a weekday and before 5 PM, they could potentially start today
+            // But for safety, start next Monday
+            if ($today->isWeekday()) {
+                // Start next Monday  
+                $startDate = $today->next(\Carbon\Carbon::MONDAY);
+            } else {
+                // If today is weekend, start next Monday
+                $startDate = $today->next(\Carbon\Carbon::MONDAY);
+            }
+            
+            Log::info('Weekday volunteer start date calculated', [
+                'today' => $today->format('Y-m-d l'),
+                'start_date' => $startDate->format('Y-m-d l'),
+                'availability' => $availability
+            ]);
+            
+        } else {
+            // Default case - start next Monday
+            $startDate = $today->next(\Carbon\Carbon::MONDAY);
+            
+            Log::info('Default volunteer start date calculated', [
+                'today' => $today->format('Y-m-d l'),
+                'start_date' => $startDate->format('Y-m-d l'),
+                'availability' => $availability
+            ]);
+        }
+        
+        return $startDate;
+        
+    } catch (\Exception $e) {
+        Log::error('Error calculating volunteer start date', [
+            'availability' => $availability,
+            'today' => $today->format('Y-m-d'),
+            'error' => $e->getMessage()
+        ]);
+        
+        // Fallback to next Monday
+        return $today->next(\Carbon\Carbon::MONDAY);
     }
 }
 }

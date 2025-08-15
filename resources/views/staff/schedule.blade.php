@@ -8,10 +8,11 @@
 <style>
     :root {
         --primary-color: #32bdea;
-        --secondary-color: #25a6cf;
-        --success-color: #1cc88a;
-        --warning-color: #f6c23e;
-        --danger-color: #e74a3b;
+        --secondary-color: #c850c0;
+        --primary-gradient: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        --success-color: #28a745;
+        --warning-color: #ffc107;
+        --danger-color: #dc3545;
         --dark-color: #2c3e50;
         --light-bg: #f8f9fc;
         --border-color: #e3e6f0;
@@ -33,7 +34,7 @@
     }
 
     .schedule-header {
-        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        background: var(--primary-gradient);
         color: white;
         padding: 1.5rem;
         margin-bottom: 2rem;
@@ -41,7 +42,7 @@
     }
 
     .day-header {
-        background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+        background: var(--primary-gradient);
         color: white;
         padding: 1rem;
         border-radius: 10px;
@@ -101,6 +102,41 @@
 
     .breadcrumb-item.active {
         color: #6c757d;
+    }
+
+    /* Button Updates for New Color Scheme */
+    .btn-primary {
+        background: var(--primary-gradient);
+        border: none;
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background: linear-gradient(135deg, #2ba3d1, #b347ad);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(50, 189, 234, 0.3);
+    }
+
+    .btn-outline-primary {
+        border: 2px solid var(--primary-color);
+        color: var(--primary-color);
+        background: transparent;
+    }
+
+    .btn-outline-primary:hover {
+        background: var(--primary-gradient);
+        border-color: var(--primary-color);
+        color: white;
+    }
+
+    .btn-success {
+        background: var(--success-color);
+        border-color: var(--success-color);
+    }
+
+    .btn-success:hover {
+        background: #218838;
+        border-color: #1e7e34;
     }
 </style>
 @endsection
@@ -212,7 +248,7 @@
                         <p class="mb-4">No activities have been scheduled for this staff member yet.</p>
                         @if(in_array(session('role'), ['admin', 'supervisor']))
                         <a href="{{ route('activities.create') }}" class="btn btn-primary">
-                            <i class="fas fa-plus me-2"></i>Create First Activity
+                            <i class="fas fa-plus me-2"></i>Create New Activity
                         </a>
                         @endif
                     </div>
@@ -284,7 +320,7 @@
 
                 @if(count($activities) > 0)
                     @foreach($activities as $activity)
-                        <div class="schedule-item">
+                        <a href="{{ route('activities.show', $activity->id) }}" class="schedule-item text-decoration-none">
                             <div class="activity-title">{{ $activity->activity_name }}</div>
                             <small class="text-muted">{{ $activity->category ?? 'General' }}</small>
                             <div class="mt-2">
@@ -294,8 +330,9 @@
                                 @else
                                     <span class="badge bg-secondary">Inactive</span>
                                 @endif
+                                <i class="fas fa-external-link-alt ms-2 text-muted small"></i>
                             </div>
-                        </div>
+                        </a>
                     @endforeach
                 @else
                     <div class="text-center py-4 text-muted">

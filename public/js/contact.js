@@ -60,9 +60,11 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     // Form submission handling
     form.addEventListener('submit', function(e) {
-    e.preventDefault();
-     if (validateForm()) {
-         submitForm();
+     if (!validateForm()) {
+         e.preventDefault();
+     } else {
+         // Show loading state but allow normal form submission
+         showSubmitLoadingState();
      }
     });
     function validateField(field) {
@@ -360,19 +362,14 @@ document.addEventListener('DOMContentLoaded', function() {
     
     Form submission handling
     */
-    function submitForm() {
+    function showSubmitLoadingState() {
     const form = document.getElementById('contactForm');
     const submitBtn = form.querySelector('button[type="submit"]');
-    const originalText = submitBtn.innerHTML;
     // Show loading state
     submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending Message...';
     submitBtn.disabled = true;
     // Add loading class to form
     form.classList.add('form-submitting');
-    // Submit after brief delay for UX
-    setTimeout(() => {
-    form.submit();
-    }, 500);
     }
     
     /**

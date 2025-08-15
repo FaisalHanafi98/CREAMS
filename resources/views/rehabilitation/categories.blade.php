@@ -18,11 +18,13 @@
                 <h3 class="text-capitalize mb-3">
                     @php
                         $typeIcons = [
+                            'faith' => 'mosque',
                             'rehabilitation' => 'heartbeat',
                             'academic' => 'graduation-cap', 
                             'creative_social' => 'palette'
                         ];
                         $typeLabels = [
+                            'faith' => 'Faith & Religious Studies',
                             'rehabilitation' => 'Rehabilitation',
                             'academic' => 'Academic',
                             'creative_social' => 'Creative & Social'
@@ -32,7 +34,9 @@
                     {{ $typeLabels[$type] ?? ucfirst(str_replace('_', ' ', $type)) }} Activities
                 </h3>
                 <p class="text-muted mb-4">
-                    @if($type === 'rehabilitation')
+                    @if($type === 'faith')
+                        Religious and spiritual activities to strengthen faith and Islamic knowledge.
+                    @elseif($type === 'rehabilitation')
                         Health and therapy-focused activities to improve physical, cognitive, and behavioral functions.
                     @elseif($type === 'academic') 
                         Educational activities focused on learning and skill development.

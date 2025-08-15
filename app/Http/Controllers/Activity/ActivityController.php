@@ -423,6 +423,7 @@ class ActivityController extends Controller
 
             // Group categories by their overarching type
             $categoriesGrouped = [
+                'faith' => $allCategories->where('category_type', 'faith'),
                 'rehabilitation' => $allCategories->where('category_type', 'rehabilitation'),
                 'academic' => $allCategories->where('category_type', 'academic'),
                 'creative_social' => $allCategories->where('category_type', 'creative_social')
@@ -551,14 +552,15 @@ class ActivityController extends Controller
         $validated = $request->validate([
             // Basic Information
             'activity_name' => 'required|string|max:255',
-            'activity_id' => 'required|string|max:20|unique:activities',
-            'category' => 'required|string|max:100',
-            'difficulty_level' => 'required|in:Beginner,Intermediate,Advanced',
-            'description' => 'required|string',
+            'activity_id' => 'required|string|max:20|unique:activities,activity_id',
+            'category_id' => 'required|exists:categories,id',
+            'activity_description' => 'required|string|max:2000',
+            'activity_goals' => 'nullable|string|max:2000',
+            'activity_outcomes' => 'nullable|string|max:2000',
             
             // Location & Centre
             'centre_id' => 'required|exists:centres,centre_id',
-            'location' => 'required|string|max:255',
+            'activity_location' => 'required|string|max:255',
             
             // Instructor
             'instructor_id' => 'required|exists:users,id',
@@ -589,23 +591,21 @@ class ActivityController extends Controller
             $startDate = Carbon::parse($validated['start_date']);
             $endDate = $startDate->copy()->addMonths($validated['activity_period']);
 
-            // Find category by name to get category_id
-            $category = Category::where('category_name', $validated['category'])->first();
-            $categoryId = $category ? $category->id : null;
-
             $activity = Activity::create([
                 'activity_id' => strtoupper($validated['activity_id']),
                 'activity_name' => $validated['activity_name'],
-                'activity_description' => $validated['description'],
-                'activity_type' => $validated['category'],
+                'activity_description' => $validated['activity_description'],
+                'activity_goals' => $validated['activity_goals'] ? json_encode(array_filter(explode("\n", $validated['activity_goals']))) : json_encode([]),
+                'activity_outcomes' => $validated['activity_outcomes'] ? json_encode(array_filter(explode("\n", $validated['activity_outcomes']))) : json_encode([]),
+                'activity_type' => 'therapy', // Default type
                 'activity_date' => $validated['start_date'],
                 'activity_start_time' => $validated['start_time'],
                 'activity_end_time' => $endTime->format('H:i:s'),
-                'activity_location' => $validated['location'],
+                'activity_location' => $validated['activity_location'],
                 'max_participants' => $validated['max_participants'],
                 'activity_status' => 'scheduled',
                 'centre_id' => $validated['centre_id'],
-                'category_id' => $categoryId,
+                'category_id' => $validated['category_id'],
                 'created_by' => session('id'),
                 'instructor_id' => $validated['instructor_id'],
                 'start_date' => $validated['start_date'],
@@ -1263,7 +1263,7 @@ class ActivityController extends Controller
             }
 
             return [
-                'total_activities' => $query->count(),
+                'total_activities' => $query->whereIn('activity_status', ['scheduled', 'ongoing', 'completed'])->count(),
                 'active_activities' => $query->whereIn('activity_status', ['scheduled', 'ongoing'])->count(),
                 'total_sessions' => $totalSessions,
                 'total_enrollments' => $totalEnrollments,

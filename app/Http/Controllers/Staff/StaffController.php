@@ -355,10 +355,11 @@ class StaffController extends Controller
     private function getStaffStatistics($staffMember)
     {
         try {
-            // Get activities where this staff is assigned as teacher/instructor (not just created by)
+            // Get activities where this staff is assigned as teacher/instructor
             $staffActivities = Activity::with(['enrollments.trainee', 'sessions'])
                 ->where(function($query) use ($staffMember) {
                     $query->where('created_by', $staffMember->id)
+                          ->orWhere('instructor_id', $staffMember->id)
                           ->orWhereHas('sessions', function($q) use ($staffMember) {
                               $q->where('teacher_id', $staffMember->id);
                           });
@@ -432,10 +433,12 @@ class StaffController extends Controller
             }
 
             return [
-                'active_sessions' => $activeSessions,
+                'active_sessions' => $staffActivities->count(), // Total activities assigned to this staff
                 'total_trainees' => $totalTrainees,
                 'attendance_rate' => round($avgAttendance, 1),
-                'years_service' => $yearsServiceDisplay
+                'years_service' => $yearsServiceDisplay,
+                'total_activities' => $staffActivities->count(),
+                'active_activity_sessions' => $activeSessions // Keep the original sessions count
             ];
 
         } catch (\Exception $e) {
@@ -482,7 +485,10 @@ class StaffController extends Controller
             
             if (\Schema::hasTable('activities')) {
                 $activities = \DB::table('activities')
-                    ->where('created_by', $staffMember->id)
+                    ->where(function($query) use ($staffMember) {
+                        $query->where('created_by', $staffMember->id)
+                              ->orWhere('instructor_id', $staffMember->id);
+                    })
                     ->whereIn('activity_status', ['scheduled', 'ongoing'])
                     ->get();
             }
@@ -617,7 +623,10 @@ class StaffController extends Controller
             
             if (\Schema::hasTable('activities')) {
                 $activitiesQuery = \DB::table('activities')
-                    ->where('created_by', $staffMember->id)
+                    ->where(function($query) use ($staffMember) {
+                        $query->where('created_by', $staffMember->id)
+                              ->orWhere('instructor_id', $staffMember->id);
+                    })
                     ->whereIn('activity_status', ['scheduled', 'ongoing']);
                 
                 // Add enrollment counts if table exists

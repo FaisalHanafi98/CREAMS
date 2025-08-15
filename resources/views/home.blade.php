@@ -254,7 +254,7 @@
                 <div class="org-level">
                     <div class="org-card director">
                         <div class="position-badge">PENGERUSI</div>
-                        <img src="{{ asset('images/team/director1.jpg') }}" alt="Professor Dr. Ruzita">
+                        <img src="{{ asset('images/leadership/director.png') }}" alt="Professor Dr. Ruzita">
                         <h4>Professor Dr. Ruzita Binti Mohd Amin</h4>
                     </div>
                 </div>
@@ -263,7 +263,7 @@
                 <div class="org-level">
                     <div class="org-card deputy">
                         <div class="position-badge">TIMBALAN PENGERUSI</div>
-                        <img src="{{ asset('images/team/deputy1.jpg') }}" alt="Professor Madya Dr. Aida">
+                        <img src="{{ asset('images/leadership/vice director.jpeg') }}" alt="Professor Madya Dr. Aida">
                         <h4>Professor Madya Dr. Aida Binti Mokhtar</h4>
                     </div>
                 </div>
@@ -272,12 +272,12 @@
                 <div class="org-level departments">
                     <div class="org-card">
                         <div class="position-badge">SETIAUSAHA</div>
-                        <img src="{{ asset('images/team/secretary.jpg') }}" alt="Professor Madya Dr. Nor Azizan">
+                        <img src="{{ asset('images/leadership/secretary.jpeg') }}" alt="Professor Madya Dr. Nor Azizan">
                         <h4>Professor Madya Dr. Nor Azizan Binti Che Embi</h4>
                     </div>
                     <div class="org-card">
                         <div class="position-badge">BENDAHARI</div>
-                        <img src="{{ asset('images/team/treasurer.jpg') }}" alt="Professor Madya Dr. Wan Rohaida">
+                        <img src="{{ asset('images/leadership/treasurer.jpeg') }}" alt="Professor Madya Dr. Wan Rohaida">
                         <h4>Professor Madya Dr. Wan Rohaida Binti Wan Husain</h4>
                     </div>
                 </div>
@@ -286,7 +286,7 @@
                 <div class="org-level">
                     <div class="org-card">
                         <div class="position-badge">PENOLONG SETIAUSAHA</div>
-                        <img src="{{ asset('images/team/assistant.jpg') }}" alt="Dr. Wan Aishah">
+                        <img src="{{ asset('images/leadership/assistant secretary.jpeg') }}" alt="Dr. Wan Aishah">
                         <h4>Dr. Wan Aishah Hanim Abd Karim</h4>
                     </div>
                 </div>
@@ -296,11 +296,11 @@
                     <h4 class="committee-title">AHLI JAWATANKUASA</h4>
                     <div class="committee-members">
                         <div class="org-card">
-                            <img src="{{ asset('images/team/member1.jpg') }}" alt="Professor Madya Dr. Radiah">
+                            <img src="{{ asset('images/leadership/commitee dr radiah.jpeg') }}" alt="Professor Madya Dr. Radiah">
                             <h4>Professor Madya Dr. Radiah Binti Abdul Ghani</h4>
                         </div>
                         <div class="org-card">
-                            <img src="{{ asset('images/team/member2.jpg') }}" alt="Dr. Zunaidah">
+                            <img src="{{ asset('images/leadership/commitee dr zunaidah.jpeg') }}" alt="Dr. Zunaidah">
                             <h4>Dr. Zunaidah Binti Mohd Marzuki</h4>
                         </div>
                     </div>
@@ -316,7 +316,6 @@
                 <div class="org-level">
                     <div class="org-card director">
                         <div class="position-badge">PENYELIA</div>
-                        <img src="{{ asset('images/team/supervisor.jpg') }}" alt="Nurul Huda">
                         <h4>Nurul Huda Binti Azaman</h4>
                     </div>
                 </div>
@@ -326,11 +325,9 @@
                     <h4 class="committee-title">PETUGAS</h4>
                     <div class="departments">
                         <div class="org-card">
-                            <img src="{{ asset('images/team/officer1.jpg') }}" alt="Nabilah">
                             <h4>Nabilah Binti Mohd Isa</h4>
                         </div>
                         <div class="org-card">
-                            <img src="{{ asset('images/team/officer2.jpg') }}" alt="Siti Nadia">
                             <h4>Siti Nadia Binti Ashari</h4>
                         </div>
                     </div>

@@ -32,10 +32,10 @@ class ActivityWizardController extends Controller
                 return redirect()->route('login');
             }
 
-            // Check authorization - only admin, supervisor, and teacher can create activities
+            // Check authorization - only admin can create activities
             $role = session('role');
-            if (!in_array($role, ['admin', 'supervisor', 'teacher'])) {
-                abort(403, 'Unauthorized to create activities');
+            if ($role !== 'admin') {
+                abort(403, 'Only centre administrators can create activities');
             }
 
             $centreId = session('centre_id');

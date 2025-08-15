@@ -233,14 +233,6 @@ Route::middleware(['auth', 'validate.params'])->group(function () {
             });
         });
         
-        // Activity Creation Wizard routes (Admin, Supervisor, Teacher)
-        Route::prefix('wizard')->name('wizard.')->middleware(['role:admin,supervisor,teacher'])->group(function () {
-            Route::get('/', [App\Http\Controllers\Activity\ActivityWizardController::class, 'index'])->name('index');
-            Route::post('/validate-step', [App\Http\Controllers\Activity\ActivityWizardController::class, 'validateStep'])->name('validate-step');
-            Route::post('/store', [App\Http\Controllers\Activity\ActivityWizardController::class, 'store'])->name('store');
-            Route::get('/template-preview', [App\Http\Controllers\Activity\ActivityWizardController::class, 'getTemplatePreview'])->name('template-preview');
-            Route::get('/suggested-iep-goals', [App\Http\Controllers\Activity\ActivityWizardController::class, 'getSuggestedIepGoals'])->name('suggested-iep-goals');
-        });
         
         // Admin only routes - Activity creation and management
         Route::middleware(['role:admin'])->group(function () {
