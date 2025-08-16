@@ -15,7 +15,7 @@ class ActivitySession extends Model
     protected $fillable = [
         'activity_id',
         'session_id',
-        'session_code',
+        // 'session_code', // Column doesn't exist in table
         'session_name',
         'session_description',
         'session_date',
@@ -38,8 +38,8 @@ class ActivitySession extends Model
         'session_notes',
         'session_materials',
         'recurring_pattern',
-        'color_code',
-        'encrypted_id'
+        // 'color_code', // Column doesn't exist in table
+        // 'encrypted_id' // Column doesn't exist in table
     ];
 
     protected $casts = [
@@ -61,12 +61,9 @@ class ActivitySession extends Model
     {
         parent::boot();
 
-        // Sync scheduled_date with session_date and generate session_code on create/update
+        // Sync scheduled_date with session_date on create/update
         static::creating(function ($session) {
-            // Generate unique session code
-            if (!$session->session_code) {
-                $session->session_code = static::generateSessionCode();
-            }
+            // Skip session_code generation since column doesn't exist in table
             
             // Sync dates
             if (!$session->scheduled_date && $session->session_date) {
@@ -75,6 +72,8 @@ class ActivitySession extends Model
                 $session->session_date = $session->scheduled_date;
             }
             
+            // Skip encrypted_id and color_code generation - columns don't exist in table
+            /*
             // Generate encrypted ID if not provided
             if (!$session->encrypted_id) {
                 $session->encrypted_id = encrypt($session->id ?: uniqid('session_'));
@@ -84,6 +83,7 @@ class ActivitySession extends Model
             if (!$session->color_code) {
                 $session->color_code = '#3498db';
             }
+            */
         });
 
         static::updating(function ($session) {
@@ -436,10 +436,14 @@ class ActivitySession extends Model
     }
 
     /**
-     * Generate unique session code
+     * Generate unique session code (DISABLED - column doesn't exist in table)
      */
     public static function generateSessionCode($activityId = null)
     {
+        // Disabled because session_code column doesn't exist in activity_sessions table
+        return null;
+        
+        /* ORIGINAL CODE - COMMENTED OUT
         do {
             // Generate code format: SES-YYYYMM-XXXX (e.g., SES-202501-0001)
             $yearMonth = date('Ym');
@@ -448,6 +452,7 @@ class ActivitySession extends Model
         } while (static::where('session_code', $code)->exists());
 
         return $code;
+        */
     }
 
     /**

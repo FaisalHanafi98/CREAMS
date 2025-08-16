@@ -624,6 +624,10 @@
                                                     <i class="fas fa-calendar-day"></i>
                                                     Today
                                                 </button>
+                                                <button class="action-btn attendance-btn" onclick="markAttendance()" id="attendanceBtn">
+                                                    <i class="fas fa-user-check"></i>
+                                                    Mark Attendance
+                                                </button>
                                                 <a href="{{ route('staffs.schedule', ['encrypted_id' => $user_encrypted_id]) }}" class="action-btn view-all-btn">
                                                     <i class="fas fa-external-link-alt"></i>
                                                     View All
@@ -3061,5 +3065,153 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 });
+
+// Mark Attendance Function
+function markAttendance() {
+    const attendanceBtn = document.getElementById('attendanceBtn');
+    const originalHTML = attendanceBtn.innerHTML;
+    
+    // Check if already marked today
+    const today = new Date().toDateString();
+    const lastMarked = localStorage.getItem('attendance_last_marked');
+    
+    if (lastMarked === today) {
+        // Show already marked message
+        attendanceBtn.innerHTML = '<i class="fas fa-check-circle"></i> Already Marked Today';
+        attendanceBtn.classList.add('attendance-marked');
+        
+        setTimeout(() => {
+            attendanceBtn.innerHTML = originalHTML;
+            attendanceBtn.classList.remove('attendance-marked');
+        }, 3000);
+        return;
+    }
+    
+    // Show loading state
+    attendanceBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Marking...';
+    attendanceBtn.disabled = true;
+    
+    // Simulate attendance marking (replace with actual API call)
+    setTimeout(() => {
+        // Mark as successful
+        attendanceBtn.innerHTML = '<i class="fas fa-check-circle"></i> Marked Successfully!';
+        attendanceBtn.classList.add('attendance-success');
+        
+        // Store in localStorage to remember for today
+        localStorage.setItem('attendance_last_marked', today);
+        localStorage.setItem('attendance_time', new Date().toLocaleTimeString());
+        
+        // Reset button after 3 seconds
+        setTimeout(() => {
+            attendanceBtn.innerHTML = '<i class="fas fa-user-check"></i> Mark Attendance';
+            attendanceBtn.classList.remove('attendance-success');
+            attendanceBtn.disabled = false;
+        }, 3000);
+        
+        // Show success notification
+        showAttendanceNotification('Attendance marked successfully at ' + new Date().toLocaleTimeString(), 'success');
+        
+    }, 1500); // Simulate API delay
+}
+
+// Show attendance notification
+function showAttendanceNotification(message, type) {
+    const notification = document.createElement('div');
+    notification.className = `attendance-notification attendance-${type}`;
+    notification.innerHTML = `
+        <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-info-circle'}"></i>
+        <span>${message}</span>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Show with animation
+    setTimeout(() => notification.classList.add('show'), 100);
+    
+    // Hide after 4 seconds
+    setTimeout(() => {
+        notification.classList.remove('show');
+        setTimeout(() => notification.remove(), 300);
+    }, 4000);
+}
+
+// Check attendance status on page load
+document.addEventListener('DOMContentLoaded', function() {
+    const today = new Date().toDateString();
+    const lastMarked = localStorage.getItem('attendance_last_marked');
+    const attendanceBtn = document.getElementById('attendanceBtn');
+    
+    if (lastMarked === today && attendanceBtn) {
+        attendanceBtn.innerHTML = '<i class="fas fa-check-circle"></i> Marked Today';
+        attendanceBtn.classList.add('attendance-marked');
+        
+        const markedTime = localStorage.getItem('attendance_time');
+        if (markedTime) {
+            attendanceBtn.title = `Attendance marked at ${markedTime}`;
+        }
+    }
+});
 </script>
+
+<style>
+/* Attendance Button Styles */
+.attendance-btn {
+    background: linear-gradient(135deg, #2ed573, #1dd1a1);
+    color: white;
+    border: none;
+    transition: all 0.3s ease;
+}
+
+.attendance-btn:hover {
+    background: linear-gradient(135deg, #1dd1a1, #00d2d3);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(46, 213, 115, 0.4);
+}
+
+.attendance-btn.attendance-marked {
+    background: linear-gradient(135deg, #ffa726, #ff9800);
+    cursor: default;
+}
+
+.attendance-btn.attendance-success {
+    background: linear-gradient(135deg, #2ed573, #1dd1a1);
+    animation: pulse 0.6s ease-in-out;
+}
+
+.attendance-notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: white;
+    padding: 15px 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    z-index: 9999;
+    transform: translateX(100%);
+    opacity: 0;
+    transition: all 0.3s ease;
+    max-width: 300px;
+}
+
+.attendance-notification.show {
+    transform: translateX(0);
+    opacity: 1;
+}
+
+.attendance-notification.attendance-success {
+    border-left: 4px solid #2ed573;
+}
+
+.attendance-notification.attendance-success i {
+    color: #2ed573;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+</style>
 @endsection

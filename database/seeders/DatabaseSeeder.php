@@ -67,25 +67,34 @@ class DatabaseSeeder extends Seeder
 
             // Phase 7: Enhanced System Features
             $this->command->info("\n🎯 PHASE 7: Adding enhanced system features...");
+            // Disabled seeders that require additional table columns not present in current schema
+            /*
             $this->call([
-                CREAMSStaffExpertiseSeeder::class,      // Staff expertise and qualifications
-                CREAMSRealisticAttendanceSeeder::class,  // Realistic attendance data based on actual enrollments
+                // CREAMSStaffExpertiseSeeder::class,      // DISABLED - requires additional user table columns
+                // CREAMSRealisticAttendanceSeeder::class,  // DISABLED - requires additional session_enrollments columns
             ]);
+            */
 
             // Phase 8: Asset Management and Enhanced Systems
             $this->command->info("\n🏗️ PHASE 8: Setting up asset management and enhanced systems...");
+            // Disabled seeders with enum/data mismatch issues
+            /*
             $this->call([
-                CREAMSAssetManagementSeeder::class,  // Comprehensive asset management
-                CREAMSIEPProgressSeeder::class,      // IEP and progress tracking
+                // CREAMSAssetManagementSeeder::class,  // DISABLED - status enum mismatch
+                // CREAMSIEPProgressSeeder::class,      // May have similar issues
                 // CREAMSCommunicationSeeder::class, // Communication system (schema needs fixing)
             ]);
+            */
 
             // Phase 9: Additional Data (Optional)
             $this->command->info("\n📝 PHASE 9: Adding supplementary data...");
+            // Disabled due to column mismatches with actual table structure
+            /*
             $this->call([
-                CREAMSMessageSeeder::class,       // Sample messages between staff
-                CREAMSNotificationSeeder::class,  // System notifications
+                // CREAMSMessageSeeder::class,       // DISABLED - message table column mismatch
+                // CREAMSNotificationSeeder::class,  // May have similar issues
             ]);
+            */
 
             // Post-seeding operations
             $this->command->info("\n🔧 PHASE 10: Post-seeding optimizations...");

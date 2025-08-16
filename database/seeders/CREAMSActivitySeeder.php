@@ -220,18 +220,15 @@ class CREAMSActivitySeeder extends Seeder
                     'activity_description' => $this->generateActivityDescription($activityName),
                     'activity_type' => $this->getActivityType($activityName),
                     'activity_date' => Carbon::now()->subDays(rand(30, 90)),
-                    'start_date' => Carbon::now()->subDays(rand(30, 90)),
-                    'end_date' => Carbon::now()->addDays(rand(60, 180)),
-                    'sessions_per_week' => rand(1, 3),
-                    'activity_period' => rand(3, 12),
+                    'activity_period' => rand(3, 12) . ' months',
                     'activity_start_time' => $this->getRandomTime(),
                     'activity_end_time' => $this->getRandomEndTime(),
                     'activity_location' => $this->getVenueForCategory($categoryType),
                     'max_participants' => $this->getMaxParticipants($categoryType),
                     'current_participants' => 0,
-                    'activity_goals' => $this->generateActivityGoals($activityName),
-                    'activity_outcomes' => $this->generateActivityOutcomes($activityName),
-                    'required_resources' => $this->generateRequiredResources($activityName),
+                    'activity_goals' => json_encode($this->generateActivityGoals($activityName)),
+                    'activity_outcomes' => json_encode($this->generateActivityOutcomes($activityName)),
+                    'required_resources' => json_encode($this->generateRequiredResources($activityName)),
                     'activity_status' => 'scheduled',
                     'centre_id' => $centre->centre_id,
                     'category_id' => $category->id,
@@ -300,23 +297,20 @@ class CREAMSActivitySeeder extends Seeder
         
         return ActivitySession::create([
             'activity_id' => $activity->id,
-            'session_id' => $sessionId,
-            'session_name' => $activity->activity_name . ' - Session ' . $sessionNumber,
-            'session_description' => 'Regular session for ' . $activity->activity_name,
             'session_date' => $sessionDate->format('Y-m-d'),
             'scheduled_date' => $sessionDate->format('Y-m-d'),
             'start_time' => $timeSlot['start'],
             'end_time' => $timeSlot['end'],
-            'session_start_time' => $timeSlot['start'],
-            'session_end_time' => $timeSlot['end'],
             'venue' => $activity->activity_location,
             'max_participants' => $activity->max_participants,
             'current_participants' => 0,
+            'session_status' => $status,
             'status' => $status,
             'teacher_id' => $activity->created_by,
             'instructor_id' => $activity->created_by,
             'attendance_marked' => $status === 'completed',
-            'notes' => $this->generateSessionNotes($status),
+            'session_notes' => $this->generateSessionNotes($status),
+            'centre_id' => $activity->centre_id,
             'created_at' => $sessionDate->copy()->subDays(rand(1, 7))
         ]);
     }
@@ -351,9 +345,10 @@ class CREAMSActivitySeeder extends Seeder
                 ], [
                     'enrollment_status' => 'enrolled',
                     'enrollment_date' => $activitySessions->first()->created_at,
-                    'progress_percentage' => rand(70, 95),
-                    'attendance_count' => $activitySessions->count(),
+                    'overall_progress' => rand(70, 95),
+                    'total_sessions' => $activitySessions->count(),
                     'enrolled_by' => $activitySessions->first()->teacher_id,
+                    'centre_id' => $activitySessions->first()->centre_id,
                 ]);
                 
                 if ($activityEnrollment->wasRecentlyCreated) {
@@ -371,10 +366,8 @@ class CREAMSActivitySeeder extends Seeder
                             'trainee_id' => $trainee->id,
                             'enrollment_date' => $session->created_at,
                             'enrolled_by' => $session->teacher_id,
-                            'enrollment_status' => $attendanceStatus === 'present' ? 'attended' : 'enrolled',
-                            'participation_score' => $session->status === 'completed' ? rand(6, 10) : null,
-                            'enrollment_notes' => $this->generateProgressNotes($attendanceStatus),
-                            'feedback' => $session->status === 'completed' ? 'Session completed successfully' : null,
+                            'enrollment_status' => 'enrolled',
+                            'centre_id' => $session->centre_id,
                         ]);
                     }
                 }

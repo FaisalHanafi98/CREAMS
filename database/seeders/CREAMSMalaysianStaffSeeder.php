@@ -236,8 +236,15 @@ class CREAMSMalaysianStaffSeeder extends Seeder
             default => 'US'
         };
         
-        $number = str_pad($index, 4, '0', STR_PAD_LEFT);
-        return $roleCode . $centreId . $number;
+        // Check for existing IDs and increment if necessary
+        $baseNumber = $index;
+        do {
+            $number = str_pad($baseNumber, 4, '0', STR_PAD_LEFT);
+            $iiumId = $roleCode . $centreId . $number;
+            $baseNumber++;
+        } while (User::where('iium_id', $iiumId)->exists());
+        
+        return $iiumId;
     }
 
     private function generateEmail(string $name, string $centreId, string $role, int $index): string

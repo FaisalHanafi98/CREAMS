@@ -115,128 +115,341 @@
     </div>
 </div>
 
-{{-- Create Session Modal --}}
+{{-- Create Session Modal - Enhanced Version --}}
 <div class="modal fade" id="createSessionModal" tabindex="-1" role="dialog">
-    <div class="modal-dialog modal-lg" role="document">
-        <div class="modal-content">
-            <form action="{{ route('activities.sessions.create', $activity->id) }}" method="POST">
+    <div class="modal-dialog modal-xl" role="document">
+        <div class="modal-content enhanced-modal">
+            <form id="sessionModalForm" action="{{ route('activities.sessions.create', $activity->id) }}" method="POST">
                 @csrf
-                <div class="modal-header">
-                    <h5 class="modal-title">Schedule New Session</h5>
+                <div class="modal-header enhanced-header">
+                    <div class="header-info">
+                        <h5 class="modal-title">
+                            <i class="fas fa-calendar-plus text-primary"></i>
+                            Schedule New Session
+                        </h5>
+                        <p class="activity-subtitle">{{ $activity->activity_name }} ({{ $activity->activity_code }})</p>
+                    </div>
                     <button type="button" class="close" data-dismiss="modal">
                         <span>&times;</span>
                     </button>
                 </div>
-                <div class="modal-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="teacher_id">Teacher <span class="required">*</span></label>
-                                <select class="form-control" id="teacher_id" name="teacher_id" required>
-                                    <option value="">Select Teacher</option>
-                                    @foreach($teachers as $teacher)
-                                        <option value="{{ $teacher->id }}">{{ $teacher->name }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
+
+                {{-- Validation Alert --}}
+                <div id="modalValidationAlert" class="validation-alert" style="display: none;">
+                    <div class="alert-content">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <div class="alert-text">
+                            <strong>Please fix the following issues:</strong>
+                            <ul id="modalValidationList"></ul>
                         </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="date">Date <span class="required">*</span></label>
-                                <input type="date" 
-                                       class="form-control" 
-                                       id="date" 
-                                       name="date" 
-                                       min="{{ date('Y-m-d') }}" 
-                                       required>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label for="start_time">Start Time <span class="required">*</span></label>
-                                <input type="time" 
-                                       class="form-control" 
-                                       id="start_time" 
-                                       name="start_time" 
-                                       required>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label for="duration">Duration <span class="required">*</span></label>
-                                <select class="form-control" id="duration" name="duration" required>
-                                    <option value="15">15 minutes</option>
-                                    <option value="20">20 minutes</option>
-                                    <option value="30" selected>30 minutes</option>
-                                    <option value="45">45 minutes</option>
-                                    <option value="60">1 hour</option>
-                                    <option value="90">1.5 hours</option>
-                                    <option value="120">2 hours</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label for="max_capacity">Max Capacity <span class="required">*</span></label>
-                                <input type="number" 
-                                       class="form-control" 
-                                       id="max_capacity" 
-                                       name="max_capacity" 
-                                       min="1" 
-                                       max="50" 
-                                       value="20" 
-                                       required>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="status">Session Status <span class="required">*</span></label>
-                                <select class="form-control" id="status" name="status" required>
-                                    <option value="scheduled" selected>Scheduled</option>
-                                    <option value="active">Active</option>
-                                    <option value="cancelled">Cancelled</option>
-                                    <option value="completed">Completed</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="room_number">Room Number</label>
-                                <input type="text" 
-                                       class="form-control" 
-                                       id="room_number" 
-                                       name="room_number" 
-                                       placeholder="e.g., A101, B205">
-                            </div>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="location">Location <span class="required">*</span></label>
-                        <input type="text" 
-                               class="form-control" 
-                               id="location" 
-                               name="location" 
-                               placeholder="e.g., Room 101, Therapy Hall" 
-                               required>
-                    </div>
-                    <div class="form-group">
-                        <label for="notes">Session Notes</label>
-                        <textarea class="form-control" 
-                                  id="notes" 
-                                  name="notes" 
-                                  rows="3"
-                                  placeholder="Add any special instructions, materials needed, or session objectives..."></textarea>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-calendar-plus"></i> Schedule Session
-                    </button>
+
+                <div class="modal-body enhanced-body">
+                    {{-- Required Fields Section --}}
+                    <div class="form-section">
+                        <div class="section-header">
+                            <h6><i class="fas fa-star text-danger"></i> Essential Information</h6>
+                            <small>All fields marked with <span class="text-danger">*</span> are mandatory</small>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group enhanced-field">
+                                    <label for="modal_teacher_id" class="enhanced-label">
+                                        <i class="fas fa-user-tie text-primary"></i>
+                                        Assigned Teacher <span class="required-star">*</span>
+                                    </label>
+                                    <select class="form-control enhanced-select" 
+                                            id="modal_teacher_id" 
+                                            name="teacher_id" 
+                                            required 
+                                            data-validation="required">
+                                        <option value="">Choose qualified teacher...</option>
+                                        @foreach($teachers as $teacher)
+                                            <option value="{{ $teacher->id }}" 
+                                                    data-qualifications="{{ $teacher->qualifications ?? '' }}"
+                                                    data-specialization="{{ $teacher->specialization ?? '' }}">
+                                                {{ $teacher->name }}
+                                                @if($teacher->qualifications)
+                                                    - {{ $teacher->qualifications }}
+                                                @endif
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    <div class="field-error" id="modal_teacher_id_error"></div>
+                                    <small class="field-hint">
+                                        <i class="fas fa-info-circle text-info"></i>
+                                        Select teacher with appropriate qualifications for this activity
+                                    </small>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="form-group enhanced-field">
+                                    <label for="modal_centre_id" class="enhanced-label">
+                                        <i class="fas fa-building text-primary"></i>
+                                        Centre <span class="required-star">*</span>
+                                    </label>
+                                    <select class="form-control enhanced-select" 
+                                            id="modal_centre_id" 
+                                            name="centre_id" 
+                                            required 
+                                            data-validation="required">
+                                        <option value="">Select centre...</option>
+                                        @foreach($centres ?? [] as $centre)
+                                            <option value="{{ $centre->id }}" 
+                                                    {{ $activity->centre_id == $centre->id ? 'selected' : '' }}
+                                                    data-location="{{ $centre->location }}"
+                                                    data-hours="{{ $centre->operating_hours ?? '8:00 AM - 6:00 PM' }}">
+                                                {{ $centre->centre_name }} - {{ $centre->location }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    <div class="field-error" id="modal_centre_id_error"></div>
+                                    <small class="field-hint">
+                                        <i class="fas fa-info-circle text-info"></i>
+                                        Default: {{ $activity->centre->centre_name ?? 'Activity centre' }}
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Schedule Configuration --}}
+                    <div class="form-section">
+                        <div class="section-header">
+                            <h6><i class="fas fa-clock text-warning"></i> Schedule Configuration</h6>
+                            <small>Set the precise timing for this session</small>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group enhanced-field">
+                                    <label for="modal_date" class="enhanced-label">
+                                        <i class="fas fa-calendar text-primary"></i>
+                                        Session Date <span class="required-star">*</span>
+                                    </label>
+                                    <input type="date" 
+                                           class="form-control" 
+                                           id="modal_date" 
+                                           name="date" 
+                                           min="{{ date('Y-m-d') }}" 
+                                           max="{{ date('Y-m-d', strtotime('+6 months')) }}"
+                                           required 
+                                           data-validation="required|date|future">
+                                    <div class="field-error" id="modal_date_error"></div>
+                                    <div id="modalDateConflict" class="conflict-warning" style="display: none;">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                        <span>Date conflicts detected</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <div class="form-group enhanced-field">
+                                    <label for="modal_start_time" class="enhanced-label">
+                                        <i class="fas fa-clock text-primary"></i>
+                                        Start Time <span class="required-star">*</span>
+                                    </label>
+                                    <input type="time" 
+                                           class="form-control" 
+                                           id="modal_start_time" 
+                                           name="start_time" 
+                                           required 
+                                           data-validation="required|time|business_hours">
+                                    <div class="field-error" id="modal_start_time_error"></div>
+                                    <div id="modalTimeConflict" class="conflict-warning" style="display: none;">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                        <span>Time slot conflicts</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <div class="form-group enhanced-field">
+                                    <label for="modal_duration" class="enhanced-label">
+                                        <i class="fas fa-hourglass-half text-primary"></i>
+                                        Duration <span class="required-star">*</span>
+                                    </label>
+                                    <select class="form-control enhanced-select" 
+                                            id="modal_duration" 
+                                            name="duration" 
+                                            required 
+                                            data-validation="required">
+                                        <option value="">Select duration...</option>
+                                        <option value="15">15 minutes</option>
+                                        <option value="20">20 minutes</option>
+                                        <option value="30" selected>30 minutes</option>
+                                        <option value="45">45 minutes</option>
+                                        <option value="60">1 hour</option>
+                                        <option value="90">1.5 hours</option>
+                                        <option value="120">2 hours</option>
+                                    </select>
+                                    <div class="field-error" id="modal_duration_error"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Schedule Preview --}}
+                        <div id="modalSchedulePreview" class="schedule-preview-box" style="display: none;">
+                            <div class="preview-header">
+                                <i class="fas fa-eye text-info"></i>
+                                <strong>Schedule Preview</strong>
+                            </div>
+                            <div class="preview-content">
+                                <div class="preview-item">
+                                    <strong>Session:</strong> <span id="modalPreviewDateTime">-</span>
+                                </div>
+                                <div class="preview-item">
+                                    <strong>Duration:</strong> <span id="modalPreviewDuration">-</span>
+                                </div>
+                                <div class="preview-item">
+                                    <strong>End Time:</strong> <span id="modalPreviewEndTime">-</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Location & Capacity --}}
+                    <div class="form-section">
+                        <div class="section-header">
+                            <h6><i class="fas fa-map-marker-alt text-success"></i> Location & Capacity</h6>
+                            <small>Specify where the session will be held and participant limits</small>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="form-group enhanced-field">
+                                    <label for="modal_location" class="enhanced-label">
+                                        <i class="fas fa-map-marker-alt text-primary"></i>
+                                        Specific Location <span class="required-star">*</span>
+                                    </label>
+                                    <input type="text" 
+                                           class="form-control" 
+                                           id="modal_location" 
+                                           name="location" 
+                                           placeholder="e.g., Therapy Room A, Main Hall, Computer Lab"
+                                           required 
+                                           data-validation="required|min:3">
+                                    <div class="field-error" id="modal_location_error"></div>
+                                    <small class="field-hint">
+                                        <i class="fas fa-info-circle text-info"></i>
+                                        Be specific to help participants find the session easily
+                                    </small>
+                                </div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <div class="form-group enhanced-field">
+                                    <label for="modal_max_capacity" class="enhanced-label">
+                                        <i class="fas fa-users text-primary"></i>
+                                        Max Capacity <span class="required-star">*</span>
+                                    </label>
+                                    <div class="input-group">
+                                        <input type="number" 
+                                               class="form-control" 
+                                               id="modal_max_capacity" 
+                                               name="max_capacity" 
+                                               min="1" 
+                                               max="50" 
+                                               value="20" 
+                                               required 
+                                               data-validation="required|numeric|min:1|max:50">
+                                        <div class="input-group-append">
+                                            <span class="input-group-text">people</span>
+                                        </div>
+                                    </div>
+                                    <div class="field-error" id="modal_max_capacity_error"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="modal_room_number" class="enhanced-label">
+                                        <i class="fas fa-door-open text-secondary"></i>
+                                        Room/Hall Number
+                                    </label>
+                                    <input type="text" 
+                                           class="form-control" 
+                                           id="modal_room_number" 
+                                           name="room_number" 
+                                           placeholder="e.g., A101, B205, TH-1">
+                                    <small class="field-hint">
+                                        <i class="fas fa-info-circle text-info"></i>
+                                        Optional formal room designation
+                                    </small>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="modal_status" class="enhanced-label">
+                                        <i class="fas fa-flag text-secondary"></i>
+                                        Initial Status
+                                    </label>
+                                    <select class="form-control enhanced-select" id="modal_status" name="status">
+                                        <option value="scheduled" selected>Scheduled</option>
+                                        <option value="draft">Draft (not visible to trainees)</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Additional Information --}}
+                    <div class="form-section">
+                        <div class="section-header">
+                            <h6><i class="fas fa-sticky-note text-info"></i> Additional Information</h6>
+                            <small>Optional notes and special instructions</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="modal_notes" class="enhanced-label">
+                                <i class="fas fa-clipboard-list text-secondary"></i>
+                                Session Notes & Instructions
+                            </label>
+                            <textarea class="form-control" 
+                                      id="modal_notes" 
+                                      name="notes" 
+                                      rows="3"
+                                      placeholder="Add any special instructions, materials needed, preparation requirements, or session objectives..."></textarea>
+                            <small class="field-hint">
+                                <i class="fas fa-info-circle text-info"></i>
+                                Include setup requirements, special materials, or participant preparation notes
+                            </small>
+                        </div>
+                    </div>
+
+                    {{-- Validation Summary --}}
+                    <div id="modalValidationSummary" class="validation-summary-box" style="display: none;">
+                        <div class="summary-header">
+                            <i class="fas fa-clipboard-check text-success"></i>
+                            <strong>Validation Status</strong>
+                        </div>
+                        <div id="modalValidationItems" class="validation-items">
+                            <!-- Validation items will be populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer enhanced-footer">
+                    <div class="footer-info">
+                        <small class="text-muted">
+                            <i class="fas fa-info-circle"></i>
+                            All required fields must be completed before scheduling
+                        </small>
+                    </div>
+                    <div class="footer-actions">
+                        <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">
+                            <i class="fas fa-times"></i> Cancel
+                        </button>
+                        <button type="submit" class="btn btn-primary" id="modalSubmitBtn">
+                            <i class="fas fa-calendar-plus"></i> Schedule Session
+                        </button>
+                    </div>
                 </div>
             </form>
         </div>
@@ -246,8 +459,562 @@
 
 @section('styles')
 <link rel="stylesheet" href="{{ asset('css/activities.css') }}">
+<link rel="stylesheet" href="{{ asset('css/form-validation-enhanced.css') }}">
+<link rel="stylesheet" href="{{ asset('css/session-enhanced.css') }}">
+<style>
+/* Enhanced Modal Styles */
+.enhanced-modal {
+    border-radius: 12px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+}
+
+.enhanced-header {
+    background: linear-gradient(135deg, #32bdea, #c850c0);
+    color: white;
+    border-radius: 12px 12px 0 0;
+    padding: 20px 30px;
+}
+
+.header-info .modal-title {
+    margin: 0;
+    font-size: 1.3rem;
+    font-weight: 600;
+}
+
+.activity-subtitle {
+    margin: 5px 0 0 0;
+    font-size: 0.9rem;
+    opacity: 0.9;
+}
+
+.enhanced-body {
+    padding: 30px;
+}
+
+.form-section {
+    margin-bottom: 30px;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border-left: 4px solid #32bdea;
+}
+
+.section-header {
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #e0e6ed;
+}
+
+.section-header h6 {
+    margin: 0 0 5px 0;
+    color: #2c3e50;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+}
+
+.section-header h6 i {
+    margin-right: 8px;
+}
+
+.enhanced-field {
+    margin-bottom: 20px;
+}
+
+.enhanced-label {
+    display: flex;
+    align-items: center;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 8px;
+}
+
+.enhanced-label i {
+    margin-right: 8px;
+}
+
+.required-star {
+    color: #ff4757;
+    margin-left: 4px;
+    font-weight: 700;
+}
+
+.enhanced-select {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 12px center;
+    background-repeat: no-repeat;
+    background-size: 16px;
+    padding-right: 40px;
+}
+
+.field-error {
+    display: none;
+    color: #ff4757;
+    font-size: 13px;
+    margin-top: 5px;
+    font-weight: 500;
+}
+
+.field-error.show {
+    display: block;
+}
+
+.field-hint {
+    display: block;
+    color: #6c757d;
+    font-size: 12px;
+    margin-top: 5px;
+}
+
+.conflict-warning {
+    background: #fffbf0;
+    border: 1px solid #fed7aa;
+    border-radius: 6px;
+    padding: 8px 12px;
+    margin-top: 8px;
+    color: #92400e;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.conflict-warning i {
+    margin-right: 6px;
+    color: #ffa726;
+}
+
+.schedule-preview-box {
+    background: #f0f9ff;
+    border: 1px solid #bae6fd;
+    border-radius: 8px;
+    padding: 15px;
+    margin-top: 15px;
+}
+
+.preview-header {
+    display: flex;
+    align-items: center;
+    font-weight: 600;
+    color: #3742fa;
+    margin-bottom: 12px;
+}
+
+.preview-header i {
+    margin-right: 8px;
+}
+
+.preview-content {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 10px;
+}
+
+.preview-item {
+    font-size: 14px;
+}
+
+.validation-alert {
+    background: #fff5f5;
+    border: 1px solid #fed7d7;
+    margin: 0 30px;
+    padding: 15px;
+    border-radius: 8px;
+}
+
+.alert-content {
+    display: flex;
+    align-items: flex-start;
+}
+
+.alert-content i {
+    color: #ff4757;
+    margin-right: 10px;
+    margin-top: 2px;
+}
+
+.alert-text strong {
+    color: #ff4757;
+}
+
+.validation-summary-box {
+    background: #f0f9ff;
+    border: 1px solid #bae6fd;
+    border-radius: 8px;
+    padding: 20px;
+    margin-top: 20px;
+}
+
+.summary-header {
+    display: flex;
+    align-items: center;
+    font-weight: 600;
+    color: #2ed573;
+    margin-bottom: 15px;
+}
+
+.summary-header i {
+    margin-right: 8px;
+}
+
+.enhanced-footer {
+    background: #f8f9fa;
+    border-radius: 0 0 12px 12px;
+    padding: 20px 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.footer-actions {
+    display: flex;
+    gap: 10px;
+}
+
+@media (max-width: 768px) {
+    .enhanced-footer {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .footer-actions {
+        width: 100%;
+        justify-content: center;
+    }
+}
+</style>
 @endsection
 
 @section('scripts')
 <script src="{{ asset('js/activities.js') }}"></script>
+<script src="{{ asset('js/form-validation-enhanced.js') }}"></script>
+<script>
+// Enhanced Session Modal Management
+document.addEventListener('DOMContentLoaded', function() {
+    const sessionModal = document.getElementById('createSessionModal');
+    const sessionForm = document.getElementById('sessionModalForm');
+    
+    if (sessionModal && sessionForm) {
+        // Initialize modal form validator
+        const modalValidator = new ModalSessionValidator({
+            formId: 'sessionModalForm',
+            activityId: {{ $activity->id }},
+            activityName: '{{ $activity->activity_name }}',
+            existingSessions: @json($sessions ?? [])
+        });
+        
+        // Reset form when modal is shown
+        $(sessionModal).on('shown.bs.modal', function() {
+            modalValidator.resetForm();
+        });
+        
+        // Clean up when modal is hidden
+        $(sessionModal).on('hidden.bs.modal', function() {
+            modalValidator.clearValidation();
+        });
+    }
+});
+
+// Modal Session Validator Class
+class ModalSessionValidator {
+    constructor(options) {
+        this.options = options;
+        this.form = document.getElementById(options.formId);
+        this.fields = this.getFormFields();
+        this.validationRules = this.getValidationRules();
+        
+        this.setupEventListeners();
+    }
+    
+    getFormFields() {
+        return {
+            teacher_id: document.getElementById('modal_teacher_id'),
+            centre_id: document.getElementById('modal_centre_id'),
+            date: document.getElementById('modal_date'),
+            start_time: document.getElementById('modal_start_time'),
+            duration: document.getElementById('modal_duration'),
+            location: document.getElementById('modal_location'),
+            max_capacity: document.getElementById('modal_max_capacity')
+        };
+    }
+    
+    getValidationRules() {
+        return {
+            teacher_id: { required: true, message: 'Please select a qualified teacher' },
+            centre_id: { required: true, message: 'Please select a centre' },
+            date: { required: true, date: true, future: true, message: 'Please select a valid future date' },
+            start_time: { required: true, time: true, message: 'Please select a valid start time' },
+            duration: { required: true, message: 'Please select session duration' },
+            location: { required: true, minLength: 3, message: 'Please specify the session location' },
+            max_capacity: { required: true, numeric: true, min: 1, max: 50, message: 'Capacity must be between 1 and 50' }
+        };
+    }
+    
+    setupEventListeners() {
+        // Real-time validation for all fields
+        Object.keys(this.fields).forEach(fieldName => {
+            const field = this.fields[fieldName];
+            if (field) {
+                field.addEventListener('blur', () => this.validateField(fieldName));
+                field.addEventListener('input', () => this.debounceValidation(fieldName));
+                field.addEventListener('change', () => this.handleFieldChange(fieldName));
+            }
+        });
+        
+        // Schedule preview updates
+        ['date', 'start_time', 'duration'].forEach(fieldName => {
+            const field = this.fields[fieldName];
+            if (field) {
+                field.addEventListener('change', () => this.updateSchedulePreview());
+            }
+        });
+        
+        // Form submission
+        this.form.addEventListener('submit', (e) => this.handleSubmit(e));
+    }
+    
+    validateField(fieldName) {
+        const field = this.fields[fieldName];
+        const rules = this.validationRules[fieldName];
+        
+        if (!field || !rules) return true;
+        
+        const value = field.value.trim();
+        const errors = [];
+        
+        // Required validation
+        if (rules.required && !value) {
+            errors.push(rules.message || `${fieldName} is required`);
+        }
+        
+        // Type-specific validations
+        if (value) {
+            if (rules.date && !this.isValidDate(value)) {
+                errors.push('Please enter a valid date');
+            }
+            
+            if (rules.future && !this.isFutureDate(value)) {
+                errors.push('Date must be in the future');
+            }
+            
+            if (rules.time && !this.isValidTime(value)) {
+                errors.push('Please enter a valid time');
+            }
+            
+            if (rules.numeric && !this.isNumeric(value)) {
+                errors.push('Please enter a valid number');
+            }
+            
+            if (rules.min && parseFloat(value) < rules.min) {
+                errors.push(`Minimum value is ${rules.min}`);
+            }
+            
+            if (rules.max && parseFloat(value) > rules.max) {
+                errors.push(`Maximum value is ${rules.max}`);
+            }
+            
+            if (rules.minLength && value.length < rules.minLength) {
+                errors.push(`Minimum length is ${rules.minLength} characters`);
+            }
+        }
+        
+        this.updateFieldDisplay(fieldName, errors);
+        return errors.length === 0;
+    }
+    
+    updateFieldDisplay(fieldName, errors) {
+        const field = this.fields[fieldName];
+        const errorElement = document.getElementById(`modal_${fieldName}_error`);
+        
+        if (errors.length > 0) {
+            field.classList.add('is-invalid');
+            field.classList.remove('is-valid');
+            
+            if (errorElement) {
+                errorElement.textContent = errors[0];
+                errorElement.classList.add('show');
+            }
+        } else {
+            field.classList.remove('is-invalid');
+            field.classList.add('is-valid');
+            
+            if (errorElement) {
+                errorElement.textContent = '';
+                errorElement.classList.remove('show');
+            }
+        }
+    }
+    
+    debounceValidation(fieldName) {
+        clearTimeout(this.validationTimers?.[fieldName]);
+        
+        if (!this.validationTimers) this.validationTimers = {};
+        
+        this.validationTimers[fieldName] = setTimeout(() => {
+            this.validateField(fieldName);
+        }, 500);
+    }
+    
+    handleFieldChange(fieldName) {
+        this.validateField(fieldName);
+        
+        // Specific handlers
+        if (['date', 'start_time', 'duration'].includes(fieldName)) {
+            this.checkScheduleConflicts();
+        }
+    }
+    
+    updateSchedulePreview() {
+        const date = this.fields.date?.value;
+        const time = this.fields.start_time?.value;
+        const duration = this.fields.duration?.value;
+        
+        const preview = document.getElementById('modalSchedulePreview');
+        if (!preview || !date || !time || !duration) return;
+        
+        try {
+            const sessionDate = new Date(`${date}T${time}`);
+            const endTime = new Date(sessionDate.getTime() + (parseInt(duration) * 60000));
+            
+            const dateTimeDisplay = sessionDate.toLocaleDateString('en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            }) + ' at ' + sessionDate.toLocaleTimeString('en-US', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            
+            document.getElementById('modalPreviewDateTime').textContent = dateTimeDisplay;
+            document.getElementById('modalPreviewDuration').textContent = `${duration} minutes`;
+            document.getElementById('modalPreviewEndTime').textContent = endTime.toLocaleTimeString('en-US', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            
+            preview.style.display = 'block';
+        } catch (e) {
+            preview.style.display = 'none';
+        }
+    }
+    
+    checkScheduleConflicts() {
+        // Check for conflicts and show warnings
+        const dateConflict = document.getElementById('modalDateConflict');
+        const timeConflict = document.getElementById('modalTimeConflict');
+        
+        // Implementation would check against existing sessions
+        // For now, hide conflicts
+        if (dateConflict) dateConflict.style.display = 'none';
+        if (timeConflict) timeConflict.style.display = 'none';
+    }
+    
+    handleSubmit(e) {
+        e.preventDefault();
+        
+        if (!this.validateAllFields()) {
+            this.showValidationAlert();
+            return false;
+        }
+        
+        // Show loading state
+        const submitBtn = document.getElementById('modalSubmitBtn');
+        const originalContent = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Scheduling...';
+        submitBtn.disabled = true;
+        
+        // Submit form
+        this.form.submit();
+    }
+    
+    validateAllFields() {
+        let isValid = true;
+        Object.keys(this.fields).forEach(fieldName => {
+            if (!this.validateField(fieldName)) {
+                isValid = false;
+            }
+        });
+        return isValid;
+    }
+    
+    showValidationAlert() {
+        const errors = this.getValidationErrors();
+        const alert = document.getElementById('modalValidationAlert');
+        const list = document.getElementById('modalValidationList');
+        
+        if (errors.length === 0) {
+            alert.style.display = 'none';
+            return;
+        }
+        
+        list.innerHTML = '';
+        errors.forEach(error => {
+            const li = document.createElement('li');
+            li.textContent = error;
+            list.appendChild(li);
+        });
+        
+        alert.style.display = 'block';
+        alert.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+    
+    getValidationErrors() {
+        const errors = [];
+        Object.keys(this.fields).forEach(fieldName => {
+            const field = this.fields[fieldName];
+            const rules = this.validationRules[fieldName];
+            
+            if (rules?.required && (!field?.value || field.value.trim() === '')) {
+                errors.push(rules.message || `${fieldName} is required`);
+            }
+        });
+        return errors;
+    }
+    
+    resetForm() {
+        this.form.reset();
+        this.clearValidation();
+        document.getElementById('modalSchedulePreview').style.display = 'none';
+    }
+    
+    clearValidation() {
+        Object.keys(this.fields).forEach(fieldName => {
+            const field = this.fields[fieldName];
+            const errorElement = document.getElementById(`modal_${fieldName}_error`);
+            
+            if (field) {
+                field.classList.remove('is-valid', 'is-invalid');
+            }
+            
+            if (errorElement) {
+                errorElement.textContent = '';
+                errorElement.classList.remove('show');
+            }
+        });
+        
+        document.getElementById('modalValidationAlert').style.display = 'none';
+    }
+    
+    // Utility methods
+    isValidDate(dateString) {
+        const date = new Date(dateString);
+        return date instanceof Date && !isNaN(date);
+    }
+    
+    isFutureDate(dateString) {
+        const date = new Date(dateString);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        return date >= today;
+    }
+    
+    isValidTime(timeString) {
+        const timeRegex = /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/;
+        return timeRegex.test(timeString);
+    }
+    
+    isNumeric(value) {
+        return !isNaN(value) && isFinite(value);
+    }
+}
+</script>
 @endsection

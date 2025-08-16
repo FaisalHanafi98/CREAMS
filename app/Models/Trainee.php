@@ -48,7 +48,6 @@ class Trainee extends Model
         'photo_consent',
         'services_consent',
         // Enhanced fields for data integrity
-        'unique_identifier',
         'admission_date',
         'graduation_date',
         'medical_info',
@@ -721,7 +720,6 @@ class Trainee extends Model
               ->orWhere('trainee_last_name', 'LIKE', "%{$search}%")
               ->orWhere('trainee_email', 'LIKE', "%{$search}%")
               ->orWhere('trainee_phone_number', 'LIKE', "%{$search}%")
-              ->orWhere('unique_identifier', 'LIKE', "%{$search}%")
               ->orWhere('guardian_name', 'LIKE', "%{$search}%")
               ->orWhere('guardian_phone', 'LIKE', "%{$search}%")
               ->orWhere('guardian_email', 'LIKE', "%{$search}%")
@@ -773,10 +771,9 @@ class Trainee extends Model
                 $trainee->trainee_id = 'TRN' . $year . $centreId . sprintf('%04d', $nextSequence);
             }
             
-            // Generate unique_identifier if not set
-            if (!$trainee->unique_identifier) {
-                // Use trainee_id as unique_identifier for consistency
-                $trainee->unique_identifier = $trainee->trainee_id;
+            // Auto-set trainee_id if not provided
+            if (!$trainee->trainee_id) {
+                $trainee->trainee_id = $trainee->generateTraineeId();
             }
         });
 

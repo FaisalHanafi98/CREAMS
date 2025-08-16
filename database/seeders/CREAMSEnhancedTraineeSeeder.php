@@ -221,8 +221,7 @@ class CREAMSEnhancedTraineeSeeder extends Seeder
             'additional_notes' => $notes,
             
             'created_at' => $faker->dateTimeBetween('-8 months', '-1 month'),
-            'updated_at' => $faker->dateTimeBetween('-1 month', 'now'),
-            'unique_identifier' => 'TRN' . date('Y') . str_pad($i, 7, '0', STR_PAD_LEFT)
+            'updated_at' => $faker->dateTimeBetween('-1 month', 'now')
         ];
         
         $trainee = Trainee::create($traineeData);

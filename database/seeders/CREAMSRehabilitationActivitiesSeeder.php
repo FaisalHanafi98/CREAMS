@@ -307,8 +307,16 @@ class CREAMSRehabilitationActivitiesSeeder extends Seeder
 
     private function createActivity(array $activityData, $centre, $teacher): Activity
     {
+        $activityId = $activityData['activity_code'] . '_' . $centre->centre_id;
+        
+        // Check if activity already exists
+        $existingActivity = Activity::where('activity_id', $activityId)->first();
+        if ($existingActivity) {
+            return $existingActivity;
+        }
+        
         return Activity::create([
-            'activity_id' => $activityData['activity_code'] . '_' . $centre->centre_id,
+            'activity_id' => $activityId,
             'activity_name' => $activityData['activity_name'] ?? $activityData['name'],
             'activity_description' => $activityData['description'],
             'activity_type' => $activityData['activity_type'] ?? 'Individual',

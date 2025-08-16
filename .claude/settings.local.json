@@ -31,6 +31,7 @@
       "Bash(find . -name \"*.blade.php\" -exec grep -l \"teachershome\\|traineeshome\\|auth\\.registerpage\\|activities\\.index\\|rehabilitation\\.categories\\|staff\\.view\\|staff\\.edit\" {} ;)",
       "Bash(wc:*)",
       "Bash(composer:*)",
+      "Bash(mysql:*)",
       "Bash(mysql:*)"
     ],
     "deny": []
