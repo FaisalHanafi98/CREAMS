@@ -140,21 +140,21 @@
                                                     @endif
                                                 </div>
                                                 <!-- Learning Outcomes Indicator -->
-                                                @if($session->activity->learningOutcomes && $session->activity->learningOutcomes->count() > 0)
+                                                @if($session->activity->learning_outcomes && $session->activity->learning_outcomes->count() > 0)
                                                     <div class="learning-outcomes-preview">
                                                         <small class="text-muted">
                                                             <i class="fas fa-graduation-cap me-1"></i>
-                                                            {{ $session->activity->learningOutcomes->count() }} Learning Outcomes
+                                                            {{ $session->activity->learning_outcomes->count() }} Learning Outcomes
                                                         </small>
                                                         <div class="outcomes-quick-view mt-1">
-                                                            @foreach($session->activity->learningOutcomes->take(2) as $outcome)
-                                                                <span class="badge bg-success badge-sm text-white me-1" title="{{ $outcome->outcome_description }}">
-                                                                    {{ Str::limit($outcome->outcome_title, 15) }}
+                                                            @foreach($session->activity->learning_outcomes->take(2) as $outcome)
+                                                                <span class="badge bg-success badge-sm text-white me-1" title="{{ is_array($outcome) ? ($outcome['description'] ?? $outcome) : $outcome }}">
+                                                                    {{ Str::limit(is_array($outcome) ? ($outcome['title'] ?? $outcome['description'] ?? 'Outcome') : $outcome, 15) }}
                                                                 </span>
                                                             @endforeach
-                                                            @if($session->activity->learningOutcomes->count() > 2)
+                                                            @if($session->activity->learning_outcomes->count() > 2)
                                                                 <span class="badge bg-secondary badge-sm text-white">
-                                                                    +{{ $session->activity->learningOutcomes->count() - 2 }} more
+                                                                    +{{ $session->activity->learning_outcomes->count() - 2 }} more
                                                                 </span>
                                                             @endif
                                                         </div>
@@ -260,7 +260,7 @@
                                                        class="btn btn-outline-primary btn-sm">
                                                         <i class="fas fa-eye me-1"></i>View
                                                     </a>
-                                                    @if($session->activity->learningOutcomes && $session->activity->learningOutcomes->count() > 0)
+                                                    @if($session->activity->learning_outcomes && $session->activity->learning_outcomes->count() > 0)
                                                         <button class="btn btn-outline-success btn-sm" 
                                                                 onclick="showLearningOutcomes({{ $session->activity_id }})"
                                                                 title="View Learning Outcomes">

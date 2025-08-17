@@ -160,7 +160,13 @@ class UserProfileController extends Controller
             Log::info('Profile update attempted', [
                 'user_id' => $roleId,
                 'role' => $role,
-                'request_data' => $request->all()
+                'request_data' => $request->all(),
+                'has_address' => $request->has('address'),
+                'has_about' => $request->has('about'), 
+                'has_date_of_birth' => $request->has('date_of_birth'),
+                'address_value' => $request->input('address'),
+                'about_value' => $request->input('about'),
+                'date_of_birth_value' => $request->input('date_of_birth')
             ]);
             
             if (!$roleId || !$role) {
@@ -190,6 +196,13 @@ class UserProfileController extends Controller
             }
             
             $validated = $request->validate($validationRules);
+            
+            Log::info('Validation successful', [
+                'validated_data' => $validated,
+                'contains_address' => array_key_exists('address', $validated),
+                'contains_about' => array_key_exists('about', $validated),
+                'contains_date_of_birth' => array_key_exists('date_of_birth', $validated)
+            ]);
             
             // Find user
             $user = User::findOrFail($roleId);
@@ -235,9 +248,37 @@ class UserProfileController extends Controller
             if (array_key_exists('position', $validated)) {
                 $user->position = $validated['position'];
             }
-            if (!empty($validated['date_of_birth'])) {
+            if (array_key_exists('date_of_birth', $validated)) {
                 $user->date_of_birth = $validated['date_of_birth'];
             }
+            
+            // Alternative approach - try mass assignment for problematic fields
+            Log::info('User attributes before assignment', [
+                'address_before' => $user->address,
+                'about_before' => $user->about,
+                'date_of_birth_before' => $user->date_of_birth
+            ]);
+            
+            // Force update using mass assignment as backup
+            $updateData = [];
+            foreach (['address', 'about', 'date_of_birth'] as $field) {
+                if (array_key_exists($field, $validated)) {
+                    $updateData[$field] = $validated[$field];
+                }
+            }
+            
+            if (!empty($updateData)) {
+                Log::info('Attempting mass assignment for critical fields', $updateData);
+                $user->fill($updateData);
+            }
+            
+            Log::info('User attributes after assignment', [
+                'address_after' => $user->address,
+                'about_after' => $user->about,
+                'date_of_birth_after' => $user->date_of_birth,
+                'is_dirty' => $user->isDirty(),
+                'dirty_fields' => $user->getDirty()
+            ]);
             
             Log::info('About to save user', [
                 'user_id' => $roleId,
@@ -261,7 +302,18 @@ class UserProfileController extends Controller
             Log::info('User save result', [
                 'user_id' => $roleId,
                 'saved' => $saved,
-                'changes' => $user->getChanges()
+                'changes' => $user->getChanges(),
+                'final_address' => $user->address,
+                'final_about' => $user->about,
+                'final_date_of_birth' => $user->date_of_birth
+            ]);
+            
+            // Verify by reloading from database
+            $reloadedUser = User::find($roleId);
+            Log::info('Database verification after save', [
+                'db_address' => $reloadedUser->address,
+                'db_about' => $reloadedUser->about,
+                'db_date_of_birth' => $reloadedUser->date_of_birth
             ]);
             
             if (!$saved) {
@@ -301,18 +353,40 @@ class UserProfileController extends Controller
             if (array_key_exists('position', $validated)) {
                 $sessionUpdates['position'] = $user->position;
             }
-            if (!empty($validated['date_of_birth'])) {
+            if (array_key_exists('date_of_birth', $validated)) {
                 $sessionUpdates['date_of_birth'] = $user->date_of_birth;
             }
             
+            Log::info('Session updates prepared', [
+                'session_updates' => $sessionUpdates,
+                'user_id' => $roleId
+            ]);
+            
             if (!empty($sessionUpdates)) {
                 session($sessionUpdates);
+                Log::info('Session updated successfully', [
+                    'updated_fields' => array_keys($sessionUpdates),
+                    'user_id' => $roleId
+                ]);
             }
             
             Log::info('Profile updated successfully', [
                 'user_id' => $roleId,
                 'role' => $role
             ]);
+            
+            // Check if this is an AJAX request and respond accordingly
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Your profile has been updated successfully.',
+                    'data' => [
+                        'address' => $user->address,
+                        'about' => $user->about,
+                        'date_of_birth' => $user->date_of_birth ? $user->date_of_birth->format('Y-m-d') : null
+                    ]
+                ]);
+            }
             
             return redirect()->back()->with('success', 'Your profile has been updated successfully.');
             
@@ -322,6 +396,14 @@ class UserProfileController extends Controller
                 'trace' => $e->getTraceAsString(),
                 'user_id' => session('id')
             ]);
+            
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'An unexpected error occurred. Please try again later.',
+                    'error' => $e->getMessage()
+                ], 500);
+            }
             
             return redirect()->back()
                 ->with('error', 'An unexpected error occurred. Please try again later.')
@@ -839,6 +921,8 @@ class UserProfileController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Template saved successfully',
+                'template_id' => $template->id,
+                'template_name' => $template->template_name,
                 'template' => $template
             ]);
 

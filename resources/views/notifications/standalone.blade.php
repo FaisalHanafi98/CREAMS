@@ -439,7 +439,7 @@
         <div class="notification-component">
             <div class="notification-bell" id="notificationToggle">
                 <i class="fas fa-bell"></i>
-                <span class="notification-count" id="notificationCount">3</span>
+                <span class="notification-count" id="notificationCount">{{ $unreadNotifications ?? 0 }}</span>
             </div>
             
             <div class="notification-dropdown" id="notificationDropdown">

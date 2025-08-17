@@ -425,12 +425,16 @@ class TeacherDashboardService extends BaseDashboardService
     private function getFellowTeachersCount(int $currentTeacherId): int
     {
         try {
-            // For UAT demo, return realistic count of other teachers
-            $totalTeachers = 37; // Total teachers as per UAT requirements
-            return $totalTeachers - 1; // Exclude current teacher = 36 fellow teachers
+            // Get actual count of teachers from database (excluding current teacher)
+            $totalTeachers = User::where('role', 'teacher')
+                                 ->where('status', 'active')
+                                 ->where('id', '!=', $currentTeacherId)
+                                 ->count();
+            
+            return $totalTeachers;
         } catch (Exception $e) {
             Log::error('Error getting fellow teachers count', ['teacher_id' => $currentTeacherId, 'error' => $e->getMessage()]);
-            return 36; // Fallback UAT number
+            return 0; // Return 0 on error instead of hardcoded number
         }
     }
 
@@ -439,17 +443,21 @@ class TeacherDashboardService extends BaseDashboardService
      */
     private function getTeachersOnlineCount(): int
     {
-        $now = Carbon::now();
-        $hour = $now->hour;
-        $isWeekday = $now->isWeekday();
-        
-        // During work hours, show more teachers online
-        if ($isWeekday && $hour >= 8 && $hour <= 17) {
-            return rand(6, 12); // 6-12 teachers online during work hours
+        try {
+            // Get actual count of teachers who have been active in the last 15 minutes
+            $now = Carbon::now();
+            $recentThreshold = $now->subMinutes(15);
+            
+            $onlineTeachers = User::where('role', 'teacher')
+                                  ->where('status', 'active')
+                                  ->where('last_login', '>=', $recentThreshold)
+                                  ->count();
+            
+            return $onlineTeachers;
+        } catch (Exception $e) {
+            Log::error('Error getting online teachers count', ['error' => $e->getMessage()]);
+            return 0; // Return 0 on error instead of random number
         }
-        
-        // Outside work hours, fewer teachers online
-        return rand(1, 4);
     }
 
     // Helper methods for calculations

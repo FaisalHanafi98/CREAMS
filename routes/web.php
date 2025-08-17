@@ -48,6 +48,7 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\Profile\LetterController as ProfileLetterController;
+use App\Http\Controllers\Letters\ModernLetterGeneratorController;
 use App\Http\Controllers\Profile\LetterTemplateController;
 use App\Http\Controllers\Letters\ModernLetterController;
 
@@ -174,6 +175,7 @@ Route::middleware(['auth', 'validate.params'])->group(function () {
         // Additional dashboard features (temporarily disabled - can be re-enabled later)
         // Dashboard API endpoints for real-time features
         Route::get('/updates', [App\Http\Controllers\Dashboard\DashboardController::class, 'getUpdates'])->name('updates');
+        Route::get('/week-calendar', [App\Http\Controllers\Dashboard\DashboardController::class, 'getWeekCalendar'])->name('week-calendar');
         Route::post('/refresh-stats', [App\Http\Controllers\Dashboard\DashboardController::class, 'refreshStats'])->name('refresh-stats');
         Route::post('/refresh-widget', [App\Http\Controllers\Dashboard\DashboardController::class, 'refreshWidget'])->name('refresh-widget');
         Route::get('/widget/{widget}', [App\Http\Controllers\Dashboard\DashboardController::class, 'getWidget'])->name('widget');
@@ -199,6 +201,8 @@ Route::middleware(['auth', 'validate.params'])->group(function () {
         Route::post('/profile/letter-generate', [LetterTemplateController::class, 'generate'])->name('profile.letter.generate');
         Route::post('/profile/letter-preview', [LetterTemplateController::class, 'preview'])->name('profile.letter.preview');
         Route::get('/profile/letter-new-reference', [LetterTemplateController::class, 'newReference'])->name('profile.letter.newReference');
+        Route::get('/profile/letter-preview/{id}', [LetterTemplateController::class, 'previewLetter'])->name('profile.letter.previewLetter');
+        Route::get('/profile/template-preview/{id}', [LetterTemplateController::class, 'previewTemplate'])->name('profile.template.preview');
         Route::get('/profile/letter-download/{id}', [LetterTemplateController::class, 'downloadLetter'])->name('profile.letter.download');
     });
 
@@ -521,6 +525,18 @@ Route::middleware(['auth', 'validate.params'])->group(function () {
     });
 
 
+    // Modern Letter Generator System - Latest Implementation
+    Route::prefix('letters/modern')->name('letters.modern.')->group(function () {
+        Route::get('/', [ModernLetterGeneratorController::class, 'index'])->name('index');
+        Route::get('/create', [ModernLetterGeneratorController::class, 'create'])->name('create');
+        Route::post('/generate', [ModernLetterGeneratorController::class, 'generate'])->name('generate');
+        Route::get('/{id}', [ModernLetterGeneratorController::class, 'show'])->name('show');
+        Route::get('/{id}/download', [ModernLetterGeneratorController::class, 'downloadPDF'])->name('download');
+        Route::get('/template-preview/{id}', [ModernLetterGeneratorController::class, 'getTemplatePreview'])->name('template.preview');
+        Route::post('/{id}/archive', [ModernLetterGeneratorController::class, 'archive'])->name('archive');
+        Route::get('/search', [ModernLetterGeneratorController::class, 'search'])->name('search');
+    });
+    
     // New Letter Management System - Complete Rewrite with Modern Architecture
     Route::prefix('letters')->name('letters.')->group(function () {
         Route::get('/', [ModernLetterController::class, 'dashboard'])->name('dashboard');

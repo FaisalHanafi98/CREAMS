@@ -166,4 +166,41 @@ class LetterController extends Controller
 </html>
 HTML;
     }
+
+    /**
+     * Delete a letter
+     */
+    public function destroy($id)
+    {
+        try {
+            $letter = \App\Models\Letter::findOrFail($id);
+            
+            // Check if user has permission to delete this letter
+            if (session('role') !== 'admin' && $letter->created_by !== session('id')) {
+                return redirect()->back()->with('error', 'Access denied to delete this letter.');
+            }
+            
+            // Delete the PDF file if it exists
+            if ($letter->letter_file_path) {
+                $pdfPath = public_path('letters/' . basename($letter->letter_file_path));
+                if (file_exists($pdfPath)) {
+                    unlink($pdfPath);
+                }
+            }
+            
+            // Delete the letter record
+            $letter->delete();
+            
+            return redirect()->back()->with('success', 'Letter deleted successfully.');
+            
+        } catch (\Exception $e) {
+            \Log::error('Letter deletion error', [
+                'message' => $e->getMessage(),
+                'letter_id' => $id,
+                'user_id' => session('id')
+            ]);
+            
+            return redirect()->back()->with('error', 'Failed to delete letter: ' . $e->getMessage());
+        }
+    }
 }

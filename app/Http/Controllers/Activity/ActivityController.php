@@ -226,7 +226,7 @@ class ActivityController extends Controller
             }
 
             // Get activities with proper ordering - simplified approach
-            $activities = $query->with(['sessions', 'enrollments', 'creator', 'centre'])
+            $activities = $query->with(['sessions', 'enrollments', 'creator', 'centre', 'category'])
                 ->withCount(['sessions', 'enrollments'])
                 ->orderByRaw('(sessions_count + enrollments_count) DESC')
                 ->orderBy('created_at', 'desc')
@@ -579,6 +579,33 @@ class ActivityController extends Controller
             'schedule_days' => 'required|array|min:1',
             'schedule_days.*' => 'in:Monday,Tuesday,Wednesday,Thursday,Friday,Saturday,Sunday'
         ]);
+
+        // Enhanced validation: Check for scheduling conflicts and duplicates
+        $validationErrors = $this->validateActivityConflicts($validated);
+        if (!empty($validationErrors)) {
+            return redirect()->back()
+                ->withErrors($validationErrors)
+                ->withInput()
+                ->with('warning', 'Please resolve the conflicts highlighted below before creating the activity.');
+        }
+
+        // Check for instructor availability conflicts
+        $instructorConflicts = $this->checkInstructorScheduleConflicts($validated);
+        if (!empty($instructorConflicts)) {
+            return redirect()->back()
+                ->withErrors(['instructor_conflicts' => $instructorConflicts])
+                ->withInput()
+                ->with('warning', 'Instructor has scheduling conflicts. Please choose different times or instructor.');
+        }
+
+        // Check room capacity and availability
+        $roomConflicts = $this->checkRoomAvailability($validated);
+        if (!empty($roomConflicts)) {
+            return redirect()->back()
+                ->withErrors(['room_conflicts' => $roomConflicts])
+                ->withInput()
+                ->with('warning', 'Room conflicts detected. Please choose a different location or time.');
+        }
 
         try {
             DB::beginTransaction();
@@ -2894,6 +2921,244 @@ class ActivityController extends Controller
                 'total_week' => 0
             ];
         }
+    }
+
+    /**
+     * Enhanced validation: Check for activity conflicts and duplicates
+     */
+    private function validateActivityConflicts(array $validated): array
+    {
+        $errors = [];
+        
+        // Check for duplicate activity names in the same centre
+        $duplicateName = Activity::where('activity_name', $validated['activity_name'])
+            ->where('centre_id', $validated['centre_id'])
+            ->where('is_active', true)
+            ->exists();
+            
+        if ($duplicateName) {
+            $errors['activity_name'] = 'An active activity with this name already exists in this centre.';
+        }
+        
+        // Check for similar activity descriptions (potential duplicates)
+        $similarActivities = Activity::where('centre_id', $validated['centre_id'])
+            ->where('is_active', true)
+            ->where('category_id', $validated['category_id'])
+            ->get();
+            
+        foreach ($similarActivities as $activity) {
+            $similarity = $this->calculateStringSimilarity($validated['activity_description'], $activity->activity_description);
+            if ($similarity > 85) { // 85% similarity threshold
+                $errors['activity_description'] = "This activity description is very similar to existing activity: '{$activity->activity_name}'. Please ensure this is not a duplicate.";
+                break;
+            }
+        }
+        
+        // Check for maximum activities per instructor
+        $instructorActivityCount = Activity::where('instructor_id', $validated['instructor_id'])
+            ->where('is_active', true)
+            ->whereDate('end_date', '>=', now())
+            ->count();
+            
+        if ($instructorActivityCount >= 10) { // Maximum 10 active activities per instructor
+            $errors['instructor_id'] = 'This instructor already has the maximum number of active activities (10). Please choose another instructor.';
+        }
+        
+        // Check for overlapping activity periods
+        $startDate = Carbon::parse($validated['start_date']);
+        $endDate = $startDate->copy()->addMonths($validated['activity_period']);
+        
+        $overlappingActivities = Activity::where('instructor_id', $validated['instructor_id'])
+            ->where('is_active', true)
+            ->where(function($query) use ($startDate, $endDate) {
+                $query->whereBetween('start_date', [$startDate, $endDate])
+                      ->orWhereBetween('end_date', [$startDate, $endDate])
+                      ->orWhere(function($q) use ($startDate, $endDate) {
+                          $q->where('start_date', '<=', $startDate)
+                            ->where('end_date', '>=', $endDate);
+                      });
+            })
+            ->get();
+            
+        if ($overlappingActivities->count() > 0) {
+            $conflictingActivities = $overlappingActivities->pluck('activity_name')->take(3)->implode(', ');
+            $errors['activity_period'] = "Activity period overlaps with existing activities: {$conflictingActivities}. Please adjust the dates.";
+        }
+        
+        return $errors;
+    }
+    
+    /**
+     * Check instructor availability for scheduling conflicts
+     */
+    private function checkInstructorScheduleConflicts(array $validated): array
+    {
+        $conflicts = [];
+        $startTime = Carbon::parse($validated['start_time']);
+        $endTime = $startTime->copy()->addHours($validated['duration_hours']);
+        $scheduleDays = $validated['schedule_days'];
+        
+        // Check for time conflicts with existing sessions
+        $existingSessions = ActivitySession::whereHas('activity', function($query) use ($validated) {
+                $query->where('instructor_id', $validated['instructor_id'])
+                      ->where('is_active', true);
+            })
+            ->where('status', '!=', 'cancelled')
+            ->get();
+            
+        foreach ($existingSessions as $session) {
+            $sessionDay = Carbon::parse($session->session_date)->format('l'); // Full day name
+            
+            if (in_array($sessionDay, $scheduleDays)) {
+                $sessionStart = Carbon::parse($session->start_time);
+                $sessionEnd = Carbon::parse($session->end_time);
+                
+                // Check for time overlap
+                if (($startTime >= $sessionStart && $startTime < $sessionEnd) ||
+                    ($endTime > $sessionStart && $endTime <= $sessionEnd) ||
+                    ($startTime <= $sessionStart && $endTime >= $sessionEnd)) {
+                    
+                    $conflicts[] = "Conflict on {$sessionDay} {$sessionStart->format('H:i')}-{$sessionEnd->format('H:i')} with activity: {$session->activity->activity_name}";
+                }
+            }
+        }
+        
+        // Check for daily hour limits (max 8 hours per day)
+        foreach ($scheduleDays as $day) {
+            $dailyHours = $this->calculateInstructorDailyHours($validated['instructor_id'], $day);
+            $newHours = $validated['duration_hours'];
+            
+            if (($dailyHours + $newHours) > 8) {
+                $conflicts[] = "Adding this activity would exceed daily hour limit (8 hours) on {$day}. Current: {$dailyHours}h, New: {$newHours}h";
+            }
+        }
+        
+        return $conflicts;
+    }
+    
+    /**
+     * Check room availability and capacity conflicts
+     */
+    private function checkRoomAvailability(array $validated): array
+    {
+        $conflicts = [];
+        $startTime = Carbon::parse($validated['start_time']);
+        $endTime = $startTime->copy()->addHours($validated['duration_hours']);
+        $scheduleDays = $validated['schedule_days'];
+        $location = $validated['activity_location'];
+        
+        // Check for room booking conflicts
+        $conflictingSessions = ActivitySession::whereHas('activity', function($query) use ($validated) {
+                $query->where('centre_id', $validated['centre_id'])
+                      ->where('is_active', true);
+            })
+            ->where('location', $location)
+            ->where('status', '!=', 'cancelled')
+            ->get();
+            
+        foreach ($conflictingSessions as $session) {
+            $sessionDay = Carbon::parse($session->session_date)->format('l');
+            
+            if (in_array($sessionDay, $scheduleDays)) {
+                $sessionStart = Carbon::parse($session->start_time);
+                $sessionEnd = Carbon::parse($session->end_time);
+                
+                // Check for time overlap
+                if (($startTime >= $sessionStart && $startTime < $sessionEnd) ||
+                    ($endTime > $sessionStart && $endTime <= $sessionEnd) ||
+                    ($startTime <= $sessionStart && $endTime >= $sessionEnd)) {
+                    
+                    $conflicts[] = "Room '{$location}' is already booked on {$sessionDay} {$sessionStart->format('H:i')}-{$sessionEnd->format('H:i')} for: {$session->activity->activity_name}";
+                }
+            }
+        }
+        
+        // Check room capacity (if room data exists)
+        $maxParticipants = $validated['max_participants'];
+        $roomCapacity = $this->getRoomCapacity($location, $validated['centre_id']);
+        
+        if ($roomCapacity && $maxParticipants > $roomCapacity) {
+            $conflicts[] = "Activity capacity ({$maxParticipants}) exceeds room capacity ({$roomCapacity}) for '{$location}'";
+        }
+        
+        return $conflicts;
+    }
+    
+    /**
+     * Calculate string similarity percentage
+     */
+    private function calculateStringSimilarity(string $str1, string $str2): float
+    {
+        $str1 = strtolower(trim($str1));
+        $str2 = strtolower(trim($str2));
+        
+        if ($str1 === $str2) return 100;
+        if (empty($str1) || empty($str2)) return 0;
+        
+        similar_text($str1, $str2, $percent);
+        return round($percent, 2);
+    }
+    
+    /**
+     * Calculate instructor's daily hours for a specific day
+     */
+    private function calculateInstructorDailyHours(int $instructorId, string $day): float
+    {
+        $existingSessions = ActivitySession::whereHas('activity', function($query) use ($instructorId) {
+                $query->where('instructor_id', $instructorId)
+                      ->where('is_active', true);
+            })
+            ->where('status', '!=', 'cancelled')
+            ->get()
+            ->filter(function($session) use ($day) {
+                return Carbon::parse($session->session_date)->format('l') === $day;
+            });
+            
+        $totalMinutes = 0;
+        foreach ($existingSessions as $session) {
+            $start = Carbon::parse($session->start_time);
+            $end = Carbon::parse($session->end_time);
+            $totalMinutes += $start->diffInMinutes($end);
+        }
+        
+        return round($totalMinutes / 60, 2);
+    }
+    
+    /**
+     * Get room capacity from database or configuration
+     */
+    private function getRoomCapacity(string $location, string $centreId): ?int
+    {
+        // Try to get from assets table if room data exists
+        $room = DB::table('assets')
+            ->where('asset_name', 'LIKE', "%{$location}%")
+            ->where('centre_id', $centreId)
+            ->where('asset_type', 'Room')
+            ->first();
+            
+        if ($room && isset($room->specifications)) {
+            $specs = json_decode($room->specifications, true);
+            return $specs['capacity'] ?? null;
+        }
+        
+        // Default room capacities based on common room types
+        $defaultCapacities = [
+            'therapy room' => 6,
+            'classroom' => 20,
+            'large hall' => 50,
+            'small room' => 8,
+            'meeting room' => 12,
+            'activity room' => 15
+        ];
+        
+        $locationLower = strtolower($location);
+        foreach ($defaultCapacities as $roomType => $capacity) {
+            if (str_contains($locationLower, $roomType)) {
+                return $capacity;
+            }
+        }
+        
+        return null; // Unknown capacity
     }
 
 }

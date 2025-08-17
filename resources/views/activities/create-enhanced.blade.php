@@ -10,6 +10,59 @@
 
 @section('content')
 <div class="activity-creation-enhanced">
+    <!-- Global Alert Messages -->
+    @if(session('success'))
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <div class="alert-content">
+                <i class="fas fa-check-circle alert-icon"></i>
+                <div class="alert-message">
+                    <strong>Success!</strong> {{ session('success') }}
+                </div>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+
+    @if(session('error'))
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <div class="alert-content">
+                <i class="fas fa-exclamation-circle alert-icon"></i>
+                <div class="alert-message">
+                    <strong>Error!</strong> {{ session('error') }}
+                </div>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+
+    @if(session('warning'))
+        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+            <div class="alert-content">
+                <i class="fas fa-exclamation-triangle alert-icon"></i>
+                <div class="alert-message">
+                    <strong>Warning!</strong> {{ session('warning') }}
+                </div>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+
+    @if($errors->any())
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <div class="alert-content">
+                <i class="fas fa-exclamation-circle alert-icon"></i>
+                <div class="alert-message">
+                    <strong>Validation Errors:</strong>
+                    <ul class="error-list">
+                        @foreach($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
     <!-- Enhanced Header -->
     <div class="creation-header-enhanced">
         <div class="header-backdrop"></div>
@@ -94,17 +147,25 @@
                             <input type="text" 
                                    id="activity_name" 
                                    name="activity_name" 
-                                   class="form-control-enhanced" 
+                                   class="form-control-enhanced @error('activity_name') is-invalid @enderror" 
                                    placeholder="e.g., Speech Therapy - Basic Communication"
+                                   value="{{ old('activity_name') }}"
                                    maxlength="100"
                                    required>
                             <div class="input-feedback">
                                 <div class="character-count">
-                                    <span class="current">0</span>/<span class="max">100</span>
+                                    <span class="current">{{ strlen(old('activity_name', '')) }}</span>/<span class="max">100</span>
                                 </div>
                             </div>
                         </div>
-                        <div class="validation-message"></div>
+                        <div class="validation-message">
+                            @error('activity_name')
+                                <div class="invalid-feedback">
+                                    <i class="fas fa-exclamation-circle"></i>
+                                    {{ $message }}
+                                </div>
+                            @enderror
+                        </div>
                         <div class="field-suggestions" style="display: none;">
                             <!-- Dynamic suggestions based on category -->
                         </div>
@@ -139,10 +200,11 @@
                             <span class="field-help" data-tooltip="Select the centre where this activity will be conducted">?</span>
                         </label>
                         <div class="input-wrapper">
-                            <select id="centre_id" name="centre_id" class="form-select-enhanced" required>
+                            <select id="centre_id" name="centre_id" class="form-select-enhanced @error('centre_id') is-invalid @enderror" required>
                                 <option value="">Select a centre...</option>
                                 @foreach(\App\Models\Centre::where('centre_status', 'active')->get() as $centre)
                                     <option value="{{ $centre->centre_id }}" 
+                                            {{ old('centre_id') == $centre->centre_id ? 'selected' : '' }}
                                             data-location="{{ $centre->centre_location }}"
                                             data-capacity="{{ $centre->centre_capacity ?? 'N/A' }}">
                                         {{ $centre->centre_name }} 
@@ -156,7 +218,14 @@
                                 <i class="fas fa-chevron-down"></i>
                             </div>
                         </div>
-                        <div class="validation-message"></div>
+                        <div class="validation-message">
+                            @error('centre_id')
+                                <div class="invalid-feedback">
+                                    <i class="fas fa-exclamation-circle"></i>
+                                    {{ $message }}
+                                </div>
+                            @enderror
+                        </div>
                         <div class="centre-info" style="display: none;">
                             <div class="info-card">
                                 <div class="info-item">

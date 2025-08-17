@@ -12,12 +12,18 @@ class Letter extends Model
 
     protected $fillable = [
         'letter_reference',
+        'letter_reference_number',
         'letter_name',
         'letter_date',
+        'letter_title',
+        'letter_description',
         'letter_subject',
         'letter_content',
         'letter_type',
         'recipient_id',
+        'recipient_name',
+        'recipient_email',
+        'recipient_address',
         'recipient_type',
         'recipient_organization',
         'purpose',
@@ -28,6 +34,7 @@ class Letter extends Model
         'archived_at',
         'archived_by',
         'sent_date',
+        'sent_at',
         'is_sent',
         'delivery_method',
         'delivery_notes',
@@ -35,7 +42,11 @@ class Letter extends Model
         'letter_data',
         'generation_metadata',
         'generated_file_type',
+        'generated_at',
         'file_size_bytes',
+        'pdf_filename',
+        'pdf_path',
+        'pdf_file_size',
         'centre_id',
         'created_by'
     ];
@@ -43,6 +54,8 @@ class Letter extends Model
     protected $casts = [
         'letter_date' => 'date',
         'sent_date' => 'date',
+        'sent_at' => 'datetime',
+        'generated_at' => 'datetime',
         'archived_at' => 'datetime',
         'is_archived' => 'boolean',
         'is_sent' => 'boolean',
@@ -58,6 +71,11 @@ class Letter extends Model
             // Generate reference number if not provided
             if (empty($letter->letter_reference)) {
                 $letter->letter_reference = self::generateReferenceNumber();
+            }
+            
+            // Also populate letter_reference_number for consistency
+            if (empty($letter->letter_reference_number)) {
+                $letter->letter_reference_number = $letter->letter_reference;
             }
         });
     }

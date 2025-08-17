@@ -32,9 +32,10 @@ class DashboardController extends Controller
             $userId = session('id');
             $role = session('role');
             $centreId = session('centre_id');
+            $weekOffset = intval($request->input('week_offset', 0));
             
             // Get enhanced dashboard data with additional UX features
-            $dashboardData = $this->getEnhancedDashboardData($role, $userId, $centreId);
+            $dashboardData = $this->getEnhancedDashboardData($role, $userId, $centreId, $weekOffset);
             
             // Route to role-specific dashboard views
             $dashboardView = $this->getDashboardViewByRole($role);
@@ -53,7 +54,14 @@ class DashboardController extends Controller
                 'error' => 'Unable to load dashboard data',
                 'role' => $role ?? 'unknown',
                 'user_name' => session('name', 'User'),
-                'current_time' => now()->format('l, F j, Y - g:i A')
+                'current_time' => now()->format('l, F j, Y - g:i A'),
+                'todays_centre_activities' => [],
+                'calendar_data' => ['events' => [], 'week_start' => now()->startOfWeek(), 'week_end' => now()->endOfWeek()],
+                'recent_activities_centre' => [],
+                'upcoming_sessions' => [],
+                'user_encrypted_id' => '',
+                'stats' => [],
+                'personal_stats' => []
             ]);
         }
     }
@@ -88,7 +96,14 @@ class DashboardController extends Controller
                 'error' => 'Unable to load dashboard data',
                 'role' => $role ?? 'unknown',
                 'user_name' => session('name', 'User'),
-                'current_time' => now()->format('l, F j, Y - g:i A')
+                'current_time' => now()->format('l, F j, Y - g:i A'),
+                'todays_centre_activities' => [],
+                'calendar_data' => ['events' => [], 'week_start' => now()->startOfWeek(), 'week_end' => now()->endOfWeek()],
+                'recent_activities_centre' => [],
+                'upcoming_sessions' => [],
+                'user_encrypted_id' => '',
+                'stats' => [],
+                'personal_stats' => []
             ]);
         }
     }
@@ -123,7 +138,14 @@ class DashboardController extends Controller
                 'error' => 'Unable to load enhanced dashboard data',
                 'role' => $role ?? 'unknown',
                 'user_name' => session('name', 'User'),
-                'current_time' => now()->format('l, F j, Y - g:i A')
+                'current_time' => now()->format('l, F j, Y - g:i A'),
+                'todays_centre_activities' => [],
+                'calendar_data' => ['events' => [], 'week_start' => now()->startOfWeek(), 'week_end' => now()->endOfWeek()],
+                'recent_activities_centre' => [],
+                'upcoming_sessions' => [],
+                'user_encrypted_id' => '',
+                'stats' => [],
+                'personal_stats' => []
             ]);
         }
     }
@@ -161,7 +183,7 @@ class DashboardController extends Controller
     /**
      * Get comprehensive dashboard data based on role
      */
-    private function getDashboardData($role, $userId, $centreId)
+    private function getDashboardData($role, $userId, $centreId, $weekOffset = 0)
     {
         // Get individual data components
         $recentActivities = $this->getRecentActivities($role, $userId, $centreId);
@@ -195,7 +217,7 @@ class DashboardController extends Controller
             'notifications' => $this->getNotifications($userId),
             'recent_users' => $recentUsers,
             'current_sessions' => $currentSessions,
-            'calendar_events' => $this->getCalendarEvents($role, $userId, $centreId),
+            'calendar_data' => $this->getCalendarEvents($role, $userId, $centreId, $weekOffset),
             'todays_centre_activities' => $this->getTodaysCentreActivities($centreId),
             'system_alerts' => $this->getSystemAlerts($role),
             'progress_summary' => $this->getProgressSummary($role, $userId, $centreId),
@@ -911,11 +933,12 @@ class DashboardController extends Controller
     /**
      * Get calendar events for the week
      */
-    private function getCalendarEvents($role, $userId, $centreId)
+    private function getCalendarEvents($role, $userId, $centreId, $weekOffset = 0)
     {
         try {
-            $startDate = now()->startOfDay();
-            $endDate = now()->addDays(7)->endOfDay();
+            // Calculate week start and end based on offset
+            $weekStart = now()->startOfWeek()->addWeeks($weekOffset);
+            $weekEnd = $weekStart->copy()->endOfWeek();
 
             $query = DB::table('activity_sessions')
                 ->leftJoin('activities', 'activity_sessions.activity_id', '=', 'activities.id')
@@ -932,7 +955,7 @@ class DashboardController extends Controller
                     'activity_sessions.max_participants',
                     'activities.activity_name'
                 ])
-                ->whereBetween('session_date', [$startDate, $endDate])
+                ->whereBetween('session_date', [$weekStart->format('Y-m-d'), $weekEnd->format('Y-m-d')])
                 ->where('status', '!=', 'cancelled');
 
             // Personal calendar should show only user's assigned sessions regardless of role
@@ -944,10 +967,11 @@ class DashboardController extends Controller
                       ->where('activity_enrollments.trainee_id', $userId);
                 });
             } else {
-                // All staff (including admin) see only their personally assigned sessions for Personal tab
+                // All staff (including admin) see their assigned sessions - FIXED: Added created_by condition
                 $query->where(function($q) use ($userId) {
                     $q->where('activity_sessions.teacher_id', $userId)
-                      ->orWhere('activity_sessions.instructor_id', $userId);
+                      ->orWhere('activity_sessions.instructor_id', $userId)
+                      ->orWhere('activities.created_by', $userId);
                 });
             }
             
@@ -957,7 +981,6 @@ class DashboardController extends Controller
 
             $results = $query->orderBy('activity_sessions.session_date', 'asc')
                 ->orderBy('activity_sessions.start_time', 'asc')
-                ->limit(8)
                 ->get()
                 ->map(function ($session) {
                     try {
@@ -972,7 +995,10 @@ class DashboardController extends Controller
                             'day' => $sessionDate->format('D'),
                             'date' => $sessionDate->format('d'),
                             'month' => $sessionDate->format('M'),
+                            'year' => $sessionDate->format('Y'),
+                            'full_date' => $sessionDate->format('Y-m-d'),
                             'time' => Carbon::parse($session->start_time)->format('g:i A'),
+                            'end_time' => Carbon::parse($session->end_time)->format('g:i A'),
                             'location' => ($session->venue ?? '') . ($session->room_number ? ' - Room ' . $session->room_number : ''),
                             'participants' => ($session->current_participants ?? 0) . '/' . ($session->max_participants ?? 0),
                             'status' => $session->status ?? 'scheduled',
@@ -987,8 +1013,13 @@ class DashboardController extends Controller
                 })
                 ->filter(); // Remove null entries
 
-
-            return $results;
+            // Return events with week info
+            return [
+                'events' => $results,
+                'week_start' => $weekStart,
+                'week_end' => $weekEnd,
+                'week_offset' => $weekOffset
+            ];
         } catch (\Exception $e) {
             Log::error('Calendar events error', ['error' => $e->getMessage()]);
             return collect([]);
@@ -1218,9 +1249,9 @@ class DashboardController extends Controller
     /**
      * Get enhanced dashboard data with additional UX features
      */
-    private function getEnhancedDashboardData($role, $userId, $centreId)
+    private function getEnhancedDashboardData($role, $userId, $centreId, $weekOffset = 0)
     {
-        $data = $this->getDashboardData($role, $userId, $centreId);
+        $data = $this->getDashboardData($role, $userId, $centreId, $weekOffset);
         
         // Add enhanced features
         $data['enhanced_features'] = true;
@@ -1483,6 +1514,49 @@ class DashboardController extends Controller
                 'success' => false,
                 'error' => 'Failed to refresh widget',
                 'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get calendar events for a specific week
+     */
+    public function getWeekCalendar(Request $request)
+    {
+        try {
+            $weekOffset = $request->input('week_offset', 0);
+            $userId = session('id');
+            $role = session('role');
+            $centreId = session('centre_id');
+
+            $calendarData = $this->getCalendarEvents($role, $userId, $centreId, $weekOffset);
+
+            // Ensure dates are properly formatted for JSON
+            $calendarData['week_start_formatted'] = $calendarData['week_start']->format('Y-m-d');
+            $calendarData['week_end_formatted'] = $calendarData['week_end']->format('Y-m-d');
+            
+            return response()->json([
+                'success' => true,
+                'calendar_data' => $calendarData,
+                'week_info' => [
+                    'week_start' => $calendarData['week_start']->format('M j'),
+                    'week_end' => $calendarData['week_end']->format('M j'),
+                    'week_number' => $calendarData['week_start']->format('W'),
+                    'year' => $calendarData['week_start']->format('Y'),
+                    'current_offset' => $weekOffset
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Week calendar error', [
+                'error' => $e->getMessage(),
+                'user_id' => session('id'),
+                'week_offset' => $request->input('week_offset', 0)
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'error' => 'Failed to load calendar data'
             ], 500);
         }
     }

@@ -181,13 +181,15 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="applicationModalLabel">Application Details</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
             </div>
             <div class="modal-body" id="applicationModalBody">
                 <!-- Will be populated via AJAX -->
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
                 <div id="modalActions">
                     <!-- Action buttons will be added here -->
                 </div>
@@ -204,7 +206,9 @@
                 <h5 class="modal-title text-success" id="approveModalLabel">
                     <i class="fas fa-check-circle"></i> Approve Application
                 </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
             </div>
             <div class="modal-body">
                 <form id="approveForm">
@@ -236,7 +240,7 @@
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
                 <button type="button" class="btn btn-success" onclick="submitApproval()">
                     <i class="fas fa-check"></i> Approve Application
                 </button>
@@ -253,7 +257,9 @@
                 <h5 class="modal-title text-danger" id="rejectModalLabel">
                     <i class="fas fa-times-circle"></i> Reject Application
                 </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
             </div>
             <div class="modal-body">
                 <form id="rejectForm">
@@ -272,7 +278,7 @@
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
                 <button type="button" class="btn btn-danger" onclick="submitRejection()">
                     <i class="fas fa-times"></i> Reject Application
                 </button>

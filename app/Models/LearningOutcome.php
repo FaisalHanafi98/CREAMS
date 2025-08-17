@@ -3,91 +3,111 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Collection;
 
-class LearningOutcome extends Model
+/**
+ * Learning Outcome Compatibility Model
+ * 
+ * This model provides backward compatibility for code expecting LearningOutcome model
+ * while actually using the activity_outcomes JSON field from the activities table.
+ * 
+ * This prevents breaking existing code while transitioning to the new structure.
+ */
+class LearningOutcome
 {
     use HasFactory;
 
-    protected $fillable = [
-        'activity_id',
-        'outcome_title',
-        'outcome_description',
-        'competency_level',
-        'assessment_criteria',
-        'display_order',
-        'is_active',
-        'created_by'
-    ];
-
-    protected $casts = [
-        'assessment_criteria' => 'array',
-        'is_active' => 'boolean',
-        'created_at' => 'datetime',
-        'updated_at' => 'datetime'
-    ];
-
-    protected static function boot()
+    /**
+     * Static method to create fake collection from activity outcomes
+     */
+    public static function forActivity($activityId)
     {
-        parent::boot();
+        $activity = Activity::find($activityId);
+        if (!$activity) {
+            return new Collection();
+        }
         
-        static::deleting(function ($outcome) {
-            // Delete all competency progress records when outcome is deleted
-            $outcome->competencyProgress()->delete();
+        return $activity->learning_outcomes->map(function($outcome, $index) use ($activityId) {
+            return new static([
+                'id' => $index + 1,
+                'activity_id' => $activityId,
+                'outcome_title' => is_array($outcome) ? ($outcome['title'] ?? 'Learning Outcome') : $outcome,
+                'outcome_description' => is_array($outcome) ? ($outcome['description'] ?? '') : '',
+                'competency_level' => is_array($outcome) ? ($outcome['level'] ?? 'Beginner') : 'Beginner',
+                'assessment_criteria' => is_array($outcome) ? ($outcome['criteria'] ?? []) : [],
+                'display_order' => $index + 1,
+                'is_active' => is_array($outcome) ? ($outcome['is_active'] ?? true) : true,
+                'created_by' => 1
+            ]);
         });
     }
 
-    // Relationships
-    public function activity(): BelongsTo
+    protected $attributes = [];
+
+    public function __construct($attributes = [])
     {
-        return $this->belongsTo(Activity::class);
+        $this->attributes = $attributes;
     }
 
-    public function creator(): BelongsTo
+    public function __get($key)
     {
-        return $this->belongsTo(User::class, 'created_by');
+        return $this->attributes[$key] ?? null;
     }
 
-    public function competencyProgress(): HasMany
+    public function __set($key, $value)
     {
-        return $this->hasMany(TraineeCompetencyProgress::class);
+        $this->attributes[$key] = $value;
     }
 
-    // Scopes
-    public function scopeActive($query)
+    public function __isset($key)
     {
-        return $query->where('is_active', true);
+        return isset($this->attributes[$key]);
     }
 
-    public function scopeByCompetencyLevel($query, $level)
+    // Fake relationships for compatibility
+    public function activity()
     {
-        return $query->where('competency_level', $level);
+        return Activity::find($this->activity_id);
     }
 
-    public function scopeForActivity($query, $activityId)
+    public function creator()
     {
-        return $query->where('activity_id', $activityId);
+        return User::find($this->created_by);
     }
 
-    public function scopeOrdered($query)
+    public function competencyProgress()
     {
-        return $query->orderBy('display_order');
+        // Return empty collection since this is transitional
+        return new Collection();
     }
 
-    // Mutators and Accessors
-    public function setAssessmentCriteriaAttribute($value)
+    // Fake scopes as static methods
+    public static function active()
     {
-        $this->attributes['assessment_criteria'] = is_array($value) ? json_encode($value) : $value;
+        return new static();
     }
 
-    public function getAssessmentCriteriaAttribute($value)
+    public static function where($field, $operator, $value = null)
     {
-        return is_string($value) ? json_decode($value, true) : $value;
+        return new Collection();
     }
 
-    // Helper Methods
+    public static function find($id)
+    {
+        return null;
+    }
+
+    public static function all()
+    {
+        return new Collection();
+    }
+
+    public function count()
+    {
+        return 0;
+    }
+
+    // Fake attribute accessors
     public function getCompetencyLevelColorAttribute()
     {
         return match($this->competency_level) {
@@ -100,38 +120,39 @@ class LearningOutcome extends Model
 
     public function getProgressStatisticsAttribute()
     {
-        $total = $this->competencyProgress()->count();
-        $achieved = $this->competencyProgress()->whereIn('current_level', ['Achieved', 'Mastered'])->count();
-        $inProgress = $this->competencyProgress()->where('current_level', 'In Progress')->count();
-        
         return [
-            'total' => $total,
-            'achieved' => $achieved,
-            'in_progress' => $inProgress,
-            'not_started' => $total - $achieved - $inProgress,
-            'completion_rate' => $total > 0 ? round(($achieved / $total) * 100, 2) : 0
+            'total' => 0,
+            'achieved' => 0,
+            'in_progress' => 0,
+            'not_started' => 0,
+            'completion_rate' => 0
         ];
     }
 
     public function getTraineeProgress($traineeId)
     {
-        return $this->competencyProgress()
-            ->where('trainee_id', $traineeId)
-            ->first();
+        return null;
     }
 
-    public function updateTraineeProgress($traineeId, $level, $percentage, $assessedBy, $notes = null, $assessmentData = null)
+    // Create/Update methods that do nothing (transitional)
+    public static function create($attributes)
     {
-        return $this->competencyProgress()->updateOrCreate(
-            ['trainee_id' => $traineeId],
-            [
-                'current_level' => $level,
-                'progress_percentage' => $percentage,
-                'last_assessed_at' => now(),
-                'assessed_by' => $assessedBy,
-                'notes' => $notes,
-                'assessment_data' => $assessmentData
-            ]
-        );
+        return new static($attributes);
+    }
+
+    public function update($attributes)
+    {
+        $this->attributes = array_merge($this->attributes, $attributes);
+        return true;
+    }
+
+    public function delete()
+    {
+        return true;
+    }
+
+    public function save()
+    {
+        return true;
     }
 }

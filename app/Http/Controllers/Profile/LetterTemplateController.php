@@ -120,6 +120,16 @@ class LetterTemplateController extends Controller
                 'user_id' => session('id')
             ]);
 
+            // Check if this is an AJAX request and respond accordingly
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Letter template saved successfully!',
+                    'template_id' => $template->id,
+                    'template_name' => $template->template_name
+                ]);
+            }
+
             return redirect()->back()->with('success', 'Letter template saved successfully!');
 
         } catch (\Illuminate\Validation\ValidationException $e) {
@@ -128,6 +138,14 @@ class LetterTemplateController extends Controller
                 'errors' => $e->errors(),
                 'user_id' => session('id')
             ]);
+            
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validation failed',
+                    'errors' => $e->errors()
+                ], 422);
+            }
             
             return redirect()->back()
                 ->withErrors($e->validator)
@@ -141,6 +159,13 @@ class LetterTemplateController extends Controller
                 'user_id' => session('id'),
                 'input' => $request->except(['header_image', 'footer_image'])
             ]);
+            
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to save letter template: ' . $e->getMessage()
+                ], 500);
+            }
             
             return redirect()->back()
                 ->with('error', 'Failed to save letter template. Please check the logs for more information.')
@@ -164,7 +189,7 @@ class LetterTemplateController extends Controller
                 'letter_date' => 'required|date',
                 'subject' => 'required|string|max:255',
                 'content' => 'required|string',
-                'recipient_name' => 'nullable|string|max:255',
+                'recipient_name' => 'required|string|max:255', // Changed to required to match DB
                 'recipient_address' => 'nullable|string',
                 'recipient_id' => 'nullable|integer',
                 'recipient_type' => 'nullable|string|max:255',
@@ -215,13 +240,18 @@ class LetterTemplateController extends Controller
             $letter = Letter::create([
                 'letter_name' => $validated['letter_name'],
                 'letter_date' => $validated['letter_date'],
+                'letter_title' => $validated['subject'], // Use subject as title
                 'letter_subject' => $validated['subject'],
                 'letter_content' => $validated['content'],
-                'letter_type' => 'official',
+                'letter_type' => 'official_letter',
                 'recipient_id' => $validated['recipient_id'] ?? 0, // Default to 0 if not provided
+                'recipient_name' => $validated['recipient_name'] ?? 'Unknown', // Required field
+                'recipient_email' => $validated['recipient_email'] ?? null,
+                'recipient_address' => $validated['recipient_address'] ?? '',
                 'recipient_type' => $validated['recipient_type'] ?? 'external',
                 'template_id' => $template->id,
-                'letter_status' => 'draft',
+                'letter_status' => 'generated',
+                'centre_id' => session('centre_id') ?? 'MAIN', // Required field
                 'created_by' => session('id'),
                 'letter_data' => [
                     'generated_by_name' => session('name') ?? $user->name,
@@ -306,7 +336,7 @@ class LetterTemplateController extends Controller
                 'subject' => 'required|string|max:255',
                 'content' => 'required|string',
                 'letter_date' => 'required|date',
-                'recipient_name' => 'nullable|string|max:255',
+                'recipient_name' => 'required|string|max:255', // Changed to required to match DB
                 'recipient_address' => 'nullable|string'
             ]);
 
@@ -335,6 +365,123 @@ class LetterTemplateController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to generate preview'
+            ], 500);
+        }
+    }
+
+    /**
+     * Preview a generated letter by ID
+     */
+    public function previewLetter($id)
+    {
+        try {
+            $letter = Letter::findOrFail($id);
+            
+            // Check if user has permission to view this letter
+            if ($letter->created_by !== session('id') && session('role') !== 'admin') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized to view this letter'
+                ], 403);
+            }
+            
+            // Get the template used for this letter
+            $template = $letter->template;
+            if (!$template) {
+                $template = LetterTemplate::getActive();
+            }
+            
+            // Prepare letter data
+            $letterData = $letter->letter_data ?? [];
+            
+            // Generate HTML preview
+            $html = view('letters.preview', [
+                'template' => $template,
+                'subject' => $letter->letter_subject,
+                'content' => $letter->letter_content,
+                'letter_date' => \Carbon\Carbon::parse($letter->letter_date)->format('d F Y'),
+                'recipient_name' => $letter->recipient_name ?? $letterData['recipient_name'] ?? 'Unknown',
+                'recipient_address' => $letter->recipient_address ?? $letterData['recipient_address'] ?? '',
+                'generated_by_name' => $letterData['generated_by_name'] ?? 'Unknown',
+                'generated_by_position' => $letterData['generated_by_position'] ?? 'Unknown',
+                'letter_reference' => $letter->letter_reference,
+                'letter_name' => $letter->letter_name
+            ])->render();
+            
+            return response()->json([
+                'success' => true,
+                'html' => $html,
+                'letter_id' => $letter->id,
+                'letter_reference' => $letter->letter_reference
+            ]);
+            
+        } catch (\Exception $e) {
+            Log::error('Letter preview error', [
+                'message' => $e->getMessage(),
+                'letter_id' => $id,
+                'user_id' => session('id')
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to load letter preview: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Preview a saved template by ID
+     */
+    public function previewTemplate($id)
+    {
+        try {
+            $template = LetterTemplate::findOrFail($id);
+            
+            // Check if user has permission to view this template
+            if ($template->created_by !== session('id') && session('role') !== 'admin') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized to view this template'
+                ], 403);
+            }
+            
+            // Get template variables or use defaults
+            $templateVars = $template->template_variables ?? [];
+            
+            // Generate sample data for preview
+            $previewData = [
+                'template' => $template,
+                'subject' => 'Sample Letter Subject',
+                'content' => 'This is a sample content for previewing the template. The actual content will be replaced when generating an actual letter.',
+                'letter_date' => Carbon::now()->format('d F Y'),
+                'recipient_name' => 'Sample Recipient Name',
+                'recipient_address' => 'Sample Recipient Address',
+                'generated_by_name' => session('name') ?? 'Your Name',
+                'generated_by_position' => ucfirst(session('role')) ?? 'Your Position',
+                'letter_reference' => 'SAMPLE/2024/001',
+                'letter_name' => 'Sample Letter'
+            ];
+            
+            // Generate HTML preview using the same view as letter preview
+            $html = view('letters.preview', $previewData)->render();
+            
+            return response()->json([
+                'success' => true,
+                'html' => $html,
+                'template_id' => $template->id,
+                'template_name' => $template->template_name
+            ]);
+            
+        } catch (\Exception $e) {
+            Log::error('Template preview error', [
+                'message' => $e->getMessage(),
+                'template_id' => $id,
+                'user_id' => session('id')
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to load template preview: ' . $e->getMessage()
             ], 500);
         }
     }

@@ -10,6 +10,10 @@
  * - Location availability checking
  * - Auto-save functionality
  * - Accessibility support
+ * - Security validation (XSS, SQL injection prevention)
+ * - File upload validation
+ * - Rate limiting protection
+ * - Progressive form enhancement
  */
 
 class EnhancedFormValidator {

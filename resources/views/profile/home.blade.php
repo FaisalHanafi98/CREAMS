@@ -535,6 +535,96 @@
         border-radius: 4px;
         box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
+    
+    /* Letter Reference Refresh Button Styling */
+    #generate-ref-btn {
+        border-left: 0 !important;
+        transition: all 0.3s ease;
+        position: relative;
+        background: #6c757d;
+        color: white;
+        border: 1px solid #6c757d;
+    }
+    
+    #generate-ref-btn:hover,
+    #generate-ref-btn.btn-hover-effect {
+        background: var(--primary-color);
+        border-color: var(--primary-color);
+        color: white;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(200, 80, 192, 0.3);
+    }
+    
+    #generate-ref-btn:active {
+        transform: translateY(0);
+        box-shadow: 0 1px 4px rgba(200, 80, 192, 0.2);
+    }
+    
+    #generate-ref-btn:disabled {
+        background: #e9ecef;
+        border-color: #e9ecef;
+        color: #6c757d;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+    }
+    
+    #generate-ref-btn i {
+        pointer-events: none;
+        transition: transform 0.3s ease;
+    }
+    
+    #generate-ref-btn:hover i {
+        transform: rotate(180deg);
+    }
+    
+    /* Input group styling for letter reference */
+    #letter_ref {
+        border-right: 0;
+    }
+    
+    .input-group-append .btn {
+        border-top-left-radius: 0;
+        border-bottom-left-radius: 0;
+    }
+    
+    /* Modal header buttons styling */
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .modal-header-buttons {
+        display: flex;
+        align-items: center;
+        margin-left: auto;
+    }
+    
+    .modal-header-buttons .btn {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.875rem;
+        line-height: 1.5;
+        border-radius: 0.2rem;
+    }
+    
+    .modal-header-buttons .close {
+        margin-left: 0.5rem;
+        padding: 0;
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        font-weight: 700;
+        line-height: 1;
+        color: #000;
+        text-shadow: 0 1px 0 #fff;
+        opacity: 0.5;
+        cursor: pointer;
+    }
+    
+    .modal-header-buttons .close:hover {
+        opacity: 0.75;
+    }
 </style>
 @endsection
 
@@ -973,8 +1063,11 @@
                             <button type="button" class="btn btn-outline-primary" id="save-template-btn">
                                 <i class="fas fa-save"></i> Save Template
                             </button>
+                            <button type="button" class="btn btn-outline-success" id="load-templates-btn">
+                                <i class="fas fa-download"></i> Load Saved Template
+                            </button>
                             <button type="button" class="btn btn-outline-secondary" id="view-templates-archive-btn">
-                                <i class="fas fa-folder-open"></i> View Templates & Letter Archive
+                                <i class="fas fa-folder-open"></i> View Letter Archive
                             </button>
                         </div>
                     </div>
@@ -992,9 +1085,11 @@
                                         <label for="letter_ref">Letter Reference ID</label>
                                         <div class="input-group">
                                             <input type="text" class="form-control" id="letter_ref" name="reference_number" value="" required readonly>
-                                            <button type="button" class="btn btn-outline-secondary" id="generate-ref-btn" title="Generate New Reference">
-                                                <i class="fas fa-refresh"></i>
-                                            </button>
+                                            <div class="input-group-append">
+                                                <button type="button" class="btn btn-outline-secondary" id="generate-ref-btn" title="Generate New Reference" style="cursor: pointer; z-index: 5;">
+                                                    <i class="fas fa-refresh" style="pointer-events: none;"></i>
+                                                </button>
+                                            </div>
                                         </div>
                                         <small class="form-text text-muted">Unique reference number for this letter</small>
                                     </div>
@@ -1065,8 +1160,9 @@
 $(document).ready(function() {
     let editMode = false;
     
-    // Handle hash navigation on page load
-    if (window.location.hash === '#letters' || window.location.hash === '#letter') {
+    // Handle hash navigation on page load - support multiple hash variants
+    const validLetterHashes = ['#letters', '#letter', '#lettergenerator', '#letter-generator', '#letters-tab'];
+    if (validLetterHashes.includes(window.location.hash.toLowerCase())) {
         // Activate the letters tab
         $('#letters-tab').tab('show');
         
@@ -1267,20 +1363,115 @@ $(document).ready(function() {
     
     // Form submission handlers with loading states and validation
     $('#personal-form').submit(function(e) {
+        e.preventDefault(); // Prevent default submission
+        
         if (!validatePersonalForm()) {
-            e.preventDefault();
             return false;
         }
-        showLoadingOverlay('Updating personal information...');
+        
+        // Collect data from both forms and submit together
+        submitCombinedProfile('personal');
     });
     
     $('#professional-form').submit(function(e) {
+        e.preventDefault(); // Prevent default submission
+        
         if (!validateProfessionalForm()) {
-            e.preventDefault();
             return false;
         }
-        showLoadingOverlay('Updating professional information...');
+        
+        // Collect data from both forms and submit together
+        submitCombinedProfile('professional');
     });
+    
+    // Function to submit all profile data regardless of which form was clicked
+    function submitCombinedProfile(formType) {
+        showLoadingOverlay(formType === 'personal' ? 'Updating personal information...' : 'Updating professional information...');
+        
+        // Collect all form data from both tabs
+        const formData = new FormData();
+        formData.append('_token', $('input[name="_token"]').first().val());
+        
+        // Personal fields
+        const nameVal = $('#name').val() || '';
+        const emailVal = $('#email').val() || '';
+        const phoneVal = $('#phone').val() || '';
+        const addressVal = $('#address').val() || '';
+        const aboutVal = $('#about').val() || '';
+        const dobVal = $('#date_of_birth').val() || '';
+        
+        formData.append('name', nameVal);
+        formData.append('email', emailVal);
+        formData.append('phone', phoneVal);
+        formData.append('address', addressVal);
+        formData.append('about', aboutVal);
+        formData.append('date_of_birth', dobVal);
+        
+        // Professional fields
+        formData.append('education_level', $('#education_level').val() || '');
+        formData.append('education_specialization', $('#education_specialization').val() || '');
+        formData.append('teaching_specialization', $('#teaching_specialization').val() || '');
+        formData.append('position', $('#position').val() || '');
+        
+        // Debug logging
+        console.log('Form data being sent:', {
+            name: nameVal,
+            email: emailVal,
+            phone: phoneVal,
+            address: addressVal,
+            about: aboutVal,
+            date_of_birth: dobVal,
+            education_level: $('#education_level').val(),
+            education_specialization: $('#education_specialization').val(),
+            teaching_specialization: $('#teaching_specialization').val(),
+            position: $('#position').val()
+        });
+        
+        // Submit via AJAX to avoid page reload issues
+        $.ajax({
+            url: '{{ route("profile.update") }}',
+            method: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(response) {
+                console.log('Profile update success response:', response);
+                hideLoadingOverlay();
+                showSuccessAlert('Profile updated successfully!');
+                
+                // Update session data and refresh if needed
+                setTimeout(function() {
+                    location.reload();
+                }, 1500);
+            },
+            error: function(xhr, status, error) {
+                console.error('Profile update error details:', {
+                    status: xhr.status,
+                    error: error,
+                    response: xhr.responseText,
+                    responseJSON: xhr.responseJSON
+                });
+                
+                hideLoadingOverlay();
+                
+                if (xhr.status === 422) {
+                    // Validation errors
+                    const errors = xhr.responseJSON.errors;
+                    let errorMessage = 'Please fix the following errors:\n';
+                    
+                    for (const field in errors) {
+                        errorMessage += `• ${errors[field][0]}\n`;
+                        showFieldError(`#${field}`, errors[field][0]);
+                    }
+                    
+                    showErrorAlert(errorMessage);
+                } else {
+                    console.error('Profile update error:', error);
+                    showErrorAlert('An error occurred while updating your profile. Please try again.');
+                }
+            }
+        });
+    }
     
     // Form validation functions
     function validatePersonalForm() {
@@ -1469,58 +1660,222 @@ $(document).ready(function() {
         }
     }
     
-    // Letter Reference ID Generator
-    $('#letter_ref').click(function() {
+    // Simplified Letter Generator Event Handlers
+    console.log('Setting up letter generator handlers...');
+    
+    // Simple approach - bind events directly to document with delegation
+    $(document).on('click', '#letter_ref', function() {
+        console.log('Input field clicked via delegation');
         if (confirm('Generate a new reference ID?')) {
-            const newRef = 'CREAMS-' + new Date().getFullYear() + '-' + String(Math.floor(Math.random() * 9999) + 1).padStart(4, '0');
-            $(this).val(newRef);
+            generateNewReference();
         }
     });
     
-    // Letter Preview
-    $('#preview-letter').click(function() {
+    $(document).on('click', '#generate-ref-btn', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log('Refresh button clicked via delegation');
+        
+        if (!$(this).prop('disabled')) {
+            generateNewReference();
+        }
+        return false;
+    });
+    
+    $(document).on('click', '#preview-letter', function() {
+        console.log('Preview button clicked');
         generateLetterPreview();
     });
     
-    // Generate new reference number
-    $('#generate-ref-btn').click(function() {
-        generateNewReference();
-    });
+    console.log('Event handlers bound to document');
     
-    // Initialize with a reference number on page load
-    generateNewReference();
+    // Letter archive preview function
+    window.previewLetter = function(letterId) {
+        console.log('Previewing letter ID:', letterId);
+        
+        // Create a modal to show the letter preview
+        const modalHtml = `
+            <div class="modal fade" id="letterPreviewModal" tabindex="-1" role="dialog" aria-labelledby="letterPreviewModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-lg" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="letterPreviewModalLabel">Letter Preview</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <div id="letterPreviewContent">
+                                <div class="text-center">
+                                    <i class="fas fa-spinner fa-spin fa-2x"></i>
+                                    <p class="mt-2">Loading letter preview...</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Remove existing modal if any
+        $('#letterPreviewModal').remove();
+        
+        // Add modal to body
+        $('body').append(modalHtml);
+        
+        // Show modal
+        $('#letterPreviewModal').modal('show');
+        
+        // Fetch letter content
+        $.ajax({
+            url: `/profile/letter-preview/${letterId}`,
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            },
+            success: function(response) {
+                if (response.success && response.html) {
+                    $('#letterPreviewContent').html(response.html);
+                } else {
+                    $('#letterPreviewContent').html('<div class="alert alert-warning">Letter preview not available.</div>');
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Error loading letter preview:', error);
+                $('#letterPreviewContent').html('<div class="alert alert-danger">Error loading letter preview. Please try again.</div>');
+            }
+        });
+    };
+    
+    // Check for template selection from letters archive page
+    function checkForSelectedTemplateId() {
+        const selectedTemplateId = localStorage.getItem('selectedTemplateId');
+        if (selectedTemplateId) {
+            console.log('Found selected template ID:', selectedTemplateId);
+            
+            // Clear the localStorage item
+            localStorage.removeItem('selectedTemplateId');
+            
+            // Load the template with more delay to ensure page is fully loaded
+            setTimeout(function() {
+                console.log('Loading template with ID:', selectedTemplateId);
+                loadSingleTemplate(parseInt(selectedTemplateId));
+            }, 1000);
+            
+            // Show a temporary message
+            showSuccessAlert(`Loading template from archive...`);
+        } else {
+            console.log('No template ID found in localStorage');
+        }
+    }
+    
+    // Add a direct test button for debugging
+    setTimeout(function() {
+        if ($('#letter_ref').length > 0) {
+            console.log('Adding test functionality');
+            $('#letter_ref').attr('title', 'Click me to generate new ID');
+            $('#generate-ref-btn').attr('title', 'Click to refresh reference ID');
+        }
+    }, 1000);
+    
+    // Check for template selection from letters archive page
+    checkForSelectedTemplateId();
+    
+    // Test if we can find elements immediately and after delay
+    console.log('Letter ref input found immediately:', $('#letter_ref').length);
+    console.log('Generate button found immediately:', $('#generate-ref-btn').length);
+    
+    // Try multiple initialization approaches
+    setTimeout(function() {
+        console.log('After 500ms - Letter ref input:', $('#letter_ref').length);
+        console.log('After 500ms - Generate button:', $('#generate-ref-btn').length);
+        
+        if ($('#letter_ref').length > 0) {
+            console.log('Initializing reference number after delay');
+            generateNewReference();
+        }
+    }, 500);
+    
+    setTimeout(function() {
+        console.log('After 2000ms - Letter ref input:', $('#letter_ref').length);
+        if ($('#letter_ref').length > 0 && $('#letter_ref').val() === '') {
+            console.log('Late initialization of reference number');
+            generateNewReference();
+        }
+    }, 2000);
     
     function generateNewReference() {
+        console.log('generateNewReference() called');
         const btn = $('#generate-ref-btn');
         const input = $('#letter_ref');
         
-        btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>');
+        // Check if elements exist
+        if (btn.length === 0) {
+            console.log('Button not found, using direct generation');
+        }
+        if (input.length === 0) {
+            console.log('Input not found, cannot set reference');
+            return;
+        }
         
-        $.ajax({
-            url: '{{ route('profile.letter.newReference') }}',
-            method: 'GET',
-            success: function(response) {
-                if (response.success) {
-                    input.val(response.reference);
-                } else {
-                    // Fallback to client-side generation
-                    const fallbackRef = 'LTR/' + new Date().getFullYear() + '/' + 
-                                       String(new Date().getMonth() + 1).padStart(2, '0') + '/' +
-                                       String(Math.floor(Math.random() * 9999) + 1).padStart(4, '0');
-                    input.val(fallbackRef);
-                }
-            },
-            error: function() {
-                // Fallback to client-side generation
-                const fallbackRef = 'LTR/' + new Date().getFullYear() + '/' + 
-                                   String(new Date().getMonth() + 1).padStart(2, '0') + '/' +
-                                   String(Math.floor(Math.random() * 9999) + 1).padStart(4, '0');
-                input.val(fallbackRef);
-            },
-            complete: function() {
+        // Visual feedback if button exists
+        if (btn.length > 0) {
+            btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>');
+        }
+        input.addClass('is-loading');
+        
+        // Generate reference client-side using the same logic as the server
+        try {
+            const newRef = generateClientSideReference();
+            input.val(newRef);
+            console.log('New reference generated and set:', newRef);
+            
+            // Show success feedback
+            if (btn.length > 0) {
+                btn.removeClass('btn-outline-secondary').addClass('btn-success');
+                setTimeout(function() {
+                    btn.removeClass('btn-success').addClass('btn-outline-secondary');
+                }, 1000);
+            }
+        } catch (error) {
+            console.error('Error generating reference:', error);
+            const fallbackRef = generateFallbackReference();
+            input.val(fallbackRef);
+        }
+        
+        // Reset visual feedback
+        setTimeout(function() {
+            if (btn.length > 0) {
                 btn.prop('disabled', false).html('<i class="fas fa-refresh"></i>');
             }
-        });
+            input.removeClass('is-loading');
+        }, 800);
+    }
+    
+    function generateClientSideReference() {
+        const prefix = 'LTR';
+        const year = new Date().getFullYear();
+        const month = String(new Date().getMonth() + 1).padStart(2, '0');
+        
+        // Generate a random sequence number between 1-9999
+        const sequence = Math.floor(Math.random() * 9999) + 1;
+        const sequenceStr = String(sequence).padStart(4, '0');
+        
+        const reference = `${prefix}/${year}/${month}/${sequenceStr}`;
+        console.log('Generated client-side reference:', reference);
+        return reference;
+    }
+    
+    function generateFallbackReference() {
+        const fallbackRef = 'LTR/' + new Date().getFullYear() + '/' + 
+                           String(new Date().getMonth() + 1).padStart(2, '0') + '/' +
+                           String(Math.floor(Math.random() * 9999) + 1).padStart(4, '0');
+        console.log('Fallback reference generated:', fallbackRef);
+        return fallbackRef;
     }
     
     function generateLetterPreview() {
@@ -1534,8 +1889,8 @@ $(document).ready(function() {
         };
         
         // Validate required fields
-        if (!formData.letter_name || !formData.subject || !formData.content) {
-            alert('Please fill in the letter name, subject and content fields to generate a preview.');
+        if (!formData.letter_name || !formData.subject || !formData.content || !formData.recipient_name) {
+            alert('Please fill in the letter name, subject, content and recipient name fields to generate a preview.');
             return;
         }
         
@@ -1605,6 +1960,12 @@ $(document).ready(function() {
         }
     });
     
+    // Load templates modal button
+    $('#load-templates-btn').click(function() {
+        console.log('Loading templates modal...');
+        loadTemplatesModal();
+    });
+
     $('#view-templates-archive-btn').click(function() {
         // Open templates and archive in same page instead of popup
         window.location.href = '{{ route("letters.index") }}';
@@ -1618,6 +1979,8 @@ $(document).ready(function() {
     
     // Save template via AJAX
     function saveTemplate(templateData) {
+        console.log('Saving template:', templateData);
+        
         $.ajax({
             url: '{{ route("profile.templates.save") }}',
             method: 'POST',
@@ -1625,27 +1988,50 @@ $(document).ready(function() {
                 ...templateData,
                 _token: '{{ csrf_token() }}'
             },
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json',
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
             beforeSend: function() {
+                console.log('Starting template save request...');
                 $('#save-template-btn').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Saving...');
             },
             success: function(response) {
+                console.log('Template save response:', response);
+                
                 if (response.success) {
-                    showSuccessAlert('Template saved successfully! The page will refresh to show the current template.');
+                    showSuccessAlert(`✅ Template "${response.template_name}" saved successfully! The page will refresh to show the updated template.`);
                     $('#template_name').val('');
                     $('#template_description').val('');
+                    
                     // Refresh page after short delay to show updated template
                     setTimeout(function() {
                         window.location.reload();
-                    }, 1500);
+                    }, 2000);
                 } else {
-                    showErrorAlert('Failed to save template: ' + response.message);
+                    console.error('Template save failed:', response);
+                    showErrorAlert('Failed to save template: ' + (response.message || 'Unknown error'));
                 }
             },
             error: function(xhr) {
                 let errorMessage = 'Failed to save template.';
                 if (xhr.responseJSON && xhr.responseJSON.message) {
                     errorMessage = xhr.responseJSON.message;
+                } else if (xhr.status === 422 && xhr.responseJSON && xhr.responseJSON.errors) {
+                    // Handle validation errors
+                    const errors = xhr.responseJSON.errors;
+                    errorMessage = 'Validation Error:\n';
+                    for (const field in errors) {
+                        errorMessage += `• ${errors[field][0]}\n`;
+                    }
+                } else if (xhr.status === 500) {
+                    errorMessage = 'Server error occurred while saving template.';
+                } else if (xhr.status === 0) {
+                    errorMessage = 'Network error. Please check your connection.';
                 }
+                
+                console.error('Template save error:', xhr);
                 showErrorAlert(errorMessage);
             },
             complete: function() {
@@ -1683,17 +2069,24 @@ $(document).ready(function() {
             templates.forEach(function(template) {
                 templatesHtml += `
                     <div class="col-md-6 mb-3">
-                        <div class="card">
-                            <div class="card-body">
+                        <div class="card h-100">
+                            <div class="card-body d-flex flex-column">
                                 <h6 class="card-title">${template.template_name}</h6>
                                 <p class="card-text text-muted small">${template.template_description || 'No description'}</p>
                                 <p class="small text-info">
                                     Created by: ${template.creator ? template.creator.name : 'Unknown'}<br>
                                     Used: ${template.usage_count} times
                                 </p>
-                                <button class="btn btn-primary btn-sm" onclick="loadSingleTemplate(${template.id})">
-                                    <i class="fas fa-download"></i> Load Template
-                                </button>
+                                <div class="mt-auto">
+                                    <div class="btn-group btn-group-sm w-100" role="group">
+                                        <button class="btn btn-outline-info" onclick="previewTemplate(${template.id})" title="Preview Template">
+                                            <i class="fas fa-eye"></i> Preview
+                                        </button>
+                                        <button class="btn btn-primary" onclick="loadSingleTemplate(${template.id})" title="Load Template">
+                                            <i class="fas fa-download"></i> Load
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1703,18 +2096,27 @@ $(document).ready(function() {
         }
         
         const modalHtml = `
-            <div class="modal fade" id="templatesModal" tabindex="-1">
-                <div class="modal-dialog modal-lg">
+            <div class="modal fade" id="templatesModal" tabindex="-1" role="dialog" aria-labelledby="templatesModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-lg" role="document">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <h5 class="modal-title"><i class="fas fa-folder-open"></i> Letter Templates</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            <h5 class="modal-title" id="templatesModalLabel">
+                                <i class="fas fa-folder-open"></i> Load Saved Templates
+                            </h5>
+                            <div class="modal-header-buttons">
+                                <button type="button" class="btn btn-sm btn-outline-secondary mr-2" onclick="minimizeModal()" title="Minimize">
+                                    <i class="fas fa-minus"></i>
+                                </button>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
                         </div>
-                        <div class="modal-body">
+                        <div class="modal-body" id="templatesModalBody">
                             ${templatesHtml}
                         </div>
                         <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
                         </div>
                     </div>
                 </div>
@@ -1731,6 +2133,123 @@ $(document).ready(function() {
         $('#templatesModal').modal('show');
     }
     
+    // Minimize modal function
+    window.minimizeModal = function() {
+        const modalBody = $('#templatesModalBody');
+        const modalFooter = $('#templatesModal .modal-footer');
+        const minimizeBtn = $('#templatesModal .fa-minus').parent();
+        
+        if (modalBody.is(':visible')) {
+            // Minimize - hide body and footer
+            modalBody.slideUp();
+            modalFooter.slideUp();
+            minimizeBtn.find('i').removeClass('fa-minus').addClass('fa-plus');
+            minimizeBtn.attr('title', 'Restore');
+        } else {
+            // Restore - show body and footer
+            modalBody.slideDown();
+            modalFooter.slideDown();
+            minimizeBtn.find('i').removeClass('fa-plus').addClass('fa-minus');
+            minimizeBtn.attr('title', 'Minimize');
+        }
+    };
+    
+    // Preview template function
+    window.previewTemplate = function(templateId) {
+        console.log('Previewing template ID:', templateId);
+        
+        // Create preview modal
+        const previewModalHtml = `
+            <div class="modal fade" id="templatePreviewModal" tabindex="-1" role="dialog" aria-labelledby="templatePreviewModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-xl" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="templatePreviewModalLabel">
+                                <i class="fas fa-eye"></i> Template Preview
+                            </h5>
+                            <div class="modal-header-buttons">
+                                <button type="button" class="btn btn-sm btn-outline-secondary mr-2" onclick="minimizePreviewModal()" title="Minimize">
+                                    <i class="fas fa-minus"></i>
+                                </button>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="modal-body" id="templatePreviewModalBody" style="max-height: 70vh; overflow-y: auto;">
+                            <div class="text-center">
+                                <i class="fas fa-spinner fa-spin fa-2x"></i>
+                                <p class="mt-2">Loading template preview...</p>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-success" onclick="loadTemplateFromPreview(${templateId})">
+                                <i class="fas fa-download"></i> Load This Template
+                            </button>
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Remove existing preview modal if any
+        $('#templatePreviewModal').remove();
+        
+        // Add preview modal to body
+        $('body').append(previewModalHtml);
+        
+        // Show preview modal
+        $('#templatePreviewModal').modal('show');
+        
+        // Fetch template preview
+        $.ajax({
+            url: '/profile/template-preview/' + templateId,
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            },
+            success: function(response) {
+                if (response.success && response.html) {
+                    $('#templatePreviewModalBody').html(response.html);
+                } else {
+                    $('#templatePreviewModalBody').html('<div class="alert alert-warning">Template preview not available.</div>');
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Error loading template preview:', error);
+                $('#templatePreviewModalBody').html('<div class="alert alert-danger">Error loading template preview. Please try again.</div>');
+            }
+        });
+    };
+    
+    // Minimize preview modal function
+    window.minimizePreviewModal = function() {
+        const modalBody = $('#templatePreviewModalBody');
+        const modalFooter = $('#templatePreviewModal .modal-footer');
+        const minimizeBtn = $('#templatePreviewModal .fa-minus').parent();
+        
+        if (modalBody.is(':visible')) {
+            modalBody.slideUp();
+            modalFooter.slideUp();
+            minimizeBtn.find('i').removeClass('fa-minus').addClass('fa-plus');
+            minimizeBtn.attr('title', 'Restore');
+        } else {
+            modalBody.slideDown();
+            modalFooter.slideDown();
+            minimizeBtn.find('i').removeClass('fa-plus').addClass('fa-minus');
+            minimizeBtn.attr('title', 'Minimize');
+        }
+    };
+    
+    // Load template from preview
+    window.loadTemplateFromPreview = function(templateId) {
+        $('#templatePreviewModal').modal('hide');
+        $('#templatesModal').modal('hide');
+        loadSingleTemplate(templateId);
+    };
+    
     // Load single template
     function loadSingleTemplate(templateId) {
         $.ajax({
@@ -1743,6 +2262,11 @@ $(document).ready(function() {
             success: function(response) {
                 if (response.success) {
                     const template = response.template;
+                    
+                    // Load template content into the letter content field
+                    if (template.template_content) {
+                        $('#letter_content').val(template.template_content);
+                    }
                     
                     // Fill in header and footer text
                     $('#header_text').val(template.header_text || '');
@@ -1761,13 +2285,30 @@ $(document).ready(function() {
                     // Close modal
                     $('#templatesModal').modal('hide');
                     
-                    showSuccessAlert(`Template "${template.template_name}" loaded successfully!`);
+                    // Navigate to letters tab automatically
+                    $('#letters-tab').tab('show');
+                    
+                    // Update the current template display
+                    $('#current-template-info').html(`
+                        <strong>${template.template_name}</strong> - ${template.template_description || 'No description'}<br>
+                        <small class="text-muted">Created: ${new Date(template.created_at).toLocaleDateString()} | Loaded: ${new Date().toLocaleDateString()}</small>
+                    `);
+                    
+                    // Scroll to letters section
+                    setTimeout(function() {
+                        $('html, body').animate({
+                            scrollTop: $('#letters-tab').offset().top - 100
+                        }, 500);
+                    }, 300);
+                    
+                    showSuccessAlert(`Template "${template.template_name}" loaded successfully! Content has been populated in the letter generator.`);
                 } else {
                     showErrorAlert('Failed to load template: ' + response.message);
                 }
             },
-            error: function(xhr) {
-                showErrorAlert('Failed to load template.');
+            error: function(xhr, status, error) {
+                console.error('Template loading error:', {xhr, status, error});
+                showErrorAlert('Failed to load template: ' + (xhr.responseJSON?.message || error));
             }
         });
     }
@@ -1802,7 +2343,8 @@ $(document).ready(function() {
                 showSuccessAlert(`Template "${templateData.name}" loaded successfully! You can now modify the content and generate a new letter.`);
                 
                 // Handle letters section navigation
-                if (window.location.hash === '#letters' || window.location.hash === '#letters-tab' || window.location.hash === '#letter') {
+                const allValidLetterHashes = ['#letters', '#letter', '#lettergenerator', '#letter-generator', '#letters-tab'];
+                if (allValidLetterHashes.includes(window.location.hash.toLowerCase())) {
                     // Activate the letters tab
                     $('#letters-tab').tab('show');
                     
@@ -1865,12 +2407,15 @@ $(document).ready(function() {
                 const letterData = letter.letter_data || {};
                 archiveHtml += `
                     <tr>
-                        <td><code>${letter.letter_reference}</code></td>
+                        <td><code>${letter.letter_reference}</code><br><small class="text-muted">${letter.letter_name || 'Untitled Letter'}</small></td>
                         <td>${new Date(letter.letter_date).toLocaleDateString()}</td>
-                        <td>${letter.letter_subject}</td>
+                        <td>${letter.letter_name || letter.letter_subject || 'Untitled Letter'}</td>
                         <td>${letterData.recipient_name || 'Unknown'}</td>
                         <td>
-                            <a href="${letter.pdf_url || '#'}" class="btn btn-sm btn-primary" target="_blank">
+                            <button class="btn btn-sm btn-outline-info me-1" onclick="previewLetter(${letter.id})" title="Preview Letter">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <a href="${letter.pdf_url || '#'}" class="btn btn-sm btn-primary" target="_blank" title="Download Letter">
                                 <i class="fas fa-download"></i>
                             </a>
                         </td>

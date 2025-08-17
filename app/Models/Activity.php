@@ -104,19 +104,46 @@ class Activity extends Model
     }
 
     /**
-     * Get learning outcomes for this activity
+     * Get learning outcomes for this activity from activity_outcomes field
      */
-    public function learningOutcomes()
+    public function getLearningOutcomesAttribute()
     {
-        return $this->hasMany(LearningOutcome::class);
+        if (empty($this->activity_outcomes)) {
+            return collect();
+        }
+        
+        $outcomes = is_string($this->activity_outcomes) 
+            ? json_decode($this->activity_outcomes, true) 
+            : $this->activity_outcomes;
+            
+        return collect($outcomes ?: []);
     }
 
     /**
      * Get active learning outcomes for this activity
      */
-    public function activeLearningOutcomes()
+    public function getActiveLearningOutcomesAttribute()
     {
-        return $this->hasMany(LearningOutcome::class)->where('is_active', true)->orderBy('display_order');
+        return $this->getLearningOutcomesAttribute()->filter(function($outcome) {
+            return is_array($outcome) ? ($outcome['is_active'] ?? true) : true;
+        });
+    }
+
+    /**
+     * Alternative relationship method for compatibility with existing code
+     * This replaces the expected learningOutcomes relationship
+     */
+    public function learningOutcomes()
+    {
+        return $this->learning_outcomes;
+    }
+
+    /**
+     * Get learning outcomes count for compatibility
+     */
+    public function getLearningOutcomesCountAttribute()
+    {
+        return $this->learning_outcomes->count();
     }
 
     /**

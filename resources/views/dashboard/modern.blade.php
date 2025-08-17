@@ -637,15 +637,15 @@
                                     </div>
 
                                     <div class="card-content-redesigned">
-                                        @if(isset($calendar_events) && count($calendar_events) > 0)
+                                        @if(isset($calendar_data) && isset($calendar_data['events']) && count($calendar_data['events']) > 0)
                                             <!-- Week Navigation -->
                                             <div class="week-navigation">
                                                 <button class="nav-btn prev-week" onclick="changeWeek(-1)">
                                                     <i class="fas fa-chevron-left"></i>
                                                 </button>
                                                 <div class="current-week-display">
-                                                    <span class="week-text">Week {{ now()->format('W') }}</span>
-                                                    <span class="week-range">{{ now()->startOfWeek()->format('M j') }} - {{ now()->endOfWeek()->format('M j') }}</span>
+                                                    <span class="week-text">Week {{ $calendar_data['week_start']->format('W') ?? now()->format('W') }}</span>
+                                                    <span class="week-range">{{ ($calendar_data['week_start']->format('M j') ?? now()->startOfWeek()->format('M j')) }} - {{ ($calendar_data['week_end']->format('M j') ?? now()->endOfWeek()->format('M j')) }}</span>
                                                 </div>
                                                 <button class="nav-btn next-week" onclick="changeWeek(1)">
                                                     <i class="fas fa-chevron-right"></i>
@@ -659,9 +659,12 @@
                                                     $eventsByDate = [];
                                                     $weekDays = [];
                                                     
-                                                    // Generate current week days
+                                                    // Use the week from calendar_data or default to current week
+                                                    $weekStart = $calendar_data['week_start'] ?? now()->startOfWeek();
+                                                    
+                                                    // Generate week days
                                                     for ($i = 0; $i < 7; $i++) {
-                                                        $date = now()->startOfWeek()->addDays($i);
+                                                        $date = $weekStart->copy()->addDays($i);
                                                         $dateKey = $date->format('Y-m-d');
                                                         $weekDays[$dateKey] = [
                                                             'date' => $date,
@@ -669,11 +672,10 @@
                                                         ];
                                                     }
                                                     
-                                                    // Add events to respective days
-                                                    foreach($calendar_events as $event) {
-                                                        $eventDate = \Carbon\Carbon::parse($event['date'] . ' ' . $event['month'] . ' ' . now()->format('Y'));
-                                                        $dateKey = $eventDate->format('Y-m-d');
-                                                        if (isset($weekDays[$dateKey])) {
+                                                    // Add events to respective days using proper full_date
+                                                    foreach($calendar_data['events'] as $event) {
+                                                        $dateKey = $event['full_date'] ?? null;
+                                                        if ($dateKey && isset($weekDays[$dateKey])) {
                                                             $weekDays[$dateKey]['events'][] = $event;
                                                         }
                                                     }
@@ -779,6 +781,20 @@
                                             @endif
 
                                         @else
+                                            <!-- Week Navigation (show even when empty) -->
+                                            <div class="week-navigation">
+                                                <button class="nav-btn prev-week" onclick="changeWeek(-1)">
+                                                    <i class="fas fa-chevron-left"></i>
+                                                </button>
+                                                <div class="current-week-display">
+                                                    <span class="week-text">Week {{ now()->format('W') }}</span>
+                                                    <span class="week-range">{{ now()->startOfWeek()->format('M j') }} - {{ now()->endOfWeek()->format('M j') }}</span>
+                                                </div>
+                                                <button class="nav-btn next-week" onclick="changeWeek(1)">
+                                                    <i class="fas fa-chevron-right"></i>
+                                                </button>
+                                            </div>
+                                            
                                             <!-- Enhanced Empty State -->
                                             <div class="schedule-empty-state-redesigned">
                                                 <div class="empty-illustration-redesigned">
@@ -2870,51 +2886,258 @@ function scrollToToday() {
 }
 
 let currentWeekOffset = 0;
+let isLoadingWeek = false;
 
 function changeWeek(direction) {
+    if (isLoadingWeek) return; // Prevent multiple simultaneous requests
+    
     currentWeekOffset += direction;
-    
-    // Update week display
-    const now = new Date();
-    const weekStart = new Date(now);
-    weekStart.setDate(now.getDate() - now.getDay() + (currentWeekOffset * 7));
-    const weekEnd = new Date(weekStart);
-    weekEnd.setDate(weekStart.getDate() + 6);
-    
-    // Calculate week number
-    const onejan = new Date(weekStart.getFullYear(), 0, 1);
-    const weekNumber = Math.ceil((((weekStart - onejan) / 86400000) + onejan.getDay() + 1) / 7);
-    
-    // Update displays
-    const weekTextElement = document.querySelector('.week-text');
-    const weekRangeElement = document.querySelector('.week-range');
-    
-    if (weekTextElement) {
-        weekTextElement.textContent = `Week ${weekNumber}`;
-    }
-    
-    if (weekRangeElement) {
-        const formatOptions = { month: 'short', day: 'numeric' };
-        const startStr = weekStart.toLocaleDateString('en-US', formatOptions);
-        const endStr = weekEnd.toLocaleDateString('en-US', formatOptions);
-        weekRangeElement.textContent = `${startStr} - ${endStr}`;
-    }
+    isLoadingWeek = true;
     
     // Add loading effect
-    const scheduleGrid = document.querySelector('.schedule-week-grid');
-    if (scheduleGrid) {
-        scheduleGrid.style.opacity = '0.5';
-        scheduleGrid.style.transform = 'translateY(10px)';
-        
-        // Simulate loading new data (in real app, this would fetch from server)
-        setTimeout(() => {
-            scheduleGrid.style.opacity = '';
-            scheduleGrid.style.transform = '';
-        }, 300);
+    const scheduleContainer = document.querySelector('.schedule-grid-container');
+    const emptyState = document.querySelector('.schedule-empty-state-redesigned');
+    const weekNavigation = document.querySelector('.week-navigation');
+    
+    // Disable navigation buttons
+    const navButtons = document.querySelectorAll('.nav-btn');
+    navButtons.forEach(btn => btn.disabled = true);
+    
+    if (scheduleContainer) {
+        scheduleContainer.style.opacity = '0.5';
+        scheduleContainer.style.transform = 'translateY(10px)';
     }
     
-    // In a real application, you would fetch new calendar events for the selected week here
-    console.log(`Loading week ${weekNumber} (offset: ${currentWeekOffset})`);
+    if (emptyState) {
+        emptyState.style.opacity = '0.5';
+    }
+    
+    // Fetch new calendar data from server
+    fetch(`{{ route('dashboard.week-calendar') }}?week_offset=${currentWeekOffset}`, {
+        method: 'GET',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Update week display
+            const weekTextElement = document.querySelector('.week-text');
+            const weekRangeElement = document.querySelector('.week-range');
+            
+            if (weekTextElement && data.week_info) {
+                weekTextElement.textContent = `Week ${data.week_info.week_number}`;
+            }
+            
+            if (weekRangeElement && data.week_info) {
+                weekRangeElement.textContent = `${data.week_info.week_start} - ${data.week_info.week_end}`;
+            }
+            
+            // Update calendar content dynamically
+            updateCalendarContent(data.calendar_data);
+        } else {
+            console.error('Failed to load calendar data:', data.error);
+            // Revert the offset
+            currentWeekOffset -= direction;
+        }
+    })
+    .catch(error => {
+        console.error('Error fetching calendar data:', error);
+        // Revert the offset
+        currentWeekOffset -= direction;
+    })
+    .finally(() => {
+        // Remove loading effects
+        isLoadingWeek = false;
+        navButtons.forEach(btn => btn.disabled = false);
+        
+        if (scheduleContainer) {
+            scheduleContainer.style.opacity = '';
+            scheduleContainer.style.transform = '';
+        }
+        
+        if (emptyState) {
+            emptyState.style.opacity = '';
+        }
+    });
+}
+
+// Function to update calendar content dynamically
+function updateCalendarContent(calendarData) {
+    const scheduleContainer = document.querySelector('.schedule-grid-container');
+    const emptyState = document.querySelector('.schedule-empty-state-redesigned');
+    const cardContent = document.querySelector('.card-content-redesigned');
+    
+    if (!calendarData || !calendarData.events || calendarData.events.length === 0) {
+        // Show empty state
+        if (scheduleContainer) {
+            scheduleContainer.style.display = 'none';
+        }
+        if (emptyState) {
+            emptyState.style.display = 'block';
+        }
+        return;
+    }
+    
+    // Hide empty state
+    if (emptyState) {
+        emptyState.style.display = 'none';
+    }
+    
+    // Show schedule container
+    if (scheduleContainer) {
+        scheduleContainer.style.display = 'block';
+    }
+    
+    // Generate week days for the current calendar data
+    const weekDays = {};
+    // Use the formatted date string from backend
+    const weekStart = new Date(calendarData.week_start_formatted);
+    
+    // Generate 7 days starting from week start
+    for (let i = 0; i < 7; i++) {
+        const date = new Date(weekStart);
+        date.setDate(weekStart.getDate() + i);
+        const dateKey = date.toISOString().split('T')[0]; // YYYY-MM-DD format
+        weekDays[dateKey] = {
+            date: date,
+            events: []
+        };
+    }
+    
+    // Group events by date
+    calendarData.events.forEach(event => {
+        const dateKey = event.full_date;
+        if (weekDays[dateKey]) {
+            weekDays[dateKey].events.push(event);
+        }
+    });
+    
+    // Generate HTML for the schedule grid
+    let scheduleGridHTML = '<div class="schedule-week-grid">';
+    
+    Object.keys(weekDays).forEach(dateKey => {
+        const dayData = weekDays[dateKey];
+        const date = dayData.date;
+        const isToday = isDateToday(date);
+        const hasEvents = dayData.events.length > 0;
+        
+        scheduleGridHTML += `
+            <div class="day-column ${isToday ? 'today-column' : ''} ${hasEvents ? 'has-events' : ''}">
+                <!-- Day Header -->
+                <div class="day-header">
+                    <div class="day-info">
+                        <span class="day-name">${date.toLocaleDateString('en-US', { weekday: 'short' })}</span>
+                        <span class="day-number ${isToday ? 'today-number' : ''}">
+                            ${date.getDate()}
+                        </span>
+                    </div>
+                    ${isToday ? '<div class="today-badge">Today</div>' : ''}
+                </div>
+
+                <!-- Day Events -->
+                <div class="day-events">`;
+        
+        if (hasEvents) {
+            // Show up to 3 events
+            const eventsToShow = dayData.events.slice(0, 3);
+            eventsToShow.forEach(event => {
+                scheduleGridHTML += `
+                    <div class="event-card event-${event.color || 'primary'} clickable-event" 
+                         onclick="navigateToSession('${event.activity_id || ''}', '${event.session_id || event.id || ''}')"
+                         style="cursor: pointer;"
+                         title="Click to view session details">
+                        <div class="event-time">${event.time}</div>
+                        <div class="event-title-short">${truncateString(event.title, 20)}</div>
+                        ${event.location ? `
+                            <div class="event-location-short">
+                                <i class="fas fa-map-pin"></i>
+                                ${truncateString(event.location, 15)}
+                            </div>
+                        ` : ''}
+                        <div class="click-indicator">
+                            <i class="fas fa-external-link-alt"></i>
+                        </div>
+                    </div>`;
+            });
+            
+            // Show "more events" indicator if needed
+            if (dayData.events.length > 3) {
+                scheduleGridHTML += `
+                    <div class="more-events-indicator">
+                        +${dayData.events.length - 3} more
+                    </div>`;
+            }
+        } else {
+            // No events
+            scheduleGridHTML += `
+                <div class="no-events">
+                    <i class="fas fa-coffee"></i>
+                    <span>Free Day</span>
+                </div>`;
+        }
+        
+        scheduleGridHTML += `
+                </div>
+            </div>`;
+    });
+    
+    scheduleGridHTML += '</div>';
+    
+    // Update the schedule container
+    if (scheduleContainer) {
+        scheduleContainer.innerHTML = scheduleGridHTML;
+    }
+    
+    // Re-attach event listeners to new elements
+    attachEventCardListeners();
+}
+
+// Helper function to check if date is today
+function isDateToday(date) {
+    const today = new Date();
+    return date.getDate() === today.getDate() &&
+           date.getMonth() === today.getMonth() &&
+           date.getFullYear() === today.getFullYear();
+}
+
+// Helper function to truncate strings
+function truncateString(str, maxLength) {
+    if (!str) return '';
+    return str.length > maxLength ? str.substring(0, maxLength) + '...' : str;
+}
+
+// Function to attach event listeners to dynamically created event cards
+function attachEventCardListeners() {
+    const eventCards = document.querySelectorAll('.event-card.clickable-event');
+    eventCards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'scale(1.02)';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = '';
+        });
+        
+        card.addEventListener('click', function(e) {
+            // Add click animation
+            this.style.transform = 'scale(0.98)';
+            setTimeout(() => {
+                this.style.transform = 'scale(1.02)';
+            }, 100);
+        });
+    });
+    
+    // Attach listeners to "more events" indicators
+    const moreEventIndicators = document.querySelectorAll('.more-events-indicator');
+    moreEventIndicators.forEach(indicator => {
+        indicator.addEventListener('click', function(e) {
+            e.stopPropagation();
+            console.log('Show all events for this day');
+        });
+    });
 }
 
 // Add click handlers for event cards
