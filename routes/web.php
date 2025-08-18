@@ -381,12 +381,17 @@ Route::middleware(['auth', 'validate.params'])->group(function () {
     Route::prefix('staffs')->name('staffs.')->group(function () {
         Route::get('/home', [StaffsHomeController::class, 'index'])->name('home');
         Route::get('/profile/{encrypted_id}', [StaffController::class, 'viewProfile'])->name('profile');
-        Route::get('/edit/{encrypted_id}', [StaffController::class, 'editProfile'])->name('edit');
-        Route::put('/update/{encrypted_id}', [StaffController::class, 'updateProfile'])->name('update');
+        Route::get('/profile/edit/{encrypted_id}', [StaffController::class, 'editProfile'])->name('edit');
+        Route::put('/profile/update/{encrypted_id}', [StaffController::class, 'updateProfile'])->name('update');
         Route::get('/schedule/{encrypted_id}', [StaffController::class, 'showSchedule'])->name('schedule');
         Route::get('/attendance/{encrypted_id}', [StaffController::class, 'showAttendance'])->name('attendance');
         Route::get('/activities/{encrypted_id}', [StaffController::class, 'showActivities'])->name('activities');
         Route::get('/trainees/{encrypted_id}', [StaffController::class, 'showTrainees'])->name('trainees');
+        
+        // Legacy edit route (redirect to new structure)
+        Route::get('/edit/{encrypted_id}', function($encrypted_id) {
+            return redirect()->route('staffs.edit', ['encrypted_id' => $encrypted_id]);
+        })->name('edit.legacy');
     });
     
     // Legacy teachershome route (redirect to new structure)
