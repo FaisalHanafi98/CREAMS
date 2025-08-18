@@ -451,18 +451,8 @@
                     </a>
                     
                     @php
-                        // Users can mark their own attendance
-                        if ($staffMember->id == $currentUserId) {
-                            $canMarkAttendance = true;
-                        }
-                        // Admin can mark for anyone
-                        elseif ($currentUserRole === 'admin') {
-                            $canMarkAttendance = true;
-                        }
-                        // Supervisor can mark for staff in their centre
-                        elseif ($currentUserRole === 'supervisor' && $staffMember->centre_id === session('centre_id') && in_array($staffMember->role, ['teacher', 'ajk'])) {
-                            $canMarkAttendance = true;
-                        }
+                        // Only admin can mark attendance now (as per requirements)
+                        $canMarkAttendance = $currentUserRole === 'admin';
                     @endphp
                     
                     @if($canMarkAttendance)

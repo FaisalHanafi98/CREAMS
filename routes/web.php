@@ -434,6 +434,7 @@ Route::middleware(['auth', 'validate.params'])->group(function () {
     Route::prefix('centres/attendance')->name('centres.attendance.')->middleware(['enhanced.auth'])->group(function () {
         Route::get('/', [StaffAttendanceController::class, 'index'])->name('index');
         Route::post('/mark', [StaffAttendanceController::class, 'markAttendance'])->name('mark');
+        Route::post('/mark-trainee', [StaffAttendanceController::class, 'markTraineeAttendance'])->name('mark-trainee');
         Route::get('/user/{encryptedUserId}', [StaffAttendanceController::class, 'getUserAttendance'])->name('user');
         Route::get('/status/{encryptedUserId}', [StaffAttendanceController::class, 'getTodayStatus'])->name('status');
     });

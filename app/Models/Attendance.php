@@ -24,6 +24,15 @@ class Attendance extends Model
         'check_in_time',
         'check_out_time',
         'activity_type',
+        // Enhanced tracking fields
+        'arrival_time',
+        'departure_time',
+        'participation_level_enum',
+        'mood_rating',
+        'progress_notes',
+        'parent_feedback_required',
+        'follow_up_needed',
+        'recorded_by'
     ];
 
     /**
@@ -33,6 +42,10 @@ class Attendance extends Model
      */
     protected $casts = [
         'date' => 'date',
+        'arrival_time' => 'datetime:H:i',
+        'departure_time' => 'datetime:H:i',
+        'parent_feedback_required' => 'boolean',
+        'follow_up_needed' => 'boolean'
     ];
 
     /**

@@ -20,6 +20,9 @@ use App\Traits\HandlesErrors;
 use Illuminate\Support\Facades\Cache;
 use Carbon\Carbon;
 use Exception;
+use App\Rules\InstructorQualificationRule;
+use App\Rules\TraineeCompatibilityRule;
+use App\Rules\ActivityTimeBufferRule;
 
 class ActivityController extends Controller
 {
@@ -562,19 +565,30 @@ class ActivityController extends Controller
             'centre_id' => 'required|exists:centres,centre_id',
             'activity_location' => 'required|string|max:255',
             
-            // Instructor
-            'instructor_id' => 'required|exists:users,id',
+            // Instructor with qualification validation
+            'instructor_id' => [
+                'required',
+                'exists:users,id',
+                new InstructorQualificationRule($request->input('category_id'))
+            ],
             
             // Participants
             'max_participants' => 'required|integer|min:1|max:50',
             'min_participants' => 'required|integer|min:1|max:50',
-            'participants' => 'nullable|string', // Comma-separated trainee IDs
+            'participants' => [
+                'nullable',
+                'string',
+                new TraineeCompatibilityRule($request->input('category_id'))
+            ],
             
             // Schedule
             'sessions_per_week' => 'required|integer|min:1|max:5',
             'duration_hours' => 'required|numeric|min:0.5|max:3',
             'start_date' => 'required|date|after_or_equal:today',
-            'start_time' => 'required|date_format:H:i',
+            'start_time' => [
+                'required',
+                'date_format:H:i'
+            ],
             'activity_period' => 'required|integer|min:1|max:24', // Duration in months
             'schedule_days' => 'required|array|min:1',
             'schedule_days.*' => 'in:Monday,Tuesday,Wednesday,Thursday,Friday,Saturday,Sunday'

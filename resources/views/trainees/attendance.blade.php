@@ -509,9 +509,9 @@
                 <i class="fas fa-calendar"></i>View Schedule
             </a>
             
-            @if(in_array(session('role'), ['admin', 'supervisor', 'teacher']))
+            @if(in_array(session('role'), ['admin']))
             <button class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#markAttendanceModal">
-                <i class="fas fa-check-circle"></i>Mark Today's Attendance
+                <i class="fas fa-check-circle"></i>Mark Today's Attendance (Admin Only)
             </button>
             @endif
             

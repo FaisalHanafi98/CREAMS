@@ -406,6 +406,13 @@
 
 @section('content')
 <div class="container-fluid">
+    @if(!in_array(session('role'), ['admin']))
+        <div class="alert alert-danger">
+            <h4><i class="fas fa-exclamation-triangle"></i> Access Denied</h4>
+            <p>Only administrators can access the attendance dashboard. Please contact your supervisor.</p>
+            <a href="{{ route('dashboard') }}" class="btn btn-primary">Return to Dashboard</a>
+        </div>
+    @else
     <!-- Header -->
     <div class="attendance-header">
         <div class="row align-items-center">
@@ -413,10 +420,12 @@
                 <h1 class="mb-2">
                     <i class="fas fa-calendar-check me-3"></i>
                     Attendance Dashboard
+                    <span class="badge badge-danger ml-2">Admin Only</span>
                 </h1>
                 <p class="mb-0 opacity-90">
                     <i class="fas fa-map-marker-alt me-2"></i>
                     {{ $selectedCentre->centre_name ?? 'All Centres' }} - {{ Carbon\Carbon::now()->format('l, F j, Y') }}
+                    <br><small><i class="fas fa-info-circle"></i> Click on any card to mark attendance automatically</small>
                 </p>
             </div>
             <div class="col-md-4 text-end">
@@ -508,9 +517,9 @@
                         $attendance = $member->staffAttendances->first();
                         $status = $attendance ? $attendance->status : 'not-marked';
                         $statusLabel = $attendance ? ucfirst($attendance->status) : 'Not Marked';
+                        $hasCheckedIn = $member->staffAttendances->where('attendance_type', 'check_in')->first();
                     @endphp
-                    <a href="{{ route('centres.attendance.user', encrypt($member->id)) }}" class="card-link">
-                        <div class="attendance-card {{ $status }} clickable">
+                    <div class="attendance-card {{ $status }} clickable" data-user-id="{{ $member->id }}" data-user-name="{{ $member->first_name }} {{ $member->last_name }}" onclick="markStaffAttendance({{ $member->id }}, '{{ $member->first_name }} {{ $member->last_name }}', '{{ $status }}', {{ $hasCheckedIn ? 'false' : 'true' }})">
                         <div class="person-info">
                             <div class="person-avatar">
                                 {{ strtoupper(substr($member->first_name, 0, 1) . substr($member->last_name, 0, 1)) }}
@@ -528,15 +537,21 @@
                             @if($attendance)
                                 <small class="text-muted">
                                     {{ $attendance->attendance_time->format('g:i A') }}
+                                    <br><small>by {{ $attendance->marked_by_email ?? 'Self' }}</small>
                                 </small>
                             @endif
                         </div>
-                            <div class="card-overlay">
-                                <i class="fas fa-external-link-alt"></i>
-                                <span>View Details</span>
-                            </div>
+                        <div class="card-overlay">
+                            <i class="fas fa-clock"></i>
+                            <span>
+                                @if($hasCheckedIn)
+                                    Change Status
+                                @else
+                                    Click to Check In
+                                @endif
+                            </span>
                         </div>
-                    </a>
+                    </div>
                 @empty
                     <div class="col-12 text-center py-5">
                         <i class="fas fa-users-slash fa-3x text-muted mb-3"></i>
@@ -563,37 +578,36 @@
                 @forelse($trainees as $trainee)
                     @php
                         $attendance = $trainee->attendances->first();
-                        $status = $attendance ? $attendance->status : 'not-marked';
-                        $statusLabel = $attendance ? ucfirst($attendance->status) : 'Not Marked';
+                        $status = $attendance ? $attendance->attendance_status : 'not-marked';
+                        $statusLabel = $attendance ? ucfirst($attendance->attendance_status) : 'Not Marked';
                     @endphp
-                    <a href="{{ route('trainees.attendance', encrypt($trainee->id)) }}" class="card-link">
-                        <div class="attendance-card {{ $status }} clickable">
-                            <div class="person-info">
-                                <div class="person-avatar">
-                                    {{ strtoupper(substr($trainee->trainee_first_name, 0, 1) . substr($trainee->trainee_last_name, 0, 1)) }}
-                                </div>
-                                <div class="person-details">
-                                    <h4>{{ $trainee->trainee_first_name }} {{ $trainee->trainee_last_name }}</h4>
-                                    <p>{{ $trainee->trainee_condition }} • ID: {{ $trainee->trainee_id }}</p>
-                                </div>
+                    <div class="attendance-card {{ $status }} clickable" data-trainee-id="{{ $trainee->id }}" data-trainee-name="{{ $trainee->trainee_first_name }} {{ $trainee->trainee_last_name }}" onclick="markTraineeAttendance({{ $trainee->id }}, '{{ $trainee->trainee_first_name }} {{ $trainee->trainee_last_name }}', '{{ $status }}')">
+                        <div class="person-info">
+                            <div class="person-avatar">
+                                {{ strtoupper(substr($trainee->trainee_first_name, 0, 1) . substr($trainee->trainee_last_name, 0, 1)) }}
                             </div>
-                            <div class="d-flex justify-content-between align-items-center">
-                                <span class="attendance-status {{ $status }}">
-                                    <i class="fas fa-circle"></i>
-                                    {{ $statusLabel }}
-                                </span>
-                                @if($attendance)
-                                    <small class="text-muted">
-                                        {{ Carbon\Carbon::parse($attendance->created_at)->format('g:i A') }}
-                                    </small>
-                                @endif
-                            </div>
-                            <div class="card-overlay">
-                                <i class="fas fa-external-link-alt"></i>
-                                <span>View Details</span>
+                            <div class="person-details">
+                                <h4>{{ $trainee->trainee_first_name }} {{ $trainee->trainee_last_name }}</h4>
+                                <p>{{ $trainee->trainee_condition }} • ID: {{ $trainee->unique_identifier ?? $trainee->id }}</p>
                             </div>
                         </div>
-                    </a>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="attendance-status {{ $status }}">
+                                <i class="fas fa-circle"></i>
+                                {{ $statusLabel }}
+                            </span>
+                            @if($attendance)
+                                <small class="text-muted">
+                                    {{ Carbon\Carbon::parse($attendance->created_at)->format('g:i A') }}
+                                    <br><small>by {{ session('email') }}</small>
+                                </small>
+                            @endif
+                        </div>
+                        <div class="card-overlay">
+                            <i class="fas fa-clock"></i>
+                            <span>Click to Mark Attendance</span>
+                        </div>
+                    </div>
                 @empty
                     <div class="col-12 text-center py-5">
                         <i class="fas fa-user-graduate fa-3x text-muted mb-3"></i>
@@ -603,9 +617,245 @@
             </div>
         </div>
     </div>
+    @endif
+</div>
+
+<!-- Attendance Marking Modal -->
+<div class="modal fade" id="attendanceModal" tabindex="-1" aria-labelledby="attendanceModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="attendanceModalLabel">Mark Attendance</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="attendanceForm">
+                    <div class="mb-3">
+                        <label for="personName" class="form-label">Name</label>
+                        <input type="text" class="form-control" id="personName" readonly>
+                        <input type="hidden" id="personId">
+                        <input type="hidden" id="personType">
+                    </div>
+                    <div class="mb-3">
+                        <label for="attendanceStatus" class="form-label">Status</label>
+                        <select class="form-control" id="attendanceStatus" required>
+                            <option value="present">Present</option>
+                            <option value="absent">Absent</option>
+                            <option value="late">Late</option>
+                            <option value="excused">Excused</option>
+                            <option value="sick_leave">Sick Leave</option>
+                            <option value="emergency_leave">Emergency Leave</option>
+                            <option value="authorized_leave">Authorized Leave</option>
+                        </select>
+                    </div>
+                    <div class="mb-3" id="attendanceTypeDiv">
+                        <label for="attendanceType" class="form-label">Type</label>
+                        <select class="form-control" id="attendanceType" required>
+                            <option value="check_in">Check In</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="remarks" class="form-label">Remarks (Optional)</label>
+                        <textarea class="form-control" id="remarks" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="submitAttendance()">Mark Attendance</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
+// Auto refresh every 10 minutes with conflict detection
+let lastRefreshTime = Date.now();
+let refreshInterval;
+
+function setupAutoRefresh() {
+    refreshInterval = setInterval(function() {
+        // Check if user was just marking attendance (within last 30 seconds)
+        if (Date.now() - lastRefreshTime > 30000) {
+            location.reload();
+        }
+    }, 600000); // 10 minutes
+}
+
+// Initialize auto refresh on page load
+document.addEventListener('DOMContentLoaded', function() {
+    setupAutoRefresh();
+});
+
+// Reset refresh timer when user interacts
+function resetRefreshTimer() {
+    lastRefreshTime = Date.now();
+}
+
+function markStaffAttendance(userId, userName, currentStatus, canCheckIn) {
+    resetRefreshTimer();
+    
+    document.getElementById('personId').value = userId;
+    document.getElementById('personName').value = userName;
+    document.getElementById('personType').value = 'staff';
+    
+    // Only check-in is allowed
+    const attendanceTypeSelect = document.getElementById('attendanceType');
+    attendanceTypeSelect.value = 'check_in';
+    
+    if (canCheckIn) {
+        document.getElementById('attendanceStatus').value = 'present';
+    }
+    
+    // Show attendance type selection for staff
+    document.getElementById('attendanceTypeDiv').style.display = 'block';
+    
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('attendanceModal'));
+    modal.show();
+}
+
+function markTraineeAttendance(traineeId, traineeName, currentStatus) {
+    resetRefreshTimer();
+    
+    document.getElementById('personId').value = traineeId;
+    document.getElementById('personName').value = traineeName;
+    document.getElementById('personType').value = 'trainee';
+    
+    // Hide attendance type for trainees (always session-based)
+    document.getElementById('attendanceTypeDiv').style.display = 'none';
+    
+    // Set default status
+    if (currentStatus === 'not-marked') {
+        document.getElementById('attendanceStatus').value = 'present';
+    }
+    
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('attendanceModal'));
+    modal.show();
+}
+
+function submitAttendance() {
+    const personId = document.getElementById('personId').value;
+    const personType = document.getElementById('personType').value;
+    const status = document.getElementById('attendanceStatus').value;
+    const attendanceType = document.getElementById('attendanceType').value;
+    const remarks = document.getElementById('remarks').value;
+    
+    // Show loading state
+    const submitBtn = document.querySelector('#attendanceModal .btn-primary');
+    const originalText = submitBtn.innerHTML;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Marking...';
+    submitBtn.disabled = true;
+    
+    const data = {
+        user_id: personId,
+        status: status,
+        remarks: remarks,
+        _token: '{{ csrf_token() }}'
+    };
+    
+    if (personType === 'staff') {
+        data.attendance_type = attendanceType;
+        
+        fetch('/centres/attendance/mark', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Close modal
+                bootstrap.Modal.getInstance(document.getElementById('attendanceModal')).hide();
+                
+                // Show success message
+                showNotification('success', data.message + ' (Marked by: {{ session("email") }})');
+                
+                // Refresh page after short delay
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                showNotification('error', data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('error', 'Failed to mark attendance. Please try again.');
+        })
+        .finally(() => {
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+        });
+    } else {
+        // Handle trainee attendance marking
+        const traineeData = {
+            trainee_id: personId,
+            status: status,
+            remarks: remarks,
+            _token: '{{ csrf_token() }}'
+        };
+        
+        fetch('/centres/attendance/mark-trainee', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            },
+            body: JSON.stringify(traineeData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Close modal
+                bootstrap.Modal.getInstance(document.getElementById('attendanceModal')).hide();
+                
+                // Show success message
+                showNotification('success', data.message + ' (Marked by: {{ session("email") }})');
+                
+                // Refresh page after short delay
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                showNotification('error', data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('error', 'Failed to mark trainee attendance. Please try again.');
+        })
+        .finally(() => {
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+        });
+    }
+}
+
+function showNotification(type, message) {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type === 'success' ? 'success' : type === 'error' ? 'danger' : 'info'} alert-dismissible fade show position-fixed`;
+    notification.style.top = '20px';
+    notification.style.right = '20px';
+    notification.style.zIndex = '9999';
+    notification.style.minWidth = '300px';
+    notification.innerHTML = `
+        <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Auto remove after 5 seconds
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.remove();
+        }
+    }, 5000);
+}
+
 function switchTab(tabName) {
     // Hide all tab contents
     document.querySelectorAll('.tab-content').forEach(tab => {

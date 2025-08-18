@@ -18,9 +18,20 @@ class StaffAttendanceController extends Controller
     public function index(Request $request)
     {
         try {
+            // Check if user is admin - only admins can access attendance dashboard
+            $userRole = session('role');
+            if (!in_array($userRole, ['admin'])) {
+                Log::warning('Unauthorized attendance dashboard access attempt', [
+                    'user_id' => session('id'),
+                    'role' => $userRole,
+                    'ip' => $request->ip()
+                ]);
+                
+                return redirect()->route('dashboard')->with('error', 'Access denied. Only administrators can access the attendance dashboard.');
+            }
+            
             // Auto-select Gombak centre (01) by default, but allow switching
             $selectedCentreId = $request->get('centre') ?? '01'; // Default to Gombak
-            $userRole = session('role');
             $userId = session('id');
 
             // Get all centres for navigation
@@ -94,13 +105,14 @@ class StaffAttendanceController extends Controller
             $validated = $request->validate([
                 'user_id' => 'required|integer|exists:users,id',
                 'status' => 'required|in:present,absent,late,sick_leave,emergency_leave,authorized_leave',
-                'attendance_type' => 'required|in:check_in,check_out',
+                'attendance_type' => 'required|in:check_in',
                 'remarks' => 'nullable|string|max:500'
             ]);
 
             $targetUserId = $validated['user_id'];
             $currentUserId = session('id');
-            $currentUserEmail = session('email') ?? User::find($currentUserId)->email;
+            $currentUser = User::find($currentUserId);
+            $currentUserEmail = session('email') ?? $currentUser->email;
             $centreId = session('centre_id');
 
             // Check permissions
@@ -465,5 +477,79 @@ class StaffAttendanceController extends Controller
         }
 
         return ['valid' => true, 'message' => ''];
+    }
+
+    /**
+     * Mark trainee attendance (admin only)
+     */
+    public function markTraineeAttendance(Request $request)
+    {
+        try {
+            // Only admin can mark trainee attendance
+            if (session('role') !== 'admin') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Only administrators can mark trainee attendance.'
+                ], 403);
+            }
+
+            $validated = $request->validate([
+                'trainee_id' => 'required|integer|exists:trainees,id',
+                'status' => 'required|in:present,absent,late,excused,partial',
+                'activity_id' => 'nullable|exists:activities,id',
+                'remarks' => 'nullable|string|max:500'
+            ]);
+
+            $currentUserId = session('id');
+            $currentUserEmail = session('email') ?? User::find($currentUserId)->email;
+            $trainee = \App\Models\Trainee::find($validated['trainee_id']);
+
+            // Create attendance record
+            $attendance = \App\Models\Attendance::create([
+                'trainee_id' => $validated['trainee_id'],
+                'activity_id' => $validated['activity_id'],
+                'attendance_date' => now()->toDateString(),
+                'attendance_status' => $validated['status'],
+                'attendance_notes' => $validated['remarks'],
+                'recorded_by' => $currentUserId,
+                'centre_id' => $trainee->centre_id,
+                'check_in_time' => $validated['status'] === 'present' ? now()->toTimeString() : null,
+                // Enhanced tracking fields
+                'arrival_time' => $validated['status'] === 'present' ? now()->toTimeString() : null,
+                'participation_level_enum' => $validated['status'] === 'present' ? 'good' : null,
+                'mood_rating' => $validated['status'] === 'present' ? 'happy' : null,
+                'progress_notes' => $validated['remarks'],
+                'parent_feedback_required' => false,
+                'follow_up_needed' => $validated['status'] === 'absent' ? true : false,
+                'recorded_by' => $currentUserId
+            ]);
+
+            Log::info('Trainee attendance marked', [
+                'attendance_id' => $attendance->id,
+                'trainee_id' => $validated['trainee_id'],
+                'marked_by' => $currentUserId,
+                'marked_by_email' => $currentUserEmail,
+                'status' => $validated['status']
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => "Attendance marked successfully for {$trainee->trainee_first_name} {$trainee->trainee_last_name}!",
+                'attendance' => $attendance
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error marking trainee attendance', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'request_data' => $request->all(),
+                'user_id' => session('id')
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to mark trainee attendance. Error: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }
