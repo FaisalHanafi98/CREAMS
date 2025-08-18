@@ -59,9 +59,10 @@ class DatabaseSeeder extends Seeder
                 // Enhanced activities moved to archive - using comprehensive activity seeder
             ]);
 
-            // Phase 6: Sessions and Enrollments
-            $this->command->info("\n📅 PHASE 6: Creating activity sessions and trainee enrollments...");
+            // Phase 6: Enhanced Sessions and Enrollments
+            $this->command->info("\n📅 PHASE 6: Creating enhanced activity sessions and trainee enrollments...");
             $this->call([
+                CREAMSEnhancedSessionSeeder::class,           // Enhanced session seeder with 3+ sessions per week
                 CREAMSActivitySeeder::class,                  // Comprehensive activity sessions and enrollments
             ]);
 
