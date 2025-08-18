@@ -8,13 +8,17 @@
 <style>
     :root {
         --primary-color: #32bdea;
-        --secondary-color: #25a6cf;
-        --success-color: #1cc88a;
-        --warning-color: #f6c23e;
-        --danger-color: #e74a3b;
-        --dark-color: #2c3e50;
-        --light-bg: #f8f9fc;
-        --border-color: #e3e6f0;
+        --secondary-color: #c850c0;
+        --primary-gradient: linear-gradient(-135deg, var(--primary-color), var(--secondary-color));
+        --secondary-gradient: linear-gradient(-135deg, var(--secondary-color), var(--primary-color));
+        --dark-color: #1a2a3a;
+        --light-color: #ffffff;
+        --text-color: #444444;
+        --light-bg: #f8f9fa;
+        --border-color: #e0e0e0;
+        --success-color: #2ed573;
+        --warning-color: #ffa502;
+        --danger-color: #ff4757;
     }
 
     .activities-card {
@@ -33,7 +37,7 @@
     }
 
     .activities-header {
-        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        background: var(--primary-gradient);
         color: white;
         padding: 1.5rem;
         margin-bottom: 2rem;
@@ -48,11 +52,31 @@
         margin-bottom: 1rem;
         transition: all 0.3s ease;
         border-left: 4px solid var(--primary-color);
+        cursor: pointer;
+        position: relative;
     }
 
     .activity-item:hover {
-        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        box-shadow: 0 5px 15px rgba(50, 189, 234, 0.2);
         transform: translateY(-2px);
+        border-left-color: var(--secondary-color);
+    }
+
+    .activity-item.clickable::after {
+        content: '\f35d';
+        font-family: 'Font Awesome 5 Free';
+        font-weight: 900;
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        color: var(--primary-color);
+        opacity: 0.5;
+        transition: all 0.3s ease;
+    }
+
+    .activity-item.clickable:hover::after {
+        opacity: 1;
+        color: var(--secondary-color);
     }
 
     .activity-title {
@@ -188,6 +212,9 @@
                 <p class="mb-0 opacity-75">Manage and view all assigned rehabilitation activities</p>
             </div>
             <div class="col-md-4 text-end">
+                <a href="{{ route('activities.create') }}" class="btn btn-warning me-2">
+                    <i class="fas fa-plus me-2"></i>Create New Activity
+                </a>
                 <a href="{{ route('staffs.profile', $staffMember->encrypted_id) }}" class="btn btn-light">
                     <i class="fas fa-arrow-left me-2"></i>Back to Profile
                 </a>
@@ -239,7 +266,7 @@
 
         @if(count($activities) > 0)
             @foreach($activities as $activity)
-                <div class="activity-item">
+                <div class="activity-item clickable" data-activity-id="{{ $activity->id }}" onclick="viewActivityDetails({{ $activity->id }})">
                     <div class="row align-items-start">
                         <div class="col-md-8">
                             <div class="d-flex align-items-center mb-2">
@@ -315,4 +342,28 @@
         @endif
     </div>
 </div>
+
+<script>
+function viewActivityDetails(activityId) {
+    // Redirect to activity details page
+    window.location.href = `/activities/show/${activityId}`;
+}
+
+// Optional: Add keyboard navigation
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && e.target.closest('.activity-item')) {
+        e.target.closest('.activity-item').click();
+    }
+});
+
+// Add accessibility
+document.addEventListener('DOMContentLoaded', function() {
+    const activityItems = document.querySelectorAll('.activity-item.clickable');
+    activityItems.forEach(item => {
+        item.setAttribute('tabindex', '0');
+        item.setAttribute('role', 'button');
+        item.setAttribute('aria-label', `View details for ${item.querySelector('.activity-title').textContent}`);
+    });
+});
+</script>
 @endsection
