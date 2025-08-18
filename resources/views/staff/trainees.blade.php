@@ -8,13 +8,17 @@
 <style>
     :root {
         --primary-color: #32bdea;
-        --secondary-color: #25a6cf;
-        --success-color: #1cc88a;
-        --warning-color: #f6c23e;
-        --danger-color: #e74a3b;
-        --dark-color: #2c3e50;
-        --light-bg: #f8f9fc;
-        --border-color: #e3e6f0;
+        --secondary-color: #c850c0;
+        --primary-gradient: linear-gradient(-135deg, var(--primary-color), var(--secondary-color));
+        --secondary-gradient: linear-gradient(-135deg, var(--secondary-color), var(--primary-color));
+        --dark-color: #1a2a3a;
+        --light-color: #ffffff;
+        --text-color: #444444;
+        --light-bg: #f8f9fa;
+        --border-color: #e0e0e0;
+        --success-color: #2ed573;
+        --warning-color: #ffa502;
+        --danger-color: #ff4757;
     }
 
     .trainees-card {
@@ -33,7 +37,7 @@
     }
 
     .trainees-header {
-        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        background: var(--primary-gradient);
         color: white;
         padding: 1.5rem;
         margin-bottom: 2rem;
@@ -59,7 +63,7 @@
         width: 60px;
         height: 60px;
         border-radius: 50%;
-        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        background: var(--primary-gradient);
         display: flex;
         align-items: center;
         justify-content: center;
