@@ -519,7 +519,7 @@ Route::middleware(['auth', 'validate.params'])->group(function () {
     // Legacy staff-attendance routes (backward compatibility redirects)
     Route::prefix('staff-attendance')->middleware(['enhanced.auth'])->group(function () {
         Route::get('/', function() { return redirect()->route('centres.attendance.index'); });
-        Route::post('/mark', function() { return redirect()->route('centres.attendance.index'); });
+        Route::post('/mark', [StaffAttendanceController::class, 'markAttendance']);
         Route::get('/user/{userId}', function($userId) { return redirect()->route('centres.attendance.user', encrypt($userId)); });
         Route::get('/status/{userId}', function($userId) { return redirect()->route('centres.attendance.status', encrypt($userId)); });
     });

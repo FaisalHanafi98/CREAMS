@@ -209,18 +209,36 @@ class MainController extends Controller
                 }
 
                 // Create welcome notification using custom notification structure
-                $notification = new Notification();
-                $notification->user_id = $user->id;
-                $notification->user_type = 'App\Models\User';
-                $notification->notification_type = 'success';
-                $notification->notification_title = 'Welcome to CREAMS';
-                $notification->notification_message = 'Welcome to the Community-based REhAbilitation Management System. Your account has been created successfully.';
-                $notification->notification_data = json_encode([
-                    'user_role' => $user->role,
-                    'registration_date' => now()->format('Y-m-d H:i:s')
-                ]);
-                $notification->is_read = false;
-                $notification->save();
+                try {
+                    $notification = new Notification();
+                    $notification->user_id = $user->id;
+                    
+                    // Only set user_type if the column exists
+                    if (Schema::hasColumn('notifications', 'user_type')) {
+                        $notification->user_type = 'user'; // Use simple string instead of class name
+                    }
+                    
+                    $notification->notification_type = 'success';
+                    $notification->notification_title = 'Welcome to CREAMS';
+                    $notification->notification_message = 'Welcome to the Community-based REhAbilitation Management System. Your account has been created successfully.';
+                    
+                    // Only set notification_data if the column exists
+                    if (Schema::hasColumn('notifications', 'notification_data')) {
+                        $notification->notification_data = json_encode([
+                            'user_role' => $user->role,
+                            'registration_date' => now()->format('Y-m-d H:i:s')
+                        ]);
+                    }
+                    
+                    $notification->is_read = false;
+                    $notification->save();
+                } catch (\Exception $notificationError) {
+                    // Log notification error but don't fail the registration
+                    Log::warning('Failed to create welcome notification', [
+                        'error' => $notificationError->getMessage(),
+                        'user_id' => $user->id
+                    ]);
+                }
 
                 DB::commit();
                 Log::info('User successfully registered', [
