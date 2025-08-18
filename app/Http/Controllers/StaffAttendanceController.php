@@ -137,12 +137,34 @@ class StaffAttendanceController extends Controller
             }
 
             // Check if already marked today for this type
-            $alreadyMarked = StaffAttendance::where('user_id', $targetUserId)
+            $existingAttendance = StaffAttendance::where('user_id', $targetUserId)
                 ->whereDate('attendance_date', Carbon::today())
                 ->where('attendance_type', $validated['attendance_type'])
-                ->exists();
+                ->first();
 
-            if ($alreadyMarked) {
+            if ($existingAttendance && $currentUserId !== $targetUserId && session('role') === 'admin') {
+                // Admin can update existing attendance status
+                $existingAttendance->update([
+                    'status' => $validated['status'],
+                    'remarks' => $validated['remarks'],
+                    'marked_by_user_id' => $currentUserId,
+                    'marked_by_email' => $currentUserEmail,
+                    'attendance_time' => now()->format('H:i:s')
+                ]);
+
+                Log::info('Staff attendance updated by admin', [
+                    'attendance_id' => $existingAttendance->id,
+                    'user_id' => $targetUserId,
+                    'updated_by' => $currentUserId,
+                    'new_status' => $validated['status']
+                ]);
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Attendance status updated successfully!',
+                    'attendance' => $existingAttendance->load(['user', 'markedBy'])
+                ]);
+            } elseif ($existingAttendance) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Attendance already marked for today (' . $validated['attendance_type'] . ').'
@@ -504,7 +526,40 @@ class StaffAttendanceController extends Controller
             $currentUserEmail = session('email') ?? User::find($currentUserId)->email;
             $trainee = \App\Models\Trainee::find($validated['trainee_id']);
 
-            // Create attendance record
+            // Check if attendance already exists for today
+            $existingAttendance = \App\Models\Attendance::where('trainee_id', $validated['trainee_id'])
+                ->whereDate('attendance_date', now()->toDateString())
+                ->first();
+
+            if ($existingAttendance) {
+                // Admin can update existing attendance
+                $existingAttendance->update([
+                    'attendance_status' => $validated['status'],
+                    'attendance_notes' => $validated['remarks'],
+                    'recorded_by' => $currentUserId,
+                    'arrival_time' => $validated['status'] === 'present' ? now()->toTimeString() : $existingAttendance->arrival_time,
+                    'participation_level_enum' => $validated['status'] === 'present' ? 'good' : null,
+                    'mood_rating' => $validated['status'] === 'present' ? 'happy' : null,
+                    'progress_notes' => $validated['remarks'],
+                    'follow_up_needed' => $validated['status'] === 'absent' ? true : false,
+                ]);
+
+                Log::info('Trainee attendance updated by admin', [
+                    'attendance_id' => $existingAttendance->id,
+                    'trainee_id' => $validated['trainee_id'],
+                    'updated_by' => $currentUserId,
+                    'updated_by_email' => $currentUserEmail,
+                    'new_status' => $validated['status']
+                ]);
+
+                return response()->json([
+                    'success' => true,
+                    'message' => "Attendance status updated successfully for {$trainee->trainee_first_name} {$trainee->trainee_last_name}!",
+                    'attendance' => $existingAttendance
+                ]);
+            }
+
+            // Create new attendance record
             $attendance = \App\Models\Attendance::create([
                 'trainee_id' => $validated['trainee_id'],
                 'activity_id' => $validated['activity_id'],

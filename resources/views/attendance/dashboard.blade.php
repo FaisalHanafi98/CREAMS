@@ -535,9 +535,22 @@
                                 {{ $statusLabel }}
                             </span>
                             @if($attendance)
+                                @php
+                                    // Show who actually marked it
+                                    if ($attendance->marked_by_email) {
+                                        // Someone else marked it (admin or supervisor)
+                                        if ($attendance->marked_by_email === $member->email) {
+                                            $markedBy = 'Self';
+                                        } else {
+                                            $markedBy = $attendance->marked_by_email;
+                                        }
+                                    } else {
+                                        $markedBy = 'Self';
+                                    }
+                                @endphp
                                 <small class="text-muted">
                                     {{ $attendance->attendance_time->format('g:i A') }}
-                                    <br><small>by {{ $attendance->marked_by_email ?? 'Self' }}</small>
+                                    <br><small>by {{ $markedBy }}</small>
                                 </small>
                             @endif
                         </div>
@@ -597,9 +610,13 @@
                                 {{ $statusLabel }}
                             </span>
                             @if($attendance)
+                                @php
+                                    $markedByUser = \App\Models\User::find($attendance->recorded_by);
+                                    $markedByEmail = $markedByUser ? $markedByUser->email : 'System';
+                                @endphp
                                 <small class="text-muted">
                                     {{ Carbon\Carbon::parse($attendance->created_at)->format('g:i A') }}
-                                    <br><small>by {{ session('email') }}</small>
+                                    <br><small>by {{ $markedByEmail }}</small>
                                 </small>
                             @endif
                         </div>
@@ -773,7 +790,7 @@ function submitAttendance() {
                 bootstrap.Modal.getInstance(document.getElementById('attendanceModal')).hide();
                 
                 // Show success message
-                showNotification('success', data.message + ' (Marked by: {{ session("email") }})');
+                showNotification('success', data.message + ' (Marked by Admin: {{ session("email") }})');
                 
                 // Refresh page after short delay
                 setTimeout(() => location.reload(), 1500);
@@ -813,7 +830,7 @@ function submitAttendance() {
                 bootstrap.Modal.getInstance(document.getElementById('attendanceModal')).hide();
                 
                 // Show success message
-                showNotification('success', data.message + ' (Marked by: {{ session("email") }})');
+                showNotification('success', data.message + ' (Marked by Admin: {{ session("email") }})');
                 
                 // Refresh page after short delay
                 setTimeout(() => location.reload(), 1500);
