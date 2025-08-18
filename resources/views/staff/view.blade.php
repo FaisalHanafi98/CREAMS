@@ -437,25 +437,18 @@
                 @endphp
                 
                 <div class="d-grid gap-2">
-                    <a href="{{ route('staffs.edit', ['encrypted_id' => $staffMember->encrypted_id ?? \App\Helpers\EncryptionHelper::generateEncryptedId($staffMember->id)]) }}" class="btn btn-outline-primary">
-                        <i class="fas fa-edit me-2"></i>Edit Profile
-                    </a>
                     <a href="{{ route('staffs.schedule', $staffMember->encrypted_id ?? \App\Helpers\EncryptionHelper::generateEncryptedId($staffMember->id)) }}" class="btn btn-outline-success">
                         <i class="fas fa-calendar-alt me-2"></i>View Schedule
                     </a>
                     <a href="{{ route('staffs.attendance', $staffMember->encrypted_id ?? \App\Helpers\EncryptionHelper::generateEncryptedId($staffMember->id)) }}" class="btn btn-outline-info">
                         <i class="fas fa-user-clock me-2"></i>View Attendance
                     </a>
-                    @if($currentUserRole === 'admin')
                     <a href="{{ route('staffs.activities', $staffMember->encrypted_id ?? \App\Helpers\EncryptionHelper::generateEncryptedId($staffMember->id)) }}" class="btn btn-outline-info">
-                        <i class="fas fa-tasks me-2"></i>View Activity
+                        <i class="fas fa-tasks me-2"></i>View Activities
                     </a>
-                    @endif
-                    @if($staffMember->role === 'teacher')
                     <a href="{{ route('staffs.trainees', $staffMember->encrypted_id ?? \App\Helpers\EncryptionHelper::generateEncryptedId($staffMember->id)) }}" class="btn btn-outline-warning">
                         <i class="fas fa-users me-2"></i>Assigned Trainee
                     </a>
-                    @endif
                     
                     @php
                         // Users can mark their own attendance

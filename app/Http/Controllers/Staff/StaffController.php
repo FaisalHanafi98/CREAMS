@@ -531,16 +531,36 @@ class StaffController extends Controller
 
             // Check for recurring schedule table
             if (\Schema::hasTable('activity_schedules')) {
-                $schedules = \DB::table('activity_schedules')
-                    ->join('activities', 'activity_schedules.activity_id', '=', 'activities.id')
-                    ->join('activity_sessions', 'activity_schedules.activity_id', '=', 'activity_sessions.activity_id')
-                    ->where('activity_sessions.teacher_id', $staffMember->id)
-                    ->where('activity_schedules.schedule_status', 'active')
-                    ->select('activity_schedules.*', 'activities.activity_name')
-                    ->distinct()
-                    ->orderBy('activity_schedules.start_date')
-                    ->orderBy('activity_schedules.start_time')
-                    ->get();
+                try {
+                    // Check if schedule_status column exists
+                    if (\Schema::hasColumn('activity_schedules', 'schedule_status')) {
+                        $schedules = \DB::table('activity_schedules')
+                            ->join('activities', 'activity_schedules.activity_id', '=', 'activities.id')
+                            ->join('activity_sessions', 'activity_schedules.activity_id', '=', 'activity_sessions.activity_id')
+                            ->where('activity_sessions.teacher_id', $staffMember->id)
+                            ->where('activity_schedules.schedule_status', 'active')
+                            ->select('activity_schedules.*', 'activities.activity_name')
+                            ->distinct()
+                            ->orderBy('activity_schedules.start_date')
+                            ->orderBy('activity_schedules.start_time')
+                            ->get();
+                    } else {
+                        // Fallback query without schedule_status
+                        $schedules = \DB::table('activity_schedules')
+                            ->join('activities', 'activity_schedules.activity_id', '=', 'activities.id')
+                            ->join('activity_sessions', 'activity_schedules.activity_id', '=', 'activity_sessions.activity_id')
+                            ->where('activity_sessions.teacher_id', $staffMember->id)
+                            ->whereIn('activities.activity_status', ['scheduled', 'ongoing'])
+                            ->select('activity_schedules.*', 'activities.activity_name')
+                            ->distinct()
+                            ->orderBy('activity_schedules.start_date')
+                            ->orderBy('activity_schedules.start_time')
+                            ->get();
+                    }
+                } catch (\Exception $e) {
+                    Log::warning('Error querying activity_schedules: ' . $e->getMessage());
+                    $schedules = collect(); // Empty collection as fallback
+                }
             }
 
             // Calculate real schedule statistics based on actual data
