@@ -17,6 +17,21 @@ class TraineeController extends Controller
     use HandlesErrors;
 
     /**
+     * Create a new controller instance.
+     *
+     * @return void
+     */
+    public function __construct()
+    {
+        $this->middleware('auth');
+        // All authenticated staff can view trainees, but with centre restrictions
+        $this->middleware('enhanced.role:admin,supervisor,teacher,ajk');
+        
+        // Only admin and supervisors can create/edit/delete trainees
+        $this->middleware('enhanced.role:admin,supervisor')->only(['create', 'store', 'edit', 'update', 'destroy']);
+    }
+
+    /**
      * Display a listing of all trainees.
      */
     public function index()

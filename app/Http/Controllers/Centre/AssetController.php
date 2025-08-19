@@ -18,6 +18,21 @@ use Exception;
 class AssetController extends Controller
 {
     /**
+     * Create a new controller instance.
+     *
+     * @return void
+     */
+    public function __construct()
+    {
+        $this->middleware('auth');
+        // Admin and Supervisors can manage assets
+        $this->middleware('enhanced.role:admin,supervisor');
+        
+        // Only admin can create/edit/delete assets
+        $this->middleware('enhanced.role:admin')->only(['create', 'store', 'edit', 'update', 'destroy']);
+    }
+
+    /**
      * Display assets for a specific centre
      */
     public function centreAssets(Request $request, $centreId)

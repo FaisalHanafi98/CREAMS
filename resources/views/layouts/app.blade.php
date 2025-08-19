@@ -43,7 +43,7 @@
         
         body {
             font-family: 'Poppins', sans-serif;
-            background-color: #f0f2f5;
+            background-color: var(--light-color);
             color: #333;
             overflow-x: hidden;
         }
@@ -1307,6 +1307,9 @@
 
     <!-- Main Content -->
     <div class="main-content">
+        <!-- Role-based Access Control Messages -->
+        @include('components.role-access-denied')
+        
         @yield('content')
     </div>
 

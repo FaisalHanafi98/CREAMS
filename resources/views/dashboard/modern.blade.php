@@ -4,6 +4,9 @@
 
 @section('content')
 <div class="enhanced-dashboard">
+    <!-- Role-based Access Denied Messages -->
+    @include('components.role-access-denied')
+    
     <!-- Enhanced Header Section -->
     <div class="dashboard-header-enhanced mb-4">
         <div class="header-gradient"></div>

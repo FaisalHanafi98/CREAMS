@@ -528,7 +528,9 @@
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                    <i class="fas fa-times mr-2"></i>Cancel
+                </button>
                 <button type="button" class="btn btn-primary" id="submitAttendance">
                     <i class="fas fa-check mr-2"></i>Mark Attendance
                 </button>
@@ -570,6 +572,7 @@ $(document).ready(function() {
         markAttendanceBtn.addEventListener('click', function() {
             const userId = this.getAttribute('data-user-id');
             const userName = this.getAttribute('data-user-name');
+            const encryptedId = '{{ $staffMember->encrypted_id ?? \\App\\Helpers\\EncryptionHelper::generateEncryptedId($staffMember->id) }}';
             
             // Set user data
             document.getElementById('attendanceUserId').value = userId;
@@ -585,8 +588,8 @@ $(document).ready(function() {
             document.getElementById('attendanceUserId').value = userId;
             showAlert('', '', false);
             
-            // Check today's status
-            fetch(`/centres/attendance/status/${userId}`)
+            // Check today's status using encrypted ID
+            fetch(`/centres/attendance/status/${encryptedId}`)
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {

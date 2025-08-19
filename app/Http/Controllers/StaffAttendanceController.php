@@ -49,7 +49,7 @@ class StaffAttendanceController extends Controller
 
             // Get trainees for the selected centre
             $trainees = \App\Models\Trainee::where('centre_id', $selectedCentreId)
-                ->with(['attendances' => function($q) {
+                ->with(['traineeAttendances' => function($q) {
                     $q->whereDate('date', Carbon::today());
                 }])
                 ->get();
@@ -385,10 +385,11 @@ class StaffAttendanceController extends Controller
         
         $totalTrainees = \App\Models\Trainee::where('centre_id', $centreId)->count();
         
-        $todayAttendance = \App\Models\Attendance::whereDate('date', $today)
-            ->whereHas('trainee', function($q) use ($centreId) {
-                $q->where('centre_id', $centreId);
-            })
+        $todayAttendance = DB::table('trainee_attendances')
+            ->join('trainees', 'trainee_attendances.trainee_id', '=', 'trainees.id')
+            ->where('trainees.centre_id', $centreId)
+            ->whereDate('trainee_attendances.date', $today)
+            ->select('trainee_attendances.*')
             ->get();
 
         return [
@@ -527,22 +528,25 @@ class StaffAttendanceController extends Controller
             $trainee = \App\Models\Trainee::find($validated['trainee_id']);
 
             // Check if attendance already exists for today
-            $existingAttendance = \App\Models\Attendance::where('trainee_id', $validated['trainee_id'])
-                ->whereDate('attendance_date', now()->toDateString())
+            $existingAttendance = DB::table('trainee_attendances')
+                ->where('trainee_id', $validated['trainee_id'])
+                ->whereDate('date', now()->toDateString())
                 ->first();
 
             if ($existingAttendance) {
                 // Admin can update existing attendance
-                $existingAttendance->update([
-                    'attendance_status' => $validated['status'],
-                    'attendance_notes' => $validated['remarks'],
-                    'recorded_by' => $currentUserId,
-                    'arrival_time' => $validated['status'] === 'present' ? now()->toTimeString() : $existingAttendance->arrival_time,
-                    'participation_level_enum' => $validated['status'] === 'present' ? 'good' : null,
-                    'mood_rating' => $validated['status'] === 'present' ? 'happy' : null,
-                    'progress_notes' => $validated['remarks'],
-                    'follow_up_needed' => $validated['status'] === 'absent' ? true : false,
-                ]);
+                DB::table('trainee_attendances')
+                    ->where('id', $existingAttendance->id)
+                    ->update([
+                        'status' => $validated['status'],
+                        'notes' => $validated['remarks'],
+                        'recorded_by' => $currentUserId,
+                        'time_in' => $validated['status'] === 'present' ? now()->toTimeString() : $existingAttendance->time_in,
+                        'engagement_level' => $validated['status'] === 'present' ? 4 : null,
+                        'mood_rating' => $validated['status'] === 'present' ? 4 : null,
+                        'progress_notes' => $validated['remarks'],
+                        'updated_at' => now(),
+                    ]);
 
                 Log::info('Trainee attendance updated by admin', [
                     'attendance_id' => $existingAttendance->id,
@@ -560,24 +564,24 @@ class StaffAttendanceController extends Controller
             }
 
             // Create new attendance record
-            $attendance = \App\Models\Attendance::create([
+            $attendanceId = DB::table('trainee_attendances')->insertGetId([
                 'trainee_id' => $validated['trainee_id'],
                 'activity_id' => $validated['activity_id'],
-                'attendance_date' => now()->toDateString(),
-                'attendance_status' => $validated['status'],
-                'attendance_notes' => $validated['remarks'],
+                'date' => now()->toDateString(),
+                'status' => $validated['status'],
+                'notes' => $validated['remarks'],
                 'recorded_by' => $currentUserId,
                 'centre_id' => $trainee->centre_id,
-                'check_in_time' => $validated['status'] === 'present' ? now()->toTimeString() : null,
-                // Enhanced tracking fields
-                'arrival_time' => $validated['status'] === 'present' ? now()->toTimeString() : null,
-                'participation_level_enum' => $validated['status'] === 'present' ? 'good' : null,
-                'mood_rating' => $validated['status'] === 'present' ? 'happy' : null,
+                'time_in' => $validated['status'] === 'present' ? now()->toTimeString() : null,
+                'engagement_level' => $validated['status'] === 'present' ? 4 : null,
+                'mood_rating' => $validated['status'] === 'present' ? 4 : null,
                 'progress_notes' => $validated['remarks'],
-                'parent_feedback_required' => false,
-                'follow_up_needed' => $validated['status'] === 'absent' ? true : false,
-                'recorded_by' => $currentUserId
+                'achievements' => null,
+                'created_at' => now(),
+                'updated_at' => now(),
             ]);
+            
+            $attendance = DB::table('trainee_attendances')->where('id', $attendanceId)->first();
 
             Log::info('Trainee attendance marked', [
                 'attendance_id' => $attendance->id,

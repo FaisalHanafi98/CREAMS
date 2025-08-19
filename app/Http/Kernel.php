@@ -58,6 +58,7 @@ class Kernel extends HttpKernel
         'auth' => \App\Http\Middleware\Authenticate::class,
         'enhanced.auth' => \App\Http\Middleware\EnhancedAuthenticate::class,
         'role' => \App\Http\Middleware\RoleMiddleware::class,
+        'enhanced.role' => \App\Http\Middleware\EnhancedRoleMiddleware::class,
         'legacy.role' => \App\Http\Middleware\Role::class,
         'centre.access' => \App\Http\Middleware\CentreAccessControl::class,
         'validate.params' => \App\Http\Middleware\ValidateRouteParameters::class,

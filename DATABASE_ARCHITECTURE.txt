@@ -28,6 +28,147 @@ KEY DESIGN PRINCIPLES:
 - Integrated communication and letter generation systems
 
 ============================================================================
+COLUMN NAMING CONVENTIONS & STANDARDS
+============================================================================
+
+The CREAMS database follows strict naming conventions to ensure consistency,
+maintainability, and clarity across all tables and relationships:
+
+1. PRIMARY KEYS:
+   - Format: {table_name}_id (e.g., user_id, trainee_id, activity_id)
+   - Type: INT AUTO_INCREMENT for most tables
+   - Special: centres table uses centre_id VARCHAR(10) for Malaysian centre codes
+
+2. FOREIGN KEYS:
+   - Format: {referenced_table}_id (e.g., centre_id, user_id, category_id)
+   - Maintains referential integrity with proper constraints
+   - Cascade rules defined for data consistency
+
+3. COLUMN PREFIXES:
+   - trainee_*: All trainee-specific fields (trainee_first_name, trainee_email)
+   - centre_*: All centre-specific fields (centre_name, centre_address)
+   - activity_*: All activity-specific fields (activity_name, activity_description)
+   - guardian_*: Guardian/parent information fields
+   - emergency_*: Emergency contact information fields
+
+4. TIMESTAMP FIELDS:
+   - created_at, updated_at: Standard Laravel timestamps (TIMESTAMP)
+   - date_of_birth, admission_date: Date fields (DATE)
+   - session_date, attendance_date: Activity-specific dates (DATE)
+   - last_accessed_at: User activity tracking (TIMESTAMP)
+
+5. STATUS & ENUM FIELDS:
+   - status: Generic status field (active, inactive, pending, etc.)
+   - role: User roles (admin, supervisor, teacher, ajk)
+   - gender: User/trainee gender (Male, Female)
+   - attendance_status: Attendance tracking (present, absent, late, excused)
+
+6. TEXT & CONTENT FIELDS:
+   - *_description: Detailed descriptions (TEXT)
+   - *_notes: Additional notes or comments (TEXT)
+   - *_content: Rich content fields (LONGTEXT)
+   - *_summary: Brief summaries (VARCHAR)
+
+7. BOOLEAN FIELDS:
+   - is_*: Boolean flags (is_active, is_completed, is_verified)
+   - has_*: Possession indicators (has_consent, has_documents)
+   - can_*: Permission indicators (can_edit, can_view)
+
+8. MALAYSIAN-SPECIFIC FIELDS:
+   - ic_number: Malaysian identification number (VARCHAR(15))
+   - phone: Malaysian phone format (+60X-XXX-XXXX)
+   - centre_id: Malaysian centre codes (01, 02, 03, 04)
+   - iium_id: IIUM-style staff identification
+
+============================================================================
+DETAILED COLUMN NAMING EXAMPLES BY TABLE
+============================================================================
+
+USERS TABLE COLUMNS:
+├── id (Primary Key - Auto increment)
+├── iium_id (Unique identifier - IIUM format: ABCD1234)
+├── name (Full name - VARCHAR(255))
+├── email (Unique email - VARCHAR(255))
+├── password (Encrypted - VARCHAR(255))
+├── phone (Malaysian format - VARCHAR(20))
+├── address (Full address - TEXT)
+├── education_level (Qualification - VARCHAR(100))
+├── education_specialization (Field of study - VARCHAR(255))
+├── teaching_specialization (Expertise area - VARCHAR(255))
+├── date_of_birth (Birth date - DATE)
+├── role (User role - ENUM: admin,supervisor,teacher,ajk)
+├── status (Account status - ENUM: active,inactive,pending)
+├── centre_id (Centre reference - VARCHAR(10))
+├── position (Job title - VARCHAR(100))
+├── about (Bio/description - TEXT)
+├── centre_location (Work location - VARCHAR(255))
+├── user_last_accessed_at (Last login - TIMESTAMP)
+├── created_at (Record creation - TIMESTAMP)
+└── updated_at (Last modified - TIMESTAMP)
+
+TRAINEES TABLE COLUMNS:
+├── id (Primary Key - Auto increment)
+├── trainee_id (Unique ID - VARCHAR(50))
+├── trainee_first_name (First name - VARCHAR(100))
+├── trainee_last_name (Last name - VARCHAR(100))
+├── trainee_email (Contact email - VARCHAR(255))
+├── ic_number (Malaysian IC - VARCHAR(15))
+├── trainee_date_of_birth (Birth date - DATE)
+├── gender (Gender - ENUM: Male,Female)
+├── trainee_phone_number (Contact phone - VARCHAR(20))
+├── trainee_address (Home address - TEXT)
+├── trainee_condition (Disability/condition - VARCHAR(255))
+├── centre_id (Centre reference - VARCHAR(10))
+├── centre_name (Centre name - VARCHAR(255))
+├── guardian_name (Guardian full name - VARCHAR(255))
+├── guardian_phone (Guardian contact - VARCHAR(20))
+├── guardian_email (Guardian email - VARCHAR(255))
+├── guardian_relationship (Relation - VARCHAR(50))
+├── guardian_address (Guardian address - TEXT)
+├── emergency_contact_name (Emergency contact - VARCHAR(255))
+├── emergency_contact_phone (Emergency phone - VARCHAR(20))
+├── emergency_contact_relationship (Emergency relation - VARCHAR(50))
+├── photo_consent (Photo permission - BOOLEAN)
+├── services_consent (Service permission - BOOLEAN)
+├── status (Trainee status - ENUM: active,inactive,graduated)
+├── created_at (Record creation - TIMESTAMP)
+└── updated_at (Last modified - TIMESTAMP)
+
+ACTIVITIES TABLE COLUMNS:
+├── id (Primary Key - Auto increment)
+├── activity_name (Activity title - VARCHAR(255))
+├── activity_description (Detailed description - TEXT)
+├── category_id (Category reference - INT)
+├── centre_id (Centre reference - VARCHAR(10))
+├── duration_weeks (Activity length - INT)
+├── sessions_per_week (Weekly frequency - INT)
+├── session_duration_minutes (Session length - INT)
+├── max_participants (Capacity limit - INT)
+├── learning_outcomes (Goals/objectives - TEXT)
+├── instructor_id (Staff reference - INT)
+├── is_active (Activity status - BOOLEAN)
+├── times_conducted (Completion count - INT)
+├── created_at (Record creation - TIMESTAMP)
+└── updated_at (Last modified - TIMESTAMP)
+
+CENTRES TABLE COLUMNS:
+├── centre_id (Primary Key - VARCHAR(10))
+├── centre_name (Centre name - VARCHAR(255))
+├── centre_address (Full address - TEXT)
+├── centre_phone (Contact phone - VARCHAR(20))
+├── centre_email (Contact email - VARCHAR(255))
+├── centre_capacity (Max capacity - VARCHAR(10))
+├── centre_manager (Manager name - VARCHAR(255))
+├── centre_manager_contact (Manager phone - VARCHAR(20))
+├── centre_status (Operational status - VARCHAR(50))
+├── centre_description (About centre - TEXT)
+├── centre_facilities (Facilities list - JSON)
+├── opening_time (Operating hours - TIME)
+├── is_active (Centre status - BOOLEAN)
+├── created_at (Record creation - TIMESTAMP)
+└── updated_at (Last modified - TIMESTAMP)
+
+============================================================================
 CORE MODULE BREAKDOWN
 ============================================================================
 

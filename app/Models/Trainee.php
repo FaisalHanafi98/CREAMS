@@ -219,6 +219,14 @@ class Trainee extends Model
     }
 
     /**
+     * Get the trainee attendance records from trainee_attendances table.
+     */
+    public function traineeAttendances()
+    {
+        return $this->hasMany(Attendance::class, 'trainee_id');
+    }
+
+    /**
      * Get the session attendance records for the trainee.
      */
     public function sessionAttendances()

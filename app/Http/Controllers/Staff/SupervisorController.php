@@ -15,12 +15,31 @@ use App\Models\Asset;
 class SupervisorController extends Controller
 {
     /**
+     * Create a new controller instance.
+     *
+     * @return void
+     */
+    public function __construct()
+    {
+        $this->middleware('auth');
+        $this->middleware('role:supervisor');
+    }
+
+    /**
      * Display the supervisor dashboard.
      *
      * @return \Illuminate\View\View
      */
     public function index()
     {
+        $supervisorId = session('id');
+        $centreId = session('centre_id');
+        
+        Log::info('Supervisor accessed dashboard', [
+            'supervisor_id' => $supervisorId,
+            'centre_id' => $centreId
+        ]);
+        
         return view('Supervisor.dashboard');
     }
     

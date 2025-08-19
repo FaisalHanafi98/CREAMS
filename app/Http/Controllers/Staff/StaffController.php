@@ -529,38 +529,51 @@ class StaffController extends Controller
                 });
             }
 
-            // Check for recurring schedule table
-            if (\Schema::hasTable('activity_schedules')) {
-                try {
-                    // Check if schedule_status column exists
-                    if (\Schema::hasColumn('activity_schedules', 'schedule_status')) {
+            // Get schedules from activities where this staff is instructor
+            try {
+                $schedules = collect();
+                
+                // First try to get schedules from activity_schedules table
+                if (\Schema::hasTable('activity_schedules')) {
+                    try {
                         $schedules = \DB::table('activity_schedules')
                             ->join('activities', 'activity_schedules.activity_id', '=', 'activities.id')
-                            ->join('activity_sessions', 'activity_schedules.activity_id', '=', 'activity_sessions.activity_id')
-                            ->where('activity_sessions.teacher_id', $staffMember->id)
-                            ->where('activity_schedules.schedule_status', 'active')
+                            ->where('activities.instructor_id', $staffMember->id)
+                            ->orWhere('activities.created_by', $staffMember->id)
                             ->select('activity_schedules.*', 'activities.activity_name')
                             ->distinct()
                             ->orderBy('activity_schedules.start_date')
                             ->orderBy('activity_schedules.start_time')
                             ->get();
-                    } else {
-                        // Fallback query without schedule_status
-                        $schedules = \DB::table('activity_schedules')
-                            ->join('activities', 'activity_schedules.activity_id', '=', 'activities.id')
-                            ->join('activity_sessions', 'activity_schedules.activity_id', '=', 'activity_sessions.activity_id')
-                            ->where('activity_sessions.teacher_id', $staffMember->id)
-                            ->whereIn('activities.activity_status', ['scheduled', 'ongoing'])
-                            ->select('activity_schedules.*', 'activities.activity_name')
-                            ->distinct()
-                            ->orderBy('activity_schedules.start_date')
-                            ->orderBy('activity_schedules.start_time')
-                            ->get();
+                    } catch (\Exception $e) {
+                        Log::info('Activity schedules query failed, using fallback: ' . $e->getMessage());
                     }
-                } catch (\Exception $e) {
-                    Log::warning('Error querying activity_schedules: ' . $e->getMessage());
-                    $schedules = collect(); // Empty collection as fallback
                 }
+                
+                // If no schedules from schedules table, create from activities
+                if ($schedules->isEmpty()) {
+                    $activities = Activity::where('instructor_id', $staffMember->id)
+                        ->orWhere('created_by', $staffMember->id)
+                        ->where('is_active', 1)
+                        ->get();
+                    
+                    $schedules = $activities->map(function($activity) {
+                        return (object)[
+                            'id' => $activity->id,
+                            'activity_id' => $activity->id,
+                            'activity_name' => $activity->activity_name,
+                            'start_date' => $activity->activity_date ?? now()->addDays(1)->format('Y-m-d'),
+                            'start_time' => $activity->activity_start_time ?? '09:00:00',
+                            'end_time' => $activity->activity_end_time ?? '10:30:00',
+                            'location' => $activity->activity_location ?? 'TBA',
+                            'schedule_status' => 'active',
+                            'duration_minutes' => $activity->duration_minutes ?? 90,
+                        ];
+                    });
+                }
+            } catch (\Exception $e) {
+                Log::error('Error loading staff schedule: ' . $e->getMessage());
+                $schedules = collect(); // Empty collection as fallback
             }
 
             // Calculate real schedule statistics based on actual data

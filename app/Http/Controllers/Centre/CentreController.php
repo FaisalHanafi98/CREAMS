@@ -23,6 +23,21 @@ use Exception;
 class CentreController extends Controller
 {
     /**
+     * Create a new controller instance.
+     *
+     * @return void
+     */
+    public function __construct()
+    {
+        $this->middleware('auth');
+        // Admin has full access, Supervisors can view centres
+        $this->middleware('enhanced.role:admin,supervisor');
+        
+        // Only admin can create/edit/delete centres
+        $this->middleware('enhanced.role:admin')->only(['create', 'store', 'edit', 'update', 'destroy']);
+    }
+
+    /**
      * Display a listing of the centres.
      */
     public function index()

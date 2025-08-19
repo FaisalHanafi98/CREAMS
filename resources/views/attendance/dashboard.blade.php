@@ -590,9 +590,9 @@
             <div class="attendance-grid">
                 @forelse($trainees as $trainee)
                     @php
-                        $attendance = $trainee->attendances->first();
-                        $status = $attendance ? $attendance->attendance_status : 'not-marked';
-                        $statusLabel = $attendance ? ucfirst($attendance->attendance_status) : 'Not Marked';
+                        $attendance = $trainee->traineeAttendances->first();
+                        $status = $attendance ? $attendance->status : 'not-marked';
+                        $statusLabel = $attendance ? ucfirst($attendance->status) : 'Not Marked';
                     @endphp
                     <div class="attendance-card {{ $status }} clickable" data-trainee-id="{{ $trainee->id }}" data-trainee-name="{{ $trainee->trainee_first_name }} {{ $trainee->trainee_last_name }}" onclick="markTraineeAttendance({{ $trainee->id }}, '{{ $trainee->trainee_first_name }} {{ $trainee->trainee_last_name }}', '{{ $status }}')">
                         <div class="person-info">
@@ -613,9 +613,10 @@
                                 @php
                                     $markedByUser = \App\Models\User::find($attendance->recorded_by);
                                     $markedByEmail = $markedByUser ? $markedByUser->email : 'System';
+                                    $timeIn = $attendance->time_in ? \Carbon\Carbon::parse($attendance->time_in)->format('g:i A') : 'N/A';
                                 @endphp
                                 <small class="text-muted">
-                                    {{ Carbon\Carbon::parse($attendance->created_at)->format('g:i A') }}
+                                    {{ $timeIn }}
                                     <br><small>by {{ $markedByEmail }}</small>
                                 </small>
                             @endif

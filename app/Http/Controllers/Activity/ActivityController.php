@@ -29,6 +29,24 @@ class ActivityController extends Controller
     use HandlesErrors;
 
     /**
+     * Create a new controller instance.
+     *
+     * @return void
+     */
+    public function __construct()
+    {
+        $this->middleware('auth');
+        // Admin can do everything, Supervisor and Teacher can view and manage activities in their centre
+        $this->middleware('enhanced.role:admin,supervisor,teacher');
+        
+        // Only admin can create/edit/delete activities
+        $this->middleware('enhanced.role:admin')->only(['create', 'store', 'edit', 'update', 'destroy', 'createActivity', 'storeActivity']);
+        
+        // Admin and Supervisors can create sessions
+        $this->middleware('enhanced.role:admin,supervisor')->only(['createSession', 'storeSession']);
+    }
+
+    /**
      * Check for activity overlaps and conflicts
      */
     private function checkActivityConflicts($activityData, $sessionData = null, $excludeActivityId = null)
