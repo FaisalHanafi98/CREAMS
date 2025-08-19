@@ -31,7 +31,7 @@ return new class extends Migration
             $table->id();
             $table->string('category_name');
             $table->text('category_description')->nullable();
-            $table->integer('parent_category_id')->nullable();
+            $table->foreignId('parent_category_id')->nullable();
             $table->boolean('is_active')->default(true);
             $table->timestamps();
             
@@ -63,10 +63,10 @@ return new class extends Migration
             $table->string('asset_tag', 50)->unique();
             $table->string('asset_name');
             $table->text('asset_description')->nullable();
-            $table->integer('asset_type_id');
-            $table->integer('asset_category_id');
+            $table->foreignId('asset_type_id');
+            $table->foreignId('asset_category_id');
             $table->string('centre_id', 10);
-            $table->integer('current_location_id')->nullable();
+            $table->foreignId('current_location_id')->nullable();
             $table->string('serial_number')->nullable();
             $table->string('model')->nullable();
             $table->string('manufacturer')->nullable();
@@ -75,7 +75,7 @@ return new class extends Migration
             $table->decimal('current_value', 10, 2)->nullable();
             $table->enum('condition', ['excellent', 'good', 'fair', 'poor', 'broken'])->default('good');
             $table->enum('status', ['available', 'in_use', 'maintenance', 'retired', 'lost'])->default('available');
-            $table->integer('assigned_to_user_id')->nullable();
+            $table->foreignId('assigned_to_user_id')->nullable();
             $table->text('notes')->nullable();
             $table->timestamps();
             
@@ -92,7 +92,7 @@ return new class extends Migration
         // 5. ASSET_MAINTENANCE TABLE
         Schema::create('asset_maintenance', function (Blueprint $table) {
             $table->id();
-            $table->integer('asset_id');
+            $table->foreignId('asset_id');
             $table->string('maintenance_type', 50);
             $table->date('scheduled_date');
             $table->date('completed_date')->nullable();
@@ -113,8 +113,8 @@ return new class extends Migration
         // 6. ASSET_MAINTENANCE_HISTORY TABLE
         Schema::create('asset_maintenance_history', function (Blueprint $table) {
             $table->id();
-            $table->integer('asset_id');
-            $table->integer('maintenance_id')->nullable();
+            $table->foreignId('asset_id');
+            $table->foreignId('maintenance_id')->nullable();
             $table->date('maintenance_date');
             $table->string('maintenance_type', 50);
             $table->text('description');
@@ -133,10 +133,10 @@ return new class extends Migration
         // 7. ASSET_MOVEMENTS TABLE
         Schema::create('asset_movements', function (Blueprint $table) {
             $table->id();
-            $table->integer('asset_id');
-            $table->integer('from_location_id')->nullable();
-            $table->integer('to_location_id');
-            $table->integer('moved_by_user_id');
+            $table->foreignId('asset_id');
+            $table->foreignId('from_location_id')->nullable();
+            $table->foreignId('to_location_id');
+            $table->foreignId('moved_by_user_id');
             $table->datetime('movement_date');
             $table->string('reason')->nullable();
             $table->text('notes')->nullable();

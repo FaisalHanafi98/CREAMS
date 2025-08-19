@@ -28,17 +28,17 @@ class ActivityRegistrationController extends Controller
     ];
 
     /**
-     * Eligible trainee conditions
+     * Eligible trainee conditions (aligned with Welcome Page services)
      * 
      * @var array
      */
     protected $eligibleConditions = [
-        'Cerebral Palsy',
-        'Autism Spectrum Disorder (ASD)',
-        'Down Syndrome',
-        'Hearing Impairment',
+        'Physical Disabilities',
+        'Learning Support', 
         'Visual Impairment',
-        'Intellectual Disabilities'
+        'Autism Spectrum Support',
+        'Hearing Impairment',
+        'Speech Therapy'
     ];
 
     /**

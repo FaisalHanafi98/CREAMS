@@ -15,7 +15,7 @@ return new class extends Migration
         // 1. STAFF_ATTENDANCES TABLE
         Schema::create('staff_attendances', function (Blueprint $table) {
             $table->id();
-            $table->integer('user_id');
+            $table->foreignId('user_id');
             $table->string('centre_id', 10)->nullable();
             $table->date('attendance_date');
             $table->time('check_in_time')->nullable();
@@ -24,9 +24,9 @@ return new class extends Migration
             $table->string('leave_type', 50)->nullable();
             $table->text('notes')->nullable();
             $table->boolean('approved')->default(false);
-            $table->integer('approved_by')->nullable();
+            $table->foreignId('approved_by')->nullable();
             $table->timestamp('approved_at')->nullable();
-            $table->integer('marked_by_user_id')->nullable();
+            $table->foreignId('marked_by_user_id')->nullable();
             $table->decimal('total_hours', 4, 2)->default(0.00);
             $table->timestamps();
             
@@ -42,13 +42,13 @@ return new class extends Migration
         Schema::create('attendance_alerts', function (Blueprint $table) {
             $table->id();
             $table->enum('alert_type', ['staff', 'trainee']);
-            $table->integer('user_id')->nullable();
-            $table->integer('trainee_id')->nullable();
+            $table->foreignId('user_id')->nullable();
+            $table->foreignId('trainee_id')->nullable();
             $table->string('alert_message');
             $table->enum('severity', ['low', 'medium', 'high', 'critical'])->default('medium');
             $table->boolean('is_read')->default(false);
             $table->boolean('is_resolved')->default(false);
-            $table->integer('resolved_by')->nullable();
+            $table->foreignId('resolved_by')->nullable();
             $table->timestamp('resolved_at')->nullable();
             $table->text('resolution_notes')->nullable();
             $table->timestamps();

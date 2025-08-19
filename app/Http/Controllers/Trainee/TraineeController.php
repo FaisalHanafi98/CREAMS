@@ -138,7 +138,7 @@ class TraineeController extends Controller
                     ->with('error', 'You do not have permission to create trainees.');
             }
             
-            // Validate input - updated to match form field names
+            // Validate input - updated to match form field names and database architecture
             $validated = $request->validate([
                 'trainee_first_name' => 'required|string|max:255',
                 'trainee_last_name' => 'required|string|max:255',
@@ -149,8 +149,11 @@ class TraineeController extends Controller
                 'gender' => 'required|string|in:Male,Female',
                 'trainee_avatar' => 'nullable|image|max:2048|mimes:jpeg,png,jpg,gif',
                 'centre_name' => 'required|string|exists:centres,centre_name',
-                'trainee_condition' => 'required|string|max:255',
-                'address' => 'nullable|string|max:500',
+                'trainee_condition' => 'required|string|in:Physical Disabilities,Learning Support,Visual Impairment,Autism Spectrum Support,Hearing Impairment,Speech Therapy',
+                'trainee_address' => 'nullable|string|max:500',
+                // Mandatory consent fields (required by database architecture)
+                'photo_consent' => 'required|accepted',
+                'services_consent' => 'required|accepted',
                 // Guardian fields
                 'guardian_name' => 'nullable|string|max:255',
                 'guardian_relationship' => 'required|string|max:255',
@@ -178,6 +181,11 @@ class TraineeController extends Controller
                 'centre_name.exists' => 'Selected centre is invalid.',
                 'guardian_relationship.required' => 'Guardian relationship is required.',
                 'guardian_email.required' => 'Guardian email is required.',
+                'trainee_condition.in' => 'Please select a valid service category from the list.',
+                'photo_consent.required' => 'Photo/video consent is mandatory for service provision.',
+                'photo_consent.accepted' => 'You must provide photo/video consent to proceed.',
+                'services_consent.required' => 'Service provision consent is mandatory for registration.',
+                'services_consent.accepted' => 'You must provide service consent to proceed.',
                 'consent.required' => 'You must provide consent to register this trainee.',
                 'consent.accepted' => 'You must provide consent to register this trainee.',
             ]);
@@ -200,21 +208,32 @@ class TraineeController extends Controller
                 throw new \Exception('Centre not found');
             }
             
-            // Generate unique trainee_id and unique_identifier
-            $year = now()->year;
-            $lastTrainee = Trainee::where('trainee_id', 'like', "TRN{$year}%")
-                                  ->orderBy('trainee_id', 'desc')
+            // Generate disability-specific trainee_id (aligned with database architecture)
+            $disabilityPrefixMap = [
+                'Physical Disabilities' => 'PHY',
+                'Learning Support' => 'LEA', 
+                'Visual Impairment' => 'VIS',
+                'Autism Spectrum Support' => 'AUT',
+                'Hearing Impairment' => 'HEA',
+                'Speech Therapy' => 'SPE'
+            ];
+            
+            $prefix = $disabilityPrefixMap[$validated['trainee_condition']] ?? 'GEN';
+            
+            // Find the next available number for this disability category
+            $lastTrainee = Trainee::where('trainee_id', 'like', "{$prefix}%")
+                                  ->orderByRaw('CAST(SUBSTRING(trainee_id, 4) AS UNSIGNED) DESC')
                                   ->first();
             
             if ($lastTrainee) {
-                $lastNumber = (int) substr($lastTrainee->trainee_id, -5);
+                $lastNumber = (int) substr($lastTrainee->trainee_id, 3);
                 $newNumber = $lastNumber + 1;
             } else {
-                $newNumber = 1;
+                $newNumber = 1001; // Start from 1001 for each category
             }
             
-            $traineeId = sprintf('TRN%s%s%05d', $year, $centre->centre_id, $newNumber);
-            $uniqueIdentifier = $traineeId; // Use same value for now
+            $traineeId = $prefix . $newNumber;
+            $uniqueIdentifier = $traineeId; // Use same value for consistency
             
             // Create trainee with all required fields
             $trainee = Trainee::create([
@@ -231,7 +250,10 @@ class TraineeController extends Controller
                 'centre_name' => $validated['centre_name'],
                 'centre_id' => $centre->centre_id,
                 'trainee_condition' => $validated['trainee_condition'],
-                'trainee_address' => $validated['address'],
+                'trainee_address' => $validated['trainee_address'],
+                // Mandatory consent fields (required by database architecture)
+                'photo_consent' => $validated['photo_consent'] ? 1 : 0,
+                'services_consent' => $validated['services_consent'] ? 1 : 0,
                 // Guardian information
                 'guardian_name' => $validated['guardian_name'],
                 'guardian_relationship' => $validated['guardian_relationship'],
@@ -384,7 +406,7 @@ class TraineeController extends Controller
                 'editor_role' => $role
             ]);
             
-            // Validate input - updated to match form field names
+            // Validate input - updated to match form field names and database architecture
             $validated = $request->validate([
                 'trainee_first_name' => 'required|string|max:255',
                 'trainee_last_name' => 'required|string|max:255',
@@ -394,8 +416,11 @@ class TraineeController extends Controller
                 'gender' => 'required|string|in:Male,Female',
                 'trainee_avatar' => 'nullable|image|max:2048|mimes:jpeg,png,jpg,gif',
                 'centre_name' => 'required|string|exists:centres,centre_name',
-                'trainee_condition' => 'required|string|max:255',
-                'address' => 'nullable|string|max:500',
+                'trainee_condition' => 'required|string|in:Physical Disabilities,Learning Support,Visual Impairment,Autism Spectrum Support,Hearing Impairment,Speech Therapy',
+                'trainee_address' => 'nullable|string|max:500',
+                // Consent fields (optional for updates as they may already exist)
+                'photo_consent' => 'nullable|boolean',
+                'services_consent' => 'nullable|boolean',
                 // Guardian fields
                 'guardian_name' => 'nullable|string|max:255',
                 'guardian_relationship' => 'required|string|max:255',

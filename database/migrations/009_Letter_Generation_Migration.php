@@ -35,14 +35,14 @@ return new class extends Migration
         Schema::create('letters', function (Blueprint $table) {
             $table->id();
             $table->string('letter_title');
-            $table->integer('template_id')->nullable();
+            $table->foreignId('template_id')->nullable();
             $table->enum('letter_type', ['trainee', 'staff', 'general', 'certificate'])->default('general');
             $table->longText('letter_content');
-            $table->integer('recipient_trainee_id')->nullable();
-            $table->integer('recipient_user_id')->nullable();
+            $table->foreignId('recipient_trainee_id')->nullable();
+            $table->foreignId('recipient_user_id')->nullable();
             $table->string('recipient_name')->nullable();
             $table->string('recipient_email')->nullable();
-            $table->integer('generated_by');
+            $table->foreignId('generated_by');
             $table->string('centre_id', 10)->nullable();
             $table->enum('status', ['draft', 'generated', 'sent', 'delivered'])->default('draft');
             $table->timestamp('generated_at')->nullable();

@@ -152,12 +152,12 @@
             </div>
 
             <div class="form-group">
-                <label for="address">Address</label>
-                <textarea name="address" 
-                          id="address" 
-                          class="form-control @error('address') is-invalid @enderror" 
-                          rows="3">{{ old('address', isset($trainee) ? $trainee->address : '') }}</textarea>
-                @error('address')
+                <label for="trainee_address">Address</label>
+                <textarea name="trainee_address" 
+                          id="trainee_address" 
+                          class="form-control @error('trainee_address') is-invalid @enderror" 
+                          rows="3">{{ old('trainee_address', isset($trainee) ? $trainee->trainee_address : '') }}</textarea>
+                @error('trainee_address')
                     <span class="invalid-feedback">{{ $message }}</span>
                 @enderror
             </div>
@@ -218,19 +218,33 @@
                 </div>
                 <div class="col-md-6">
                     <div class="form-group">
-                        <label for="trainee_condition">Medical Condition <span class="text-danger">*</span></label>
+                        <label for="trainee_condition">Service Category <span class="text-danger">*</span></label>
                         <select name="trainee_condition" 
                                 id="trainee_condition" 
                                 class="form-control @error('trainee_condition') is-invalid @enderror" 
                                 required>
-                            <option value="">Select Condition</option>
-                            @foreach(config('trainee.conditions') as $condition)
-                                <option value="{{ $condition }}" 
-                                        {{ old('trainee_condition', isset($trainee) ? $trainee->trainee_condition : '') == $condition ? 'selected' : '' }}>
-                                    {{ $condition }}
+                            <option value="">Select Service Category</option>
+                            @php
+                                $serviceCategories = [
+                                    'Physical Disabilities' => 'Physical therapy and mobility assistance',
+                                    'Learning Support' => 'Educational approaches for learning challenges', 
+                                    'Visual Impairment' => 'Mobility training and adaptive technology',
+                                    'Autism Spectrum Support' => 'Communication and social skills programs',
+                                    'Hearing Impairment' => 'Sign language and communication enhancement',
+                                    'Speech Therapy' => 'Communication development programs'
+                                ];
+                            @endphp
+                            @foreach($serviceCategories as $category => $description)
+                                <option value="{{ $category }}" 
+                                        title="{{ $description }}"
+                                        {{ old('trainee_condition', isset($trainee) ? $trainee->trainee_condition : '') == $category ? 'selected' : '' }}>
+                                    {{ $category }}
                                 </option>
                             @endforeach
                         </select>
+                        <small class="form-text text-muted">
+                            Select the primary service category that best matches the trainee's needs based on our Welcome Page services.
+                        </small>
                         @error('trainee_condition')
                             <span class="invalid-feedback">{{ $message }}</span>
                         @enderror
@@ -424,6 +438,56 @@
                 @enderror
             </div>
 
+            <!-- Mandatory Consent Section -->
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <div class="form-check">
+                            <input type="checkbox" 
+                                   name="photo_consent" 
+                                   id="photo_consent" 
+                                   class="form-check-input @error('photo_consent') is-invalid @enderror" 
+                                   value="1"
+                                   {{ old('photo_consent', isset($trainee) && $trainee->photo_consent ? 'checked' : '') }}
+                                   required>
+                            <label class="form-check-label" for="photo_consent">
+                                <strong>Photo/Video Consent <span class="text-danger">*</span></strong>
+                                <br>
+                                <small class="text-muted">
+                                    I consent to photos and videos being taken for educational, therapeutic, and promotional purposes. This is mandatory for service provision.
+                                </small>
+                            </label>
+                            @error('photo_consent')
+                                <div class="invalid-feedback d-block">{{ $message }}</div>
+                            @enderror
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <div class="form-check">
+                            <input type="checkbox" 
+                                   name="services_consent" 
+                                   id="services_consent" 
+                                   class="form-check-input @error('services_consent') is-invalid @enderror" 
+                                   value="1"
+                                   {{ old('services_consent', isset($trainee) && $trainee->services_consent ? 'checked' : '') }}
+                                   required>
+                            <label class="form-check-label" for="services_consent">
+                                <strong>Service Provision Consent <span class="text-danger">*</span></strong>
+                                <br>
+                                <small class="text-muted">
+                                    I consent to the provision of rehabilitation services and understand the terms of service. This is mandatory for registration.
+                                </small>
+                            </label>
+                            @error('services_consent')
+                                <div class="invalid-feedback d-block">{{ $message }}</div>
+                            @enderror
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="form-group">
                 <div class="form-check">
                     <input type="checkbox" 
@@ -434,7 +498,7 @@
                            {{ old('consent') ? 'checked' : '' }}
                            required>
                     <label class="form-check-label" for="consent">
-                        <strong>Consent for Registration <span class="text-danger">*</span></strong>
+                        <strong>Data Processing Consent <span class="text-danger">*</span></strong>
                         <br>
                         <small class="text-muted">
                             I confirm that I have the authority to register this trainee and that all information provided is accurate and complete. I consent to the collection and processing of this information for the purposes of providing rehabilitation services.

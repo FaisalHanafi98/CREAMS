@@ -1,0 +1,804 @@
+============================================================================
+                    CREAMS - COMPREHENSIVE FORMS TESTING SCRIPT
+============================================================================
+
+VERSION: Enhanced Production Testing Suite (August 2025)
+PURPOSE: Test all forms and modules with success and failure scenarios
+DATABASE: creams (with enhanced architecture)
+TESTING FRAMEWORK: Manual testing procedures for complete system validation
+
+============================================================================
+TESTING PREREQUISITES
+============================================================================
+
+1. **Database Setup:**
+   - Fresh migration completed: ✓
+   - Database seeded with sample data: ✓ 
+   - All consent fields set to TRUE: ✓
+   - Email format @iium.edu.my: ✓
+   - Trainee IDs with disability prefixes: ✓
+
+2. **User Accounts for Testing:**
+   - Admin user: admin@iium.edu.my (full access)
+   - Supervisor user: supervisor@iium.edu.my (centre management)
+   - Teacher user: teacher@iium.edu.my (activity instruction)
+   - AJK user: ajk@iium.edu.my (facility management)
+
+3. **Testing Environment:**
+   - Browser: Chrome/Firefox with Developer Tools
+   - Network: Stable connection
+   - Session timeout: Disabled for testing
+
+============================================================================
+MODULE 1: AUTHENTICATION & USER MANAGEMENT
+============================================================================
+
+### 1.1 LOGIN FORM TESTING
+**URL**: /login
+**Form Fields**: email, password, remember_me
+
+**SUCCESS SCENARIOS:**
+Test Case 1.1.1: Valid Admin Login
+- Email: admin@iium.edu.my
+- Password: password
+- Expected: Redirect to admin dashboard
+- Verify: Session created, role = 'admin', proper navigation menu
+
+Test Case 1.1.2: Valid Teacher Login  
+- Email: teacher@iium.edu.my
+- Password: password
+- Expected: Redirect to teacher dashboard
+- Verify: Session created, role = 'teacher', restricted menu options
+
+Test Case 1.1.3: Remember Me Functionality
+- Email: supervisor@iium.edu.my  
+- Password: password
+- Remember Me: ✓ checked
+- Expected: Persistent login across browser sessions
+
+**FAILURE SCENARIOS:**
+Test Case 1.1.4: Invalid Email Format
+- Email: invalid-email
+- Password: password
+- Expected: Validation error "Please provide a valid email address"
+
+Test Case 1.1.5: Non-existent User
+- Email: nonexistent@iium.edu.my
+- Password: password
+- Expected: Authentication error "These credentials do not match our records"
+
+Test Case 1.1.6: Wrong Password
+- Email: admin@iium.edu.my
+- Password: wrongpassword
+- Expected: Authentication error "Invalid credentials"
+
+Test Case 1.1.7: Empty Fields
+- Email: (empty)
+- Password: (empty)
+- Expected: Required field validation errors
+
+### 1.2 PASSWORD RESET FORM TESTING
+**URL**: /forgot-password
+**Form Fields**: email
+
+**SUCCESS SCENARIOS:**
+Test Case 1.2.1: Valid Reset Request
+- Email: admin@iium.edu.my
+- Expected: Success message "Password reset link sent to your email"
+- Verify: Email sent, reset token generated
+
+**FAILURE SCENARIOS:**
+Test Case 1.2.2: Invalid Email
+- Email: invalid@domain.com
+- Expected: Error "We can't find a user with that email address"
+
+Test Case 1.2.3: Empty Email
+- Email: (empty)
+- Expected: Required field validation error
+
+============================================================================
+MODULE 2: TRAINEE MANAGEMENT SYSTEM
+============================================================================
+
+### 2.1 TRAINEE REGISTRATION FORM TESTING
+**URL**: /trainees/create
+**Form Fields**: trainee_first_name, trainee_last_name, trainee_email, ic_number, 
+trainee_phone_number, trainee_date_of_birth, gender, trainee_address, 
+centre_name, trainee_condition, medical_history, guardian_name, guardian_email, 
+guardian_relationship, photo_consent, services_consent
+
+**SUCCESS SCENARIOS:**
+Test Case 2.1.1: Complete Trainee Registration (Physical Disabilities)
+- trainee_first_name: Ahmad
+- trainee_last_name: Hassan
+- trainee_email: ahmad.hassan@example.com  
+- ic_number: 990101-01-1234
+- trainee_phone_number: +60123456789
+- trainee_date_of_birth: 1999-01-01
+- gender: Male
+- trainee_address: 123 Jalan Ampang, Kuala Lumpur
+- centre_name: Gombak Centre
+- trainee_condition: Physical Disabilities
+- medical_history: Cerebral palsy, requires wheelchair assistance
+- guardian_name: Hassan bin Omar
+- guardian_email: hassan.omar@example.com
+- guardian_relationship: Father
+- photo_consent: ✓ checked
+- services_consent: ✓ checked
+- Expected: Success message "Trainee registered successfully!"
+- Verify: Trainee ID generated as PHY#### format, all data saved correctly
+
+Test Case 2.1.2: Complete Trainee Registration (Learning Support)
+- trainee_first_name: Siti
+- trainee_last_name: Aminah
+- trainee_email: siti.aminah@example.com
+- ic_number: 000202-02-5678
+- trainee_phone_number: +60198765432
+- trainee_date_of_birth: 2000-02-02
+- gender: Female
+- trainee_address: 456 Jalan Bukit, Petaling Jaya
+- centre_name: Kuantan Centre
+- trainee_condition: Learning Support
+- medical_history: ADHD, requires structured learning environment
+- guardian_name: Aminah binti Abdullah
+- guardian_email: aminah.abdullah@example.com
+- guardian_relationship: Mother
+- photo_consent: ✓ checked
+- services_consent: ✓ checked
+- Expected: Success message, trainee ID generated as LEA#### format
+
+Test Case 2.1.3: Trainee Registration with File Upload
+- Complete all required fields (use Test Case 2.1.1 data)
+- trainee_avatar: Upload valid image file (JPG, PNG, max 2MB)
+- Expected: Success with avatar uploaded and displayed
+
+**FAILURE SCENARIOS:**
+Test Case 2.1.4: Missing Required Fields
+- trainee_first_name: (empty)
+- trainee_last_name: (empty)
+- trainee_email: (empty)
+- Expected: Multiple validation errors for required fields
+
+Test Case 2.1.5: Invalid Email Format
+- trainee_email: invalid-email-format
+- Expected: Validation error "Please provide a valid email address"
+
+Test Case 2.1.6: Duplicate Email
+- Use email that already exists in database
+- Expected: Error "This email is already registered"
+
+Test Case 2.1.7: Duplicate IC Number
+- Use IC number that already exists in database
+- Expected: Error "This IC/Passport number is already registered"
+
+Test Case 2.1.8: Invalid Date of Birth
+- trainee_date_of_birth: 2050-01-01 (future date)
+- Expected: Error "Date of birth must be in the past"
+
+Test Case 2.1.9: Invalid Service Category
+- trainee_condition: "Invalid Category"
+- Expected: Error "Please select a valid service category from the list"
+
+Test Case 2.1.10: Missing Consent Fields
+- photo_consent: (unchecked)
+- services_consent: (unchecked)
+- Expected: Errors "Photo/video consent is mandatory for service provision"
+
+Test Case 2.1.11: Invalid File Upload
+- trainee_avatar: Upload non-image file or >2MB file
+- Expected: Error "Avatar must be a valid image file" or "File size must not exceed 2MB"
+
+### 2.2 TRAINEE PROFILE UPDATE FORM TESTING
+**URL**: /traineeprofile/{encrypted_id}/edit
+**Form Fields**: Same as registration plus status field
+
+**SUCCESS SCENARIOS:**
+Test Case 2.2.1: Update Basic Information
+- Update trainee_phone_number, trainee_address
+- Expected: Success message "Trainee updated successfully!"
+
+Test Case 2.2.2: Update Service Category
+- Change trainee_condition from "Physical Disabilities" to "Learning Support"
+- Expected: Success, verify trainee ID remains same (no regeneration on updates)
+
+Test Case 2.2.3: Update Status
+- Change status from "active" to "completed"
+- Expected: Success, verify status change reflected
+
+**FAILURE SCENARIOS:**
+Test Case 2.2.4: Invalid Email Update
+- Change to email that belongs to another trainee
+- Expected: Error "This email is already registered"
+
+Test Case 2.2.5: Unauthorized Access
+- Login as 'teacher' role, attempt to edit trainee not in their centre
+- Expected: Permission error or redirect
+
+============================================================================
+MODULE 3: ACTIVITY MANAGEMENT SYSTEM
+============================================================================
+
+### 3.1 ACTIVITY CREATION FORM TESTING
+**URL**: /activities/create
+**Form Fields**: activity_name, activity_id, category_id, activity_description,
+activity_goals, centre_id, activity_location, instructor_id, max_participants,
+sessions_per_week, duration_hours, start_date, start_time, activity_period
+
+**SUCCESS SCENARIOS:**
+Test Case 3.1.1: Complete Physical Therapy Activity
+- activity_name: Morning Physical Therapy
+- activity_id: PHY001
+- category_id: (Physical Disabilities category)
+- activity_description: Comprehensive physical therapy program
+- activity_goals: Improve mobility and strength
+- centre_id: Gombak Centre
+- activity_location: Therapy Room A
+- instructor_id: (Select qualified physical therapist)
+- max_participants: 8
+- min_participants: 4
+- sessions_per_week: 3
+- duration_hours: 1.5
+- start_date: (next Monday)
+- start_time: 09:00
+- activity_period: 12
+- schedule_days: Monday, Wednesday, Friday
+- Expected: Success message "Activity created successfully!"
+- Verify: Sessions automatically generated for 12 months
+
+Test Case 3.1.2: Learning Support Activity
+- activity_name: Basic Mathematics
+- activity_id: LEA001  
+- category_id: (Learning Support category)
+- activity_description: Basic math skills development
+- centre_id: Kuantan Centre
+- instructor_id: (Select qualified teacher)
+- max_participants: 6
+- sessions_per_week: 2
+- duration_hours: 1
+- start_date: (next week)
+- start_time: 14:00
+- activity_period: 6
+- schedule_days: Tuesday, Thursday
+- Expected: Success, verify appropriate trainee compatibility
+
+**FAILURE SCENARIOS:**
+Test Case 3.1.3: Non-Admin User Attempt
+- Login as 'teacher' or 'supervisor'
+- Attempt to create activity
+- Expected: Permission error "Only administrators can create activities"
+
+Test Case 3.1.4: Duplicate Activity ID
+- activity_id: Use existing activity ID
+- Expected: Error "Activity ID must be unique"
+
+Test Case 3.1.5: Unqualified Instructor
+- instructor_id: Select instructor without appropriate qualifications
+- Expected: Error related to instructor qualification requirements
+
+Test Case 3.1.6: Invalid Schedule
+- start_date: Past date
+- Expected: Error "Start date must be today or later"
+
+Test Case 3.1.7: Conflicting Room/Time
+- Use same location and time as existing activity
+- Expected: Warning about room conflicts
+
+Test Case 3.1.8: Invalid Participant Range
+- max_participants: 0 or > 50
+- min_participants: > max_participants
+- Expected: Validation errors for participant limits
+
+### 3.2 TRAINEE ENROLLMENT FORM TESTING
+**URL**: /activities/{id}/enroll
+**Form Fields**: trainee_ids[], enrollment_date, goals
+
+**SUCCESS SCENARIOS:**
+Test Case 3.2.1: Single Trainee Enrollment
+- trainee_ids: [Select one eligible trainee]
+- enrollment_date: (today's date)
+- goals: Individual development goals
+- Expected: Success "1 trainee enrolled successfully"
+
+Test Case 3.2.2: Multiple Trainee Enrollment
+- trainee_ids: [Select 3 compatible trainees]
+- enrollment_date: (today's date)
+- Expected: Success "3 trainees enrolled successfully"
+
+Test Case 3.2.3: Enrollment with Capacity Check
+- Select trainees up to activity max_participants limit
+- Expected: All accepted, verify capacity tracking
+
+**FAILURE SCENARIOS:**
+Test Case 3.2.4: No Trainees Selected
+- trainee_ids: []
+- Expected: Error "Please select at least one trainee"
+
+Test Case 3.2.5: Duplicate Enrollment
+- Select trainee already enrolled in the activity
+- Expected: Error "Trainee is already enrolled in this activity"
+
+Test Case 3.2.6: Over Capacity
+- Attempt to enroll when activity at max capacity
+- Expected: Error "Activity is at full capacity"
+
+Test Case 3.2.7: Incompatible Trainee Condition
+- Enroll trainee with condition not suitable for activity category
+- Expected: Warning or validation error about compatibility
+
+### 3.3 ATTENDANCE MARKING FORM TESTING
+**URL**: /activities/{activityId}/sessions/{sessionId}/attendance
+**Form Fields**: attendance[trainee_id], notes[trainee_id], attendance_date
+
+**SUCCESS SCENARIOS:**
+Test Case 3.3.1: Complete Attendance Marking
+- Mark all enrolled trainees as "present"
+- attendance_date: (session date)
+- Expected: Success "Attendance marked successfully"
+- Verify: Session status updates to "completed"
+
+Test Case 3.3.2: Mixed Attendance Status
+- Mark some trainees "present", others "absent" or "late"
+- Add notes for absent trainees
+- Expected: Success, verify individual status updates
+
+Test Case 3.3.3: Excused Absences
+- Mark trainee as "excused" with detailed notes
+- Expected: Success, verify excused status doesn't affect progress negatively
+
+**FAILURE SCENARIOS:**
+Test Case 3.3.4: Unauthorized Teacher
+- Login as teacher not assigned to the session
+- Attempt to mark attendance
+- Expected: Permission error "You can only mark attendance for your own sessions"
+
+Test Case 3.3.5: Invalid Date
+- attendance_date: Future date or significantly past date
+- Expected: Validation error for attendance date
+
+Test Case 3.3.6: Missing Attendance Status
+- Submit form without marking status for some trainees
+- Expected: Error "Please mark attendance for all trainees"
+
+============================================================================
+MODULE 4: CENTRE & ASSET MANAGEMENT
+============================================================================
+
+### 4.1 ASSET REGISTRATION FORM TESTING
+**URL**: /centres/assets/create
+**Form Fields**: asset_name, asset_id, asset_type_id, asset_category_id,
+description, purchase_date, cost, current_location_id
+
+**SUCCESS SCENARIOS:**
+Test Case 4.1.1: Physical Therapy Equipment
+- asset_name: Wheelchair - Manual Standard
+- asset_id: WC001
+- asset_type_id: Medical Equipment
+- asset_category_id: Mobility Aids
+- description: Standard manual wheelchair for therapy sessions
+- purchase_date: (recent date)
+- cost: 1500.00
+- current_location_id: Therapy Room A
+- Expected: Success "Asset registered successfully"
+
+Test Case 4.1.2: Learning Materials
+- asset_name: Interactive Learning Tablet
+- asset_id: TAB001
+- asset_type_id: Educational Technology
+- description: Tablet for learning support activities
+- cost: 800.00
+- Expected: Success, verify asset tracking activated
+
+**FAILURE SCENARIOS:**
+Test Case 4.1.3: Duplicate Asset ID
+- asset_id: Use existing asset ID
+- Expected: Error "Asset ID must be unique"
+
+Test Case 4.1.4: Invalid Cost
+- cost: Negative number or non-numeric value
+- Expected: Validation error "Cost must be a positive number"
+
+Test Case 4.1.5: Missing Required Fields
+- asset_name: (empty)
+- asset_type_id: (not selected)
+- Expected: Multiple validation errors
+
+### 4.2 ASSET MAINTENANCE FORM TESTING
+**URL**: /centres/assets/{id}/maintenance
+**Form Fields**: maintenance_type, scheduled_date, description, estimated_cost
+
+**SUCCESS SCENARIOS:**
+Test Case 4.2.1: Scheduled Maintenance
+- maintenance_type: Routine Inspection
+- scheduled_date: (next week)
+- description: Monthly safety inspection
+- estimated_cost: 150.00
+- Expected: Success, maintenance record created
+
+Test Case 4.2.2: Repair Request
+- maintenance_type: Repair
+- description: Wheelchair brake adjustment needed
+- priority: High
+- Expected: Success, maintenance alert generated
+
+**FAILURE SCENARIOS:**
+Test Case 4.2.3: Past Date Scheduling
+- scheduled_date: Yesterday's date
+- Expected: Error "Maintenance date cannot be in the past"
+
+============================================================================
+MODULE 5: COMMUNICATION & MESSAGING
+============================================================================
+
+### 5.1 CONTACT FORM TESTING (Public)
+**URL**: /contact
+**Form Fields**: name, email, phone, subject, reason, message, priority
+
+**SUCCESS SCENARIOS:**
+Test Case 5.1.1: General Inquiry
+- name: John Doe
+- email: john.doe@example.com
+- phone: +60123456789
+- subject: Information Request
+- reason: General Inquiry
+- message: I would like to know more about your services
+- priority: Normal
+- Expected: Success "Thank you for contacting us. We will respond within 24 hours."
+- Verify: Email sent to admin, confirmation email to sender
+
+Test Case 5.1.2: Urgent Support Request
+- name: Emergency Contact
+- email: urgent@example.com
+- reason: Support Request
+- message: Urgent assistance needed
+- priority: High
+- Expected: Success with priority handling notification
+
+**FAILURE SCENARIOS:**
+Test Case 5.1.3: Invalid Email
+- email: invalid-email-format
+- Expected: Validation error "Please provide a valid email address"
+
+Test Case 5.1.4: Empty Required Fields
+- name: (empty)
+- message: (empty)
+- Expected: Multiple validation errors
+
+Test Case 5.1.5: Spam Prevention
+- Submit multiple identical messages rapidly
+- Expected: Rate limiting or spam detection activation
+
+### 5.2 VOLUNTEER APPLICATION FORM TESTING
+**URL**: /volunteer
+**Form Fields**: name, email, phone, age, experience, availability, motivation
+
+**SUCCESS SCENARIOS:**
+Test Case 5.2.1: Complete Volunteer Application
+- name: Sarah Ahmed
+- email: sarah.ahmed@example.com
+- phone: +60198765432
+- age: 25
+- experience: 3 years teaching experience
+- availability: Weekends
+- motivation: Want to help children with special needs
+- Expected: Success "Thank you for your interest in volunteering"
+- Verify: Admin notification sent, application stored
+
+Test Case 5.2.2: Professional Volunteer
+- Include professional qualifications and certifications
+- Expected: Success with qualification verification trigger
+
+**FAILURE SCENARIOS:**
+Test Case 5.2.3: Underage Volunteer
+- age: 16
+- Expected: Error "Volunteers must be at least 18 years old"
+
+Test Case 5.2.4: Duplicate Application
+- Use email already in volunteer database
+- Expected: Error "An application with this email already exists"
+
+============================================================================
+MODULE 6: REPORTING & ANALYTICS
+============================================================================
+
+### 6.1 PROGRESS REPORT GENERATION TESTING
+**URL**: /trainees/{id}/progress
+**Form Fields**: report_type, date_range, include_attendance, include_goals
+
+**SUCCESS SCENARIOS:**
+Test Case 6.1.1: Monthly Progress Report
+- report_type: Monthly Summary
+- date_range: Last 30 days
+- include_attendance: ✓ checked
+- include_goals: ✓ checked
+- Expected: Success, PDF report generated with all requested data
+
+Test Case 6.1.2: Custom Date Range Report
+- report_type: Custom Period
+- date_range: Specific start and end dates
+- Expected: Success with accurate date filtering
+
+**FAILURE SCENARIOS:**
+Test Case 6.1.3: Invalid Date Range
+- start_date: Future date
+- end_date: Before start_date
+- Expected: Validation error "End date must be after start date"
+
+Test Case 6.1.4: No Data Available
+- Select date range with no activities or attendance
+- Expected: Info message "No data available for selected period"
+
+============================================================================
+MODULE 7: LETTER GENERATION SYSTEM
+============================================================================
+
+### 7.1 LETTER GENERATION FORM TESTING
+**URL**: /letters/create
+**Form Fields**: template_id, recipient_type, recipient_id, custom_content
+
+**SUCCESS SCENARIOS:**
+Test Case 7.1.1: Progress Letter for Trainee
+- template_id: Progress Report Letter
+- recipient_type: Trainee
+- recipient_id: (Select trainee)
+- custom_content: Additional personalized content
+- Expected: Success, letter generated with proper formatting
+
+Test Case 7.1.2: Official Certificate
+- template_id: Completion Certificate
+- recipient_type: Trainee
+- Expected: Success, formal certificate with IIUM branding
+
+**FAILURE SCENARIOS:**
+Test Case 7.1.3: Missing Template
+- template_id: (not selected)
+- Expected: Error "Please select a letter template"
+
+Test Case 7.1.4: Invalid Recipient
+- recipient_id: (trainee not in system)
+- Expected: Error "Selected recipient is not valid"
+
+============================================================================
+INTEGRATION TESTING SCENARIOS
+============================================================================
+
+### 8.1 CROSS-MODULE INTEGRATION TESTS
+
+Test Case 8.1.1: Complete Trainee Journey
+1. Register new trainee (Module 2)
+2. Enroll in activity (Module 3)
+3. Mark attendance for sessions (Module 3)
+4. Generate progress report (Module 6)
+5. Send completion letter (Module 7)
+Expected: All modules work together seamlessly
+
+Test Case 8.1.2: Activity Management Workflow
+1. Create activity (Module 3)
+2. Assign assets (Module 4)
+3. Enroll suitable trainees (Module 3)
+4. Track attendance across sessions (Module 3)
+5. Generate activity report (Module 6)
+Expected: Complete activity lifecycle management
+
+Test Case 8.1.3: Centre Operations Workflow
+1. Register new assets (Module 4)
+2. Assign to activities (Module 3)
+3. Schedule maintenance (Module 4)
+4. Handle public inquiries (Module 5)
+5. Generate centre reports (Module 6)
+Expected: Comprehensive centre management
+
+============================================================================
+ERROR HANDLING & EDGE CASE TESTING
+============================================================================
+
+### 9.1 SYSTEM RESILIENCE TESTS
+
+Test Case 9.1.1: Database Connection Loss
+- Start form submission
+- Simulate database disconnection
+- Expected: Graceful error handling with user-friendly message
+
+Test Case 9.1.2: Session Timeout
+- Start long form completion
+- Let session expire during filling
+- Expected: Session timeout warning with option to extend
+
+Test Case 9.1.3: File Upload Failures
+- Upload corrupted image files
+- Upload files during server storage issues
+- Expected: Clear error messages with retry options
+
+Test Case 9.1.4: Concurrent User Access
+- Multiple users editing same record simultaneously
+- Expected: Conflict detection and resolution
+
+Test Case 9.1.5: Browser Compatibility
+- Test all forms on different browsers (Chrome, Firefox, Safari, Edge)
+- Test responsive design on mobile devices
+- Expected: Consistent functionality across platforms
+
+### 9.2 DATA INTEGRITY TESTS
+
+Test Case 9.2.1: SQL Injection Attempts
+- Enter SQL injection code in form fields
+- Expected: Proper sanitization, no database compromise
+
+Test Case 9.2.2: XSS Attack Prevention
+- Enter JavaScript code in text fields
+- Expected: Script sanitization, no code execution
+
+Test Case 9.2.3: CSRF Protection
+- Submit forms without CSRF tokens
+- Expected: Request rejection with proper error
+
+Test Case 9.2.4: Large Data Handling
+- Submit forms with maximum allowed data
+- Test file uploads at size limits
+- Expected: Proper handling without system crashes
+
+============================================================================
+PERFORMANCE TESTING SCENARIOS
+============================================================================
+
+### 10.1 LOAD TESTING
+
+Test Case 10.1.1: Multiple Concurrent Registrations
+- Simulate 10+ users registering trainees simultaneously
+- Expected: All submissions processed correctly without conflicts
+
+Test Case 10.1.2: Large Batch Enrollments
+- Enroll 20+ trainees in single activity
+- Expected: Batch processing completes successfully
+
+Test Case 10.1.3: Report Generation Load
+- Generate multiple large reports simultaneously
+- Expected: System remains responsive, all reports complete
+
+### 10.2 SCALABILITY TESTING
+
+Test Case 10.2.1: High Data Volume
+- Test forms with database containing 1000+ trainees
+- Expected: Form loading and submission remain fast
+
+Test Case 10.2.2: Long-Running Sessions
+- Keep forms open for extended periods
+- Expected: No memory leaks or performance degradation
+
+============================================================================
+ACCESSIBILITY TESTING
+============================================================================
+
+### 11.1 ACCESSIBILITY COMPLIANCE TESTS
+
+Test Case 11.1.1: Keyboard Navigation
+- Navigate all forms using only keyboard
+- Expected: All elements accessible via Tab/Enter keys
+
+Test Case 11.1.2: Screen Reader Compatibility
+- Test with screen reader software
+- Expected: All labels and messages properly announced
+
+Test Case 11.1.3: Color Contrast
+- Verify error messages and required field indicators
+- Expected: WCAG 2.1 compliance for color contrast ratios
+
+Test Case 11.1.4: Form Labels and ARIA
+- Check all form elements have proper labels
+- Expected: All inputs properly labeled for assistive technology
+
+============================================================================
+SECURITY TESTING SCENARIOS
+============================================================================
+
+### 12.1 AUTHENTICATION & AUTHORIZATION TESTS
+
+Test Case 12.1.1: Role-Based Access Control
+- Login with each role type (admin, supervisor, teacher, ajk)
+- Attempt to access restricted forms
+- Expected: Proper permission enforcement
+
+Test Case 12.1.2: Password Security
+- Test weak password rejection
+- Verify password encryption in database
+- Expected: Strong password enforcement, secure storage
+
+Test Case 12.1.3: Session Management
+- Test session fixation attempts
+- Verify secure session handling
+- Expected: Secure session management throughout
+
+### 12.2 DATA PROTECTION TESTS
+
+Test Case 12.2.1: Personal Data Handling
+- Verify trainee data encryption
+- Test data export/import security
+- Expected: PCI/GDPR compliance for personal data
+
+Test Case 12.2.2: Audit Trail Verification
+- Perform various operations
+- Check audit logs for completeness
+- Expected: Complete audit trail for all data changes
+
+============================================================================
+TESTING EXECUTION CHECKLIST
+============================================================================
+
+**BEFORE TESTING:**
+□ Database migrated and seeded
+□ Test user accounts created for all roles
+□ Browser developer tools enabled
+□ Network conditions stable
+□ Test data prepared for all scenarios
+
+**DURING TESTING:**
+□ Record all test results with screenshots
+□ Document any unexpected behaviors
+□ Test both success and failure paths
+□ Verify database state changes
+□ Check email notifications where applicable
+□ Monitor server logs for errors
+
+**AFTER TESTING:**
+□ Compile comprehensive test report
+□ Document all bugs found with reproduction steps
+□ Verify fixes for critical issues
+□ Re-test failed scenarios after fixes
+□ Update documentation based on findings
+
+**CRITICAL SUCCESS CRITERIA:**
+□ All forms submit successfully with valid data
+□ All validation errors display meaningful messages
+□ All role-based permissions work correctly
+□ All integrations between modules function properly
+□ All error scenarios handled gracefully
+□ All audit trails captured correctly
+□ All email notifications sent successfully
+□ All file uploads process correctly
+
+============================================================================
+REPORTING TEMPLATE
+============================================================================
+
+**TEST EXECUTION REPORT**
+Date: ___________
+Tester: ___________
+Environment: Production/Staging
+
+**SUMMARY:**
+Total Test Cases: ___
+Passed: ___
+Failed: ___
+Blocked: ___
+Success Rate: ___%
+
+**CRITICAL ISSUES FOUND:**
+1. Issue Description: ___________
+   Severity: Critical/High/Medium/Low
+   Reproduction Steps: ___________
+   Expected Result: ___________
+   Actual Result: ___________
+
+**RECOMMENDATIONS:**
+□ Deploy to production (all critical tests pass)
+□ Fix critical issues before deployment
+□ Additional testing required for: ___________
+
+**SIGN-OFF:**
+Tester: ___________ Date: ___________
+Project Manager: ___________ Date: ___________
+Technical Lead: ___________ Date: ___________
+
+============================================================================
+END OF COMPREHENSIVE FORMS TESTING SCRIPT
+============================================================================
+
+This testing script covers every form and module in the CREAMS system with 
+comprehensive success and failure scenarios. Execute all test cases to ensure 
+complete system reliability before production deployment.
+
+For questions or clarifications about any test case, refer to the enhanced 
+database architecture documentation and system requirements.
+
+TOTAL TEST CASES: 120+
+ESTIMATED TESTING TIME: 8-12 hours for complete execution
+RECOMMENDED TEAM SIZE: 2-3 testers for comprehensive coverage

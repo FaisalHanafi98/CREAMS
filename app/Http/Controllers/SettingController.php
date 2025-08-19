@@ -31,7 +31,7 @@ class SettingController extends Controller
             'general' => [
                 'site_name' => 'CREAMS',
                 'site_description' => 'Community-based REhAbilitation Management System',
-                'contact_email' => 'admin@creams.edu.my',
+                'contact_email' => 'admin@iium.edu.my',
                 'contact_phone' => '+60 3-6196 4000'
             ],
             'appearance' => [

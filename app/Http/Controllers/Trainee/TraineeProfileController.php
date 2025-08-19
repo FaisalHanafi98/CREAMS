@@ -175,19 +175,14 @@ class TraineeProfileController extends Controller
             $trainee = Trainee::findOrFail($id);
             $centres = Centre::where('is_active', 1)->get();
             
-            // List of conditions (same as in registration)
+            // List of conditions aligned with Welcome Page services
             $conditions = [
-                'Autism Spectrum Disorder',
-                'Cerebral Palsy',
-                'Down Syndrome',
-                'Hearing Impairment',
+                'Physical Disabilities',
+                'Learning Support', 
                 'Visual Impairment',
-                'Intellectual Disability',
-                'Physical Disability',
-                'Speech Impairment',
-                'Learning Disability',
-                'Multiple Disabilities',
-                'Other'
+                'Autism Spectrum Support',
+                'Hearing Impairment',
+                'Speech Therapy'
             ];
             
             return view('trainees.edit', [

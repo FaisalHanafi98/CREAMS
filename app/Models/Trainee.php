@@ -152,23 +152,20 @@ class Trainee extends Model
 
     /**
      * Get the badge class for the trainee's condition.
+     * Updated to match Welcome Page service categories.
      *
      * @return string
      */
     public function getConditionBadgeClassAttribute()
     {
-        // Map conditions to Bootstrap badge classes
+        // Map Welcome Page service conditions to Bootstrap badge classes
         $conditionMap = [
-            'Autism Spectrum Disorder' => 'info',
-            'Down Syndrome' => 'primary',
-            'Cerebral Palsy' => 'warning',
-            'Hearing Impairment' => 'secondary',
-            'Visual Impairment' => 'secondary',
-            'Intellectual Disability' => 'danger',
-            'Physical Disability' => 'dark',
-            'Speech and Language Disorder' => 'light',
-            'Learning Disability' => 'success',
-            'Multiple Disabilities' => 'danger',
+            'Physical Disabilities' => 'primary',        // PHY - Primary service
+            'Learning Support' => 'success',             // LEA - Educational focus
+            'Visual Impairment' => 'info',               // VIS - Technology/mobility
+            'Autism Spectrum Support' => 'warning',      // AUT - Communication/social
+            'Hearing Impairment' => 'secondary',         // HEA - Communication aids
+            'Speech Therapy' => 'light',                 // SPE - Communication development
             'Others' => 'secondary'
         ];
         

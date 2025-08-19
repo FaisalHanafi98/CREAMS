@@ -21,7 +21,7 @@ return new class extends Migration
             $table->string('subject');
             $table->text('message');
             $table->enum('status', ['new', 'read', 'replied', 'closed'])->default('new');
-            $table->integer('replied_by')->nullable();
+            $table->foreignId('replied_by')->nullable();
             $table->timestamp('replied_at')->nullable();
             $table->text('reply_message')->nullable();
             $table->timestamps();
@@ -36,7 +36,7 @@ return new class extends Migration
             $table->id();
             $table->string('subject');
             $table->text('content');
-            $table->integer('sender_id');
+            $table->foreignId('sender_id');
             $table->enum('sender_type', ['user', 'system']);
             $table->enum('message_type', ['general', 'announcement', 'alert', 'reminder'])->default('general');
             $table->enum('priority', ['low', 'normal', 'high', 'urgent'])->default('normal');
@@ -54,7 +54,7 @@ return new class extends Migration
 
         // 3. NOTIFICATIONS TABLE
         Schema::create('notifications', function (Blueprint $table) {
-            $table->id();
+            $table->uuid('id')->primary();
             $table->string('type');
             $table->morphs('notifiable');
             $table->text('data');
@@ -76,7 +76,7 @@ return new class extends Migration
             $table->text('availability')->nullable();
             $table->text('motivation')->nullable();
             $table->enum('status', ['applied', 'reviewed', 'approved', 'rejected', 'active', 'inactive'])->default('applied');
-            $table->integer('reviewed_by')->nullable();
+            $table->foreignId('reviewed_by')->nullable();
             $table->timestamp('reviewed_at')->nullable();
             $table->text('review_notes')->nullable();
             $table->timestamps();

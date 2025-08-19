@@ -27,7 +27,7 @@ return new class extends Migration
             $table->string('trainee_condition')->nullable();
             $table->string('centre_id', 10)->nullable();
             $table->string('centre_name')->nullable();
-            $table->integer('course_id')->nullable();
+            $table->foreignId('course_id')->nullable();
             $table->enum('status', ['active', 'inactive', 'graduated'])->default('active');
             
             // Guardian Information

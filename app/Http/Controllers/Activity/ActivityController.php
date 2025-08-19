@@ -1622,56 +1622,38 @@ class ActivityController extends Controller
     private function getConditionActivityMapping()
     {
         return [
-            // Physical conditions work well with adaptive programs
-            'Physical Disability' => [
+            // Welcome Page Service Categories (Updated August 2025)
+            'Physical Disabilities' => [
                 'Physical Therapy', 'Occupational Therapy', 'Art & Creativity', 
-                'Computer Skills', 'Mathematics', 'Literacy', 'Music Therapy', 'Vocational Training'
-            ],
-            'Cerebral Palsy' => [
-                'Physical Therapy', 'Occupational Therapy', 'Speech Therapy', 
-                'Computer Skills', 'Art & Creativity', 'Music Therapy', 'Mathematics', 'Literacy'
+                'Computer Skills', 'Mathematics', 'Literacy', 'Music Therapy', 'Vocational Training',
+                'Speech Therapy', 'Life Skills'
             ],
             
-            // Cognitive/Learning conditions benefit from structured learning
-            'Autism Spectrum Disorder' => [
-                'Mathematics', 'Computer Skills', 'Art & Creativity', 'Music Therapy',
-                'Sensory Integration', 'Behavioral Therapy', 'Life Skills', 'Science'
-            ],
-            'ADHD' => [
-                'Physical Therapy', 'Behavioral Therapy', 'Art & Creativity', 
-                'Music Therapy', 'Social Skills', 'Life Skills', 'Vocational Training'
-            ],
-            'Learning Disabilities' => [
+            'Learning Support' => [
                 'Mathematics', 'Literacy', 'Computer Skills', 'Art & Creativity',
-                'Occupational Therapy', 'Life Skills', 'Vocational Training'
-            ],
-            'Intellectual Disability' => [
-                'Life Skills', 'Social Skills', 'Art & Creativity', 'Music Therapy',
-                'Physical Therapy', 'Occupational Therapy', 'Vocational Training'
-            ],
-            'Down Syndrome' => [
-                'Social Skills', 'Life Skills', 'Music Therapy', 'Art & Creativity',
-                'Physical Therapy', 'Mathematics', 'Literacy'
+                'Occupational Therapy', 'Life Skills', 'Vocational Training', 'Science',
+                'Social Skills', 'Music Therapy', 'Behavioral Therapy'
             ],
             
-            // Communication conditions need specialized support
-            'Speech and Language Disorders' => [
-                'Speech Therapy', 'Art & Creativity', 'Music Therapy', 'Computer Skills',
-                'Social Skills', 'Mathematics', 'Literacy'
-            ],
-            'Hearing Impairment' => [
-                'Art & Creativity', 'Computer Skills', 'Mathematics', 'Science',
-                'Vocational Training', 'Life Skills', 'Physical Therapy'
-            ],
             'Visual Impairment' => [
                 'Music Therapy', 'Computer Skills', 'Mathematics', 'Literacy',
-                'Life Skills', 'Vocational Training', 'Physical Therapy'
+                'Life Skills', 'Vocational Training', 'Physical Therapy', 'Art & Creativity'
             ],
             
-            // Multiple conditions need comprehensive support
-            'Multiple Disabilities' => [
-                'Music Therapy', 'Sensory Integration', 'Life Skills', 'Art & Creativity',
-                'Physical Therapy', 'Occupational Therapy', 'Social Skills'
+            'Autism Spectrum Support' => [
+                'Mathematics', 'Computer Skills', 'Art & Creativity', 'Music Therapy',
+                'Sensory Integration', 'Behavioral Therapy', 'Life Skills', 'Science',
+                'Social Skills', 'Speech Therapy'
+            ],
+            
+            'Hearing Impairment' => [
+                'Art & Creativity', 'Computer Skills', 'Mathematics', 'Science',
+                'Vocational Training', 'Life Skills', 'Physical Therapy', 'Literacy'
+            ],
+            
+            'Speech Therapy' => [
+                'Speech Therapy', 'Art & Creativity', 'Music Therapy', 'Computer Skills',
+                'Social Skills', 'Mathematics', 'Literacy', 'Life Skills'
             ],
             
             // Sensory conditions benefit from specialized interventions

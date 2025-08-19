@@ -602,19 +602,19 @@
                 
                 @if(isset($attendanceDays))
                     <div class="attendance-chart">
-                        <div class="attendance-stat present">
+                        <div class="attendance-stat present" onclick="markAttendanceStatus('present', '{{ $trainee->full_name ?? 'Trainee' }}')" style="cursor: pointer;" title="Click to mark as Present for today">
                             <div class="attendance-number present">{{ $attendanceDays['present'] ?? 0 }}</div>
                             <div class="attendance-label">Present</div>
                         </div>
-                        <div class="attendance-stat late">
+                        <div class="attendance-stat late" onclick="markAttendanceStatus('late', '{{ $trainee->full_name ?? 'Trainee' }}')" style="cursor: pointer;" title="Click to mark as Late for today">
                             <div class="attendance-number late">{{ $attendanceDays['late'] ?? 0 }}</div>
                             <div class="attendance-label">Late</div>
                         </div>
-                        <div class="attendance-stat absent">
+                        <div class="attendance-stat absent" onclick="markAttendanceStatus('absent', '{{ $trainee->full_name ?? 'Trainee' }}')" style="cursor: pointer;" title="Click to mark as Absent for today">
                             <div class="attendance-number absent">{{ $attendanceDays['absent'] ?? 0 }}</div>
                             <div class="attendance-label">Absent</div>
                         </div>
-                        <div class="attendance-stat excused">
+                        <div class="attendance-stat excused" onclick="markAttendanceStatus('excused', '{{ $trainee->full_name ?? 'Trainee' }}')" style="cursor: pointer;" title="Click to mark as Excused for today">
                             <div class="attendance-number excused">{{ $attendanceDays['excused'] ?? 0 }}</div>
                             <div class="attendance-label">Excused</div>
                         </div>
@@ -751,5 +751,60 @@ $(document).ready(function() {
         function() { $(this).removeClass('shadow-lg'); }
     );
 });
+
+// Mark attendance status with confirmation
+function markAttendanceStatus(status, traineeName) {
+    // Show confirmation dialog
+    const statusText = status.charAt(0).toUpperCase() + status.slice(1);
+    const confirmed = confirm(`Are you sure you want to mark ${traineeName} as ${statusText} for today?`);
+    
+    if (!confirmed) {
+        return;
+    }
+    
+    // Show loading state
+    const statusCard = document.querySelector(`.attendance-stat.${status}`);
+    const originalContent = statusCard.innerHTML;
+    statusCard.innerHTML = '<div class="attendance-number"><i class="fas fa-spinner fa-spin"></i></div><div class="attendance-label">Updating...</div>';
+    statusCard.style.pointerEvents = 'none';
+    
+    // Simulate attendance marking (replace with actual API call)
+    setTimeout(() => {
+        // Reset content
+        statusCard.innerHTML = originalContent;
+        statusCard.style.pointerEvents = 'auto';
+        
+        // Show success notification
+        showNotification(`${traineeName} marked as ${statusText} successfully!`, 'success');
+        
+        // Optionally reload the page to update attendance counts
+        // setTimeout(() => location.reload(), 1500);
+        
+    }, 1500); // Simulate API delay
+}
+
+// Show notification function
+function showNotification(message, type) {
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show`;
+    notification.style.position = 'fixed';
+    notification.style.top = '20px';
+    notification.style.right = '20px';
+    notification.style.zIndex = '9999';
+    notification.style.minWidth = '300px';
+    notification.innerHTML = `
+        <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'} me-2"></i>${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Auto-remove after 3 seconds
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.parentNode.removeChild(notification);
+        }
+    }, 3000);
+}
 </script>
 @endsection

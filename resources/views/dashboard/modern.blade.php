@@ -3313,6 +3313,12 @@ function markAttendance() {
         return;
     }
     
+    // Show confirmation dialog
+    const confirmed = confirm('Are you sure you want to mark your attendance for today?');
+    if (!confirmed) {
+        return;
+    }
+    
     // Show loading state
     attendanceBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Marking...';
     attendanceBtn.disabled = true;

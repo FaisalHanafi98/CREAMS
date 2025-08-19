@@ -161,7 +161,7 @@
         <div class="centre-address">
             {{ session('centre_address', 'Centre Address') }}<br>
             Tel: {{ session('centre_phone', '+60-XXX-XXXXXXX') }} | 
-            Email: {{ session('centre_email', 'info@creams.edu.my') }}
+            Email: {{ session('centre_email', 'info@iium.edu.my') }}
         </div>
     </div>
     

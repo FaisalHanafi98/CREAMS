@@ -37,19 +37,14 @@ class TraineeRegistrationController extends Controller
                 $centres = Centre::all();
             }
             
-            // Get conditions for dropdown (could be from a separate model/table in the future)
+            // Get conditions aligned with Welcome Page services
             $conditions = [
-                'Autism Spectrum Disorder',
-                'Down Syndrome',
-                'Cerebral Palsy',
-                'Hearing Impairment',
+                'Physical Disabilities',
+                'Learning Support', 
                 'Visual Impairment',
-                'Intellectual Disability',
-                'Physical Disability',
-                'Speech and Language Disorder',
-                'Learning Disability',
-                'Multiple Disabilities',
-                'Others'
+                'Autism Spectrum Support',
+                'Hearing Impairment',
+                'Speech Therapy'
             ];
             
             // Check if we have a selected centre from query parameters (for when redirected from centre page)
