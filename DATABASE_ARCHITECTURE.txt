@@ -1,0 +1,704 @@
+============================================================================
+    CREAMS - COMMUNITY-BASED REHABILITATION MANAGEMENT SYSTEM
+    FINAL DATABASE ARCHITECTURE DOCUMENTATION
+============================================================================
+
+DATABASE NAME: cream
+VERSION: Final Production Version 
+LAST UPDATED: August 2025
+ARCHITECTURE TYPE: Relational Database (MySQL 8.0+)
+TOTAL TABLES: 29 Core Tables
+
+============================================================================
+EXECUTIVE SUMMARY
+============================================================================
+
+The CREAMS database architecture represents a comprehensive, normalized 
+relational database designed specifically for rehabilitation center 
+management in Malaysia. The system supports multi-center operations 
+with role-based access control, complete audit trails, and scalable 
+data structures optimized for community-based rehabilitation services.
+
+KEY DESIGN PRINCIPLES:
+- Multi-tenant architecture with center-based data isolation
+- Role-based access control (Admin, Supervisor, Teacher, AJK)
+- Comprehensive audit logging and data integrity
+- Flexible activity and session management
+- Scalable asset and resource tracking
+- Integrated communication and letter generation systems
+
+============================================================================
+CORE MODULE BREAKDOWN
+============================================================================
+
+1. USER MANAGEMENT MODULE
+   - users (Primary user accounts)
+   - password_resets (Password recovery system)
+   - sessions (Laravel session management)
+
+2. TRAINEE MANAGEMENT MODULE  
+   - trainees (Trainee/student records)
+   - trainee_attendances (Trainee attendance tracking)
+
+3. CENTRE MANAGEMENT MODULE
+   - centres (Rehabilitation center records)
+
+4. ACTIVITY MANAGEMENT MODULE
+   - activities (Main activity definitions)
+   - activity_categories (Activity categorization)
+   - activity_sessions (Individual session instances)
+   - activity_enrollments (Activity-level enrollments)
+
+5. ATTENDANCE & PROGRESS MODULE
+   - staff_attendances (Staff attendance records)
+   - attendance_alerts (Automated attendance alerts)
+
+6. ASSET MANAGEMENT MODULE
+   - assets (Equipment and resource inventory)
+   - asset_types (Asset categorization)
+   - asset_categories (Secondary categorization)
+   - asset_locations (Location tracking)
+   - asset_maintenance (Maintenance scheduling)
+   - asset_maintenance_history (Maintenance records)
+   - asset_movements (Asset transfer tracking)
+
+7. COMMUNICATION MODULE
+   - contact_messages (Public contact form submissions)
+   - messages (Internal messaging system)
+   - notifications (System notifications)
+   - volunteers (Volunteer application management)
+
+8. LETTER GENERATION MODULE
+   - letters (Generated letter records)
+   - letter_templates (Letter template library)
+
+9. SYSTEM INFRASTRUCTURE
+   - migrations (Database version control)
+   - failed_jobs (Error tracking)
+   - jobs (Background job queue)
+   - personal_access_tokens (API authentication)
+
+============================================================================
+DETAILED TABLE SPECIFICATIONS
+============================================================================
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│                           1. USERS TABLE                                │
+└─────────────────────────────────────────────────────────────────────────┘
+
+TABLE: users
+PURPOSE: Primary user accounts for all system roles
+ROLE SUPPORT: Admin, Supervisor, Teacher, AJK
+
+COLUMNS:
+├── id (bigint, PK, AUTO_INCREMENT) - Primary identifier
+├── iium_id (varchar, UNIQUE) - IIUM identification number
+├── name (varchar, NOT NULL) - Full user name
+├── email (varchar, UNIQUE, NOT NULL) - Login email
+├── password (varchar, NOT NULL) - Encrypted password
+├── phone (varchar, NULL) - Contact phone number
+├── address (text, NULL) - Physical address
+├── education_level (varchar, NULL) - Educational qualification
+├── education_specialization (varchar, NULL) - Field of study
+├── teaching_specialization (varchar, NULL) - Teaching expertise
+├── date_of_birth (date, NULL) - Birth date
+├── role (enum, NOT NULL) - User role: admin, supervisor, teacher, ajk
+├── status (enum, NOT NULL, DEFAULT: pending) - Account status
+├── centre_id (varchar, FK, NULL) - Associated rehabilitation center
+├── encrypted_id (varchar, NULL) - Additional security identifier
+├── avatar (varchar, NULL) - Profile picture path
+├── position (varchar, NULL) - Job position/title
+├── about (text, NULL) - Personal/professional description
+├── centre_location (varchar, NULL) - Work location details
+├── user_last_accessed_at (timestamp, NULL) - Last login tracking
+├── remember_token (varchar, NULL) - Session persistence
+├── created_at (timestamp, NULL) - Record creation time
+└── updated_at (timestamp, NULL) - Last modification time
+
+INDEXES:
+- PRIMARY KEY (id)
+- UNIQUE KEY (iium_id)
+- UNIQUE KEY (email)
+- INDEX (role)
+- INDEX (centre_id)
+- INDEX (status)
+
+FOREIGN KEY CONSTRAINTS:
+- centre_id REFERENCES centres(centre_id)
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│                         2. TRAINEES TABLE                               │
+└─────────────────────────────────────────────────────────────────────────┘
+
+TABLE: trainees
+PURPOSE: Student/participant records for rehabilitation services
+ACCESSIBILITY: Comprehensive disability accommodation support
+
+COLUMNS:
+├── id (bigint, PK, AUTO_INCREMENT) - Primary identifier
+├── trainee_id (varchar, UNIQUE, NOT NULL) - Trainee identification
+├── trainee_first_name (varchar, NOT NULL) - First name
+├── trainee_last_name (varchar, NOT NULL) - Last name
+├── trainee_email (varchar, UNIQUE, NOT NULL) - Contact email
+├── ic_number (varchar, UNIQUE, NOT NULL) - Malaysian IC number
+├── trainee_date_of_birth (date, NOT NULL) - Birth date
+├── gender (enum, NOT NULL) - Gender: Male, Female, Other
+├── trainee_address (text, NULL) - Residence address
+├── trainee_condition (varchar, NULL) - Primary condition/disability
+├── hearing_impaired (boolean, DEFAULT: 0) - Hearing impairment flag
+├── visually_impaired (boolean, DEFAULT: 0) - Visual impairment flag
+├── mobility_impaired (boolean, DEFAULT: 0) - Mobility impairment flag
+├── cognitive_impairment (enum, DEFAULT: none) - Cognitive level
+├── behavioral_support_needed (boolean, DEFAULT: 0) - Support flag
+├── communication_method (enum, DEFAULT: verbal) - Preferred communication
+├── centre_name (varchar, NOT NULL) - Center name (denormalized)
+├── photo_consent (boolean, DEFAULT: 0) - Photography permission
+├── services_consent (boolean, DEFAULT: 0) - Service consent
+├── status (enum, DEFAULT: active) - Enrollment status
+├── centre_id (varchar, FK, NOT NULL) - Associated center
+├── guardian_name (varchar, NULL) - Guardian/parent name
+├── guardian_phone (varchar, NULL) - Guardian contact
+├── guardian_email (varchar, NULL) - Guardian email
+├── guardian_relationship (varchar, NULL) - Relationship to trainee
+├── guardian_address (text, NULL) - Guardian address
+├── emergency_contact_name (varchar, NULL) - Emergency contact
+├── emergency_contact_phone (varchar, NULL) - Emergency phone
+├── emergency_contact_relationship (varchar, NULL) - Emergency relationship
+├── trainee_phone_number (varchar, NULL) - Trainee direct contact
+├── avatar (varchar, NULL) - Profile photo
+├── medical_history (text, NULL) - Medical background
+├── created_at (timestamp, NULL) - Registration date
+└── updated_at (timestamp, NULL) - Last update
+
+INDEXES:
+- PRIMARY KEY (id)
+- UNIQUE KEY (trainee_id)
+- UNIQUE KEY (trainee_email)
+- UNIQUE KEY (ic_number)
+- INDEX (trainee_condition)
+- INDEX (status)
+- INDEX (centre_id)
+
+FOREIGN KEY CONSTRAINTS:
+- centre_id REFERENCES centres(centre_id)
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│                        3. ACTIVITIES TABLE                              │
+└─────────────────────────────────────────────────────────────────────────┘
+
+TABLE: activities
+PURPOSE: Core rehabilitation activity definitions and scheduling
+MANAGEMENT: Admin-created, multi-session activities
+
+COLUMNS:
+├── id (bigint, PK, AUTO_INCREMENT) - Primary identifier
+├── activity_id (varchar, UNIQUE, NOT NULL) - Activity code (type-based)
+├── activity_name (varchar, NOT NULL) - Activity title
+├── activity_description (text, NOT NULL) - Detailed description
+├── activity_type (varchar, NOT NULL) - Activity category
+├── activity_date (date, NOT NULL) - Primary activity date
+├── activity_start_time (time, NOT NULL) - Start time
+├── activity_end_time (time, NOT NULL) - End time
+├── activity_location (varchar, NOT NULL) - Primary venue
+├── max_participants (int, DEFAULT: 20) - Maximum capacity
+├── current_participants (int, DEFAULT: 0) - Current enrollment
+├── min_participants (int, DEFAULT: 1) - Minimum required
+├── activity_goals (text, NULL) - Learning objectives
+├── activity_outcomes (longtext, NULL) - Expected outcomes (JSON)
+├── required_resources (longtext, NULL) - Resource requirements (JSON)
+├── activity_status (enum, DEFAULT: scheduled) - Current status
+├── difficulty_level (enum, DEFAULT: beginner) - Complexity level
+├── age_group (enum, DEFAULT: all_ages) - Target age group
+├── activity_period (varchar, NULL) - Duration period
+├── centre_id (varchar, FK, NOT NULL) - Associated center
+├── category_id (bigint, FK, NULL) - Activity category
+├── created_by (bigint, FK, NOT NULL) - Creating user
+├── instructor_id (bigint, FK, NULL) - Primary instructor
+├── times_conducted (int, DEFAULT: 0) - Session count
+├── average_rating (decimal(3,2), NULL) - User ratings
+├── duration_minutes (int, NULL) - Session duration
+├── is_active (boolean, DEFAULT: 1) - Availability status
+├── created_at (timestamp, NULL) - Creation time
+└── updated_at (timestamp, NULL) - Last modification
+
+INDEXES:
+- PRIMARY KEY (id)
+- UNIQUE KEY (activity_id)
+- INDEX (activity_date)
+- INDEX (activity_status)
+- INDEX (difficulty_level)
+- INDEX (centre_id)
+- INDEX (category_id)
+- INDEX (created_by)
+- INDEX (instructor_id)
+- INDEX (is_active)
+
+FOREIGN KEY CONSTRAINTS:
+- centre_id REFERENCES centres(centre_id)
+- category_id REFERENCES activity_categories(id)
+- created_by REFERENCES users(id)
+- instructor_id REFERENCES users(id)
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│                    4. ACTIVITY_SESSIONS TABLE                           │
+└─────────────────────────────────────────────────────────────────────────┘
+
+TABLE: activity_sessions
+PURPOSE: Individual session instances for multi-session activities
+SCHEDULING: Flexible session management with instructor assignment
+
+COLUMNS:
+├── id (bigint, PK, AUTO_INCREMENT) - Primary identifier
+├── activity_id (bigint, FK, NOT NULL) - Parent activity
+├── session_date (date, NOT NULL) - Actual session date
+├── scheduled_date (date, NOT NULL) - Originally planned date
+├── start_time (time, NOT NULL) - Session start time
+├── end_time (time, NOT NULL) - Session end time
+├── venue (varchar, NOT NULL) - Session location
+├── room_number (varchar, NULL) - Specific room
+├── instructor_id (bigint, FK, NOT NULL) - Session instructor
+├── teacher_id (bigint, NOT NULL) - Legacy instructor reference
+├── max_capacity (int, DEFAULT: 20) - Session capacity
+├── max_participants (int, DEFAULT: 20) - Participant limit
+├── current_enrollment (int, DEFAULT: 0) - Enrolled count
+├── current_participants (int, DEFAULT: 0) - Active participants
+├── session_status (enum, DEFAULT: scheduled) - Session state
+├── status (enum, DEFAULT: scheduled) - Legacy status field
+├── attendance_marked (boolean, DEFAULT: 0) - Attendance flag
+├── marked_by (bigint, FK, NULL) - Attendance recorder
+├── session_feedback (text, NULL) - Post-session feedback
+├── session_notes (text, NULL) - Instructor notes
+├── session_objectives (longtext, NULL) - Session goals (JSON)
+├── completed_objectives (longtext, NULL) - Achieved goals (JSON)
+├── materials_used (text, NULL) - Resources utilized
+├── session_rating (decimal(3,2), NULL) - Session evaluation
+├── centre_id (varchar, FK, NOT NULL) - Associated center
+├── created_at (timestamp, NULL) - Creation time
+└── updated_at (timestamp, NULL) - Last modification
+
+INDEXES:
+- PRIMARY KEY (id)
+- INDEX (activity_id)
+- INDEX (session_date)
+- INDEX (scheduled_date)
+- INDEX (instructor_id)
+- INDEX (session_status)
+- INDEX (centre_id)
+
+FOREIGN KEY CONSTRAINTS:
+- activity_id REFERENCES activities(id)
+- instructor_id REFERENCES users(id)
+- marked_by REFERENCES users(id)
+- centre_id REFERENCES centres(centre_id)
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│                        5. CENTRES TABLE                                 │
+└─────────────────────────────────────────────────────────────────────────┘
+
+TABLE: centres
+PURPOSE: Rehabilitation center management and configuration
+LOCATIONS: Multi-center support with detailed facility information
+
+COLUMNS:
+├── id (bigint, PK, AUTO_INCREMENT) - Primary identifier
+├── centre_id (varchar, UNIQUE, NOT NULL) - Center identification code
+├── centre_name (varchar, NOT NULL) - Official center name
+├── centre_address (text, NOT NULL) - Physical address
+├── centre_phone (varchar, NOT NULL) - Contact phone
+├── centre_email (varchar, NOT NULL) - Contact email
+├── centre_capacity (varchar, NOT NULL) - Maximum capacity
+├── centre_manager (varchar, NOT NULL) - Manager name
+├── centre_manager_contact (varchar, NOT NULL) - Manager contact
+├── centre_status (enum, DEFAULT: active) - Operational status
+├── centre_description (text, NULL) - Facility description
+├── centre_facilities (longtext, NULL) - Available facilities (JSON)
+├── opening_time (time, NULL) - Daily opening time
+├── is_active (boolean, DEFAULT: 1) - Availability flag
+├── created_at (timestamp, NULL) - Registration date
+└── updated_at (timestamp, NULL) - Last update
+
+INDEXES:
+- PRIMARY KEY (id)
+- UNIQUE KEY (centre_id)
+- INDEX (centre_status)
+- INDEX (is_active)
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│                        6. ASSETS TABLE                                  │
+└─────────────────────────────────────────────────────────────────────────┘
+
+TABLE: assets
+PURPOSE: Equipment and resource inventory management
+TRACKING: Comprehensive asset lifecycle with maintenance scheduling
+
+COLUMNS:
+├── id (bigint, PK, AUTO_INCREMENT) - Primary identifier
+├── asset_code (varchar, UNIQUE, NULL) - Legacy asset code
+├── asset_id (varchar, UNIQUE, NOT NULL) - Asset identification
+├── asset_name (varchar, NOT NULL) - Asset name
+├── name (varchar, NULL) - Alternative name field
+├── asset_description (text, NULL) - Asset description
+├── description (text, NULL) - Alternative description
+├── asset_type_id (bigint, FK, NOT NULL) - Asset type category
+├── category_id (bigint, FK, NULL) - Secondary categorization
+├── serial_number (varchar, NULL) - Manufacturer serial
+├── model (varchar, NULL) - Model designation
+├── manufacturer (varchar, NULL) - Manufacturer name
+├── brand (varchar, NULL) - Brand name
+├── purchase_date (date, NULL) - Acquisition date
+├── purchase_price (decimal(10,2), NULL) - Original cost
+├── current_value (decimal(10,2), NULL) - Current valuation
+├── depreciation_rate (decimal(5,2), DEFAULT: 20.00) - Annual depreciation
+├── specifications (longtext, NULL) - Technical specifications (JSON)
+├── location (varchar, NOT NULL) - Current location
+├── condition (enum, DEFAULT: good) - Physical condition
+├── status (enum, DEFAULT: active) - Operational status
+├── centre_id (varchar, FK, NOT NULL) - Associated center
+├── assigned_to (bigint, FK, NULL) - Current assignee
+├── assigned_date (date, NULL) - Assignment date
+├── maintenance_notes (text, NULL) - Maintenance history
+├── notes (text, NULL) - General notes
+├── created_by (bigint, FK, NULL) - Creating user
+├── last_maintenance_date (date, NULL) - Previous maintenance
+├── next_maintenance_date (date, NULL) - Scheduled maintenance
+├── warranty_expiry (varchar, NULL) - Warranty information
+├── warranty_months (int, DEFAULT: 12) - Warranty period
+├── asset_image (varchar, NULL) - Primary image
+├── images (longtext, NULL) - Additional images (JSON)
+├── qr_code (varchar, NULL) - QR code identifier
+├── rfid_tag (varchar, NULL) - RFID tag identifier
+├── priority (varchar, NULL) - Maintenance priority
+├── created_at (timestamp, NULL) - Creation time
+└── updated_at (timestamp, NULL) - Last modification
+
+INDEXES:
+- PRIMARY KEY (id)
+- UNIQUE KEY (asset_code)
+- UNIQUE KEY (asset_id)
+- INDEX (asset_type_id)
+- INDEX (category_id)
+- INDEX (condition)
+- INDEX (status)
+- INDEX (centre_id)
+- INDEX (assigned_to)
+
+FOREIGN KEY CONSTRAINTS:
+- asset_type_id REFERENCES asset_types(id)
+- category_id REFERENCES asset_categories(id)
+- centre_id REFERENCES centres(centre_id)
+- assigned_to REFERENCES users(id)
+- created_by REFERENCES users(id)
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│                    7. COMMUNICATION TABLES                              │
+└─────────────────────────────────────────────────────────────────────────┘
+
+TABLE: contact_messages
+PURPOSE: Public contact form submissions and inquiry management
+FEATURES: Automated categorization and admin assignment
+
+COLUMNS:
+├── id (bigint, PK, AUTO_INCREMENT) - Primary identifier
+├── sender_name (varchar, NOT NULL) - Contact name
+├── sender_email (varchar, NOT NULL) - Contact email
+├── sender_phone (varchar, NULL) - Contact phone
+├── organization (varchar, NULL) - Sender organization
+├── message_subject (varchar, NOT NULL) - Inquiry subject
+├── message_body (text, NOT NULL) - Inquiry content
+├── urgency (enum, DEFAULT: medium) - Priority level
+├── preferred_contact_method (varchar, NULL) - Contact preference
+├── message_category (varchar, DEFAULT: general) - Message type
+├── message_status (varchar, DEFAULT: new) - Processing status
+├── admin_notes (text, NULL) - Internal notes
+├── assigned_to (bigint, FK, NULL) - Handling admin
+├── replied_at (timestamp, NULL) - Response timestamp
+├── response_sent_at (timestamp, NULL) - Reply sent time
+├── resolved_at (timestamp, NULL) - Resolution time
+├── ip_address (varchar(45), NULL) - Sender IP
+├── user_agent (varchar, NULL) - Browser information
+├── referrer (varchar, NULL) - Source page
+├── submitted_at (timestamp, NULL) - Submission time
+├── centre_id (varchar, FK, NULL) - Target center
+├── created_at (timestamp, NULL) - Creation time
+└── updated_at (timestamp, NULL) - Last modification
+
+TABLE: volunteers
+PURPOSE: Volunteer application and management system
+WORKFLOW: Application → Review → Approval → Assignment
+
+COLUMNS:
+├── id (bigint, PK, AUTO_INCREMENT) - Primary identifier
+├── volunteer_name (varchar, NOT NULL) - Full name
+├── volunteer_email (varchar, UNIQUE, NOT NULL) - Contact email
+├── volunteer_phone (varchar, NOT NULL) - Contact phone
+├── volunteer_address (text, NOT NULL) - Address
+├── volunteer_birth_date (date, NOT NULL) - Birth date
+├── volunteer_gender (enum, NOT NULL) - Gender
+├── volunteer_skills (text, NULL) - Skills and experience
+├── volunteer_experience (text, NULL) - Previous experience
+├── volunteer_availability (varchar, NULL) - Available schedule
+├── volunteer_status (enum, DEFAULT: pending) - Application status
+├── volunteer_start_date (date, NULL) - Service start date
+├── emergency_contact_name (varchar, NULL) - Emergency contact
+├── emergency_contact_phone (varchar, NULL) - Emergency phone
+├── centre_id (varchar, FK, NULL) - Assigned center
+├── approved_by (bigint, FK, NULL) - Approving admin
+├── admin_notes (text, NULL) - Internal notes
+├── status_updated_at (timestamp, NULL) - Status change time
+├── created_at (timestamp, NULL) - Application time
+└── updated_at (timestamp, NULL) - Last modification
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│                    8. LETTER GENERATION SYSTEM                          │
+└─────────────────────────────────────────────────────────────────────────┘
+
+TABLE: letters
+PURPOSE: Generated letter storage and management
+TYPES: Certificates, reports, recommendations, official correspondence
+
+COLUMNS:
+├── id (bigint, PK, AUTO_INCREMENT) - Primary identifier
+├── letter_reference_number (varchar, UNIQUE, NOT NULL) - Reference number
+├── letter_reference (varchar, NULL) - Alternative reference
+├── letter_name (varchar, NULL) - Letter title
+├── letter_date (date, NULL) - Letter date
+├── template_id (bigint, FK, NULL) - Source template
+├── letter_title (varchar, NULL) - Document title
+├── letter_description (text, NULL) - Description
+├── letter_subject (varchar, NULL) - Letter subject
+├── letter_type (enum, DEFAULT: custom) - Letter category
+├── letter_content (longtext, NOT NULL) - Letter content
+├── letter_data (longtext, NULL) - Template data (JSON)
+├── generation_metadata (longtext, NULL) - Generation info (JSON)
+├── generated_file_type (varchar, NULL) - Output format
+├── recipient_name (varchar, NOT NULL) - Recipient name
+├── recipient_id (bigint, FK, NULL) - Recipient user ID
+├── recipient_email (varchar, NULL) - Recipient email
+├── recipient_address (varchar, NULL) - Recipient address
+├── recipient_type (enum, DEFAULT: external) - Recipient category
+├── recipient_organization (varchar, NULL) - Recipient organization
+├── purpose (varchar, NULL) - Letter purpose
+├── priority_level (enum, DEFAULT: medium) - Priority level
+├── letter_status (enum, DEFAULT: generated) - Processing status
+├── is_archived (boolean, DEFAULT: 0) - Archive flag
+├── archived_at (timestamp, NULL) - Archive time
+├── archived_by (bigint, FK, NULL) - Archiving user
+├── pdf_filename (varchar, NULL) - PDF file name
+├── pdf_path (varchar, NULL) - PDF file path
+├── pdf_file_size (int, NULL) - File size in bytes
+├── generated_at (timestamp, NULL) - Generation time
+├── file_size_bytes (int, NULL) - Alternative file size
+├── sent_at (timestamp, NULL) - Delivery time
+├── sent_date (date, NULL) - Delivery date
+├── is_sent (boolean, DEFAULT: 0) - Delivery flag
+├── delivery_method (enum, DEFAULT: email) - Delivery method
+├── delivery_notes (text, NULL) - Delivery notes
+├── letter_file_path (varchar, NULL) - Alternative file path
+├── centre_id (varchar, FK, NOT NULL) - Associated center
+├── created_by (bigint, FK, NOT NULL) - Creating user
+├── created_at (timestamp, NULL) - Creation time
+└── updated_at (timestamp, NULL) - Last modification
+
+TABLE: letter_templates
+PURPOSE: Reusable letter templates with variable substitution
+FEATURES: Dynamic content insertion and formatting
+
+============================================================================
+ATTENDANCE & PROGRESS TRACKING SYSTEM
+============================================================================
+
+TABLE: staff_attendances
+PURPOSE: Staff attendance tracking and monitoring
+INTEGRATION: Linked to payroll and performance systems
+
+TABLE: trainee_attendances  
+PURPOSE: Trainee participation tracking
+ANALYTICS: Progress calculation and engagement monitoring
+
+TABLE: attendance_alerts
+PURPOSE: Automated attendance alert system
+TRIGGERS: Absence patterns and attendance issues
+
+TABLE: activity_enrollments
+PURPOSE: Activity-level enrollment management
+WORKFLOW: Registration → Enrollment → Participation → Completion
+
+============================================================================
+ASSET MANAGEMENT ECOSYSTEM
+============================================================================
+
+SUPPORTING TABLES:
+├── asset_types - Asset categorization system
+├── asset_categories - Secondary classification
+├── asset_locations - Location tracking
+├── asset_maintenance - Maintenance scheduling
+├── asset_maintenance_history - Maintenance records
+└── asset_movements - Asset transfer tracking
+
+FEATURES:
+- Comprehensive asset lifecycle management
+- Preventive maintenance scheduling
+- Location and assignment tracking
+- Depreciation calculation
+- QR code and RFID integration
+
+============================================================================
+DATA RELATIONSHIPS & CONSTRAINTS
+============================================================================
+
+PRIMARY RELATIONSHIPS:
+1. centres → users (One-to-Many)
+2. centres → trainees (One-to-Many) 
+3. centres → activities (One-to-Many)
+4. activities → activity_sessions (One-to-Many)
+5. users → activities (created_by, instructor_id)
+6. activities → activity_enrollments (One-to-Many)
+7. centres → assets (One-to-Many)
+8. users → letters (created_by)
+
+FOREIGN KEY CONSTRAINTS:
+- All foreign keys enforce referential integrity
+- CASCADE DELETE on dependent records
+- RESTRICT DELETE on core entity references
+
+INDEXES FOR PERFORMANCE:
+- Primary keys (automatic)
+- Foreign keys (automatic)
+- Frequently queried columns (date, status, role)
+- Unique constraints (email, ID fields)
+
+============================================================================
+SECURITY & DATA INTEGRITY
+============================================================================
+
+ACCESS CONTROL:
+- Role-based data filtering at application level
+- Centre-based data isolation for multi-tenancy
+- Encrypted sensitive data (passwords, tokens)
+- Audit logging for all critical operations
+
+DATA VALIDATION:
+- NOT NULL constraints on required fields
+- ENUM constraints for controlled vocabularies
+- CHECK constraints for data ranges
+- UNIQUE constraints for business rules
+
+BACKUP & RECOVERY:
+- Daily automated backups
+- Point-in-time recovery capability
+- Transaction log shipping
+- Disaster recovery procedures
+
+============================================================================
+PERFORMANCE OPTIMIZATION
+============================================================================
+
+INDEXING STRATEGY:
+- Composite indexes for common query patterns
+- Covering indexes for frequently accessed data
+- Partial indexes for conditional queries
+- Full-text indexes for search functionality
+
+QUERY OPTIMIZATION:
+- Prepared statements for security and performance
+- Connection pooling for scalability
+- Query result caching for static data
+- Database connection optimization
+
+STORAGE OPTIMIZATION:
+- Appropriate data types for storage efficiency
+- JSON columns for flexible schema requirements
+- BLOB storage for file attachments
+- Partitioning for large historical data
+
+============================================================================
+SCALABILITY CONSIDERATIONS
+============================================================================
+
+HORIZONTAL SCALING:
+- Read replica configuration
+- Sharding strategy for multi-center growth
+- Microservice-ready data boundaries
+- API-first data access patterns
+
+VERTICAL SCALING:
+- Memory optimization for large datasets
+- CPU optimization for complex queries
+- Storage optimization for file handling
+- Network optimization for remote centers
+
+MONITORING & MAINTENANCE:
+- Performance monitoring dashboards
+- Automated maintenance routines
+- Capacity planning metrics
+- Health check endpoints
+
+============================================================================
+MIGRATION & DEPLOYMENT HISTORY
+============================================================================
+
+MIGRATION SEQUENCE:
+001 - Core Laravel Infrastructure
+002 - Centre Management System
+003 - User Management System  
+004 - Trainee Management System
+005 - Activity Management System
+006 - Session & Enrollment System
+007 - Attendance Tracking System
+008 - Communication System
+009 - Letter Generation System
+010 - Foreign Key Constraints
+011+ - Schema Refinements and Optimizations
+
+DEPLOYMENT CONSIDERATIONS:
+- Zero-downtime migration strategy
+- Rollback procedures for each migration
+- Data validation after each deployment
+- Performance testing post-migration
+
+============================================================================
+FUTURE ENHANCEMENTS
+============================================================================
+
+PLANNED EXTENSIONS:
+- Advanced analytics and reporting tables
+- Integration with external systems (APIs)
+- Mobile application support tables
+- Real-time notification system enhancement
+- Advanced file management system
+- Integration with learning management systems
+
+ARCHITECTURAL EVOLUTION:
+- Microservice decomposition readiness
+- Event-driven architecture preparation  
+- API versioning support
+- Multi-language content support
+- Advanced audit and compliance features
+
+============================================================================
+CONCLUSION
+============================================================================
+
+The CREAMS database architecture represents a mature, production-ready 
+system designed for scalability, maintainability, and extensibility. 
+The current schema supports all functional requirements while providing 
+a solid foundation for future enhancements.
+
+KEY STRENGTHS:
+✓ Comprehensive rehabilitation center management
+✓ Flexible multi-center architecture
+✓ Robust role-based access control
+✓ Complete audit trail capabilities
+✓ Scalable asset and resource management
+✓ Integrated communication systems
+✓ Professional letter generation
+✓ Performance-optimized design
+
+The database is ready for production deployment and can handle the 
+complete operational needs of rehabilitation centers while maintaining 
+data integrity, security, and performance standards expected in 
+healthcare-adjacent environments.
+
+============================================================================
+END OF ARCHITECTURE DOCUMENTATION
+============================================================================
