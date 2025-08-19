@@ -43,17 +43,7 @@ return new class extends Migration
             $table->unsignedInteger('created_at');
         });
 
-        // 4. PERSONAL_ACCESS_TOKENS TABLE
-        Schema::create('personal_access_tokens', function (Blueprint $table) {
-            $table->id();
-            $table->morphs('tokenable');
-            $table->string('name');
-            $table->string('token', 64)->unique();
-            $table->text('abilities')->nullable();
-            $table->timestamp('last_used_at')->nullable();
-            $table->timestamp('expires_at')->nullable();
-            $table->timestamps();
-        });
+        // 4. PERSONAL_ACCESS_TOKENS TABLE (Handled by Laravel Sanctum migration)
     }
 
     /**
@@ -61,9 +51,9 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('personal_access_tokens');
         Schema::dropIfExists('jobs');
         Schema::dropIfExists('failed_jobs');
         // Don't drop migrations table as it's critical for Laravel
+        // personal_access_tokens dropped by Laravel Sanctum migration
     }
 };
