@@ -26,7 +26,7 @@ class StaffAttendanceSeeder extends Seeder
                 // Skip weekends
                 if ($date->isWeekend()) continue;
                 
-                $status = $faker->randomElement(['present', 'present', 'present', 'late', 'absent'], [70, 15, 10, 3, 2]);
+                $status = $faker->randomElement(['present', 'late', 'absent'], [75, 15, 10]);
                 
                 DB::table('staff_attendances')->insert([
                     'user_id' => $user->id,

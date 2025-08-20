@@ -164,17 +164,17 @@
                 <button class="filter-tab-enhanced" data-filter="rehabilitation">
                     <span class="tab-icon"><i class="fas fa-heartbeat"></i></span>
                     <span class="tab-text">Rehabilitation</span>
-                    <span class="tab-count">{{ $activities->filter(function($activity) { return $activity->activity_type === 'rehabilitation'; })->count() }}</span>
+                    <span class="tab-count">{{ $activities->filter(function($activity) { return $activity->category?->category_type === 'rehabilitation'; })->count() }}</span>
                 </button>
                 <button class="filter-tab-enhanced" data-filter="academic">
                     <span class="tab-icon"><i class="fas fa-graduation-cap"></i></span>
                     <span class="tab-text">Academic</span>
-                    <span class="tab-count">{{ $activities->filter(function($activity) { return $activity->activity_type === 'academic'; })->count() }}</span>
+                    <span class="tab-count">{{ $activities->filter(function($activity) { return $activity->category?->category_type === 'academic'; })->count() }}</span>
                 </button>
                 <button class="filter-tab-enhanced" data-filter="recreational">
                     <span class="tab-icon"><i class="fas fa-gamepad"></i></span>
                     <span class="tab-text">Recreational</span>
-                    <span class="tab-count">{{ $activities->filter(function($activity) { return $activity->activity_type === 'recreational'; })->count() }}</span>
+                    <span class="tab-count">{{ $activities->filter(function($activity) { return $activity->category?->category_type === 'creative_social'; })->count() }}</span>
                 </button>
                 <button class="filter-tab-enhanced" data-filter="active">
                     <span class="tab-icon"><i class="fas fa-play-circle"></i></span>

@@ -18,6 +18,7 @@ CREATE TABLE `activities` (
   `session_duration_minutes` int(11) NOT NULL DEFAULT 60,
   `max_participants` int(11) NOT NULL DEFAULT 10,
   `learning_outcomes` text DEFAULT NULL,
+  `activity_location` varchar(255) DEFAULT NULL,
   `instructor_id` bigint(20) unsigned DEFAULT NULL,
   `is_active` tinyint(1) NOT NULL DEFAULT 1,
   `times_conducted` int(11) NOT NULL DEFAULT 0,
@@ -149,6 +150,7 @@ CREATE TABLE `asset_maintenance` (
   `scheduled_date` date NOT NULL,
   `completed_date` date DEFAULT NULL,
   `status` enum('scheduled','in_progress','completed','cancelled') NOT NULL DEFAULT 'scheduled',
+  `priority` enum('low','normal','high','critical') NOT NULL DEFAULT 'normal',
   `description` text DEFAULT NULL,
   `cost` decimal(8,2) DEFAULT NULL,
   `performed_by` varchar(255) DEFAULT NULL,
@@ -238,6 +240,7 @@ CREATE TABLE `assets` (
   `model` varchar(255) DEFAULT NULL,
   `manufacturer` varchar(255) DEFAULT NULL,
   `purchase_date` date DEFAULT NULL,
+  `warranty_expiry` date DEFAULT NULL,
   `purchase_cost` decimal(10,2) DEFAULT NULL,
   `current_value` decimal(10,2) DEFAULT NULL,
   `condition` enum('excellent','good','fair','poor','broken') NOT NULL DEFAULT 'good',
@@ -418,7 +421,7 @@ DROP TABLE IF EXISTS `notifications`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `notifications` (
-  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `id` char(36) NOT NULL,
   `type` varchar(255) NOT NULL,
   `notifiable_type` varchar(255) NOT NULL,
   `notifiable_id` bigint(20) unsigned NOT NULL,
@@ -640,12 +643,7 @@ CREATE TABLE `volunteers` (
 /*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
-INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (1,'001_User_Management_Migration',1);
-INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (2,'002_Centre_Management_Migration',1);
-INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (3,'003_Foreign_Keys_Migration',1);
-INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (4,'004_Trainee_Management_Migration',1);
-INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (5,'005_Activity_Management_Migration',1);
-INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (6,'006_Attendance_Progress_Migration',1);
-INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (7,'007_Asset_Management_Migration',1);
-INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (8,'008_Communication_Migration',1);
-INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (9,'009_Letter_Generation_Migration',1);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (1,'2019_12_14_000001_create_personal_access_tokens_table',1);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (2,'2024_01_01_000001_create_users_and_centres_tables',1);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (3,'2024_01_01_000002_create_foreign_keys',1);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (4,'2024_01_01_000003_create_all_remaining_tables',1);

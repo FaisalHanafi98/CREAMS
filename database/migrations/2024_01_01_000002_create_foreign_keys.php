@@ -11,6 +11,15 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // Skip if foreign key already exists
+        if (Schema::hasTable('users')) {
+            // Check if foreign key already exists
+            $foreignKeys = collect(Schema::getConnection()->getDoctrineSchemaManager()->listTableForeignKeys('users'));
+            if ($foreignKeys->contains(function ($key) { return $key->getForeignTableName() === 'centres'; })) {
+                return;
+            }
+        }
+
         // Add foreign key constraint for users table
         Schema::table('users', function (Blueprint $table) {
             $table->foreign('centre_id')->references('centre_id')->on('centres')->onDelete('set null');

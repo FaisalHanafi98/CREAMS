@@ -33,7 +33,8 @@
       "Bash(composer:*)",
       "Bash(mysql:*)",
       "Bash(mysql:*)",
-      "Bash(time curl:*)"
+      "Bash(time curl:*)",
+      "Bash(sed:*)"
     ],
     "deny": [],
     "additionalDirectories": [

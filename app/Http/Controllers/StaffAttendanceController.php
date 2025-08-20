@@ -450,7 +450,7 @@ class StaffAttendanceController extends Controller
         $todayAttendance = DB::table('trainee_attendances')
             ->join('trainees', 'trainee_attendances.trainee_id', '=', 'trainees.id')
             ->where('trainees.centre_id', $centreId)
-            ->whereDate('trainee_attendances.date', $today)
+            ->whereDate('trainee_attendances.attendance_date', $today)
             ->select('trainee_attendances.*')
             ->get();
 
@@ -592,7 +592,7 @@ class StaffAttendanceController extends Controller
             // Check if attendance already exists for today
             $existingAttendance = DB::table('trainee_attendances')
                 ->where('trainee_id', $validated['trainee_id'])
-                ->whereDate('date', now()->toDateString())
+                ->whereDate('attendance_date', now()->toDateString())
                 ->first();
 
             if ($existingAttendance) {
@@ -629,7 +629,7 @@ class StaffAttendanceController extends Controller
             $attendanceId = DB::table('trainee_attendances')->insertGetId([
                 'trainee_id' => $validated['trainee_id'],
                 'activity_id' => $validated['activity_id'],
-                'date' => now()->toDateString(),
+                'attendance_date' => now()->toDateString(),
                 'status' => $validated['status'],
                 'notes' => $validated['remarks'],
                 'recorded_by' => $currentUserId,

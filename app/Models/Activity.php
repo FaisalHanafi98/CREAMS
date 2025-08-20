@@ -13,45 +13,28 @@ class Activity extends Model
     protected $table = 'activities';
 
     protected $fillable = [
-        'activity_id',
         'activity_name',
-        'activity_description',
-        'activity_type',
-        'activity_date',
-        'start_date',
-        'end_date',
-        'sessions_per_week',
-        'activity_period',
-        'pass_threshold',
-        'is_active',
-        'activity_start_time',
-        'activity_end_time',
-        'activity_location',
-        'max_participants',
-        'current_participants',
-        'activity_goals',
-        'activity_outcomes',
-        'activity_image',
-        'required_resources',
-        'activity_status',
-        'centre_id',
+        'activity_description', 
         'category_id',
-        'created_by',
-        'times_conducted',
-        'instructor_id'
+        'centre_id',
+        'duration_weeks',
+        'sessions_per_week',
+        'session_duration_minutes',
+        'max_participants',
+        'learning_outcomes',
+        'activity_location',
+        'instructor_id',
+        'is_active',
+        'times_conducted'
     ];
 
     protected $casts = [
-        'required_resources' => 'array',
-        'activity_goals' => 'array',
-        'activity_outcomes' => 'array',
-        'activity_date' => 'date',
-        'start_date' => 'date',
-        'end_date' => 'date',
-        'pass_threshold' => 'decimal:2',
         'is_active' => 'boolean',
-        'activity_start_time' => 'datetime:H:i',
-        'activity_end_time' => 'datetime:H:i'
+        'times_conducted' => 'integer',
+        'duration_weeks' => 'integer',
+        'sessions_per_week' => 'integer',
+        'session_duration_minutes' => 'integer',
+        'max_participants' => 'integer'
     ];
 
     protected $appends = ['category_icon', 'category_color', 'formatted_duration'];
@@ -61,23 +44,23 @@ class Activity extends Model
      */
     public function centre()
     {
-        return $this->belongsTo(Centre::class, 'centre_id');
+        return $this->belongsTo(Centre::class, 'centre_id', 'centre_id');
     }
 
     /**
-     * Get the user who created this activity
-     */
-    public function creator()
-    {
-        return $this->belongsTo(User::class, 'created_by');
-    }
-
-    /**
-     * Get the instructor for this activity (alias for creator)
+     * Get the instructor for this activity
      */
     public function instructor()
     {
-        return $this->belongsTo(User::class, 'created_by');
+        return $this->belongsTo(User::class, 'instructor_id');
+    }
+
+    /**
+     * Get the creator/instructor for this activity (alias for instructor)
+     */
+    public function creator()
+    {
+        return $this->belongsTo(User::class, 'instructor_id');
     }
 
     /**
@@ -289,15 +272,15 @@ class Activity extends Model
      */
     public function scopeActive($query)
     {
-        return $query->where('activity_status', 'scheduled');
+        return $query->where('is_active', true);
     }
 
     /**
      * Scope for activities by category
      */
-    public function scopeByCategory($query, $category)
+    public function scopeByCategory($query, $categoryId)
     {
-        return $query->where('category', $category);
+        return $query->where('category_id', $categoryId);
     }
 
     /**
@@ -349,7 +332,7 @@ class Activity extends Model
             'Vocational Training' => 'fas fa-briefcase'
         ];
 
-        return $icons[$this->activity_type] ?? 'fas fa-circle';
+        return $icons[$this->category?->category_name] ?? 'fas fa-circle';
     }
 
     /**
@@ -374,7 +357,7 @@ class Activity extends Model
             'Vocational Training' => '#FFC107'
         ];
 
-        return $colors[$this->activity_type] ?? '#6c757d';
+        return $colors[$this->category?->category_name] ?? '#6c757d';
     }
 
     /**
@@ -382,8 +365,8 @@ class Activity extends Model
      */
     public function getFormattedDurationAttribute()
     {
-        $hours = floor($this->duration_minutes / 60);
-        $minutes = $this->duration_minutes % 60;
+        $hours = floor($this->session_duration_minutes / 60);
+        $minutes = $this->session_duration_minutes % 60;
         
         if ($hours > 0) {
             return $hours . 'h ' . ($minutes > 0 ? $minutes . 'm' : '');

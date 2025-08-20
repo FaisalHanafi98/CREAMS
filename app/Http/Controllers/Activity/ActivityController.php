@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Activity;
 use App\Models\Category;
+use App\Models\ActivityCategory;
 use App\Models\ActivitySession;
 use App\Models\ActivitySchedule;
 use App\Models\ActivityEnrollment;
@@ -262,7 +263,7 @@ class ActivityController extends Controller
             
             // Get data for new academic filters
             $trainees = Trainee::select('id', 'trainee_first_name', 'trainee_last_name')->get();
-            $venues = Activity::distinct()->pluck('activity_location')->filter();
+            $venues = ActivitySession::distinct()->pluck('location')->filter();
 
             Log::info('Successfully loaded activities', [
                 'user_id' => $userId,
@@ -576,15 +577,12 @@ class ActivityController extends Controller
         $validated = $request->validate([
             // Basic Information
             'activity_name' => 'required|string|max:255',
-            'activity_id' => 'required|string|max:20|unique:activities,activity_id',
-            'category_id' => 'required|exists:categories,id',
             'activity_description' => 'required|string|max:2000',
-            'activity_goals' => 'nullable|string|max:2000',
-            'activity_outcomes' => 'nullable|string|max:2000',
+            'category_id' => 'required|exists:activity_categories,id',
+            'learning_outcomes' => 'nullable|string|max:2000',
             
             // Location & Centre
             'centre_id' => 'required|exists:centres,centre_id',
-            'activity_location' => 'required|string|max:255',
             
             // Instructor with qualification validation
             'instructor_id' => [
@@ -668,27 +666,18 @@ class ActivityController extends Controller
             $endDate = $startDate->copy()->addMonths($validated['activity_period']);
 
             $activity = Activity::create([
-                'activity_id' => strtoupper($validated['activity_id']),
                 'activity_name' => $validated['activity_name'],
                 'activity_description' => $validated['activity_description'],
-                'activity_goals' => $validated['activity_goals'] ? json_encode(array_filter(explode("\n", $validated['activity_goals']))) : json_encode([]),
-                'activity_outcomes' => $validated['activity_outcomes'] ? json_encode(array_filter(explode("\n", $validated['activity_outcomes']))) : json_encode([]),
-                // activity_type removed - using category_id instead
-                'activity_date' => $validated['start_date'],
-                'activity_start_time' => $validated['start_time'],
-                'activity_end_time' => $endTime->format('H:i:s'),
-                'activity_location' => $validated['activity_location'],
-                'max_participants' => $validated['max_participants'],
-                'activity_status' => 'scheduled',
-                'centre_id' => $validated['centre_id'],
+                'learning_outcomes' => $validated['learning_outcomes'],
                 'category_id' => $validated['category_id'],
-                'created_by' => session('id'),
+                'centre_id' => $validated['centre_id'],
                 'instructor_id' => $validated['instructor_id'],
-                'start_date' => $validated['start_date'],
-                'end_date' => $endDate->format('Y-m-d'),
-                'activity_period' => $validated['activity_period'],
-                'sessions_per_week' => $validated['sessions_per_week'],
-                'is_active' => true
+                'max_participants' => $validated['max_participants'] ?? 10,
+                'duration_weeks' => $validated['activity_period'] ?? 12,
+                'sessions_per_week' => $validated['sessions_per_week'] ?? 2,
+                'session_duration_minutes' => $validated['session_duration'] ?? 60,
+                'is_active' => true,
+                'times_conducted' => 0
             ]);
 
             // Create activity sessions based on schedule
@@ -853,18 +842,11 @@ class ActivityController extends Controller
 
             $activity->update([
                 'activity_name' => $validated['activity_name'],
-                'activity_id' => strtoupper($validated['activity_id']),
                 'activity_description' => $validated['activity_description'],
                 'category_id' => $validated['category_id'],
-                'activity_date' => $validated['activity_date'],
-                'activity_start_time' => $validated['activity_start_time'],
-                'activity_end_time' => $validated['activity_end_time'],
-                'activity_location' => $validated['activity_location'],
                 'max_participants' => $validated['max_participants'],
-                'activity_goals' => $validated['activity_goals'],
-                'activity_outcomes' => $validated['activity_outcomes'],
-                'required_resources' => $validated['required_resources'],
-                'activity_image' => $validated['activity_image']
+                'learning_outcomes' => $validated['activity_outcomes'] ?? $validated['learning_outcomes'] ?? null,
+                'instructor_id' => $validated['instructor_id'] ?? $activity->instructor_id
             ]);
 
             return redirect()->route('activities.show', $activity->id)
@@ -1288,22 +1270,12 @@ class ActivityController extends Controller
      */
     private function getActivityCategories()
     {
-        return [
-            'Physical Therapy',
-            'Occupational Therapy',
-            'Speech Therapy',
-            'Behavioral Therapy',
-            'Sensory Integration',
-            'Mathematics',
-            'Literacy',
-            'Science',
-            'Computer Skills',
-            'Art & Creativity',
-            'Music Therapy',
-            'Social Skills',
-            'Life Skills',
-            'Vocational Training'
-        ];
+        return Cache::remember('activity_categories', 3600, function () {
+            return ActivityCategory::where('is_active', true)
+                ->orderBy('category_name')
+                ->pluck('category_name')
+                ->toArray();
+        });
     }
 
     /**

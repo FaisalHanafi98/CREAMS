@@ -28,6 +28,7 @@ class Asset extends Model
         'serial_number',
         'purchase_price',
         'purchase_date',
+        'warranty_expiry',
         'warranty_months',
         'condition',
         'status',

@@ -9,7 +9,7 @@
     <div class="page-header">
         <div>
             <h1 class="page-title">{{ $activity->activity_name }}</h1>
-            <p class="activity-code">{{ $activity->activity_id }}</p>
+            <p class="activity-code">Activity #{{ $activity->id }}</p>
         </div>
         <div class="page-actions">
             @if($role === 'admin')
