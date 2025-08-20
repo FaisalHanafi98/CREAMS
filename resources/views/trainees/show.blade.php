@@ -147,6 +147,29 @@
         box-shadow: 0 12px 35px rgba(200, 80, 192, 0.4);
     }
 
+    .avatar-placeholder {
+        width: 150px;
+        height: 150px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 5px solid white;
+        box-shadow: 0 8px 25px rgba(200, 80, 192, 0.3);
+        font-size: 3rem;
+        font-weight: 700;
+        color: white;
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        margin: 0 auto 20px;
+        text-transform: uppercase;
+        transition: all 0.3s ease;
+    }
+
+    .avatar-placeholder:hover {
+        transform: scale(1.05);
+        box-shadow: 0 12px 35px rgba(200, 80, 192, 0.4);
+    }
+
     .profile-name {
         font-size: 2rem;
         font-weight: 700;
@@ -835,10 +858,19 @@
                 <!-- Profile Avatar & Basic Info -->
                 <div class="profile-card">
                     <div class="profile-avatar-section">
-                        <img src="{{ $trainee->getAvatarUrlAttribute() }}" 
-                             alt="{{ $trainee->trainee_first_name ?? 'Trainee' }}" 
-                             class="profile-avatar"
-                             onerror="this.src='{{ asset('images/default-avatar.png') }}'">
+                        @if($trainee->avatar && file_exists(public_path('storage/' . str_replace('storage/', '', $trainee->avatar))))
+                            <img src="{{ asset($trainee->avatar) }}?v={{ time() }}" 
+                                 alt="{{ $trainee->trainee_first_name ?? 'Trainee' }}" 
+                                 class="profile-avatar"
+                                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                            <div class="avatar-placeholder" style="display: none;">
+                                {{ strtoupper(substr($trainee->trainee_first_name ?? 'T', 0, 1)) }}
+                            </div>
+                        @else
+                            <div class="avatar-placeholder">
+                                {{ strtoupper(substr($trainee->trainee_first_name ?? 'T', 0, 1)) }}
+                            </div>
+                        @endif
                         
                         <div class="profile-name">
                             {{ $trainee->trainee_first_name ?? 'Unknown' }} {{ $trainee->trainee_last_name ?? '' }}
@@ -1057,13 +1089,6 @@ document.addEventListener('DOMContentLoaded', function() {
         window.print();
     };
 
-    // Avatar error handling
-    const avatar = document.querySelector('.profile-avatar');
-    if (avatar) {
-        avatar.addEventListener('error', function() {
-            this.src = '{{ asset("images/default-avatar.png") }}';
-        });
-    }
 });
 
 // Calculate profile completion percentage

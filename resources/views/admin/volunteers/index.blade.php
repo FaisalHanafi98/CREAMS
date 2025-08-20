@@ -66,9 +66,10 @@
                             <label class="form-label">Status</label>
                             <select id="statusFilter" class="form-select" onchange="filterApplications()">
                                 <option value="">All Statuses</option>
-                                <option value="pending">Pending</option>
-                                <option value="active">Approved</option>
-                                <option value="inactive">Rejected</option>
+                                <option value="applied">Applied (Pending)</option>
+                                <option value="approved">Approved</option>
+                                <option value="rejected">Rejected</option>
+                                <option value="active">Active</option>
                             </select>
                         </div>
                         @if(session('role') === 'admin')
@@ -115,27 +116,29 @@
                                     @foreach($applications as $app)
                                         <tr>
                                             <td><strong>#VA{{ str_pad($app->id, 6, '0', STR_PAD_LEFT) }}</strong></td>
-                                            <td>{{ $app->volunteer_name }}</td>
-                                            <td>{{ $app->volunteer_email }}</td>
-                                            <td>{{ $app->volunteer_phone }}</td>
+                                            <td>{{ $app->name }}</td>
+                                            <td>{{ $app->email }}</td>
+                                            <td>{{ $app->phone }}</td>
                                             <td>{{ $app->created_at->format('M j, Y') }}</td>
                                             <td>
-                                                @if($app->volunteer_status === 'pending')
+                                                @if($app->status === 'applied')
                                                     <span class="badge bg-warning">Pending</span>
-                                                @elseif($app->volunteer_status === 'active')
+                                                @elseif($app->status === 'approved')
                                                     <span class="badge bg-success">Approved</span>
+                                                @elseif($app->status === 'active')
+                                                    <span class="badge bg-success">Active</span>
                                                 @else
                                                     <span class="badge bg-danger">Rejected</span>
                                                 @endif
                                             </td>
                                             <td>{{ $app->centre ? $app->centre->centre_name : 'Unassigned' }}</td>
-                                            <td>{{ $app->approvedByUser ? $app->approvedByUser->name : 'Not reviewed' }}</td>
+                                            <td>{{ $app->reviewedByUser ? $app->reviewedByUser->name : 'Not reviewed' }}</td>
                                             <td>
                                                 <div class="btn-group btn-group-sm">
                                                     <button class="btn btn-outline-primary" onclick="viewApplication({{ $app->id }})" title="View Details">
                                                         <i class="fas fa-eye"></i>
                                                     </button>
-                                                    @if($app->volunteer_status === 'pending')
+                                                    @if($app->status === 'applied')
                                                         <button class="btn btn-outline-success" onclick="showApproveModal({{ $app->id }})" title="Approve">
                                                             <i class="fas fa-check"></i>
                                                         </button>
@@ -291,12 +294,17 @@
 <script>
 // Helper function to display application details (must be defined first)
 window.displayApplicationDetails = function(app) {
-    const statusBadge = app.volunteer_status === 'pending' ? '<span class="badge bg-warning">Pending</span>' :
-                        app.volunteer_status === 'active' ? '<span class="badge bg-success">Approved</span>' :
-                        '<span class="badge bg-danger">Rejected</span>';
+    const getStatusBadge = (status) => {
+        if (status === 'applied') return '<span class="badge bg-warning">Applied (Pending)</span>';
+        if (status === 'approved') return '<span class="badge bg-success">Approved</span>';
+        if (status === 'active') return '<span class="badge bg-success">Active</span>';
+        if (status === 'rejected') return '<span class="badge bg-danger">Rejected</span>';
+        return '<span class="badge bg-secondary">Unknown</span>';
+    };
     
+    const statusBadge = getStatusBadge(app.status);
     const centreName = app.centre ? app.centre.centre_name : 'Unassigned';
-    const approvedBy = app.approved_by_user ? app.approved_by_user.name : 'N/A';
+    const reviewedBy = app.reviewed_by_user ? app.reviewed_by_user.name : 'Not reviewed';
     
     const formatDate = (dateStr) => {
         if (!dateStr || dateStr === 'Not specified') return 'Not specified';
@@ -314,57 +322,53 @@ window.displayApplicationDetails = function(app) {
     const html = `
         <div class="row">
             <div class="col-md-6">
-                <h5>Personal Information</h5>
+                <h5><i class="fas fa-user text-primary"></i> Personal Information</h5>
                 <table class="table table-borderless">
-                    <tr><th width="40%">Name:</th><td>${app.volunteer_name}</td></tr>
-                    <tr><th>Email:</th><td><a href="mailto:${app.volunteer_email}">${app.volunteer_email}</a></td></tr>
-                    <tr><th>Phone:</th><td><a href="tel:${app.volunteer_phone}">${app.volunteer_phone}</a></td></tr>
-                    <tr><th>Gender:</th><td>${app.volunteer_gender || 'Not specified'}</td></tr>
-                    <tr><th>Birth Date:</th><td>${formatDate(app.volunteer_birth_date)}</td></tr>
-                    <tr><th>Address:</th><td>${app.volunteer_address || 'Not specified'}</td></tr>
+                    <tr><th width="40%">Name:</th><td>${app.name || 'Not provided'}</td></tr>
+                    <tr><th>Email:</th><td><a href="mailto:${app.email || ''}">${app.email || 'Not provided'}</a></td></tr>
+                    <tr><th>Phone:</th><td><a href="tel:${app.phone || ''}">${app.phone || 'Not provided'}</a></td></tr>
+                    <tr><th>Gender:</th><td>${app.gender ? app.gender.charAt(0).toUpperCase() + app.gender.slice(1) : 'Not specified'}</td></tr>
+                    <tr><th>Birth Date:</th><td>${formatDate(app.date_of_birth)}</td></tr>
+                    <tr><th>Address:</th><td>${app.address || 'Not specified'}</td></tr>
+                    <tr><th>Occupation:</th><td>${app.occupation || 'Not specified'}</td></tr>
                 </table>
             </div>
             <div class="col-md-6">
-                <h5>Application Details</h5>
+                <h5><i class="fas fa-clipboard-list text-info"></i> Application Details</h5>
                 <table class="table table-borderless">
-                    <tr><th width="40%">Status:</th><td>${statusBadge}</td></tr>
+                    <tr><th width="40%">Application ID:</th><td>#VA${String(app.id).padStart(6, '0')}</td></tr>
+                    <tr><th>Status:</th><td>${statusBadge}</td></tr>
                     <tr><th>Centre:</th><td>${centreName}</td></tr>
                     <tr><th>Applied:</th><td>${formatDate(app.created_at)}</td></tr>
-                    <tr><th>Approved By:</th><td>${approvedBy}</td></tr>
-                    <tr><th>Availability:</th><td>${app.volunteer_availability || 'Not specified'}</td></tr>
+                    <tr><th>Reviewed By:</th><td>${reviewedBy}</td></tr>
+                    <tr><th>Review Date:</th><td>${app.reviewed_at ? formatDate(app.reviewed_at) : 'Not reviewed'}</td></tr>
                 </table>
             </div>
         </div>
         
         <div class="row mt-3">
             <div class="col-12">
-                <h5>Skills & Experience</h5>
+                <h5><i class="fas fa-tools text-success"></i> Skills & Volunteer Information</h5>
                 <div class="mb-3">
-                    <strong>Skills:</strong>
-                    <div class="p-2 bg-light rounded">${app.volunteer_skills || 'Not specified'}</div>
+                    <strong>Skills & Qualifications:</strong>
+                    <div class="p-2 bg-light rounded">${app.skills || 'Not specified'}</div>
                 </div>
                 <div class="mb-3">
-                    <strong>Experience:</strong>
-                    <div class="p-2 bg-light rounded">${app.volunteer_experience || 'Not specified'}</div>
+                    <strong>Availability:</strong>
+                    <div class="p-2 bg-light rounded">${app.availability || 'Not specified'}</div>
+                </div>
+                <div class="mb-3">
+                    <strong>Motivation:</strong>
+                    <div class="p-2 bg-light rounded">${app.motivation || 'Not specified'}</div>
                 </div>
             </div>
         </div>
         
+        ${app.review_notes ? `
         <div class="row mt-3">
             <div class="col-12">
-                <h5>Emergency Contact</h5>
-                <div class="p-2 bg-light rounded">
-                    <p class="mb-1"><strong>Name:</strong> ${app.emergency_contact_name || 'Not provided'}</p>
-                    <p class="mb-0"><strong>Phone:</strong> ${app.emergency_contact_phone ? `<a href="tel:${app.emergency_contact_phone}">${app.emergency_contact_phone}</a>` : 'Not provided'}</p>
-                </div>
-            </div>
-        </div>
-        
-        ${app.admin_notes ? `
-        <div class="row mt-3">
-            <div class="col-12">
-                <h5>Admin Notes</h5>
-                <div class="alert alert-info">${app.admin_notes}</div>
+                <h5><i class="fas fa-sticky-note text-warning"></i> Review Notes</h5>
+                <div class="alert alert-info">${app.review_notes}</div>
             </div>
         </div>
         ` : ''}
@@ -373,7 +377,7 @@ window.displayApplicationDetails = function(app) {
     $('#applicationModalBody').html(html);
     
     // Add action buttons if pending
-    if (app.volunteer_status === 'pending') {
+    if (app.status === 'applied') {
         $('#modalActions').html(`
             <button type="button" class="btn btn-success" onclick="window.showApproveModal(${app.id})" data-bs-dismiss="modal">
                 <i class="fas fa-check"></i> Approve

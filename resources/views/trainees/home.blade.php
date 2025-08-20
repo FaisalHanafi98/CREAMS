@@ -192,18 +192,23 @@
         box-shadow: 0 4px 15px rgba(200, 80, 192, 0.3);
         margin: 0 auto 15px;
         display: block;
-        transition: opacity 0.3s ease;
-        background: #f8f9fa; /* Fallback background */
     }
 
-    .trainee-avatar.loading {
-        opacity: 0.7;
-    }
-
-    .trainee-avatar.error {
-        opacity: 1;
-        background: linear-gradient(135deg, #e9ecef, #dee2e6);
-        position: relative;
+    .avatar-placeholder {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 4px solid white;
+        box-shadow: 0 4px 15px rgba(200, 80, 192, 0.3);
+        font-size: 2rem;
+        font-weight: 700;
+        color: white;
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        margin: 0 auto 15px;
+        text-transform: uppercase;
     }
 
     .trainee-name {
@@ -514,13 +519,6 @@
         </div>
         <div class="stat-card">
             <div class="stat-icon">
-                <i class="fas fa-calendar-check"></i>
-            </div>
-            <div class="stat-value">{{ $stats['avg_attendance'] ?? 0 }}%</div>
-            <div class="stat-label">Average Attendance</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-icon">
                 <i class="fas fa-exclamation-triangle text-warning"></i>
             </div>
             <div class="stat-value">{{ $stats['below_threshold'] ?? 0 }}</div>
@@ -581,10 +579,20 @@
             @foreach($trainees as $trainee)
                 <div class="trainee-card">
                     <div class="trainee-card-header">
-                        <img src="{{ $trainee->avatar_url }}" 
-                             alt="{{ $trainee->name ?? ($trainee->trainee_first_name . ' ' . $trainee->trainee_last_name) }}" 
-                             class="trainee-avatar"
-                             onerror="this.src='{{ asset('images/default-avatar.png') }}'">
+                        @if($trainee->avatar && file_exists(public_path('storage/' . str_replace('storage/', '', $trainee->avatar))))
+                            <img src="{{ asset($trainee->avatar) }}?v={{ time() }}" 
+                                 alt="{{ $trainee->name ?? ($trainee->trainee_first_name . ' ' . $trainee->trainee_last_name) }}" 
+                                 class="trainee-avatar"
+                                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                            <div class="avatar-placeholder" style="display: none;">
+                                {{ strtoupper(substr($trainee->trainee_first_name ?? 'T', 0, 1)) }}
+                            </div>
+                        @else
+                            <div class="avatar-placeholder">
+                                {{ strtoupper(substr($trainee->trainee_first_name ?? 'T', 0, 1)) }}
+                            </div>
+                        @endif
+                        
                         <h6 class="trainee-name">{{ $trainee->name ?? ($trainee->trainee_first_name . ' ' . $trainee->trainee_last_name) }}</h6>
                         <div class="trainee-id">ID: {{ $trainee->trainee_id ?? 'N/A' }}</div>
                     </div>
@@ -614,45 +622,25 @@
                             </div>
                         </div>
 
-                        <div class="progress-section">
-                            <div class="progress-label">
-                                <span>Overall Progress</span>
-                                <span>
-                                    @php
-                                        $progressPercentage = 0;
-                                        if ($trainee->enrollments && $trainee->enrollments->count() > 0) {
-                                            // Use participation_score (0-10 scale) and convert to percentage (0-100)
-                                            $avgParticipationScore = $trainee->enrollments->avg('participation_score') ?? 0;
-                                            $progressPercentage = $avgParticipationScore * 10; // Convert 0-10 to 0-100
-                                        }
-                                    @endphp
-                                    {{ round($progressPercentage) }}%
-                                </span>
-                            </div>
-                            <div class="progress">
-                                <div class="progress-bar" style="width: {{ round($progressPercentage) }}%"></div>
-                            </div>
-                        </div>
-
-                        <!-- Attendance Tracking Section -->
+                        <!-- Overall Progress Section -->
                         <div class="attendance-section mt-3">
                             <div class="attendance-label">
-                                <span>Attendance Average</span>
+                                <span>Overall Progress</span>
                                 <span class="attendance-percentage {{ isset($trainee->meets_attendance_threshold) && $trainee->meets_attendance_threshold ? 'text-success' : 'text-warning' }}">
-                                    {{ isset($trainee->attendance_average) ? round($trainee->attendance_average, 1) : 0 }}%
+                                    {{ isset($trainee->session_progress) ? round($trainee->session_progress, 1) : 0 }}%
                                 </span>
                             </div>
                             <div class="progress mt-1">
                                 <div class="progress-bar {{ isset($trainee->meets_attendance_threshold) && $trainee->meets_attendance_threshold ? 'bg-success' : 'bg-warning' }}" 
-                                     style="width: {{ isset($trainee->attendance_average) ? round($trainee->attendance_average) : 0 }}%"></div>
+                                     style="width: {{ isset($trainee->session_progress) ? round($trainee->session_progress) : 0 }}%"></div>
                             </div>
                             @if(isset($trainee->meets_attendance_threshold) && !$trainee->meets_attendance_threshold)
                                 <small class="text-warning mt-1 d-block">
-                                    <i class="fas fa-exclamation-triangle"></i> Below 50% threshold
+                                    <i class="fas fa-exclamation-triangle"></i> Below 50% progress
                                 </small>
                             @elseif(isset($trainee->meets_attendance_threshold) && $trainee->meets_attendance_threshold)
                                 <small class="text-success mt-1 d-block">
-                                    <i class="fas fa-check-circle"></i> Meets attendance requirement
+                                    <i class="fas fa-check-circle"></i> Good overall progress
                                 </small>
                             @endif
                         </div>
@@ -704,27 +692,8 @@
 
 @section('scripts')
 <script>
-// Handle avatar loading and prevent flickering
+// Handle page loading
 document.addEventListener('DOMContentLoaded', function() {
-    // Improve avatar loading experience
-    const avatars = document.querySelectorAll('.trainee-avatar');
-    avatars.forEach(function(avatar) {
-        // Add loading class initially
-        avatar.classList.add('loading');
-        
-        // Handle successful load
-        avatar.addEventListener('load', function() {
-            this.classList.remove('loading');
-        });
-        
-        // Improve error handling
-        avatar.addEventListener('error', function() {
-            this.classList.remove('loading');
-            this.classList.add('error');
-            // Use a more reliable fallback
-            this.src = '{{ asset("images/default-avatar.png") }}';
-        });
-    });
 
     // Auto-submit filter form on select change
     const conditionSelect = document.getElementById('condition');

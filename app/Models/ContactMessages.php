@@ -18,31 +18,18 @@ protected $table = 'contact_messages';
  * @var array<int, string>
  */
 protected $fillable = [
-    // Contact Information
-    'sender_name',
-    'sender_email',    
-    'sender_phone',
-    'organization',
+    // Contact Information (actual database columns)
+    'name',
+    'email',    
+    'phone',
+    'subject',
+    'message',
+    'status',
     
-    // Message Details
-    'message_category',
-    'message_subject',
-    'message_body',
-    'urgency',
-    'preferred_contact_method',
-    
-    // System fields
-    'message_status',
-    'ip_address',
-    'user_agent',
-    'referrer',
-    'submitted_at',
-    
-    // Admin fields
-    'assigned_to',
-    'admin_notes',
-    'response_sent_at',
-    'resolved_at',
+    // Admin fields (actual database columns)
+    'replied_by',
+    'replied_at',
+    'reply_message',
 ];
 
 /**
@@ -51,9 +38,7 @@ protected $fillable = [
  * @var array<string, string>
  */
 protected $casts = [
-    'submitted_at' => 'datetime',
-    'response_sent_at' => 'datetime',
-    'resolved_at' => 'datetime',
+    'replied_at' => 'datetime',
 ];
 
 /**
@@ -62,9 +47,7 @@ protected $casts = [
  * @var array<int, string>
  */
 protected $hidden = [
-    'ip_address',
-    'user_agent',
-    'referrer',
+    // No fields to hide for this table
 ];
 
 /**
@@ -72,9 +55,9 @@ protected $hidden = [
  *
  * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
  */
-public function assignedUser()
+public function repliedByUser()
 {
-    return $this->belongsTo(User::class, 'assigned_to');
+    return $this->belongsTo(User::class, 'replied_by');
 }
 
 /**
@@ -85,53 +68,41 @@ public function assignedUser()
  */
 public function scopeNew($query)
 {
-    return $query->where('message_status', 'new');
+    return $query->where('status', 'new');
 }
 
 /**
- * Scope a query to only include urgent messages.
+ * Scope a query to only include closed messages.
  *
  * @param  \Illuminate\Database\Eloquent\Builder  $query
  * @return \Illuminate\Database\Eloquent\Builder
  */
-public function scopeUrgent($query)
+public function scopeClosed($query)
 {
-    return $query->where('urgency', 'urgent');
+    return $query->where('status', 'closed');
 }
 
 /**
- * Scope a query to only include resolved messages.
+ * Scope a query to only include replied messages.
  *
  * @param  \Illuminate\Database\Eloquent\Builder  $query
  * @return \Illuminate\Database\Eloquent\Builder
  */
-public function scopeResolved($query)
+public function scopeReplied($query)
 {
-    return $query->where('message_status', 'resolved');
+    return $query->where('status', 'replied');
 }
 
 /**
- * Scope a query to filter by reason.
+ * Scope a query to filter by status.
  *
  * @param  \Illuminate\Database\Eloquent\Builder  $query
- * @param  string  $reason
+ * @param  string  $status
  * @return \Illuminate\Database\Eloquent\Builder
  */
-public function scopeByReason($query, $reason)
+public function scopeByStatus($query, $status)
 {
-    return $query->where('message_category', $reason);
-}
-
-/**
- * Scope a query to filter by urgency.
- *
- * @param  \Illuminate\Database\Eloquent\Builder  $query
- * @param  string  $urgency
- * @return \Illuminate\Database\Eloquent\Builder
- */
-public function scopeByUrgency($query, $urgency)
-{
-    return $query->where('urgency', $urgency);
+    return $query->where('status', $status);
 }
 
 /**
@@ -140,9 +111,9 @@ public function scopeByUrgency($query, $urgency)
  * @param  string  $value
  * @return void
  */
-public function setSenderNameAttribute($value)
+public function setNameAttribute($value)
 {
-    $this->attributes['sender_name'] = ucwords(strtolower(trim($value)));
+    $this->attributes['name'] = ucwords(strtolower(trim($value)));
 }
 
 /**
@@ -151,41 +122,9 @@ public function setSenderNameAttribute($value)
  * @param  string  $value
  * @return void
  */
-public function setSenderEmailAttribute($value)
+public function setEmailAttribute($value)
 {
-    $this->attributes['sender_email'] = strtolower(trim($value));
-}
-
-/**
- * Get the formatted reason attribute.
- *
- * @return string
- */
-public function getFormattedReasonAttribute()
-{
-    $reasonMap = [
-        'services' => 'Rehabilitation Services',
-        'support' => 'Support & Assistance',
-        'volunteer' => 'Volunteer Inquiry',
-        'partnership' => 'Partnership Opportunity',
-        'general' => 'General Inquiry',
-        'admission' => 'Admission Inquiry',
-        'complaint' => 'Complaint',
-        'feedback' => 'Feedback',
-        'other' => 'Other'
-    ];
-
-    return $reasonMap[$this->message_category] ?? ucfirst($this->message_category);
-}
-
-/**
- * Get the formatted urgency attribute.
- *
- * @return string
- */
-public function getFormattedUrgencyAttribute()
-{
-    return ucfirst($this->urgency);
+    $this->attributes['email'] = strtolower(trim($value));
 }
 
 /**
@@ -198,29 +137,11 @@ public function getStatusBadgeColorAttribute()
     $colors = [
         'new' => 'primary',
         'read' => 'info',
-        'in_progress' => 'warning',
-        'resolved' => 'success',
+        'replied' => 'success',
         'closed' => 'secondary'
     ];
 
-    return $colors[$this->message_status] ?? 'secondary';
-}
-
-/**
- * Get the urgency badge color.
- *
- * @return string
- */
-public function getUrgencyBadgeColorAttribute()
-{
-    $colors = [
-        'low' => 'secondary',
-        'medium' => 'info',
-        'high' => 'warning',
-        'urgent' => 'danger'
-    ];
-
-    return $colors[$this->urgency] ?? 'secondary';
+    return $colors[$this->status] ?? 'secondary';
 }
 
 /**
@@ -234,13 +155,13 @@ public function getTimeSinceSubmissionAttribute()
 }
 
 /**
- * Check if message is urgent.
+ * Check if message has been replied to.
  *
  * @return bool
  */
-public function isUrgent()
+public function isReplied()
 {
-    return $this->urgency === 'urgent';
+    return $this->status === 'replied';
 }
 
 /**
@@ -250,8 +171,8 @@ public function isUrgent()
  */
 public function isOverdue()
 {
-    $hours = $this->isUrgent() ? 24 : 72; // 24 hours for urgent, 72 for others
-    return $this->created_at->diffInHours(now()) > $hours && !in_array($this->message_status, ['resolved', 'closed']);
+    $hours = 72; // 72 hours for response
+    return $this->created_at->diffInHours(now()) > $hours && !in_array($this->status, ['replied', 'closed']);
 }
 
 /**
@@ -261,59 +182,37 @@ public function isOverdue()
  */
 public function markAsRead()
 {
-    if ($this->message_status === 'new') {
-        $this->message_status = 'read';
+    if ($this->status === 'new') {
+        $this->status = 'read';
         return $this->save();
     }
     return true;
 }
 
 /**
- * Mark as in progress.
- *
- * @return bool
- */
-public function markAsInProgress()
-{
-    $this->message_status = 'in_progress';
-    return $this->save();
-}
-
-/**
- * Mark as resolved.
- *
- * @return bool
- */
-public function markAsResolved()
-{
-    $this->message_status = 'resolved';
-    $this->resolved_at = now();
-    return $this->save();
-}
-
-/**
- * Mark response as sent.
- *
- * @return bool
- */
-public function markResponseSent()
-{
-    $this->response_sent_at = now();
-    return $this->save();
-}
-
-/**
- * Assign to user.
+ * Mark as replied.
  *
  * @param int $userId
+ * @param string $replyMessage
  * @return bool
  */
-public function assignTo($userId)
+public function markAsReplied($userId, $replyMessage)
 {
-    $this->assigned_to = $userId;
-    if ($this->message_status === 'new') {
-        $this->message_status = 'read';
-    }
+    $this->status = 'replied';
+    $this->replied_by = $userId;
+    $this->replied_at = now();
+    $this->reply_message = $replyMessage;
+    return $this->save();
+}
+
+/**
+ * Mark as closed.
+ *
+ * @return bool
+ */
+public function markAsClosed()
+{
+    $this->status = 'closed';
     return $this->save();
 }
 }

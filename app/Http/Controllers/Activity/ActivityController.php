@@ -23,6 +23,7 @@ use Exception;
 use App\Rules\InstructorQualificationRule;
 use App\Rules\TraineeCompatibilityRule;
 use App\Rules\ActivityTimeBufferRule;
+use App\Rules\MinimumEnrollmentRule;
 
 class ActivityController extends Controller
 {
@@ -242,8 +243,8 @@ class ActivityController extends Controller
                     $q->where('teacher_id', $userId);
                 });
             } elseif ($role === 'ajk') {
-                // AJK can only view activities
-                $query->whereIn('activity_status', ['scheduled', 'ongoing']);
+                // AJK can only view active activities
+                $query->where('is_active', true);
             }
 
             // Get activities with proper ordering - simplified approach
@@ -339,7 +340,7 @@ class ActivityController extends Controller
                 ],
                 [
                     'title' => 'Ongoing',
-                    'value' => $activities->where('activity_status', 'ongoing')->count(),
+                    'value' => $activities->where('is_active', true)->count(),
                     'color_class' => 'text-green-600',
                     'bg_class' => 'bg-green-100',
                     'icon' => 'fas fa-play-circle',
@@ -437,7 +438,7 @@ class ActivityController extends Controller
             // Get all categories with their activity counts using the proper relationship
             $allCategories = Category::active()
                 ->withCount(['activities as activities_count' => function($query) {
-                    $query->whereIn('activity_status', ['scheduled', 'ongoing', 'completed']);
+                    $query->where('is_active', true);
                 }])
                 ->ordered()
                 ->get();
@@ -499,7 +500,9 @@ class ActivityController extends Controller
                 $categoryName = ucwords($categoryName);
                 
                 // Check if activities exist with this category directly (for ENUM-based categories)
-                $activities = Activity::where('activity_type', $categoryName)
+                $activities = Activity::whereHas('category', function($q) use ($categoryName) {
+                        $q->where('category_name', $categoryName);
+                    })
                     ->where('is_active', true)
                     ->where('centre_id', session('centre_id'))
                     ->with(['sessions', 'creator'])
@@ -594,8 +597,9 @@ class ActivityController extends Controller
             'max_participants' => 'required|integer|min:1|max:50',
             'min_participants' => 'required|integer|min:1|max:50',
             'participants' => [
-                'nullable',
+                'required',
                 'string',
+                new MinimumEnrollmentRule(1),
                 new TraineeCompatibilityRule($request->input('category_id'))
             ],
             
@@ -611,6 +615,19 @@ class ActivityController extends Controller
             'schedule_days' => 'required|array|min:1',
             'schedule_days.*' => 'in:Monday,Tuesday,Wednesday,Thursday,Friday,Saturday,Sunday'
         ]);
+
+        // Additional mandatory requirements validation
+        if (empty($validated['instructor_id'])) {
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'MANDATORY REQUIREMENT: Every activity must have at least 1 qualified instructor assigned.');
+        }
+
+        if (empty($validated['participants'])) {
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'MANDATORY REQUIREMENT: Every activity must have at least 1 trainee enrolled before creation.');
+        }
 
         // Enhanced validation: Check for scheduling conflicts and duplicates
         $validationErrors = $this->validateActivityConflicts($validated);
@@ -656,7 +673,7 @@ class ActivityController extends Controller
                 'activity_description' => $validated['activity_description'],
                 'activity_goals' => $validated['activity_goals'] ? json_encode(array_filter(explode("\n", $validated['activity_goals']))) : json_encode([]),
                 'activity_outcomes' => $validated['activity_outcomes'] ? json_encode(array_filter(explode("\n", $validated['activity_outcomes']))) : json_encode([]),
-                'activity_type' => 'therapy', // Default type
+                // activity_type removed - using category_id instead
                 'activity_date' => $validated['start_date'],
                 'activity_start_time' => $validated['start_time'],
                 'activity_end_time' => $endTime->format('H:i:s'),
@@ -823,7 +840,6 @@ class ActivityController extends Controller
                 'activity_id' => 'required|string|max:20|unique:activities,activity_id,' . $id,
                 'activity_description' => 'required|string',
                 'category_id' => 'nullable|exists:categories,id',
-                'activity_type' => 'required|in:Individual,Group,Both,Education,Therapy,Training',
                 'activity_date' => 'required|date|after_or_equal:today',
                 'activity_start_time' => 'required|date_format:H:i',
                 'activity_end_time' => 'required|date_format:H:i|after:activity_start_time',
@@ -840,7 +856,6 @@ class ActivityController extends Controller
                 'activity_id' => strtoupper($validated['activity_id']),
                 'activity_description' => $validated['activity_description'],
                 'category_id' => $validated['category_id'],
-                'activity_type' => $validated['activity_type'],
                 'activity_date' => $validated['activity_date'],
                 'activity_start_time' => $validated['activity_start_time'],
                 'activity_end_time' => $validated['activity_end_time'],
@@ -1095,7 +1110,6 @@ class ActivityController extends Controller
                         'remarks' => $validated['notes'][$traineeId] ?? null,
                         'marked_by' => $userId,
                         'check_in_time' => $status === 'present' ? now() : null,
-                        'activity_type' => 'session'
                     ]);
                 }
             }
@@ -1322,12 +1336,12 @@ class ActivityController extends Controller
             }
 
             return [
-                'total_activities' => $query->whereIn('activity_status', ['scheduled', 'ongoing', 'completed'])->count(),
-                'active_activities' => $query->whereIn('activity_status', ['scheduled', 'ongoing'])->count(),
+                'total_activities' => $query->count(),
+                'active_activities' => $query->where('is_active', true)->count(),
                 'total_sessions' => $totalSessions,
                 'total_enrollments' => $totalEnrollments,
                 'total' => $query->count(), // Backward compatibility
-                'active' => $query->whereIn('activity_status', ['scheduled', 'ongoing'])->count(), // Backward compatibility
+                'active' => $query->where('is_active', true)->count(), // Backward compatibility
                 'sessions' => $totalSessions, // For activities home view
                 'enrollments' => $totalEnrollments, // For activities home view
                 'rehabilitation' => $query->get()->filter(function($activity) {
@@ -1507,7 +1521,9 @@ class ActivityController extends Controller
             $query = Activity::with(['sessions', 'creator']);
 
             if ($request->has('category')) {
-                $query->where('activity_type', $request->category);
+                $query->whereHas('category', function($q) use ($request) {
+                    $q->where('category_name', $request->category);
+                });
             }
 
             if ($request->has('search')) {
@@ -1519,7 +1535,7 @@ class ActivityController extends Controller
                 });
             }
 
-            $activities = $query->whereIn('activity_status', ['scheduled', 'ongoing'])->get();
+            $activities = $query->where('is_active', true)->get();
 
             return response()->json([
                 'success' => true,
@@ -2319,8 +2335,8 @@ class ActivityController extends Controller
 
             // Apply category filter
             if ($categoryFilter) {
-                $query->whereHas('activity', function($q) use ($categoryFilter) {
-                    $q->where('activity_type', $categoryFilter);
+                $query->whereHas('activity.category', function($q) use ($categoryFilter) {
+                    $q->where('category_name', $categoryFilter);
                 });
             }
 
@@ -2381,9 +2397,8 @@ class ActivityController extends Controller
             $centres = Centre::active()->orderBy('centre_name')->get();
             
             // Get categories from existing activities
-            $categories = Activity::distinct()
-                ->whereNotNull('activity_type')
-                ->pluck('activity_type')
+            $categories = \App\Models\Category::active()
+                ->pluck('category_name')
                 ->filter()
                 ->sort()
                 ->values();

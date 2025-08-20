@@ -1158,7 +1158,65 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/zxcvbn/4.4.2/zxcvbn.js"></script>
 <script>
 $(document).ready(function() {
-    let editMode = false;
+    // Restore edit mode from localStorage
+    let editMode = localStorage.getItem('profileEditMode') === 'true';
+    
+    // Define global alert functions to prevent JavaScript errors
+    if (typeof window.showSuccessAlert !== 'function') {
+        window.showSuccessAlert = function(message) {
+            // Check if there's already a server-side success message showing
+            if ($('.alert-success').length > 0) {
+                console.log('Skipping duplicate success alert:', message);
+                return; // Don't show duplicate alert
+            }
+            
+            // Create and show a temporary success alert
+            const alertHtml = `
+                <div class="alert alert-success alert-dismissible fade show js-alert" role="alert" style="position: fixed; top: 20px; right: 20px; z-index: 9999; min-width: 300px;">
+                    <i class="fas fa-check-circle mr-2"></i> ${message}
+                    <button type="button" class="close" data-dismiss="alert">
+                        <span>&times;</span>
+                    </button>
+                </div>
+            `;
+            $('body').append(alertHtml);
+            
+            // Auto-dismiss after 5 seconds
+            setTimeout(function() {
+                $('.alert-success.js-alert').fadeOut(function() {
+                    $(this).remove();
+                });
+            }, 5000);
+        };
+    }
+    
+    if (typeof window.showErrorAlert !== 'function') {
+        window.showErrorAlert = function(message) {
+            // Check if there's already a server-side error message showing
+            if ($('.alert-danger').length > 0) {
+                console.log('Skipping duplicate error alert:', message);
+                return; // Don't show duplicate alert
+            }
+            
+            // Create and show a temporary error alert
+            const alertHtml = `
+                <div class="alert alert-danger alert-dismissible fade show js-alert" role="alert" style="position: fixed; top: 20px; right: 20px; z-index: 9999; min-width: 300px;">
+                    <i class="fas fa-exclamation-circle mr-2"></i> ${message}
+                    <button type="button" class="close" data-dismiss="alert">
+                        <span>&times;</span>
+                    </button>
+                </div>
+            `;
+            $('body').append(alertHtml);
+            
+            // Auto-dismiss after 7 seconds (errors should stay longer)
+            setTimeout(function() {
+                $('.alert-danger.js-alert').fadeOut(function() {
+                    $(this).remove();
+                });
+            }, 7000);
+        };
+    }
     
     // Handle hash navigation on page load - support multiple hash variants
     const validLetterHashes = ['#letters', '#letter', '#lettergenerator', '#letter-generator', '#letters-tab'];
@@ -1196,6 +1254,9 @@ $(document).ready(function() {
     // Edit Profile Toggle
     $('#edit-profile-toggle').click(function() {
         editMode = !editMode;
+        
+        // Save edit mode state to localStorage
+        localStorage.setItem('profileEditMode', editMode.toString());
         
         if (editMode) {
             $(this).addClass('editing');
@@ -1346,6 +1407,14 @@ $(document).ready(function() {
                 hideLoadingOverlay();
                 if (response.success || $(response).find('.alert-success').length > 0) {
                     showSuccessAlert('Profile photo updated successfully!');
+                    
+                    // Clear edit mode after successful avatar update
+                    editMode = false;
+                    localStorage.setItem('profileEditMode', 'false');
+                    $('#edit-profile-toggle').removeClass('editing');
+                    $('#edit-profile-toggle').html('<i class="fas fa-edit"></i><span>Edit Profile</span>');
+                    disableEditing();
+                    
                     // Force refresh the avatar with a new timestamp
                     const newSrc = $('#avatar-preview').attr('src').split('?')[0] + '?v=' + new Date().getTime();
                     $('#avatar-preview').attr('src', newSrc);
@@ -1438,6 +1507,13 @@ $(document).ready(function() {
                 console.log('Profile update success response:', response);
                 hideLoadingOverlay();
                 showSuccessAlert('Profile updated successfully!');
+                
+                // Clear edit mode and return to read-only state after successful update
+                editMode = false;
+                localStorage.setItem('profileEditMode', 'false');
+                $('#edit-profile-toggle').removeClass('editing');
+                $('#edit-profile-toggle').html('<i class="fas fa-edit"></i><span>Edit Profile</span>');
+                disableEditing();
                 
                 // Update session data and refresh if needed
                 setTimeout(function() {
@@ -1930,9 +2006,19 @@ $(document).ready(function() {
         });
     }
     
-    // Initialize styling
+    // Initialize styling and restore edit mode state
     updateFieldStyling();
-    disableEditing();
+    
+    // Restore edit mode state on page load
+    if (editMode) {
+        $('#edit-profile-toggle').addClass('editing');
+        $('#edit-profile-toggle').html('<i class="fas fa-times"></i><span>Cancel Edit</span>');
+        enableEditing();
+    } else {
+        $('#edit-profile-toggle').removeClass('editing');
+        $('#edit-profile-toggle').html('<i class="fas fa-edit"></i><span>Edit Profile</span>');
+        disableEditing();
+    }
     
     // Check for selected template from letters archive page
     checkForSelectedTemplate();

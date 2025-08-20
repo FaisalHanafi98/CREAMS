@@ -106,42 +106,35 @@ class TraineeHomeController extends Controller
                 return $trainee->enrollments && $trainee->enrollments->count() > 0;
             })->count();
             
-            // Calculate average progress using new time-based academic progress system
+            // Calculate overall progress based on session attendance rates
             $totalProgress = 0;
-            $totalAttendance = 0;
             $traineesWithProgress = 0;
-            $traineesWithAttendance = 0;
             
             foreach ($trainees as $trainee) {
-                // Use the new calculateAverageProgress method from Trainee model
-                $traineeProgress = $trainee->calculateAverageProgress();
-                if ($traineeProgress > 0) {
-                    $totalProgress += $traineeProgress;
+                // Calculate progress based on session attendance
+                $sessionAttendanceStats = $trainee->getAttendanceStatistics();
+                $sessionProgress = 0;
+                
+                if ($sessionAttendanceStats['total_sessions'] > 0) {
+                    // Progress is calculated as attendance rate of sessions
+                    $sessionProgress = $sessionAttendanceStats['attendance_rate'];
+                    $totalProgress += $sessionProgress;
                     $traineesWithProgress++;
                 }
                 
-                // Calculate attendance average for each trainee
-                $attendanceAvg = $trainee->getOverallAttendanceAverage();
-                $trainee->attendance_average = $attendanceAvg;
-                $trainee->meets_attendance_threshold = $attendanceAvg >= 50;
-                
-                if ($attendanceAvg > 0) {
-                    $totalAttendance += $attendanceAvg;
-                    $traineesWithAttendance++;
-                }
+                $trainee->session_progress = $sessionProgress;
+                $trainee->meets_attendance_threshold = $sessionProgress >= 50;
             }
             
             $avgProgress = $traineesWithProgress > 0 ? round($totalProgress / $traineesWithProgress, 1) : 0;
-            $avgAttendance = $traineesWithAttendance > 0 ? round($totalAttendance / $traineesWithAttendance, 1) : 0;
             
             $stats = [
                 'total' => $totalTrainees,
                 'active' => $activeTrainees,
                 'enrolled' => $enrolledTrainees,
                 'avg_progress' => $avgProgress,
-                'avg_attendance' => $avgAttendance,
                 'below_threshold' => $trainees->filter(function($trainee) {
-                    return isset($trainee->attendance_average) && $trainee->attendance_average < 50;
+                    return isset($trainee->session_progress) && $trainee->session_progress < 50;
                 })->count()
             ];
             
@@ -178,7 +171,7 @@ class TraineeHomeController extends Controller
                 'totalTrainees' => 0,
                 'conditionTypes' => 0,
                 'newTraineesCount' => 0,
-                'stats' => ['total' => 0, 'active' => 0, 'enrolled' => 0, 'avg_progress' => 0],
+                'stats' => ['total' => 0, 'active' => 0, 'enrolled' => 0, 'avg_progress' => 0, 'below_threshold' => 0],
                 'error' => 'An error occurred while retrieving trainees: ' . $e->getMessage()
             ]);
         }
@@ -481,25 +474,24 @@ class TraineeHomeController extends Controller
                 ->where('enrollment_status', 'enrolled')
                 ->count();
 
-            // Calculate real attendance rate
-            $totalSessions = \DB::table('session_enrollments')
+            // Calculate real attendance rate from trainee_attendances
+            $totalSessions = \DB::table('trainee_attendances')
                 ->where('trainee_id', $id)
                 ->count();
                 
-            $attendedSessions = \DB::table('session_enrollments')
+            $attendedSessions = \DB::table('trainee_attendances')
                 ->where('trainee_id', $id)
-                ->where('attendance_status', 'present')
+                ->whereIn('status', ['present', 'late'])
                 ->count();
                 
             $attendanceRate = $totalSessions > 0 ? round(($attendedSessions / $totalSessions) * 100, 1) : 0;
 
-            // Get activities this week
-            $recentActivities = \DB::table('activity_sessions')
-                ->join('session_enrollments', 'activity_sessions.id', '=', 'session_enrollments.session_id')
-                ->join('activities', 'activity_sessions.activity_id', '=', 'activities.id')
-                ->where('session_enrollments.trainee_id', $id)
-                ->whereBetween('activity_sessions.session_date', [now()->startOfWeek(), now()->endOfWeek()])
-                ->count();
+            // Get activities this week from trainee_attendances
+            $recentActivities = \DB::table('trainee_attendances')
+                ->where('trainee_id', $id)
+                ->whereBetween('attendance_date', [now()->startOfWeek(), now()->endOfWeek()])
+                ->distinct('activity_id')
+                ->count('activity_id');
 
             // Calculate enrollment duration in months
             $enrollmentDuration = $trainee->created_at ? $trainee->created_at->diffInMonths(now()) : 0;
@@ -507,26 +499,47 @@ class TraineeHomeController extends Controller
             // Get current activities from database
             $currentActivities = \DB::table('activities')
                 ->join('activity_enrollments', 'activities.id', '=', 'activity_enrollments.activity_id')
+                ->leftJoin('activity_categories', 'activities.category_id', '=', 'activity_categories.id')
                 ->where('activity_enrollments.trainee_id', $id)
                 ->where('activity_enrollments.enrollment_status', 'enrolled')
-                ->select('activities.*', 'activity_enrollments.enrollment_date', 'activity_enrollments.enrollment_status')
+                ->select(
+                    'activities.id',
+                    'activities.activity_name', 
+                    'activities.activity_description',
+                    'activity_categories.category_name as category',
+                    'activity_enrollments.enrollment_date', 
+                    'activity_enrollments.enrollment_status',
+                    'activity_enrollments.trainee_id'
+                )
                 ->get();
 
-            // Get recent attendance records
-            $recentAttendance = \DB::table('session_enrollments')
-                ->join('activity_sessions', 'session_enrollments.session_id', '=', 'activity_sessions.id')
-                ->join('activities', 'activity_sessions.activity_id', '=', 'activities.id')
-                ->where('session_enrollments.trainee_id', $id)
-                ->where('activity_sessions.session_date', '>=', now()->subDays(30))
+            // Get recent attendance records from trainee_attendances table
+            $recentAttendance = \DB::table('trainee_attendances')
+                ->leftJoin('activities', 'trainee_attendances.activity_id', '=', 'activities.id')
+                ->where('trainee_attendances.trainee_id', $id)
+                ->where('trainee_attendances.attendance_date', '>=', now()->subDays(30))
                 ->select(
-                    'activity_sessions.session_date as date',
-                    'session_enrollments.attendance_status as status',
-                    'session_enrollments.progress_notes as remarks',
-                    'activities.activity_name'
+                    'trainee_attendances.attendance_date as date',
+                    'trainee_attendances.status',
+                    'trainee_attendances.notes as remarks',
+                    'activities.activity_name',
+                    'trainee_attendances.trainee_id'
                 )
-                ->orderBy('activity_sessions.session_date', 'desc')
+                ->orderBy('trainee_attendances.attendance_date', 'desc')
                 ->limit(10)
                 ->get();
+
+            // Add debug logging for trainee-specific data
+            Log::info('Trainee profile data loaded', [
+                'trainee_id' => $id,
+                'trainee_name' => $trainee->trainee_first_name . ' ' . $trainee->trainee_last_name,
+                'total_activities' => $totalActivities,
+                'attendance_rate' => $attendanceRate,
+                'recent_activities' => $recentActivities,
+                'current_activities_count' => $currentActivities->count(),
+                'recent_attendance_count' => $recentAttendance->count(),
+                'user_id' => session('id')
+            ]);
 
             return view('trainees.show', compact(
                 'trainee', 
@@ -592,29 +605,48 @@ class TraineeHomeController extends Controller
                 ->whereBetween('activity_sessions.session_date', [now()->startOfWeek(), now()->endOfWeek()])
                 ->select(
                     'activity_sessions.session_date',
-                    'activity_sessions.session_start_time',
-                    'activity_sessions.session_end_time', 
-                    'activity_sessions.session_location',
+                    'activity_sessions.start_time',
+                    'activity_sessions.end_time', 
+                    'activity_sessions.location',
                     'activities.activity_name'
                 )
                 ->orderBy('activity_sessions.session_date')
-                ->orderBy('activity_sessions.session_start_time')
+                ->orderBy('activity_sessions.start_time')
                 ->get();
 
             // Organize sessions by day of week
             foreach ($thisWeekSessions as $session) {
                 $dayName = \Carbon\Carbon::parse($session->session_date)->format('l'); // Get day name (Monday, Tuesday, etc.)
-                $startTime = \Carbon\Carbon::parse($session->session_start_time)->format('h:i A');
-                $endTime = \Carbon\Carbon::parse($session->session_end_time)->format('h:i A');
+                $startTime = \Carbon\Carbon::parse($session->start_time)->format('h:i A');
+                $endTime = \Carbon\Carbon::parse($session->end_time)->format('h:i A');
                 
                 $weeklySchedule[$dayName][] = [
                     'time' => $startTime . ' - ' . $endTime,
                     'activity' => $session->activity_name,
-                    'location' => $session->session_location
+                    'location' => $session->location
                 ];
             }
 
-            return view('trainees.schedule', compact('trainee', 'weeklySchedule'));
+            // Get upcoming activities (next 7 days beyond current week)
+            $upcomingActivities = \DB::table('activity_sessions')
+                ->join('session_enrollments', 'activity_sessions.id', '=', 'session_enrollments.session_id')
+                ->join('activities', 'activity_sessions.activity_id', '=', 'activities.id')
+                ->where('session_enrollments.trainee_id', $id)
+                ->where('session_enrollments.enrollment_status', 'enrolled')
+                ->whereBetween('activity_sessions.session_date', [now()->addWeek()->startOfWeek(), now()->addWeek()->endOfWeek()])
+                ->select(
+                    'activity_sessions.session_date',
+                    'activity_sessions.start_time',
+                    'activity_sessions.end_time', 
+                    'activity_sessions.location',
+                    'activities.activity_name'
+                )
+                ->orderBy('activity_sessions.session_date')
+                ->orderBy('activity_sessions.start_time')
+                ->limit(6)
+                ->get();
+
+            return view('trainees.schedule', compact('trainee', 'weeklySchedule', 'upcomingActivities'));
 
         } catch (Exception $e) {
             Log::error('Error showing trainee schedule', [
@@ -652,15 +684,73 @@ class TraineeHomeController extends Controller
                 'user_id' => session('id')
             ]);
 
-            // Sample attendance statistics - this would come from database in real implementation
-            $attendanceStats = [
-                'present' => 18,
-                'late' => 3,
-                'absent' => 2,
-                'rate' => 92
-            ];
+            // Get real attendance statistics from database
+            $attendanceStats = $trainee->getAttendanceStatistics();
+            
+            // If no attendance data exists, return default values
+            if ($attendanceStats['total_sessions'] == 0) {
+                $attendanceStats = [
+                    'present' => 0,
+                    'late' => 0,
+                    'absent' => 0,
+                    'excused' => 0,
+                    'total_sessions' => 0,
+                    'rate' => 0,
+                    'meets_threshold' => false
+                ];
+            } else {
+                // Format the data for the view 
+                $attendanceStats['rate'] = round($attendanceStats['attendance_rate'], 1);
+            }
 
-            return view('trainees.attendance', compact('trainee', 'attendanceStats'));
+            // Get real attendance history from database
+            $attendanceHistory = \DB::table('trainee_attendances')
+                ->leftJoin('activities', 'trainee_attendances.activity_id', '=', 'activities.id')
+                ->where('trainee_attendances.trainee_id', $id)
+                ->select(
+                    'trainee_attendances.attendance_date as date',
+                    'trainee_attendances.status',
+                    'trainee_attendances.notes as remarks',
+                    'activities.activity_name as activity',
+                    'trainee_attendances.marked_at'
+                )
+                ->orderBy('trainee_attendances.attendance_date', 'desc')
+                ->limit(50) // Limit to recent 50 records
+                ->get();
+
+            // Calculate monthly attendance data for chart (last 12 months)
+            $monthlyData = [];
+            for ($i = 11; $i >= 0; $i--) {
+                $month = now()->subMonths($i);
+                $startOfMonth = $month->copy()->startOfMonth();
+                $endOfMonth = $month->copy()->endOfMonth();
+                
+                $monthAttendances = \DB::table('trainee_attendances')
+                    ->where('trainee_id', $id)
+                    ->whereBetween('attendance_date', [$startOfMonth->format('Y-m-d'), $endOfMonth->format('Y-m-d')])
+                    ->get();
+                
+                $totalSessions = $monthAttendances->count();
+                $presentSessions = $monthAttendances->whereIn('status', ['present', 'late'])->count();
+                $attendanceRate = $totalSessions > 0 ? round(($presentSessions / $totalSessions) * 100, 1) : 0;
+                
+                $monthlyData[] = [
+                    'month' => $month->format('M'),
+                    'rate' => $attendanceRate
+                ];
+            }
+
+            // Add debug logging for trainee-specific attendance data
+            Log::info('Trainee attendance data loaded', [
+                'trainee_id' => $id,
+                'trainee_name' => $trainee->trainee_first_name . ' ' . $trainee->trainee_last_name,
+                'attendance_stats' => $attendanceStats,
+                'attendance_history_count' => $attendanceHistory->count(),
+                'monthly_data_points' => count($monthlyData),
+                'user_id' => session('id')
+            ]);
+
+            return view('trainees.attendance', compact('trainee', 'attendanceStats', 'attendanceHistory', 'monthlyData'));
 
         } catch (Exception $e) {
             Log::error('Error showing trainee attendance', [

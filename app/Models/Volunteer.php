@@ -11,32 +11,28 @@ class Volunteer extends Model
     protected $table = 'volunteers';
 
     protected $fillable = [
-        // Personal Information
-        'volunteer_name',
-        'volunteer_email',
-        'volunteer_phone',
-        'volunteer_address',
-        'volunteer_birth_date',
-        'volunteer_gender',
-        'volunteer_skills',
-        'volunteer_experience',
-        'volunteer_availability',
-        'volunteer_status',
-        'volunteer_start_date',
-        'emergency_contact_name',
-        'emergency_contact_phone',
-        // Admin fields
+        // Personal Information (actual database columns)
+        'name',
+        'email',
+        'phone',
+        'address',
+        'date_of_birth',
+        'gender',
+        'occupation',
+        'skills',
+        'availability',
+        'motivation',
+        'status',
         'centre_id',
-        'approved_by',
-        'admin_notes',
-        'status_updated_at',
+        // Admin fields (actual database columns)
+        'reviewed_by',
+        'reviewed_at',
+        'review_notes',
     ];
 
     protected $casts = [
-        'volunteer_availability' => 'array',
-        'volunteer_birth_date' => 'date',
-        'volunteer_start_date' => 'date',
-        'status_updated_at' => 'datetime',
+        'date_of_birth' => 'date',
+        'reviewed_at' => 'datetime',
     ];
 
     protected $hidden = [];
@@ -44,84 +40,92 @@ class Volunteer extends Model
     /**
      * Relationships
      */
+    public function reviewedByUser()
+    {
+        return $this->belongsTo(User::class, 'reviewed_by');
+    }
+
     public function centre()
     {
         return $this->belongsTo(Centre::class, 'centre_id', 'centre_id');
     }
 
-    public function approvedByUser()
-    {
-        return $this->belongsTo(User::class, 'approved_by');
-    }
-
     /**
      * Scopes
      */
-    public function scopeForCentre($query, $centreId)
-    {
-        return $query->where('centre_id', $centreId);
-    }
-
     public function scopePending($query)
     {
-        return $query->where('volunteer_status', 'pending');
+        return $query->where('status', 'applied');
     }
 
     public function scopeApproved($query)
     {
-        return $query->where('volunteer_status', 'active');
+        return $query->where('status', 'approved');
     }
 
     public function scopeRejected($query)
     {
-        return $query->where('volunteer_status', 'inactive');
+        return $query->where('status', 'rejected');
+    }
+
+    public function scopeActive($query)
+    {
+        return $query->where('status', 'active');
+    }
+
+    public function scopeInactive($query)
+    {
+        return $query->where('status', 'inactive');
     }
 
     // Scope methods can be added later if needed
 
-    public function setVolunteerNameAttribute($value)
+    public function setNameAttribute($value)
     {
-        $this->attributes['volunteer_name'] = ucwords(strtolower($value));
+        $this->attributes['name'] = ucwords(strtolower($value));
     }
 
-
+    public function setEmailAttribute($value)
+    {
+        $this->attributes['email'] = strtolower(trim($value));
+    }
 
     public function getFormattedAvailabilityAttribute()
     {
-        if (!$this->volunteer_availability) {
+        if (!$this->availability) {
             return 'Not specified';
         }
 
-        return $this->volunteer_availability;
+        return $this->availability;
     }
 
     // Accessor methods can be added later if needed
 
 
-    public function approve($centreId, $adminUserId, $notes = null)
+    public function approve($adminUserId, $notes = null)
     {
-        $this->volunteer_status = 'active';
-        $this->centre_id = $centreId;
-        $this->approved_by = $adminUserId;
-        $this->admin_notes = $notes;
-        $this->status_updated_at = now();
+        $this->status = 'approved';
+        $this->reviewed_by = $adminUserId;
+        $this->review_notes = $notes;
+        $this->reviewed_at = now();
         return $this->save();
     }
 
     public function reject($adminUserId, $notes = null)
     {
-        $this->volunteer_status = 'inactive';
-        $this->approved_by = $adminUserId;
-        $this->admin_notes = $notes;
-        $this->status_updated_at = now();
+        $this->status = 'rejected';
+        $this->reviewed_by = $adminUserId;
+        $this->review_notes = $notes;
+        $this->reviewed_at = now();
         return $this->save();
     }
 
-    public function assignToCentre($centreId, $adminUserId)
+    public function activate($adminUserId, $notes = null)
     {
-        $this->centre_id = $centreId;
-        $this->approved_by = $adminUserId;
-        $this->status_updated_at = now();
+        $this->status = 'active';
+        $this->reviewed_by = $adminUserId;
+        $this->review_notes = $notes;
+        $this->reviewed_at = now();
         return $this->save();
     }
 
@@ -129,11 +133,14 @@ class Volunteer extends Model
     public function getStatusBadgeColorAttribute()
     {
         $colors = [
-            'pending' => 'warning',
+            'applied' => 'info',
+            'reviewed' => 'warning', 
+            'approved' => 'success',
+            'rejected' => 'danger',
             'active' => 'success',
-            'inactive' => 'danger'
+            'inactive' => 'secondary'
         ];
 
-        return $colors[$this->volunteer_status] ?? 'secondary';
+        return $colors[$this->status] ?? 'secondary';
     }
 }

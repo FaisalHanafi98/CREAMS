@@ -270,7 +270,7 @@
                                 <div class="session-details">
                                     <small class="text-muted">
                                         <i class="fas fa-calendar me-1"></i>
-                                        {{ \Carbon\Carbon::parse($session->scheduled_date)->format('M j, Y') }}
+                                        {{ \Carbon\Carbon::parse($session->session_date)->format('M j, Y') }}
                                     </small>
                                     <br>
                                     <small class="text-muted">
@@ -278,17 +278,10 @@
                                         {{ \Carbon\Carbon::parse($session->start_time)->format('g:i A') }} - 
                                         {{ \Carbon\Carbon::parse($session->end_time)->format('g:i A') }}
                                     </small>
-                                    @if($session->venue)
+                                    @if($session->location)
                                         <br>
                                         <small class="text-muted">
-                                            <i class="fas fa-map-marker-alt me-1"></i>{{ $session->venue }}
-                                            @if(isset($session->room_number) && $session->room_number) 
-                                                - Room {{ $session->room_number }}
-                                            @else
-                                                <span class="text-warning ms-1">
-                                                    <i class="fas fa-exclamation-triangle"></i> Room TBD
-                                                </span>
-                                            @endif
+                                            <i class="fas fa-map-marker-alt me-1"></i>{{ $session->location }}
                                         </small>
                                     @endif
                                 </div>
@@ -342,42 +335,52 @@
                 @endif
             </div>
 
-            <!-- Quick Stats -->
+            <!-- Enhanced Weekly Stats -->
             <div class="schedule-card">
                 <h3 class="mb-4">
                     <i class="fas fa-chart-bar me-2 text-primary"></i>Weekly Stats
                 </h3>
 
                 <div class="row g-3">
+                    <!-- Recurring Schedules -->
                     <div class="col-6">
-                        <div class="text-center">
-                            <div class="h4 text-primary mb-1">{{ count($schedules) }}</div>
-                            <small class="text-muted">Recurring Schedules</small>
+                        <div class="stat-box text-center p-3 rounded-3 bg-light border">
+                            <i class="fas fa-repeat text-primary mb-2" style="font-size: 1.5rem;"></i>
+                            <div class="h3 text-primary mb-1 fw-bold">{{ count($schedules) }}</div>
+                            <small class="text-muted fw-medium">Recurring Schedules</small>
                         </div>
                     </div>
+                    <!-- Upcoming Sessions -->
                     <div class="col-6">
-                        <div class="text-center">
-                            <div class="h4 text-success mb-1">{{ isset($sessions) ? count($sessions) : 0 }}</div>
-                            <small class="text-muted">Upcoming Sessions</small>
+                        <div class="stat-box text-center p-3 rounded-3 bg-light border">
+                            <i class="fas fa-calendar-check text-success mb-2" style="font-size: 1.5rem;"></i>
+                            <div class="h3 text-success mb-1 fw-bold">{{ isset($sessions) ? count($sessions) : 0 }}</div>
+                            <small class="text-muted fw-medium">Upcoming Sessions</small>
                         </div>
                     </div>
+                    <!-- Total Activities -->
                     <div class="col-6">
-                        <div class="text-center">
-                            <div class="h4 text-warning mb-1">{{ count($activities) }}</div>
-                            <small class="text-muted">Total Activity</small>
+                        <div class="stat-box text-center p-3 rounded-3 bg-light border">
+                            <i class="fas fa-tasks text-warning mb-2" style="font-size: 1.5rem;"></i>
+                            <div class="h3 text-warning mb-1 fw-bold">{{ count($activities) }}</div>
+                            <small class="text-muted fw-medium">Total Activities</small>
                         </div>
                     </div>
+                    <!-- Total Enrolled -->
                     <div class="col-6">
-                        <div class="text-center">
+                        <div class="stat-box text-center p-3 rounded-3 bg-light border">
+                            <i class="fas fa-users text-info mb-2" style="font-size: 1.5rem;"></i>
                             @php
                                 $totalEnrolled = isset($sessions) ? collect($sessions)->sum('enrolled_count') : 0;
                             @endphp
-                            <div class="h4 text-info mb-1">{{ $totalEnrolled }}</div>
-                            <small class="text-muted">Total Enrolled</small>
+                            <div class="h3 text-info mb-1 fw-bold">{{ $totalEnrolled }}</div>
+                            <small class="text-muted fw-medium">Total Enrolled</small>
                         </div>
                     </div>
+                    <!-- Weekly Hours -->
                     <div class="col-12">
-                        <div class="text-center">
+                        <div class="stat-box text-center p-4 rounded-3 shadow-sm" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                            <i class="fas fa-clock text-white mb-3" style="font-size: 2rem;"></i>
                             @php
                                 // Calculate hours from both schedules and sessions
                                 $scheduleMinutes = collect($schedules)->sum(function($schedule) {
@@ -390,11 +393,29 @@
                                 $totalMinutes = $sessionMinutes > 0 ? $sessionMinutes : $scheduleMinutes;
                                 $totalHours = round($totalMinutes / 60, 1);
                             @endphp
-                            <div class="h4 text-warning mb-1">{{ $totalHours }}h</div>
-                            <small class="text-muted">Weekly Hours</small>
+                            <div class="h2 text-white mb-2 fw-bold">{{ $totalHours }}h</div>
+                            <small class="text-white fw-medium opacity-75">Weekly Hours</small>
                         </div>
                     </div>
                 </div>
+                
+                <!-- Additional CSS for stat boxes -->
+                <style>
+                .stat-box {
+                    transition: all 0.3s ease;
+                    cursor: pointer;
+                }
+                .stat-box:hover {
+                    transform: translateY(-5px);
+                    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+                }
+                .stat-box i {
+                    transition: transform 0.3s ease;
+                }
+                .stat-box:hover i {
+                    transform: scale(1.1);
+                }
+                </style>
             </div>
         </div>
     </div>

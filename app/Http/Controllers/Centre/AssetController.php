@@ -66,7 +66,7 @@ class AssetController extends Controller
             // Apply filters
             if ($search) {
                 $assetsQuery->where(function($query) use ($search) {
-                    $query->where('name', 'like', "%{$search}%")
+                    $query->where('asset_name', 'like', "%{$search}%")
                           ->orWhere('asset_code', 'like', "%{$search}%")
                           ->orWhere('description', 'like', "%{$search}%");
                 });

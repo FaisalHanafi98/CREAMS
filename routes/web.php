@@ -436,7 +436,7 @@ Route::middleware(['auth', 'validate.params'])->group(function () {
         Route::post('/mark', [StaffAttendanceController::class, 'markAttendance'])->name('mark');
         Route::post('/mark-trainee', [StaffAttendanceController::class, 'markTraineeAttendance'])->name('mark-trainee');
         Route::get('/user/{encryptedUserId}', [StaffAttendanceController::class, 'getUserAttendance'])->name('user');
-        Route::get('/status/{encryptedUserId}', [StaffAttendanceController::class, 'getTodayStatus'])->name('status');
+        Route::get('/status/{encryptedUserId}', [StaffAttendanceController::class, 'getAttendanceStatus'])->name('status');
     });
 
     // Centre
@@ -687,9 +687,9 @@ Route::middleware(['auth', 'centre.access:trainee'])->prefix('trainees')->name('
     Route::get('/progress/{encrypted_id}', [App\Http\Controllers\Trainee\TraineeProgressController::class, 'show'])->name('progress.show');
     Route::get('/progress/{encrypted_id}/schedule', [App\Http\Controllers\Trainee\TraineeProgressController::class, 'weeklySchedule'])->name('progress.schedule');
     
-    Route::get('/{encrypted_id}/edit', [TraineeProfileController::class, 'edit'])->name('edit'); // Edit route with encrypted ID
+    Route::get('/profile/edit/{encrypted_id}', [TraineeProfileController::class, 'edit'])->name('edit'); // Edit route with encrypted ID
     Route::put('/{encrypted_id}', [TraineeProfileController::class, 'update'])->name('update'); // Update route with encrypted ID
-    Route::get('/{encrypted_id}', [TraineeHomeController::class, 'show'])->name('show'); // Show route with encrypted ID (must be last)
+    Route::get('/profile/{encrypted_id}', [TraineeHomeController::class, 'show'])->name('show'); // Show route with encrypted ID
     // Note: Legacy profile routes use /traineeprofile/{id} for backward compatibility
 });
 

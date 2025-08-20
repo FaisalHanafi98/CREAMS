@@ -10,19 +10,19 @@ class Category extends Model
 {
     use HasFactory;
 
+    protected $table = 'activity_categories';
+
     protected $fillable = [
         'category_name',
         'category_description',
         'category_color',
         'category_icon',
-        'category_status',
         'category_type',
-        'sort_order'
+        'is_active'
     ];
 
     protected $casts = [
-        'category_status' => 'string',
-        'sort_order' => 'integer'
+        'is_active' => 'boolean',
     ];
 
     /**
@@ -41,13 +41,13 @@ class Category extends Model
 
     public function activeActivities()
     {
-        return $this->activities()->whereIn('activity_status', ['scheduled', 'ongoing']);
+        return $this->activities()->where('is_active', true);
     }
 
     // Scopes
     public function scopeActive($query)
     {
-        return $query->where('category_status', 'active');
+        return $query->where('is_active', true);
     }
 
     public function scopeRehabilitation($query)
@@ -67,7 +67,7 @@ class Category extends Model
 
     public function scopeOrdered($query)
     {
-        return $query->orderBy('sort_order')->orderBy('category_name');
+        return $query->orderBy('category_name');
     }
 
     // Accessors

@@ -499,6 +499,19 @@
         border-top: 1px solid #e9ecef;
     }
 
+    .avatar-placeholder {
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        color: white;
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        text-transform: uppercase;
+        border: 4px solid white;
+        box-shadow: 0 4px 15px rgba(200, 80, 192, 0.3);
+    }
+
     @media (max-width: 768px) {
         .container-fluid {
             padding: 15px;
@@ -661,10 +674,10 @@
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label for="trainee_phone_number">Phone Number</label>
+                                    <label for="trainee_phone_number">Phone Number <span class="text-danger">*</span></label>
                                     <input type="text" class="form-control @error('trainee_phone_number') is-invalid @enderror" 
                                            id="trainee_phone_number" name="trainee_phone_number" 
-                                           value="{{ old('trainee_phone_number', $trainee->trainee_phone_number) }}">
+                                           value="{{ old('trainee_phone_number', $trainee->trainee_phone_number) }}" required>
                                     @error('trainee_phone_number')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
@@ -673,18 +686,35 @@
                         </div>
                         
                         <div class="row">
-                            <div class="col-md-4">
+                            <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="trainee_date_of_birth">Date of Birth <span class="text-danger">*</span></label>
                                     <input type="date" class="form-control @error('trainee_date_of_birth') is-invalid @enderror" 
                                            id="trainee_date_of_birth" name="trainee_date_of_birth" 
-                                           value="{{ old('trainee_date_of_birth', $trainee->trainee_date_of_birth ? $trainee->trainee_date_of_birth->format('Y-m-d') : '') }}" required>
+                                           value="{{ old('trainee_date_of_birth', $trainee->trainee_date_of_birth ? $trainee->trainee_date_of_birth->format('Y-m-d') : '') }}" required readonly>
+                                    <small class="form-text text-muted">Date of birth cannot be changed after registration.</small>
                                     @error('trainee_date_of_birth')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="ic_number">IC Number</label>
+                                    <input type="text" class="form-control @error('ic_number') is-invalid @enderror" 
+                                           id="ic_number" name="ic_number" 
+                                           value="{{ old('ic_number', $trainee->ic_number ?? '') }}"
+                                           placeholder="e.g. 950101-01-2345" readonly>
+                                    <small class="form-text text-muted">IC number cannot be changed after registration.</small>
+                                    @error('ic_number')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="gender">Gender <span class="text-danger">*</span></label>
                                     <select class="form-control @error('gender') is-invalid @enderror" 
@@ -698,7 +728,7 @@
                                     @enderror
                                 </div>
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="trainee_condition">Condition <span class="text-danger">*</span></label>
                                     <select class="form-control @error('trainee_condition') is-invalid @enderror" 
@@ -720,7 +750,7 @@
                         
                         <div class="form-group">
                             <label for="centre_name">Centre <span class="text-danger">*</span></label>
-                            <select class="form-control @error('centre_name') is-invalid @enderror" id="centre_name" name="centre_name" required>
+                            <select class="form-control @error('centre_name') is-invalid @enderror" id="centre_name" name="centre_name" required disabled>
                                 <option value="">Select Centre</option>
                                 @if(isset($centres))
                                     @foreach($centres as $centre)
@@ -731,6 +761,8 @@
                                     @endforeach
                                 @endif
                             </select>
+                            <input type="hidden" name="centre_name" value="{{ $trainee->centre_name }}">
+                            <small class="form-text text-muted">Centre assignment cannot be changed. Contact admin for centre transfers.</small>
                             @error('centre_name')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
@@ -752,10 +784,10 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label for="guardian_name">Guardian's Name</label>
+                                    <label for="guardian_name">Guardian's Name <span class="text-danger">*</span></label>
                                     <input type="text" class="form-control @error('guardian_name') is-invalid @enderror" 
                                            id="guardian_name" name="guardian_name" 
-                                           value="{{ old('guardian_name', $trainee->guardian_name ?? '') }}">
+                                           value="{{ old('guardian_name', $trainee->guardian_name ?? '') }}" required>
                                     @error('guardian_name')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
@@ -763,9 +795,9 @@
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label for="guardian_relationship">Relationship</label>
+                                    <label for="guardian_relationship">Relationship <span class="text-danger">*</span></label>
                                     <select class="form-control @error('guardian_relationship') is-invalid @enderror" 
-                                            id="guardian_relationship" name="guardian_relationship">
+                                            id="guardian_relationship" name="guardian_relationship" required>
                                         <option value="">Select Relationship</option>
                                         @foreach(config('trainee.guardian_relationships') as $relationship)
                                             <option value="{{ $relationship }}" 
@@ -784,10 +816,10 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label for="guardian_phone">Guardian's Phone</label>
+                                    <label for="guardian_phone">Guardian's Phone <span class="text-danger">*</span></label>
                                     <input type="text" class="form-control @error('guardian_phone') is-invalid @enderror" 
                                            id="guardian_phone" name="guardian_phone" 
-                                           value="{{ old('guardian_phone', $trainee->guardian_phone ?? '') }}">
+                                           value="{{ old('guardian_phone', $trainee->guardian_phone ?? '') }}" required>
                                     @error('guardian_phone')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
@@ -795,10 +827,10 @@
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label for="guardian_email">Guardian's Email</label>
+                                    <label for="guardian_email">Guardian's Email <span class="text-danger">*</span></label>
                                     <input type="email" class="form-control @error('guardian_email') is-invalid @enderror" 
                                            id="guardian_email" name="guardian_email" 
-                                           value="{{ old('guardian_email', $trainee->guardian_email ?? '') }}">
+                                           value="{{ old('guardian_email', $trainee->guardian_email ?? '') }}" required>
                                     @error('guardian_email')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
@@ -845,10 +877,26 @@
                                 <h6 class="m-0 font-weight-bold text-primary">Profile Picture</h6>
                             </div>
                             <div class="card-body text-center">
-                                <img id="avatar-preview" class="img-fluid rounded-circle mb-3" 
-                                     src="{{ $trainee->avatar_url }}" alt="Profile Picture" 
-                                     style="width: 150px; height: 150px; object-fit: cover;"
-                                     onerror="this.src='{{ asset('images/default-avatar.png') }}'">
+                                <div id="avatar-container" style="position: relative; width: 150px; height: 150px; margin: 0 auto 15px;">
+                                    @if($trainee->avatar && file_exists(public_path('storage/' . str_replace('storage/', '', $trainee->avatar))))
+                                        <img id="avatar-preview" class="img-fluid rounded-circle" 
+                                             src="{{ asset($trainee->avatar) }}?v={{ time() }}" alt="Profile Picture" 
+                                             style="width: 150px; height: 150px; object-fit: cover;"
+                                             onerror="this.style.display='none'; document.getElementById('avatar-placeholder').style.display='flex';">
+                                        <div id="avatar-placeholder" class="avatar-placeholder" 
+                                             style="display: none; width: 150px; height: 150px; font-size: 3rem;">
+                                            {{ strtoupper(substr($trainee->trainee_first_name ?? 'T', 0, 1)) }}
+                                        </div>
+                                    @else
+                                        <img id="avatar-preview" class="img-fluid rounded-circle" 
+                                             src="" alt="Profile Picture" 
+                                             style="width: 150px; height: 150px; object-fit: cover; display: none;">
+                                        <div id="avatar-placeholder" class="avatar-placeholder" 
+                                             style="display: flex; width: 150px; height: 150px; font-size: 3rem;">
+                                            {{ strtoupper(substr($trainee->trainee_first_name ?? 'T', 0, 1)) }}
+                                        </div>
+                                    @endif
+                                </div>
                                 
                                 <div class="form-group">
                                     <div class="custom-file">
@@ -903,26 +951,37 @@
                         <!-- Consent Information -->
                         <div class="card mb-4">
                             <div class="card-header py-3">
-                                <h6 class="m-0 font-weight-bold text-primary">Consent</h6>
+                                <h6 class="m-0 font-weight-bold text-primary">Consent & Permissions</h6>
                             </div>
                             <div class="card-body">
                                 <div class="form-group form-check">
                                     <input type="checkbox" class="form-check-input" 
                                            id="photo_consent" name="photo_consent" value="1" 
-                                           {{ old('photo_consent', $trainee->photo_consent ?? 0) ? 'checked' : '' }}>
+                                           {{ old('photo_consent', $trainee->photo_consent ?? 0) ? 'checked' : '' }} required>
                                     <label class="form-check-label" for="photo_consent">
-                                        Permission to use photos/videos for promotional purposes
+                                        <strong>Photo/Video Consent</strong> - Permission to use photos/videos for promotional purposes <span class="text-danger">*</span>
                                     </label>
                                 </div>
                                 
                                 <div class="form-group form-check">
                                     <input type="checkbox" class="form-check-input" 
                                            id="services_consent" name="services_consent" value="1" 
-                                           {{ old('services_consent', $trainee->services_consent ?? 0) ? 'checked' : '' }}>
+                                           {{ old('services_consent', $trainee->services_consent ?? 0) ? 'checked' : '' }} required>
                                     <label class="form-check-label" for="services_consent">
-                                        Consent for rehabilitation services
+                                        <strong>Services Consent</strong> - Consent for rehabilitation services and treatment <span class="text-danger">*</span>
                                     </label>
                                 </div>
+                                
+                                <div class="form-group form-check">
+                                    <input type="checkbox" class="form-check-input" 
+                                           id="data_consent" name="data_consent" value="1" 
+                                           {{ old('data_consent', 1) ? 'checked' : '' }} required>
+                                    <label class="form-check-label" for="data_consent">
+                                        <strong>Data Processing Consent</strong> - I confirm that all information provided is accurate and I consent to the collection and processing of this data for the purpose of providing services to the trainee <span class="text-danger">*</span>
+                                    </label>
+                                </div>
+                                
+                                <small class="text-muted">All consent items are mandatory for participation in the program.</small>
                             </div>
                         </div>
                         
@@ -973,11 +1032,12 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                {{-- Delete functionality temporarily disabled - route not available in new structure --}}
-                <form action="#" method="POST" style="display: inline;" onsubmit="alert('Delete functionality not available'); return false;">
+                <form action="{{ route('traineeprofile.destroy', \App\Helpers\EncryptionHelper::generateEncryptedId($trainee->id)) }}" method="POST" style="display: inline;" onsubmit="return confirm('Are you absolutely sure you want to delete this trainee? This action cannot be undone.');">
                     @csrf
                     @method('DELETE')
-                    <button type="submit" class="btn btn-danger">Delete Trainee</button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash-alt mr-1"></i> Confirm Delete
+                    </button>
                 </form>
             </div>
         </div>
@@ -993,7 +1053,8 @@
             if (this.files && this.files[0]) {
                 var reader = new FileReader();
                 reader.onload = function(e) {
-                    $('#avatar-preview').attr('src', e.target.result);
+                    $('#avatar-preview').attr('src', e.target.result).show();
+                    $('#avatar-placeholder').hide();
                 }
                 reader.readAsDataURL(this.files[0]);
                 

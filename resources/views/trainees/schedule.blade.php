@@ -360,9 +360,9 @@
                     @if(isset($weeklySchedule[$day]) && count($weeklySchedule[$day]) > 0)
                         @foreach($weeklySchedule[$day] as $activity)
                         <div class="schedule-time-slot">
-                            <div class="schedule-time">{{ $activity['time'] ?? '09:00 AM' }}</div>
-                            <div class="schedule-activity">{{ $activity['activity'] ?? 'Therapy Session' }}</div>
-                            <div class="schedule-location">{{ $activity['location'] ?? 'Main Hall' }}</div>
+                            <div class="schedule-time">{{ $activity['time'] }}</div>
+                            <div class="schedule-activity">{{ $activity['activity'] }}</div>
+                            <div class="schedule-location">{{ $activity['location'] }}</div>
                         </div>
                         @endforeach
                     @else
@@ -409,13 +409,44 @@
                 @endphp
 
                 @while($currentDate->lte($endDate))
-                <div class="calendar-day {{ $currentDate->isSameDay($today) ? 'today' : '' }} {{ rand(0, 4) === 0 ? 'has-schedule' : '' }}">
+                @php
+                    // Check if this date has any activities
+                    $dayActivities = collect();
+                    $hasSchedule = false;
+                    
+                    // Check weekly schedule if date is in current week
+                    if ($currentDate->isCurrentWeek()) {
+                        $dayName = $currentDate->format('l');
+                        if (isset($weeklySchedule[$dayName]) && count($weeklySchedule[$dayName]) > 0) {
+                            $dayActivities = collect($weeklySchedule[$dayName]);
+                            $hasSchedule = true;
+                        }
+                    }
+                    
+                    // Check upcoming activities if date is in next week
+                    if (isset($upcomingActivities)) {
+                        foreach ($upcomingActivities as $activity) {
+                            if (\Carbon\Carbon::parse($activity->session_date)->isSameDay($currentDate)) {
+                                $dayActivities->push([
+                                    'activity' => $activity->activity_name,
+                                    'time' => \Carbon\Carbon::parse($activity->start_time)->format('g:i A')
+                                ]);
+                                $hasSchedule = true;
+                            }
+                        }
+                    }
+                @endphp
+                <div class="calendar-day {{ $currentDate->isSameDay($today) ? 'today' : '' }} {{ $hasSchedule ? 'has-schedule' : '' }}">
                     <div class="day-number">{{ $currentDate->format('j') }}</div>
-                    @if(rand(0, 4) === 0)
-                        <span class="day-activity">Therapy</span>
-                    @endif
-                    @if(rand(0, 6) === 0)
-                        <span class="day-activity" style="background: var(--success-color);">Assessment</span>
+                    @foreach($dayActivities->take(2) as $activity)
+                        <span class="day-activity" title="{{ $activity['activity'] }} - {{ $activity['time'] ?? '' }}">
+                            {{ Str::limit($activity['activity'], 12) }}
+                        </span>
+                    @endforeach
+                    @if($dayActivities->count() > 2)
+                        <span class="day-activity" style="background: var(--info-color);">
+                            +{{ $dayActivities->count() - 2 }} more
+                        </span>
                     @endif
                 </div>
                 @php $currentDate->addDay(); @endphp
@@ -430,55 +461,46 @@
                     <div class="card-icon">
                         <i class="fas fa-clock"></i>
                     </div>
-                    Upcoming Activities
+                    Upcoming Activities (Next Week)
                 </h5>
             </div>
 
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="schedule-time-slot">
-                        <div class="schedule-time">Tomorrow - 10:00 AM</div>
-                        <div class="schedule-activity">Physical Therapy Session</div>
-                        <div class="schedule-location">Therapy Room A</div>
+            @if(isset($upcomingActivities) && count($upcomingActivities) > 0)
+                <div class="row">
+                    @foreach($upcomingActivities as $activity)
+                    <div class="col-md-6">
+                        <div class="schedule-time-slot">
+                            <div class="schedule-time">
+                                {{ \Carbon\Carbon::parse($activity->session_date)->format('l, M j') }} - 
+                                {{ \Carbon\Carbon::parse($activity->start_time)->format('g:i A') }}
+                            </div>
+                            <div class="schedule-activity">{{ $activity->activity_name }}</div>
+                            <div class="schedule-location">{{ $activity->location ?? 'Location TBD' }}</div>
+                        </div>
                     </div>
+                    @endforeach
                 </div>
-                <div class="col-md-6">
-                    <div class="schedule-time-slot">
-                        <div class="schedule-time">Friday - 2:00 PM</div>
-                        <div class="schedule-activity">Progress Assessment</div>
-                        <div class="schedule-location">Assessment Center</div>
-                    </div>
+            @else
+                <div class="no-schedule">
+                    <i class="fas fa-calendar-times"></i>
+                    <p>No upcoming activities scheduled for next week</p>
                 </div>
-                <div class="col-md-6">
-                    <div class="schedule-time-slot">
-                        <div class="schedule-time">Next Monday - 9:30 AM</div>
-                        <div class="schedule-activity">Group Activity</div>
-                        <div class="schedule-location">Main Hall</div>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="schedule-time-slot">
-                        <div class="schedule-time">Next Wednesday - 11:00 AM</div>
-                        <div class="schedule-activity">Individual Counseling</div>
-                        <div class="schedule-location">Counseling Room</div>
-                    </div>
-                </div>
-            </div>
+            @endif
         </div>
 
         <!-- Action Buttons -->
         <div class="action-buttons">
-            <a href="{{ route('trainees.show', $trainee->id) }}" class="btn btn-primary">
+            <a href="{{ route('trainees.show', \App\Helpers\EncryptionHelper::generateEncryptedId($trainee->id)) }}" class="btn btn-primary">
                 <i class="fas fa-user"></i>Back to Profile
             </a>
             
-            <a href="{{ route('trainees.attendance', $trainee->id) }}" class="btn btn-secondary">
+            <a href="{{ route('trainees.attendance', \App\Helpers\EncryptionHelper::generateEncryptedId($trainee->id)) }}" class="btn btn-secondary">
                 <i class="fas fa-clipboard-check"></i>View Attendance
             </a>
             
             @if(in_array(session('role'), ['admin', 'supervisor']))
-            <a href="{{ route('trainees.edit', $trainee->id) }}" class="btn btn-secondary">
-                <i class="fas fa-edit"></i>Edit Schedule
+            <a href="{{ route('trainees.edit', \App\Helpers\EncryptionHelper::generateEncryptedId($trainee->id)) }}" class="btn btn-secondary">
+                <i class="fas fa-edit"></i>Edit Profile
             </a>
             @endif
         </div>

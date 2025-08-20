@@ -96,6 +96,7 @@ class TraineeRegistrationController extends Controller
                 'ic_number' => 'required|string|max:20|unique:trainees,ic_number',
                 'trainee_phone_number' => 'required|string|max:20',
                 'trainee_date_of_birth' => 'required|date|before_or_equal:today',
+                'gender' => 'required|in:Male,Female',
                 'trainee_avatar' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
                 'centre_name' => 'required|string|max:255|exists:centres,centre_name',
                 'trainee_condition' => 'required|string|max:255',
@@ -110,6 +111,8 @@ class TraineeRegistrationController extends Controller
                 'trainee_phone_number.required' => 'The phone number field is required.',
                 'trainee_date_of_birth.required' => 'The date of birth field is required.',
                 'trainee_date_of_birth.before_or_equal' => 'The date of birth cannot be in the future.',
+                'gender.required' => 'Please select a gender.',
+                'gender.in' => 'Gender must be either Male or Female.',
                 'trainee_avatar.image' => 'The uploaded file must be an image.',
                 'trainee_avatar.mimes' => 'The image must be a JPEG, PNG, JPG or GIF file.',
                 'trainee_avatar.max' => 'The image size must not exceed 2MB.',
@@ -187,6 +190,7 @@ class TraineeRegistrationController extends Controller
             $trainee->ic_number = $request->input('ic_number');
             $trainee->trainee_phone_number = $request->input('trainee_phone_number');
             $trainee->trainee_date_of_birth = $request->input('trainee_date_of_birth');
+            $trainee->gender = $request->input('gender');
             $trainee->centre_name = $request->input('centre_name'); // Just store the centre_name
             
             // Get centre_id from centre_name for proper ID generation
@@ -217,10 +221,7 @@ class TraineeRegistrationController extends Controller
                 $trainee->trainee_id = 'TRN' . $year . $centreId . sprintf('%04d', $nextSequence);
             }
             
-            // Generate unique_identifier if not set
-            if (!$trainee->unique_identifier) {
-                $trainee->unique_identifier = $trainee->trainee_id;
-            }
+            // Note: unique_identifier field removed as it doesn't exist in database schema
             
             $trainee->trainee_condition = $request->input('trainee_condition');
             // Note: trainee_attendance field removed as it doesn't exist in database

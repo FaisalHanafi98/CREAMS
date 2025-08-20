@@ -490,15 +490,7 @@
         </div>
         
         <div class="form-content">
-            <!-- Flash Message -->
-            @if (session('success'))
-                <div class="alert alert-success alert-dismissible fade show">
-                    <i class="fas fa-check-circle"></i> {{ session('success') }}
-                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-            @endif
+            <!-- Global success messages are handled by the layout -->
             
             @if (session('fail'))
                 <div class="alert alert-danger alert-dismissible fade show">
@@ -528,7 +520,7 @@
                 <button class="tab-btn" id="tab-3">Review & Submit</button>
             </div>
             
-            <form action="{{ route('auth.save') }}" method="POST" id="registration-form" onsubmit="console.log('Form submitting with centre_id:', document.getElementById('centre_id').value); return true;">
+            <form action="{{ route('auth.save') }}" method="POST" id="registration-form" onsubmit="return handleFormSubmit();">
                 @csrf
                 
                 <div class="form-sections-container">
@@ -883,6 +875,28 @@ $(document).ready(function() {
         const centreId = centreMapping[location] || '';
         $('#centre_id').val(centreId);
     }
+    
+    // Success alerts are handled globally by the layout
 });
+
+// Prevent double form submission
+let formSubmitted = false;
+function handleFormSubmit() {
+    if (formSubmitted) {
+        return false; // Prevent double submission
+    }
+    
+    console.log('Form submitting with centre_id:', document.getElementById('centre_id').value);
+    formSubmitted = true;
+    
+    // Disable submit button to prevent multiple clicks
+    const submitBtn = document.getElementById('submit-button');
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating Account...';
+    }
+    
+    return true;
+}
 </script>
 @endsection

@@ -420,11 +420,11 @@ class Trainee extends Model
         }
         
         if ($dateFrom) {
-            $query->whereDate('date', '>=', $dateFrom);
+            $query->whereDate('attendance_date', '>=', $dateFrom);
         }
         
         if ($dateTo) {
-            $query->whereDate('date', '<=', $dateTo);
+            $query->whereDate('attendance_date', '<=', $dateTo);
         }
         
         $attendances = $query->get();

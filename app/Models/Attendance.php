@@ -10,6 +10,13 @@ class Attendance extends Model
     use HasFactory;
 
     /**
+     * The table associated with the model.
+     *
+     * @var string
+     */
+    protected $table = 'trainee_attendances';
+
+    /**
      * The attributes that are mass assignable.
      *
      * @var array<int, string>
@@ -17,22 +24,12 @@ class Attendance extends Model
     protected $fillable = [
         'trainee_id',
         'activity_id',
-        'date',
+        'session_id',
+        'attendance_date',
         'status',
-        'remarks',
-        'marked_by',
-        'check_in_time',
-        'check_out_time',
-        'activity_type',
-        // Enhanced tracking fields
-        'arrival_time',
-        'departure_time',
-        'participation_level_enum',
-        'mood_rating',
-        'progress_notes',
-        'parent_feedback_required',
-        'follow_up_needed',
-        'recorded_by'
+        'notes',
+        'marked_by_user_id',
+        'marked_at'
     ];
 
     /**
@@ -41,11 +38,8 @@ class Attendance extends Model
      * @var array<string, string>
      */
     protected $casts = [
-        'date' => 'date',
-        'arrival_time' => 'datetime:H:i',
-        'departure_time' => 'datetime:H:i',
-        'parent_feedback_required' => 'boolean',
-        'follow_up_needed' => 'boolean'
+        'attendance_date' => 'date',
+        'marked_at' => 'datetime'
     ];
 
     /**
@@ -65,11 +59,19 @@ class Attendance extends Model
     }
 
     /**
+     * Get the session for this attendance record.
+     */
+    public function session()
+    {
+        return $this->belongsTo(\App\Models\ActivitySession::class, 'session_id');
+    }
+
+    /**
      * Get the user who marked this attendance.
      */
     public function markedBy()
     {
-        return $this->belongsTo(User::class, 'marked_by');
+        return $this->belongsTo(User::class, 'marked_by_user_id');
     }
 
     /**
@@ -77,7 +79,7 @@ class Attendance extends Model
      */
     public function scopeForDate($query, $date)
     {
-        return $query->whereDate('date', $date);
+        return $query->whereDate('attendance_date', $date);
     }
 
     /**
@@ -101,13 +103,13 @@ class Attendance extends Model
      */
     public static function getForDateRange($startDate, $endDate, $traineeId = null)
     {
-        $query = self::whereBetween('date', [$startDate, $endDate]);
+        $query = self::whereBetween('attendance_date', [$startDate, $endDate]);
         
         if ($traineeId) {
             $query->where('trainee_id', $traineeId);
         }
         
-        return $query->orderBy('date', 'desc')->get();
+        return $query->orderBy('attendance_date', 'desc')->get();
     }
     
     /**
@@ -117,7 +119,7 @@ class Attendance extends Model
     {
         // Get attendance records in the range
         $records = self::where('trainee_id', $traineeId)
-            ->whereBetween('date', [$startDate, $endDate])
+            ->whereBetween('attendance_date', [$startDate, $endDate])
             ->get();
         
         // Count by status

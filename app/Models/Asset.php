@@ -19,7 +19,7 @@ class Asset extends Model
 
     protected $fillable = [
         'asset_code',
-        'name',
+        'asset_name',
         'description',
         'category_id',
         'centre_id',
@@ -29,7 +29,6 @@ class Asset extends Model
         'purchase_price',
         'purchase_date',
         'warranty_months',
-        'warranty_expiry',
         'condition',
         'status',
         'location',

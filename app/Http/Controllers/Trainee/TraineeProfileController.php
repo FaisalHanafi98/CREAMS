@@ -544,8 +544,9 @@ class TraineeProfileController extends Controller
                 Storage::disk('public')->delete(str_replace('storage/', '', $trainee->avatar));
             }
             
-            // Delete related activities
-            Activity::where('trainee_id', $id)->delete();
+            // Delete related enrollments and attendance records
+            \DB::table('activity_enrollments')->where('trainee_id', $id)->delete();
+            \DB::table('trainee_attendances')->where('trainee_id', $id)->delete();
             
             // Delete the trainee
             $trainee->delete();

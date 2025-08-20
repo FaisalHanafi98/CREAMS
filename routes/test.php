@@ -1,69 +1,85 @@
 <?php
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Dashboard\DashboardController;
 
-// Test route that simulates what user sees
-Route::get("/test-dashboard", function() {
-    // Simulate being logged in as admin
-    session([
-        "id" => 1, 
-        "role" => "admin", 
-        "centre_id" => "01", 
-        "name" => "Muhammad Syafiq bin Moh"
-    ]);
-    
-    $dashboardController = new DashboardController();
-    $request = new Illuminate\Http\Request();
-    
+use Illuminate\Support\Facades\Route;
+use App\Models\Trainee;
+use App\Models\Centre;
+use App\Models\ActivityEnrollment;
+
+Route::get('/test-trainee-stats', function () {
     try {
-        $response = $dashboardController->index($request);
+        // Get all trainees with relationships
+        $trainees = Trainee::with([
+            'centre', 
+            'activities', 
+            'enrollments' => function($query) {
+                $query->whereIn('enrollment_status', ['enrolled', 'active']);
+            }
+        ])->get();
         
-        if ($response instanceof Illuminate\View\View) {
-            $data = $response->getData();
+        echo "Total trainees found: " . $trainees->count() . "<br>";
+        
+        // Count active trainees
+        $activeTrainees = $trainees->where('status', 'active')->count();
+        echo "Active trainees: " . $activeTrainees . "<br>";
+        
+        // Count trainees enrolled in activities
+        $enrolledTrainees = $trainees->filter(function($trainee) {
+            return $trainee->enrollments && $trainee->enrollments->count() > 0;
+        })->count();
+        echo "Enrolled trainees: " . $enrolledTrainees . "<br>";
+        
+        // Calculate progress and attendance
+        $totalProgress = 0;
+        $totalAttendance = 0;
+        $traineesWithProgress = 0;
+        $traineesWithAttendance = 0;
+        
+        foreach ($trainees as $trainee) {
+            // Calculate progress
+            $traineeProgress = $trainee->calculateAverageProgress();
+            if ($traineeProgress > 0) {
+                $totalProgress += $traineeProgress;
+                $traineesWithProgress++;
+            }
             
-            // Return JSON of what the dashboard should show
-            return response()->json([
-                "status" => "success",
-                "data_summary" => [
-                    "general_tab_stats" => $data["stats_flat"] ?? "not found",
-                    "personal_tab_stats" => $data["personal_stats"] ?? "not found", 
-                    "calendar_events_count" => count($data["calendar_events"] ?? []),
-                    "recent_activities_count" => count($data["recent_activities_centre"] ?? [])
-                ],
-                "what_you_should_see" => [
-                    "General Tab" => [
-                        "Total Users" => ($data["stats_flat"]["total_users"] ?? 0),
-                        "Active Trainees" => ($data["stats_flat"]["total_trainees"] ?? 0),
-                        "Active Programs" => ($data["stats_flat"]["total_activities"] ?? 0),
-                        "Active Centres" => ($data["stats_flat"]["active_centres"] ?? 0)
-                    ],
-                    "Personal Tab" => [
-                        "My Activities" => ($data["personal_stats"]["user_activities"] ?? 0),
-                        "Weekly Sessions" => ($data["personal_stats"]["weekly_sessions"] ?? 0),
-                        "Completion Rate" => ($data["personal_stats"]["completion_rate"] ?? 0) . "%",
-                        "Average Attendance" => ($data["personal_stats"]["avg_attendance"] ?? 0) . "%"
-                    ],
-                    "My Schedule" => [
-                        "Calendar Events" => count($data["calendar_events"] ?? []) . " upcoming sessions",
-                        "Calendar Style" => "7-day grid with event dots"
-                    ]
-                ],
-                "css_check" => [
-                    "dashboard_widgets_css_exists" => file_exists(public_path("css/dashboard-widgets.css")),
-                    "css_file_size" => file_exists(public_path("css/dashboard-widgets.css")) ? 
-                        filesize(public_path("css/dashboard-widgets.css")) . " bytes" : "File not found"
-                ]
-            ], JSON_PRETTY_PRINT);
-        } else {
-            return response()->json(["status" => "error", "message" => "Dashboard not returning view"]);
+            // Calculate attendance
+            $attendanceAvg = $trainee->getOverallAttendanceAverage();
+            if ($attendanceAvg > 0) {
+                $totalAttendance += $attendanceAvg;
+                $traineesWithAttendance++;
+            }
         }
+        
+        $avgProgress = $traineesWithProgress > 0 ? round($totalProgress / $traineesWithProgress, 1) : 0;
+        $avgAttendance = $traineesWithAttendance > 0 ? round($totalAttendance / $traineesWithAttendance, 1) : 0;
+        
+        echo "Average progress: " . $avgProgress . "%<br>";
+        echo "Average attendance: " . $avgAttendance . "%<br>";
+        echo "Trainees with progress: " . $traineesWithProgress . "<br>";
+        echo "Trainees with attendance: " . $traineesWithAttendance . "<br>";
+        
+        // Count below threshold
+        $belowThreshold = $trainees->filter(function($trainee) {
+            $attendanceAvg = $trainee->getOverallAttendanceAverage();
+            return $attendanceAvg > 0 && $attendanceAvg < 50;
+        })->count();
+        
+        echo "Below 50% attendance: " . $belowThreshold . "<br>";
+        
+        $stats = [
+            'total' => $trainees->count(),
+            'active' => $activeTrainees,
+            'enrolled' => $enrolledTrainees,
+            'avg_progress' => $avgProgress,
+            'avg_attendance' => $avgAttendance,
+            'below_threshold' => $belowThreshold
+        ];
+        
+        echo "<br>Final stats array:<br>";
+        echo "<pre>" . print_r($stats, true) . "</pre>";
+        
     } catch (Exception $e) {
-        return response()->json([
-            "status" => "error", 
-            "message" => $e->getMessage(),
-            "file" => $e->getFile(),
-            "line" => $e->getLine()
-        ]);
+        echo "Error: " . $e->getMessage() . "<br>";
+        echo "Trace: " . $e->getTraceAsString();
     }
 });
-?>

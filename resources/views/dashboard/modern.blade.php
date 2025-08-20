@@ -473,7 +473,7 @@
                                 'sublabel' => 'Activities I created/teach',
                                 'trend_icon' => 'fas fa-lightbulb',
                                 'trend_text' => $personal_stats['user_activities'] > 0 ? 'Active Educator' : 'Ready to Create',
-                                'color' => 'primary'
+                                'color' => 'info'
                             ],
                             [
                                 'icon' => 'fas fa-calendar-day',
@@ -491,7 +491,7 @@
                                 'sublabel' => 'Scheduled sessions conducted',
                                 'trend_icon' => ($personal_stats['completion_rate'] ?? 0) >= 85 ? 'fas fa-award' : 'fas fa-chart-line',
                                 'trend_text' => ($personal_stats['completion_rate'] ?? 0) >= 85 ? 'Excellent' : 'Good Progress',
-                                'color' => 'info'
+                                'color' => 'primary'
                             ],
                             [
                                 'icon' => 'fas fa-user-graduate',

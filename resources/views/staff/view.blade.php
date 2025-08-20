@@ -572,7 +572,7 @@ $(document).ready(function() {
         markAttendanceBtn.addEventListener('click', function() {
             const userId = this.getAttribute('data-user-id');
             const userName = this.getAttribute('data-user-name');
-            const encryptedId = '{{ $staffMember->encrypted_id ?? \\App\\Helpers\\EncryptionHelper::generateEncryptedId($staffMember->id) }}';
+            const encryptedId = '{{ $staffMember->encrypted_id ?? \App\Helpers\EncryptionHelper::generateEncryptedId($staffMember->id) }}';
             
             // Set user data
             document.getElementById('attendanceUserId').value = userId;

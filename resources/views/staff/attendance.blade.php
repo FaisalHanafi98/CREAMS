@@ -428,12 +428,23 @@
                                     </td>
                                     <td>{{ \Carbon\Carbon::parse($record->attendance_date)->format('l') }}</td>
                                     <td>
-                                        <strong>{{ \Carbon\Carbon::parse($record->attendance_time)->format('g:i A') }}</strong>
+                                        @if($record->check_in_time)
+                                            <strong>{{ \Carbon\Carbon::parse($record->check_in_time)->format('g:i A') }}</strong>
+                                            @if($record->check_out_time)
+                                                - {{ \Carbon\Carbon::parse($record->check_out_time)->format('g:i A') }}
+                                            @endif
+                                        @else
+                                            <span class="text-muted">N/A</span>
+                                        @endif
                                     </td>
                                     <td>
-                                        <span class="badge badge-{{ $record->attendance_type === 'check_in' ? 'success' : 'info' }}">
-                                            {{ ucfirst(str_replace('_', ' ', $record->attendance_type)) }}
-                                        </span>
+                                        @if($record->check_in_time && $record->check_out_time)
+                                            <span class="badge badge-success">Full Day</span>
+                                        @elseif($record->check_in_time)
+                                            <span class="badge badge-info">Check In Only</span>
+                                        @else
+                                            <span class="badge badge-warning">Leave</span>
+                                        @endif
                                     </td>
                                     <td>
                                         <span class="status-badge status-{{ strtolower($record->status) }}">
@@ -441,13 +452,13 @@
                                         </span>
                                     </td>
                                     <td>
-                                        @if($record->marked_by_email)
-                                            {{ $record->marked_by_email }}
+                                        @if($record->marked_by_user_id)
+                                            <span class="text-muted">Admin</span>
                                         @else
                                             <span class="text-muted">Self</span>
                                         @endif
                                     </td>
-                                    <td>{{ $record->remarks ?? 'No remarks' }}</td>
+                                    <td>{{ $record->notes ?? 'No notes' }}</td>
                                 </tr>
                             @endforeach
                         @else
@@ -478,47 +489,261 @@
                 <i class="fas fa-file-export"></i>Export Report
             </button>
 
-            <button class="btn btn-secondary" onclick="markAttendance()">
+            <button type="button" class="btn btn-secondary" id="markAttendanceBtn" data-user-id="{{ $staffMember->id }}" data-user-name="{{ $staffMember->name }}">
                 <i class="fas fa-clock"></i>Mark Attendance
             </button>
             @endif
         </div>
     </div>
 </div>
+
+<!-- Mark Attendance Modal -->
+<div class="modal fade" id="markAttendanceModal" tabindex="-1" aria-labelledby="markAttendanceModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="markAttendanceModalLabel">
+                    <i class="fas fa-clock mr-2"></i>Mark Attendance
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="attendanceStatusAlert" class="alert" style="display: none;"></div>
+                
+                <form id="attendanceForm">
+                    <input type="hidden" id="attendanceUserId" name="user_id">
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="attendanceStatus" class="form-label fw-bold">Status</label>
+                            <select class="form-select" id="attendanceStatus" name="status" required>
+                                <option value="">Select Status</option>
+                                <option value="present">Present</option>
+                                <option value="absent">Absent</option>
+                                <option value="late">Late</option>
+                                <option value="sick_leave">Sick Leave</option>
+                                <option value="emergency_leave">Emergency Leave</option>
+                                <option value="authorized_leave">Authorized Leave</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="attendanceType" class="form-label fw-bold">Type</label>
+                            <select class="form-select" id="attendanceType" name="attendance_type" required>
+                                <option value="">Select Type</option>
+                                <option value="check_in">Check In</option>
+                                <option value="check_out">Check Out</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="attendanceRemarks" class="form-label fw-bold">Remarks (Optional)</label>
+                        <textarea class="form-control" id="attendanceRemarks" name="remarks" rows="3" placeholder="Add any additional notes..."></textarea>
+                    </div>
+                    
+                    <div class="border-top pt-3">
+                        <h6 class="fw-bold mb-2">Attendance Information</h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <small class="text-muted d-block">Date:</small>
+                                <span class="fw-bold" id="attendanceDate"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <small class="text-muted d-block">Time:</small>
+                                <span class="fw-bold" id="attendanceTime"></span>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                    <i class="fas fa-times mr-2"></i>Cancel
+                </button>
+                <button type="button" class="btn btn-primary" id="submitAttendance">
+                    <i class="fas fa-check mr-2"></i>Mark Attendance
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 @endsection
 
 @section('scripts')
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-document.addEventListener('DOMContentLoaded', function() {
+$(document).ready(function() {
+    const markAttendanceBtn = document.getElementById('markAttendanceBtn');
+    const attendanceForm = document.getElementById('attendanceForm');
+    const submitBtn = document.getElementById('submitAttendance');
+    
+    if (markAttendanceBtn) {
+        // Update time display every second
+        function updateDateTime() {
+            const now = new Date();
+            document.getElementById('attendanceDate').textContent = now.toLocaleDateString('en-MY', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+            document.getElementById('attendanceTime').textContent = now.toLocaleTimeString('en-MY', {
+                hour12: false,
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+        }
+        
+        // Mark Attendance Button Click
+        markAttendanceBtn.addEventListener('click', function() {
+            console.log('Mark Attendance button clicked');
+            const userId = this.getAttribute('data-user-id');
+            const userName = this.getAttribute('data-user-name');
+            const encryptedId = '{{ $staffMember->encrypted_id }}';
+            
+            console.log('User ID:', userId);
+            console.log('User Name:', userName);
+            console.log('Encrypted ID:', encryptedId);
+            
+            // Set user data
+            document.getElementById('attendanceUserId').value = userId;
+            document.getElementById('markAttendanceModalLabel').innerHTML = 
+                `<i class="fas fa-clock mr-2"></i>Mark Attendance - ${userName}`;
+            
+            // Update date/time
+            updateDateTime();
+            setInterval(updateDateTime, 1000);
+            
+            // Reset form
+            attendanceForm.reset();
+            document.getElementById('attendanceUserId').value = userId;
+            showAlert('', '', false);
+            
+            // Check today's status using encrypted ID
+            fetch(`/centres/attendance/status/${encryptedId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        let statusHtml = '<div class="alert alert-info"><h6>Today\'s Status</h6>';
+                        
+                        if (data.has_checked_in) {
+                            statusHtml += '<span class="badge bg-success me-2">Checked In</span>';
+                        }
+                        if (data.has_checked_out) {
+                            statusHtml += '<span class="badge bg-warning">Checked Out</span>';
+                        }
+                        if (!data.has_checked_in && !data.has_checked_out) {
+                            statusHtml += '<span class="badge bg-secondary">No attendance marked</span>';
+                        }
+                        
+                        statusHtml += '</div>';
+                        showAlert(statusHtml, 'info', true);
+                        
+                        // Pre-select appropriate type
+                        if (!data.has_checked_in) {
+                            document.getElementById('attendanceType').value = 'check_in';
+                        } else if (!data.has_checked_out) {
+                            document.getElementById('attendanceType').value = 'check_out';
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Error checking status:', error);
+                });
+            
+            $('#markAttendanceModal').modal('show');
+        });
+        
+        // Submit Attendance
+        submitBtn.addEventListener('click', function() {
+            const formData = new FormData(attendanceForm);
+            
+            // Validate required fields
+            if (!formData.get('status') || !formData.get('attendance_type')) {
+                showAlert('Please fill in all required fields.', 'danger', true);
+                return;
+            }
+            
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Marking...';
+            
+            // Submit attendance
+            fetch('/centres/attendance/mark', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    'Accept': 'application/json'
+                },
+                body: formData
+            })
+            .then(response => {
+                console.log('Response status:', response.status);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Response data:', data);
+                if (data.success) {
+                    showAlert(data.message, 'success', true);
+                    setTimeout(() => {
+                        $('#markAttendanceModal').modal('hide');
+                        location.reload(); // Refresh to show updated status
+                    }, 1500);
+                } else {
+                    showAlert(data.message || 'Failed to mark attendance.', 'danger', true);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showAlert(`An error occurred: ${error.message}`, 'danger', true);
+            })
+            .finally(() => {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-check mr-2"></i>Mark Attendance';
+            });
+        });
+        
+        function showAlert(message, type, show) {
+            const alertDiv = document.getElementById('attendanceStatusAlert');
+            if (show && message) {
+                alertDiv.className = `alert alert-${type}`;
+                alertDiv.innerHTML = message;
+                alertDiv.style.display = 'block';
+            } else {
+                alertDiv.style.display = 'none';
+            }
+        }
+    }
+    
     // Month filter functionality
     const monthFilter = document.getElementById('monthFilter');
     if (monthFilter) {
         monthFilter.addEventListener('change', function() {
-            // This would typically reload the page with the selected month
             console.log('Filter changed to:', this.value);
         });
     }
+    
+    // Add hover effects to stat cards
+    document.querySelectorAll('.stat-card').forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-10px) scale(1.02)';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(-5px) scale(1)';
+        });
+    });
 });
 
 // Export attendance function
 function exportAttendance() {
     alert('Staff attendance report export functionality would be implemented here.');
 }
-
-// Mark attendance function
-function markAttendance() {
-    alert('Quick attendance marking functionality would be implemented here.');
-}
-
-// Add hover effects to stat cards
-document.querySelectorAll('.stat-card').forEach(card => {
-    card.addEventListener('mouseenter', function() {
-        this.style.transform = 'translateY(-10px) scale(1.02)';
-    });
-    
-    card.addEventListener('mouseleave', function() {
-        this.style.transform = 'translateY(-5px) scale(1)';
-    });
-});
 </script>
 @endsection

@@ -215,7 +215,7 @@ class CentreController extends Controller
             $validated = $request->validate([
                 'centre_name' => 'required|string|max:255|unique:centres,centre_name,' . $centre->centre_id . ',centre_id',
                 'centre_description' => 'nullable|string',
-                'centre_address' => 'required|string',
+                'address' => 'required|string',
                 'centre_phone' => 'nullable|string|max:20',
                 'centre_email' => 'nullable|email|max:255',
                 'centre_capacity' => 'required|string|max:10',
@@ -326,7 +326,7 @@ class CentreController extends Controller
             ->join('activities', 'activity_sessions.activity_id', '=', 'activities.id')
             ->where('activities.centre_id', $centreId)
             ->where('activity_sessions.session_status', 'scheduled')
-            ->where('activity_sessions.scheduled_date', '>=', now())
+            ->where('activity_sessions.session_date', '>=', now())
             ->count();
     }
 

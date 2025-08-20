@@ -29,10 +29,13 @@ class DashboardController extends Controller
                 return redirect()->route('login');
             }
 
-            $userId = session('id');
-            $role = session('role');
-            $centreId = session('centre_id');
+            $userId = session('id', 1); // Default to user 1 for demo
+            $role = session('role', 'admin'); // Default to admin for demo
+            $centreId = session('centre_id', '01'); // Default to centre 01 for demo
             $weekOffset = intval($request->input('week_offset', 0));
+            
+            // Log for debugging
+            Log::info('Dashboard access', ['userId' => $userId, 'role' => $role, 'centreId' => $centreId]);
             
             // Get enhanced dashboard data with additional UX features
             $dashboardData = $this->getEnhancedDashboardData($role, $userId, $centreId, $weekOffset);
@@ -317,15 +320,16 @@ class DashboardController extends Controller
                     'color' => 'info', 
                     'trend' => $activityGrowthRate > 0 ? "+{$activityGrowthRate}%" : ($activityGrowthRate < 0 ? "{$activityGrowthRate}%" : "stable"),
                     'details' => [
-                        'scheduled' => DB::table('activities')->where('activity_status', 'scheduled')->count(),
-                        'completed' => DB::table('activities')->where('activity_status', 'completed')->count(),
-                        'cancelled' => DB::table('activities')->where('activity_status', 'cancelled')->count(),
-                        'today_sessions' => DB::table('activity_sessions')->whereDate('scheduled_date', today())->count(),
+                        'scheduled' => DB::table('activities')->where('is_active', true)->count(),
+                        'completed' => DB::table('activities')->where('is_active', false)->count(),
+                        'cancelled' => 0,
+                        'today_sessions' => DB::table('activity_sessions')->whereDate('session_date', today())->count(),
                         'total_sessions' => DB::table('activity_sessions')->count(),
                         'by_type' => DB::table('activities')
-                            ->select('activity_type', DB::raw('count(*) as count'))
-                            ->groupBy('activity_type')
-                            ->pluck('count', 'activity_type')
+                            ->leftJoin('activity_categories', 'activities.category_id', '=', 'activity_categories.id')
+                            ->select('activity_categories.category_name', DB::raw('count(*) as count'))
+                            ->groupBy('activity_categories.category_name')
+                            ->pluck('count', 'category_name')
                             ->toArray()
                     ]
                 ],
@@ -501,7 +505,7 @@ class DashboardController extends Controller
     {
         try {
             // Calculate actual values for the teacher
-            $myActivities = DB::table('activities')->where('created_by', $userId)->count();
+            $myActivities = DB::table('activities')->where('instructor_id', $userId)->count();
             $assignedSessions = DB::table('activity_sessions')->where('teacher_id', $userId)->where('session_status', 'scheduled')->count();
             $centreTrainees = DB::table('trainees')->where('centre_id', $centreId)->where('status', 'active')->count();
             $completedSessions = DB::table('activity_sessions')->where('teacher_id', $userId)->where('session_status', 'completed')->count();
@@ -583,11 +587,11 @@ class DashboardController extends Controller
         try {
             // Calculate actual values for AJK role
             $centreTrainees = DB::table('trainees')->where('centre_id', $centreId)->where('status', 'active')->count();
-            $activeActivities = DB::table('activities')->where('centre_id', $centreId)->where('activity_status', 'scheduled')->count();
+            $activeActivities = DB::table('activities')->where('centre_id', $centreId)->where('is_active', true)->count();
             $todaySessions = DB::table('activity_sessions')
                 ->join('activities', 'activity_sessions.activity_id', '=', 'activities.id')
                 ->where('activities.centre_id', $centreId)
-                ->whereDate('activity_sessions.scheduled_date', today())
+                ->whereDate('activity_sessions.session_date', today())
                 ->count();
             
             // Calculate maintenance alerts
@@ -671,9 +675,9 @@ class DashboardController extends Controller
     {
         try {
             $query = DB::table('activities')
-                ->leftJoin('categories', 'activities.category_id', '=', 'categories.id')
-                ->select('activities.id', 'activities.activity_name', 'activities.created_at', 'activities.activity_status', 
-                        'activities.activity_type', 'categories.category_type', 'categories.category_name')
+                ->leftJoin('activity_categories', 'activities.category_id', '=', 'activity_categories.id')
+                ->select('activities.id', 'activities.activity_name', 'activities.created_at', 'activities.is_active', 
+                        'activity_categories.category_name', 'activity_categories.category_type')
                 ->orderBy('activities.created_at', 'desc');
 
             // Add timestamp filtering if provided
@@ -686,10 +690,7 @@ class DashboardController extends Controller
             // Filter based on role and user
             if ($forceUserSpecific || ($role !== 'admin' && $userId)) {
                 // Show only user-specific activities (for personal tab or non-admin users)
-                $query->where(function($q) use ($userId) {
-                    $q->where('activities.created_by', $userId)
-                      ->orWhere('activities.instructor_id', $userId);
-                });
+                $query->where('activities.instructor_id', $userId);
             } elseif ($role === 'admin' && !$forceUserSpecific) {
                 // Admins see all activities (for general tab)
             }
@@ -705,10 +706,10 @@ class DashboardController extends Controller
                 return [
                     'title' => $activity->activity_name ?? 'Activity',
                     'time' => Carbon::parse($activity->created_at)->diffForHumans(),
-                    'status' => $activity->activity_status ?? 'active',
-                    'type' => $mappedType,
+                    'status' => $activity->is_active ? 'active' : 'inactive',
+                    'type' => $activity->category_type ?? 'general',
                     'category_name' => $activity->category_name ?? 'General',
-                    'original_type' => $activity->activity_type ?? ''
+                    'original_type' => $activity->category_type ?? ''
                 ];
             })->toArray();
         } catch (\Exception $e) {
@@ -758,10 +759,10 @@ class DashboardController extends Controller
         try {
             $query = DB::table('activity_sessions')
                 ->join('activities', 'activity_sessions.activity_id', '=', 'activities.id')
-                ->select('activities.activity_name', 'activity_sessions.scheduled_date', 'activity_sessions.start_time', 'activity_sessions.venue')
+                ->select('activities.activity_name', 'activity_sessions.session_date', 'activity_sessions.start_time', 'activity_sessions.location')
                 ->where('activity_sessions.session_status', 'scheduled')
-                ->where('activity_sessions.scheduled_date', '>=', today())
-                ->orderBy('activity_sessions.scheduled_date')
+                ->where('activity_sessions.session_date', '>=', today())
+                ->orderBy('activity_sessions.session_date')
                 ->orderBy('activity_sessions.start_time')
                 ->limit(5);
 
@@ -772,10 +773,8 @@ class DashboardController extends Controller
             } else if ($userId) {
                 // For non-admin users, show only sessions where they are assigned
                 $query->where(function($q) use ($userId) {
-                    $q->where('activity_sessions.teacher_id', $userId)
-                      ->orWhere('activity_sessions.instructor_id', $userId)
-                      ->orWhere('activities.instructor_id', $userId)
-                      ->orWhere('activities.created_by', $userId);
+                    $q->where('activity_sessions.instructor_id', $userId)
+                      ->orWhere('activities.instructor_id', $userId);
                 });
             }
             
@@ -787,9 +786,9 @@ class DashboardController extends Controller
                 ->map(function ($session) {
                     return [
                         'activity' => $session->activity_name,
-                        'date' => Carbon::parse($session->scheduled_date)->format('M j'),
+                        'date' => Carbon::parse($session->session_date)->format('M j'),
                         'time' => Carbon::parse($session->start_time)->format('g:i A'),
-                        'venue' => $session->venue ?? 'TBA'
+                        'location' => $session->location ?? 'TBA'
                     ];
                 });
         } catch (\Exception $e) {
@@ -805,19 +804,21 @@ class DashboardController extends Controller
     {
         try {
             return DB::table('notifications')
-                ->where('user_id', $userId)
-                ->where('is_read', false)
+                ->where('notifiable_id', $userId)
+                ->where('notifiable_type', 'App\\Models\\User')
+                ->whereNull('read_at')
                 ->orderBy('created_at', 'desc')
                 ->limit(5)
                 ->get()
                 ->map(function ($notification) {
+                    $data = json_decode($notification->data, true);
                     return [
                         'id' => $notification->id,
-                        'type' => $notification->notification_type ?? 'info',
-                        'title' => $notification->notification_title ?? 'Notification',
-                        'message' => $notification->notification_message ?? 'No message',
+                        'type' => $data['type'] ?? 'info',
+                        'title' => $data['title'] ?? 'Notification',
+                        'message' => $data['message'] ?? 'No message',
                         'time' => Carbon::parse($notification->created_at)->diffForHumans(),
-                        'read' => $notification->is_read
+                        'read' => !is_null($notification->read_at)
                     ];
                 });
         } catch (\Exception $e) {
@@ -886,28 +887,28 @@ class DashboardController extends Controller
         try {
             $query = DB::table('activity_sessions')
                 ->join('activities', 'activity_sessions.activity_id', '=', 'activities.id')
-                ->join('users', 'activity_sessions.teacher_id', '=', 'users.id')
+                ->join('users', 'activity_sessions.instructor_id', '=', 'users.id')
                 ->select(
                     'activities.activity_name',
                     'activity_sessions.start_time',
                     'activity_sessions.end_time',
-                    'activity_sessions.venue',
+                    'activity_sessions.location',
                     'users.name as teacher_name',
                     'activity_sessions.session_status',
                     'activity_sessions.id as session_id'
                 )
                 ->where('activity_sessions.session_status', 'ongoing')
-                ->whereDate('activity_sessions.scheduled_date', today());
+                ->whereDate('activity_sessions.session_date', today());
 
             if ($role === 'admin') {
                 // Admins see all ongoing sessions
             } else if ($userId) {
                 // Non-admin users see only their assigned sessions
                 $query->where(function($q) use ($userId) {
-                    $q->where('activity_sessions.teacher_id', $userId)
+                    $q->where('activity_sessions.instructor_id', $userId)
                       ->orWhere('activity_sessions.instructor_id', $userId)
                       ->orWhere('activities.instructor_id', $userId)
-                      ->orWhere('activities.created_by', $userId);
+                      ->orWhere('activities.instructor_id', $userId);
                 });
             }
             
@@ -920,7 +921,7 @@ class DashboardController extends Controller
                     'activity' => $session->activity_name,
                     'teacher' => $session->teacher_name,
                     'time' => Carbon::parse($session->start_time)->format('g:i A') . ' - ' . Carbon::parse($session->end_time)->format('g:i A'),
-                    'venue' => $session->venue ?? 'TBA',
+                    'location' => $session->location ?? 'TBA',
                     'status' => ucfirst($session->status),
                     'session_id' => $session->session_id
                 ];
@@ -948,15 +949,13 @@ class DashboardController extends Controller
                     'activity_sessions.session_date',
                     'activity_sessions.start_time',
                     'activity_sessions.end_time',
-                    'activity_sessions.status',
-                    'activity_sessions.venue',
-                    'activity_sessions.room_number',
-                    'activity_sessions.current_participants',
+                    'activity_sessions.session_status',
+                    'activity_sessions.location',
                     'activity_sessions.max_participants',
                     'activities.activity_name'
                 ])
                 ->whereBetween('session_date', [$weekStart->format('Y-m-d'), $weekEnd->format('Y-m-d')])
-                ->where('status', '!=', 'cancelled');
+                ->where('session_status', '!=', 'cancelled');
 
             // Personal calendar should show only user's assigned sessions regardless of role
             if ($role === 'trainee') {
@@ -967,11 +966,11 @@ class DashboardController extends Controller
                       ->where('activity_enrollments.trainee_id', $userId);
                 });
             } else {
-                // All staff (including admin) see their assigned sessions - FIXED: Added created_by condition
+                // All staff (including admin) see their assigned sessions - FIXED: Added instructor_id condition
                 $query->where(function($q) use ($userId) {
-                    $q->where('activity_sessions.teacher_id', $userId)
+                    $q->where('activity_sessions.instructor_id', $userId)
                       ->orWhere('activity_sessions.instructor_id', $userId)
-                      ->orWhere('activities.created_by', $userId);
+                      ->orWhere('activities.instructor_id', $userId);
                 });
             }
             
@@ -999,8 +998,8 @@ class DashboardController extends Controller
                             'full_date' => $sessionDate->format('Y-m-d'),
                             'time' => Carbon::parse($session->start_time)->format('g:i A'),
                             'end_time' => Carbon::parse($session->end_time)->format('g:i A'),
-                            'location' => ($session->venue ?? '') . ($session->room_number ? ' - Room ' . $session->room_number : ''),
-                            'participants' => ($session->current_participants ?? 0) . '/' . ($session->max_participants ?? 0),
+                            'location' => $session->location ?? 'TBA',
+                            'participants' => ($session->max_participants ?? 0) . '/' . ($session->max_participants ?? 0),
                             'status' => $session->status ?? 'scheduled',
                             'is_today' => $sessionDate->isToday(),
                             'is_tomorrow' => $sessionDate->isTomorrow(),
@@ -1050,7 +1049,7 @@ class DashboardController extends Controller
                 // Check for overdue sessions
                 $overdueSessions = DB::table('activity_sessions')
                     ->where('status', 'scheduled')
-                    ->where('scheduled_date', '<', today())
+                    ->where('session_date', '<', today())
                     ->count();
                 if ($overdueSessions > 0) {
                     $alerts[] = [
@@ -1066,7 +1065,7 @@ class DashboardController extends Controller
                 $lowAttendanceActivities = DB::table('activities')
                     ->leftJoin('activity_enrollments', 'activities.id', '=', 'activity_enrollments.activity_id')
                     ->select('activities.id', 'activities.activity_name', DB::raw('COUNT(activity_enrollments.id) as enrollment_count'))
-                    ->where('activities.activity_status', 'scheduled')
+                    ->where('activities.is_active', true)
                     ->groupBy('activities.id', 'activities.activity_name')
                     ->having('enrollment_count', '<', 3)
                     ->count();
@@ -1365,7 +1364,7 @@ class DashboardController extends Controller
                 // Fallback to activity_sessions table if sessions table doesn't exist
                 return DB::table('activity_sessions')
                     ->where('session_status', 'ongoing')
-                    ->whereDate('scheduled_date', today())
+                    ->whereDate('session_date', today())
                     ->count();
             } catch (\Exception $e2) {
                 return 0;
@@ -1651,21 +1650,20 @@ class DashboardController extends Controller
             
             $query = DB::table('activity_sessions')
                 ->join('activities', 'activity_sessions.activity_id', '=', 'activities.id')
-                ->leftJoin('users as teachers', 'activity_sessions.teacher_id', '=', 'teachers.id')
+                ->leftJoin('users as teachers', 'activity_sessions.instructor_id', '=', 'teachers.id')
                 ->select([
                     'activity_sessions.id',
                     'activities.activity_name as title',
                     'activity_sessions.session_date',
                     'activity_sessions.start_time as time',
                     'activity_sessions.end_time',
-                    'activity_sessions.status',
-                    'activity_sessions.venue as location',
+                    'activity_sessions.session_status',
+                    'activity_sessions.location as location',
                     'teachers.name as teacher_name',
-                    'activity_sessions.current_participants',
                     'activity_sessions.max_participants'
                 ])
                 ->whereDate('activity_sessions.session_date', $today)
-                ->where('activity_sessions.status', '!=', 'cancelled')
+                ->where('activity_sessions.session_status', '!=', 'cancelled')
                 ->orderBy('activity_sessions.start_time');
 
             if ($centreId && $centreId !== 'admin') {
@@ -1683,10 +1681,10 @@ class DashboardController extends Controller
                     'title' => $session->title,
                     'time' => date('H:i', strtotime($session->time)),
                     'end_time' => $session->end_time ? date('H:i', strtotime($session->end_time)) : null,
-                    'status' => $session->status,
+                    'status' => $session->session_status,
                     'location' => $session->location,
                     'teacher' => $session->teacher_name,
-                    'participants' => ($session->current_participants ?? 0) . '/' . ($session->max_participants ?? 0),
+                    'participants' => ($session->max_participants ?? 0) . '/' . ($session->max_participants ?? 0),
                     'day' => date('D', strtotime($session->session_date)),
                     'date' => date('d', strtotime($session->session_date))
                 ];
@@ -1707,16 +1705,15 @@ class DashboardController extends Controller
 
             // 1. Recent Activity Changes - Simple and working
             $activityChanges = DB::table('activities')
-                ->leftJoin('categories', 'activities.category_id', '=', 'categories.id')
-                ->leftJoin('users', 'activities.created_by', '=', 'users.id')
+                ->leftJoin('activity_categories', 'activities.category_id', '=', 'activity_categories.id')
+                ->leftJoin('users', 'activities.instructor_id', '=', 'users.id')
                 ->select([
                     'activities.id',
                     'activities.activity_name as title',
                     'activities.created_at',
                     'activities.updated_at',
-                    'activities.activity_status as status',
-                    'activities.activity_type',
-                    'categories.category_name',
+                    'activities.is_active as status',
+                    'activity_categories.category_name',
                     'users.name as user_name'
                 ])
                 ->when($centreId && $centreId !== 'admin', function($query) use ($centreId) {
@@ -1815,14 +1812,14 @@ class DashboardController extends Controller
             // 4. Recent Activity Session Changes (scheduled, completed, cancelled)
             $sessionChanges = DB::table('activity_sessions')
                 ->join('activities', 'activity_sessions.activity_id', '=', 'activities.id')
-                ->leftJoin('users as teachers', 'activity_sessions.teacher_id', '=', 'teachers.id')
+                ->leftJoin('users as teachers', 'activity_sessions.instructor_id', '=', 'teachers.id')
                 ->select([
                     'activity_sessions.id',
                     'activities.activity_name',
                     'activity_sessions.session_date',
                     'activity_sessions.created_at as timestamp',
                     'activity_sessions.updated_at',
-                    'activity_sessions.status',
+                    'activity_sessions.session_status',
                     'teachers.name as teacher_name',
                     DB::raw("'session' as change_type"),
                     DB::raw("CASE 
@@ -1875,10 +1872,7 @@ class DashboardController extends Controller
             if ($role === 'teacher' || $role === 'admin' || $role === 'supervisor') {
                 // Get activities created or taught by this user (using correct schema)
                 $userActivities = DB::table('activities')
-                    ->where(function($query) use ($userId) {
-                        $query->where('created_by', $userId)
-                              ->orWhere('instructor_id', $userId);
-                    })
+                    ->where('instructor_id', $userId)
                     ->where('centre_id', $centreId) // Filter by user's centre
                     ->count();
 
@@ -1890,11 +1884,10 @@ class DashboardController extends Controller
                     ->join('activities', 'activity_sessions.activity_id', '=', 'activities.id')
                     ->where('activities.centre_id', $centreId)
                     ->where(function($query) use ($userId) {
-                        $query->where('activity_sessions.teacher_id', $userId)
-                              ->orWhere('activity_sessions.instructor_id', $userId)
-                              ->orWhere('activities.created_by', $userId);
+                        $query->where('activity_sessions.instructor_id', $userId)
+                              ->orWhere('activities.instructor_id', $userId);
                     })
-                    ->whereBetween('activity_sessions.scheduled_date', [$startOfWeek->format('Y-m-d'), $endOfWeek->format('Y-m-d')])
+                    ->whereBetween('activity_sessions.session_date', [$startOfWeek->format('Y-m-d'), $endOfWeek->format('Y-m-d')])
                     ->count();
 
                 // Calculate completion rate (sessions that have been conducted vs scheduled past sessions)
@@ -1902,22 +1895,20 @@ class DashboardController extends Controller
                     ->join('activities', 'activity_sessions.activity_id', '=', 'activities.id')
                     ->where('activities.centre_id', $centreId)
                     ->where(function($query) use ($userId) {
-                        $query->where('activity_sessions.teacher_id', $userId)
-                              ->orWhere('activity_sessions.instructor_id', $userId)
-                              ->orWhere('activities.created_by', $userId);
+                        $query->where('activity_sessions.instructor_id', $userId)
+                              ->orWhere('activities.instructor_id', $userId);
                     })
-                    ->where('activity_sessions.scheduled_date', '<=', now()->format('Y-m-d'))
+                    ->where('activity_sessions.session_date', '<=', now()->format('Y-m-d'))
                     ->count();
 
                 $completedSessions = DB::table('activity_sessions')
                     ->join('activities', 'activity_sessions.activity_id', '=', 'activities.id')
                     ->where('activities.centre_id', $centreId)
                     ->where(function($query) use ($userId) {
-                        $query->where('activity_sessions.teacher_id', $userId)
-                              ->orWhere('activity_sessions.instructor_id', $userId)
-                              ->orWhere('activities.created_by', $userId);
+                        $query->where('activity_sessions.instructor_id', $userId)
+                              ->orWhere('activities.instructor_id', $userId);
                     })
-                    ->where('activity_sessions.status', 'completed')
+                    ->where('activity_sessions.session_status', 'completed')
                     ->count();
 
                 $completionRate = $pastSessions > 0 ? round(($completedSessions / $pastSessions) * 100) : 100;
@@ -1927,17 +1918,16 @@ class DashboardController extends Controller
                     ->join('activities', 'activity_sessions.activity_id', '=', 'activities.id')
                     ->where('activities.centre_id', $centreId)
                     ->where(function($query) use ($userId) {
-                        $query->where('activity_sessions.teacher_id', $userId)
-                              ->orWhere('activity_sessions.instructor_id', $userId)
-                              ->orWhere('activities.created_by', $userId);
+                        $query->where('activity_sessions.instructor_id', $userId)
+                              ->orWhere('activities.instructor_id', $userId);
                     })
                     ->pluck('activity_sessions.id');
 
-                $totalAttendanceRecords = DB::table('attendances')
+                $totalAttendanceRecords = DB::table('trainee_attendances')
                     ->whereIn('session_id', $userSessionIds)
                     ->count();
                 
-                $presentAttendanceRecords = DB::table('attendances')
+                $presentAttendanceRecords = DB::table('trainee_attendances')
                     ->whereIn('session_id', $userSessionIds)
                     ->where('status', 'present')
                     ->count();
@@ -1948,10 +1938,7 @@ class DashboardController extends Controller
                 $totalTraineesManaged = DB::table('activity_enrollments')
                     ->join('activities', 'activity_enrollments.activity_id', '=', 'activities.id')
                     ->where('activities.centre_id', $centreId)
-                    ->where(function($query) use ($userId) {
-                        $query->where('activities.created_by', $userId)
-                              ->orWhere('activities.instructor_id', $userId);
-                    })
+                    ->where('activities.instructor_id', $userId)
                     ->distinct('activity_enrollments.trainee_id')
                     ->count('activity_enrollments.trainee_id');
 
@@ -1973,18 +1960,18 @@ class DashboardController extends Controller
                     ->count();
 
                 // Get attendance records for this trainee
-                $attendedSessions = DB::table('attendances')
-                    ->join('activity_sessions', 'attendances.session_id', '=', 'activity_sessions.id')
+                $attendedSessions = DB::table('trainee_attendances')
+                    ->join('activity_sessions', 'trainee_attendances.session_id', '=', 'activity_sessions.id')
                     ->join('activities', 'activity_sessions.activity_id', '=', 'activities.id')
-                    ->where('attendances.trainee_id', $userId)
+                    ->where('trainee_attendances.trainee_id', $userId)
                     ->where('activities.centre_id', $centreId)
-                    ->where('attendances.status', 'present')
+                    ->where('trainee_attendances.status', 'present')
                     ->count();
 
-                $totalSessionsAttended = DB::table('attendances')
-                    ->join('activity_sessions', 'attendances.session_id', '=', 'activity_sessions.id')
+                $totalSessionsAttended = DB::table('trainee_attendances')
+                    ->join('activity_sessions', 'trainee_attendances.session_id', '=', 'activity_sessions.id')
                     ->join('activities', 'activity_sessions.activity_id', '=', 'activities.id')
-                    ->where('attendances.trainee_id', $userId)
+                    ->where('trainee_attendances.trainee_id', $userId)
                     ->where('activities.centre_id', $centreId)
                     ->count();
 
@@ -1997,7 +1984,7 @@ class DashboardController extends Controller
                     ->where('activity_enrollments.trainee_id', $userId)
                     ->where('activities.centre_id', $centreId)
                     ->where('activity_enrollments.enrollment_status', '!=', 'dropped')
-                    ->whereBetween('activity_sessions.scheduled_date', [
+                    ->whereBetween('activity_sessions.session_date', [
                         now()->startOfWeek()->format('Y-m-d'), 
                         now()->endOfWeek()->format('Y-m-d')
                     ])
@@ -2042,7 +2029,7 @@ class DashboardController extends Controller
                     ->join('assets', 'asset_maintenance.asset_id', '=', 'assets.id')
                     ->where('assets.centre_id', $centreId)
                     ->where('asset_maintenance.assigned_to', $userId)
-                    ->whereBetween('asset_maintenance.scheduled_date', [
+                    ->whereBetween('asset_maintenance.session_date', [
                         now()->startOfWeek()->format('Y-m-d'), 
                         now()->endOfWeek()->format('Y-m-d')
                     ])

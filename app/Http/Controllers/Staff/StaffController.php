@@ -356,15 +356,17 @@ class StaffController extends Controller
     {
         try {
             // Get activities where this staff is assigned as teacher/instructor
+            // For admins, also show activities from their centre
             $staffActivities = Activity::with(['enrollments.trainee', 'sessions'])
                 ->where(function($query) use ($staffMember) {
-                    $query->where('created_by', $staffMember->id)
-                          ->orWhere('instructor_id', $staffMember->id)
-                          ->orWhereHas('sessions', function($q) use ($staffMember) {
-                              $q->where('teacher_id', $staffMember->id);
-                          });
+                    $query->where('instructor_id', $staffMember->id);
+                    
+                    // For admin roles, also include activities from their centre
+                    if ($staffMember->role === 'admin' && $staffMember->centre_id) {
+                        $query->orWhere('centre_id', $staffMember->centre_id);
+                    }
                 })
-                ->whereIn('activity_status', ['scheduled', 'ongoing', 'completed'])
+                ->where('is_active', true)
                 ->get();
             
             // Count unique trainees enrolled in activities where this staff is instructor
@@ -381,9 +383,17 @@ class StaffController extends Controller
             $activeSessions = 0;
             if (\Schema::hasTable('activity_sessions')) {
                 $activeSessions = \DB::table('activity_sessions')
-                    ->where('teacher_id', $staffMember->id)
-                    ->whereIn('session_status', ['scheduled', 'ongoing'])
-                    ->where('scheduled_date', '>=', now()->startOfMonth()) // Current month
+                    ->join('activities', 'activity_sessions.activity_id', '=', 'activities.id')
+                    ->where(function($query) use ($staffMember) {
+                        $query->where('activity_sessions.instructor_id', $staffMember->id);
+                        
+                        // For admin roles, also include sessions from their centre activities
+                        if ($staffMember->role === 'admin' && $staffMember->centre_id) {
+                            $query->orWhere('activities.centre_id', $staffMember->centre_id);
+                        }
+                    })
+                    ->whereIn('activity_sessions.session_status', ['scheduled', 'ongoing'])
+                    ->where('activity_sessions.session_date', '>=', now()->startOfMonth()) // Current month
                     ->count();
             }
 
@@ -486,10 +496,14 @@ class StaffController extends Controller
             if (\Schema::hasTable('activities')) {
                 $activities = \DB::table('activities')
                     ->where(function($query) use ($staffMember) {
-                        $query->where('created_by', $staffMember->id)
-                              ->orWhere('instructor_id', $staffMember->id);
+                        $query->where('instructor_id', $staffMember->id);
+                        
+                        // For admin roles, also include activities from their centre
+                        if ($staffMember->role === 'admin' && $staffMember->centre_id) {
+                            $query->orWhere('centre_id', $staffMember->centre_id);
+                        }
                     })
-                    ->whereIn('activity_status', ['scheduled', 'ongoing'])
+                    ->where('is_active', true)
                     ->get();
             }
 
@@ -497,21 +511,28 @@ class StaffController extends Controller
             if (\Schema::hasTable('activity_sessions')) {
                 $sessions = \DB::table('activity_sessions')
                     ->join('activities', 'activity_sessions.activity_id', '=', 'activities.id')
-                    ->leftJoin('categories', 'activities.category_id', '=', 'categories.id')
-                    ->where('activity_sessions.teacher_id', $staffMember->id)
+                    ->leftJoin('activity_categories', 'activities.category_id', '=', 'activity_categories.id')
+                    ->where(function($query) use ($staffMember) {
+                        $query->where('activity_sessions.instructor_id', $staffMember->id);
+                        
+                        // For admin roles, also include sessions from their centre activities
+                        if ($staffMember->role === 'admin' && $staffMember->centre_id) {
+                            $query->orWhere('activities.centre_id', $staffMember->centre_id);
+                        }
+                    })
                     ->whereIn('activity_sessions.session_status', ['scheduled', 'ongoing', 'completed'])
-                    ->where('activity_sessions.scheduled_date', '>=', now()->subDays(30)) // Show last 30 days
+                    ->where('activity_sessions.session_date', '>=', now()->subDays(30)) // Show last 30 days
                     ->select(
                         'activity_sessions.*',
                         'activities.activity_name',
                         'activities.category_id',
-                        'categories.category_name as category',
-                        'activity_sessions.scheduled_date',
+                        'activity_categories.category_name as category',
+                        'activity_sessions.session_date',
                         'activity_sessions.start_time',
                         'activity_sessions.end_time',
-                        'activity_sessions.venue'
+                        'activity_sessions.location'
                     )
-                    ->orderBy('activity_sessions.scheduled_date', 'desc')
+                    ->orderBy('activity_sessions.session_date', 'desc')
                     ->orderBy('activity_sessions.start_time', 'desc')
                     ->limit(20) // Limit to 20 recent sessions
                     ->get();
@@ -524,7 +545,11 @@ class StaffController extends Controller
                         $end = \Carbon\Carbon::parse($session->end_time);
                         $session->duration_minutes = $end->diffInMinutes($start);
                     }
-                    $session->enrolled_count = 0; // Will be calculated from enrollments if needed
+                    // Calculate actual enrolled count for this session's activity
+                    $session->enrolled_count = \DB::table('activity_enrollments')
+                        ->where('activity_id', $session->activity_id)
+                        ->whereIn('enrollment_status', ['enrolled', 'active'])
+                        ->count();
                     return $session;
                 });
             }
@@ -539,7 +564,7 @@ class StaffController extends Controller
                         $schedules = \DB::table('activity_schedules')
                             ->join('activities', 'activity_schedules.activity_id', '=', 'activities.id')
                             ->where('activities.instructor_id', $staffMember->id)
-                            ->orWhere('activities.created_by', $staffMember->id)
+                            // Use instructor_id only, created_by column doesn't exist
                             ->select('activity_schedules.*', 'activities.activity_name')
                             ->distinct()
                             ->orderBy('activity_schedules.start_date')
@@ -553,7 +578,7 @@ class StaffController extends Controller
                 // If no schedules from schedules table, create from activities
                 if ($schedules->isEmpty()) {
                     $activities = Activity::where('instructor_id', $staffMember->id)
-                        ->orWhere('created_by', $staffMember->id)
+                        // Use instructor_id only, created_by column doesn't exist
                         ->where('is_active', 1)
                         ->get();
                     
@@ -591,17 +616,17 @@ class StaffController extends Controller
                 
                 // Count today's sessions
                 $scheduleStats['today_sessions'] = $sessions->filter(function($session) {
-                    return \Carbon\Carbon::parse($session->scheduled_date)->isToday();
+                    return \Carbon\Carbon::parse($session->session_date)->isToday();
                 })->count();
                 
                 // Count this week's sessions
                 $scheduleStats['week_sessions'] = $sessions->filter(function($session) {
-                    return \Carbon\Carbon::parse($session->scheduled_date)->isCurrentWeek();
+                    return \Carbon\Carbon::parse($session->session_date)->isCurrentWeek();
                 })->count();
                 
                 // Calculate monthly hours (approximate)
                 $monthlyMinutes = $sessions->filter(function($session) {
-                    return \Carbon\Carbon::parse($session->scheduled_date)->isCurrentMonth();
+                    return \Carbon\Carbon::parse($session->session_date)->isCurrentMonth();
                 })->sum('duration_minutes');
                 $scheduleStats['month_hours'] = round($monthlyMinutes / 60, 1);
             }
@@ -657,10 +682,14 @@ class StaffController extends Controller
             if (\Schema::hasTable('activities')) {
                 $activitiesQuery = \DB::table('activities')
                     ->where(function($query) use ($staffMember) {
-                        $query->where('created_by', $staffMember->id)
-                              ->orWhere('instructor_id', $staffMember->id);
+                        $query->where('instructor_id', $staffMember->id);
+                        
+                        // For admin roles, also include activities from their centre
+                        if ($staffMember->role === 'admin' && $staffMember->centre_id) {
+                            $query->orWhere('centre_id', $staffMember->centre_id);
+                        }
                     })
-                    ->whereIn('activity_status', ['scheduled', 'ongoing']);
+                    ->where('is_active', true);
                 
                 // Add enrollment counts if table exists
                 if (\Schema::hasTable('activity_enrollments')) {
@@ -680,14 +709,14 @@ class StaffController extends Controller
                             
                             // Add category information
                             if ($activity->category_id) {
-                                $category = \DB::table('categories')->where('id', $activity->category_id)->first();
+                                $category = \DB::table('activity_categories')->where('id', $activity->category_id)->first();
                                 $activity->category = $category ? $category->category_name : null;
                             } else {
                                 $activity->category = null;
                             }
                             
                             // Add missing properties for view compatibility
-                            $requiredResources = $activity->required_resources;
+                            $requiredResources = $activity->required_resources ?? null;
                             if (is_string($requiredResources)) {
                                 $requiredResources = json_decode($requiredResources, true);
                             }
@@ -714,14 +743,14 @@ class StaffController extends Controller
                         
                         // Add category information
                         if ($activity->category_id) {
-                            $category = \DB::table('categories')->where('id', $activity->category_id)->first();
+                            $category = \DB::table('activity_categories')->where('id', $activity->category_id)->first();
                             $activity->category = $category ? $category->category_name : null;
                         } else {
                             $activity->category = null;
                         }
                         
                         // Add missing properties for view compatibility
-                        $requiredResources = $activity->required_resources;
+                        $requiredResources = $activity->required_resources ?? null;
                         if (is_string($requiredResources)) {
                             $requiredResources = json_decode($requiredResources, true);
                         }
@@ -787,16 +816,47 @@ class StaffController extends Controller
                     $trainees = \DB::table('trainees')
                         ->join('activity_enrollments', 'trainees.id', '=', 'activity_enrollments.trainee_id')
                         ->join('activities', 'activity_enrollments.activity_id', '=', 'activities.id')
-                        ->where('activities.created_by', $staffMember->id)
+                        ->where(function($query) use ($staffMember) {
+                            $query->where('activities.instructor_id', $staffMember->id);
+                            
+                            // For admin roles, also include activities from their centre
+                            if ($staffMember->role === 'admin' && $staffMember->centre_id) {
+                                $query->orWhere('activities.centre_id', $staffMember->centre_id);
+                            }
+                        })
                         ->whereIn('activity_enrollments.enrollment_status', ['enrolled', 'active'])
-                        ->select('trainees.*', 'activities.activity_name', 'activity_enrollments.enrollment_date', 'activity_enrollments.enrollment_status')
+                        ->select(
+                            'trainees.*', 
+                            'activities.activity_name', 
+                            'activity_enrollments.enrollment_date', 
+                            'activity_enrollments.enrollment_status',
+                            'trainees.trainee_first_name',
+                            'trainees.trainee_last_name',
+                            'trainees.trainee_id'
+                        )
                         ->distinct()
-                        ->get();
+                        ->get()
+                        ->map(function($trainee) {
+                            // Add computed name field for view compatibility
+                            $trainee->name = trim(($trainee->trainee_first_name ?? '') . ' ' . ($trainee->trainee_last_name ?? ''));
+                            if (empty(trim($trainee->name))) {
+                                $trainee->name = 'Unknown Trainee';
+                            }
+                            return $trainee;
+                        });
                 } else {
                     // Fallback: get trainees from same centre
                     $trainees = \DB::table('trainees')
                         ->where('centre_id', $staffMember->centre_id)
-                        ->get();
+                        ->get()
+                        ->map(function($trainee) {
+                            // Add computed name field for view compatibility
+                            $trainee->name = trim(($trainee->trainee_first_name ?? '') . ' ' . ($trainee->trainee_last_name ?? ''));
+                            if (empty(trim($trainee->name))) {
+                                $trainee->name = 'Unknown Trainee';
+                            }
+                            return $trainee;
+                        });
                 }
             }
 
@@ -867,7 +927,7 @@ class StaffController extends Controller
                 ->where('user_id', $staffMember->id)
                 ->where('attendance_date', '>=', now()->subDays(30))
                 ->orderBy('attendance_date', 'desc')
-                ->orderBy('attendance_time', 'desc')
+                ->orderBy('check_in_time', 'desc')
                 ->limit(50)
                 ->get();
 
@@ -926,8 +986,8 @@ class StaffController extends Controller
             // Count records by status (using the actual status field from database)
             $lateArrivals = $monthlyAttendances->where('status', 'late')->count();
             
-            // Count sick leaves (this status actually exists in the enum)
-            $sickLeaves = $monthlyAttendances->where('status', 'sick_leave')->count();
+            // Count leaves (using actual enum values)
+            $sickLeaves = $monthlyAttendances->where('status', 'leave')->count();
             
             // Calculate attendance rate based on present days vs working days
             $attendanceRate = $workingDaysThisMonth > 0 ? round(($presentDays / $workingDaysThisMonth) * 100, 1) : 0;
@@ -968,13 +1028,13 @@ class StaffController extends Controller
                 ->whereBetween('attendance_date', [$currentMonth->toDateString(), $endOfMonth->toDateString()])
                 ->get();
                 
-            // Count check-ins and check-outs (actual data from attendance_type column)
-            $totalCheckins = $monthlyAttendances->where('attendance_type', 'check_in')->count();
-            $totalCheckouts = $monthlyAttendances->where('attendance_type', 'check_out')->count();
+            // Count check-ins and check-outs (based on presence of times)
+            $totalCheckins = $monthlyAttendances->whereNotNull('check_in_time')->count();
+            $totalCheckouts = $monthlyAttendances->whereNotNull('check_out_time')->count();
             
-            // Count different leave types (actual statuses from the enum)
-            $authorizedLeaves = $monthlyAttendances->where('status', 'authorized_leave')->count();
-            $emergencyLeaves = $monthlyAttendances->where('status', 'emergency_leave')->count();
+            // Count different leave types (based on actual enum values)
+            $authorizedLeaves = $monthlyAttendances->where('status', 'leave')->count();
+            $emergencyLeaves = $monthlyAttendances->where('status', 'half_day')->count();
             
             return [
                 'total_checkins' => $totalCheckins,
@@ -1011,7 +1071,7 @@ class StaffController extends Controller
                 ->where('user_id', $staffId)
                 ->whereBetween('attendance_date', [$startOfWeek->toDateString(), $endOfWeek->toDateString()])
                 ->orderBy('attendance_date')
-                ->orderBy('attendance_time')
+                ->orderBy('check_in_time')
                 ->get();
                 
             $totalMinutes = 0;
@@ -1020,12 +1080,12 @@ class StaffController extends Controller
             $dailyRecords = $weeklyAttendances->groupBy('attendance_date');
             
             foreach ($dailyRecords as $date => $records) {
-                $checkIn = $records->where('attendance_type', 'check_in')->first();
-                $checkOut = $records->where('attendance_type', 'check_out')->first();
+                // Get the first record of the day (should be check in)
+                $dayRecord = $records->first();
                 
-                if ($checkIn && $checkOut) {
-                    $checkInTime = \Carbon\Carbon::parse($date . ' ' . $checkIn->attendance_time);
-                    $checkOutTime = \Carbon\Carbon::parse($date . ' ' . $checkOut->attendance_time);
+                if ($dayRecord && $dayRecord->check_in_time && $dayRecord->check_out_time) {
+                    $checkInTime = \Carbon\Carbon::parse($date . ' ' . $dayRecord->check_in_time);
+                    $checkOutTime = \Carbon\Carbon::parse($date . ' ' . $dayRecord->check_out_time);
                     
                     $dailyMinutes = $checkOutTime->diffInMinutes($checkInTime);
                     $totalMinutes += $dailyMinutes;

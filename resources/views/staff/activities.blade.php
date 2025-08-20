@@ -235,7 +235,7 @@
             </div>
             <div class="stat-card">
                 <div class="stat-number">
-                    {{ collect($activities)->whereIn('activity_status', ['scheduled', 'ongoing'])->count() }}
+                    {{ collect($activities)->where('is_active', 1)->count() }}
                 </div>
                 <div class="stat-label">Active Activity</div>
             </div>
@@ -286,7 +286,7 @@
                             @endif
                             
                             <div class="activity-meta">
-                                <i class="fas fa-clock me-1"></i>Duration: {{ $activity->activity_start_time && $activity->activity_end_time ? \Carbon\Carbon::parse($activity->activity_start_time)->diffInMinutes(\Carbon\Carbon::parse($activity->activity_end_time)) : 60 }} minutes
+                                <i class="fas fa-clock me-1"></i>Duration: {{ $activity->session_duration_minutes ?? 60 }} minutes
                                 @if(isset($activity->difficulty_level))
                                     | <i class="fas fa-signal me-1"></i>Level: {{ ucfirst($activity->difficulty_level) }}
                                 @endif
@@ -312,10 +312,10 @@
                             @endif
                             
                             <div>
-                                @if(in_array($activity->activity_status, ['scheduled', 'ongoing']))
+                                @if($activity->is_active == 1)
                                     <span class="badge bg-success">Active</span>
                                 @else
-                                    <span class="badge bg-secondary">{{ ucfirst($activity->activity_status) }}</span>
+                                    <span class="badge bg-secondary">Inactive</span>
                                 @endif
                                 
                                 @if($activity->requires_equipment)

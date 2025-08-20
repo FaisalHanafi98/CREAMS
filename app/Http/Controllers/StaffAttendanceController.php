@@ -44,7 +44,7 @@ class StaffAttendanceController extends Controller
             
             $staff = $staffQuery->with(['staffAttendances' => function($q) {
                 $q->whereDate('attendance_date', Carbon::today())
-                  ->orderBy('attendance_time', 'desc');
+                  ->orderBy('check_in_time', 'desc');
             }])->get();
 
             // Get trainees for the selected centre
@@ -60,7 +60,7 @@ class StaffAttendanceController extends Controller
                     $q->where('centre_id', $selectedCentreId);
                 })
                 ->with(['user', 'markedBy'])
-                ->orderBy('attendance_time', 'desc')
+                ->orderBy('check_in_time', 'desc')
                 ->get();
 
             // Get attendance statistics for the selected centre
@@ -220,6 +220,68 @@ class StaffAttendanceController extends Controller
     }
 
     /**
+     * Get today's attendance status for a user
+     */
+    public function getAttendanceStatus($encryptedUserId)
+    {
+        try {
+            // Decrypt the user ID for security
+            try {
+                $userId = decrypt($encryptedUserId);
+            } catch (\Exception $e) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid or expired link.'
+                ], 400);
+            }
+            
+            // Check permissions
+            if (!$this->canViewAttendanceFor($userId, session('id'))) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Access denied.'
+                ], 403);
+            }
+
+            // Get today's attendance record
+            $todayAttendance = StaffAttendance::where('user_id', $userId)
+                ->whereDate('attendance_date', Carbon::today())
+                ->first();
+
+            $response = [
+                'success' => true,
+                'has_checked_in' => false,
+                'has_checked_out' => false,
+                'check_in_time' => null,
+                'check_out_time' => null,
+                'status' => null
+            ];
+
+            if ($todayAttendance) {
+                $response['has_checked_in'] = !is_null($todayAttendance->check_in_time);
+                $response['has_checked_out'] = !is_null($todayAttendance->check_out_time);
+                $response['check_in_time'] = $todayAttendance->check_in_time;
+                $response['check_out_time'] = $todayAttendance->check_out_time;
+                $response['status'] = $todayAttendance->status;
+            }
+
+            return response()->json($response);
+
+        } catch (\Exception $e) {
+            Log::error('Error getting attendance status', [
+                'error' => $e->getMessage(),
+                'encrypted_user_id' => $encryptedUserId,
+                'user_id' => session('id')
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to get attendance status.'
+            ], 500);
+        }
+    }
+
+    /**
      * Get attendance for specific user
      */
     public function getUserAttendance(Request $request, $encryptedUserId)
@@ -250,7 +312,7 @@ class StaffAttendanceController extends Controller
                 ->dateRange($startDate, $endDate)
                 ->with(['markedBy'])
                 ->orderBy('attendance_date', 'desc')
-                ->orderBy('attendance_time', 'desc')
+                ->orderBy('check_in_time', 'desc')
                 ->get();
 
             $stats = StaffAttendance::getAttendanceStats($userId, $startDate, $endDate);

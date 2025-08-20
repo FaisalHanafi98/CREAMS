@@ -79,41 +79,39 @@ public function submit(Request $request)
 
         $validatedData = $validator->validated();
 
-        // Save application to database
+        // Save application to database (using actual database columns)
         $application = Volunteer::create([
-            'volunteer_name' => $validatedData['first_name'] . ' ' . $validatedData['last_name'],
-            'volunteer_email' => strtolower(trim($validatedData['email'])),
-            'volunteer_phone' => $validatedData['phone'],
-            'volunteer_address' => $request->address ?: '',
-            'volunteer_birth_date' => $validatedData['birth_date'] ?? '1990-01-01',
-            'volunteer_gender' => $validatedData['gender'] ?? 'Other',
-            'volunteer_skills' => $request->skills ?: '',
-            'volunteer_experience' => $request->experience ?: '',
-            'volunteer_availability' => implode(', ', $validatedData['availability']),
-            'volunteer_status' => 'pending',
-            'volunteer_start_date' => now()->format('Y-m-d'),
-            'emergency_contact_name' => $validatedData['emergency_contact_name'] ?? '',
-            'emergency_contact_phone' => $validatedData['emergency_contact_phone'] ?? '',
+            'name' => $validatedData['first_name'] . ' ' . $validatedData['last_name'],
+            'email' => strtolower(trim($validatedData['email'])),
+            'phone' => $validatedData['phone'],
+            'address' => $request->address ?: null,
+            'date_of_birth' => $validatedData['birth_date'],
+            'gender' => $validatedData['gender'],
+            'occupation' => $request->occupation ?: null,
+            'skills' => $request->skills ?: null,
+            'availability' => implode(', ', $validatedData['availability']),
+            'motivation' => $validatedData['motivation'],
+            'status' => 'applied',
         ]);
 
         Log::info('Volunteer application saved successfully', [
             'id' => $application->id,
-            'email' => $application->volunteer_email
+            'email' => $application->email
         ]);
 
         // Send confirmation email to volunteer (will be logged with log driver)
         try {
             Mail::raw(
-                "Dear {$application->volunteer_name},\n\n" .
+                "Dear {$application->name},\n\n" .
                 "Thank you for your interest in volunteering with IIUM PD-CARE!\n\n" .
                 "We have successfully received your volunteer application and are excited about your willingness to support children with special needs in our community.\n\n" .
                 "Application Summary:\n" .
-                "- Name: {$application->volunteer_name}\n" .
-                "- Email: {$application->volunteer_email}\n" .
-                "- Phone: {$application->volunteer_phone}\n" .
+                "- Name: {$application->name}\n" .
+                "- Email: {$application->email}\n" .
+                "- Phone: {$application->phone}\n" .
                 "- Area of Interest: Volunteer Work\n" .
-                "- Availability: {$application->volunteer_availability}\n" .
-                "- Skills: {$application->volunteer_skills}\n" .
+                "- Availability: {$application->availability}\n" .
+                "- Skills: {$application->skills}\n" .
                 "- Application ID: #VA" . str_pad($application->id, 6, '0', STR_PAD_LEFT) . "\n\n" .
                 "What happens next?\n" .
                 "1. Our volunteer coordinator will review your application\n" .
@@ -125,17 +123,17 @@ public function submit(Request $request)
                 "Best regards,\n" .
                 "IIUM PD-CARE Volunteer Coordination Team", 
                 function ($message) use ($application) {
-                    $message->to($application->volunteer_email, $application->volunteer_name)
+                    $message->to($application->email, $application->name)
                             ->from(config('mail.from.address'), config('mail.from.name'))
                             ->subject('Volunteer Application Received - IIUM PD-CARE');
                 }
             );
             
-            Log::info('Volunteer confirmation email sent', ['email' => $application->volunteer_email]);
+            Log::info('Volunteer confirmation email sent', ['email' => $application->email]);
         } catch (\Exception $e) {
             Log::error('Failed to send volunteer confirmation email', [
                 'error' => $e->getMessage(),
-                'email' => $application->volunteer_email
+                'email' => $application->email
             ]);
         }
 
@@ -147,23 +145,23 @@ public function submit(Request $request)
                 "New volunteer application received!\n\n" .
                 "APPLICANT DETAILS:\n" .
                 "==================\n" .
-                "Name: {$application->volunteer_name}\n" .
-                "Email: {$application->volunteer_email}\n" .
-                "Phone: {$application->volunteer_phone}\n" .
-                "Address: " . ($application->volunteer_address ?: 'Not provided') . "\n" .
+                "Name: {$application->name}\n" .
+                "Email: {$application->email}\n" .
+                "Phone: {$application->phone}\n" .
+                "Address: " . ($application->address ?: 'Not provided') . "\n" .
                 "" .
                 "" .
                 "VOLUNTEER PREFERENCES:\n" .
                 "=====================\n" .
                 "Area of Interest: Volunteer Work\n" .
                 "" .
-                "Availability: {$application->volunteer_availability}\n" .
+                "Availability: {$application->availability}\n" .
                 "" .
-                "Skills: " . ($application->volunteer_skills ?: 'Not specified') . "\n\n" .
+                "Skills: " . ($application->skills ?: 'Not specified') . "\n\n" .
                 "" .
-                "EXPERIENCE:\n" .
+                "MOTIVATION:\n" .
                 "===========\n" . 
-                ($application->volunteer_experience ?: 'No previous experience specified') . "\n\n" .
+                ($application->motivation ?: 'No motivation specified') . "\n\n" .
                 "ADDITIONAL INFO:\n" .
                 "===============\n" .
                 "" .
@@ -174,7 +172,7 @@ public function submit(Request $request)
                 function ($message) use ($adminEmail, $application) {
                     $message->to($adminEmail)
                             ->from(config('mail.from.address'), config('mail.from.name'))
-                            ->subject('🆕 New Volunteer Application - ' . $application->volunteer_name);
+                            ->subject('🆕 New Volunteer Application - ' . $application->name);
                 }
             );
             
@@ -185,7 +183,7 @@ public function submit(Request $request)
 
         // Redirect back with success message
         return redirect()->route('volunteer')
-            ->with('success', 'Thank you for your volunteer application! We have received your submission and sent a confirmation email to ' . $application->volunteer_email . '. We will contact you within 7-10 business days regarding the next steps.');
+            ->with('success', 'Thank you for your volunteer application! We have received your submission and sent a confirmation email to ' . $application->email . '. We will contact you within 7-10 business days regarding the next steps.');
         
     } catch (\Exception $e) {
         Log::error('Error in volunteer submission', [
@@ -207,27 +205,15 @@ public function submit(Request $request)
 public function getApplications(Request $request)
 {
     try {
-        $query = Volunteer::with(['centre', 'approvedByUser'])
+        $query = Volunteer::with(['reviewedByUser', 'centre'])
             ->orderBy('created_at', 'desc');
 
-        // Filter by centre if user is centre admin
-        $userRole = session('role');
-        $centreId = session('centre_id');
-        
-        if ($userRole === 'centre_admin' && $centreId) {
-            $query->where(function($q) use ($centreId) {
-                $q->where('centre_id', $centreId)
-                  ->orWhereNull('centre_id'); // Include unassigned applications
-            });
-        }
+        // All users can see all applications for now
+        // Centre-based filtering removed as volunteers table doesn't have centre_id
 
         // Additional filters
         if ($request->status) {
-            $query->where('volunteer_status', $request->status);
-        }
-
-        if ($request->centre_id) {
-            $query->where('centre_id', $request->centre_id);
+            $query->where('status', $request->status);
         }
 
         $applications = $query->paginate(15);
@@ -265,11 +251,11 @@ public function show($id)
             'session_user_id' => session('id')
         ]);
         
-        $application = Volunteer::with(['centre', 'approvedByUser'])->findOrFail($id);
+        $application = Volunteer::with(['reviewedByUser', 'centre'])->findOrFail($id);
         
         Log::info('Volunteer application found', [
             'application_id' => $application->id,
-            'application_name' => $application->volunteer_name
+            'application_name' => $application->name
         ]);
         
         // Return JSON for AJAX requests
@@ -315,7 +301,7 @@ public function updateStatus(Request $request, $id)
         $application = Volunteer::findOrFail($id);
         
         $validator = Validator::make($request->all(), [
-            'status' => 'required|in:pending,active,inactive',
+            'status' => 'required|in:applied,reviewed,approved,rejected,active,inactive',
             'notes' => 'nullable|string|max:1000'
         ]);
 
@@ -326,7 +312,7 @@ public function updateStatus(Request $request, $id)
             ], 422);
         }
 
-        $application->volunteer_status = $request->status;
+        $application->status = $request->status;
         // Admin notes functionality would require additional table columns
         $application->save();
 
@@ -366,20 +352,9 @@ public function approve(Request $request, $id)
     try {
         $application = Volunteer::findOrFail($id);
         
-        // Verify admin has permission to approve for this centre
-        $userRole = session('role');
-        $centreId = session('centre_id');
         $adminUserId = session('id');
         
-        if ($userRole === 'centre_admin' && !$centreId) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Centre assignment required'
-            ], 403);
-        }
-
         $validator = Validator::make($request->all(), [
-            'centre_id' => ($userRole === 'admin' && !$centreId) ? 'required|exists:centres,centre_id' : 'nullable|exists:centres,centre_id',
             'notes' => 'nullable|string|max:1000'
         ]);
 
@@ -390,26 +365,23 @@ public function approve(Request $request, $id)
             ], 422);
         }
 
-        // Use centre from session for centre admins, or from request for system admins
-        // For admin role, use their assigned centre if they have one, otherwise use request
-        if ($userRole === 'admin' && $centreId) {
-            $assignCentreId = $centreId; // Admin of specific centre (like Gombak) auto-assigns to their centre
-        } elseif ($userRole === 'centre_admin') {
-            $assignCentreId = $centreId; // Centre admin always assigns to their centre
-        } else {
-            $assignCentreId = $request->centre_id; // System admin can choose centre
+        // Get admin user's centre_id for assignment
+        $adminUser = \App\Models\User::find($adminUserId);
+        $centreId = $adminUser ? $adminUser->centre_id : null;
+        
+        // Approve the application and assign to approver's centre
+        $application->approve($adminUserId, $request->notes);
+        if ($centreId) {
+            $application->centre_id = $centreId;
+            $application->save();
         }
-
-        // Approve the application
-        $application->approve($assignCentreId, $adminUserId, $request->notes);
 
         // Send approval email
         $this->sendApprovalEmail($application);
 
         Log::info('Volunteer application approved', [
             'application_id' => $id,
-            'approved_by' => $adminUserId,
-            'centre_id' => $assignCentreId
+            'approved_by' => $adminUserId
         ]);
 
         return response()->json([
@@ -495,14 +467,13 @@ private function sendApprovalEmail($application)
         // Refresh the application to get updated relationships
         $application->refresh();
         
-        // Get centre information
-        $centre = $application->centre;
-        $centreName = $centre ? $centre->centre_name : 'IIUM PD-CARE';
-        $centreAddress = $centre ? $centre->centre_address : 'IIUM Campus, Gombak';
-        $centrePhone = $centre ? $centre->centre_phone : '+60 3-6196 4000';
+        // Default centre information
+        $centreName = 'IIUM PD-CARE';
+        $centreAddress = 'IIUM Campus, Gombak';
+        $centrePhone = '+60 3-6196 4000';
         
         // Parse volunteer availability first to determine appropriate start date
-        $availability = $application->volunteer_availability;
+        $availability = $application->availability;
         $today = \Carbon\Carbon::today();
         
         // Calculate start date based on volunteer's availability
@@ -513,7 +484,7 @@ private function sendApprovalEmail($application)
         
         Log::info('Sending approval email', [
             'application_id' => $application->id,
-            'email' => $application->volunteer_email,
+            'email' => $application->email,
             'centre' => $centreName,
             'start_date' => $startDate->format('Y-m-d'),
             'schedule' => $scheduleDetails
@@ -532,13 +503,13 @@ private function sendApprovalEmail($application)
         // Use queue for better performance (if configured)
         if (config('queue.default') !== 'sync') {
             Mail::queue('emails.volunteer-approval', $emailData, function ($message) use ($application) {
-                $message->to($application->volunteer_email, $application->volunteer_name)
+                $message->to($application->email, $application->name)
                         ->from(config('mail.from.address'), config('mail.from.name'))
                         ->subject('🎉 Volunteer Application Approved - Welcome to IIUM PD-CARE!');
             });
         } else {
             Mail::send('emails.volunteer-approval', $emailData, function ($message) use ($application) {
-                $message->to($application->volunteer_email, $application->volunteer_name)
+                $message->to($application->email, $application->name)
                         ->from(config('mail.from.address'), config('mail.from.name'))
                         ->subject('🎉 Volunteer Application Approved - Welcome to IIUM PD-CARE!');
             });
@@ -546,7 +517,7 @@ private function sendApprovalEmail($application)
 
         Log::info('Volunteer approval email sent successfully', [
             'application_id' => $application->id,
-            'email' => $application->volunteer_email,
+            'email' => $application->email,
             'centre' => $centreName,
             'start_date' => $startDate->format('Y-m-d')
         ]);
@@ -554,7 +525,7 @@ private function sendApprovalEmail($application)
     } catch (\Exception $e) {
         Log::error('Failed to send volunteer approval email', [
             'application_id' => $application->id,
-            'email' => $application->volunteer_email ?? 'unknown',
+            'email' => $application->email ?? 'unknown',
             'error' => $e->getMessage(),
             'trace' => $e->getTraceAsString()
         ]);
@@ -578,7 +549,7 @@ private function sendRejectionEmail($application)
         
         Log::info('Sending rejection email', [
             'application_id' => $application->id,
-            'email' => $application->volunteer_email,
+            'email' => $application->email,
             'rejection_reason' => $application->admin_notes ? 'Provided' : 'Not provided'
         ]);
         
@@ -587,7 +558,7 @@ private function sendRejectionEmail($application)
             Mail::queue('emails.volunteer-rejection', [
                 'volunteer' => $application
             ], function ($message) use ($application) {
-                $message->to($application->volunteer_email, $application->volunteer_name)
+                $message->to($application->email, $application->name)
                         ->from(config('mail.from.address'), config('mail.from.name'))
                         ->subject('📧 Volunteer Application Update - IIUM PD-CARE')
                         ->priority(3); // Normal priority
@@ -596,7 +567,7 @@ private function sendRejectionEmail($application)
             Mail::send('emails.volunteer-rejection', [
                 'volunteer' => $application
             ], function ($message) use ($application) {
-                $message->to($application->volunteer_email, $application->volunteer_name)
+                $message->to($application->email, $application->name)
                         ->from(config('mail.from.address'), config('mail.from.name'))
                         ->subject('📧 Volunteer Application Update - IIUM PD-CARE')
                         ->priority(3); // Normal priority
@@ -605,13 +576,13 @@ private function sendRejectionEmail($application)
 
         Log::info('Volunteer rejection email sent successfully', [
             'application_id' => $application->id,
-            'email' => $application->volunteer_email
+            'email' => $application->email
         ]);
 
     } catch (\Exception $e) {
         Log::error('Failed to send volunteer rejection email', [
             'application_id' => $application->id,
-            'email' => $application->volunteer_email ?? 'unknown',
+            'email' => $application->email ?? 'unknown',
             'error' => $e->getMessage(),
             'trace' => $e->getTraceAsString()
         ]);
@@ -629,47 +600,26 @@ private function sendRejectionEmail($application)
 public function adminIndex()
 {
     try {
-        $userRole = session('role');
-        $centreId = session('centre_id');
-        
         // Get statistics
         $stats = [
-            'pending' => Volunteer::pending()->when($userRole === 'centre_admin' && $centreId, 
-                function($q) use ($centreId) {
-                    return $q->where(function($query) use ($centreId) {
-                        $query->where('centre_id', $centreId)->orWhereNull('centre_id');
-                    });
-                })->count(),
-            'approved' => Volunteer::approved()->when($userRole === 'centre_admin' && $centreId,
-                function($q) use ($centreId) {
-                    return $q->where('centre_id', $centreId);
-                })->count(),
-            'rejected' => Volunteer::rejected()->when($userRole === 'centre_admin' && $centreId,
-                function($q) use ($centreId) {
-                    return $q->where('centre_id', $centreId);
-                })->count()
+            'pending' => Volunteer::pending()->count(),
+            'approved' => Volunteer::approved()->count(),
+            'rejected' => Volunteer::rejected()->count(),
+            'active' => Volunteer::active()->count()
         ];
 
         // Get applications data for initial load
-        $query = Volunteer::with(['centre', 'approvedByUser'])
+        $query = Volunteer::with(['reviewedByUser', 'centre'])
             ->orderBy('created_at', 'desc');
 
-        // Filter by centre if user is centre admin
-        if ($userRole === 'centre_admin' && $centreId) {
-            $query->where(function($q) use ($centreId) {
-                $q->where('centre_id', $centreId)
-                  ->orWhereNull('centre_id'); // Include unassigned applications
-            });
-        }
+        // No centre-based filtering as volunteers table doesn't have centre_id
 
         // Apply filters from request
         $request = request();
         if ($request->status) {
-            $query->where('volunteer_status', $request->status);
+            $query->where('status', $request->status);
         }
-        if ($request->centre_id) {
-            $query->where('centre_id', $request->centre_id);
-        }
+        // Centre filtering removed as volunteers table doesn't have centre_id
         if ($request->date_from) {
             $query->whereDate('created_at', '>=', $request->date_from);
         }

@@ -362,19 +362,19 @@
 
             <div class="stats-grid">
                 <div class="stat-card present">
-                    <div class="stat-number">{{ $attendanceStats['present'] ?? 18 }}</div>
+                    <div class="stat-number">{{ $attendanceStats['present'] }}</div>
                     <div class="stat-label">Present Days</div>
                 </div>
                 <div class="stat-card late">
-                    <div class="stat-number">{{ $attendanceStats['late'] ?? 3 }}</div>
+                    <div class="stat-number">{{ $attendanceStats['late'] }}</div>
                     <div class="stat-label">Late Arrivals</div>
                 </div>
                 <div class="stat-card absent">
-                    <div class="stat-number">{{ $attendanceStats['absent'] ?? 2 }}</div>
+                    <div class="stat-number">{{ $attendanceStats['absent'] }}</div>
                     <div class="stat-label">Absent Days</div>
                 </div>
                 <div class="stat-card rate">
-                    <div class="stat-number">{{ $attendanceStats['rate'] ?? 92 }}%</div>
+                    <div class="stat-number">{{ $attendanceStats['rate'] }}%</div>
                     <div class="stat-label">Attendance Rate</div>
                 </div>
             </div>
@@ -447,37 +447,30 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @php
-                            // Sample attendance data
-                            $sampleAttendance = [
-                                ['date' => '2025-01-27', 'day' => 'Monday', 'activity' => 'Physical Therapy', 'check_in' => '09:00 AM', 'check_out' => '11:00 AM', 'status' => 'present', 'remarks' => 'Good progress'],
-                                ['date' => '2025-01-26', 'day' => 'Sunday', 'activity' => 'Group Session', 'check_in' => '10:15 AM', 'check_out' => '12:00 PM', 'status' => 'late', 'remarks' => 'Traffic delay'],
-                                ['date' => '2025-01-25', 'day' => 'Saturday', 'activity' => 'Assessment', 'check_in' => '08:45 AM', 'check_out' => '10:30 AM', 'status' => 'present', 'remarks' => 'Excellent participation'],
-                                ['date' => '2025-01-24', 'day' => 'Friday', 'activity' => 'Individual Session', 'check_in' => '-', 'check_out' => '-', 'status' => 'absent', 'remarks' => 'Sick leave'],
-                                ['date' => '2025-01-23', 'day' => 'Thursday', 'activity' => 'Therapy', 'check_in' => '09:30 AM', 'check_out' => '11:15 AM', 'status' => 'late', 'remarks' => 'Family appointment'],
-                                ['date' => '2025-01-22', 'day' => 'Wednesday', 'activity' => 'Group Activity', 'check_in' => '09:00 AM', 'check_out' => '11:00 AM', 'status' => 'present', 'remarks' => 'Active participation'],
-                                ['date' => '2025-01-21', 'day' => 'Tuesday', 'activity' => 'Physical Therapy', 'check_in' => '08:55 AM', 'check_out' => '10:40 AM', 'status' => 'present', 'remarks' => 'Good progress'],
-                                ['date' => '2025-01-20', 'day' => 'Monday', 'activity' => 'Assessment', 'check_in' => '-', 'check_out' => '-', 'status' => 'excused', 'remarks' => 'Medical appointment'],
-                            ];
-                        @endphp
-
-                        @foreach($sampleAttendance as $record)
+                        @forelse($attendanceHistory as $record)
                         <tr>
                             <td>
-                                <strong>{{ \Carbon\Carbon::parse($record['date'])->format('M j, Y') }}</strong>
+                                <strong>{{ \Carbon\Carbon::parse($record->date)->format('M j, Y') }}</strong>
                             </td>
-                            <td>{{ $record['day'] }}</td>
-                            <td>{{ $record['activity'] }}</td>
-                            <td>{{ $record['check_in'] }}</td>
-                            <td>{{ $record['check_out'] }}</td>
+                            <td>{{ \Carbon\Carbon::parse($record->date)->format('l') }}</td>
+                            <td>{{ $record->activity ?? 'General Attendance' }}</td>
+                            <td>{{ $record->marked_at ? \Carbon\Carbon::parse($record->marked_at)->format('h:i A') : '-' }}</td>
+                            <td>-</td>
                             <td>
-                                <span class="status-badge status-{{ $record['status'] }}">
-                                    {{ ucfirst($record['status']) }}
+                                <span class="status-badge status-{{ $record->status }}">
+                                    {{ ucfirst($record->status) }}
                                 </span>
                             </td>
-                            <td>{{ $record['remarks'] }}</td>
+                            <td>{{ $record->remarks ?? '-' }}</td>
                         </tr>
-                        @endforeach
+                        @empty
+                        <tr>
+                            <td colspan="7" class="text-center text-muted py-4">
+                                <i class="fas fa-calendar-times fa-2x mb-2"></i><br>
+                                No attendance records found for this trainee.
+                            </td>
+                        </tr>
+                        @endforelse
                     </tbody>
                 </table>
             </div>
@@ -610,10 +603,18 @@ document.addEventListener('DOMContentLoaded', function() {
     const attendanceChart = new Chart(ctx, {
         type: 'line',
         data: {
-            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+            labels: [
+                @foreach($monthlyData as $month)
+                '{{ $month["month"] }}',
+                @endforeach
+            ],
             datasets: [{
                 label: 'Attendance Rate (%)',
-                data: [92, 88, 95, 90, 93, 89, 96, 91, 87, 94, 90, 92],
+                data: [
+                    @foreach($monthlyData as $month)
+                    {{ $month["rate"] }},
+                    @endforeach
+                ],
                 borderColor: '#c850c0',
                 backgroundColor: 'rgba(200, 80, 192, 0.1)',
                 borderWidth: 3,

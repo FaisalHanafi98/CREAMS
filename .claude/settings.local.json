@@ -32,7 +32,8 @@
       "Bash(wc:*)",
       "Bash(composer:*)",
       "Bash(mysql:*)",
-      "Bash(mysql:*)"
+      "Bash(mysql:*)",
+      "Bash(time curl:*)"
     ],
     "deny": [],
     "additionalDirectories": [
