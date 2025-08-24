@@ -169,15 +169,25 @@
                             @enderror
                         </div>
 
-                        <!-- Asset Image -->
+                        <!-- Asset Images -->
                         <div class="mb-4">
-                            <label for="image" class="form-label fw-bold">Asset Image</label>
-                            <input type="file" class="form-control @error('image') is-invalid @enderror" 
-                                   id="image" name="image" accept="image/*">
-                            <div class="form-text">Supported formats: JPG, PNG, GIF. Max size: 2MB</div>
-                            @error('image')
+                            <label for="images" class="form-label fw-bold">Asset Images</label>
+                            <input type="file" class="form-control @error('images.*') is-invalid @enderror" 
+                                   id="images" name="images[]" accept="image/*" multiple>
+                            <div class="form-text">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Select multiple images to create a gallery for this asset. Supported formats: JPG, PNG, GIF. Max size: 2MB per image.
+                                <br><small class="text-muted">The first image will be used as the primary asset image.</small>
+                            </div>
+                            @error('images.*')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
+                            
+                            <!-- Image Preview Container -->
+                            <div id="imagePreviewContainer" class="mt-3" style="display: none;">
+                                <h6 class="text-muted mb-2">Preview:</h6>
+                                <div id="imagePreviews" class="d-flex flex-wrap gap-2"></div>
+                            </div>
                         </div>
 
                         <!-- Form Actions -->
@@ -252,31 +262,53 @@ document.addEventListener('DOMContentLoaded', function() {
     nameInput.addEventListener('blur', generateAssetId);
     typeSelect.addEventListener('change', generateAssetId);
     
-    // Image preview
-    const imageInput = document.getElementById('image');
-    imageInput.addEventListener('change', function(e) {
-        const file = e.target.files[0];
-        if (file) {
-            if (file.size > 2 * 1024 * 1024) {
-                alert('File size must be less than 2MB');
-                this.value = '';
-                return;
-            }
+    // Multiple images preview
+    const imagesInput = document.getElementById('images');
+    const previewContainer = document.getElementById('imagePreviewContainer');
+    const previewsDiv = document.getElementById('imagePreviews');
+    
+    imagesInput.addEventListener('change', function(e) {
+        const files = Array.from(e.target.files);
+        
+        // Clear previous previews
+        previewsDiv.innerHTML = '';
+        
+        if (files.length > 0) {
+            previewContainer.style.display = 'block';
             
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                // Create or update preview image
-                let preview = document.getElementById('imagePreview');
-                if (!preview) {
-                    preview = document.createElement('img');
-                    preview.id = 'imagePreview';
-                    preview.className = 'mt-2 img-thumbnail';
-                    preview.style.maxWidth = '200px';
-                    imageInput.parentNode.appendChild(preview);
+            files.forEach((file, index) => {
+                // Validate file size
+                if (file.size > 2 * 1024 * 1024) {
+                    alert(`File ${file.name} is too large. Maximum size is 2MB.`);
+                    return;
                 }
-                preview.src = e.target.result;
-            };
-            reader.readAsDataURL(file);
+                
+                // Validate file type
+                if (!file.type.startsWith('image/')) {
+                    alert(`File ${file.name} is not an image.`);
+                    return;
+                }
+                
+                // Create preview
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const previewDiv = document.createElement('div');
+                    previewDiv.className = 'position-relative';
+                    previewDiv.innerHTML = `
+                        <img src="${e.target.result}" class="img-thumbnail" style="width: 100px; height: 100px; object-fit: cover;">
+                        <div class="position-absolute top-0 start-0">
+                            ${index === 0 ? '<span class="badge bg-primary">Primary</span>' : ''}
+                        </div>
+                        <div class="text-center mt-1">
+                            <small class="text-muted">${file.name}</small>
+                        </div>
+                    `;
+                    previewsDiv.appendChild(previewDiv);
+                };
+                reader.readAsDataURL(file);
+            });
+        } else {
+            previewContainer.style.display = 'none';
         }
     });
 });

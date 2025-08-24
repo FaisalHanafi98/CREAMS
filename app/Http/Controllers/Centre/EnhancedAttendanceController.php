@@ -74,6 +74,12 @@ class EnhancedAttendanceController extends Controller
     public function markActivityAttendance($sessionId)
     {
         try {
+            // Check if today is a weekend (Saturday or Sunday)
+            $today = now();
+            if ($today->isWeekend()) {
+                return redirect()->back()->with('error', 'Attendance marking is not allowed on weekends. Please try again on a weekday.');
+            }
+            
             $session = ActivitySession::with([
                 'activity.learningOutcomes',
                 'activity.category',
@@ -119,6 +125,15 @@ class EnhancedAttendanceController extends Controller
     {
         try {
             $session = ActivitySession::findOrFail($sessionId);
+            
+            // Check if today is a weekend (Saturday or Sunday)
+            $today = now();
+            if ($today->isWeekend()) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'Attendance marking is not allowed on weekends. Please try again on a weekday.'
+                ], 422);
+            }
             
             // Validate request
             $validated = $request->validate([
@@ -308,12 +323,11 @@ class EnhancedAttendanceController extends Controller
     {
         return [
             'total_trainees' => Trainee::where('centre_id', $centreId)->count(),
-            'present_today' => DB::table('attendances')
-                                ->whereDate('date', $date)
-                                ->whereHas('trainee', function($q) use ($centreId) {
-                                    $q->where('centre_id', $centreId);
-                                })
-                                ->where('status', 'present')
+            'present_today' => DB::table('trainee_attendances')
+                                ->join('trainees', 'trainee_attendances.trainee_id', '=', 'trainees.id')
+                                ->whereDate('trainee_attendances.attendance_date', $date)
+                                ->where('trainees.centre_id', $centreId)
+                                ->where('trainee_attendances.status', 'present')
                                 ->count(),
             'total_sessions' => ActivitySession::whereHas('activity', function($q) use ($centreId) {
                                     $q->where('centre_id', $centreId);

@@ -479,10 +479,27 @@
         </div>
         <div class="asset-profile">
             <div class="asset-image-section">
-                <img src="{{ $asset->asset_avatar ? asset($asset->asset_avatar) : asset('images/default-asset.png') }}" 
+                <img src="{{ $asset->primary_image_url }}" 
                      alt="{{ $asset->asset_name }}" 
                      class="asset-main-image"
+                     id="mainAssetImage"
                      onerror="this.src='{{ asset('images/default-asset.png') }}'">
+                
+                @if($asset->images && count($asset->images) > 1)
+                    <div class="asset-gallery mt-3">
+                        <h6 class="text-muted mb-2">Gallery</h6>
+                        <div class="d-flex flex-wrap gap-2">
+                            @foreach($asset->images as $index => $image)
+                                <img src="{{ asset('storage/' . $image) }}" 
+                                     alt="Asset Image {{ $index + 1 }}" 
+                                     class="gallery-thumb {{ $index === 0 ? 'active' : '' }}"
+                                     style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px; cursor: pointer; border: 2px solid {{ $index === 0 ? 'var(--primary-color)' : 'transparent' }};"
+                                     onclick="changeMainImage('{{ asset('storage/' . $image) }}', this)"
+                                     onerror="this.style.display='none'">
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
             </div>
             <div class="asset-info-section">
                 <h2 class="asset-title">{{ $asset->asset_name }}</h2>
@@ -698,6 +715,23 @@ function confirmDelete(assetId) {
         document.body.appendChild(form);
         form.submit();
     }
+}
+
+// Asset image gallery functionality
+function changeMainImage(imageSrc, thumbnail) {
+    // Update main image
+    const mainImage = document.getElementById('mainAssetImage');
+    mainImage.src = imageSrc;
+    
+    // Update active thumbnail
+    const allThumbs = document.querySelectorAll('.gallery-thumb');
+    allThumbs.forEach(thumb => {
+        thumb.style.border = '2px solid transparent';
+        thumb.classList.remove('active');
+    });
+    
+    thumbnail.style.border = '2px solid var(--primary-color)';
+    thumbnail.classList.add('active');
 }
 
 // Print styles

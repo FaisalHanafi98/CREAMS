@@ -265,7 +265,7 @@ class ApiController extends Controller
                 $stats['attendanceStats'] = DB::table('trainee_attendances')
                     ->join('activities', 'trainee_attendances.activity_id', '=', 'activities.id')
                     ->where('activities.teacher_id', $id)
-                    ->selectRaw('DATE(trainee_attendances.date) as date, COUNT(*) as total, SUM(CASE WHEN trainee_attendances.status = "present" THEN 1 ELSE 0 END) as present')
+                    ->selectRaw('DATE(trainee_attendances.attendance_date) as date, COUNT(*) as total, SUM(CASE WHEN trainee_attendances.status = "present" THEN 1 ELSE 0 END) as present')
                     ->groupBy('date')
                     ->orderBy('date', 'desc')
                     ->limit(7)

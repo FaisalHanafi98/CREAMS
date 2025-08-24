@@ -23,7 +23,6 @@ class Volunteer extends Model
         'availability',
         'motivation',
         'status',
-        'centre_id',
         // Admin fields (actual database columns)
         'reviewed_by',
         'reviewed_at',
@@ -47,7 +46,30 @@ class Volunteer extends Model
 
     public function centre()
     {
-        return $this->belongsTo(Centre::class, 'centre_id', 'centre_id');
+        return $this->hasOneThrough(
+            Centre::class,          // Final model we want to reach
+            User::class,            // Intermediate model (admin user)
+            'id',                   // Foreign key on users table
+            'centre_id',            // Foreign key on centres table  
+            'reviewed_by',          // Local key on volunteers table
+            'centre_id'             // Local key on users table
+        );
+    }
+
+    /**
+     * Get the centre name through the admin who approved this volunteer
+     */
+    public function getCentreNameAttribute()
+    {
+        return $this->centre ? $this->centre->centre_name : 'Unassigned';
+    }
+
+    /**
+     * Get the centre ID through the admin who approved this volunteer
+     */
+    public function getCentreIdAttribute()
+    {
+        return $this->reviewedByUser ? $this->reviewedByUser->centre_id : null;
     }
 
     /**

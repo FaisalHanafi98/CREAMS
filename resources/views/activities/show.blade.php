@@ -165,14 +165,18 @@
                     <h3>Quick Actions</h3>
                 </div>
                 <div class="quick-actions-body">
+                    @if($role === 'admin' || $role === 'supervisor')
                     <a href="{{ route('activities.sessions', $activity->id) }}" class="action-item">
                         <i class="fas fa-calendar-plus"></i>
                         <span>Schedule New Session</span>
                     </a>
+                    @endif
+                    @if($role === 'admin')
                     <a href="{{ route('activities.edit', $activity->id) }}" class="action-item">
                         <i class="fas fa-edit"></i>
                         <span>Edit Activity Details</span>
                     </a>
+                    @endif
                     @if($role === 'admin')
                         <form action="{{ route('activities.destroy', $activity->id) }}" 
                             method="POST" 

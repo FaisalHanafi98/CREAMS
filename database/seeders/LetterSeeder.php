@@ -19,7 +19,13 @@ class LetterSeeder extends Seeder
         
         for ($i = 1; $i <= 30; $i++) {
             $template = $templates->random();
-            $generator = $users->where('role', 'admin')->random();
+            $adminUsers = $users->where('role', 'admin');
+            
+            if ($adminUsers->count() === 0) {
+                continue; // Skip if no admin users available
+            }
+            
+            $generator = $adminUsers->random();
             
             if ($template->template_type === 'trainee') {
                 $trainee = $trainees->random();

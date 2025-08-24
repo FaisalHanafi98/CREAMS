@@ -365,16 +365,8 @@ public function approve(Request $request, $id)
             ], 422);
         }
 
-        // Get admin user's centre_id for assignment
-        $adminUser = \App\Models\User::find($adminUserId);
-        $centreId = $adminUser ? $adminUser->centre_id : null;
-        
-        // Approve the application and assign to approver's centre
+        // Approve the application - centre assignment handled through reviewed_by relationship
         $application->approve($adminUserId, $request->notes);
-        if ($centreId) {
-            $application->centre_id = $centreId;
-            $application->save();
-        }
 
         // Send approval email
         $this->sendApprovalEmail($application);

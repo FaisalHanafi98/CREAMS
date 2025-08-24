@@ -11,10 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('assets', function (Blueprint $table) {
-            if (!Schema::hasColumn('assets', 'warranty_expiry')) {
-                $table->date('warranty_expiry')->nullable()->after('purchase_date');
-            }
+        Schema::table('users', function (Blueprint $table) {
+            $table->string('staff_id')->unique()->nullable()->after('id');
         });
     }
 
@@ -23,8 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('assets', function (Blueprint $table) {
-            $table->dropColumn('warranty_expiry');
+        Schema::table('users', function (Blueprint $table) {
+            $table->dropColumn('staff_id');
         });
     }
 };

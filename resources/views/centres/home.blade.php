@@ -6,7 +6,7 @@
 <div class="container-fluid">
     <div class="d-sm-flex align-items-center justify-content-between mb-4">
         <h1 class="h3 mb-0 text-gray-800">Centre Management</h1>
-        @if(in_array(session('role'), ['admin', 'supervisor']))
+        @if(in_array(session('role'), ['admin']))
         <a href="{{ route('centres.create') }}" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm">
             <i class="fas fa-plus fa-sm text-white-50"></i> Add New Centre
         </a>
@@ -57,10 +57,12 @@
                             <a href="{{ route('centres.show', $centre->centre_id) }}" class="btn btn-info">
                                 <i class="fas fa-eye"></i> View
                             </a>
-                            @if(in_array(session('role'), ['admin', 'supervisor']))
+                            @if(in_array(session('role'), ['admin']))
                             <a href="{{ route('centres.edit', $centre->centre_id) }}" class="btn btn-warning">
                                 <i class="fas fa-edit"></i> Edit
                             </a>
+                            @endif
+                            @if(in_array(session('role'), ['admin', 'supervisor', 'teacher', 'ajk']))
                             <a href="{{ route('centres.attendance.index') }}?centre={{ $centre->centre_id }}" class="btn btn-success">
                                 <i class="fas fa-clock"></i> Attendance
                             </a>
@@ -79,7 +81,7 @@
                         <i class="fas fa-building fa-3x text-gray-400 mb-3"></i>
                         <h5>No centres found</h5>
                         <p class="text-muted">There are no centres registered in the system yet.</p>
-                        @if(in_array(session('role'), ['admin', 'supervisor']))
+                        @if(in_array(session('role'), ['admin']))
                         <a href="{{ route('centres.create') }}" class="btn btn-primary mt-2">
                             <i class="fas fa-plus mr-1"></i>Create First Centre
                         </a>

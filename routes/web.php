@@ -214,9 +214,11 @@ Route::middleware(['auth', 'validate.params'])->group(function () {
 
 
     // Activity Management
-    Route::prefix('activities')->name('activities.')->middleware(['centre.access:activity'])->group(function () {
+    Route::prefix('activities')->name('activities.')->group(function () {
         Route::get('/', function() { return redirect()->route('activities.home'); }); // Legacy redirect
         Route::get('/home', [ActivityController::class, 'index'])->name('home'); // New structure
+        Route::get('/test', function() { return 'Test route works - User: ' . session('name') . ' Role: ' . session('role'); })->name('test');
+        Route::get('/test-sessions/{id}', function($id) { return 'Test sessions route works for activity ' . $id . ' - User: ' . session('name') . ' Role: ' . session('role'); })->name('test-sessions');
         Route::get('/modern-home', [ActivityController::class, 'modernHome'])->name('modern-home'); // Modern activities homepage
         Route::get('/categories', [ActivityController::class, 'categories'])->name('categories');
         Route::get('/categories/{categorySlug}', [ActivityController::class, 'categoryShow'])->name('categories.show');
@@ -245,9 +247,11 @@ Route::middleware(['auth', 'validate.params'])->group(function () {
             Route::get('/{id}/edit', [ActivityController::class, 'edit'])->name('edit');
             Route::put('/{id}', [ActivityController::class, 'update'])->name('update');
             Route::delete('/{id}', [ActivityController::class, 'destroy'])->name('destroy');
-            Route::get('/{id}/sessions', [ActivityController::class, 'sessions'])->name('sessions');
             Route::post('/{id}/sessions', [ActivityController::class, 'createSession'])->name('sessions.create');
         });
+        
+        // Sessions view - accessible to all authenticated users (CRUD restricted in controller)
+        Route::get('/{id}/sessions', [ActivityController::class, 'sessions'])->name('sessions');
         
         // Learning Outcomes routes (Teacher, Admin, Supervisor)
         Route::prefix('learning-outcomes')->name('learning-outcomes.')->middleware(['role:teacher,admin,supervisor'])->group(function () {
@@ -439,47 +443,57 @@ Route::middleware(['auth', 'validate.params'])->group(function () {
         Route::get('/status/{encryptedUserId}', [StaffAttendanceController::class, 'getAttendanceStatus'])->name('status');
     });
 
-    // Centre
+    // Centre - READ operations (accessible to all authenticated users)
     Route::prefix('centres')->name('centres.')->middleware(['centre.access:centre'])->group(function () {
+        // View operations - accessible to all authenticated users
         Route::get('/home', [CentreController::class, 'index'])->name('index');
-        Route::get('/create', [CentreController::class, 'create'])->name('create');
-        Route::post('/', [CentreController::class, 'store'])->name('store');
         Route::get('/{id}', [CentreController::class, 'show'])->name('show');
-        Route::get('/{id}/edit', [CentreController::class, 'edit'])->name('edit');
-        Route::put('/{id}', [CentreController::class, 'update'])->name('update');
-        Route::delete('/{id}', [CentreController::class, 'destroy'])->name('destroy');
         Route::get('/{id}/assets', [CentreController::class, 'assets'])->name('assets');
-        
-        // Enhanced centre management routes
         Route::get('/{id}/metrics', [CentreController::class, 'getMetrics'])->name('metrics');
-        Route::post('/{id}/statistics/refresh', [CentreController::class, 'refreshStatistics'])->name('statistics.refresh');
+        
+        // CRUD operations - restricted to admin users only
+        Route::middleware(['role:admin'])->group(function () {
+            Route::get('/create', [CentreController::class, 'create'])->name('create');
+            Route::post('/', [CentreController::class, 'store'])->name('store');
+            Route::get('/{id}/edit', [CentreController::class, 'edit'])->name('edit');
+            Route::put('/{id}', [CentreController::class, 'update'])->name('update');
+            Route::delete('/{id}', [CentreController::class, 'destroy'])->name('destroy');
+            Route::post('/{id}/statistics/refresh', [CentreController::class, 'refreshStatistics'])->name('statistics.refresh');
+        });
     });
 
-    // Asset
+    // Asset - READ and operational access for all, CRUD restricted to admin
     Route::prefix('assets')->name('assets.')->middleware(['centre.access:asset'])->group(function () {
+        // View and operational routes - accessible to all authenticated users
         Route::get('/', [AssetController::class, 'index'])->name('index');
-        Route::get('/create', [AssetController::class, 'create'])->name('create');
-        Route::post('/', [AssetController::class, 'store'])->name('store');
         Route::get('/reports', [AssetController::class, 'reports'])->name('reports');
         Route::get('/reports/data', [AssetController::class, 'getReportData'])->name('reports.data');
         Route::get('/reports/export', [AssetController::class, 'exportReports'])->name('reports.export');
         Route::get('/maintenance', [AssetController::class, 'maintenance'])->name('maintenance');
         Route::get('/maintenance/filter', [AssetController::class, 'filterMaintenance'])->name('maintenance.filter');
-        Route::post('/maintenance/schedule', [AssetController::class, 'scheduleMaintenance'])->name('maintenance.schedule');
-        Route::post('/maintenance/{id}/complete', [AssetController::class, 'completeMaintenance'])->name('maintenance.complete');
-        Route::post('/maintenance/{id}/reschedule', [AssetController::class, 'rescheduleMaintenance'])->name('maintenance.reschedule');
         Route::get('/movements', [AssetController::class, 'movements'])->name('movements');
         Route::get('/movements/filter', [AssetController::class, 'filterMovements'])->name('movements.filter');
-        Route::post('/movements/record', [AssetController::class, 'recordMovement'])->name('movements.record');
-        Route::post('/movements/{id}/approve', [AssetController::class, 'approveMovement'])->name('movements.approve');
         Route::get('/{id}', [AssetController::class, 'show'])->name('show');
-        Route::get('/{id}/edit', [AssetController::class, 'edit'])->name('edit');
-        Route::put('/{id}', [AssetController::class, 'update'])->name('update');
-        Route::delete('/{id}', [AssetController::class, 'destroy'])->name('destroy');
         
-        // Asset rental/usage routes
-        Route::post('/{id}/rent', [AssetController::class, 'rentAsset'])->name('rent');
-        Route::post('/{id}/return', [AssetController::class, 'returnAsset'])->name('return');
+        // Asset rental/usage routes (operational - supervisors and teachers can manage)
+        Route::middleware(['role:admin,supervisor,teacher'])->group(function () {
+            Route::post('/{id}/rent', [AssetController::class, 'rentAsset'])->name('rent');
+            Route::post('/{id}/return', [AssetController::class, 'returnAsset'])->name('return');
+            Route::post('/maintenance/schedule', [AssetController::class, 'scheduleMaintenance'])->name('maintenance.schedule');
+            Route::post('/maintenance/{id}/complete', [AssetController::class, 'completeMaintenance'])->name('maintenance.complete');
+            Route::post('/maintenance/{id}/reschedule', [AssetController::class, 'rescheduleMaintenance'])->name('maintenance.reschedule');
+            Route::post('/movements/record', [AssetController::class, 'recordMovement'])->name('movements.record');
+        });
+        
+        // CRUD operations - restricted to admin users only
+        Route::middleware(['role:admin'])->group(function () {
+            Route::get('/create', [AssetController::class, 'create'])->name('create');
+            Route::post('/', [AssetController::class, 'store'])->name('store');
+            Route::get('/{id}/edit', [AssetController::class, 'edit'])->name('edit');
+            Route::put('/{id}', [AssetController::class, 'update'])->name('update');
+            Route::delete('/{id}', [AssetController::class, 'destroy'])->name('destroy');
+            Route::post('/movements/{id}/approve', [AssetController::class, 'approveMovement'])->name('movements.approve');
+        });
     });
 
     // Message
@@ -929,4 +943,4 @@ Route::fallback(function () {
     }
     return redirect()->route('home')
         ->with('warning', 'The page you were looking for could not be found.');
-});
+});Route::get('/test-schedule-view', function() { return view('activities.schedule.index', ['sessions' => collect([]), 'centres' => collect([]), 'categories' => collect([]), 'role' => 'admin']); });

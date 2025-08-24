@@ -48,7 +48,8 @@ class Letter extends Model
         'pdf_path',
         'pdf_file_size',
         'centre_id',
-        'created_by'
+        'created_by',
+        'generated_by'
     ];
 
     protected $casts = [

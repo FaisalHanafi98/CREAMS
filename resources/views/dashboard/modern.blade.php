@@ -85,13 +85,15 @@
     <div class="dashboard-navigation-tabs mb-4">
         <div class="tab-navigation-enhanced">
             <ul class="nav nav-pills dashboard-nav-pills justify-content-center" id="dashboardTabs" role="tablist">
+                @if($role === 'admin')
                 <li class="nav-item">
                     <a class="nav-link active" id="general-tab" data-toggle="pill" href="#general" role="tab" aria-controls="general" aria-selected="true">
                         <i class="fas fa-chart-line mr-2"></i>General
                     </a>
                 </li>
+                @endif
                 <li class="nav-item">
-                    <a class="nav-link" id="personal-tab" data-toggle="pill" href="#personal" role="tab" aria-controls="personal" aria-selected="false">
+                    <a class="nav-link {{ $role !== 'admin' ? 'active' : '' }}" id="personal-tab" data-toggle="pill" href="#personal" role="tab" aria-controls="personal" aria-selected="{{ $role !== 'admin' ? 'true' : 'false' }}">
                         <i class="fas fa-user mr-2"></i>Personal
                     </a>
                 </li>
@@ -101,6 +103,7 @@
 
     <!-- Tab Content -->
     <div class="tab-content" id="dashboardTabContent">
+        @if($role === 'admin')
         <!-- General Tab -->
         <div class="tab-pane fade show active" id="general" role="tabpanel">
 
@@ -377,9 +380,10 @@
         </div>
     </div>
         </div> <!-- End General Tab -->
+        @endif
 
         <!-- Personal Tab -->
-        <div class="tab-pane fade" id="personal" role="tabpanel">
+        <div class="tab-pane fade {{ $role !== 'admin' ? 'show active' : '' }}" id="personal" role="tabpanel">
             
             <!-- Personal Statistics Section - DATA-BASED -->
             <div class="row g-4 mb-4">
@@ -818,7 +822,7 @@
                                                             <i class="fas fa-plus"></i>
                                                             Add New Session
                                                         </a>
-                                                        <a href="{{ route('activities.home') }}" class="btn btn-outline-modern">
+                                                        <a href="{{ route($role . '.activities') }}" class="btn btn-outline-modern">
                                                             <i class="fas fa-eye"></i>
                                                             Browse Activities
                                                         </a>
@@ -2623,7 +2627,7 @@
 }
 
 .stats-sublabel {
-    color: rgba(255, 255, 255, 0.8);
+    color: #6c757d;
     font-size: 0.75rem;
     margin-top: 0.25rem;
     display: block;

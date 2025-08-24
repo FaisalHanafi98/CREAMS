@@ -186,7 +186,7 @@
                         <div class="text-center py-4">
                             <i class="fas fa-clipboard-list fa-2x text-muted mb-2"></i>
                             <p class="text-muted mb-0">No recent activities</p>
-                            @if(in_array(session('role'), ['admin', 'supervisor']))
+                            @if(session('role') === 'admin')
                                 <a href="{{ route('activities.create') }}" class="btn btn-sm btn-primary mt-2">
                                     Create Activity
                                 </a>
@@ -230,7 +230,7 @@
                         <div class="text-center py-4">
                             <i class="fas fa-box fa-2x text-muted mb-2"></i>
                             <p class="text-muted mb-0">No assets registered</p>
-                            @if(in_array(session('role'), ['admin', 'supervisor']))
+                            @if(session('role') === 'admin')
                                 <a href="{{ route('centres.assets', $centre->centre_id) }}" class="btn btn-sm btn-primary mt-2">
                                     Add Asset
                                 </a>

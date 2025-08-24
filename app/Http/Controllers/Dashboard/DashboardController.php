@@ -506,12 +506,12 @@ class DashboardController extends Controller
         try {
             // Calculate actual values for the teacher
             $myActivities = DB::table('activities')->where('instructor_id', $userId)->count();
-            $assignedSessions = DB::table('activity_sessions')->where('teacher_id', $userId)->where('session_status', 'scheduled')->count();
+            $assignedSessions = DB::table('activity_sessions')->where('instructor_id', $userId)->where('session_status', 'scheduled')->count();
             $centreTrainees = DB::table('trainees')->where('centre_id', $centreId)->where('status', 'active')->count();
-            $completedSessions = DB::table('activity_sessions')->where('teacher_id', $userId)->where('session_status', 'completed')->count();
+            $completedSessions = DB::table('activity_sessions')->where('instructor_id', $userId)->where('session_status', 'completed')->count();
             
             // Calculate completion rate
-            $totalSessions = DB::table('activity_sessions')->where('teacher_id', $userId)->count();
+            $totalSessions = DB::table('activity_sessions')->where('instructor_id', $userId)->count();
             $completionRate = $totalSessions > 0 ? round(($completedSessions / $totalSessions) * 100, 1) : 0;
             
             return [
@@ -1094,8 +1094,8 @@ class DashboardController extends Controller
     {
         try {
             if ($role === 'teacher') {
-                $totalSessions = DB::table('activity_sessions')->where('teacher_id', $userId)->count();
-                $completedSessions = DB::table('activity_sessions')->where('teacher_id', $userId)->where('session_status', 'completed')->count();
+                $totalSessions = DB::table('activity_sessions')->where('instructor_id', $userId)->count();
+                $completedSessions = DB::table('activity_sessions')->where('instructor_id', $userId)->where('session_status', 'completed')->count();
                 $progress = $totalSessions > 0 ? round(($completedSessions / $totalSessions) * 100) : 0;
 
                 return [
@@ -1641,12 +1641,13 @@ class DashboardController extends Controller
     }
 
     /**
-     * Get today's centre activities for General tab
+     * Get today's centre activities for General tab (or nearest workday)
      */
     private function getTodaysCentreActivities($centreId)
     {
         try {
-            $today = now()->format('Y-m-d');
+            // Get nearest workday from current time
+            $targetDate = $this->getNearestWorkday();
             
             $query = DB::table('activity_sessions')
                 ->join('activities', 'activity_sessions.activity_id', '=', 'activities.id')
@@ -1662,7 +1663,7 @@ class DashboardController extends Controller
                     'teachers.name as teacher_name',
                     'activity_sessions.max_participants'
                 ])
-                ->whereDate('activity_sessions.session_date', $today)
+                ->whereDate('activity_sessions.session_date', $targetDate)
                 ->where('activity_sessions.session_status', '!=', 'cancelled')
                 ->orderBy('activity_sessions.start_time');
 
@@ -1690,9 +1691,31 @@ class DashboardController extends Controller
                 ];
             })->filter()->toArray(); // Remove null entries
         } catch (\Exception $e) {
-            Log::error('Today\'s centre activities error', ['error' => $e->getMessage()]);
+            Log::error('Centre activities error', ['error' => $e->getMessage()]);
             return [];
         }
+    }
+    
+    /**
+     * Get nearest workday from current time
+     */
+    private function getNearestWorkday()
+    {
+        $today = now();
+        
+        // If today is a workday (Monday-Friday), return today
+        if ($today->isWeekday()) {
+            return $today->format('Y-m-d');
+        }
+        
+        // If today is weekend, find next Monday
+        if ($today->isSaturday()) {
+            return $today->addDays(2)->format('Y-m-d'); // Next Monday
+        } else if ($today->isSunday()) {
+            return $today->addDay()->format('Y-m-d'); // Next Monday
+        }
+        
+        return $today->format('Y-m-d');
     }
 
     /**
@@ -1911,7 +1934,7 @@ class DashboardController extends Controller
                     ->where('activity_sessions.session_status', 'completed')
                     ->count();
 
-                $completionRate = $pastSessions > 0 ? round(($completedSessions / $pastSessions) * 100) : 100;
+                $completionRate = $pastSessions > 0 ? round(($completedSessions / $pastSessions) * 100) : 0;
 
                 // Calculate average attendance from sessions taught by this user
                 $userSessionIds = DB::table('activity_sessions')

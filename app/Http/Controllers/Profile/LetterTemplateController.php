@@ -253,6 +253,7 @@ class LetterTemplateController extends Controller
                 'letter_status' => 'generated',
                 'centre_id' => session('centre_id') ?? 'MAIN', // Required field
                 'created_by' => session('id'),
+                'generated_by' => session('id'), // Required for audit tracking
                 'letter_data' => [
                     'generated_by_name' => session('name') ?? $user->name,
                     'generated_by_position' => $user->position ?? ucfirst(session('role')),

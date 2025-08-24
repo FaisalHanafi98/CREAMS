@@ -237,6 +237,17 @@
                             </div>
 
                             <div class="form-group">
+                                <label for="activity_location">Activity Location</label>
+                                <input type="text" class="form-control @error('activity_location') is-invalid @enderror" 
+                                       id="activity_location" name="activity_location" maxlength="255"
+                                       value="{{ old('activity_location', $activity->activity_location) }}" required>
+                                @error('activity_location')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                                <small class="form-text text-muted">Primary location where this activity takes place</small>
+                            </div>
+
+                            <div class="form-group">
                                 <label for="max_participants">Max Participants</label>
                                 <input type="number" class="form-control @error('max_participants') is-invalid @enderror" 
                                        id="max_participants" name="max_participants" min="1" max="50"

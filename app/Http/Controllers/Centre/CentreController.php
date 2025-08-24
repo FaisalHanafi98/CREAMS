@@ -30,11 +30,11 @@ class CentreController extends Controller
     public function __construct()
     {
         $this->middleware('auth');
-        // Admin has full access, Supervisors can view centres
-        $this->middleware('enhanced.role:admin,supervisor');
+        // All authenticated users can view centres, but only admin can perform CRUD operations
+        $this->middleware('enhanced.role:admin,supervisor,teacher,ajk');
         
         // Only admin can create/edit/delete centres
-        $this->middleware('enhanced.role:admin')->only(['create', 'store', 'edit', 'update', 'destroy']);
+        $this->middleware('enhanced.role:admin')->only(['create', 'store', 'edit', 'update', 'destroy', 'refreshStatistics']);
     }
 
     /**

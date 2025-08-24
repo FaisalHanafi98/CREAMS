@@ -554,48 +554,45 @@ class StaffController extends Controller
                 });
             }
 
-            // Get schedules from activities where this staff is instructor
+            // Get ONLY real schedules from activity_sessions table - NO FAKE DATA
             try {
-                $schedules = collect();
-                
-                // First try to get schedules from activity_schedules table
-                if (\Schema::hasTable('activity_schedules')) {
-                    try {
-                        $schedules = \DB::table('activity_schedules')
-                            ->join('activities', 'activity_schedules.activity_id', '=', 'activities.id')
-                            ->where('activities.instructor_id', $staffMember->id)
-                            // Use instructor_id only, created_by column doesn't exist
-                            ->select('activity_schedules.*', 'activities.activity_name')
-                            ->distinct()
-                            ->orderBy('activity_schedules.start_date')
-                            ->orderBy('activity_schedules.start_time')
-                            ->get();
-                    } catch (\Exception $e) {
-                        Log::info('Activity schedules query failed, using fallback: ' . $e->getMessage());
-                    }
-                }
-                
-                // If no schedules from schedules table, create from activities
-                if ($schedules->isEmpty()) {
-                    $activities = Activity::where('instructor_id', $staffMember->id)
-                        // Use instructor_id only, created_by column doesn't exist
-                        ->where('is_active', 1)
-                        ->get();
-                    
-                    $schedules = $activities->map(function($activity) {
-                        return (object)[
-                            'id' => $activity->id,
-                            'activity_id' => $activity->id,
-                            'activity_name' => $activity->activity_name,
-                            'start_date' => $activity->activity_date ?? now()->addDays(1)->format('Y-m-d'),
-                            'start_time' => $activity->activity_start_time ?? '09:00:00',
-                            'end_time' => $activity->activity_end_time ?? '10:30:00',
-                            'location' => $activity->activity_location ?? 'TBA',
-                            'schedule_status' => 'active',
-                            'duration_minutes' => $activity->duration_minutes ?? 90,
-                        ];
+                $schedules = \DB::table('activity_sessions')
+                    ->join('activities', 'activity_sessions.activity_id', '=', 'activities.id')
+                    ->leftJoin('activity_categories', 'activities.category_id', '=', 'activity_categories.id')
+                    ->where('activity_sessions.instructor_id', $staffMember->id)
+                    ->whereIn('activity_sessions.session_status', ['scheduled', 'ongoing', 'completed'])
+                    ->whereBetween('activity_sessions.session_date', [now()->startOfWeek(), now()->endOfWeek()]) // This week only
+                    ->select(
+                        'activity_sessions.id',
+                        'activity_sessions.activity_id',
+                        'activities.activity_name',
+                        'activity_sessions.session_date',
+                        'activity_sessions.start_time',
+                        'activity_sessions.end_time',
+                        'activity_sessions.location',
+                        'activity_sessions.session_status as schedule_status',
+                        'activity_categories.category_name as category'
+                    )
+                    ->orderBy('activity_sessions.session_date')
+                    ->orderBy('activity_sessions.start_time')
+                    ->get()
+                    ->map(function($session) {
+                        // Calculate day of week (1=Monday, 7=Sunday)
+                        $session->day_of_week = \Carbon\Carbon::parse($session->session_date)->dayOfWeekIso;
+                        
+                        // Calculate duration in minutes
+                        $session->duration_minutes = 90; // Default
+                        if ($session->start_time && $session->end_time) {
+                            $start = \Carbon\Carbon::parse($session->start_time);
+                            $end = \Carbon\Carbon::parse($session->end_time);
+                            $session->duration_minutes = $end->diffInMinutes($start);
+                        }
+                        
+                        // Set start_date for compatibility with view
+                        $session->start_date = $session->session_date;
+                        
+                        return $session;
                     });
-                }
             } catch (\Exception $e) {
                 Log::error('Error loading staff schedule: ' . $e->getMessage());
                 $schedules = collect(); // Empty collection as fallback
@@ -619,10 +616,8 @@ class StaffController extends Controller
                     return \Carbon\Carbon::parse($session->session_date)->isToday();
                 })->count();
                 
-                // Count this week's sessions
-                $scheduleStats['week_sessions'] = $sessions->filter(function($session) {
-                    return \Carbon\Carbon::parse($session->session_date)->isCurrentWeek();
-                })->count();
+                // Count this week's sessions (use same data as schedule grid)
+                $scheduleStats['week_sessions'] = $schedules->count();
                 
                 // Calculate monthly hours (approximate)
                 $monthlyMinutes = $sessions->filter(function($session) {
@@ -633,6 +628,16 @@ class StaffController extends Controller
 
             // Add encrypted ID to staff member object for view links
             $staffMember->encrypted_id = $encrypted_id;
+            
+            // DEBUG: Log the exact data being passed to the view
+            Log::info('DEBUG: Staff Schedule Data', [
+                'staff_id' => $staffMember->id,
+                'staff_name' => $staffMember->name,
+                'schedules_count' => $schedules->count(),
+                'sessions_count' => $sessions->count(),
+                'schedules_sample' => $schedules->take(3)->toArray(),
+                'sessions_sample' => $sessions->take(3)->toArray()
+            ]);
             
             return view('staff.schedule', [
                 'staffMember' => $staffMember,

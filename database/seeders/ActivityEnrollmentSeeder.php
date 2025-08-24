@@ -9,17 +9,25 @@ use Faker\Factory as Faker;
 class ActivityEnrollmentSeeder extends Seeder
 {
     /**
-     * Seed activity enrollments matching trainees with appropriate activities
+     * Seed MASSIVE activity enrollments with disability matching and workload requirements
+     * Ensures 2-10 activities per week per trainee/staff (average 5 activities = 10 sessions)
+     * Matches activities to trainee disability conditions appropriately
      */
     public function run(): void
     {
-        $this->command->info('📝 Seeding activity enrollments...');
+        $this->command->info('📝 Seeding MASSIVE activity enrollments with disability matching and workload management...');
 
         $faker = Faker::create();
         
-        $trainees = DB::table('trainees')->get();
+        // Get trainees from 4 centres (exclude Gombak)
+        $trainees = DB::table('trainees')
+            ->whereNotIn('centre_id', ['01'])
+            ->get();
+            
+        // Get activities with categories from 4 centres
         $activities = DB::table('activities')
             ->join('activity_categories', 'activities.category_id', '=', 'activity_categories.id')
+            ->whereNotIn('activities.centre_id', ['01'])
             ->select('activities.*', 'activity_categories.category_name')
             ->get();
         
@@ -27,8 +35,11 @@ class ActivityEnrollmentSeeder extends Seeder
             $this->command->error('No trainees or activities found! Run TraineeSeeder and ActivitySeeder first.');
             return;
         }
-
+        
+        $this->command->info("   Processing {$trainees->count()} trainees with {$activities->count()} activities...");
+        
         $totalEnrollments = 0;
+        $workloadStats = [];
         
         foreach ($trainees as $trainee) {
             // Get activities from the same centre
@@ -41,12 +52,21 @@ class ActivityEnrollmentSeeder extends Seeder
             // Match trainee condition with appropriate activities
             $suitableActivities = $this->getSuitableActivities($trainee, $centreActivities);
             
-            // Enroll trainee in 2-4 suitable activities
-            $enrollmentCount = $faker->numberBetween(2, min(4, $suitableActivities->count()));
-            $selectedActivities = $suitableActivities->random($enrollmentCount);
+            if ($suitableActivities->count() == 0) continue;
+            
+            // Calculate weekly workload: minimum 2, average 5, maximum 10 activities per week
+            $weeklyActivityCount = $this->calculateWeeklyWorkload();
+            
+            // Select activities across different time periods to ensure consistent weekly load
+            $selectedActivities = $this->selectActivitiesAcrossTimeline(
+                $suitableActivities, 
+                $weeklyActivityCount
+            );
+            
+            $traineeEnrollments = 0;
             
             foreach ($selectedActivities as $activity) {
-                $enrollmentDate = $faker->dateTimeBetween('-3 months', '-1 month');
+                $enrollmentDate = $this->getAppropriateEnrollmentDate($activity);
                 $progress = $this->calculateProgress($enrollmentDate, $faker);
                 
                 $enrollmentData = [
@@ -56,7 +76,7 @@ class ActivityEnrollmentSeeder extends Seeder
                     'enrollment_status' => $this->getEnrollmentStatus($progress),
                     'enrollment_notes' => $this->generateEnrollmentNotes($trainee, $activity, $faker),
                     'progress_percentage' => $progress,
-                    'attendance_count' => $faker->numberBetween(5, 30),
+                    'attendance_count' => $faker->numberBetween(5, 50),
                     'completion_date' => $progress >= 100 ? $faker->dateTimeBetween($enrollmentDate, 'now')->format('Y-m-d') : null,
                     'completion_notes' => $progress >= 100 ? 'Successfully completed all program objectives.' : null,
                     'enrolled_by' => $this->getRandomStaffMember($trainee->centre_id),
@@ -66,12 +86,20 @@ class ActivityEnrollmentSeeder extends Seeder
                 
                 DB::table('activity_enrollments')->insert($enrollmentData);
                 $totalEnrollments++;
+                $traineeEnrollments++;
             }
+            
+            // Track workload statistics
+            $workloadStats[] = [
+                'trainee_id' => $trainee->id,
+                'condition' => $trainee->trainee_condition,
+                'enrollments' => $traineeEnrollments
+            ];
         }
 
-        $this->command->info("📝 Successfully seeded {$totalEnrollments} activity enrollments");
+        $this->command->info("📝 Successfully seeded {$totalEnrollments} MASSIVE activity enrollments");
         
-        // Show enrollment statistics
+        // Show enrollment and workload statistics
         $stats = DB::table('activity_enrollments')
             ->select('enrollment_status', DB::raw('count(*) as count'))
             ->groupBy('enrollment_status')
@@ -79,6 +107,13 @@ class ActivityEnrollmentSeeder extends Seeder
             
         foreach ($stats as $stat) {
             $this->command->line("   📊 {$stat->enrollment_status}: {$stat->count} enrollments");
+        }
+        
+        // Show workload distribution
+        $enrollmentCounts = array_count_values(array_column($workloadStats, 'enrollments'));
+        $this->command->line("\n   Trainee workload distribution:");
+        foreach ($enrollmentCounts as $count => $trainees) {
+            $this->command->line("     {$count} activities: {$trainees} trainees");
         }
     }
     
@@ -159,5 +194,78 @@ class ActivityEnrollmentSeeder extends Seeder
             ->first();
             
         return $staff ? $staff->id : null;
+    }
+
+    private function calculateWeeklyWorkload(): int
+    {
+        // Minimum 2, average 5, maximum 10 activities per week
+        $weights = [
+            2 => 10,  // 2 activities: 10% (minimum)
+            3 => 15,  // 3 activities: 15%
+            4 => 20,  // 4 activities: 20%
+            5 => 25,  // 5 activities: 25% (most common)
+            6 => 15,  // 6 activities: 15%
+            7 => 10,  // 7 activities: 10%
+            8 => 3,   // 8 activities: 3%
+            9 => 1,   // 9 activities: 1%
+            10 => 1   // 10 activities: 1% (maximum)
+        ];
+        
+        $rand = rand(1, 100);
+        $cumulative = 0;
+        
+        foreach ($weights as $count => $weight) {
+            $cumulative += $weight;
+            if ($rand <= $cumulative) {
+                return $count;
+            }
+        }
+        
+        return 5; // Default fallback
+    }
+
+    private function selectActivitiesAcrossTimeline($suitableActivities, int $targetCount): array
+    {
+        $selected = [];
+        $activities = $suitableActivities->toArray();
+        
+        // Shuffle to get random selection
+        shuffle($activities);
+        
+        // Prioritize current ongoing activities (August) and future activities (September)
+        $ongoingActivities = array_filter($activities, function($activity) {
+            return $activity->is_active;
+        });
+        
+        $completedActivities = array_filter($activities, function($activity) {
+            return !$activity->is_active;
+        });
+        
+        // Select 60% from ongoing/planned, 40% from completed
+        $ongoingCount = (int) ($targetCount * 0.6);
+        $completedCount = $targetCount - $ongoingCount;
+        
+        // Add ongoing activities
+        $selectedOngoing = array_slice($ongoingActivities, 0, min($ongoingCount, count($ongoingActivities)));
+        $selected = array_merge($selected, $selectedOngoing);
+        
+        // Add completed activities to reach target
+        $remaining = $targetCount - count($selected);
+        if ($remaining > 0) {
+            $selectedCompleted = array_slice($completedActivities, 0, min($remaining, count($completedActivities)));
+            $selected = array_merge($selected, $selectedCompleted);
+        }
+        
+        return $selected;
+    }
+
+    private function getAppropriateEnrollmentDate($activity): \DateTime
+    {
+        $activityCreated = \Carbon\Carbon::parse($activity->created_at);
+        
+        // Enroll 1-2 weeks before or at activity start
+        $enrollmentDate = $activityCreated->copy()->subDays(rand(0, 14));
+        
+        return $enrollmentDate;
     }
 }

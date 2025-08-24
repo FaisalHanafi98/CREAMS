@@ -82,7 +82,8 @@ class ModernLetterController extends Controller
                     'centre_id' => session('centre_id')
                 ]),
                 'template_id' => $validated['template_id'],
-                'created_by' => session('id')
+                'created_by' => session('id'),
+                'generated_by' => session('id')
             ]);
 
             // Generate PDF with new architecture

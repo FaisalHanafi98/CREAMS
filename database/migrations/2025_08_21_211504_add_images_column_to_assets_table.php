@@ -12,9 +12,11 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('assets', function (Blueprint $table) {
-            if (!Schema::hasColumn('assets', 'warranty_expiry')) {
-                $table->date('warranty_expiry')->nullable()->after('purchase_date');
-            }
+            // Add images column to store JSON array of image paths
+            $table->json('images')->nullable()->after('notes');
+            
+            // Add a primary_image column for quick access to main asset image
+            $table->string('primary_image')->nullable()->after('images');
         });
     }
 
@@ -24,7 +26,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('assets', function (Blueprint $table) {
-            $table->dropColumn('warranty_expiry');
+            $table->dropColumn(['images', 'primary_image']);
         });
     }
 };

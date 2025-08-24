@@ -124,7 +124,7 @@
                     <div class="stat-body">
                         <h3 class="stat-number">{{ $stats['total_enrollments'] ?? 0 }}</h3>
                         <p class="stat-label">Enrollments</p>
-                        <span class="stat-description">Active participants</span>
+                        <span class="stat-description">Unique active participants</span>
                     </div>
                 </div>
             </div>
@@ -159,27 +159,27 @@
                 <button class="filter-tab-enhanced active" data-filter="all">
                     <span class="tab-icon"><i class="fas fa-th-large"></i></span>
                     <span class="tab-text">All Activities</span>
-                    <span class="tab-count">{{ $activities->count() }}</span>
+                    <span class="tab-count">{{ $categoryCounts['total'] ?? 0 }}</span>
                 </button>
                 <button class="filter-tab-enhanced" data-filter="rehabilitation">
                     <span class="tab-icon"><i class="fas fa-heartbeat"></i></span>
                     <span class="tab-text">Rehabilitation</span>
-                    <span class="tab-count">{{ $activities->filter(function($activity) { return $activity->category?->category_type === 'rehabilitation'; })->count() }}</span>
+                    <span class="tab-count">{{ $categoryCounts['rehabilitation'] ?? 0 }}</span>
                 </button>
                 <button class="filter-tab-enhanced" data-filter="academic">
                     <span class="tab-icon"><i class="fas fa-graduation-cap"></i></span>
                     <span class="tab-text">Academic</span>
-                    <span class="tab-count">{{ $activities->filter(function($activity) { return $activity->category?->category_type === 'academic'; })->count() }}</span>
+                    <span class="tab-count">{{ $categoryCounts['academic'] ?? 0 }}</span>
                 </button>
                 <button class="filter-tab-enhanced" data-filter="recreational">
                     <span class="tab-icon"><i class="fas fa-gamepad"></i></span>
                     <span class="tab-text">Recreational</span>
-                    <span class="tab-count">{{ $activities->filter(function($activity) { return $activity->category?->category_type === 'creative_social'; })->count() }}</span>
+                    <span class="tab-count">{{ $categoryCounts['creative_social'] ?? 0 }}</span>
                 </button>
                 <button class="filter-tab-enhanced" data-filter="active">
                     <span class="tab-icon"><i class="fas fa-play-circle"></i></span>
                     <span class="tab-text">Active</span>
-                    <span class="tab-count">{{ $activities->where('is_active', true)->count() }}</span>
+                    <span class="tab-count">{{ $categoryCounts['active'] ?? 0 }}</span>
                 </button>
             </div>
 
@@ -354,8 +354,61 @@
 
     <!-- Enhanced Activities Grid with Pagination -->
     <div class="activities-main-enhanced">
-        <div class="activities-grid-enhanced" id="activitiesGrid">
-            <!-- Activities will be dynamically loaded here -->
+        <div class="activities-grid" id="activitiesGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 25px; margin-bottom: 2rem;">
+            <!-- Fallback: Show activities using PHP/Blade while JS loads -->
+            @if($activities && $activities->count() > 0)
+                @foreach($activities as $activity)
+                <div class="activity-card" style="background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 5px 20px rgba(0,0,0,0.08); border: 1px solid #f1f3f4;">
+                    <!-- Activity Card Header -->
+                    <div class="activity-card-header" style="background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1)); padding: 20px; text-align: center; position: relative;">
+                        <div style="width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px; font-size: 24px; background: linear-gradient(135deg, #667eea, #764ba2); color: white; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);">
+                            <i class="fas fa-tasks"></i>
+                        </div>
+                        <h6 class="activity-name" style="font-size: 1.2rem; font-weight: 700; color: #2c3e50; margin: 0 0 5px 0;">{{ $activity->activity_name }}</h6>
+                        <div class="activity-category" style="font-size: 0.9rem; color: #6c757d; font-family: 'Courier New', monospace; background: rgba(255,255,255,0.8); padding: 3px 8px; border-radius: 10px; display: inline-block;">
+                            {{ $activity->category ?? 'General' }}
+                        </div>
+                    </div>
+
+                    <!-- Activity Card Body -->
+                    <div class="activity-card-body" style="padding: 20px;">
+                        <div class="status-badge" style="background: linear-gradient(135deg, {{ $activity->is_active ? '#28a745' : '#6c757d' }}, {{ $activity->is_active ? '#20c997' : '#5a6268' }}); color: white; padding: 5px 12px; border-radius: 15px; font-size: 0.8rem; font-weight: 600; display: inline-block; margin-bottom: 15px; text-align: center; width: 100%;">
+                            {{ $activity->is_active ? 'Active' : 'Inactive' }}
+                        </div>
+                        
+                        <div class="activity-info" style="margin-bottom: 15px;">
+                            <div class="info-row" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 0.9rem;">
+                                <span class="info-label" style="color: #6c757d; font-weight: 500;">Sessions:</span>
+                                <span class="info-value" style="color: #2c3e50; font-weight: 600;">{{ $activity->sessions->count() }}</span>
+                            </div>
+                            <div class="info-row" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 0.9rem;">
+                                <span class="info-label" style="color: #6c757d; font-weight: 500;">Max Participants:</span>
+                                <span class="info-value" style="color: #2c3e50; font-weight: 600;">{{ $activity->max_participants ?? 'No limit' }}</span>
+                            </div>
+                        </div>
+
+                        <div class="activity-description" style="color: #6c757d; font-size: 0.85rem; line-height: 1.4; margin-bottom: 15px; min-height: 40px;">
+                            {{ Str::limit($activity->activity_description, 100) }}
+                        </div>
+
+                        <div class="activity-actions" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap: 8px; margin-top: 15px;">
+                            <a href="{{ route('activities.show', $activity->id) }}" class="btn-action btn-view" style="padding: 8px 15px; border-radius: 10px; border: none; font-size: 0.85rem; font-weight: 600; transition: all 0.3s ease; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 5px; background: linear-gradient(135deg, #667eea, #764ba2); color: white; z-index: 10; position: relative;">
+                                <i class="fas fa-eye"></i>View
+                            </a>
+                            <a href="{{ route('activities.sessions', $activity->id) }}" class="btn-action btn-schedule" style="padding: 8px 15px; border-radius: 10px; border: none; font-size: 0.85rem; font-weight: 600; transition: all 0.3s ease; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 5px; background: #17a2b8; color: white; z-index: 10; position: relative;">
+                                <i class="fas fa-calendar"></i>Sessions
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                @endforeach
+            @else
+                <div class="no-activities-message">
+                    <h3>No Activities Found</h3>
+                    <p>No activities are currently available for your role.</p>
+                    <p><strong>Debug Info:</strong> Activities count = {{ $activities ? $activities->count() : 'null' }}</p>
+                </div>
+            @endif
         </div>
 
         <!-- Loading State -->
@@ -382,36 +435,59 @@
         </div>
     </div>
 
-    <!-- Enhanced Pagination -->
-    <div class="pagination-container" id="paginationContainer">
-        <div class="pagination-info">
-            <span>Page <span id="currentPage">1</span> of <span id="totalPages">1</span></span>
+    <!-- Simple Pagination -->
+    <div class="text-center mt-4">
+        <div class="mb-2">
+            <small class="text-muted">
+                Page {{ $activities->currentPage() }} of {{ $activities->lastPage() }} • {{ $activities->total() }} total activities
+            </small>
         </div>
         
-        <div class="pagination-controls">
-            <!-- Previous Navigation -->
-            <button class="pagination-btn pagination-prev" id="prevBtn" disabled>
-                <i class="fas fa-chevron-left"></i>
-                <span>Previous</span>
-            </button>
-
-            <!-- Page Numbers -->
-            <div class="pagination-numbers" id="paginationNumbers">
-                <!-- Dynamic page numbers will be inserted here -->
-            </div>
-
-            <!-- Next Navigation -->
-            <button class="pagination-btn pagination-next" id="nextBtn">
-                <span>Next</span>
-                <i class="fas fa-chevron-right"></i>
-            </button>
+        @if($activities->lastPage() > 1)
+        <div class="d-inline-flex">
+            @php
+                $current = $activities->currentPage();
+                $last = $activities->lastPage();
+                $start = max(1, $current - 2);
+                $end = min($last, $current + 2);
+            @endphp
+            
+            {{-- Previous --}}
+            @if(!$activities->onFirstPage())
+                <a href="{{ $activities->previousPageUrl() }}" class="text-decoration-none mx-1" style="color: #667eea;">‹ Prev</a>
+            @endif
+            
+            {{-- First page --}}
+            @if($start > 1)
+                <a href="{{ $activities->url(1) }}" class="text-decoration-none mx-1 px-2 py-1 rounded {{ $current == 1 ? 'bg-primary text-white' : 'text-secondary' }}">1</a>
+                @if($start > 2)
+                    <span class="mx-1 text-muted">…</span>
+                @endif
+            @endif
+            
+            {{-- Page range --}}
+            @for($page = $start; $page <= $end; $page++)
+                @if($page == $current)
+                    <span class="mx-1 px-2 py-1 rounded bg-primary text-white">{{ $page }}</span>
+                @else
+                    <a href="{{ $activities->url($page) }}" class="text-decoration-none mx-1 px-2 py-1 rounded text-secondary hover-bg-light">{{ $page }}</a>
+                @endif
+            @endfor
+            
+            {{-- Last page --}}
+            @if($end < $last)
+                @if($end < $last - 1)
+                    <span class="mx-1 text-muted">…</span>
+                @endif
+                <a href="{{ $activities->url($last) }}" class="text-decoration-none mx-1 px-2 py-1 rounded text-secondary">{{ $last }}</a>
+            @endif
+            
+            {{-- Next --}}
+            @if($activities->hasMorePages())
+                <a href="{{ $activities->nextPageUrl() }}" class="text-decoration-none mx-1" style="color: #667eea;">Next ›</a>
+            @endif
         </div>
-
-        <div class="pagination-jump">
-            <label for="pageJump">Go to page:</label>
-            <input type="number" id="pageJump" min="1" max="1" value="1">
-            <button class="btn-jump" id="jumpBtn">Go</button>
-        </div>
+        @endif
     </div>
 </div>
 
@@ -439,8 +515,10 @@
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize the enhanced activities system
     const activitiesSystem = new EnhancedActivitiesManager({
-        activities: @json($activities),
-        itemsPerPage: 25,
+        activities: @json($activitiesForJs ?? $activities),
+        itemsPerPage: {{ $activities->perPage() }},
+        currentPage: {{ $activities->currentPage() }},
+        totalPages: {{ $activities->lastPage() }},
         defaultSort: 'name_asc'
     });
     

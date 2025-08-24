@@ -103,6 +103,7 @@ class LetterController extends Controller
                 'template_id' => $template->id,
                 'letter_status' => 'final',
                 'created_by' => session('id'),
+                'generated_by' => session('id'),
                 'letter_data' => json_encode([
                     'recipient_name' => $validated['recipient_name'],
                     'recipient_address' => $validated['recipient_address'] ?? '',

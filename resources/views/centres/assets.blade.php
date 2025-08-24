@@ -123,7 +123,7 @@
                                     </td>
                                     <td>
                                         <div class="asset-info">
-                                            <img src="{{ asset('images/default-asset.png') }}" alt="Asset" class="asset-thumbnail">
+                                            <img src="{{ $asset->primary_image_url ?? asset('images/default-asset.png') }}" alt="Asset" class="asset-thumbnail">
                                             <div>
                                                 <strong>{{ $asset->name ?? $asset->asset_name ?? 'Unnamed Asset' }}</strong>
                                                 @if($asset->description ?? $asset->asset_note)

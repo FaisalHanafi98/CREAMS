@@ -14,8 +14,8 @@ class EnhancedActivitiesManager {
     constructor(options) {
         this.activities = options.activities || [];
         this.itemsPerPage = options.itemsPerPage || 25;
-        this.currentPage = 1;
-        this.totalPages = Math.ceil(this.activities.length / this.itemsPerPage);
+        this.currentPage = options.currentPage || 1;
+        this.totalPages = options.totalPages || Math.ceil(this.activities.length / this.itemsPerPage);
         this.filteredActivities = [...this.activities];
         this.activeFilters = {};
         this.searchTerm = '';
@@ -503,41 +503,134 @@ class EnhancedActivitiesManager {
         
         if (!container) return;
         
-        // Show loading state
-        if (loadingState) loadingState.style.display = 'flex';
-        container.style.display = 'none';
-        if (emptyState) emptyState.style.display = 'none';
+        // Get all current cards
+        const allCards = Array.from(container.querySelectorAll('.activity-card'));
         
-        // Simulate loading delay for smooth UX
-        setTimeout(() => {
-            const startIndex = (this.currentPage - 1) * this.itemsPerPage;
-            const endIndex = startIndex + this.itemsPerPage;
-            const pageActivities = this.filteredActivities.slice(startIndex, endIndex);
+        // Calculate pagination
+        const startIndex = (this.currentPage - 1) * this.itemsPerPage;
+        const endIndex = startIndex + this.itemsPerPage;
+        
+        // Hide all cards first
+        allCards.forEach(card => card.style.display = 'none');
+        
+        // Show only the cards that match current filters and pagination
+        const filteredCards = this.getFilteredCards(allCards);
+        const pageCards = filteredCards.slice(startIndex, endIndex);
+        
+        if (pageCards.length === 0) {
+            if (emptyState) {
+                emptyState.style.display = 'flex';
+                emptyState.innerHTML = `
+                    <div class="text-center p-4">
+                        <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                        <h4>No activities found</h4>
+                        <p class="text-muted">Try adjusting your filters or search terms</p>
+                    </div>
+                `;
+            }
+        } else {
+            if (emptyState) emptyState.style.display = 'none';
+            pageCards.forEach(card => card.style.display = 'block');
+        }
+        
+        // Update the filtered activities count for pagination
+        this.filteredActivities = filteredCards.map(card => ({
+            id: this.getActivityIdFromCard(card)
+        }));
+        this.totalPages = Math.ceil(filteredCards.length / this.itemsPerPage);
+        
+        // Update filter tab counts
+        this.updateFilterTabCounts(allCards);
+    }
+    
+    getFilteredCards(allCards) {
+        return allCards.filter(card => {
+            const cardData = this.extractCardData(card);
             
-            if (pageActivities.length === 0) {
-                container.style.display = 'none';
-                if (loadingState) loadingState.style.display = 'none';
-                if (emptyState) emptyState.style.display = 'flex';
-                return;
+            // Apply search filter
+            if (this.searchTerm.trim()) {
+                const term = this.searchTerm.toLowerCase();
+                const searchText = [
+                    cardData.name,
+                    cardData.description,
+                    cardData.category
+                ].join(' ').toLowerCase();
+                
+                if (!searchText.includes(term)) return false;
             }
             
-            container.innerHTML = pageActivities.map(activity => this.createActivityCard(activity)).join('');
+            // Apply category filter (from tabs)
+            if (this.activeFilters.category) {
+                if (this.activeFilters.category === 'active') {
+                    if (!cardData.isActive) return false;
+                } else if (this.activeFilters.category === 'rehabilitation') {
+                    if (!['Physical Therapy', 'Occupational Therapy', 'Speech Therapy', 'Behavioral Therapy'].includes(cardData.category)) return false;
+                } else if (this.activeFilters.category === 'academic') {
+                    if (!['Mathematics', 'Basic Literacy', 'Life Skills'].includes(cardData.category)) return false;
+                } else if (this.activeFilters.category === 'recreational') {
+                    if (!['Arts & Crafts', 'Sports & Games', 'Music Therapy'].includes(cardData.category)) return false;
+                }
+            }
             
-            // Hide loading, show content
-            if (loadingState) loadingState.style.display = 'none';
-            container.style.display = 'grid';
-            if (emptyState) emptyState.style.display = 'none';
+            return true;
+        });
+    }
+    
+    extractCardData(cardElement) {
+        const titleElement = cardElement.querySelector('.activity-name');
+        const descriptionElement = cardElement.querySelector('.activity-description');
+        const categoryElement = cardElement.querySelector('.activity-category');
+        const statusElement = cardElement.querySelector('.status-badge');
+        
+        return {
+            name: titleElement ? titleElement.textContent.trim() : '',
+            description: descriptionElement ? descriptionElement.textContent.trim() : '',
+            category: categoryElement ? categoryElement.textContent.trim() : '',
+            isActive: statusElement ? statusElement.textContent.trim().toLowerCase() === 'active' : false
+        };
+    }
+    
+    getActivityIdFromCard(cardElement) {
+        const viewButton = cardElement.querySelector('a[href*="/activities/"]');
+        if (viewButton) {
+            const href = viewButton.getAttribute('href');
+            const match = href.match(/\/activities\/(\d+)/);
+            return match ? parseInt(match[1]) : null;
+        }
+        return null;
+    }
+    
+    updateFilterTabCounts(allCards) {
+        // Count activities by category
+        const counts = {
+            all: allCards.length,
+            active: 0,
+            rehabilitation: 0,
+            academic: 0,
+            recreational: 0
+        };
+        
+        allCards.forEach(card => {
+            const cardData = this.extractCardData(card);
             
-            // Add animation to cards
-            container.querySelectorAll('.activity-card-enhanced').forEach((card, index) => {
-                card.style.animationDelay = `${index * 0.1}s`;
-                card.classList.add('fade-in');
-            });
+            if (cardData.isActive) counts.active++;
             
-            // Setup card event listeners
-            this.setupCardListeners();
-            
-        }, 300);
+            if (['Physical Therapy', 'Occupational Therapy', 'Speech Therapy', 'Behavioral Therapy'].includes(cardData.category)) {
+                counts.rehabilitation++;
+            } else if (['Mathematics', 'Basic Literacy', 'Life Skills'].includes(cardData.category)) {
+                counts.academic++;
+            } else if (['Arts & Crafts', 'Sports & Games', 'Music Therapy'].includes(cardData.category)) {
+                counts.recreational++;
+            }
+        });
+        
+        // Update the counts in the filter tabs
+        Object.keys(counts).forEach(filter => {
+            const tab = document.querySelector(`[data-filter="${filter}"] .tab-count`);
+            if (tab) {
+                tab.textContent = counts[filter];
+            }
+        });
     }
     
     createActivityCard(activity) {
@@ -718,66 +811,9 @@ class EnhancedActivitiesManager {
     }
     
     setupCardListeners() {
-        // Menu button toggles
-        document.querySelectorAll('.menu-btn-enhanced').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const menu = btn.nextElementSibling;
-                
-                // Close other menus
-                document.querySelectorAll('.menu-dropdown-enhanced').forEach(m => {
-                    if (m !== menu) m.style.display = 'none';
-                });
-                
-                menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
-            });
-        });
-        
-        // Quick view buttons
-        document.querySelectorAll('.btn-quick-view').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                this.showActivityModal(btn.dataset.activityId);
-            });
-        });
-        
-        // Quick edit buttons
-        document.querySelectorAll('.btn-quick-edit').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                window.location.href = `/activities/${btn.dataset.activityId}/edit`;
-            });
-        });
-        
-        // Enroll buttons
-        document.querySelectorAll('.btn-enroll').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                window.location.href = `/activities/${btn.dataset.activityId}/enroll`;
-            });
-        });
-        
-        // Delete buttons
-        document.querySelectorAll('.delete-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                this.confirmDelete(btn.dataset.activityId);
-            });
-        });
-        
-        // Card click to view
-        document.querySelectorAll('.activity-card-enhanced').forEach(card => {
-            card.addEventListener('click', () => {
-                window.location.href = `/activities/${card.dataset.activityId}`;
-            });
-        });
-        
-        // Close menus when clicking outside
-        document.addEventListener('click', () => {
-            document.querySelectorAll('.menu-dropdown-enhanced').forEach(menu => {
-                menu.style.display = 'none';
-            });
-        });
+        // Since we're using existing Blade cards, we don't need to setup additional listeners
+        // The cards already have their own click handlers and buttons
+        console.log('Card listeners setup - using existing Blade card structure');
     }
     
     goToPage(page) {

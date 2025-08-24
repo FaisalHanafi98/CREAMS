@@ -408,6 +408,29 @@
                         </div>
                     </div>
 
+                    <!-- Activity Location -->
+                    <div class="form-group half-width">
+                        <label for="activity_location" class="form-label">
+                            <i class="fas fa-map-marker-alt"></i>
+                            Activity Location
+                            <span class="required">*</span>
+                        </label>
+                        <div class="input-wrapper">
+                            <input type="text" 
+                                   id="activity_location" 
+                                   name="activity_location" 
+                                   class="form-control-enhanced" 
+                                   placeholder="e.g., Main Hall, Therapy Room A, Outdoor Area..."
+                                   maxlength="255"
+                                   required>
+                            <div class="input-icon">
+                                <i class="fas fa-map-marker-alt"></i>
+                            </div>
+                        </div>
+                        <div class="validation-message"></div>
+                        <div class="input-help">Specify the primary location where this activity will take place</div>
+                    </div>
+
                     <!-- Prerequisites -->
                     <div class="form-group half-width">
                         <label for="prerequisites" class="form-label">

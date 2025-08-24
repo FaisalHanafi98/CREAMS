@@ -336,6 +336,7 @@ class AssetController extends Controller
                 'current_value' => $validated['purchase_price'],
                 'specifications' => $validated['specifications'] ?? [],
                 'images' => $images,
+                'primary_image' => !empty($images) ? $images[0] : null,
                 'notes' => $validated['notes'],
                 'created_by' => session('id')
             ]);

@@ -236,15 +236,15 @@ class DashboardService
                     ->count(),
                 'total_trainees' => DB::table('activity_enrollments')
                     ->join('activity_sessions', 'activity_enrollments.activity_id', '=', 'activity_sessions.activity_id')
-                    ->where('activity_sessions.teacher_id', $userId)
+                    ->where('activity_sessions.instructor_id', $userId)
                     ->where('activity_enrollments.enrollment_status', 'enrolled')
                     ->distinct('activity_enrollments.trainee_id')
                     ->count('activity_enrollments.trainee_id'),
-                'pending_attendance' => ActivitySession::where('teacher_id', $userId)
+                'pending_attendance' => ActivitySession::where('instructor_id', $userId)
                     ->where('status', 'scheduled')
                     ->where('session_date', '<', $today)
                     ->count(),
-                'completed_sessions' => ActivitySession::where('teacher_id', $userId)
+                'completed_sessions' => ActivitySession::where('instructor_id', $userId)
                     ->where('status', 'completed')
                     ->whereMonth('session_date', $today->month)
                     ->count(),

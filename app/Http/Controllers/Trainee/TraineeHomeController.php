@@ -802,7 +802,7 @@ class TraineeHomeController extends Controller
             
             // Check if attendance already exists for this date
             $existingAttendance = Attendance::where('trainee_id', $id)
-                ->whereDate('date', $validatedData['attendance_date'])
+                ->whereDate('attendance_date', $validatedData['attendance_date'])
                 ->first();
             
             if ($existingAttendance) {

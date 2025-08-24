@@ -39,6 +39,7 @@ class Asset extends Model
         'current_value',
         'specifications',
         'images',
+        'primary_image',
         'notes',
         'created_by'
     ];
@@ -177,9 +178,17 @@ class Asset extends Model
      */
     public function getPrimaryImageUrlAttribute(): string
     {
+        // First check if we have a primary_image set
+        if ($this->primary_image) {
+            return asset('storage/' . $this->primary_image);
+        }
+        
+        // Fallback to first image in images array
         if ($this->images && count($this->images) > 0) {
             return asset('storage/' . $this->images[0]);
         }
+        
+        // Default asset image
         return asset('images/default-asset.png');
     }
 

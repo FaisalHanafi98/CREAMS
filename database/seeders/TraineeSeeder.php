@@ -44,26 +44,26 @@ class TraineeSeeder extends Seeder
             'surnames' => ['Pillai', 'Naidu', 'Gopal', 'Nair', 'Singh', 'Sharma', 'Krishnan']
         ];
         
-        // Special needs conditions with realistic prevalence
+        // Special needs conditions with realistic prevalence and disability codes
         $conditions = [
-            'Autism Spectrum Disorder',
-            'Down Syndrome',
-            'Cerebral Palsy',
-            'Intellectual Disability',
-            'ADHD',
-            'Learning Disabilities',
-            'Speech and Language Disorders',
-            'Hearing Impairment',
-            'Visual Impairment',
-            'Physical Disability',
-            'Multiple Disabilities'
+            'Autism Spectrum Disorder' => 'AU',
+            'Down Syndrome' => 'DS',
+            'Cerebral Palsy' => 'CP',
+            'Intellectual Disability' => 'ID',
+            'ADHD' => 'AD',
+            'Learning Disabilities' => 'LD',
+            'Speech and Language Disorders' => 'SL',
+            'Hearing Impairment' => 'HI',
+            'Visual Impairment' => 'VI',
+            'Physical Disability' => 'PY',
+            'Multiple Disabilities' => 'MD'
         ];
         
         // Malaysian locations for addresses
         $malaysianStates = ['Selangor', 'Kuala Lumpur', 'Pahang', 'Johor', 'Perak'];
         
-        // Create 50 trainees with realistic data
-        for ($i = 1; $i <= 50; $i++) {
+        // Create 100 trainees with realistic data (doubled for 3:1 ratio)
+        for ($i = 1; $i <= 100; $i++) {
             // Determine ethnicity with Malaysian demographics
             $ethnicityRand = rand(1, 100);
             if ($ethnicityRand <= 60) {
@@ -108,9 +108,10 @@ class TraineeSeeder extends Seeder
             // Select random centre
             $selectedCentre = $centres->random();
             
-            // Generate trainee ID
-            $centreCode = strtoupper(substr($selectedCentre->centre_name, 0, 3));
-            $traineeId = "{$centreCode}-" . sprintf('%04d', $i);
+            // Select random condition and generate trainee ID with disability code
+            $selectedCondition = $faker->randomElement(array_keys($conditions));
+            $disabilityCode = $conditions[$selectedCondition];
+            $traineeId = $disabilityCode . sprintf('%04d', $i);
             
             // Generate contact details
             $phonePrefix = $faker->randomElement(['012', '013', '014', '016', '017', '018', '019']);
@@ -146,7 +147,7 @@ class TraineeSeeder extends Seeder
                 'gender' => $gender,
                 'trainee_phone_number' => $phoneNumber,
                 'trainee_address' => $address,
-                'trainee_condition' => $faker->randomElement($conditions),
+                'trainee_condition' => $selectedCondition,
                 'centre_id' => $selectedCentre->centre_id,
                 'centre_name' => $selectedCentre->centre_name,
                 'status' => 'active',
@@ -178,7 +179,7 @@ class TraineeSeeder extends Seeder
             DB::table('trainees')->insert($traineeData);
         }
         
-        $this->command->info('🧒 Successfully seeded 50 trainees with realistic Malaysian data');
+        $this->command->info('🧒 Successfully seeded 100 trainees with realistic Malaysian data and disability-coded IDs');
         
         // Show distribution by centre
         $centreStats = DB::table('trainees')

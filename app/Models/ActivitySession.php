@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
 class ActivitySession extends Model
@@ -19,7 +20,7 @@ class ActivitySession extends Model
         'session_name',
         'session_description',
         'session_date',
-        'scheduled_date',
+        // 'scheduled_date', // Column doesn't exist, using session_date instead
         'start_time',
         'session_start_time',
         'end_time',
@@ -27,11 +28,10 @@ class ActivitySession extends Model
         'venue',
         'room_number',
         'max_participants',
-        'current_participants',
         'attendance_marked',
-        'teacher_id',
+        'instructor_id',
         'supervisor_id',
-        'status',
+        'session_status',
         'priority',
         'session_objectives',
         'notes',
@@ -44,7 +44,7 @@ class ActivitySession extends Model
 
     protected $casts = [
         'session_date' => 'date',
-        'scheduled_date' => 'date',
+        // 'scheduled_date' => 'date', // Column doesn't exist, using session_date
         'start_time' => 'datetime:H:i',
         'end_time' => 'datetime:H:i',
         'session_materials' => 'array',
@@ -63,14 +63,34 @@ class ActivitySession extends Model
 
         // Sync scheduled_date with session_date on create/update
         static::creating(function ($session) {
+            // Business Logic Validation
+            if ($session->session_date) {
+                $sessionDate = Carbon::parse($session->session_date);
+                
+                // Rule 1: No weekend sessions
+                if ($sessionDate->dayOfWeek === 0 || $sessionDate->dayOfWeek === 6) {
+                    throw new \InvalidArgumentException('Sessions cannot be scheduled on weekends. Centre operates Monday to Friday only.');
+                }
+            }
+            
+            if ($session->start_time && $session->end_time) {
+                $startTime = Carbon::parse($session->start_time);
+                $endTime = Carbon::parse($session->end_time);
+                
+                // Rule 2: Sessions must start between 9:30 AM and 3:00 PM
+                if ($startTime->format('H:i') < '09:30' || $startTime->format('H:i') > '15:00') {
+                    throw new \InvalidArgumentException('Sessions must start between 9:30 AM and 3:00 PM. Centre operates from 9:00 AM to 4:00 PM.');
+                }
+                
+                // Rule 3: All sessions must end by 4:00 PM
+                if ($endTime->format('H:i') > '16:00') {
+                    throw new \InvalidArgumentException('Sessions must end by 4:00 PM. Please reduce the duration or start time.');
+                }
+            }
+            
             // Skip session_code generation since column doesn't exist in table
             
-            // Sync dates
-            if (!$session->scheduled_date && $session->session_date) {
-                $session->scheduled_date = $session->session_date;
-            } elseif (!$session->session_date && $session->scheduled_date) {
-                $session->session_date = $session->scheduled_date;
-            }
+            // Note: Only using session_date as scheduled_date column doesn't exist in database
             
             // Skip encrypted_id and color_code generation - columns don't exist in table
             /*
@@ -87,11 +107,32 @@ class ActivitySession extends Model
         });
 
         static::updating(function ($session) {
-            if ($session->isDirty('session_date') && !$session->isDirty('scheduled_date')) {
-                $session->scheduled_date = $session->session_date;
-            } elseif ($session->isDirty('scheduled_date') && !$session->isDirty('session_date')) {
-                $session->session_date = $session->scheduled_date;
+            // Business Logic Validation for updates
+            if ($session->isDirty('session_date') && $session->session_date) {
+                $sessionDate = Carbon::parse($session->session_date);
+                
+                // Rule 1: No weekend sessions
+                if ($sessionDate->dayOfWeek === 0 || $sessionDate->dayOfWeek === 6) {
+                    throw new \InvalidArgumentException('Sessions cannot be scheduled on weekends. Centre operates Monday to Friday only.');
+                }
             }
+            
+            if (($session->isDirty('start_time') || $session->isDirty('end_time')) && $session->start_time && $session->end_time) {
+                $startTime = Carbon::parse($session->start_time);
+                $endTime = Carbon::parse($session->end_time);
+                
+                // Rule 2: Sessions must start between 9:30 AM and 3:00 PM
+                if ($startTime->format('H:i') < '09:30' || $startTime->format('H:i') > '15:00') {
+                    throw new \InvalidArgumentException('Sessions must start between 9:30 AM and 3:00 PM. Centre operates from 9:00 AM to 4:00 PM.');
+                }
+                
+                // Rule 3: All sessions must end by 4:00 PM
+                if ($endTime->format('H:i') > '16:00') {
+                    throw new \InvalidArgumentException('Sessions must end by 4:00 PM. Please reduce the duration or start time.');
+                }
+            }
+            
+            // Note: Only using session_date as scheduled_date column doesn't exist in database
         });
     }
 
@@ -108,7 +149,7 @@ class ActivitySession extends Model
      */
     public function teacher()
     {
-        return $this->belongsTo(User::class, 'teacher_id');
+        return $this->belongsTo(User::class, 'instructor_id');
     }
 
     /**
@@ -125,6 +166,54 @@ class ActivitySession extends Model
     public function enrollments()
     {
         return $this->hasMany(ActivityEnrollment::class, 'activity_id', 'activity_id');
+    }
+    
+    /**
+     * Get enrollments that were made before or on this session's date
+     */
+    public function getValidEnrollmentsAttribute()
+    {
+        return $this->enrollments()
+            ->where('enrollment_date', '<=', $this->session_date)
+            ->get();
+    }
+    
+    /**
+     * Get count of valid participants for this session
+     */
+    public function getValidParticipantCountAttribute()
+    {
+        $sessionDate = Carbon::parse($this->session_date);
+        $sessionEnd = $sessionDate->copy()->setTimeFromTimeString($this->end_time);
+        $now = Carbon::now();
+        
+        // For past/completed sessions, show actual attendees if available, otherwise all enrolled
+        if ($now->greaterThan($sessionEnd)) {
+            // Check if there are attendance records for this session
+            $attendanceCount = DB::table('session_attendance')
+                ->where('session_id', $this->id)
+                ->whereIn('attendance_status', ['present', 'late'])
+                ->count();
+                
+            if ($attendanceCount > 0) {
+                return $attendanceCount; // Show actual attendees
+            } else {
+                return $this->enrollments()->count(); // Show all enrolled if no attendance marked
+            }
+        } else {
+            // For future sessions, only count enrollments made before/on session date
+            return $this->enrollments()
+                ->where('enrollment_date', '<=', $this->session_date)
+                ->count();
+        }
+    }
+    
+    /**
+     * Get session attendance records
+     */
+    public function attendances()
+    {
+        return $this->hasMany(SessionAttendance::class, 'session_id', 'id');
     }
 
     /**
@@ -144,6 +233,22 @@ class ActivitySession extends Model
     {
         return $this->hasMany(ActivityEnrollment::class, 'session_id')
             ->where('enrollment_status', 'enrolled');
+    }
+
+    /**
+     * Get status attribute (maps to session_status column)
+     */
+    public function getStatusAttribute()
+    {
+        return $this->session_status;
+    }
+
+    /**
+     * Set status attribute (maps to session_status column)
+     */
+    public function setStatusAttribute($value)
+    {
+        $this->attributes['session_status'] = $value;
     }
 
     /**
@@ -248,7 +353,7 @@ class ActivitySession extends Model
      */
     public function scopeByTeacher($query, $teacherId)
     {
-        return $query->where('teacher_id', $teacherId);
+        return $query->where('instructor_id', $teacherId);
     }
 
     /**
@@ -332,7 +437,7 @@ class ActivitySession extends Model
      */
     public function hasTimeConflict($excludeSessionId = null)
     {
-        $query = static::where('teacher_id', $this->teacher_id)
+        $query = static::where('instructor_id', $this->instructor_id)
             ->where('session_date', $this->session_date)
             ->where('status', '!=', 'cancelled')
             ->where(function($q) {
@@ -464,6 +569,14 @@ class ActivitySession extends Model
     }
 
     /**
+     * Get current participants count (computed from enrollments)
+     */
+    public function getCurrentParticipantsAttribute()
+    {
+        return $this->enrollments()->count();
+    }
+
+    /**
      * Get available spots
      */
     public function getAvailableSpotsAttribute()
@@ -541,8 +654,7 @@ class ActivitySession extends Model
      */
     public function getDisplayDateAttribute()
     {
-        return $this->session_date ? $this->session_date->format('Y-m-d') : 
-               ($this->scheduled_date ? $this->scheduled_date->format('Y-m-d') : null);
+        return $this->session_date ? $this->session_date->format('Y-m-d') : null;
     }
 
     /**

@@ -50,7 +50,7 @@ class StaffAttendanceController extends Controller
             // Get trainees for the selected centre
             $trainees = \App\Models\Trainee::where('centre_id', $selectedCentreId)
                 ->with(['traineeAttendances' => function($q) {
-                    $q->whereDate('date', Carbon::today());
+                    $q->whereDate('attendance_date', Carbon::today());
                 }])
                 ->get();
 
@@ -105,7 +105,6 @@ class StaffAttendanceController extends Controller
             $validated = $request->validate([
                 'user_id' => 'required|integer|exists:users,id',
                 'status' => 'required|in:present,absent,late,sick_leave,emergency_leave,authorized_leave',
-                'attendance_type' => 'required|in:check_in',
                 'remarks' => 'nullable|string|max:500'
             ]);
 
@@ -136,10 +135,9 @@ class StaffAttendanceController extends Controller
                 ]);
             }
 
-            // Check if already marked today for this type
+            // Check if already marked today
             $existingAttendance = StaffAttendance::where('user_id', $targetUserId)
                 ->whereDate('attendance_date', Carbon::today())
-                ->where('attendance_type', $validated['attendance_type'])
                 ->first();
 
             if ($existingAttendance && $currentUserId !== $targetUserId && session('role') === 'admin') {
@@ -512,29 +510,27 @@ class StaffAttendanceController extends Controller
             ];
         }
 
-        // Check office hours for check-in/check-out
-        if ($validated['attendance_type'] === 'check_in') {
-            $officeStart = Carbon::parse($today->format('Y-m-d') . ' ' . $policies['office_hours']['start_time']);
-            $officeEnd = Carbon::parse($today->format('Y-m-d') . ' ' . $policies['office_hours']['end_time']);
-            
-            // Allow check-in up to 2 hours before office start
-            $earliestCheckIn = $officeStart->copy()->subHours(2);
-            
-            if ($currentTime->lessThan($earliestCheckIn)) {
-                return [
-                    'valid' => false,
-                    'message' => 'Check-in is too early. Office hours start at ' . $policies['office_hours']['start_time'] . '.'
-                ];
-            }
+        // Check office hours for attendance
+        $officeStart = Carbon::parse($today->format('Y-m-d') . ' ' . $policies['office_hours']['start_time']);
+        $officeEnd = Carbon::parse($today->format('Y-m-d') . ' ' . $policies['office_hours']['end_time']);
+        
+        // Allow check-in up to 2 hours before office start
+        $earliestCheckIn = $officeStart->copy()->subHours(2);
+        
+        if ($currentTime->lessThan($earliestCheckIn)) {
+            return [
+                'valid' => false,
+                'message' => 'Check-in is too early. Office hours start at ' . $policies['office_hours']['start_time'] . '.'
+            ];
+        }
 
-            // Auto-suggest late status if checking in late
-            if ($centre->isLateCheckIn($currentTime) && $validated['status'] === 'present') {
-                return [
-                    'valid' => false,
-                    'message' => 'You are checking in late. Please select "Late" status or check-in before ' . 
-                                 $officeStart->addMinutes($policies['office_hours']['late_threshold_minutes'])->format('H:i') . '.'
-                ];
-            }
+        // Auto-suggest late status if checking in late
+        if ($centre->isLateCheckIn($currentTime) && $validated['status'] === 'present') {
+            return [
+                'valid' => false,
+                'message' => 'You are checking in late. Please select "Late" status or check-in before ' . 
+                             $officeStart->addMinutes($policies['office_hours']['late_threshold_minutes'])->format('H:i') . '.'
+            ];
         }
 
         // Check leave policies
@@ -601,12 +597,9 @@ class StaffAttendanceController extends Controller
                     ->where('id', $existingAttendance->id)
                     ->update([
                         'status' => $validated['status'],
-                        'notes' => $validated['remarks'],
-                        'recorded_by' => $currentUserId,
-                        'time_in' => $validated['status'] === 'present' ? now()->toTimeString() : $existingAttendance->time_in,
-                        'engagement_level' => $validated['status'] === 'present' ? 4 : null,
-                        'mood_rating' => $validated['status'] === 'present' ? 4 : null,
-                        'progress_notes' => $validated['remarks'],
+                        'notes' => $validated['remarks'] ?? null,
+                        'marked_by_user_id' => $currentUserId,
+                        'marked_at' => now(),
                         'updated_at' => now(),
                     ]);
 
@@ -628,17 +621,12 @@ class StaffAttendanceController extends Controller
             // Create new attendance record
             $attendanceId = DB::table('trainee_attendances')->insertGetId([
                 'trainee_id' => $validated['trainee_id'],
-                'activity_id' => $validated['activity_id'],
+                'activity_id' => $validated['activity_id'] ?? null,
                 'attendance_date' => now()->toDateString(),
                 'status' => $validated['status'],
-                'notes' => $validated['remarks'],
-                'recorded_by' => $currentUserId,
-                'centre_id' => $trainee->centre_id,
-                'time_in' => $validated['status'] === 'present' ? now()->toTimeString() : null,
-                'engagement_level' => $validated['status'] === 'present' ? 4 : null,
-                'mood_rating' => $validated['status'] === 'present' ? 4 : null,
-                'progress_notes' => $validated['remarks'],
-                'achievements' => null,
+                'notes' => $validated['remarks'] ?? null,
+                'marked_by_user_id' => $currentUserId,
+                'marked_at' => now(),
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);

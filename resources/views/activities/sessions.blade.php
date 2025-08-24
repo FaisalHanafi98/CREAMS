@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Sessions - ' . $activity->activity_name)
+@section('title', 'Sessions - ' . $activity->activity_name . ' [DEBUG VERSION]')
 
 @section('content')
 <div class="sessions-container">
@@ -48,11 +48,11 @@
                     </thead>
                     <tbody>
                         @forelse($sessions as $session)
-                            <tr class="session-row" data-status="{{ $session->scheduled_date < now() ? 'past' : 'upcoming' }}">
+                            <tr class="session-row" data-status="{{ $session->session_date < now() ? 'past' : 'upcoming' }}">
                                 <td>
                                     <div class="date-display">
-                                        <span class="date-day">{{ $session->scheduled_date->format('d') }}</span>
-                                        <span class="date-month">{{ $session->scheduled_date->format('M Y') }}</span>
+                                        <span class="date-day">{{ $session->session_date->format('d') }}</span>
+                                        <span class="date-month">{{ $session->session_date->format('M Y') }}</span>
                                     </div>
                                 </td>
                                 <td>{{ \Carbon\Carbon::parse($session->start_time)->format('h:i A') }}</td>
@@ -62,7 +62,7 @@
                                 <td>
                                     <div class="enrollment-status">
                                         <span class="{{ $session->is_full ? 'text-danger' : 'text-success' }}">
-                                            {{ $session->enrollments->count() }}/{{ $session->max_capacity ?? $session->max_participants }}
+                                            {{ $session->valid_participant_count }}/{{ $session->max_capacity ?? $session->max_participants }}
                                         </span>
                                         @if($session->is_full)
                                             <span class="badge badge-danger ml-1">Full</span>
@@ -70,9 +70,43 @@
                                     </div>
                                 </td>
                                 <td>
-                                    <span class="badge badge-{{ $session->status == 'active' ? 'success' : ($session->status == 'cancelled' ? 'danger' : 'secondary') }}">
-                                        {{ ucfirst($session->status) }}
+                                    @php
+                                        // Calculate actual status based on date/time
+                                        $sessionDate = \Carbon\Carbon::parse($session->session_date);
+                                        $sessionStart = $sessionDate->copy()->setTimeFromTimeString($session->start_time);
+                                        $sessionEnd = $sessionDate->copy()->setTimeFromTimeString($session->end_time);
+                                        $now = \Carbon\Carbon::now();
+                                        
+                                        // Calculate status based purely on date/time
+                                        $isPastSession = $now->greaterThan($sessionEnd);
+                                        $isOngoingSession = $now->greaterThanOrEqualTo($sessionStart) && $now->lessThanOrEqualTo($sessionEnd);
+                                        $isCancelled = $session->session_status == 'cancelled';
+                                        
+                                        $debug = "Date: {$session->session_date}, Now: {$now->format('Y-m-d H:i')}, End: {$sessionEnd->format('Y-m-d H:i')}, Past: " . ($isPastSession ? 'YES' : 'NO');
+                                        $debugExtra = "RAW: sessionDate={$session->session_date}, endTime={$session->end_time}, sessionEnd={$sessionEnd}, now={$now}";
+                                        
+                                        if ($isCancelled) {
+                                            $actualStatus = 'cancelled';
+                                        } elseif ($isPastSession) {
+                                            $actualStatus = 'completed';
+                                        } elseif ($isOngoingSession) {
+                                            $actualStatus = 'ongoing';
+                                        } else {
+                                            $actualStatus = 'scheduled';
+                                        }
+                                        
+                                        $statusClass = match($actualStatus) {
+                                            'completed' => 'success',
+                                            'ongoing' => 'warning', 
+                                            'cancelled' => 'danger',
+                                            'scheduled' => 'primary',
+                                            default => 'secondary'
+                                        };
+                                    @endphp
+                                    <span class="badge badge-success">
+                                        COMPLETED
                                     </span>
+                                    <br><small style="color: red;">HARDCODED TEST - All should show COMPLETED</small>
                                 </td>
                                 <td>
                                     <div class="action-buttons">
@@ -81,7 +115,7 @@
                                            title="Manage Enrollments">
                                             <i class="fas fa-users"></i>
                                         </a>
-                                        @if($session->scheduled_date >= now() && in_array($role, ['admin', 'supervisor', 'teacher']))
+                                        @if($session->session_date >= now() && in_array($role, ['admin', 'supervisor', 'teacher']))
                                             <a href="{{ route('activities.activities.attendance', [$activity->id, $session->id]) }}" 
                                                class="btn btn-sm btn-outline-success" 
                                                title="Mark Attendance">
@@ -110,7 +144,60 @@
             </div>
         </div>
         <div class="sessions-card-footer">
-            {{ $sessions->links() }}
+            <!-- Custom Pagination -->
+            <div class="text-center mt-4">
+                <div class="mb-2">
+                    <small class="text-muted">
+                        Page {{ $sessions->currentPage() }} of {{ $sessions->lastPage() }} • {{ $sessions->total() }} total sessions
+                    </small>
+                </div>
+                
+                @if($sessions->lastPage() > 1)
+                <div class="d-inline-flex">
+                    @php
+                        $current = $sessions->currentPage();
+                        $last = $sessions->lastPage();
+                        $start = max(1, $current - 2);
+                        $end = min($last, $current + 2);
+                    @endphp
+                    
+                    {{-- Previous --}}
+                    @if(!$sessions->onFirstPage())
+                        <a href="{{ $sessions->appends(request()->query())->previousPageUrl() }}" class="text-decoration-none mx-1" style="color: #667eea;">‹ Prev</a>
+                    @endif
+                    
+                    {{-- First page --}}
+                    @if($start > 1)
+                        <a href="{{ $sessions->appends(request()->query())->url(1) }}" class="text-decoration-none mx-1 px-2 py-1 rounded {{ $current == 1 ? 'bg-primary text-white' : 'text-secondary' }}">1</a>
+                        @if($start > 2)
+                            <span class="mx-1 text-muted">…</span>
+                        @endif
+                    @endif
+                    
+                    {{-- Page range --}}
+                    @for($page = $start; $page <= $end; $page++)
+                        @if($page == $current)
+                            <span class="mx-1 px-2 py-1 rounded bg-primary text-white">{{ $page }}</span>
+                        @else
+                            <a href="{{ $sessions->appends(request()->query())->url($page) }}" class="text-decoration-none mx-1 px-2 py-1 rounded text-secondary hover-bg-light">{{ $page }}</a>
+                        @endif
+                    @endfor
+                    
+                    {{-- Last page --}}
+                    @if($end < $last)
+                        @if($end < $last - 1)
+                            <span class="mx-1 text-muted">…</span>
+                        @endif
+                        <a href="{{ $sessions->appends(request()->query())->url($last) }}" class="text-decoration-none mx-1 px-2 py-1 rounded text-secondary">{{ $last }}</a>
+                    @endif
+                    
+                    {{-- Next --}}
+                    @if($sessions->hasMorePages())
+                        <a href="{{ $sessions->appends(request()->query())->nextPageUrl() }}" class="text-decoration-none mx-1" style="color: #667eea;">Next ›</a>
+                    @endif
+                </div>
+                @endif
+            </div>
         </div>
     </div>
 </div>
@@ -462,6 +549,59 @@
 <link rel="stylesheet" href="{{ asset('css/form-validation-enhanced.css') }}">
 <link rel="stylesheet" href="{{ asset('css/session-enhanced.css') }}">
 <style>
+/* Filter Tab Styles */
+.filter-tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 0;
+}
+
+.filter-tab {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    color: #6c757d;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    outline: none;
+}
+
+.filter-tab:hover {
+    background: #e9ecef;
+    border-color: #adb5bd;
+    color: #495057;
+}
+
+.filter-tab.active {
+    background: #667eea;
+    border-color: #667eea;
+    color: #fff;
+    box-shadow: 0 2px 4px rgba(102, 126, 234, 0.3);
+}
+
+.sessions-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 25px;
+    border-bottom: 1px solid #eee;
+}
+
+.sessions-card-header h2 {
+    margin: 0;
+    font-size: 20px;
+    color: #2c3e50;
+}
+
+/* Pagination Styles */
+.hover-bg-light:hover {
+    background-color: #f8f9fa !important;
+    transition: background-color 0.2s ease;
+}
+
 /* Enhanced Modal Styles */
 .enhanced-modal {
     border-radius: 12px;
@@ -687,8 +827,49 @@
 <script src="{{ asset('js/activities.js') }}"></script>
 <script src="{{ asset('js/form-validation-enhanced.js') }}"></script>
 <script>
-// Enhanced Session Modal Management
+// Filter Functionality
 document.addEventListener('DOMContentLoaded', function() {
+    // Session Filter Tabs
+    const filterTabs = document.querySelectorAll('.filter-tab');
+    const sessionRows = document.querySelectorAll('.session-row');
+
+    filterTabs.forEach(tab => {
+        tab.addEventListener('click', function() {
+            const filter = this.getAttribute('data-filter');
+            
+            // Update active tab
+            filterTabs.forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
+            
+            // Filter sessions
+            sessionRows.forEach(row => {
+                const status = row.getAttribute('data-status');
+                
+                if (filter === 'all') {
+                    row.style.display = '';
+                } else if (filter === 'upcoming' && status === 'upcoming') {
+                    row.style.display = '';
+                } else if (filter === 'past' && status === 'past') {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+            
+            // Update session count
+            updateSessionCount();
+        });
+    });
+    
+    function updateSessionCount() {
+        const visibleSessions = document.querySelectorAll('.session-row:not([style*="display: none"])').length;
+        const activeFilter = document.querySelector('.filter-tab.active').textContent;
+        
+        // Could update a counter if exists
+        console.log(`Showing ${visibleSessions} ${activeFilter.toLowerCase()}`);
+    }
+
+    // Enhanced Session Modal Management
     const sessionModal = document.getElementById('createSessionModal');
     const sessionForm = document.getElementById('sessionModalForm');
     

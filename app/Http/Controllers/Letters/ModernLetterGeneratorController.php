@@ -149,6 +149,7 @@ class ModernLetterGeneratorController extends Controller
                     'custom_variables' => $validated['custom_variables'] ?? []
                 ]),
                 'created_by' => session('id'),
+                'generated_by' => session('id'),
                 'centre_id' => session('centre_id'),
                 'status' => 'generated',
                 'generated_at' => now()

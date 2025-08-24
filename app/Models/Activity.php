@@ -332,7 +332,12 @@ class Activity extends Model
             'Vocational Training' => 'fas fa-briefcase'
         ];
 
-        return $icons[$this->category?->category_name] ?? 'fas fa-circle';
+        $categoryName = null;
+        if ($this->category && is_object($this->category) && isset($this->category->category_name)) {
+            $categoryName = $this->category->category_name;
+        }
+
+        return $icons[$categoryName] ?? 'fas fa-circle';
     }
 
     /**
@@ -357,7 +362,12 @@ class Activity extends Model
             'Vocational Training' => '#FFC107'
         ];
 
-        return $colors[$this->category?->category_name] ?? '#6c757d';
+        $categoryName = null;
+        if ($this->category && is_object($this->category) && isset($this->category->category_name)) {
+            $categoryName = $this->category->category_name;
+        }
+
+        return $colors[$categoryName] ?? '#6c757d';
     }
 
     /**

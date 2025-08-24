@@ -12,7 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('asset_maintenance', function (Blueprint $table) {
-            $table->enum('priority', ['low', 'normal', 'high', 'critical'])->default('normal')->after('status');
+            if (!Schema::hasColumn('asset_maintenance', 'priority')) {
+                $table->enum('priority', ['low', 'normal', 'high', 'critical'])->default('normal')->after('status');
+            }
         });
     }
 
