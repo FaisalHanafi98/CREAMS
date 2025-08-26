@@ -2923,7 +2923,7 @@ class ActivityController extends Controller
             
             Log::info('Admin viewing staff schedule', [
                 'admin_id' => session('id'),
-                'staff_id' => $staffId,
+                'iium_id' => $staff->iium_id,
                 'staff_name' => $staff->name
             ]);
 

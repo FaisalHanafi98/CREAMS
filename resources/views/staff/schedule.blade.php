@@ -7,15 +7,18 @@
 @section('styles')
 <style>
     :root {
-        --coral: #FF6B6B;
-        --mint: #4ECDC4;
-        --cream: #FFE66D;
-        --sage: #95B46A;
-        --slate: #2C3E50;
-        --soft-gray: #F7F9FC;
-        --warm-white: #FEFEFE;
-        --shadow-soft: rgba(76, 175, 80, 0.1);
-        --shadow-deep: rgba(0, 0, 0, 0.08);
+        --primary-color: #32bdea;
+        --secondary-color: #c850c0;
+        --success-color: #2ed573;
+        --danger-color: #ff4757;
+        --warning-color: #ffa502;
+        --info-color: #1e90ff;
+        --dark-color: #1a2a3a;
+        --light-color: #f8f9fa;
+        --border-color: #e9ecef;
+        --transition-speed: 0.3s;
+        --soft-gray: #f8f9fa;
+        --warm-white: #ffffff;
     }
 
     body {
@@ -43,90 +46,69 @@
         left: 0;
         right: 0;
         height: 4px;
-        background: linear-gradient(90deg, var(--coral) 0%, var(--mint) 25%, var(--cream) 50%, var(--sage) 100%);
+        background: linear-gradient(90deg, var(--primary-color) 0%, var(--secondary-color) 25%, var(--success-color) 50%, var(--warning-color) 100%);
         border-radius: 16px 16px 0 0;
     }
 
-    .breadcrumb-minimal {
-        background: rgba(255, 255, 255, 0.95);
-        backdrop-filter: blur(10px);
-        padding: 1rem 1.5rem;
-        border-radius: 12px;
-        margin-bottom: 2rem;
-        margin-left: 0;
-        border: 1px solid rgba(255, 255, 255, 0.6);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-        font-size: 0.9rem;
+    .breadcrumb {
+        background: transparent;
+        padding: 0;
+        margin-bottom: 1rem;
     }
 
-    .breadcrumb-minimal a {
-        color: var(--slate);
+    .breadcrumb-item a {
+        color: var(--primary-color);
         text-decoration: none;
-        font-weight: 500;
-        transition: color 0.2s ease;
     }
 
-    .breadcrumb-minimal a:hover {
-        color: var(--coral);
+    .breadcrumb-item.active {
+        color: #6c757d;
     }
 
     .staff-header {
-        background: var(--warm-white);
-        border-radius: 20px;
-        padding: 2rem 2rem 2rem 1.5rem;
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        color: white;
+        padding: 2rem;
+        border-radius: 15px;
         margin-bottom: 2rem;
-        margin-left: 0;
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
         position: relative;
         overflow: hidden;
     }
 
-    .staff-header::before {
-        content: '';
-        position: absolute;
-        top: -50%;
-        right: -10%;
-        width: 300px;
-        height: 300px;
-        background: radial-gradient(circle, var(--mint) 0%, transparent 70%);
-        opacity: 0.1;
-        border-radius: 50%;
-    }
-
     .staff-photo {
-        width: 100px;
-        height: 100px;
+        width: 120px;
+        height: 120px;
         border-radius: 50%;
-        border: 4px solid var(--cream);
-        box-shadow: 0 8px 20px rgba(255, 230, 109, 0.3);
+        border: 4px solid white;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
         object-fit: cover;
     }
 
     .staff-photo-placeholder {
-        width: 100px;
-        height: 100px;
+        width: 120px;
+        height: 120px;
         border-radius: 50%;
-        background: linear-gradient(135deg, var(--coral), var(--mint));
+        background: var(--light-color);
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 2.5rem;
-        font-weight: 700;
-        color: white;
-        border: 4px solid var(--cream);
-        box-shadow: 0 8px 20px rgba(255, 230, 109, 0.3);
+        font-size: 3rem;
+        color: #6c757d;
+        border: 4px solid white;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
     }
 
     .staff-name {
         font-size: 2.2rem;
         font-weight: 700;
-        color: var(--slate);
+        color: white;
         margin-bottom: 0.5rem;
         letter-spacing: -0.02em;
     }
 
     .staff-subtitle {
-        color: #64748B;
+        color: rgba(255, 255, 255, 0.9);
         font-size: 1.1rem;
         margin-bottom: 1.5rem;
         font-weight: 400;
@@ -142,9 +124,10 @@
         letter-spacing: 0.5px;
     }
 
-    .role-admin { background: var(--coral); color: white; }
-    .role-supervisor { background: var(--sage); color: white; }
-    .role-teacher { background: var(--mint); color: white; }
+    .role-admin { background: linear-gradient(45deg, #dc3545, #c82333); color: white; }
+    .role-supervisor { background: linear-gradient(45deg, #fd7e14, #e55a00); color: white; }
+    .role-teacher { background: linear-gradient(45deg, #32bdea, #0fa3cc); color: white; }
+    .role-ajk { background: linear-gradient(45deg, #c850c0, #a843a0); color: white; }
 
     .schedule-layout {
         display: block;
@@ -159,7 +142,7 @@
     }
 
     .calendar-header {
-        background: var(--slate);
+        background: var(--dark-color);
         color: white;
         padding: 2rem;
         text-align: center;
@@ -183,8 +166,7 @@
         text-align: center;
         font-weight: 700;
         font-size: 0.85rem;
-        color: var(--slate);
-        background: var(--slate);
+        background: var(--dark-color);
         color: white;
         border-right: 1px solid #E2E8F0;
         display: flex;
@@ -197,7 +179,7 @@
     .day-header {
         padding: 1rem 0.5rem;
         text-align: center;
-        color: var(--slate);
+        color: var(--dark-color);
         background: var(--warm-white);
         border-right: 1px solid #E2E8F0;
         transition: all 0.3s ease;
@@ -209,10 +191,10 @@
     }
 
     .day-header.today {
-        background: linear-gradient(135deg, var(--coral), #FF8E8E);
+        background: linear-gradient(135deg, var(--primary-color), var(--info-color));
         color: white;
         transform: scale(1.02);
-        box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+        box-shadow: 0 4px 12px rgba(50, 189, 234, 0.3);
     }
 
     .day-header.weekend {
@@ -269,7 +251,7 @@
     .time-label {
         width: 100px;
         font-size: 0.9rem;
-        color: var(--slate);
+        color: var(--dark-color);
         font-weight: 600;
         text-align: center;
         margin-right: 1rem;
@@ -289,7 +271,7 @@
     }
 
     .time-cell {
-        background: var(--slate);
+        background: var(--dark-color);
         color: white;
         padding: 0.75rem;
         border-radius: 8px;
@@ -337,10 +319,10 @@
         box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
     }
 
-    .session-rehab { background: linear-gradient(135deg, var(--coral), #FF8E8E); color: white; }
-    .session-therapy { background: linear-gradient(135deg, var(--mint), #6EDBDB); color: white; }
-    .session-education { background: linear-gradient(135deg, var(--cream), #FFE88A); color: var(--slate); }
-    .session-sports { background: linear-gradient(135deg, var(--sage), #A8C47B); color: white; }
+    .session-rehab { background: linear-gradient(135deg, var(--primary-color), var(--info-color)); color: white; }
+    .session-therapy { background: linear-gradient(135deg, var(--success-color), #4ed573); color: white; }
+    .session-education { background: linear-gradient(135deg, var(--warning-color), #ffb347); color: white; }
+    .session-sports { background: linear-gradient(135deg, var(--secondary-color), #d565d0); color: white; }
 
     .sidebar-panels {
         display: flex;
@@ -380,14 +362,14 @@
         color: white;
     }
 
-    .icon-stats { background: var(--coral); }
-    .icon-activities { background: var(--mint); }
-    .icon-sessions { background: var(--sage); }
+    .icon-stats { background: var(--primary-color); }
+    .icon-activities { background: var(--success-color); }
+    .icon-sessions { background: var(--secondary-color); }
 
     .panel-title {
         font-size: 1.1rem;
         font-weight: 600;
-        color: var(--slate);
+        color: var(--dark-color);
         margin: 0;
     }
 
@@ -407,7 +389,7 @@
     }
 
     .metric-card:hover {
-        border-color: var(--mint);
+        border-color: var(--primary-color);
         background: white;
         transform: scale(1.05);
     }
@@ -415,7 +397,7 @@
     .metric-number {
         font-size: 1.8rem;
         font-weight: 800;
-        color: var(--slate);
+        color: var(--primary-color);
         margin-bottom: 0.25rem;
     }
 
@@ -438,13 +420,13 @@
 
     .list-item:hover {
         background: white;
-        border-left-color: var(--coral);
+        border-left-color: var(--primary-color);
         transform: translateX(4px);
     }
 
     .item-title {
         font-weight: 600;
-        color: var(--slate);
+        color: var(--dark-color);
         margin-bottom: 0.25rem;
     }
 
@@ -457,11 +439,11 @@
         position: fixed;
         bottom: 2rem;
         right: 2rem;
-        background: var(--slate);
+        background: var(--dark-color);
         color: white;
         padding: 1.5rem;
         border-radius: 20px;
-        box-shadow: 0 10px 30px rgba(44, 62, 80, 0.3);
+        box-shadow: 0 10px 30px rgba(26, 42, 58, 0.3);
         text-align: center;
         min-width: 120px;
         z-index: 1000;
@@ -485,7 +467,7 @@
     }
 
     .btn-organic {
-        background: var(--coral);
+        background: var(--primary-color);
         color: white;
         border: none;
         padding: 0.75rem 1.5rem;
@@ -500,21 +482,21 @@
     }
 
     .btn-organic:hover {
-        background: #FF5252;
+        background: var(--info-color);
         transform: translateY(-2px);
-        box-shadow: 0 8px 20px rgba(255, 107, 107, 0.4);
+        box-shadow: 0 8px 20px rgba(50, 189, 234, 0.4);
         color: white;
     }
 
     .btn-light-organic {
         background: var(--warm-white);
-        color: var(--slate);
-        border: 2px solid var(--soft-gray);
+        color: var(--dark-color);
+        border: 2px solid var(--border-color);
     }
 
     .btn-light-organic:hover {
-        border-color: var(--mint);
-        background: var(--mint);
+        border-color: var(--primary-color);
+        background: var(--primary-color);
         color: white;
     }
 
@@ -528,7 +510,7 @@
         width: 150px;
         height: 150px;
         margin: 0 auto 2rem;
-        background: linear-gradient(135deg, var(--cream), var(--mint));
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
         border-radius: 50%;
         display: flex;
         align-items: center;
@@ -602,15 +584,14 @@
 
 @section('content')
 <div class="container-fluid" style="padding-left: 0.5rem; padding-right: 1rem;">
-    <!-- Minimal Breadcrumb -->
-    <nav class="breadcrumb-minimal">
-        <a href="{{ route('dashboard') }}">Dashboard</a>
-        <span class="mx-2">→</span>
-        <a href="{{ route('staffs.home') }}">Staff Directory</a>
-        <span class="mx-2">→</span>
-        <a href="{{ route('staffs.profile', $staffMember->encrypted_id) }}">{{ $staffMember->name }}</a>
-        <span class="mx-2">→</span>
-        <span class="active">Schedule</span>
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="{{ route('staffs.home') }}">Staff Directory</a></li>
+            <li class="breadcrumb-item"><a href="{{ route('staffs.profile', $staffMember->encrypted_id) }}">{{ $staffMember->name }}</a></li>
+            <li class="breadcrumb-item active">Schedule</li>
+        </ol>
     </nav>
 
     <!-- Success/Error Messages -->
@@ -634,10 +615,14 @@
             <div class="col-auto">
                 @if($staffMember->avatar)
                     <img src="{{ asset('storage/avatars/' . $staffMember->avatar) }}" 
-                         alt="{{ $staffMember->name }}" class="staff-photo">
+                         alt="{{ $staffMember->name }}" class="staff-photo"
+                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    <div class="staff-photo-placeholder" style="display: none;">
+                        <i class="fas fa-user"></i>
+                    </div>
                 @else
                     <div class="staff-photo-placeholder">
-                        {{ strtoupper(substr($staffMember->name, 0, 1)) }}
+                        <i class="fas fa-user"></i>
                     </div>
                 @endif
             </div>
@@ -645,14 +630,16 @@
                 <h1 class="staff-name">{{ $staffMember->name }}</h1>
                 <p class="staff-subtitle">Weekly Schedule & Activity Overview</p>
                 <div class="d-flex gap-3 align-items-center">
-                    <span class="role-badge role-{{ $staffMember->role }}">
+                    <span class="role-badge role-{{ strtolower($staffMember->role) }}">
                         {{ ucfirst($staffMember->role) }}
                     </span>
-                    <span style="color: #64748B; font-size: 0.9rem;">
-                        <i class="fas fa-building me-1"></i>
-                        {{ $staffMember->centre->centre_name ?? 'No Centre Assigned' }}
-                    </span>
                 </div>
+                <p class="mt-3 mb-0" style="color: rgba(255, 255, 255, 0.9);">
+                    <i class="fas fa-envelope me-2"></i>{{ $staffMember->email }}
+                </p>
+                <p class="mb-0" style="color: rgba(255, 255, 255, 0.9);">
+                    <i class="fas fa-building me-2"></i>{{ $staffMember->centre->centre_name ?? 'No Centre Assigned' }}
+                </p>
             </div>
             <div class="col-auto">
                 @if(in_array(session('role'), ['admin', 'supervisor']))
@@ -889,7 +876,7 @@
                     <div class="empty-illustration">
                         <i class="fas fa-calendar-plus"></i>
                     </div>
-                    <h4 style="font-weight: 700; margin-bottom: 1rem; color: var(--slate);">No Schedule Available</h4>
+                    <h4 style="font-weight: 700; margin-bottom: 1rem; color: var(--dark-color);">No Schedule Available</h4>
                     <p style="margin-bottom: 2rem;">This staff member doesn't have any scheduled activities yet.</p>
                     @if(in_array(session('role'), ['admin', 'supervisor']))
                     <a href="{{ route('activities.create') }}" class="btn-organic">

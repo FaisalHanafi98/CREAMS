@@ -931,6 +931,44 @@ Route::get('/test-dashboard', function() {
 
 /*
 |--------------------------------------------------------------------------
+| CSRF TOKEN REFRESH ROUTE
+|--------------------------------------------------------------------------
+*/
+
+// CSRF Token refresh route for AJAX calls
+Route::middleware(['auth'])->get('/csrf-token', function() {
+    return response()->json(['token' => csrf_token()]);
+});
+
+// Debug route for attendance marking
+Route::middleware(['enhanced.auth'])->get('/debug-attendance', function() {
+    $trainee = \App\Models\Trainee::first();
+    
+    return response()->json([
+        'debug_info' => [
+            'session_user_id' => session('id'),
+            'session_role' => session('role'),
+            'session_centre_id' => session('centre_id'),
+            'session_centre_id_type' => gettype(session('centre_id')),
+            'session_email' => session('email'),
+            'all_session_data' => session()->all(),
+        ],
+        'sample_trainee' => [
+            'id' => $trainee->id ?? null,
+            'name' => ($trainee->trainee_first_name ?? '') . ' ' . ($trainee->trainee_last_name ?? ''),
+            'centre_id' => $trainee->centre_id ?? null,
+            'centre_id_type' => gettype($trainee->centre_id ?? null),
+        ],
+        'current_user_from_db' => \App\Models\User::find(session('id')),
+        'routes_info' => [
+            'mark_trainee_route' => route('centres.attendance.mark-trainee'),
+            'mark_staff_route' => route('centres.attendance.mark'),
+        ]
+    ]);
+});
+
+/*
+|--------------------------------------------------------------------------
 | FALLBACK ROUTE
 |--------------------------------------------------------------------------
 */

@@ -611,12 +611,16 @@
                             </span>
                             @if($attendance)
                                 @php
-                                    $markedByUser = \App\Models\User::find($attendance->recorded_by);
-                                    $markedByEmail = $markedByUser ? $markedByUser->email : 'System';
-                                    $timeIn = $attendance->time_in ? \Carbon\Carbon::parse($attendance->time_in)->format('g:i A') : 'N/A';
+                                    // Show who actually marked the trainee attendance
+                                    if ($attendance->markedBy) {
+                                        $markedByEmail = $attendance->markedBy->email;
+                                    } else {
+                                        $markedByEmail = 'System';
+                                    }
+                                    $timeMarked = $attendance->marked_at ? $attendance->marked_at->format('g:i A') : 'N/A';
                                 @endphp
                                 <small class="text-muted">
-                                    {{ $timeIn }}
+                                    {{ $timeMarked }}
                                     <br><small>by {{ $markedByEmail }}</small>
                                 </small>
                             @endif
@@ -661,9 +665,6 @@
                             <option value="absent">Absent</option>
                             <option value="late">Late</option>
                             <option value="excused">Excused</option>
-                            <option value="sick_leave">Sick Leave</option>
-                            <option value="emergency_leave">Emergency Leave</option>
-                            <option value="authorized_leave">Authorized Leave</option>
                         </select>
                     </div>
                     <div class="mb-3" id="attendanceTypeDiv">
@@ -775,6 +776,7 @@ function submitAttendance() {
     
     if (personType === 'staff') {
         data.attendance_type = attendanceType;
+        console.log('Staff attendance data being sent:', data);
         
         fetch('/centres/attendance/mark', {
             method: 'POST',
@@ -784,24 +786,47 @@ function submitAttendance() {
             },
             body: JSON.stringify(data)
         })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
         .then(data => {
+            console.log('Staff attendance response:', data);
             if (data.success) {
-                // Close modal
-                bootstrap.Modal.getInstance(document.getElementById('attendanceModal')).hide();
+                console.log('Staff attendance success response received');
                 
-                // Show success message
-                showNotification('success', data.message + ' (Marked by Admin: {{ session("email") }})');
+                // Show success message first
+                showNotification('success', data.message);
+                
+                // Try to close modal - use multiple methods as fallbacks
+                try {
+                    const modalElement = document.getElementById('attendanceModal');
+                    if (modalElement) {
+                        // Method 1: Try Bootstrap 5
+                        const modal = bootstrap.Modal.getInstance(modalElement);
+                        if (modal) {
+                            modal.hide();
+                        } else {
+                            // Method 2: Try creating new Bootstrap instance
+                            const newModal = new bootstrap.Modal(modalElement);
+                            newModal.hide();
+                        }
+                    }
+                } catch (e) {
+                    console.log('Modal close attempt failed, will reload page:', e);
+                }
                 
                 // Refresh page after short delay
                 setTimeout(() => location.reload(), 1500);
             } else {
-                showNotification('error', data.message);
+                showNotification('error', data.message || 'Failed to mark staff attendance');
             }
         })
         .catch(error => {
-            console.error('Error:', error);
-            showNotification('error', 'Failed to mark attendance. Please try again.');
+            console.error('Staff attendance error:', error);
+            showNotification('error', 'Network error or server issue. Please check your connection and try again.');
         })
         .finally(() => {
             submitBtn.innerHTML = originalText;
@@ -816,6 +841,8 @@ function submitAttendance() {
             _token: '{{ csrf_token() }}'
         };
         
+        console.log('Trainee attendance data being sent:', traineeData);
+        
         fetch('/centres/attendance/mark-trainee', {
             method: 'POST',
             headers: {
@@ -824,24 +851,63 @@ function submitAttendance() {
             },
             body: JSON.stringify(traineeData)
         })
-        .then(response => response.json())
+        .then(response => {
+            console.log('Raw trainee attendance response:', response);
+            console.log('Response status:', response.status);
+            console.log('Response ok:', response.ok);
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
         .then(data => {
-            if (data.success) {
-                // Close modal
-                bootstrap.Modal.getInstance(document.getElementById('attendanceModal')).hide();
+            console.log('Parsed trainee attendance response:', data);
+            if (data && data.success) {
+                console.log('Trainee attendance success response received');
                 
-                // Show success message
-                showNotification('success', data.message + ' (Marked by Admin: {{ session("email") }})');
+                // Show success message first
+                showNotification('success', data.message || 'Trainee attendance marked successfully!');
+                
+                // Try to close modal - use multiple methods as fallbacks
+                try {
+                    const modalElement = document.getElementById('attendanceModal');
+                    if (modalElement) {
+                        // Method 1: Try Bootstrap 5
+                        const modal = bootstrap.Modal.getInstance(modalElement);
+                        if (modal) {
+                            modal.hide();
+                        } else {
+                            // Method 2: Try creating new Bootstrap instance
+                            const newModal = new bootstrap.Modal(modalElement);
+                            newModal.hide();
+                        }
+                    }
+                } catch (e) {
+                    console.log('Modal close attempt failed, will reload page:', e);
+                }
                 
                 // Refresh page after short delay
                 setTimeout(() => location.reload(), 1500);
             } else {
-                showNotification('error', data.message);
+                console.error('Response indicates failure:', data);
+                showNotification('error', data.message || 'Failed to mark trainee attendance');
             }
         })
         .catch(error => {
-            console.error('Error:', error);
-            showNotification('error', 'Failed to mark trainee attendance. Please try again.');
+            console.error('Trainee attendance error details:', error);
+            console.error('Error name:', error.name);
+            console.error('Error message:', error.message);
+            console.error('Error stack:', error.stack);
+            
+            // More specific error messages based on error type
+            if (error.name === 'SyntaxError') {
+                showNotification('error', 'Server response format error. The attendance may have been marked - please refresh the page.');
+            } else if (error.message.includes('HTTP error')) {
+                showNotification('error', `Server error (${error.message}). The attendance may have been marked - please refresh the page.`);
+            } else {
+                showNotification('error', 'Connection error occurred. The attendance may have been marked - please refresh the page to check.');
+            }
         })
         .finally(() => {
             submitBtn.innerHTML = originalText;
@@ -891,5 +957,76 @@ function switchTab(tabName) {
     // Add active class to clicked button
     event.target.classList.add('active');
 }
+
+// Fix modal close functionality
+document.addEventListener('DOMContentLoaded', function() {
+    // Add manual close button handler
+    const closeBtn = document.querySelector('#attendanceModal .btn-close');
+    if (closeBtn) {
+        closeBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log('Close button clicked');
+            const modal = document.getElementById('attendanceModal');
+            if (modal) {
+                // Try Bootstrap hide first
+                const bsModal = bootstrap.Modal.getInstance(modal);
+                if (bsModal) {
+                    bsModal.hide();
+                } else {
+                    // Fallback to jQuery
+                    $(modal).modal('hide');
+                }
+            }
+        });
+    }
+    
+    // Also handle clicking outside the modal
+    const modal = document.getElementById('attendanceModal');
+    if (modal) {
+        modal.addEventListener('click', function(e) {
+            if (e.target === this) {
+                console.log('Backdrop clicked');
+                const bsModal = bootstrap.Modal.getInstance(this);
+                if (bsModal) {
+                    bsModal.hide();
+                } else {
+                    $(this).modal('hide');
+                }
+            }
+        });
+    }
+});
+
+// Debug function to test session data
+window.debugAttendanceSystem = function() {
+    console.log('=== DEBUGGING ATTENDANCE SYSTEM ===');
+    
+    fetch('/debug-attendance', {
+        method: 'GET',
+        headers: {
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('Debug response:', data);
+        alert('Debug info logged to console. Check browser console (F12) for details.');
+    })
+    .catch(error => {
+        console.error('Debug request failed:', error);
+        alert('Debug request failed: ' + error.message);
+    });
+};
 </script>
+
+<!-- Debug Button (only visible in development) -->
+@if(config('app.debug', false))
+<div style="position: fixed; bottom: 20px; left: 20px; z-index: 9999;">
+    <button onclick="debugAttendanceSystem()" class="btn btn-warning btn-sm">
+        🐛 Debug Attendance
+    </button>
+</div>
+@endif
+
 @endsection

@@ -34,7 +34,8 @@
       "Bash(mysql:*)",
       "Bash(mysql:*)",
       "Bash(time curl:*)",
-      "Bash(sed:*)"
+      "Bash(sed:*)",
+      "Bash(rg:*)"
     ],
     "deny": [],
     "additionalDirectories": [

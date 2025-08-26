@@ -305,8 +305,8 @@
                         <tbody>
                             @forelse($assets ?? [] as $asset)
                             <tr>
-                                <td><strong>{{ $asset->asset_code ?? $asset->id }}</strong></td>
-                                <td>{{ $asset->name ?? 'Unnamed Asset' }}</td>
+                                <td><strong>{{ $asset->asset_tag ?? $asset->id }}</strong></td>
+                                <td>{{ $asset->asset_name ?? 'Unnamed Asset' }}</td>
                                 <td>
                                     <span class="badge badge-info">{{ ucfirst($asset->category->name ?? 'General') }}</span>
                                 </td>
@@ -418,7 +418,7 @@
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label>Asset Code</label>
-                                <input type="text" name="asset_code" class="form-control" placeholder="Auto-generated if empty">
+                                <input type="text" name="asset_tag" class="form-control" placeholder="Auto-generated if empty">
                                 <small class="form-text text-muted">Leave blank for auto-generation</small>
                             </div>
                         </div>

@@ -22,9 +22,9 @@ class AssetEnhanced extends Model
     protected $table = 'assets';
 
     protected $fillable = [
-        'asset_code', 'name', 'description', 'asset_type_id', 'centre_id',
-        'location_id', 'assigned_to_id', 'brand', 'model', 'serial_number',
-        'purchase_date', 'purchase_price', 'current_value', 'status',
+        'asset_tag', 'asset_name', 'asset_description', 'type_id', 'centre_id',
+        'location_id', 'assigned_to_user', 'manufacturer', 'model_number', 'serial_number',
+        'purchase_date', 'purchase_price', 'status',
         'warranty_date', 'last_maintenance_date', 'next_maintenance_date',
         'maintenance_interval', 'image_path', 'qr_code', 'rfid_tag',
         'barcode', 'notes'
@@ -72,7 +72,7 @@ class AssetEnhanced extends Model
      */
     public function assetType(): BelongsTo
     {
-        return $this->belongsTo(AssetType::class, 'asset_type_id');
+        return $this->belongsTo(AssetType::class, 'type_id');
     }
 
     /**
@@ -96,7 +96,7 @@ class AssetEnhanced extends Model
      */
     public function assignedTo(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'assigned_to_id');
+        return $this->belongsTo(User::class, 'assigned_to_user');
     }
 
     /**
@@ -159,7 +159,7 @@ class AssetEnhanced extends Model
     {
         return $query->where(function ($q) use ($search) {
             $q->where('name', 'LIKE', "%{$search}%")
-              ->orWhere('asset_code', 'LIKE', "%{$search}%")
+              ->orWhere('asset_tag', 'LIKE', "%{$search}%")
               ->orWhere('brand', 'LIKE', "%{$search}%")
               ->orWhere('model', 'LIKE', "%{$search}%")
               ->orWhere('serial_number', 'LIKE', "%{$search}%");
@@ -179,7 +179,7 @@ class AssetEnhanced extends Model
      */
     public function scopeOfType($query, $assetTypeId)
     {
-        return $query->where('asset_type_id', $assetTypeId);
+        return $query->where('type_id', $assetTypeId);
     }
 
     // =============================================
@@ -294,7 +294,7 @@ class AssetEnhanced extends Model
      */
     public function assignTo($userId, $notes = null): bool
     {
-        $this->assigned_to_id = $userId;
+        $this->assigned_to_user = $userId;
         $this->status = self::STATUS_IN_USE;
         if ($notes) {
             $this->notes = ($this->notes ? $this->notes . "\n" : '') . "Assigned: " . $notes;
@@ -311,8 +311,8 @@ class AssetEnhanced extends Model
      */
     public function returnAsset($notes = null): bool
     {
-        $previousAssignee = $this->assigned_to_id;
-        $this->assigned_to_id = null;
+        $previousAssignee = $this->assigned_to_user;
+        $this->assigned_to_user = null;
         $this->status = self::STATUS_AVAILABLE;
         if ($notes) {
             $this->notes = ($this->notes ? $this->notes . "\n" : '') . "Returned: " . $notes;
@@ -404,7 +404,7 @@ class AssetEnhanced extends Model
     public function retire($reason = null): bool
     {
         $this->status = self::STATUS_RETIRED;
-        $this->assigned_to_id = null;
+        $this->assigned_to_user = null;
         if ($reason) {
             $this->notes = ($this->notes ? $this->notes . "\n" : '') . "Retired: " . $reason;
         }
@@ -440,8 +440,8 @@ class AssetEnhanced extends Model
             'description' => $description,
             'from_location_id' => $this->getOriginal('location_id'),
             'to_location_id' => $this->location_id,
-            'from_user_id' => $this->getOriginal('assigned_to_id'),
-            'to_user_id' => $this->assigned_to_id,
+            'from_user_id' => $this->getOriginal('assigned_to_user'),
+            'to_user_id' => $this->assigned_to_user,
             'performed_by' => session('id'),
             'movement_date' => now(),
             'notes' => $notes,
@@ -459,7 +459,7 @@ class AssetEnhanced extends Model
     {
         do {
             $code = $prefix . '-' . strtoupper(uniqid());
-        } while (self::where('asset_code', $code)->exists());
+        } while (self::where('asset_tag', $code)->exists());
         
         return $code;
     }
@@ -478,7 +478,7 @@ class AssetEnhanced extends Model
                                        ->get(),
             'unassigned_valuable' => self::available()
                                          ->where('purchase_price', '>', 1000)
-                                         ->whereNull('assigned_to_id')
+                                         ->whereNull('assigned_to_user')
                                          ->with(['assetType', 'centre'])
                                          ->get(),
         ];

@@ -55,7 +55,7 @@ try {
         'asset_id' => 'TEST' . now()->format('mdHi'),
         'asset_name' => 'Test Asset ' . now()->format('Y-m-d H:i:s'),
         'asset_description' => 'Test Description',
-        'asset_type_id' => $assetType->id,
+        'type_id' => $assetType->id,
         'asset_model' => 'Test Model',
         'asset_brand' => 'Test Brand',
         'asset_serial_number' => 'TEST' . now()->format('mdHis'),

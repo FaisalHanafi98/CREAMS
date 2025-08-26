@@ -1535,9 +1535,33 @@
                     searchResults.innerHTML = '<div class="search-loading"><i class="fas fa-spinner fa-spin"></i> Searching...</div>';
                     searchResults.style.display = 'block';
                     
-                    // Use mock results directly for now to ensure it works
-                    console.log('Using mock results for query:', query);
-                    displayMockResults(query);
+                    // Perform actual search API call
+                    fetch(`{{ route('search') }}?query=${encodeURIComponent(query)}`, {
+                        method: 'GET',
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        }
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log('Search results received:', data);
+                        if (data.results) {
+                            displaySearchResults(data.results, query, 'API');
+                        } else {
+                            displaySearchResults([], query, 'API');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Search error:', error);
+                        searchResults.innerHTML = '<div class="search-error"><i class="fas fa-exclamation-triangle"></i> Search error. Please try again.</div>';
+                    });
                 }
                 
                 // Display search results function
@@ -1980,6 +2004,25 @@
         function testJS() {
             alert('JavaScript is working!');
         }
+        
+        // CSRF Token Auto-Refresh
+        function refreshCSRFToken() {
+            $.get('/csrf-token', function(data) {
+                $('meta[name="csrf-token"]').attr('content', data.token);
+                $('input[name="_token"]').val(data.token);
+                console.log('CSRF token refreshed');
+            }).fail(function() {
+                console.log('Failed to refresh CSRF token');
+            });
+        }
+        
+        // Refresh CSRF token every 30 minutes (1800000 ms)
+        setInterval(refreshCSRFToken, 1800000);
+        
+        // Also refresh on window focus (when user returns to tab)
+        $(window).focus(function() {
+            refreshCSRFToken();
+        });
         
     </script>
     

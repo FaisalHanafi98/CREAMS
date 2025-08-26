@@ -15,8 +15,9 @@ class AssetTypeSeeder extends Seeder
             [
                 'type_name' => 'Medical Equipment',
                 'type_description' => 'Medical devices and equipment for rehabilitation therapy',
-                'type_color' => '#e74c3c',
-                'type_attributes' => json_encode(['requires_calibration' => true, 'maintenance_frequency' => 'monthly']),
+                'category_id' => 1,
+                'requires_maintenance' => true,
+                'default_maintenance_interval_days' => 30,
                 'is_active' => true,
                 'created_at' => now(),
                 'updated_at' => now()
@@ -24,8 +25,9 @@ class AssetTypeSeeder extends Seeder
             [
                 'type_name' => 'Educational Materials',
                 'type_description' => 'Books, learning aids, and educational resources',
-                'type_color' => '#3498db',
-                'type_attributes' => json_encode(['requires_calibration' => false, 'maintenance_frequency' => 'yearly']),
+                'category_id' => 2,
+                'requires_maintenance' => false,
+                'default_maintenance_interval_days' => 365,
                 'is_active' => true,
                 'created_at' => now(),
                 'updated_at' => now()
@@ -33,8 +35,9 @@ class AssetTypeSeeder extends Seeder
             [
                 'type_name' => 'Technology Equipment',
                 'type_description' => 'Computers, tablets, and assistive technology',
-                'type_color' => '#9b59b6',
-                'type_attributes' => json_encode(['requires_calibration' => true, 'maintenance_frequency' => 'quarterly']),
+                'category_id' => 3,
+                'requires_maintenance' => true,
+                'default_maintenance_interval_days' => 90,
                 'is_active' => true,
                 'created_at' => now(),
                 'updated_at' => now()
@@ -42,8 +45,9 @@ class AssetTypeSeeder extends Seeder
             [
                 'type_name' => 'Furniture',
                 'type_description' => 'Chairs, tables, storage units, and specialized furniture',
-                'type_color' => '#95a5a6',
-                'type_attributes' => json_encode(['requires_calibration' => false, 'maintenance_frequency' => 'yearly']),
+                'category_id' => 4,
+                'requires_maintenance' => false,
+                'default_maintenance_interval_days' => 365,
                 'is_active' => true,
                 'created_at' => now(),
                 'updated_at' => now()

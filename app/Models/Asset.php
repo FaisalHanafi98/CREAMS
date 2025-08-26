@@ -18,7 +18,7 @@ class Asset extends Model
     protected $table = 'assets';
 
     protected $fillable = [
-        'asset_code',
+        'asset_tag',
         'asset_name',
         'description',
         'category_id',
@@ -33,7 +33,7 @@ class Asset extends Model
         'condition',
         'status',
         'location',
-        'assigned_to',
+        'assigned_to_user',
         'assigned_date',
         'depreciation_rate',
         'current_value',
@@ -198,8 +198,8 @@ class Asset extends Model
     public function scopeSearch($query, string $search)
     {
         return $query->where(function ($q) use ($search) {
-            $q->where('name', 'LIKE', "%{$search}%")
-              ->orWhere('asset_code', 'LIKE', "%{$search}%")
+            $q->where('asset_name', 'LIKE', "%{$search}%")
+              ->orWhere('asset_tag', 'LIKE', "%{$search}%")
               ->orWhere('model', 'LIKE', "%{$search}%")
               ->orWhere('brand', 'LIKE', "%{$search}%")
               ->orWhere('serial_number', 'LIKE', "%{$search}%")

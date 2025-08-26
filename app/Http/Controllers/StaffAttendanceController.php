@@ -34,8 +34,11 @@ class StaffAttendanceController extends Controller
             $selectedCentreId = $request->get('centre') ?? '01'; // Default to Gombak
             $userId = session('id');
 
-            // Get all centres for navigation
-            $centres = Centre::where('centre_status', 'active')->orderBy('centre_name')->get();
+            // Get only the main 5 centres for navigation (excluding Nilai and Cyberjaya for now)
+            $centres = Centre::where('centre_status', 'active')
+                ->whereNotIn('centre_id', ['06', '07']) // Exclude Nilai and Cyberjaya
+                ->orderBy('centre_name')
+                ->get();
             $selectedCentre = Centre::find($selectedCentreId);
 
             // Get staff for the selected centre
@@ -50,7 +53,8 @@ class StaffAttendanceController extends Controller
             // Get trainees for the selected centre
             $trainees = \App\Models\Trainee::where('centre_id', $selectedCentreId)
                 ->with(['traineeAttendances' => function($q) {
-                    $q->whereDate('attendance_date', Carbon::today());
+                    $q->whereDate('attendance_date', Carbon::today())
+                      ->with('markedBy'); // Include the user who marked the attendance
                 }])
                 ->get();
 
@@ -96,11 +100,18 @@ class StaffAttendanceController extends Controller
      */
     public function markAttendance(Request $request)
     {
+        // Debug logging at the very start
+        Log::info('=== STAFF ATTENDANCE MARKING STARTED ===', [
+            'timestamp' => now(),
+            'request_data' => $request->all(),
+            'session_id' => session('id'),
+            'session_role' => session('role'),
+            'session_centre_id' => session('centre_id'),
+            'request_method' => $request->method(),
+            'request_url' => $request->fullUrl(),
+        ]);
+
         try {
-            Log::info('Mark attendance request received', [
-                'request_data' => $request->all(),
-                'session_user' => session('id')
-            ]);
             
             $validated = $request->validate([
                 'user_id' => 'required|integer|exists:users,id',
@@ -113,6 +124,18 @@ class StaffAttendanceController extends Controller
             $currentUser = User::find($currentUserId);
             $currentUserEmail = session('email') ?? $currentUser->email;
             $centreId = session('centre_id');
+
+            // Debug logging for staff attendance
+            $targetUser = User::find($targetUserId);
+            Log::info('Staff attendance permission check', [
+                'current_user_id' => $currentUserId,
+                'current_user_centre_id' => $centreId,
+                'current_user_role' => session('role'),
+                'target_user_id' => $targetUserId,
+                'target_user_centre_id' => $targetUser->centre_id ?? 'NULL',
+                'target_user_name' => $targetUser->name ?? 'Unknown',
+                'can_mark' => $this->canMarkAttendanceFor($targetUserId, $currentUserId)
+            ]);
 
             // Check permissions
             if (!$this->canMarkAttendanceFor($targetUserId, $currentUserId)) {
@@ -391,15 +414,17 @@ class StaffAttendanceController extends Controller
             return true;
         }
 
-        // Admin can mark for anyone
+        // Admin can mark for staff in their centre only
         if ($currentUserRole === 'admin') {
-            return true;
+            $targetUser = User::find($targetUserId);
+            // Use loose comparison to handle potential type differences
+            return $targetUser && $targetUser->centre_id == $currentUserCentre;
         }
 
         // Supervisor can mark for staff in their centre
         if ($currentUserRole === 'supervisor') {
             $targetUser = User::find($targetUserId);
-            return $targetUser && $targetUser->centre_id === $currentUserCentre && 
+            return $targetUser && $targetUser->centre_id == $currentUserCentre && 
                    in_array($targetUser->role, ['teacher', 'ajk']);
         }
 
@@ -565,6 +590,18 @@ class StaffAttendanceController extends Controller
      */
     public function markTraineeAttendance(Request $request)
     {
+        // Debug logging at the very start
+        Log::info('=== TRAINEE ATTENDANCE MARKING STARTED ===', [
+            'timestamp' => now(),
+            'request_data' => $request->all(),
+            'session_id' => session('id'),
+            'session_role' => session('role'),
+            'session_centre_id' => session('centre_id'),
+            'request_method' => $request->method(),
+            'request_url' => $request->fullUrl(),
+            'request_headers' => $request->headers->all()
+        ]);
+
         try {
             // Only admin can mark trainee attendance
             if (session('role') !== 'admin') {
@@ -576,14 +613,50 @@ class StaffAttendanceController extends Controller
 
             $validated = $request->validate([
                 'trainee_id' => 'required|integer|exists:trainees,id',
-                'status' => 'required|in:present,absent,late,excused,partial',
+                'status' => 'required|in:present,absent,late,excused',
                 'activity_id' => 'nullable|exists:activities,id',
                 'remarks' => 'nullable|string|max:500'
             ]);
 
             $currentUserId = session('id');
+            $currentUserCentreId = session('centre_id');
             $currentUserEmail = session('email') ?? User::find($currentUserId)->email;
             $trainee = \App\Models\Trainee::find($validated['trainee_id']);
+
+            // Debug logging for center validation
+            Log::info('Trainee attendance center validation', [
+                'current_user_id' => $currentUserId,
+                'current_user_centre_id' => $currentUserCentreId,
+                'current_user_centre_id_type' => gettype($currentUserCentreId),
+                'current_user_email' => $currentUserEmail,
+                'trainee_id' => $validated['trainee_id'],
+                'trainee_centre_id' => $trainee->centre_id ?? 'NULL',
+                'trainee_centre_id_type' => gettype($trainee->centre_id),
+                'trainee_name' => $trainee->trainee_first_name . ' ' . $trainee->trainee_last_name,
+                'validation_will_pass' => ((int) $trainee->centre_id === (int) $currentUserCentreId)
+            ]);
+
+            // Ensure admin can only mark attendance for trainees in their own centre
+            // Normalize both centre IDs to integers for proper comparison
+            $traineeCurrentUserCentreId = (int) $currentUserCentreId;
+            $traineesCentreId = (int) $trainee->centre_id;
+            
+            if ($traineesCentreId !== $traineeCurrentUserCentreId) {
+                Log::warning('Center validation failed for trainee attendance', [
+                    'trainee_centre_id_raw' => $trainee->centre_id,
+                    'trainee_centre_id_type' => gettype($trainee->centre_id),
+                    'admin_centre_id_raw' => $currentUserCentreId,
+                    'admin_centre_id_type' => gettype($currentUserCentreId),
+                    'trainee_centre_id_normalized' => $traineesCentreId,
+                    'admin_centre_id_normalized' => $traineeCurrentUserCentreId,
+                    'trainee_name' => $trainee->trainee_first_name . ' ' . $trainee->trainee_last_name
+                ]);
+                
+                return response()->json([
+                    'success' => false,
+                    'message' => "You can only mark attendance for trainees in your own centre. Trainee '{$trainee->trainee_first_name} {$trainee->trainee_last_name}' is in centre {$traineesCentreId}, but you are in centre {$traineeCurrentUserCentreId}."
+                ], 403);
+            }
 
             // Check if attendance already exists for today
             $existingAttendance = DB::table('trainee_attendances')

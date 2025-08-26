@@ -264,15 +264,14 @@ class IRLSeeder extends Seeder
                     'asset_tag' => $data['quantity'] > 1 ? $data['asset_tag'] . '-' . $i : $data['asset_tag'],
                     'asset_name' => $data['asset_name'],
                     'asset_description' => $data['asset_name'] . ' - ' . $data['asset_type'],
-                    'asset_type_id' => $assetTypeMapping[$data['asset_type']] ?? 2, // Default to Educational Materials
-                    'asset_category_id' => $assetCategoryMapping[$data['asset_type']] ?? 2, // Default to Learning Materials
+                    'type_id' => $assetTypeMapping[$data['asset_type']] ?? 2, // Default to Educational Materials
+                    'category_id' => $assetCategoryMapping[$data['asset_type']] ?? 2, // Default to Learning Materials
                     'centre_id' => $centre->centre_id,
                     'serial_number' => 'SN' . strtoupper($faker->bothify('##??####')),
                     'manufacturer' => $data['supplier'],
                     'purchase_date' => Carbon::parse($data['purchase_date']),
                     'warranty_expiry' => Carbon::parse($data['purchase_date'])->addYears(2),
-                    'purchase_cost' => $cost,
-                    'current_value' => $cost * 0.8, // Depreciated value
+                    'purchase_price' => $cost,
                     'condition' => $faker->randomElement(['Excellent', 'Good', 'Fair']),
                     'status' => 'available',
                     'notes' => 'Real inventory item from ' . $data['supplier']
@@ -625,7 +624,6 @@ class IRLSeeder extends Seeder
             $email = strtolower($cleanName) . '@iium.edu.my';
             
             User::create([
-                'staff_id' => $staffId,
                 'iium_id' => $staffId,
                 'name' => $data['name'],
                 'email' => $email,

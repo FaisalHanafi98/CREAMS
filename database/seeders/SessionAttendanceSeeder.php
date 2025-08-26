@@ -55,11 +55,10 @@ class SessionAttendanceSeeder extends Seeder
                 $attendanceData = [
                     'session_id' => $enrollment->session_id,
                     'trainee_id' => $enrollment->trainee_id,
-                    'marked_by_staff_id' => $staffMember->id,
+                    'marked_by' => $staffMember->id,
                     'attendance_status' => $attendanceStatus,
                     'check_in_time' => $checkInTime,
                     'notes' => $this->generateAttendanceNotes($attendanceStatus, $participationScore),
-                    'participation_score' => $participationScore,
                     'created_at' => now(),
                     'updated_at' => now()
                 ];

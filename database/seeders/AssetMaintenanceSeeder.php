@@ -62,7 +62,7 @@ class AssetMaintenanceSeeder extends Seeder
             DB::table('asset_movements')->insert([
                 'asset_id' => $asset->id,
                 'from_location_id' => null,
-                'to_location_id' => $asset->current_location_id,
+                'to_location_id' => $asset->location_id,
                 'moved_by_user_id' => DB::table('users')->where('role', 'admin')->first()->id,
                 'movement_date' => $faker->dateTimeBetween('-1 year', 'now'),
                 'reason' => 'Initial placement',

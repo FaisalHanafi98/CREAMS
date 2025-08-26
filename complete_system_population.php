@@ -283,7 +283,6 @@ try {
                 }
                 
                 DB::table('staff_attendances')->insert([
-                    'staff_id' => $staff->id,
                     'user_id' => $staff->id,
                     'date' => $attendanceDate->format('Y-m-d'),
                     'marked_by_user_id' => $staff->id,

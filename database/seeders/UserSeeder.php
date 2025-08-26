@@ -204,7 +204,6 @@ class UserSeeder extends Seeder
 
         return [
             'id' => $userIndex + 1,
-            'staff_id' => $staffId,
             'iium_id' => $staffId,
             'name' => $name[0] . ' ' . $name[1],
             'email' => $email,

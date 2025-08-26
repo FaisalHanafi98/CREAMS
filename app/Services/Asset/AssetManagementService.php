@@ -44,7 +44,7 @@ class AssetManagementService
             DB::beginTransaction();
 
             // Generate unique asset code
-            $data['asset_code'] = $this->generateAssetCode($data['asset_type_id']);
+            $data['asset_tag'] = $this->generateAssetCode($data['type_id']);
             
             // Create asset
             $asset = Asset::create($data);
@@ -66,7 +66,7 @@ class AssetManagementService
             
             Log::info('Asset created successfully', [
                 'asset_id' => $asset->id,
-                'asset_code' => $asset->asset_code,
+                'asset_tag' => $asset->asset_tag,
                 'created_by' => auth()->id() ?? session('id')
             ]);
 
@@ -132,7 +132,7 @@ class AssetManagementService
             ->when($filters['search'] ?? null, function ($query, $search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('name', 'LIKE', "%{$search}%")
-                      ->orWhere('asset_code', 'LIKE', "%{$search}%")
+                      ->orWhere('asset_tag', 'LIKE', "%{$search}%")
                       ->orWhere('description', 'LIKE', "%{$search}%")
                       ->orWhereHas('assetType', function ($subQ) use ($search) {
                           $subQ->where('name', 'LIKE', "%{$search}%");
@@ -145,8 +145,8 @@ class AssetManagementService
             ->when($filters['centre_id'] ?? null, function ($query, $centreId) {
                 $query->where('centre_id', $centreId);
             })
-            ->when($filters['asset_type_id'] ?? null, function ($query, $typeId) {
-                $query->where('asset_type_id', $typeId);
+            ->when($filters['type_id'] ?? null, function ($query, $typeId) {
+                $query->where('type_id', $typeId);
             })
             ->when($filters['location_id'] ?? null, function ($query, $locationId) {
                 $query->where('asset_location', $locationId);
@@ -193,8 +193,8 @@ class AssetManagementService
         }
 
         return [
-            'by_type' => $query->selectRaw('asset_type_id, COUNT(*) as count')
-                ->groupBy('asset_type_id')
+            'by_type' => $query->selectRaw('type_id, COUNT(*) as count')
+                ->groupBy('type_id')
                 ->with('assetType:id,name')
                 ->get()
                 ->toArray(),
@@ -337,7 +337,7 @@ class AssetManagementService
         $prefix = $assetType ? strtoupper(substr($assetType->name, 0, 3)) : 'AST';
         $year = date('Y');
         
-        $sequence = Asset::where('asset_type_id', $assetTypeId)
+        $sequence = Asset::where('type_id', $assetTypeId)
             ->whereYear('created_at', $year)
             ->count() + 1;
         
@@ -378,7 +378,7 @@ class AssetManagementService
     {
         // Placeholder for QR code generation
         // Will be implemented in future iteration
-        $asset->update(['qr_code' => 'qr_' . $asset->asset_code . '.png']);
+        $asset->update(['qr_code' => 'qr_' . $asset->asset_tag . '.png']);
     }
 
     /**
@@ -400,7 +400,7 @@ class AssetManagementService
         if (!empty($changes)) {
             Log::info('Asset changes tracked', [
                 'asset_id' => $asset->id,
-                'asset_code' => $asset->asset_code,
+                'asset_tag' => $asset->asset_tag,
                 'changes' => $changes,
                 'changed_by' => auth()->id() ?? session('id'),
                 'timestamp' => now()

@@ -631,7 +631,7 @@ class StaffController extends Controller
             
             // DEBUG: Log the exact data being passed to the view
             Log::info('DEBUG: Staff Schedule Data', [
-                'staff_id' => $staffMember->id,
+                'iium_id' => $staffMember->iium_id,
                 'staff_name' => $staffMember->name,
                 'schedules_count' => $schedules->count(),
                 'sessions_count' => $sessions->count(),
@@ -900,7 +900,7 @@ class StaffController extends Controller
             
             Log::info('Viewing staff attendance', [
                 'encrypted_id' => $encrypted_id,
-                'staff_id' => $staffMember->id,
+                'iium_id' => $staffMember->iium_id,
                 'viewer_id' => session('id')
             ]);
 

@@ -27,7 +27,7 @@ class IepActivityGoal extends Model
         'notes',
         'current_progress_percentage',
         'last_progress_update',
-        'assigned_staff_id'
+        'assigned_user_id'
     ];
 
     protected $casts = [
@@ -78,7 +78,7 @@ class IepActivityGoal extends Model
 
     public function assignedStaff(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'assigned_staff_id');
+        return $this->belongsTo(User::class, 'assigned_user_id');
     }
 
     // Scopes
@@ -129,7 +129,7 @@ class IepActivityGoal extends Model
 
     public function scopeAssignedTo($query, $staffId)
     {
-        return $query->where('assigned_staff_id', $staffId);
+        return $query->where('assigned_user_id', $staffId);
     }
 
     public function scopeDueSoon($query, $days = 7)

@@ -9,73 +9,24 @@ use Illuminate\Support\Facades\DB;
 class DatabaseSeeder extends Seeder
 {
     /**
-     * Seed the application's database following the exact DATABASE_ARCHITECTURE.txt specifications.
-     * This ensures all 29 tables are properly populated with no duplicates or empty tables.
+     * Seed the application's database using new CREAMS consolidated structure.
+     * This ensures all tables are properly populated with Malaysian context and real data preservation.
      */
     public function run(): void
     {
-        $this->command->info('🚀 Starting CREAMS Database Seeding - Following DATABASE_ARCHITECTURE.txt');
+        $this->command->info('🚀 Starting CREAMS Database Seeding - Consolidated Structure');
         
         try {
-            // Phase 1: Foundation Data (Centres first, as they are referenced by everything)
-            $this->command->info("\n🏗️  PHASE 1: Foundation Infrastructure");
+            // CREAMS Consolidated Seeding - 7 Modules
+            $this->command->info("\n🏗️ CREAMS CONSOLIDATED SEEDING (7 MODULES)");
             $this->call([
-                CentreSeeder::class,
-            ]);
-
-            // Phase 2: User Management (Users, authentication systems)
-            $this->command->info("\n👥 PHASE 2: User Management System");
-            $this->call([
-                UserSeeder::class,
-            ]);
-
-            // Phase 3: Trainee Management (Trainees and their attendance system)
-            $this->command->info("\n🧒 PHASE 3: Trainee Management System");
-            $this->call([
-                TraineeSeeder::class,
-            ]);
-
-            // Phase 4: Activity System (Categories, Activities, Sessions, Enrollments)
-            $this->command->info("\n🎯 PHASE 4: Activity Management System");
-            $this->call([
-                ActivityCategorySeeder::class,
-                ActivitySeeder::class,
-                ActivitySessionSeeder::class,
-                ActivityEnrollmentSeeder::class,
-            ]);
-
-            // Phase 5: Attendance & Progress System
-            $this->command->info("\n📋 PHASE 5: Attendance & Progress System");
-            $this->call([
-                StaffAttendanceSeeder::class,
-                TraineeAttendanceSeeder::class,
-                AttendanceAlertSeeder::class,
-            ]);
-
-            // Phase 6: Asset Management System
-            $this->command->info("\n🏭 PHASE 6: Asset Management System");
-            $this->call([
-                AssetTypeSeeder::class,
-                AssetCategorySeeder::class,
-                AssetLocationSeeder::class,
-                AssetSeeder::class,
-                AssetMaintenanceSeeder::class,
-            ]);
-
-            // Phase 7: Communication System
-            $this->command->info("\n📧 PHASE 7: Communication System");
-            $this->call([
-                ContactMessageSeeder::class,
-                MessageSeeder::class,
-                NotificationSeeder::class,
-                VolunteerSeeder::class,
-            ]);
-
-            // Phase 8: Letter Generation System
-            $this->command->info("\n📄 PHASE 8: Letter Generation System");
-            $this->call([
-                LetterTemplateSeeder::class,
-                LetterSeeder::class,
+                CREAMSSeederFoundationManagement::class,      // Module 01: Centres, Users, System
+                CREAMSSeederClientManagement::class,          // Module 02: Trainees, Volunteers, Contacts  
+                CREAMSSeederServiceDeliveryManagement::class, // Module 03: Activities, Sessions, Enrollments
+                CREAMSSeederAttendanceManagement::class,      // Module 04: All Attendance Systems
+                CREAMSSeederAssetManagement::class,           // Module 05: Assets, Maintenance, Inventory
+                CREAMSSeederCommunicationManagement::class,   // Module 06: Messages, Notifications, Letters
+                CREAMSSeederSystemConstraints::class,         // Module 07: Foreign Keys, Validation
             ]);
 
             // Show final comprehensive summary
