@@ -12,6 +12,7 @@ class Volunteer extends Model
 
     protected $fillable = [
         // Personal Information (actual database columns)
+        'volunteer_id',
         'name',
         'email',
         'phone',

@@ -24,8 +24,7 @@ class CreateCreamsServiceDeliveryManagementTables extends Migration
             $table->string('category_name');
             $table->text('category_description')->nullable();
             $table->string('category_type', 50)->nullable();
-            $table->string('category_color', 7)->default('#007bff');
-            $table->string('category_icon', 50)->nullable();
+            // Removed category_color and category_icon - will be managed via frontend/config
             $table->boolean('is_active')->default(true);
             $table->timestamps();
             

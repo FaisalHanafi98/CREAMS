@@ -76,9 +76,10 @@ class DatabaseSeeder extends Seeder
             $this->command->info("   📅 Activity Sessions: " . $stats['activity_sessions']);
             $this->command->info("   📝 Activity Enrollments: " . $stats['activity_enrollments']);
             
-            // Attendance System
+            // Attendance System  
             $this->command->info("\n📋 ATTENDANCE SYSTEM:");
             $this->command->info("   👨‍💼 Staff Attendances: " . $stats['staff_attendances']);
+            $this->command->info("   📝 Session Attendance: " . $stats['session_attendance']);
             $this->command->info("   🚨 Attendance Alerts: " . $stats['attendance_alerts']);
             
             // Asset Management
@@ -149,8 +150,9 @@ class DatabaseSeeder extends Seeder
             'activity_sessions' => DB::table('activity_sessions')->count(),
             'activity_enrollments' => DB::table('activity_enrollments')->count(),
             
-            // Attendance & Progress (2 tables)
+            // Attendance & Progress (3 tables)
             'staff_attendances' => DB::table('staff_attendances')->count(),
+            'session_attendance' => DB::table('session_attendance')->count(),
             'attendance_alerts' => DB::table('attendance_alerts')->count(),
             
             // Asset Management (7 tables)

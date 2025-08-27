@@ -63,7 +63,7 @@ class CreateCreamsFoundationManagementTables extends Migration
             $table->string('position', 100)->nullable();
             $table->text('about')->nullable();
             $table->string('centre_location')->nullable();
-            $table->text('bio')->nullable();
+            // Removed bio field - old implementation, about field is sufficient
             $table->timestamp('user_last_accessed_at')->nullable();
             $table->rememberToken();
             $table->timestamps();

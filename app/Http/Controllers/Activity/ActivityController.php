@@ -235,7 +235,7 @@ class ActivityController extends Controller
                     $q->with(['enrollments', 'teacher'])
                       ->orderBy('session_date', 'asc')
                       ->orderBy('start_time', 'asc');
-                }, 'category', 'centre', 'learningOutcomes'])
+                }, 'category', 'centre', 'instructor'])
                 ->withCount(['sessions', 'enrollments']);
 
             // Role-based filtering
@@ -252,16 +252,16 @@ class ActivityController extends Controller
             // Get activities with pagination
             $activities = $query->orderBy('created_at', 'desc')->paginate(12);
 
-            // Calculate enhanced statistics
+            // Calculate enhanced statistics using direct DB queries
             $stats = [
-                'total' => Activity::count(),
-                'active' => Activity::where('is_active', true)->count(),
-                'sessions' => ActivitySession::count(),
-                'enrollments' => ActivityEnrollment::count(),
-                'upcoming_sessions' => ActivitySession::where('session_date', '>=', Carbon::now())->count(),
-                'completed_sessions' => ActivitySession::where('session_date', '<', Carbon::now())->count(),
+                'total_activities' => Activity::count(),
+                'active_activities' => Activity::where('is_active', true)->count(),
+                'total_sessions' => DB::table('activity_sessions')->count(),
+                'total_enrollments' => DB::table('activity_enrollments')->count(),
+                'upcoming_sessions' => DB::table('activity_sessions')->where('session_date', '>=', Carbon::now())->count(),
+                'completed_sessions' => DB::table('activity_sessions')->where('session_date', '<', Carbon::now())->count(),
                 'total_trainees' => \App\Models\Trainee::count(),
-                'active_trainees' => ActivityEnrollment::distinct('trainee_id')->count()
+                'active_trainees' => DB::table('activity_enrollments')->distinct()->count('trainee_id')
             ];
 
             // Get categories with counts for sidebar
@@ -269,8 +269,8 @@ class ActivityController extends Controller
             
             // Calculate category-based statistics
             $categoryCounts = [
-                'total' => $stats['total'],
-                'active' => $stats['active'],
+                'total' => $stats['total_activities'],
+                'active' => $stats['active_activities'],
                 'rehabilitation' => Activity::whereHas('category', function($q) {
                     $q->where('category_name', 'like', '%rehabilitation%');
                 })->count(),

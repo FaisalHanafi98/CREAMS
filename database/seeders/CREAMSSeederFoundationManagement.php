@@ -79,56 +79,42 @@ class CREAMSSeederFoundationManagement extends Seeder
             ],
             [
                 'centre_id' => '03',
-                'centre_name' => 'Johor Bahru',
-                'centre_address' => 'Jalan Skudai, 81300 Johor Bahru, Johor',
-                'centre_phone' => '+607-553-4000',
-                'centre_email' => 'jb@creams.edu.my',
+                'centre_name' => 'Pagoh',
+                'centre_address' => 'Km 1, Jalan Panchor, 84600 Pagoh, Johor',
+                'centre_phone' => '+607-434-1000',
+                'centre_email' => 'pagoh@creams.edu.my',
                 'centre_capacity' => '100',
-                'centre_manager' => 'Dr. Rajesh Kumar a/l Subramaniam',
-                'centre_manager_contact' => '+607-553-4001',
+                'centre_manager' => 'Dr. Mohd Hazlan bin Ibrahim',
+                'centre_manager_contact' => '+607-434-1001',
                 'centre_status' => 'active',
-                'centre_description' => 'CREAMS Johor Bahru Centre - Pusat rehabilitasi selatan yang menumpukan perkhidmatan terapi dan pendidikan khas untuk komuniti berbilang kaum.',
+                'centre_description' => 'CREAMS Pagoh Centre - Community-based rehabilitation centre serving southern Peninsular Malaysia with focus on inclusive education and vocational training.',
                 'centre_facilities' => json_encode([
-                    'Bilik Terapi', 'Ruang Seni', 'Bilik Muzik', 'Bilik Komputer',
-                    'Perpustakaan', 'Bilik Konseling Keluarga'
+                    'Vocational Training Workshop', 'Life Skills Training Room', 
+                    'Computer Training Lab', 'Therapy Rooms', 'Community Integration Center',
+                    'Physical Therapy Room'
                 ]),
                 'opening_time' => '08:00:00',
                 'is_active' => true,
             ],
             [
                 'centre_id' => '04',
-                'centre_name' => 'Kota Kinabalu',
-                'centre_address' => 'Jalan Lintas, 88300 Kota Kinabalu, Sabah',
-                'centre_phone' => '+608-832-4000',
-                'centre_email' => 'kk@creams.edu.my',
-                'centre_capacity' => '90',
-                'centre_manager' => 'Puan Jennifer Lim Siew Choo',
-                'centre_manager_contact' => '+608-832-4001',
-                'centre_status' => 'active',
-                'centre_description' => 'CREAMS Kota Kinabalu Centre - Pusat rehabilitasi Sabah yang menyediakan perkhidmatan kepada komuniti pelbagai etnik di Borneo.',
-                'centre_facilities' => json_encode([
-                    'Bilik Terapi', 'Bilik Aktiviti', 'Ruang Kebudayaan', 'Bilik Komputer'
-                ]),
-                'opening_time' => '08:00:00',
-                'is_active' => true,
-            ],
-            [
-                'centre_id' => '05',
-                'centre_name' => 'Nilai',
-                'centre_address' => 'Persiaran Olahraga, 71800 Nilai, Negeri Sembilan',
-                'centre_phone' => '+606-798-4000',
-                'centre_email' => 'nilai@creams.edu.my',
+                'centre_name' => 'Gambang',
+                'centre_address' => 'Jalan ILP, 26300 Gambang, Pahang',
+                'centre_phone' => '+609-424-2000',
+                'centre_email' => 'gambang@creams.edu.my',
                 'centre_capacity' => '80',
-                'centre_manager' => 'Dr. Tan Wei Ming',
-                'centre_manager_contact' => '+606-798-4001',
+                'centre_manager' => 'Dr. Nurul Ain binti Kamal',
+                'centre_manager_contact' => '+609-424-2001',
                 'centre_status' => 'active',
-                'centre_description' => 'CREAMS Nilai Centre - Pusat rehabilitasi Negeri Sembilan yang mengkhusus dalam terapi perkembangan awal kanak-kanak.',
+                'centre_description' => 'CREAMS Gambang Centre - Rural rehabilitation centre providing accessible services to underserved communities with mobile outreach programs.',
                 'centre_facilities' => json_encode([
-                    'Bilik Terapi Awal Kanak-kanak', 'Taman Permainan Terapeutik', 'Bilik Keluarga'
+                    'Mobile Therapy Unit', 'Community Outreach Center', 
+                    'Basic Therapy Rooms', 'Learning Support Center',
+                    'Family Counseling Room'
                 ]),
-                'opening_time' => '08:00:00',
+                'opening_time' => '08:30:00',
                 'is_active' => true,
-            ],
+            ]
         ];
 
         foreach ($centres as $centre) {
@@ -203,8 +189,9 @@ class CREAMSSeederFoundationManagement extends Seeder
             $selectedStaff = collect($allStaff)->shuffle()->take($staffCount);
             
             foreach ($selectedStaff as $staff) {
+                $realDomains = ['gmail.com', 'yahoo.com', 'hotmail.com', 'outlook.com', 'live.com', 'icloud.com', 'protonmail.com'];
                 $email = strtolower(str_replace(['Dr. ', 'Puan ', 'Encik ', ' a/l ', ' a/p ', ' bin ', ' binti '], '', $staff['name']));
-                $email = str_replace(' ', '.', $email) . '@creams.edu.my';
+                $email = str_replace(' ', '.', $email) . rand(1, 999) . '@' . collect($realDomains)->random();
                 
                 try {
                     DB::table('users')->insertOrIgnore([
@@ -231,5 +218,63 @@ class CREAMSSeederFoundationManagement extends Seeder
         }
         
         $this->command->line("      ✓ Created {$totalCreated} demo Malaysian staff members");
+        
+        // Add additional diverse users with real email domains
+        $this->seedAdditionalUsers($faker);
+    }
+    
+    /**
+     * Seed additional users with diverse backgrounds and real email domains
+     */
+    private function seedAdditionalUsers($faker): void
+    {
+        $this->command->info('   👥 Creating additional diverse users...');
+        
+        $realDomains = ['gmail.com', 'yahoo.com', 'hotmail.com', 'outlook.com', 'live.com', 'icloud.com', 'protonmail.com'];
+        $centres = DB::table('centres')->pluck('centre_id');
+        
+        $additionalUsers = [
+            ['name' => 'Sarah Johnson', 'role' => 'teacher'],
+            ['name' => 'Michael Chen', 'role' => 'supervisor'],
+            ['name' => 'Priya Sharma', 'role' => 'teacher'],
+            ['name' => 'David Kim', 'role' => 'ajk'],
+            ['name' => 'Emma Wilson', 'role' => 'teacher'],
+            ['name' => 'Ahmed Hassan', 'role' => 'supervisor'],
+            ['name' => 'Lisa Anderson', 'role' => 'teacher'],
+            ['name' => 'Raj Patel', 'role' => 'ajk'],
+            ['name' => 'Maria Rodriguez', 'role' => 'teacher'],
+            ['name' => 'Thomas Lee', 'role' => 'teacher'],
+        ];
+        
+        $additionalCreated = 0;
+        foreach ($additionalUsers as $user) {
+            $email = strtolower(str_replace(' ', '.', $user['name'])) . rand(100, 999) . '@' . $faker->randomElement($realDomains);
+            $centreId = $centres->random();
+            
+            try {
+                DB::table('users')->insertOrIgnore([
+                    'iium_id' => 'ADD' . $centreId . sprintf('%03d', rand(100, 999)),
+                    'name' => $user['name'],
+                    'email' => $email,
+                    'password' => Hash::make('password123'),
+                    'phone' => '+60' . rand(10, 19) . '-' . rand(100, 999) . '-' . rand(1000, 9999),
+                    'address' => $faker->address,
+                    'date_of_birth' => $faker->dateTimeBetween('-50 years', '-25 years')->format('Y-m-d'),
+                    'role' => $user['role'],
+                    'status' => 'active',
+                    'centre_id' => $centreId,
+                    'position' => ucfirst($user['role']) . ' Staff Member',
+                    'centre_location' => DB::table('centres')->where('centre_id', $centreId)->value('centre_name'),
+                    'about' => 'Dedicated ' . $user['role'] . ' with expertise in special education and rehabilitation services.',
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+                $additionalCreated++;
+            } catch (\Exception $e) {
+                // Skip duplicate entries
+            }
+        }
+        
+        $this->command->line("      ✓ Created {$additionalCreated} additional diverse users with real email domains");
     }
 }

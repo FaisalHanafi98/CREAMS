@@ -514,6 +514,11 @@
 
     <!-- JavaScript -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Expiry Handler for post-login redirect -->
+    <link rel="stylesheet" href="{{ asset('css/expiry-handler.css') }}">
+    <script src="{{ asset('js/expiry-handler.js') }}"></script>
+    
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Elements
@@ -572,6 +577,11 @@
 
             // Auto-focus first input
             document.getElementById('identifier').focus();
+            
+            // Handle post-login redirect from expiry handler
+            if (typeof ExpiryHandler !== 'undefined') {
+                ExpiryHandler.handlePostLoginRedirect();
+            }
 
             // Auto-hide alerts after 5 seconds
             setTimeout(function() {

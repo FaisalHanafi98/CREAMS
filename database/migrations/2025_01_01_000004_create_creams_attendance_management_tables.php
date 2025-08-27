@@ -25,18 +25,18 @@ class CreateCreamsAttendanceManagementTables extends Migration
             $table->string('centre_id', 10)->nullable();
             $table->date('attendance_date');
             $table->time('check_in_time')->nullable();
-            $table->time('check_out_time')->nullable();
-            $table->enum('status', ['present', 'absent', 'late', 'sick_leave', 'emergency_leave', 'authorized_leave'])->default('absent');
-            $table->string('leave_type', 50)->nullable();
-            $table->text('notes')->nullable();
+            // Removed check_out_time - staff only need to check in
+            $table->enum('status', ['present', 'absent', 'late', 'leave'])->default('absent');
+            $table->string('leave_type', 50)->nullable(); // mandatory when status = 'leave'
+            // Removed notes - keeping only remarks
             $table->boolean('approved')->default(false);
-            $table->integer('approved_by')->nullable();
+            $table->integer('approved_by')->nullable(); // mandatory for leave status
             $table->timestamp('approved_at')->nullable();
-            $table->integer('marked_by_user_id')->nullable();
-            $table->string('marked_by_email')->nullable();
-            $table->time('attendance_time')->nullable();
+            $table->integer('marked_by_user_id')->nullable(); // must be filled if marked_by_email is filled
+            $table->string('marked_by_email')->nullable(); // must be filled if marked_by_user_id is filled
+            // Removed attendance_time - using check_in_time only
             $table->text('remarks')->nullable();
-            $table->decimal('total_hours', 4, 2)->default(0.00);
+            // Removed total_hours - not needed for check-in only system
             $table->timestamps();
             
             $table->index(['user_id', 'attendance_date']);

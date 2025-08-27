@@ -21,10 +21,10 @@ class CreateCreamsClientManagementTables extends Migration
         // 1. TRAINEES - Service recipients (preserves current structure)
         Schema::create('trainees', function (Blueprint $table) {
             $table->id();
-            $table->string('trainee_id', 50)->unique();
+            $table->string('trainee_id', 50)->unique(); // Format: PY0001 (disability_code + 4 digits)
             $table->string('trainee_first_name', 100);
             $table->string('trainee_last_name', 100);
-            $table->string('trainee_email')->unique();
+            $table->string('trainee_email')->unique(); // Valid domains: gmail, outlook, yahoo, hotmail etc.
             $table->string('ic_number', 15)->unique();
             $table->date('trainee_date_of_birth');
             $table->enum('gender', ['Male', 'Female']);
@@ -33,18 +33,20 @@ class CreateCreamsClientManagementTables extends Migration
             $table->string('trainee_condition')->nullable();
             $table->string('centre_id', 10)->nullable();
             $table->string('centre_name')->nullable();
-            $table->integer('course_id')->nullable();
+            // Removed course_id - old implementation, replaced by activity system
             $table->enum('status', ['active', 'inactive', 'graduated'])->default('active');
             $table->string('guardian_name')->nullable();
             $table->string('guardian_phone', 20)->nullable();
             $table->string('guardian_email')->nullable();
-            $table->string('guardian_relationship', 50)->nullable();
+            $table->string('guardian_relationship', 50)->nullable(); // Must be in English
             $table->text('guardian_address')->nullable();
             $table->string('emergency_contact_name')->nullable();
             $table->string('emergency_contact_phone', 20)->nullable();
-            $table->string('emergency_contact_relationship', 50)->nullable();
+            $table->string('emergency_contact_relationship', 50)->nullable(); // Must be in English
+            // Three consent types (all mandatory - value 1)
             $table->boolean('photo_consent')->default(false);
             $table->boolean('services_consent')->default(false);
+            $table->boolean('data_consent')->default(false); // Third consent field
             $table->date('registration_date')->default(now());
             $table->timestamps();
             
@@ -64,8 +66,9 @@ class CreateCreamsClientManagementTables extends Migration
             $table->enum('gender', ['Male', 'Female'])->nullable();
             $table->string('occupation')->nullable();
             $table->string('skills')->nullable();
+            $table->text('availability')->nullable();
             $table->string('centre_id', 10)->nullable();
-            $table->enum('status', ['active', 'inactive', 'pending'])->default('pending');
+            $table->enum('status', ['applied', 'reviewed', 'approved', 'rejected', 'active', 'inactive'])->default('applied');
             $table->text('motivation')->nullable();
             $table->date('registration_date')->default(now());
             $table->timestamps();

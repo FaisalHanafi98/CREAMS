@@ -598,10 +598,10 @@ class TraineeHomeController extends Controller
             
             // Get this week's sessions for the trainee
             $thisWeekSessions = \DB::table('activity_sessions')
-                ->join('session_enrollments', 'activity_sessions.id', '=', 'session_enrollments.session_id')
                 ->join('activities', 'activity_sessions.activity_id', '=', 'activities.id')
-                ->where('session_enrollments.trainee_id', $id)
-                ->where('session_enrollments.enrollment_status', 'enrolled')
+                ->join('activity_enrollments', 'activities.id', '=', 'activity_enrollments.activity_id')
+                ->where('activity_enrollments.trainee_id', $id)
+                ->where('activity_enrollments.enrollment_status', 'enrolled')
                 ->whereBetween('activity_sessions.session_date', [now()->startOfWeek(), now()->endOfWeek()])
                 ->select(
                     'activity_sessions.session_date',
@@ -629,10 +629,10 @@ class TraineeHomeController extends Controller
 
             // Get upcoming activities (next 7 days beyond current week)
             $upcomingActivities = \DB::table('activity_sessions')
-                ->join('session_enrollments', 'activity_sessions.id', '=', 'session_enrollments.session_id')
                 ->join('activities', 'activity_sessions.activity_id', '=', 'activities.id')
-                ->where('session_enrollments.trainee_id', $id)
-                ->where('session_enrollments.enrollment_status', 'enrolled')
+                ->join('activity_enrollments', 'activities.id', '=', 'activity_enrollments.activity_id')
+                ->where('activity_enrollments.trainee_id', $id)
+                ->where('activity_enrollments.enrollment_status', 'enrolled')
                 ->whereBetween('activity_sessions.session_date', [now()->addWeek()->startOfWeek(), now()->addWeek()->endOfWeek()])
                 ->select(
                     'activity_sessions.session_date',

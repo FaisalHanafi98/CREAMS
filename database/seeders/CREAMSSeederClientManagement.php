@@ -33,16 +33,19 @@ class CREAMSSeederClientManagement extends Seeder
         
         $faker = Faker::create('ms_MY');
         
-        // Malaysian disability conditions with proper bilingual terminology
+        // Malaysian disability conditions with proper bilingual terminology and codes
         $conditions = [
-            'Autism Spectrum Disorder (Gangguan Spektrum Autisme)',
-            'Down Syndrome (Sindrom Down)',
-            'Attention Deficit Hyperactivity Disorder (ADHD)',
-            'Cerebral Palsy (Palsi Serebrum)',
-            'Learning Disability (Ketidakupayaan Pembelajaran)',
-            'Intellectual Disability (Ketidakupayaan Intelektual)',
-            'Speech and Language Delay (Kelewatan Pertuturan dan Bahasa)',
-            'Developmental Delay (Kelewatan Perkembangan)',
+            'Autism Spectrum Disorder (Gangguan Spektrum Autisme)' => 'AU',
+            'Down Syndrome (Sindrom Down)' => 'DS',
+            'Attention Deficit Hyperactivity Disorder (ADHD)' => 'AD',
+            'Cerebral Palsy (Palsi Serebrum)' => 'CP',
+            'Learning Disability (Ketidakupayaan Pembelajaran)' => 'LD',
+            'Intellectual Disability (Ketidakupayaan Intelektual)' => 'ID',
+            'Speech and Language Delay (Kelewatan Pertuturan dan Bahasa)' => 'SL',
+            'Developmental Delay (Kelewatan Perkembangan)' => 'DD',
+            'Hearing Impairment (Orang Kurang Upaya Pendengaran)' => 'HI',
+            'Visual Impairment (Orang Kurang Upaya Penglihatan)' => 'VI',
+            'Physical Disability (Ketidakupayaan Fizikal)' => 'PD',
         ];
 
         // Malaysian names by ethnicity with proper cultural patterns
@@ -66,6 +69,7 @@ class CREAMSSeederClientManagement extends Seeder
 
         $centres = DB::table('centres')->get();
         $totalCreated = 0;
+        $globalCounter = 1; // Global counter for unique IDs
         
         foreach ($centres as $centre) {
             $traineeCount = rand(25, 45); // Realistic numbers per centre
@@ -96,33 +100,38 @@ class CREAMSSeederClientManagement extends Seeder
 
                 $birthDate = $faker->dateTimeBetween('-25 years', '-3 years');
                 $icNumber = $this->generateMalaysianIC($birthDate);
-                $traineeId = 'T' . $centre->centre_id . date('y', $birthDate->getTimestamp()) . sprintf('%04d', $i + 1);
+                
+                // Select condition and generate disability-based ID
+                $selectedCondition = array_rand($conditions);
+                $disabilityCode = $conditions[$selectedCondition];
+                $traineeId = $disabilityCode . sprintf('%04d', $globalCounter++);
                 
                 try {
                     DB::table('trainees')->insertOrIgnore([
                         'trainee_id' => $traineeId,
                         'trainee_first_name' => $firstName,
                         'trainee_last_name' => $fullLastName,
-                        'trainee_email' => strtolower(str_replace(' ', '.', $firstName . '.' . str_replace(['bin ', 'binti ', 'a/l ', 'a/p '], '', $fullLastName))) . '@trainee.creams.edu.my',
+                        'trainee_email' => strtolower(str_replace(' ', '.', $firstName . '.' . str_replace(['bin ', 'binti ', 'a/l ', 'a/p '], '', $fullLastName))) . rand(1, 999) . '@' . collect(['gmail.com', 'outlook.com', 'yahoo.com', 'hotmail.com', 'live.com'])->random(),
                         'ic_number' => $icNumber,
                         'trainee_date_of_birth' => $birthDate->format('Y-m-d'),
                         'gender' => $gender,
                         'trainee_phone_number' => '+60' . rand(10, 19) . '-' . rand(100, 999) . '-' . rand(1000, 9999),
                         'trainee_address' => $this->generateMalaysianAddress($centre->centre_name),
-                        'trainee_condition' => $conditions[array_rand($conditions)],
+                        'trainee_condition' => $selectedCondition,
                         'centre_id' => $centre->centre_id,
                         'centre_name' => $centre->centre_name,
                         'status' => 'active',
                         'guardian_name' => $this->generateGuardianName($ethnicity, $gender),
                         'guardian_phone' => '+60' . rand(10, 19) . '-' . rand(100, 999) . '-' . rand(1000, 9999),
                         'guardian_email' => $faker->email,
-                        'guardian_relationship' => rand(0, 1) ? 'Ibu' : 'Bapa',
+                        'guardian_relationship' => rand(0, 1) ? 'Mother' : 'Father',
                         'guardian_address' => $this->generateMalaysianAddress($centre->centre_name),
                         'emergency_contact_name' => $this->generateGuardianName($ethnicity, rand(0, 1) ? 'Male' : 'Female'),
                         'emergency_contact_phone' => '+60' . rand(10, 19) . '-' . rand(100, 999) . '-' . rand(1000, 9999),
-                        'emergency_contact_relationship' => collect(['Datuk', 'Nenek', 'Pakcik', 'Makcik', 'Abang', 'Kakak'])->random(),
-                        'photo_consent' => rand(0, 100) > 20, // 80% consent rate
-                        'services_consent' => rand(0, 100) > 10, // 90% consent rate
+                        'emergency_contact_relationship' => collect(['Grandfather', 'Grandmother', 'Uncle', 'Aunt', 'Brother', 'Sister'])->random(),
+                        'photo_consent' => 1, // Mandatory consent
+                        'services_consent' => 1, // Mandatory consent
+                        'data_consent' => 1, // Third mandatory consent
                         'registration_date' => $faker->dateTimeBetween('-2 years', 'now')->format('Y-m-d'),
                         'created_at' => now(),
                         'updated_at' => now(),

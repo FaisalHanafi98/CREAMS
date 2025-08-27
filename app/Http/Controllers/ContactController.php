@@ -207,7 +207,7 @@ private function sendNotificationEmails($contact, $validatedData)
         Mail::send('emails.contactadminnotification', [
             'contact' => $contact,
             'data' => $validatedData
-        ], function ($message) use ($adminEmail, $subject, $contact) {
+        ], function ($message) use ($adminEmail, $subject, $contact, $validatedData) {
             $message->to($adminEmail)
                     ->from(config('mail.from.address'), config('mail.from.name'))
                     ->subject($subject)

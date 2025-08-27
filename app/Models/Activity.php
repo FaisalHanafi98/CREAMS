@@ -114,12 +114,12 @@ class Activity extends Model
     }
 
     /**
-     * Alternative relationship method for compatibility with existing code
-     * This replaces the expected learningOutcomes relationship
+     * Get learning outcomes - returns the collection from accessor method
+     * Note: This is not a relationship, it's computed from learning_outcomes field
      */
     public function learningOutcomes()
     {
-        return $this->learning_outcomes;
+        return $this->getLearningOutcomesAttribute();
     }
 
     /**

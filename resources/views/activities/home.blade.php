@@ -352,61 +352,106 @@
         </div>
     </div>
 
-    <!-- Enhanced Activities Grid with Pagination -->
-    <div class="activities-main-enhanced">
-        <div class="activities-grid" id="activitiesGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 25px; margin-bottom: 2rem;">
+    <!-- Activities Grid -->
+    <div class="activities-section">
+        <div class="activities-grid-clean" id="activitiesGrid">
             <!-- Fallback: Show activities using PHP/Blade while JS loads -->
             @if($activities && $activities->count() > 0)
                 @foreach($activities as $activity)
-                <div class="activity-card" style="background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 5px 20px rgba(0,0,0,0.08); border: 1px solid #f1f3f4;">
-                    <!-- Activity Card Header -->
-                    <div class="activity-card-header" style="background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1)); padding: 20px; text-align: center; position: relative;">
-                        <div style="width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px; font-size: 24px; background: linear-gradient(135deg, #667eea, #764ba2); color: white; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);">
-                            <i class="fas fa-tasks"></i>
+                <div class="activity-card-clean">
+                    <!-- Card Header -->
+                    <div class="card-header-clean">
+                        <div class="activity-title-wrapper">
+                            <h3 class="activity-title">{{ $activity->activity_name }}</h3>
+                            <span class="activity-status {{ $activity->is_active ? 'active' : 'inactive' }}">
+                                {{ $activity->is_active ? 'Active' : 'Inactive' }}
+                            </span>
                         </div>
-                        <h6 class="activity-name" style="font-size: 1.2rem; font-weight: 700; color: #2c3e50; margin: 0 0 5px 0;">{{ $activity->activity_name }}</h6>
-                        <div class="activity-category" style="font-size: 0.9rem; color: #6c757d; font-family: 'Courier New', monospace; background: rgba(255,255,255,0.8); padding: 3px 8px; border-radius: 10px; display: inline-block;">
-                            {{ $activity->category ?? 'General' }}
+                        <div class="activity-category">
+                            @php
+                                $categoryIcon = 'fas fa-tasks';
+                                if(isset($activity->category)) {
+                                    if(stripos($activity->category, 'rehabilitation') !== false) {
+                                        $categoryIcon = 'fas fa-heartbeat';
+                                    } elseif(stripos($activity->category, 'academic') !== false) {
+                                        $categoryIcon = 'fas fa-graduation-cap';
+                                    } elseif(stripos($activity->category, 'creative') !== false || stripos($activity->category, 'social') !== false) {
+                                        $categoryIcon = 'fas fa-palette';
+                                    } elseif(stripos($activity->category, 'physical') !== false) {
+                                        $categoryIcon = 'fas fa-running';
+                                    }
+                                }
+                            @endphp
+                            <i class="{{ $categoryIcon }}"></i>
+                            <span>{{ $activity->category->category_name ?? 'General' }}</span>
                         </div>
                     </div>
 
-                    <!-- Activity Card Body -->
-                    <div class="activity-card-body" style="padding: 20px;">
-                        <div class="status-badge" style="background: linear-gradient(135deg, {{ $activity->is_active ? '#28a745' : '#6c757d' }}, {{ $activity->is_active ? '#20c997' : '#5a6268' }}); color: white; padding: 5px 12px; border-radius: 15px; font-size: 0.8rem; font-weight: 600; display: inline-block; margin-bottom: 15px; text-align: center; width: 100%;">
-                            {{ $activity->is_active ? 'Active' : 'Inactive' }}
+                    <!-- Card Content -->
+                    <div class="card-content-clean">
+                        <div class="activity-description">
+                            <p>{{ Str::limit($activity->activity_description, 120) }}</p>
                         </div>
-                        
-                        <div class="activity-info" style="margin-bottom: 15px;">
-                            <div class="info-row" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 0.9rem;">
-                                <span class="info-label" style="color: #6c757d; font-weight: 500;">Sessions:</span>
-                                <span class="info-value" style="color: #2c3e50; font-weight: 600;">{{ $activity->sessions->count() }}</span>
+
+                        <div class="activity-stats">
+                            <div class="stat">
+                                <i class="fas fa-calendar-alt"></i>
+                                <span>{{ $activity->sessions_count ?? $activity->sessions->count() }} Sessions</span>
                             </div>
-                            <div class="info-row" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 0.9rem;">
-                                <span class="info-label" style="color: #6c757d; font-weight: 500;">Max Participants:</span>
-                                <span class="info-value" style="color: #2c3e50; font-weight: 600;">{{ $activity->max_participants ?? 'No limit' }}</span>
+                            <div class="stat">
+                                <i class="fas fa-users"></i>
+                                <span>{{ $activity->enrollments_count ?? $activity->enrollments->count() }} Enrolled</span>
+                            </div>
+                            <div class="stat">
+                                <i class="fas fa-clock"></i>
+                                <span>{{ $activity->session_duration_minutes ?? 60 }}min</span>
                             </div>
                         </div>
 
-                        <div class="activity-description" style="color: #6c757d; font-size: 0.85rem; line-height: 1.4; margin-bottom: 15px; min-height: 40px;">
-                            {{ Str::limit($activity->activity_description, 100) }}
+                        <div class="activity-meta">
+                            @if($activity->instructor)
+                            <div class="meta-item">
+                                <i class="fas fa-user-tie"></i>
+                                <span>{{ $activity->instructor->name }}</span>
+                            </div>
+                            @endif
+                            @if($activity->activity_location)
+                            <div class="meta-item">
+                                <i class="fas fa-map-marker-alt"></i>
+                                <span>{{ $activity->activity_location }}</span>
+                            </div>
+                            @endif
                         </div>
+                    </div>
 
-                        <div class="activity-actions" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap: 8px; margin-top: 15px;">
-                            <a href="{{ route('activities.show', $activity->id) }}" class="btn-action btn-view" style="padding: 8px 15px; border-radius: 10px; border: none; font-size: 0.85rem; font-weight: 600; transition: all 0.3s ease; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 5px; background: linear-gradient(135deg, #667eea, #764ba2); color: white; z-index: 10; position: relative;">
-                                <i class="fas fa-eye"></i>View
-                            </a>
-                            <a href="{{ route('activities.sessions', $activity->id) }}" class="btn-action btn-schedule" style="padding: 8px 15px; border-radius: 10px; border: none; font-size: 0.85rem; font-weight: 600; transition: all 0.3s ease; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 5px; background: #17a2b8; color: white; z-index: 10; position: relative;">
-                                <i class="fas fa-calendar"></i>Sessions
-                            </a>
-                        </div>
+                    <!-- Card Actions -->
+                    <div class="card-actions-clean">
+                        <a href="{{ route('activities.show', $activity->id) }}" class="btn-clean btn-primary">
+                            View Details
+                        </a>
+                        <a href="{{ route('activities.sessions', $activity->id) }}" class="btn-clean btn-secondary">
+                            Sessions
+                        </a>
+                        @if(in_array(session('role'), ['admin', 'supervisor', 'teacher']))
+                        <a href="{{ route('activities.edit', $activity->id) }}" class="btn-clean btn-tertiary">
+                            Edit
+                        </a>
+                        @endif
                     </div>
                 </div>
                 @endforeach
             @else
-                <div class="no-activities-message">
+                <div class="empty-state-clean">
+                    <div class="empty-icon">
+                        <i class="fas fa-clipboard-list"></i>
+                    </div>
                     <h3>No Activities Found</h3>
                     <p>No activities are currently available for your role.</p>
-                    <p><strong>Debug Info:</strong> Activities count = {{ $activities ? $activities->count() : 'null' }}</p>
+                    @if(in_array(session('role'), ['admin', 'supervisor']))
+                    <a href="{{ route('activities.create') }}" class="btn-clean btn-primary">
+                        Create First Activity
+                    </a>
+                    @endif
                 </div>
             @endif
         </div>
@@ -523,6 +568,36 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     activitiesSystem.init();
+    
+    // Simple filter functionality
+    const filterTabs = document.querySelectorAll('.filter-tab-enhanced');
+    const activityCards = document.querySelectorAll('.activity-card-clean');
+    
+    filterTabs.forEach(tab => {
+        tab.addEventListener('click', function() {
+            filterTabs.forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
+            
+            const filter = this.dataset.filter;
+            
+            activityCards.forEach(card => {
+                let shouldShow = true;
+                
+                if (filter === 'active') {
+                    shouldShow = card.querySelector('.activity-status.active') !== null;
+                } else if (filter === 'rehabilitation') {
+                    shouldShow = card.textContent.toLowerCase().includes('rehabilitation');
+                } else if (filter === 'academic') {
+                    shouldShow = card.textContent.toLowerCase().includes('academic');
+                } else if (filter === 'recreational') {
+                    shouldShow = card.textContent.toLowerCase().includes('creative') || 
+                              card.textContent.toLowerCase().includes('social');
+                }
+                
+                card.style.display = (shouldShow || filter === 'all') ? 'block' : 'none';
+            });
+        });
+    });
 });
 </script>
 @endsection

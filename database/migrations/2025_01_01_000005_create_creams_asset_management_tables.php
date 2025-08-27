@@ -23,11 +23,11 @@ class CreateCreamsAssetManagementTables extends Migration
             $table->id();
             $table->string('category_name');
             $table->text('category_description')->nullable();
-            $table->integer('parent_category_id')->nullable();
+            // Removed parent_category_id - flat category structure preferred
             $table->boolean('is_active')->default(true);
             $table->timestamps();
             
-            $table->index(['parent_category_id', 'is_active']);
+            $table->index('is_active');
         });
 
         // 2. ASSET TYPES - Equipment types (preserves current structure)

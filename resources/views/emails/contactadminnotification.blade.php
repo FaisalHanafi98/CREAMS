@@ -76,21 +76,21 @@
         
         <div class="message-details {{ ($data['urgency'] ?? 'medium') === 'urgent' ? 'urgent' : (($data['urgency'] ?? 'medium') === 'high' ? 'high' : '') }}">
             <h3>Contact Information</h3>
-            <p><strong>Name:</strong> {{ $contact->sender_name }}</p>
-            <p><strong>Email:</strong> {{ $contact->sender_email }}</p>
-            @if($contact->sender_phone)
-            <p><strong>Phone:</strong> {{ $contact->sender_phone }}</p>
+            <p><strong>Name:</strong> {{ $contact->name }}</p>
+            <p><strong>Email:</strong> {{ $contact->email }}</p>
+            @if($contact->phone)
+            <p><strong>Phone:</strong> {{ $contact->phone }}</p>
             @endif
             
             <h3>Message Details</h3>
-            <p><strong>Subject:</strong> {{ $contact->message_subject ?? 'General Inquiry' }}</p>
-            <p><strong>Category:</strong> {{ ucfirst($contact->message_category) }}</p>
+            <p><strong>Subject:</strong> {{ $contact->subject ?? 'General Inquiry' }}</p>
+            <p><strong>Category:</strong> {{ ucfirst($data['reason'] ?? 'General') }}</p>
             <p><strong>Priority:</strong> {{ ucfirst($data['urgency'] ?? 'medium') }}</p>
             <p><strong>Submitted:</strong> {{ $contact->created_at->format('F j, Y \a\t g:i A') }}</p>
             
             <h3>Message Content</h3>
             <div style="background: #f8f9fa; padding: 15px; border-radius: 4px; border-left: 3px solid #c850c0;">
-                {!! nl2br(e($contact->message_body)) !!}
+                {!! nl2br(e($contact->message)) !!}
             </div>
         </div>
         
@@ -119,7 +119,7 @@
         </ol>
         
         <p style="margin-top: 30px;">
-            <a href="mailto:{{ $contact->sender_email }}" class="action-button">Reply via Email</a>
+            <a href="mailto:{{ $contact->email }}" class="action-button">Reply via Email</a>
         </p>
     </div>
     

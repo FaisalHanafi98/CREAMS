@@ -231,15 +231,14 @@ class CentreService
     {
         $startDate = Carbon::now()->subDays($days);
         
-        $attendanceData = DB::table('session_enrollments')
-            ->join('activity_sessions', 'session_enrollments.session_id', '=', 'activity_sessions.id')
+        $attendanceData = DB::table('session_attendance')
+            ->join('activity_sessions', 'session_attendance.session_id', '=', 'activity_sessions.id')
             ->join('activities', 'activity_sessions.activity_id', '=', 'activities.id')
             ->where('activities.centre_id', $centreId)
             ->where('activity_sessions.session_date', '>=', $startDate)
-            ->where('activity_sessions.attendance_marked', true)
             ->selectRaw('
                 COUNT(*) as total_enrollments,
-                SUM(CASE WHEN session_enrollments.attendance_status IN ("present", "late") THEN 1 ELSE 0 END) as present_count
+                SUM(CASE WHEN session_attendance.attendance_status IN ("present", "late") THEN 1 ELSE 0 END) as present_count
             ')
             ->first();
             

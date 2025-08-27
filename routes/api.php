@@ -109,6 +109,26 @@ Route::middleware(['web', 'auth'])->group(function () {
         return response()->json(['results' => $results]);
     });
     
+    // Session status check endpoint for expiry handler
+    Route::get('/session-check', function (Request $request) {
+        // Check if user is authenticated via session (not token)
+        if (!session('id') || !session('name')) {
+            return response()->json(['authenticated' => false], 401);
+        }
+        
+        // Simple session check - just verify session exists
+        return response()->json([
+            'authenticated' => true,
+            'user' => [
+                'id' => session('id'),
+                'name' => session('name'),
+                'role' => session('role')
+            ],
+            'expires_in' => 3600, // 1 hour default
+            'session_valid' => true
+        ]);
+    });
+    
     // Notifications check endpoint
     Route::get('/notifications/check', function (Request $request) {
         $userId = session('id');

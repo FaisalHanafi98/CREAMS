@@ -79,8 +79,19 @@ public function submit(Request $request)
 
         $validatedData = $validator->validated();
 
+        // Generate unique volunteer ID
+        $volunteerIdNumber = Volunteer::count() + 1;
+        $volunteerId = 'VOL' . sprintf('%04d', $volunteerIdNumber);
+        
+        // Ensure uniqueness
+        while (Volunteer::where('volunteer_id', $volunteerId)->exists()) {
+            $volunteerIdNumber++;
+            $volunteerId = 'VOL' . sprintf('%04d', $volunteerIdNumber);
+        }
+
         // Save application to database (using actual database columns)
         $application = Volunteer::create([
+            'volunteer_id' => $volunteerId,
             'name' => $validatedData['first_name'] . ' ' . $validatedData['last_name'],
             'email' => strtolower(trim($validatedData['email'])),
             'phone' => $validatedData['phone'],
