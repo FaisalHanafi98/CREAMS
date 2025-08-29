@@ -186,38 +186,8 @@
         
         <!-- Content Section -->
         <div class="content-section">
-            <!-- Alert Message -->
-            @if(session('success'))
-                <div class="alert alert-success alert-dismissible fade show" role="alert">
-                    {{ session('success') }}
-                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-            @endif
-
-            @if(session('error'))
-                <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                    {{ session('error') }}
-                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-            @endif
-
-            @if($errors->any())
-                <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                    <i class="fas fa-exclamation-circle mr-2"></i> Please check the form for errors
-                    <ul class="mb-0 mt-2">
-                        @foreach($errors->all() as $error)
-                            <li>{{ $error }}</li>
-                        @endforeach
-                    </ul>
-                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-            @endif
+            <!-- Standardized Flash Messages -->
+            @include('components.flash-messages')
 
             <!-- Registration Form Card -->
             <div class="card shadow mb-4">
@@ -225,51 +195,8 @@
                     <h6 class="m-0 font-weight-bold text-primary">Trainee Information</h6>
                 </div>
                 <div class="card-body">
-                    <!-- Global Alert Messages -->
-                    @if(session('success'))
-                        <div class="alert alert-success alert-dismissible fade show" role="alert">
-                            <i class="fas fa-check-circle me-2"></i>
-                            <strong>Success!</strong> {{ session('success') }}
-                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                <span aria-hidden="true">&times;</span>
-                            </button>
-                        </div>
-                    @endif
-
-                    @if(session('error'))
-                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                            <i class="fas fa-exclamation-circle me-2"></i>
-                            <strong>Error!</strong> {{ session('error') }}
-                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                <span aria-hidden="true">&times;</span>
-                            </button>
-                        </div>
-                    @endif
-
-                    @if(session('warning'))
-                        <div class="alert alert-warning alert-dismissible fade show" role="alert">
-                            <i class="fas fa-exclamation-triangle me-2"></i>
-                            <strong>Warning!</strong> {{ session('warning') }}
-                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                <span aria-hidden="true">&times;</span>
-                            </button>
-                        </div>
-                    @endif
-
-                    @if($errors->any())
-                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                            <i class="fas fa-exclamation-circle me-2"></i>
-                            <strong>Please correct the following errors:</strong>
-                            <ul class="mb-0 mt-2">
-                                @foreach($errors->all() as $error)
-                                    <li>{{ $error }}</li>
-                                @endforeach
-                            </ul>
-                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                <span aria-hidden="true">&times;</span>
-                            </button>
-                        </div>
-                    @endif
+                    <!-- Standardized Flash Messages -->
+                    @include('components.flash-messages')
 
                     <form action="{{ route('traineesregistrationstore') }}" method="POST" enctype="multipart/form-data" id="traineeRegistrationForm">
                         @csrf
@@ -359,6 +286,32 @@
                                     </div>
                                     <div class="col-md-6">
                                         <div class="form-group">
+                                            <label for="ic_number">IC Number <span class="text-danger">*</span></label>
+                                            <input type="text" class="form-control @error('ic_number') is-invalid @enderror" id="ic_number" name="ic_number" value="{{ old('ic_number') }}" placeholder="123456789012" maxlength="12" required>
+                                            <small class="form-text text-muted">Malaysian IC number (12 digits without dashes)</small>
+                                            @error('ic_number')
+                                                <div class="invalid-feedback">{{ $message }}</div>
+                                            @enderror
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="gender">Gender <span class="text-danger">*</span></label>
+                                            <select class="form-control @error('gender') is-invalid @enderror" id="gender" name="gender" required>
+                                                <option value="">Select Gender</option>
+                                                <option value="Male" {{ old('gender') == 'Male' ? 'selected' : '' }}>Male</option>
+                                                <option value="Female" {{ old('gender') == 'Female' ? 'selected' : '' }}>Female</option>
+                                            </select>
+                                            @error('gender')
+                                                <div class="invalid-feedback">{{ $message }}</div>
+                                            @enderror
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
                                             <label for="trainee_condition">Condition <span class="text-danger">*</span></label>
                                             <select class="form-control @error('trainee_condition') is-invalid @enderror" id="trainee_condition" name="trainee_condition" required>
                                                 <option value="">Select Condition</option>
@@ -392,6 +345,18 @@
                                             @enderror
                                         </div>
                                     </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="trainee_address">Address <span class="text-danger">*</span></label>
+                                            <textarea class="form-control @error('trainee_address') is-invalid @enderror" id="trainee_address" name="trainee_address" rows="3" placeholder="Full address" required>{{ old('trainee_address') }}</textarea>
+                                            @error('trainee_address')
+                                                <div class="invalid-feedback">{{ $message }}</div>
+                                            @enderror
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
                                     <div class="col-md-6">
                                         <div class="form-group">
                                             <label for="trainee_avatar">Profile Picture</label>
@@ -498,11 +463,37 @@
                                     @enderror
                                 </div>
                                 
-                                <div class="form-group form-check mt-4 mb-4">
-                                    <input type="checkbox" class="form-check-input" id="consent" name="consent" required>
-                                    <label class="form-check-label ml-2" for="consent">
-                                        I confirm that all information provided is accurate and I consent to the collection and processing of this data for the purpose of providing services to the trainee.
-                                    </label>
+                                <!-- Consent Section -->
+                                <div class="consent-section mt-4 mb-4">
+                                    <h5 class="mb-3 text-primary">Required Consents</h5>
+                                    <p class="text-muted mb-4">All three consents below are mandatory for registration:</p>
+                                    
+                                    <!-- Photo/Video Consent -->
+                                    <div class="form-group form-check mb-3">
+                                        <input type="checkbox" class="form-check-input" id="photo_consent" name="photo_consent" value="1" required>
+                                        <label class="form-check-label ml-2" for="photo_consent">
+                                            <strong>Photo/Video Consent</strong> <span class="text-danger">*</span><br>
+                                            <small class="text-muted">I consent to photos and videos being taken for educational, therapeutic, and promotional purposes.</small>
+                                        </label>
+                                    </div>
+                                    
+                                    <!-- Service Provision Consent -->
+                                    <div class="form-group form-check mb-3">
+                                        <input type="checkbox" class="form-check-input" id="services_consent" name="services_consent" value="1" required>
+                                        <label class="form-check-label ml-2" for="services_consent">
+                                            <strong>Service Provision Consent</strong> <span class="text-danger">*</span><br>
+                                            <small class="text-muted">I consent to the provision of rehabilitation services and understand the terms of service.</small>
+                                        </label>
+                                    </div>
+                                    
+                                    <!-- Data Processing Consent -->
+                                    <div class="form-group form-check mb-3">
+                                        <input type="checkbox" class="form-check-input" id="data_consent" name="data_consent" value="1" required>
+                                        <label class="form-check-label ml-2" for="data_consent">
+                                            <strong>Data Processing Consent</strong> <span class="text-danger">*</span><br>
+                                            <small class="text-muted">I confirm that all information provided is accurate and I consent to the collection and processing of this data for the purpose of providing services to the trainee.</small>
+                                        </label>
+                                    </div>
                                 </div>
                                 
                                 <div class="text-right mt-4">
@@ -624,6 +615,41 @@
                 }
             );
             
+            // IC Number validation
+            $('#ic_number').on('input', function() {
+                var ic = $(this).val().replace(/[-\s]/g, ''); // Remove dashes and spaces
+                $(this).val(ic); // Update input value
+                
+                // Validate IC format (12 digits)
+                if (ic.length === 12 && /^\d{12}$/.test(ic)) {
+                    $(this).removeClass('is-invalid').addClass('is-valid');
+                    
+                    // Extract date from IC for automatic DOB setting
+                    var year = ic.substring(0, 2);
+                    var month = ic.substring(2, 4);
+                    var day = ic.substring(4, 6);
+                    
+                    // Determine century (basic logic)
+                    var fullYear = (parseInt(year) <= 30) ? '20' + year : '19' + year;
+                    
+                    // Auto-fill date of birth if not already set
+                    if (!$('#trainee_date_of_birth').val()) {
+                        var autoDate = fullYear + '-' + month.padStart(2, '0') + '-' + day.padStart(2, '0');
+                        $('#trainee_date_of_birth').val(autoDate).trigger('change');
+                    }
+                    
+                    // Auto-determine gender from IC
+                    var genderDigit = parseInt(ic.substring(11, 12));
+                    if (!$('#gender').val()) {
+                        $('#gender').val(genderDigit % 2 === 0 ? 'Female' : 'Male');
+                    }
+                } else if (ic.length > 0) {
+                    $(this).removeClass('is-valid').addClass('is-invalid');
+                } else {
+                    $(this).removeClass('is-valid is-invalid');
+                }
+            });
+            
             // Age calculation on date of birth change
             $('#trainee_date_of_birth').change(function() {
                 var dob = new Date($(this).val());
@@ -737,10 +763,12 @@
                 if (!valid) {
                     e.preventDefault();
                     alert('Please fill in all required fields.');
-                } else if (!$('#consent').is(':checked')) {
+                } else if (!$('#photo_consent').is(':checked') || !$('#services_consent').is(':checked') || !$('#data_consent').is(':checked')) {
                     e.preventDefault();
-                    alert('Please confirm your consent by checking the box.');
-                    $('#consent').addClass('is-invalid');
+                    alert('Please confirm all three required consents by checking all boxes.');
+                    if (!$('#photo_consent').is(':checked')) $('#photo_consent').addClass('is-invalid');
+                    if (!$('#services_consent').is(':checked')) $('#services_consent').addClass('is-invalid');
+                    if (!$('#data_consent').is(':checked')) $('#data_consent').addClass('is-invalid');
                 }
             });
             

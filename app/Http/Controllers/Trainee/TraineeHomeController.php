@@ -55,14 +55,14 @@ class TraineeHomeController extends Controller
                 Log::debug('Filter applied: search = ' . $search);
             }
             
-            // Get the filtered trainees with eager loading for relationships
+            // Get the filtered trainees with eager loading for relationships and pagination
             $trainees = $query->with([
                 'centre', 
                 'activities', 
                 'enrollments' => function($query) {
                     $query->whereIn('enrollment_status', ['enrolled', 'active']);
                 }
-            ])->get();
+            ])->paginate(8);
             
             // Get all active centers for filter dropdown
             // Check if we need to use status or centre_status based on your DB structure
@@ -81,11 +81,38 @@ class TraineeHomeController extends Controller
                 ->whereNotNull('trainee_condition')
                 ->pluck('trainee_condition');
             
-            // Group trainees by center
-            $traineesByCenter = $trainees->groupBy('centre_name');
+            // For stats calculations, we need all trainees (not paginated)
+            $allTraineesQuery = Trainee::query();
+            
+            // Apply same filters for stats calculation
+            if ($request->filled('centre')) {
+                $allTraineesQuery->where('centre_name', $request->input('centre'));
+            }
+            if ($request->filled('condition')) {
+                $allTraineesQuery->where('trainee_condition', $request->input('condition'));
+            }
+            if ($request->filled('search')) {
+                $search = $request->input('search');
+                $allTraineesQuery->where(function($q) use ($search) {
+                    $q->where('trainee_first_name', 'like', "%{$search}%")
+                      ->orWhere('trainee_last_name', 'like', "%{$search}%")
+                      ->orWhere('trainee_email', 'like', "%{$search}%");
+                });
+            }
+            
+            $allTrainees = $allTraineesQuery->with([
+                'centre', 
+                'activities', 
+                'enrollments' => function($query) {
+                    $query->whereIn('enrollment_status', ['enrolled', 'active']);
+                }
+            ])->get();
+            
+            // Group trainees by center (use all trainees for statistics)
+            $traineesByCenter = $allTrainees->groupBy('centre_name');
             
             // Count trainees for stats
-            $totalTrainees = $trainees->count();
+            $totalTrainees = $allTrainees->count();
             $conditionTypes = $conditions->count();
             
             // Count new trainees in the last 30 days
@@ -99,18 +126,19 @@ class TraineeHomeController extends Controller
             ]);
             
             // Calculate stats for the view using proper column names and relationships
-            $activeTrainees = $trainees->where('status', 'active')->count();
+            $activeTrainees = $allTrainees->where('status', 'active')->count();
             
             // Count trainees enrolled in activities using the enrollments relationship
-            $enrolledTrainees = $trainees->filter(function($trainee) {
+            $enrolledTrainees = $allTrainees->filter(function($trainee) {
                 return $trainee->enrollments && $trainee->enrollments->count() > 0;
             })->count();
             
-            // Calculate overall progress based on session attendance rates
+            // Transform paginated items and calculate progress
             $totalProgress = 0;
             $traineesWithProgress = 0;
             
-            foreach ($trainees as $trainee) {
+            // Add progress data to paginated items
+            $trainees->getCollection()->transform(function($trainee) use (&$totalProgress, &$traineesWithProgress) {
                 // Calculate progress based on session attendance
                 $sessionAttendanceStats = $trainee->getAttendanceStatistics();
                 $sessionProgress = 0;
@@ -124,18 +152,38 @@ class TraineeHomeController extends Controller
                 
                 $trainee->session_progress = $sessionProgress;
                 $trainee->meets_attendance_threshold = $sessionProgress >= 50;
+                
+                return $trainee;
+            });
+            
+            // Calculate progress for all trainees for stats
+            $allTraineesTotalProgress = 0;
+            $allTraineesWithProgress = 0;
+            $belowThresholdCount = 0;
+            
+            foreach ($allTrainees as $trainee) {
+                $sessionAttendanceStats = $trainee->getAttendanceStatistics();
+                $sessionProgress = 0;
+                
+                if ($sessionAttendanceStats['total_sessions'] > 0) {
+                    $sessionProgress = $sessionAttendanceStats['attendance_rate'];
+                    $allTraineesTotalProgress += $sessionProgress;
+                    $allTraineesWithProgress++;
+                }
+                
+                if ($sessionProgress < 50) {
+                    $belowThresholdCount++;
+                }
             }
             
-            $avgProgress = $traineesWithProgress > 0 ? round($totalProgress / $traineesWithProgress, 1) : 0;
+            $avgProgress = $allTraineesWithProgress > 0 ? round($allTraineesTotalProgress / $allTraineesWithProgress, 1) : 0;
             
             $stats = [
                 'total' => $totalTrainees,
                 'active' => $activeTrainees,
                 'enrolled' => $enrolledTrainees,
                 'avg_progress' => $avgProgress,
-                'below_threshold' => $trainees->filter(function($trainee) {
-                    return isset($trainee->session_progress) && $trainee->session_progress < 50;
-                })->count()
+                'below_threshold' => $belowThresholdCount
             ];
             
             Log::info('Trainee retrieved successfully', [
@@ -163,8 +211,16 @@ class TraineeHomeController extends Controller
             ]);
             
             // Return view with empty data and error message
+            $emptyPaginator = new \Illuminate\Pagination\LengthAwarePaginator(
+                collect(), // Empty collection
+                0, // Total
+                8, // Per page
+                1, // Current page
+                ['path' => request()->url()]
+            );
+            
             return view('trainees.home', [
-                'trainees' => collect(), // Add the direct trainees variable that the view expects
+                'trainees' => $emptyPaginator, // Add the direct trainees variable that the view expects
                 'traineesByCenter' => collect(),
                 'centres' => collect(),
                 'conditions' => collect(),

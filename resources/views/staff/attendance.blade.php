@@ -430,18 +430,13 @@
                                     <td>
                                         @if($record->check_in_time)
                                             <strong>{{ \Carbon\Carbon::parse($record->check_in_time)->format('g:i A') }}</strong>
-                                            @if($record->check_out_time)
-                                                - {{ \Carbon\Carbon::parse($record->check_out_time)->format('g:i A') }}
-                                            @endif
                                         @else
                                             <span class="text-muted">N/A</span>
                                         @endif
                                     </td>
                                     <td>
-                                        @if($record->check_in_time && $record->check_out_time)
-                                            <span class="badge badge-success">Full Day</span>
-                                        @elseif($record->check_in_time)
-                                            <span class="badge badge-info">Check In Only</span>
+                                        @if($record->check_in_time)
+                                            <span class="badge badge-success">Checked In</span>
                                         @else
                                             <span class="badge badge-warning">Leave</span>
                                         @endif

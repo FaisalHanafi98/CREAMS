@@ -155,10 +155,10 @@
             </div>
 
             <div class="form-group">
-                <label for="avatar">Profile Photo</label>
+                <label for="trainee_avatar">Profile Photo</label>
                 <input type="file" 
                        name="trainee_avatar" 
-                       id="avatar" 
+                       id="trainee_avatar" 
                        class="form-control @error('trainee_avatar') is-invalid @enderror" 
                        accept="image/*">
                 @error('trainee_avatar')
@@ -483,20 +483,20 @@
             <div class="form-group">
                 <div class="form-check">
                     <input type="checkbox" 
-                           name="consent" 
-                           id="consent" 
-                           class="form-check-input @error('consent') is-invalid @enderror" 
+                           name="data_consent" 
+                           id="data_consent" 
+                           class="form-check-input @error('data_consent') is-invalid @enderror" 
                            value="1"
-                           {{ old('consent') ? 'checked' : '' }}
+                           {{ old('data_consent', isset($trainee) && $trainee->data_consent ? 'checked' : '') }}
                            required>
-                    <label class="form-check-label" for="consent">
+                    <label class="form-check-label" for="data_consent">
                         <strong>Data Processing Consent <span class="text-danger">*</span></strong>
                         <br>
                         <small class="text-muted">
                             I confirm that I have the authority to register this trainee and that all information provided is accurate and complete. I consent to the collection and processing of this information for the purposes of providing rehabilitation services.
                         </small>
                     </label>
-                    @error('consent')
+                    @error('data_consent')
                         <div class="invalid-feedback d-block">{{ $message }}</div>
                     @enderror
                 </div>

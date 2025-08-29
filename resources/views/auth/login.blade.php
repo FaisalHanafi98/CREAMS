@@ -424,31 +424,8 @@
                 <form id="loginForm" action="{{ route('auth.check') }}" method="POST">
                     @csrf
                     
-                    <!-- Alert Container -->
-                    <div id="alertContainer">
-                        @if(session('error'))
-                            <div class="alert alert-danger">
-                                <i class="fas fa-exclamation-triangle me-2"></i>
-                                {{ session('error') }}
-                            </div>
-                        @endif
-                        
-                        @if(session('success'))
-                            <div class="alert alert-success">
-                                <i class="fas fa-check-circle me-2"></i>
-                                {{ session('success') }}
-                            </div>
-                        @endif
-                        
-                        @if($errors->any())
-                            <div class="alert alert-danger">
-                                <i class="fas fa-exclamation-triangle me-2"></i>
-                                @foreach($errors->all() as $error)
-                                    {{ $error }}<br>
-                                @endforeach
-                            </div>
-                        @endif
-                    </div>
+                    <!-- Standardized Flash Messages -->
+                    @include('components.flash-messages')
 
                     <!-- Email/Identifier Field -->
                     <div class="form-floating">

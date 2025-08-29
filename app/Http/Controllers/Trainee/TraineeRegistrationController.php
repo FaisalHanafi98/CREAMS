@@ -165,10 +165,19 @@ class TraineeRegistrationController extends Controller
                 'emergency_contact_name' => 'nullable|string|max:255',
                 'emergency_contact_phone' => 'nullable|string|max:20',
                 'emergency_contact_relationship' => 'nullable|string|max:255',
-                'consent' => 'required|accepted',
+                'trainee_address' => 'required|string|max:500',
+                // Three separate consent fields
+                'photo_consent' => 'required|accepted',
+                'services_consent' => 'required|accepted',
+                'data_consent' => 'required|accepted',
             ], [
-                'consent.required' => 'You must provide consent to register this trainee.',
-                'consent.accepted' => 'You must provide consent to register this trainee.',
+                'trainee_address.required' => 'The address field is required.',
+                'photo_consent.required' => 'You must provide photo/video consent.',
+                'photo_consent.accepted' => 'You must provide photo/video consent.',
+                'services_consent.required' => 'You must provide service provision consent.',
+                'services_consent.accepted' => 'You must provide service provision consent.',
+                'data_consent.required' => 'You must provide data processing consent.',
+                'data_consent.accepted' => 'You must provide data processing consent.',
             ]);
             
             if ($additionalValidator->fails()) {
@@ -191,6 +200,7 @@ class TraineeRegistrationController extends Controller
             $trainee->trainee_phone_number = $request->input('trainee_phone_number');
             $trainee->trainee_date_of_birth = $request->input('trainee_date_of_birth');
             $trainee->gender = $request->input('gender');
+            $trainee->trainee_address = $request->input('trainee_address');
             $trainee->centre_name = $request->input('centre_name'); // Just store the centre_name
             
             // Get centre_id from centre_name for proper ID generation
@@ -239,6 +249,11 @@ class TraineeRegistrationController extends Controller
             $trainee->emergency_contact_name = $request->input('emergency_contact_name');
             $trainee->emergency_contact_phone = $request->input('emergency_contact_phone');
             $trainee->emergency_contact_relationship = $request->input('emergency_contact_relationship');
+            
+            // Add consent fields
+            $trainee->photo_consent = $request->has('photo_consent');
+            $trainee->services_consent = $request->has('services_consent');
+            $trainee->data_consent = $request->has('data_consent');
             
             // Save the trainee to get an ID (needed for avatar naming)
             $trainee->save();

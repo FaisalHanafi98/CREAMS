@@ -226,14 +226,25 @@
                             </div>
 
                             <div class="form-group">
-                                <label for="duration_minutes">Duration (minutes)</label>
-                                <input type="number" class="form-control @error('duration_minutes') is-invalid @enderror" 
-                                       id="duration_minutes" name="duration_minutes" min="1" max="480"
-                                       value="{{ old('duration_minutes', $activity->duration_minutes) }}">
-                                @error('duration_minutes')
+                                <label for="session_duration">Session Duration (minutes)</label>
+                                <input type="number" class="form-control @error('session_duration') is-invalid @enderror" 
+                                       id="session_duration" name="session_duration" min="1" max="480"
+                                       value="{{ old('session_duration', $activity->session_duration) }}">
+                                @error('session_duration')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
-                                <small class="form-text text-muted">Expected duration per session</small>
+                                <small class="form-text text-muted">Expected duration per session in minutes</small>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="activity_period">Activity Period (weeks)</label>
+                                <input type="number" class="form-control @error('activity_period') is-invalid @enderror" 
+                                       id="activity_period" name="activity_period" min="1" max="52"
+                                       value="{{ old('activity_period', $activity->activity_period) }}">
+                                @error('activity_period')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                                <small class="form-text text-muted">How many weeks is this activity held for?</small>
                             </div>
 
                             <div class="form-group">

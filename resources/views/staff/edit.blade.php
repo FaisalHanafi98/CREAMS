@@ -476,9 +476,9 @@
                         @endif
                         
                         <div class="mt-3">
-                            <input type="file" id="avatar" name="avatar" accept="image/*" 
+                            <input type="file" id="staff_avatar" name="staff_avatar" accept="image/*" 
                                    class="d-none" onchange="previewAvatar(this)">
-                            <label for="avatar" class="upload-btn">
+                            <label for="staff_avatar" class="upload-btn">
                                 <i class="fas fa-upload me-2"></i>Change Picture
                             </label>
                         </div>

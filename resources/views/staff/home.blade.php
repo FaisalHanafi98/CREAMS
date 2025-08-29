@@ -158,9 +158,28 @@
 
     .staff-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-        gap: 25px;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 20px;
         margin-bottom: 2rem;
+    }
+
+    @media (max-width: 1200px) {
+        .staff-grid {
+            grid-template-columns: repeat(3, 1fr);
+        }
+    }
+
+    @media (max-width: 768px) {
+        .staff-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .staff-grid {
+            grid-template-columns: 1fr;
+        }
     }
 
     .staff-card {
@@ -347,6 +366,108 @@
     .no-staff p {
         color: #6c757d;
         margin-bottom: 20px;
+    }
+
+    /* Enhanced Pagination Styling - Matching Activities */
+    .pagination-enhanced {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-top: 2rem;
+        padding: 2rem 0;
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+    }
+
+    .pagination-controls {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .pagination-info {
+        color: var(--dark-color);
+        font-weight: 600;
+        margin: 0 20px;
+        font-size: 0.95rem;
+    }
+
+    .pagination-btn {
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        border: none;
+        border-radius: 25px;
+        padding: 8px 16px;
+        color: white;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 80px;
+        justify-content: center;
+    }
+
+    .pagination-btn:hover:not(.disabled) {
+        background: linear-gradient(135deg, var(--secondary-color), var(--primary-color));
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(50, 189, 234, 0.4);
+        color: white;
+        text-decoration: none;
+    }
+
+    .pagination-btn.disabled {
+        background: #dee2e6;
+        color: #6c757d;
+        cursor: not-allowed;
+        pointer-events: none;
+    }
+
+    .page-numbers {
+        display: flex;
+        gap: 8px;
+        margin: 0 15px;
+    }
+
+    .page-number {
+        background: white;
+        border: 2px solid var(--border-color);
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--dark-color);
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+
+    .page-number:hover {
+        border-color: var(--primary-color);
+        color: var(--primary-color);
+        text-decoration: none;
+        transform: translateY(-1px);
+    }
+
+    .page-number.active {
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        border-color: var(--primary-color);
+        color: white;
+    }
+
+    .page-number.dots {
+        border: none;
+        color: #6c757d;
+        cursor: default;
+    }
+
+    .page-number.dots:hover {
+        transform: none;
+        color: #6c757d;
     }
 </style>
 @endsection
@@ -573,6 +694,72 @@
                 </div>
             @endforeach
         </div>
+
+        <!-- Enhanced Pagination - Matching Activities Style -->
+        @if(isset($users) && method_exists($users, 'hasPages') && $users->hasPages())
+        <div class="pagination-enhanced">
+            <div class="pagination-controls">
+                <!-- Previous Button -->
+                <a href="{{ $users->previousPageUrl() }}" 
+                   class="pagination-btn {{ $users->onFirstPage() ? 'disabled' : '' }}">
+                    <i class="fas fa-chevron-left"></i>
+                    <span>Previous</span>
+                </a>
+
+                <!-- Page Numbers -->
+                <div class="page-numbers">
+                    @php
+                        $currentPage = $users->currentPage();
+                        $lastPage = $users->lastPage();
+                        $start = max(1, $currentPage - 2);
+                        $end = min($lastPage, $currentPage + 2);
+                        
+                        if ($end - $start < 4) {
+                            if ($start == 1) {
+                                $end = min($lastPage, $start + 4);
+                            } else {
+                                $start = max(1, $end - 4);
+                            }
+                        }
+                    @endphp
+                    
+                    @if($start > 1)
+                        <a href="{{ $users->url(1) }}" class="page-number">1</a>
+                        @if($start > 2)
+                            <span class="page-number dots">...</span>
+                        @endif
+                    @endif
+                    
+                    @for($page = $start; $page <= $end; $page++)
+                        <a href="{{ $users->url($page) }}" 
+                           class="page-number {{ $page == $currentPage ? 'active' : '' }}">
+                            {{ $page }}
+                        </a>
+                    @endfor
+                    
+                    @if($end < $lastPage)
+                        @if($end < $lastPage - 1)
+                            <span class="page-number dots">...</span>
+                        @endif
+                        <a href="{{ $users->url($lastPage) }}" class="page-number">{{ $lastPage }}</a>
+                    @endif
+                </div>
+
+                <!-- Next Button -->
+                <a href="{{ $users->nextPageUrl() }}" 
+                   class="pagination-btn {{ $users->hasMorePages() ? '' : 'disabled' }}">
+                    <span>Next</span>
+                    <i class="fas fa-chevron-right"></i>
+                </a>
+            </div>
+            
+            <!-- Pagination Info -->
+            <div class="pagination-info">
+                Showing {{ $users->firstItem() ?? 0 }} to {{ $users->lastItem() ?? 0 }} 
+                of {{ $users->total() ?? 0 }} staff members
+            </div>
+        </div>
+        @endif
     @else
         <div class="no-staff">
             <i class="fas fa-users"></i>

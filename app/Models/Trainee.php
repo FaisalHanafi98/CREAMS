@@ -25,6 +25,7 @@ class Trainee extends Model
         'gender',
         'trainee_address',
         'avatar',
+        'trainee_avatar',
         'trainee_condition',
         'centre_name',
         'centre_id',

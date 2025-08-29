@@ -11,8 +11,7 @@ class Letter extends Model
     use HasFactory;
 
     protected $fillable = [
-        'letter_reference',
-        'letter_reference_number',
+        'letter_id',
         'letter_name',
         'letter_date',
         'letter_title',
@@ -69,14 +68,9 @@ class Letter extends Model
         parent::boot();
         
         static::creating(function ($letter) {
-            // Generate reference number if not provided
-            if (empty($letter->letter_reference)) {
-                $letter->letter_reference = self::generateReferenceNumber();
-            }
-            
-            // Also populate letter_reference_number for consistency
-            if (empty($letter->letter_reference_number)) {
-                $letter->letter_reference_number = $letter->letter_reference;
+            // Generate letter ID if not provided
+            if (empty($letter->letter_id)) {
+                $letter->letter_id = self::generateReferenceNumber();
             }
         });
     }
@@ -94,9 +88,9 @@ class Letter extends Model
         for ($attempt = 1; $attempt <= $maxAttempts; $attempt++) {
             try {
                 // Get the highest sequence number for this month
-                $lastSequence = self::where('letter_reference', 'like', "{$prefix}/{$year}/{$month}/%")
-                    ->orderByRaw('CAST(SUBSTRING_INDEX(letter_reference, "/", -1) AS UNSIGNED) DESC')
-                    ->value('letter_reference');
+                $lastSequence = self::where('letter_id', 'like', "{$prefix}/{$year}/{$month}/%")
+                    ->orderByRaw('CAST(SUBSTRING_INDEX(letter_id, "/", -1) AS UNSIGNED) DESC')
+                    ->value('letter_id');
                 
                 if ($lastSequence) {
                     $sequence = intval(substr($lastSequence, -4)) + 1;
@@ -107,7 +101,7 @@ class Letter extends Model
                 $reference = sprintf('%s/%s/%s/%04d', $prefix, $year, $month, $sequence);
                 
                 // Check if this reference already exists
-                if (!self::where('letter_reference', $reference)->exists()) {
+                if (!self::where('letter_id', $reference)->exists()) {
                     return $reference;
                 }
                 
@@ -119,7 +113,7 @@ class Letter extends Model
                 $sequence = intval(substr(time(), -4));
                 $reference = sprintf('%s/%s/%s/%04d', $prefix, $year, $month, $sequence);
                 
-                if (!self::where('letter_reference', $reference)->exists()) {
+                if (!self::where('letter_id', $reference)->exists()) {
                     return $reference;
                 }
             }
@@ -250,7 +244,7 @@ class Letter extends Model
     {
         return $query->where(function ($q) use ($term) {
             $q->where('letter_subject', 'like', "%{$term}%")
-              ->orWhere('letter_reference', 'like', "%{$term}%")
+              ->orWhere('letter_id', 'like', "%{$term}%")
               ->orWhere('letter_content', 'like', "%{$term}%")
               ->orWhereJsonContains('letter_data->recipient_name', $term)
               ->orWhereJsonContains('letter_data->generated_by_name', $term);

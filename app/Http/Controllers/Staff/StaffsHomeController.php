@@ -84,12 +84,11 @@ class StaffsHomeController extends Controller
             $query->orderBy('users.role', 'asc')
                   ->orderBy('users.education_level', 'asc');
             
-            // Get the data
-            $users = $query->get();
+            // Get the data with pagination
+            $users = $query->paginate(8);
             
-            // Ensure education level is populated for proper grouping
-            // If it's not populated, you might need to set a default value
-            $users = $users->map(function($user) {
+            // Transform paginated items
+            $users->getCollection()->transform(function($user) {
                 if (empty($user->education_level)) {
                     $user->education_level = 'Not Specified';
                 }
@@ -105,11 +104,14 @@ class StaffsHomeController extends Controller
                 return $user;
             });
             
+            // For filter dropdown values, we need to get all users (not paginated)
+            $allUsersForFilters = User::with(['centre'])->where('status', 'active')->get();
+            
             // Get distinct values for filters
-            $educationLevels = $users->pluck('education_level')->unique()->filter()->sort()->values();
-            $teachingSpecializations = $users->pluck('teaching_specialization')->unique()->filter()->sort()->values();
-            $educationSpecializations = $users->pluck('education_specialization')->unique()->filter()->sort()->values();
-            $roles = $users->pluck('role')->unique()->sort()->values();
+            $educationLevels = $allUsersForFilters->pluck('education_level')->unique()->filter()->sort()->values();
+            $teachingSpecializations = $allUsersForFilters->pluck('teaching_specialization')->unique()->filter()->sort()->values();
+            $educationSpecializations = $allUsersForFilters->pluck('education_specialization')->unique()->filter()->sort()->values();
+            $roles = $allUsersForFilters->pluck('role')->unique()->sort()->values();
             
             // Combine specializations for backwards compatibility
             $specialisations = $teachingSpecializations->merge($educationSpecializations)
@@ -129,21 +131,22 @@ class StaffsHomeController extends Controller
                 }
             }
             
-            // Statistics for dashboard
+            // Statistics for dashboard (based on all users, not just current page)
             $stats = [
-                'total_users' => $users->count(),
-                'teachers_count' => $users->where('role', 'teacher')->count(),
-                'supervisors_count' => $users->where('role', 'supervisor')->count(),
-                'admins_count' => $users->where('role', 'admin')->count(),
-                'ajks_count' => $users->where('role', 'ajk')->count(),
-                'education_breakdown' => $users->groupBy('education_level')
+                'total_users' => $allUsersForFilters->count(),
+                'teachers_count' => $allUsersForFilters->where('role', 'teacher')->count(),
+                'supervisors_count' => $allUsersForFilters->where('role', 'supervisor')->count(),
+                'admins_count' => $allUsersForFilters->where('role', 'admin')->count(),
+                'ajks_count' => $allUsersForFilters->where('role', 'ajk')->count(),
+                'education_breakdown' => $allUsersForFilters->groupBy('education_level')
                     ->map(function ($group) {
                         return $group->count();
                     })->toArray(),
-                'centre_breakdown' => $users->groupBy('centre_name')
-                    ->map(function ($group) {
-                        return $group->count();
-                    })->toArray(),
+                'centre_breakdown' => $allUsersForFilters->groupBy(function($user) {
+                    return $user->centre ? $user->centre->centre_name : 'Not Assigned';
+                })->map(function ($group) {
+                    return $group->count();
+                })->toArray(),
             ];
             
             // Get current user's role for permission checks in the view
@@ -173,9 +176,17 @@ class StaffsHomeController extends Controller
             Log::error('Error in TeachersHomeController@index: ' . $e->getMessage());
             
             // Return a fallback view with error message
+            $emptyPaginator = new \Illuminate\Pagination\LengthAwarePaginator(
+                collect(), // Empty collection
+                0, // Total
+                8, // Per page
+                1, // Current page
+                ['path' => request()->url()]
+            );
+            
             return view('staff.home', [
                 'error' => 'An error occurred while loading the staff list. Please try again later.',
-                'users' => collect(), // Empty collection
+                'users' => $emptyPaginator, // Empty paginator
                 'educationLevels' => collect(),
                 'teachingSpecializations' => collect(),
                 'educationSpecializations' => collect(),

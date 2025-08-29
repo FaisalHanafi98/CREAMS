@@ -1079,34 +1079,29 @@ class StaffController extends Controller
                 ->orderBy('check_in_time')
                 ->get();
                 
-            $totalMinutes = 0;
+            $attendanceDays = 0;
             
-            // Group by date to calculate daily hours
+            // Group by date to count attendance days
             $dailyRecords = $weeklyAttendances->groupBy('attendance_date');
             
             foreach ($dailyRecords as $date => $records) {
-                // Get the first record of the day (should be check in)
+                // Get the first record of the day
                 $dayRecord = $records->first();
                 
-                if ($dayRecord && $dayRecord->check_in_time && $dayRecord->check_out_time) {
-                    $checkInTime = \Carbon\Carbon::parse($date . ' ' . $dayRecord->check_in_time);
-                    $checkOutTime = \Carbon\Carbon::parse($date . ' ' . $dayRecord->check_out_time);
-                    
-                    $dailyMinutes = $checkOutTime->diffInMinutes($checkInTime);
-                    $totalMinutes += $dailyMinutes;
+                // Count any day they showed up (present or late)
+                if ($dayRecord && in_array($dayRecord->status, ['present', 'late'])) {
+                    $attendanceDays++;
                 }
             }
             
-            $weeklyHours = round($totalMinutes / 60, 1);
-            
             return [
-                'hours' => $weeklyHours
+                'days' => $attendanceDays
             ];
             
         } catch (\Exception $e) {
             Log::error('Error calculating weekly stats: ' . $e->getMessage());
             return [
-                'hours' => 0
+                'days' => 0
             ];
         }
     }

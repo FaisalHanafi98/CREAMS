@@ -131,7 +131,7 @@ class ModernLetterGeneratorController extends Controller
 
             // Create letter record
             $letter = Letter::create([
-                'letter_reference' => $reference,
+                'letter_id' => $reference,
                 'template_id' => $validated['template_id'],
                 'letter_subject' => $validated['letter_subject'],
                 'letter_content' => $processedContent,
@@ -220,13 +220,13 @@ class ModernLetterGeneratorController extends Controller
             }
 
             if ($letter->pdf_path && Storage::exists($letter->pdf_path)) {
-                return Storage::download($letter->pdf_path, $letter->letter_reference . '.pdf');
+                return Storage::download($letter->pdf_path, $letter->letter_id . '.pdf');
             } else {
                 // Regenerate PDF if missing
                 $pdfPath = $this->generatePDF($letter, $letter->letter_content);
                 $letter->update(['pdf_path' => $pdfPath]);
                 
-                return Storage::download($pdfPath, $letter->letter_reference . '.pdf');
+                return Storage::download($pdfPath, $letter->letter_id . '.pdf');
             }
         } catch (Exception $e) {
             Log::error('Error downloading letter PDF: ' . $e->getMessage());
@@ -306,7 +306,7 @@ class ModernLetterGeneratorController extends Controller
             $letters = Letter::with(['template', 'creator'])
                 ->where('created_by', session('id'))
                 ->where(function($q) use ($query) {
-                    $q->where('letter_reference', 'LIKE', "%{$query}%")
+                    $q->where('letter_id', 'LIKE', "%{$query}%")
                       ->orWhere('letter_subject', 'LIKE', "%{$query}%")
                       ->orWhere('letter_content', 'LIKE', "%{$query}%");
                 })
@@ -350,13 +350,13 @@ class ModernLetterGeneratorController extends Controller
         $month = date('m');
         
         // Get next sequence number
-        $lastLetter = Letter::where('letter_reference', 'LIKE', "{$prefix}-{$centreCode}-{$year}{$month}-%")
-            ->orderBy('letter_reference', 'desc')
+        $lastLetter = Letter::where('letter_id', 'LIKE', "{$prefix}-{$centreCode}-{$year}{$month}-%")
+            ->orderBy('letter_id', 'desc')
             ->first();
             
         $sequence = 1;
         if ($lastLetter) {
-            $lastSequence = (int) substr($lastLetter->letter_reference, -4);
+            $lastSequence = (int) substr($lastLetter->letter_id, -4);
             $sequence = $lastSequence + 1;
         }
         
@@ -393,7 +393,7 @@ class ModernLetterGeneratorController extends Controller
             'letterData' => json_decode($letter->letter_data, true)
         ]);
         
-        $filename = 'letters/' . $letter->letter_reference . '.pdf';
+        $filename = 'letters/' . $letter->letter_id . '.pdf';
         Storage::put($filename, $pdf->output());
         
         return $filename;
@@ -406,7 +406,7 @@ class ModernLetterGeneratorController extends Controller
     {
         // Email delivery implementation would go here
         // For now, just log the action
-        Log::info('Email delivery requested for letter: ' . $letter->letter_reference);
+        Log::info('Email delivery requested for letter: ' . $letter->letter_id);
     }
 
     /**

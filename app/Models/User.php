@@ -28,6 +28,7 @@ class User extends Authenticatable
         'education_specialization',
         'teaching_specialization',
         'avatar',
+        'staff_avatar',
         'about',
         'date_of_birth',
         'role',

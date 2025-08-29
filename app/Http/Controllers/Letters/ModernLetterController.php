@@ -96,7 +96,7 @@ class ModernLetterController extends Controller
 
             Log::info('Letter generated successfully', [
                 'letter_id' => $letter->id,
-                'reference' => $letter->letter_reference,
+                'reference' => $letter->letter_id,
                 'user_id' => session('id')
             ]);
 
@@ -104,7 +104,7 @@ class ModernLetterController extends Controller
                 'success' => true,
                 'message' => 'Letter generated successfully',
                 'letter_id' => $letter->id,
-                'reference' => $letter->letter_reference,
+                'reference' => $letter->letter_id,
                 'download_url' => route('letters.download', $letter->id)
             ]);
 

@@ -157,9 +157,21 @@
 
     .trainee-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        grid-template-columns: repeat(4, 1fr);
         gap: 25px;
         margin-bottom: 2rem;
+    }
+
+    @media (max-width: 1400px) {
+        .trainee-grid {
+            grid-template-columns: repeat(3, 1fr);
+        }
+    }
+
+    @media (max-width: 1024px) {
+        .trainee-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
     }
 
     .trainee-card {
@@ -455,6 +467,132 @@
             padding: 20px;
         }
     }
+
+    /* Enhanced Pagination Styling */
+    .pagination-container {
+        background: white;
+        border-radius: 15px;
+        padding: 20px;
+        margin-top: 30px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+    }
+
+    .pagination-wrapper {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 15px;
+        flex-wrap: wrap;
+    }
+
+    .pagination-info {
+        color: #6c757d;
+        font-size: 14px;
+        font-weight: 500;
+        margin-right: 20px;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .pagination-info .info-highlight {
+        font-weight: 700;
+        color: var(--primary-color);
+    }
+
+    .pagination {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        margin: 0;
+    }
+
+    .page-item {
+        margin: 0;
+    }
+
+    .page-link {
+        border: none;
+        background: transparent;
+        color: #6c757d;
+        padding: 10px 15px;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 14px;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 45px;
+        height: 45px;
+        text-decoration: none;
+    }
+
+    .page-link:hover {
+        background: rgba(200, 80, 192, 0.1);
+        color: var(--primary-color);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(200, 80, 192, 0.2);
+    }
+
+    .page-item.active .page-link {
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        color: white;
+        box-shadow: 0 4px 15px rgba(200, 80, 192, 0.3);
+        transform: translateY(-2px);
+    }
+
+    .page-item.disabled .page-link {
+        color: #cbd5e0;
+        background: #f8f9fa;
+        cursor: not-allowed;
+    }
+
+    .page-item.disabled .page-link:hover {
+        background: #f8f9fa;
+        color: #cbd5e0;
+        transform: none;
+        box-shadow: none;
+    }
+
+    /* Navigation buttons styling */
+    .page-item:first-child .page-link,
+    .page-item:last-child .page-link {
+        background: rgba(200, 80, 192, 0.05);
+        color: var(--primary-color);
+        font-weight: 700;
+    }
+
+    .page-item:first-child .page-link:hover,
+    .page-item:last-child .page-link:hover {
+        background: rgba(200, 80, 192, 0.15);
+        color: var(--primary-color);
+    }
+
+    /* Responsive pagination */
+    @media (max-width: 768px) {
+        .pagination-wrapper {
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .pagination-info {
+            margin-right: 0;
+            text-align: center;
+        }
+
+        .pagination {
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .page-link {
+            padding: 8px 12px;
+            font-size: 13px;
+            min-width: 40px;
+            height: 40px;
+        }
+    }
 </style>
 @endsection
 
@@ -667,10 +805,92 @@
             @endforeach
         </div>
 
-        <!-- Pagination -->
+        <!-- Enhanced Pagination -->
         @if(method_exists($trainees, 'hasPages') && $trainees->hasPages())
-        <div class="d-flex justify-content-center">
-            {{ $trainees->links() }}
+        <div class="pagination-container">
+            <div class="pagination-wrapper">
+                <div class="pagination-info">
+                    <i class="fas fa-info-circle me-1"></i>
+                    Showing <span class="info-highlight">{{ $trainees->firstItem() }}</span> to 
+                    <span class="info-highlight">{{ $trainees->lastItem() }}</span> of 
+                    <span class="info-highlight">{{ $trainees->total() }}</span> trainees
+                </div>
+                
+                <nav aria-label="Trainee pagination">
+                    <ul class="pagination">
+                        {{-- Previous Page Link --}}
+                        @if ($trainees->onFirstPage())
+                            <li class="page-item disabled" aria-disabled="true">
+                                <span class="page-link">
+                                    <i class="fas fa-chevron-left me-1"></i>Previous
+                                </span>
+                            </li>
+                        @else
+                            <li class="page-item">
+                                <a class="page-link" href="{{ $trainees->previousPageUrl() }}" rel="prev">
+                                    <i class="fas fa-chevron-left me-1"></i>Previous
+                                </a>
+                            </li>
+                        @endif
+
+                        {{-- Pagination Elements --}}
+                        @php
+                            $start = max($trainees->currentPage() - 2, 1);
+                            $end = min($start + 4, $trainees->lastPage());
+                            $start = max($end - 4, 1);
+                        @endphp
+
+                        @if($start > 1)
+                            <li class="page-item">
+                                <a class="page-link" href="{{ $trainees->url(1) }}">1</a>
+                            </li>
+                            @if($start > 2)
+                                <li class="page-item disabled">
+                                    <span class="page-link">...</span>
+                                </li>
+                            @endif
+                        @endif
+
+                        @for ($i = $start; $i <= $end; $i++)
+                            @if ($i == $trainees->currentPage())
+                                <li class="page-item active" aria-current="page">
+                                    <span class="page-link">{{ $i }}</span>
+                                </li>
+                            @else
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ $trainees->url($i) }}">{{ $i }}</a>
+                                </li>
+                            @endif
+                        @endfor
+
+                        @if($end < $trainees->lastPage())
+                            @if($end < $trainees->lastPage() - 1)
+                                <li class="page-item disabled">
+                                    <span class="page-link">...</span>
+                                </li>
+                            @endif
+                            <li class="page-item">
+                                <a class="page-link" href="{{ $trainees->url($trainees->lastPage()) }}">{{ $trainees->lastPage() }}</a>
+                            </li>
+                        @endif
+
+                        {{-- Next Page Link --}}
+                        @if ($trainees->hasMorePages())
+                            <li class="page-item">
+                                <a class="page-link" href="{{ $trainees->nextPageUrl() }}" rel="next">
+                                    Next<i class="fas fa-chevron-right ms-1"></i>
+                                </a>
+                            </li>
+                        @else
+                            <li class="page-item disabled" aria-disabled="true">
+                                <span class="page-link">
+                                    Next<i class="fas fa-chevron-right ms-1"></i>
+                                </span>
+                            </li>
+                        @endif
+                    </ul>
+                </nav>
+            </div>
         </div>
         @endif
     @else

@@ -128,11 +128,14 @@ class CreateCreamsSystemConstraints extends Migration
 
         Schema::table('letters', function (Blueprint $table) {
             $table->foreign('created_by')->references('id')->on('users')->onDelete('cascade');
+            $table->foreign('generated_by')->references('id')->on('users')->onDelete('set null');
+            $table->foreign('template_id')->references('id')->on('letter_templates')->onDelete('set null');
             $table->foreign('centre_id')->references('centre_id')->on('centres')->onDelete('cascade');
         });
 
         Schema::table('letter_templates', function (Blueprint $table) {
             $table->foreign('created_by')->references('id')->on('users')->onDelete('cascade');
+            $table->foreign('centre_id')->references('centre_id')->on('centres')->onDelete('set null');
         });
     }
 
@@ -143,7 +146,7 @@ class CreateCreamsSystemConstraints extends Migration
     {
         // Drop foreign keys in reverse dependency order
         Schema::table('letter_templates', function (Blueprint $table) {
-            $table->dropForeign(['created_by']);
+            $table->dropForeign(['created_by', 'centre_id']);
         });
 
         Schema::table('letters', function (Blueprint $table) {

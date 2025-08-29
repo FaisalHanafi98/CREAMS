@@ -10,59 +10,8 @@
 
 @section('content')
 <div class="activity-creation-enhanced">
-    <!-- Global Alert Messages -->
-    @if(session('success'))
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            <div class="alert-content">
-                <i class="fas fa-check-circle alert-icon"></i>
-                <div class="alert-message">
-                    <strong>Success!</strong> {{ session('success') }}
-                </div>
-            </div>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    @endif
-
-    @if(session('error'))
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            <div class="alert-content">
-                <i class="fas fa-exclamation-circle alert-icon"></i>
-                <div class="alert-message">
-                    <strong>Error!</strong> {{ session('error') }}
-                </div>
-            </div>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    @endif
-
-    @if(session('warning'))
-        <div class="alert alert-warning alert-dismissible fade show" role="alert">
-            <div class="alert-content">
-                <i class="fas fa-exclamation-triangle alert-icon"></i>
-                <div class="alert-message">
-                    <strong>Warning!</strong> {{ session('warning') }}
-                </div>
-            </div>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    @endif
-
-    @if($errors->any())
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            <div class="alert-content">
-                <i class="fas fa-exclamation-circle alert-icon"></i>
-                <div class="alert-message">
-                    <strong>Validation Errors:</strong>
-                    <ul class="error-list">
-                        @foreach($errors->all() as $error)
-                            <li>{{ $error }}</li>
-                        @endforeach
-                    </ul>
-                </div>
-            </div>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    @endif
+    <!-- Standardized Flash Messages -->
+    @include('components.flash-messages')
     <!-- Enhanced Header -->
     <div class="creation-header-enhanced">
         <div class="header-backdrop"></div>
@@ -348,15 +297,15 @@
 
                     <!-- Duration -->
                     <div class="form-group third-width">
-                        <label for="duration_minutes" class="form-label">
+                        <label for="session_duration" class="form-label">
                             <i class="fas fa-clock"></i>
-                            Duration (minutes)
+                            Session Duration (minutes)
                             <span class="required">*</span>
                         </label>
                         <div class="input-wrapper">
                             <input type="number" 
-                                   id="duration_minutes" 
-                                   name="duration_minutes" 
+                                   id="session_duration" 
+                                   name="session_duration" 
                                    class="form-control-enhanced" 
                                    min="15" 
                                    max="300" 
