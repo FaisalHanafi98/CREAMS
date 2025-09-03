@@ -221,7 +221,7 @@ class DashboardController extends Controller
             'recent_users' => $recentUsers,
             'current_sessions' => $currentSessions,
             'calendar_data' => $this->getCalendarEvents($role, $userId, $centreId, $weekOffset),
-            'todays_centre_activities' => $this->getTodaysCentreActivities($centreId),
+            'todays_centre_activities' => $this->getTodaysActivities($role, $userId, $centreId),
             'system_alerts' => $this->getSystemAlerts($role),
             'progress_summary' => $this->getProgressSummary($role, $userId, $centreId),
             'centre_info' => $this->getCentreInfo($centreId),
@@ -1637,6 +1637,80 @@ class DashboardController extends Controller
                 'success' => false,
                 'error' => 'Failed to refresh statistics'
             ], 500);
+        }
+    }
+
+    /**
+     * Get today's activities - personalized for staff, centre-wide for admin
+     */
+    private function getTodaysActivities($role, $userId, $centreId)
+    {
+        if ($role === 'admin') {
+            return $this->getTodaysCentreActivities($centreId);
+        } else {
+            return $this->getTodaysPersonalActivities($role, $userId, $centreId);
+        }
+    }
+
+    /**
+     * Get today's personal activities for staff members (non-admin users)
+     */
+    private function getTodaysPersonalActivities($role, $userId, $centreId)
+    {
+        try {
+            // Get nearest workday from current time
+            $targetDate = $this->getNearestWorkday();
+            
+            $query = DB::table('activity_sessions')
+                ->join('activities', 'activity_sessions.activity_id', '=', 'activities.id')
+                ->leftJoin('users as teachers', 'activity_sessions.instructor_id', '=', 'teachers.id')
+                ->select([
+                    'activity_sessions.id',
+                    'activities.activity_name as title',
+                    'activity_sessions.session_date',
+                    'activity_sessions.start_time as time',
+                    'activity_sessions.end_time',
+                    'activity_sessions.session_status',
+                    'activity_sessions.location as location',
+                    'teachers.name as teacher_name',
+                    'activity_sessions.max_participants'
+                ])
+                ->whereDate('activity_sessions.session_date', $targetDate)
+                ->where('activity_sessions.session_status', '!=', 'cancelled')
+                ->orderBy('activity_sessions.start_time');
+
+            // Filter to show only user's assigned activities
+            $query->where(function($q) use ($userId) {
+                $q->where('activity_sessions.instructor_id', $userId)
+                  ->orWhere('activities.instructor_id', $userId);
+            });
+
+            if ($centreId && $centreId !== 'admin') {
+                $query->where('activities.centre_id', $centreId);
+            }
+
+            return $query->get()->map(function ($session) {
+                // Only return sessions with complete data
+                if (!$session->time || !$session->location || !$session->title) {
+                    return null;
+                }
+                
+                return [
+                    'id' => $session->id,
+                    'title' => $session->title,
+                    'time' => date('H:i', strtotime($session->time)),
+                    'end_time' => $session->end_time ? date('H:i', strtotime($session->end_time)) : null,
+                    'status' => $session->session_status,
+                    'location' => $session->location,
+                    'teacher' => $session->teacher_name,
+                    'participants' => ($session->max_participants ?? 0) . '/' . ($session->max_participants ?? 0),
+                    'day' => date('D', strtotime($session->session_date)),
+                    'date' => date('d', strtotime($session->session_date))
+                ];
+            })->filter()->toArray(); // Remove null entries
+        } catch (\Exception $e) {
+            Log::error('Personal activities error', ['error' => $e->getMessage()]);
+            return [];
         }
     }
 

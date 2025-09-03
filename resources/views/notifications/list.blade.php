@@ -305,7 +305,7 @@
             </div>
             
             <div class="pagination-container">
-                {{ $notifications->links() }}
+                @include('components.custom-pagination', ['items' => $notifications])
             </div>
         @endif
     </div>

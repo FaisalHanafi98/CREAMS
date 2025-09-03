@@ -11,6 +11,12 @@ class CREAMSSeederServiceDeliveryManagement extends Seeder
     /**
      * CREAMS Service Delivery Management Seeder
      * Seeds: Activity categories, activities, sessions, enrollments
+     * NEW BUSINESS LOGIC:
+     * - 3-10 trainees per session (updated from 8-15)
+     * - Operating hours: 9:30 AM - 3:30 PM (sessions end by 4:30 PM)
+     * - Maximum 5 sessions per instructor per day
+     * - Maximum 5 sessions per trainee per day
+     * - Activities require minimum 3 trainees enrolled before creation
      * Target: 400 activities (100 per centre), proper status distribution
      */
     public function run(): void
@@ -94,7 +100,7 @@ class CREAMSSeederServiceDeliveryManagement extends Seeder
                     'duration_weeks' => rand(4, 12), // 1-3 months
                     'sessions_per_week' => rand(2, 4), // 2-4 sessions per week
                     'session_duration_minutes' => [60, 90, 120][array_rand([60, 90, 120])],
-                    'max_participants' => rand(8, 15),
+                    'max_participants' => rand(3, 10),
                     'learning_outcomes' => $this->generateLearningOutcomes($category->category_name),
                     'activity_location' => 'Room ' . rand(101, 599),
                     'instructor_id' => $instructor ? $instructor->id : null,
@@ -116,17 +122,32 @@ class CREAMSSeederServiceDeliveryManagement extends Seeder
         $activities = DB::table('activities')->get();
         $totalSessions = 0;
         
+        // Track daily sessions per instructor and date
+        $dailyInstructorSessions = [];
+        
         foreach ($activities as $activity) {
             $sessionsPerWeek = DB::table('activities')->where('id', $activity->id)->value('sessions_per_week');
             $durationWeeks = DB::table('activities')->where('id', $activity->id)->value('duration_weeks');
-            $totalSessionsForActivity = $sessionsPerWeek * $durationWeeks;
+            $instructorId = $activity->instructor_id;
             
             $startDate = Carbon::parse($activity->created_at);
             
-            // Create sessions based on activity status
+            // Create realistic sessions with business rule compliance
             for ($week = 0; $week < $durationWeeks; $week++) {
+                $weekStart = $startDate->copy()->addWeeks($week)->startOfWeek();
+                
                 for ($session = 1; $session <= $sessionsPerWeek; $session++) {
-                    $sessionDate = $startDate->copy()->addWeeks($week)->addDays(($session - 1) * 2);
+                    // Find a suitable day in the week for this session
+                    $sessionDate = $this->findAvailableSessionSlot(
+                        $weekStart, 
+                        $instructorId, 
+                        $dailyInstructorSessions
+                    );
+                    
+                    if (!$sessionDate) {
+                        // Skip if no available slot (instructor overbooked)
+                        continue;
+                    }
                     
                     // Determine session status
                     if ($sessionDate->isPast()) {
@@ -137,27 +158,75 @@ class CREAMSSeederServiceDeliveryManagement extends Seeder
                         $sessionStatus = 'scheduled';
                     }
                     
+                    // Generate realistic time slots (1.5-2 hour sessions)
+                    $timeSlot = $this->getAvailableTimeSlot();
+                    
                     DB::table('activity_sessions')->insert([
                         'activity_id' => $activity->id,
-                        'session_name' => $activity->activity_name . ' - Session ' . (($week * $sessionsPerWeek) + $session),
-                        'session_description' => 'Session ' . (($week * $sessionsPerWeek) + $session) . ' of ' . $totalSessionsForActivity,
+                        'session_name' => $activity->activity_name . ' - Week ' . ($week + 1),
+                        'session_description' => 'Week ' . ($week + 1) . ' session for ' . $activity->activity_name,
                         'session_date' => $sessionDate->format('Y-m-d'),
-                        'start_time' => ['09:00:00', '11:00:00', '14:00:00', '16:00:00'][array_rand(['09:00:00', '11:00:00', '14:00:00', '16:00:00'])],
-                        'end_time' => '17:00:00', // Will be calculated properly based on duration
+                        'start_time' => $timeSlot['start'],
+                        'end_time' => $timeSlot['end'],
                         'location' => $activity->activity_location,
-                        'instructor_id' => $activity->instructor_id,
+                        'instructor_id' => $instructorId,
                         'session_status' => $sessionStatus,
                         'max_participants' => $activity->max_participants,
                         'created_at' => now(),
                         'updated_at' => now()
                     ]);
                     
+                    // Track this session for daily limits
+                    $dateKey = $sessionDate->format('Y-m-d');
+                    if (!isset($dailyInstructorSessions[$instructorId][$dateKey])) {
+                        $dailyInstructorSessions[$instructorId][$dateKey] = 0;
+                    }
+                    $dailyInstructorSessions[$instructorId][$dateKey]++;
+                    
                     $totalSessions++;
                 }
             }
         }
         
-        $this->command->line("      ✓ Created {$totalSessions} activity sessions");
+        $this->command->line("      ✓ Created {$totalSessions} activity sessions (compliant with 5 sessions/day limit)");
+    }
+    
+    /**
+     * Find an available session slot respecting the 5 sessions per day limit
+     */
+    private function findAvailableSessionSlot($weekStart, $instructorId, &$dailyInstructorSessions)
+    {
+        // Try each weekday (Monday to Friday)
+        for ($day = 0; $day < 5; $day++) {
+            $potentialDate = $weekStart->copy()->addDays($day);
+            $dateKey = $potentialDate->format('Y-m-d');
+            
+            // Check if instructor has less than 5 sessions on this day
+            $currentSessions = $dailyInstructorSessions[$instructorId][$dateKey] ?? 0;
+            
+            if ($currentSessions < 5) {
+                return $potentialDate;
+            }
+        }
+        
+        return null; // No available slots this week
+    }
+    
+    /**
+     * Get realistic time slots (1.5-2 hour sessions)
+     */
+    private function getAvailableTimeSlot()
+    {
+        $timeSlots = [
+            ['start' => '09:30:00', 'end' => '11:00:00'], // 1.5 hours
+            ['start' => '11:15:00', 'end' => '12:45:00'], // 1.5 hours
+            ['start' => '13:00:00', 'end' => '14:30:00'], // 1.5 hours
+            ['start' => '14:45:00', 'end' => '16:15:00'], // 1.5 hours
+            ['start' => '10:00:00', 'end' => '12:00:00'], // 2 hours
+            ['start' => '13:30:00', 'end' => '15:30:00'], // 2 hours
+        ];
+        
+        return $timeSlots[array_rand($timeSlots)];
     }
     
     private function seedActivityEnrollments(): void
@@ -205,6 +274,9 @@ class CREAMSSeederServiceDeliveryManagement extends Seeder
                 }
             }
         }
+        
+        // Ensure each activity has at least 3 trainees (NEW BUSINESS RULE)
+        $this->ensureMinimumEnrollments($activities, $trainees);
         
         $this->command->line("      ✓ Created {$totalEnrollments} activity enrollments");
     }
@@ -280,5 +352,52 @@ class CREAMSSeederServiceDeliveryManagement extends Seeder
         ];
         
         return $outcomes[$category] ?? '1. Skill development\n2. Personal growth\n3. Independence enhancement';
+    }
+    
+    /**
+     * Ensure each activity has at least 3 trainees enrolled (NEW BUSINESS RULE)
+     */
+    private function ensureMinimumEnrollments($activities, $trainees): void
+    {
+        $additionalEnrollments = 0;
+        
+        foreach ($activities as $activity) {
+            $currentEnrollments = DB::table('activity_enrollments')
+                ->where('activity_id', $activity->id)
+                ->count();
+            
+            if ($currentEnrollments < 3) {
+                $needed = 3 - $currentEnrollments;
+                
+                // Get trainees not already enrolled in this activity
+                $enrolledTraineeIds = DB::table('activity_enrollments')
+                    ->where('activity_id', $activity->id)
+                    ->pluck('trainee_id')
+                    ->toArray();
+                
+                $availableTrainees = $trainees->whereNotIn('id', $enrolledTraineeIds)
+                    ->shuffle()
+                    ->take($needed);
+                
+                foreach ($availableTrainees as $trainee) {
+                    DB::table('activity_enrollments')->insert([
+                        'activity_id' => $activity->id,
+                        'trainee_id' => $trainee->id,
+                        'enrollment_date' => Carbon::parse($activity->created_at)->format('Y-m-d'),
+                        'enrollment_status' => $activity->times_conducted > 0 ? 'completed' : 'enrolled',
+                        'progress_percentage' => $activity->times_conducted > 0 ? 100.00 : rand(0, 80),
+                        'completion_date' => $activity->times_conducted > 0 ? Carbon::parse($activity->created_at)->addWeeks($activity->duration_weeks) : null,
+                        'created_at' => now(),
+                        'updated_at' => now()
+                    ]);
+                    
+                    $additionalEnrollments++;
+                }
+            }
+        }
+        
+        if ($additionalEnrollments > 0) {
+            $this->command->line("      ✓ Added {$additionalEnrollments} additional enrollments to ensure minimum 3 trainees per activity");
+        }
     }
 }

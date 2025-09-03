@@ -121,7 +121,7 @@ class SearchController extends Controller
                     'type' => 'Activity',
                     'location' => $categoryName,
                     'avatar' => asset('images/activity-icon.png'),
-                    'url' => route('activities.show', ['id' => $activity->id])
+                    'url' => route('activities.home') . '?activity=' . $activity->id
                 ];
             }
 

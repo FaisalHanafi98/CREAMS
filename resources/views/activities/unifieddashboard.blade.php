@@ -444,7 +444,7 @@
             
             <!-- Pagination -->
             <div class="d-flex justify-content-center mt-4">
-                {{ $activities->appends(request()->query())->links() }}
+                @include('components.custom-pagination', ['items' => $activities])
             </div>
         @else
             <div class="empty-state">

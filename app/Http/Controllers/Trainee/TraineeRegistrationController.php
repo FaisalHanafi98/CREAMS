@@ -14,12 +14,14 @@ use Illuminate\Support\Str;
 use Intervention\Image\Facades\Image;
 use Carbon\Carbon;
 use App\Traits\HandlesErrors;
+use App\Traits\HandlesPhoneNumbers;
+use App\Rules\MalaysianPhoneRule;
 use App\Exceptions\FileUploadException;
 use App\Exceptions\ValidationException as CREAMSValidationException;
 
 class TraineeRegistrationController extends Controller
 {
-    use HandlesErrors;
+    use HandlesErrors, HandlesPhoneNumbers;
     /**
      * Display the registration form.
      *
@@ -94,7 +96,7 @@ class TraineeRegistrationController extends Controller
                 'trainee_last_name' => 'required|string|max:255',
                 'trainee_email' => 'required|email|unique:trainees,trainee_email',
                 'ic_number' => 'required|string|max:20|unique:trainees,ic_number',
-                'trainee_phone_number' => 'required|string|max:20',
+                'trainee_phone_number' => $this->getPhoneValidationRules(true, true),
                 'trainee_date_of_birth' => 'required|date|before_or_equal:today',
                 'gender' => 'required|in:Male,Female',
                 'trainee_avatar' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
@@ -136,7 +138,7 @@ class TraineeRegistrationController extends Controller
             $guardianValidator = Validator::make($request->all(), [
                 'guardian_name' => 'required|string|max:255',
                 'guardian_relationship' => 'required|string|max:255',
-                'guardian_phone' => 'required|string|max:20',
+                'guardian_phone' => $this->getPhoneValidationRules(true, true),
                 'guardian_email' => 'required|email|max:255',
                 'guardian_address' => 'nullable|string|max:500',
             ], [
@@ -163,7 +165,7 @@ class TraineeRegistrationController extends Controller
                 'additional_notes' => 'nullable|string|max:5000',
                 'medical_history' => 'nullable|string|max:5000',
                 'emergency_contact_name' => 'nullable|string|max:255',
-                'emergency_contact_phone' => 'nullable|string|max:20',
+                'emergency_contact_phone' => $this->getPhoneValidationRules(true, false),
                 'emergency_contact_relationship' => 'nullable|string|max:255',
                 'trainee_address' => 'required|string|max:500',
                 // Three separate consent fields

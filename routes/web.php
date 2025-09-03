@@ -405,8 +405,24 @@ Route::middleware(['auth', 'validate.params'])->group(function () {
     
     // Legacy staff routes (redirect to new encrypted structure)
     Route::prefix('staff')->name('staff.')->group(function () {
-        Route::get('/view/{id}', function($id) { return redirect()->route('staffs.profile', ['encrypted_id' => app('App\Traits\HandlesEncryptedIds')->generateEncryptedId($id)]); })->name('view');
-        Route::get('/edit/{id}', function($id) { return redirect()->route('staffs.edit', ['encrypted_id' => app('App\Traits\HandlesEncryptedIds')->generateEncryptedId($id)]); })->name('edit');
+        Route::get('/view/{id}', function($id) { 
+            $handler = new class {
+                use \App\Traits\HandlesEncryptedIds;
+                public function encrypt($id) {
+                    return $this->generateEncryptedId($id);
+                }
+            };
+            return redirect()->route('staffs.profile', ['encrypted_id' => $handler->encrypt($id)]); 
+        })->name('view');
+        Route::get('/edit/{id}', function($id) { 
+            $handler = new class {
+                use \App\Traits\HandlesEncryptedIds;
+                public function encrypt($id) {
+                    return $this->generateEncryptedId($id);
+                }
+            };
+            return redirect()->route('staffs.edit', ['encrypted_id' => $handler->encrypt($id)]); 
+        })->name('edit');
     });
     
     // Handle plain ID staff edit routes (redirect to encrypted)

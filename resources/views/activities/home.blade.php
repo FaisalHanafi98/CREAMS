@@ -1,602 +1,906 @@
 @extends('layouts.app')
 
-@section('title', 'Activities Dashboard')
+@section('title', 'Activities Management')
 
 @section('styles')
-<link rel="stylesheet" href="{{ asset('css/activities-enhanced.css') }}">
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        background: #f8fafc;
+        min-height: 100vh;
+    }
+
+    .activities-modern-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 2rem;
+        background: transparent;
+    }
+
+    /* Modern Header */
+    .modern-header {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border-radius: 24px;
+        padding: 2.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .header-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .header-left h1 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #1a202c;
+        margin-bottom: 0.5rem;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .header-left p {
+        font-size: 1.1rem;
+        color: #64748b;
+        margin-bottom: 1rem;
+    }
+
+    .quick-stats {
+        display: flex;
+        gap: 2rem;
+        margin-top: 1rem;
+    }
+
+    .quick-stat {
+        text-align: center;
+    }
+
+    .quick-stat .number {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: #667eea;
+        display: block;
+    }
+
+    .quick-stat .label {
+        font-size: 0.875rem;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .header-right {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+    }
+
+    .modern-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: 12px;
+        font-weight: 500;
+        text-decoration: none;
+        transition: all 0.2s ease;
+        cursor: pointer;
+        font-size: 0.875rem;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(102, 126, 234, 0.6);
+        color: white;
+        text-decoration: none;
+    }
+
+    .btn-secondary {
+        background: rgba(102, 126, 234, 0.1);
+        color: #667eea;
+        border: 1px solid rgba(102, 126, 234, 0.2);
+    }
+
+    .btn-secondary:hover {
+        background: rgba(102, 126, 234, 0.2);
+        color: #667eea;
+        text-decoration: none;
+    }
+
+    /* Modern Search & Filter */
+    .search-section {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border-radius: 20px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .search-bar {
+        position: relative;
+        margin-bottom: 1.5rem;
+    }
+
+    .search-input {
+        width: 100%;
+        padding: 1rem 1rem 1rem 3rem;
+        border: 2px solid rgba(102, 126, 234, 0.2);
+        border-radius: 16px;
+        font-size: 1rem;
+        background: rgba(255, 255, 255, 0.8);
+        transition: all 0.3s ease;
+    }
+
+    .search-input:focus {
+        outline: none;
+        border-color: #667eea;
+        background: white;
+        box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+    }
+
+    .search-icon {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #667eea;
+        font-size: 1.1rem;
+    }
+
+    .filter-tabs {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .filter-tab {
+        padding: 0.75rem 1.5rem;
+        border: none;
+        background: rgba(102, 126, 234, 0.1);
+        color: #667eea;
+        border-radius: 12px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .filter-tab.active {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+
+    .filter-tab:hover {
+        transform: translateY(-1px);
+    }
+
+    .filter-count {
+        background: rgba(255, 255, 255, 0.2);
+        color: inherit;
+        padding: 0.2rem 0.5rem;
+        border-radius: 8px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .filter-tab.active .filter-count {
+        background: rgba(255, 255, 255, 0.2);
+    }
+
+    /* Modern Activity Grid - Fixed 3x3 layout (9 items max per page) */
+    .activities-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 2rem;
+        margin-bottom: 2rem;
+        min-height: 600px; /* Ensures consistent height even with fewer items */
+    }
+
+    .activity-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border-radius: 20px;
+        overflow: hidden;
+        transition: all 0.3s ease;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    .activity-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+    }
+
+    .card-header {
+        padding: 1.5rem;
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+        position: relative;
+    }
+
+    .activity-status {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        padding: 0.3rem 0.8rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .status-active {
+        background: rgba(34, 197, 94, 0.1);
+        color: #059669;
+    }
+
+    .status-inactive {
+        background: rgba(239, 68, 68, 0.1);
+        color: #dc2626;
+    }
+
+    .activity-title {
+        font-size: 1.3rem;
+        font-weight: 600;
+        color: #1a202c;
+        margin-bottom: 0.5rem;
+        line-height: 1.3;
+    }
+
+    .activity-category {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: #667eea;
+        font-weight: 500;
+        font-size: 0.875rem;
+    }
+
+    .category-icon {
+        width: 20px;
+        height: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .card-content {
+        padding: 1.5rem;
+    }
+
+    .activity-description {
+        color: #64748b;
+        line-height: 1.6;
+        margin-bottom: 1.5rem;
+    }
+
+    .activity-meta {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .meta-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: #64748b;
+        font-size: 0.875rem;
+    }
+
+    .meta-icon {
+        color: #667eea;
+        width: 16px;
+    }
+
+    .card-actions {
+        display: flex;
+        gap: 0.75rem;
+        padding: 0 1.5rem 1.5rem;
+    }
+
+    .btn-small {
+        padding: 0.5rem 1rem;
+        font-size: 0.875rem;
+        border-radius: 8px;
+        text-decoration: none;
+        transition: all 0.2s ease;
+        border: none;
+        cursor: pointer;
+        flex: 1;
+        text-align: center;
+    }
+
+    .btn-outline {
+        background: transparent;
+        border: 1px solid rgba(102, 126, 234, 0.3);
+        color: #667eea;
+    }
+
+    .btn-outline:hover {
+        background: rgba(102, 126, 234, 0.1);
+        color: #667eea;
+        text-decoration: none;
+    }
+
+    .btn-ghost {
+        background: rgba(100, 116, 139, 0.1);
+        color: #64748b;
+    }
+
+    .btn-ghost:hover {
+        background: rgba(100, 116, 139, 0.2);
+        color: #64748b;
+        text-decoration: none;
+    }
+
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border-radius: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .empty-icon {
+        font-size: 4rem;
+        color: #667eea;
+        margin-bottom: 1.5rem;
+        opacity: 0.7;
+    }
+
+    .empty-state h3 {
+        color: #1a202c;
+        margin-bottom: 1rem;
+        font-weight: 600;
+    }
+
+    .empty-state p {
+        color: #64748b;
+        margin-bottom: 2rem;
+        font-size: 1.1rem;
+    }
+
+    /* Modern Pagination */
+    .modern-pagination {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 1rem;
+        margin-top: 3rem;
+    }
+
+    .pagination-info {
+        color: #64748b;
+        font-size: 0.875rem;
+    }
+
+    .pagination-nav {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+    }
+
+    .page-btn {
+        width: 40px;
+        height: 40px;
+        border: none;
+        background: rgba(255, 255, 255, 0.8);
+        color: #64748b;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-decoration: none;
+    }
+
+    .page-btn:hover {
+        background: rgba(102, 126, 234, 0.1);
+        color: #667eea;
+        text-decoration: none;
+    }
+
+    .page-btn.active {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .activities-modern-container {
+            padding: 1rem;
+        }
+
+        .modern-header {
+            padding: 1.5rem;
+        }
+
+        .header-content {
+            flex-direction: column;
+            gap: 1.5rem;
+            text-align: center;
+        }
+
+        .header-left h1 {
+            font-size: 2rem;
+        }
+
+        .quick-stats {
+            justify-content: center;
+        }
+
+        .activities-grid {
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+        }
+        
+        @media (min-width: 769px) and (max-width: 1024px) {
+            .activities-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .filter-tabs {
+            justify-content: center;
+        }
+
+        .card-actions {
+            flex-direction: column;
+        }
+    }
+
+    /* Loading Animation */
+    .loading {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 200px;
+    }
+
+    .spinner {
+        width: 40px;
+        height: 40px;
+        border: 3px solid rgba(102, 126, 234, 0.3);
+        border-top: 3px solid #667eea;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    /* Fade in animation */
+    .fade-in {
+        opacity: 0;
+        animation: fadeIn 0.5s ease forwards;
+    }
+
+    @keyframes fadeIn {
+        to {
+            opacity: 1;
+        }
+    }
+</style>
 @endsection
 
 @section('content')
-<div class="activities-enhanced-container">
-    <!-- Enhanced Header with System Colors -->
-    <div class="enhanced-header">
-        <div class="header-backdrop"></div>
+<div class="activities-modern-container fade-in">
+    <!-- Modern Header -->
+    <div class="modern-header">
         <div class="header-content">
-            <div class="header-main">
-                <div class="header-text">
-                    <h1 class="header-title">
-                        <span class="title-icon">🎯</span>
-                        Activities Management
-                    </h1>
-                    <p class="header-subtitle">Comprehensive rehabilitation and educational program management with real-time tracking</p>
-                </div>
-                @if(session('role') === 'admin')
-                <div class="header-actions">
-                    <a href="{{ route('activities.create') }}" class="btn-enhanced btn-primary">
-                        <i class="fas fa-plus-circle"></i>
-                        <span>Create New Activity</span>
-                    </a>
-                    <div class="dropdown">
-                        <button class="btn-enhanced btn-tertiary dropdown-toggle" type="button" id="moreActions" data-toggle="dropdown">
-                            <i class="fas fa-cog"></i>
-                            <span>More</span>
-                        </button>
-                        <div class="dropdown-menu" aria-labelledby="moreActions">
-                            <a class="dropdown-item" href="{{ route('activities.categories') }}">
-                                <i class="fas fa-th-large"></i> Manage Categories
-                            </a>
-                            <a class="dropdown-item" href="{{ route('activities.templates.index') }}">
-                                <i class="fas fa-file-copy"></i> Activity Templates
-                            </a>
-                            <a class="dropdown-item" href="{{ route('activities.schedule') }}">
-                                <i class="fas fa-calendar-alt"></i> Schedule Overview
-                            </a>
-                        </div>
+            <div class="header-left">
+                <h1>Activities Management</h1>
+                <p>Manage rehabilitation and educational programs with ease</p>
+                <div class="quick-stats">
+                    <div class="quick-stat">
+                        <span class="number">{{ $stats['total_activities'] ?? $activities->count() }}</span>
+                        <span class="label">Total Activities</span>
+                    </div>
+                    <div class="quick-stat">
+                        <span class="number">{{ $stats['active_activities'] ?? $activities->where('is_active', true)->count() }}</span>
+                        <span class="label">Active</span>
+                    </div>
+                    <div class="quick-stat">
+                        <span class="number">{{ $stats['total_sessions'] ?? 0 }}</span>
+                        <span class="label">Sessions</span>
+                    </div>
+                    <div class="quick-stat">
+                        <span class="number">{{ $stats['total_enrollments'] ?? 0 }}</span>
+                        <span class="label">Enrolled</span>
                     </div>
                 </div>
+            </div>
+            <div class="header-right">
+                @if(in_array(session('role'), ['admin', 'supervisor']))
+                    <a href="{{ route('activities.create') }}" class="modern-btn btn-primary">
+                        <i class="fas fa-plus"></i>
+                        Create Activity
+                    </a>
                 @endif
+                <a href="{{ route('activities.categories') }}" class="modern-btn btn-secondary">
+                    <i class="fas fa-th-large"></i>
+                    Categories
+                </a>
             </div>
         </div>
     </div>
 
-    <!-- Enhanced Statistics Cards with System Colors -->
-    <div class="stats-section">
-        <div class="stats-grid">
-            <div class="stat-card stat-primary">
-                <div class="stat-content">
-                    <div class="stat-header">
-                        <div class="stat-icon">
-                            <i class="fas fa-tasks"></i>
-                        </div>
-                        <div class="stat-trend positive">
-                            <i class="fas fa-arrow-up"></i>
-                            <span>+{{ rand(8, 15) }}%</span>
-                        </div>
-                    </div>
-                    <div class="stat-body">
-                        <h3 class="stat-number">{{ $stats['total_activities'] ?? 0 }}</h3>
-                        <p class="stat-label">Total Activities</p>
-                        <span class="stat-description">All registered programs</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="stat-card stat-success">
-                <div class="stat-content">
-                    <div class="stat-header">
-                        <div class="stat-icon">
-                            <i class="fas fa-check-circle"></i>
-                        </div>
-                        <div class="stat-trend positive">
-                            <i class="fas fa-arrow-up"></i>
-                            <span>+{{ rand(5, 12) }}%</span>
-                        </div>
-                    </div>
-                    <div class="stat-body">
-                        <h3 class="stat-number">{{ $stats['active_activities'] ?? 0 }}</h3>
-                        <p class="stat-label">Active Programs</p>
-                        <span class="stat-description">Currently running</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="stat-card stat-info">
-                <div class="stat-content">
-                    <div class="stat-header">
-                        <div class="stat-icon">
-                            <i class="fas fa-calendar-check"></i>
-                        </div>
-                        <div class="stat-trend positive">
-                            <i class="fas fa-arrow-up"></i>
-                            <span>+{{ rand(10, 20) }}%</span>
-                        </div>
-                    </div>
-                    <div class="stat-body">
-                        <h3 class="stat-number">{{ $stats['total_sessions'] ?? 0 }}</h3>
-                        <p class="stat-label">Total Sessions</p>
-                        <span class="stat-description">This semester</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="stat-card stat-warning">
-                <div class="stat-content">
-                    <div class="stat-header">
-                        <div class="stat-icon">
-                            <i class="fas fa-users"></i>
-                        </div>
-                        <div class="stat-trend positive">
-                            <i class="fas fa-arrow-up"></i>
-                            <span>+{{ rand(3, 8) }}%</span>
-                        </div>
-                    </div>
-                    <div class="stat-body">
-                        <h3 class="stat-number">{{ $stats['total_enrollments'] ?? 0 }}</h3>
-                        <p class="stat-label">Enrollments</p>
-                        <span class="stat-description">Unique active participants</span>
-                    </div>
-                </div>
-            </div>
+    <!-- Modern Search & Filter -->
+    <div class="search-section">
+        <div class="search-bar">
+            <i class="fas fa-search search-icon"></i>
+            <input type="text" class="search-input" id="searchInput" placeholder="Search activities by name, instructor, or description...">
         </div>
-    </div>
-
-    <!-- Enhanced Search and Filter Section -->
-    <div class="search-filter-section">
-        <div class="search-container">
-            <div class="search-box-enhanced">
-                <i class="fas fa-search search-icon"></i>
-                <input type="text" 
-                       id="globalSearch" 
-                       class="search-input-enhanced" 
-                       placeholder="Search activities, instructors, categories, or descriptions..."
-                       autocomplete="off">
-                <div class="search-loading">
-                    <div class="spinner"></div>
-                </div>
-                <div class="search-clear" id="searchClear" style="display: none;">
-                    <i class="fas fa-times"></i>
-                </div>
-            </div>
-            <div class="search-suggestions" id="searchSuggestions" style="display: none;">
-                <!-- Dynamic suggestions will be populated here -->
-            </div>
-        </div>
-
-        <div class="filters-container-enhanced">
-            <!-- Quick Filter Tabs -->
-            <div class="filter-tabs-enhanced">
-                <button class="filter-tab-enhanced active" data-filter="all">
-                    <span class="tab-icon"><i class="fas fa-th-large"></i></span>
-                    <span class="tab-text">All Activities</span>
-                    <span class="tab-count">{{ $categoryCounts['total'] ?? 0 }}</span>
-                </button>
-                <button class="filter-tab-enhanced" data-filter="rehabilitation">
-                    <span class="tab-icon"><i class="fas fa-heartbeat"></i></span>
-                    <span class="tab-text">Rehabilitation</span>
-                    <span class="tab-count">{{ $categoryCounts['rehabilitation'] ?? 0 }}</span>
-                </button>
-                <button class="filter-tab-enhanced" data-filter="academic">
-                    <span class="tab-icon"><i class="fas fa-graduation-cap"></i></span>
-                    <span class="tab-text">Academic</span>
-                    <span class="tab-count">{{ $categoryCounts['academic'] ?? 0 }}</span>
-                </button>
-                <button class="filter-tab-enhanced" data-filter="recreational">
-                    <span class="tab-icon"><i class="fas fa-gamepad"></i></span>
-                    <span class="tab-text">Recreational</span>
-                    <span class="tab-count">{{ $categoryCounts['creative_social'] ?? 0 }}</span>
-                </button>
-                <button class="filter-tab-enhanced" data-filter="active">
-                    <span class="tab-icon"><i class="fas fa-play-circle"></i></span>
-                    <span class="tab-text">Active</span>
-                    <span class="tab-count">{{ $categoryCounts['active'] ?? 0 }}</span>
-                </button>
-            </div>
-
-            <!-- Advanced Filters -->
-            <div class="advanced-filters">
-                <button class="filter-btn-enhanced" id="advancedFilters">
-                    <i class="fas fa-sliders-h"></i>
-                    <span>Advanced Filters</span>
-                    <span class="filter-count" id="activeFilterCount" style="display: none;">0</span>
-                    <i class="fas fa-chevron-down dropdown-arrow"></i>
-                </button>
-                
-                <div class="filter-menu-enhanced" id="filterMenu">
-                    <div class="filter-header">
-                        <h4>Filter Options</h4>
-                        <button class="btn-clear-filters" id="clearAllFilters">
-                            <i class="fas fa-eraser"></i> Clear All
-                        </button>
-                    </div>
-                    
-                    <div class="filter-grid">
-                        <div class="filter-group">
-                            <label class="filter-label">
-                                <i class="fas fa-signal"></i> Difficulty Level
-                            </label>
-                            <div class="checkbox-group">
-                                <label class="checkbox-label-enhanced">
-                                    <input type="checkbox" value="beginner" class="filter-checkbox" data-filter-type="difficulty">
-                                    <span class="checkmark-enhanced"></span>
-                                    <span class="checkbox-text">Beginner</span>
-                                    <span class="checkbox-count">({{ $activities->where('difficulty_level', 'beginner')->count() }})</span>
-                                </label>
-                                <label class="checkbox-label-enhanced">
-                                    <input type="checkbox" value="intermediate" class="filter-checkbox" data-filter-type="difficulty">
-                                    <span class="checkmark-enhanced"></span>
-                                    <span class="checkbox-text">Intermediate</span>
-                                    <span class="checkbox-count">({{ $activities->where('difficulty_level', 'intermediate')->count() }})</span>
-                                </label>
-                                <label class="checkbox-label-enhanced">
-                                    <input type="checkbox" value="advanced" class="filter-checkbox" data-filter-type="difficulty">
-                                    <span class="checkmark-enhanced"></span>
-                                    <span class="checkbox-text">Advanced</span>
-                                    <span class="checkbox-count">({{ $activities->where('difficulty_level', 'advanced')->count() }})</span>
-                                </label>
-                            </div>
-                        </div>
-
-                        <div class="filter-group">
-                            <label class="filter-label">
-                                <i class="fas fa-child"></i> Age Group
-                            </label>
-                            <select class="modern-select-enhanced" id="ageGroupFilter" data-filter-type="age">
-                                <option value="">All Age Groups</option>
-                                <option value="children">Children (4-8 years)</option>
-                                <option value="adolescents">Adolescents (9-16 years)</option>
-                                <option value="adults">Adults (17+ years)</option>
-                                <option value="all_ages">All Ages</option>
-                            </select>
-                        </div>
-
-                        <div class="filter-group">
-                            <label class="filter-label">
-                                <i class="fas fa-map-marker-alt"></i> Centre Location
-                            </label>
-                            <select class="modern-select-enhanced" id="centreFilter" data-filter-type="centre">
-                                <option value="">All Centres</option>
-                                @foreach(\App\Models\Centre::where('centre_status', 'active')->get() as $centre)
-                                    <option value="{{ $centre->centre_id }}">{{ $centre->centre_name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-
-                        <div class="filter-group">
-                            <label class="filter-label">
-                                <i class="fas fa-user-tie"></i> Instructor
-                            </label>
-                            <select class="modern-select-enhanced" id="instructorFilter" data-filter-type="instructor">
-                                <option value="">All Instructors</option>
-                                @foreach($activities->pluck('instructor_id')->unique()->filter() as $instructor_id)
-                                    @php
-                                        $instructor = \App\Models\User::find($instructor_id);
-                                    @endphp
-                                    @if($instructor)
-                                        <option value="{{ $instructor_id }}">{{ $instructor->name }}</option>
-                                    @endif
-                                @endforeach
-                            </select>
-                        </div>
-
-                        <div class="filter-group">
-                            <label class="filter-label">
-                                <i class="fas fa-calendar-alt"></i> Schedule Status
-                            </label>
-                            <div class="radio-group">
-                                <label class="radio-label-enhanced">
-                                    <input type="radio" name="scheduleStatus" value="" checked class="filter-radio" data-filter-type="schedule">
-                                    <span class="radio-mark"></span>
-                                    <span>All Activities</span>
-                                </label>
-                                <label class="radio-label-enhanced">
-                                    <input type="radio" name="scheduleStatus" value="scheduled" class="filter-radio" data-filter-type="schedule">
-                                    <span class="radio-mark"></span>
-                                    <span>Scheduled</span>
-                                </label>
-                                <label class="radio-label-enhanced">
-                                    <input type="radio" name="scheduleStatus" value="completed" class="filter-radio" data-filter-type="schedule">
-                                    <span class="radio-mark"></span>
-                                    <span>Completed</span>
-                                </label>
-                            </div>
-                        </div>
-
-                        <div class="filter-group">
-                            <label class="filter-label">
-                                <i class="fas fa-users"></i> Enrollment Status
-                            </label>
-                            <div class="range-slider">
-                                <label class="range-label">Enrollment Capacity:</label>
-                                <input type="range" 
-                                       id="enrollmentRange" 
-                                       min="0" 
-                                       max="100" 
-                                       value="0" 
-                                       class="slider"
-                                       data-filter-type="enrollment">
-                                <div class="range-labels">
-                                    <span>0%</span>
-                                    <span id="enrollmentValue">0%</span>
-                                    <span>100%</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Sort Options -->
-            <div class="sort-container">
-                <select class="sort-select-enhanced" id="sortOptions">
-                    <option value="name_asc">Name (A-Z)</option>
-                    <option value="name_desc">Name (Z-A)</option>
-                    <option value="date_newest">Newest First</option>
-                    <option value="date_oldest">Oldest First</option>
-                    <option value="popularity">Most Popular</option>
-                    <option value="capacity">By Capacity</option>
-                </select>
-            </div>
-        </div>
-    </div>
-
-    <!-- Results Summary -->
-    <div class="results-summary">
-        <div class="results-info">
-            <span class="results-count">
-                Showing <span id="showingCount">0</span> of <span id="totalCount">{{ $activities->count() }}</span> activities
-            </span>
-            <span class="results-filters" id="activeFiltersDisplay" style="display: none;">
-                <!-- Active filters will be shown here -->
-            </span>
-        </div>
-        <div class="view-options">
-            <div class="view-toggle">
-                <button class="view-btn active" data-view="grid" title="Grid View">
-                    <i class="fas fa-th"></i>
-                </button>
-                <button class="view-btn" data-view="list" title="List View">
-                    <i class="fas fa-list"></i>
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Activities Grid -->
-    <div class="activities-section">
-        <div class="activities-grid-clean" id="activitiesGrid">
-            <!-- Fallback: Show activities using PHP/Blade while JS loads -->
-            @if($activities && $activities->count() > 0)
-                @foreach($activities as $activity)
-                <div class="activity-card-clean">
-                    <!-- Card Header -->
-                    <div class="card-header-clean">
-                        <div class="activity-title-wrapper">
-                            <h3 class="activity-title">{{ $activity->activity_name }}</h3>
-                            <span class="activity-status {{ $activity->is_active ? 'active' : 'inactive' }}">
-                                {{ $activity->is_active ? 'Active' : 'Inactive' }}
-                            </span>
-                        </div>
-                        <div class="activity-category">
-                            @php
-                                $categoryIcon = 'fas fa-tasks';
-                                if(isset($activity->category)) {
-                                    if(stripos($activity->category, 'rehabilitation') !== false) {
-                                        $categoryIcon = 'fas fa-heartbeat';
-                                    } elseif(stripos($activity->category, 'academic') !== false) {
-                                        $categoryIcon = 'fas fa-graduation-cap';
-                                    } elseif(stripos($activity->category, 'creative') !== false || stripos($activity->category, 'social') !== false) {
-                                        $categoryIcon = 'fas fa-palette';
-                                    } elseif(stripos($activity->category, 'physical') !== false) {
-                                        $categoryIcon = 'fas fa-running';
-                                    }
-                                }
-                            @endphp
-                            <i class="{{ $categoryIcon }}"></i>
-                            <span>{{ $activity->category->category_name ?? 'General' }}</span>
-                        </div>
-                    </div>
-
-                    <!-- Card Content -->
-                    <div class="card-content-clean">
-                        <div class="activity-description">
-                            <p>{{ Str::limit($activity->activity_description, 120) }}</p>
-                        </div>
-
-                        <div class="activity-stats">
-                            <div class="stat">
-                                <i class="fas fa-calendar-alt"></i>
-                                <span>{{ $activity->sessions_count ?? $activity->sessions->count() }} Sessions</span>
-                            </div>
-                            <div class="stat">
-                                <i class="fas fa-users"></i>
-                                <span>{{ $activity->enrollments_count ?? $activity->enrollments->count() }} Enrolled</span>
-                            </div>
-                            <div class="stat">
-                                <i class="fas fa-clock"></i>
-                                <span>{{ $activity->session_duration_minutes ?? 60 }}min</span>
-                            </div>
-                        </div>
-
-                        <div class="activity-meta">
-                            @if($activity->instructor)
-                            <div class="meta-item">
-                                <i class="fas fa-user-tie"></i>
-                                <span>{{ $activity->instructor->name }}</span>
-                            </div>
-                            @endif
-                            @if($activity->activity_location)
-                            <div class="meta-item">
-                                <i class="fas fa-map-marker-alt"></i>
-                                <span>{{ $activity->activity_location }}</span>
-                            </div>
-                            @endif
-                        </div>
-                    </div>
-
-                    <!-- Card Actions -->
-                    <div class="card-actions-clean">
-                        <a href="{{ route('activities.show', $activity->id) }}" class="btn-clean btn-primary">
-                            View Details
-                        </a>
-                        <a href="{{ route('activities.sessions', $activity->id) }}" class="btn-clean btn-secondary">
-                            Sessions
-                        </a>
-                        @if(in_array(session('role'), ['admin', 'supervisor', 'teacher']))
-                        <a href="{{ route('activities.edit', $activity->id) }}" class="btn-clean btn-tertiary">
-                            Edit
-                        </a>
-                        @endif
-                    </div>
-                </div>
-                @endforeach
-            @else
-                <div class="empty-state-clean">
-                    <div class="empty-icon">
-                        <i class="fas fa-clipboard-list"></i>
-                    </div>
-                    <h3>No Activities Found</h3>
-                    <p>No activities are currently available for your role.</p>
-                    @if(in_array(session('role'), ['admin', 'supervisor']))
-                    <a href="{{ route('activities.create') }}" class="btn-clean btn-primary">
-                        Create First Activity
-                    </a>
-                    @endif
-                </div>
-            @endif
-        </div>
-
-        <!-- Loading State -->
-        <div class="loading-state" id="loadingState" style="display: none;">
-            <div class="loading-spinner">
-                <div class="spinner-ring"></div>
-                <div class="spinner-ring"></div>
-                <div class="spinner-ring"></div>
-            </div>
-            <p>Loading activities...</p>
-        </div>
-
-        <!-- Empty State -->
-        <div class="empty-state" id="emptyState" style="display: none;">
-            <div class="empty-icon">
-                <i class="fas fa-search"></i>
-            </div>
-            <h3>No Activities Found</h3>
-            <p>Try adjusting your search criteria or filters to find what you're looking for.</p>
-            <button class="btn-enhanced btn-primary" id="clearFiltersBtn">
-                <i class="fas fa-eraser"></i>
-                Clear All Filters
+        
+        <div class="filter-tabs">
+            <button class="filter-tab active" data-filter="all">
+                <i class="fas fa-th-large"></i>
+                All Activities
+                <span class="filter-count">{{ $activities->count() }}</span>
+            </button>
+            <button class="filter-tab" data-filter="active">
+                <i class="fas fa-play-circle"></i>
+                Active
+                <span class="filter-count">{{ $activities->where('is_active', true)->count() }}</span>
+            </button>
+            <button class="filter-tab" data-filter="therapy">
+                <i class="fas fa-heartbeat"></i>
+                Therapy
+                <span class="filter-count">{{ $activities->filter(function($activity) { 
+                    $categoryName = strtolower($activity->categoryModel->category_name ?? '');
+                    return stripos($categoryName, 'therapy') !== false || 
+                           stripos($categoryName, 'speech') !== false || 
+                           stripos($categoryName, 'hearing') !== false || 
+                           stripos($categoryName, 'visual') !== false ||
+                           stripos($categoryName, 'physical') !== false ||
+                           stripos($categoryName, 'autism') !== false;
+                })->count() }}</span>
+            </button>
+            <button class="filter-tab" data-filter="academic">
+                <i class="fas fa-graduation-cap"></i>
+                Academic
+                <span class="filter-count">{{ $activities->filter(function($activity) { 
+                    $categoryName = strtolower($activity->categoryModel->category_name ?? '');
+                    return stripos($categoryName, 'academic') !== false || 
+                           stripos($categoryName, 'learning') !== false;
+                })->count() }}</span>
+            </button>
+            <button class="filter-tab" data-filter="faith">
+                <i class="fas fa-hands-praying"></i>
+                Faith & Values
+                <span class="filter-count">{{ $activities->filter(function($activity) { 
+                    $categoryName = strtolower($activity->categoryModel->category_name ?? '');
+                    return stripos($categoryName, 'faith') !== false || 
+                           stripos($categoryName, 'values') !== false;
+                })->count() }}</span>
             </button>
         </div>
     </div>
 
-    <!-- Simple Pagination -->
-    <div class="text-center mt-4">
-        <div class="mb-2">
-            <small class="text-muted">
-                Page {{ $activities->currentPage() }} of {{ $activities->lastPage() }} • {{ $activities->total() }} total activities
-            </small>
-        </div>
-        
-        @if($activities->lastPage() > 1)
-        <div class="d-inline-flex">
-            @php
-                $current = $activities->currentPage();
-                $last = $activities->lastPage();
-                $start = max(1, $current - 2);
-                $end = min($last, $current + 2);
-            @endphp
-            
-            {{-- Previous --}}
-            @if(!$activities->onFirstPage())
-                <a href="{{ $activities->previousPageUrl() }}" class="text-decoration-none mx-1" style="color: #667eea;">‹ Prev</a>
-            @endif
-            
-            {{-- First page --}}
-            @if($start > 1)
-                <a href="{{ $activities->url(1) }}" class="text-decoration-none mx-1 px-2 py-1 rounded {{ $current == 1 ? 'bg-primary text-white' : 'text-secondary' }}">1</a>
-                @if($start > 2)
-                    <span class="mx-1 text-muted">…</span>
+    <!-- Activities Grid -->
+    <div class="activities-grid" id="activitiesGrid">
+        @if($activities && $activities->count() > 0)
+            @foreach($activities as $activity)
+            <div class="activity-card" 
+                 data-category="{{ strtolower($activity->categoryModel->category_name ?? 'general') }}" 
+                 data-status="{{ $activity->is_active ? 'active' : 'inactive' }}"
+                 data-name="{{ strtolower($activity->activity_name) }}"
+                 data-instructor="{{ strtolower($activity->instructor->name ?? '') }}"
+                 data-category-type="@if($activity->categoryModel)
+                     @php
+                         $catName = strtolower($activity->categoryModel->category_name);
+                         if(stripos($catName, 'therapy') !== false || stripos($catName, 'speech') !== false || stripos($catName, 'hearing') !== false || stripos($catName, 'visual') !== false || stripos($catName, 'physical') !== false || stripos($catName, 'autism') !== false) {
+                             echo 'therapy';
+                         } elseif(stripos($catName, 'academic') !== false || stripos($catName, 'learning') !== false) {
+                             echo 'academic';
+                         } elseif(stripos($catName, 'faith') !== false || stripos($catName, 'values') !== false) {
+                             echo 'faith';
+                         } else {
+                             echo 'general';
+                         }
+                     @endphp
+                 @else
+                     general
+                 @endif">
+                
+                <div class="card-header">
+                    <div class="activity-status {{ $activity->is_active ? 'status-active' : 'status-inactive' }}">
+                        {{ $activity->is_active ? 'Active' : 'Inactive' }}
+                    </div>
+                    
+                    <h3 class="activity-title">{{ $activity->activity_name }}</h3>
+                    
+                    <div class="activity-category">
+                        @php
+                            $categoryIcon = 'fas fa-tasks';
+                            $categoryName = strtolower($activity->categoryModel->category_name ?? '');
+                            if(stripos($categoryName, 'autism') !== false) {
+                                $categoryIcon = 'fas fa-brain';
+                            } elseif(stripos($categoryName, 'hearing') !== false) {
+                                $categoryIcon = 'fas fa-deaf';
+                            } elseif(stripos($categoryName, 'visual') !== false) {
+                                $categoryIcon = 'fas fa-eye-slash';
+                            } elseif(stripos($categoryName, 'physical') !== false) {
+                                $categoryIcon = 'fas fa-wheelchair';
+                            } elseif(stripos($categoryName, 'learning') !== false || stripos($categoryName, 'academic') !== false) {
+                                $categoryIcon = 'fas fa-graduation-cap';
+                            } elseif(stripos($categoryName, 'speech') !== false) {
+                                $categoryIcon = 'fas fa-comments';
+                            } elseif(stripos($categoryName, 'faith') !== false || stripos($categoryName, 'values') !== false) {
+                                $categoryIcon = 'fas fa-hands-praying';
+                            }
+                        @endphp
+                        <div class="category-icon">
+                            <i class="{{ $categoryIcon }}"></i>
+                        </div>
+                        <span>{{ $activity->categoryModel->category_name ?? 'General' }}</span>
+                    </div>
+                </div>
+
+                <div class="card-content">
+                    <div class="activity-description">
+                        {{ Str::limit($activity->activity_description, 120) ?: 'No description available.' }}
+                    </div>
+
+                    <div class="activity-meta">
+                        <div class="meta-item">
+                            <i class="fas fa-calendar-alt meta-icon"></i>
+                            <span>{{ $activity->sessions_count ?? $activity->sessions->count() }} Sessions</span>
+                        </div>
+                        <div class="meta-item">
+                            <i class="fas fa-users meta-icon"></i>
+                            <span>{{ $activity->enrollments_count ?? $activity->enrollments->count() }} Enrolled</span>
+                        </div>
+                        @if($activity->instructor)
+                        <div class="meta-item">
+                            <i class="fas fa-user-tie meta-icon"></i>
+                            <span>{{ Str::limit($activity->instructor->name, 15) }}</span>
+                        </div>
+                        @endif
+                        @if($activity->activity_location)
+                        <div class="meta-item">
+                            <i class="fas fa-map-marker-alt meta-icon"></i>
+                            <span>{{ Str::limit($activity->activity_location, 15) }}</span>
+                        </div>
+                        @endif
+                    </div>
+                </div>
+
+                <div class="card-actions">
+                    <a href="{{ route('activities.show', $activity->id) }}" class="btn-small btn-primary">
+                        <i class="fas fa-eye"></i>
+                        View
+                    </a>
+                    <a href="{{ route('activities.sessions', $activity->id) }}" class="btn-small btn-outline">
+                        <i class="fas fa-calendar"></i>
+                        Sessions
+                    </a>
+                    @if(in_array(session('role'), ['admin', 'supervisor']) && $activity->is_active)
+                    <a href="{{ route('activities.edit', $activity->id) }}" class="btn-small btn-ghost">
+                        <i class="fas fa-edit"></i>
+                        Edit
+                    </a>
+                    @endif
+                </div>
+            </div>
+            @endforeach
+        @else
+            <div class="empty-state" style="grid-column: 1 / -1;">
+                <div class="empty-icon">
+                    <i class="fas fa-clipboard-list"></i>
+                </div>
+                <h3>No Activities Found</h3>
+                <p>Get started by creating your first activity program.</p>
+                @if(in_array(session('role'), ['admin', 'supervisor']))
+                <a href="{{ route('activities.create') }}" class="modern-btn btn-primary">
+                    <i class="fas fa-plus"></i>
+                    Create First Activity
+                </a>
                 @endif
-            @endif
-            
-            {{-- Page range --}}
-            @for($page = $start; $page <= $end; $page++)
-                @if($page == $current)
-                    <span class="mx-1 px-2 py-1 rounded bg-primary text-white">{{ $page }}</span>
-                @else
-                    <a href="{{ $activities->url($page) }}" class="text-decoration-none mx-1 px-2 py-1 rounded text-secondary hover-bg-light">{{ $page }}</a>
-                @endif
-            @endfor
-            
-            {{-- Last page --}}
-            @if($end < $last)
-                @if($end < $last - 1)
-                    <span class="mx-1 text-muted">…</span>
-                @endif
-                <a href="{{ $activities->url($last) }}" class="text-decoration-none mx-1 px-2 py-1 rounded text-secondary">{{ $last }}</a>
-            @endif
-            
-            {{-- Next --}}
-            @if($activities->hasMorePages())
-                <a href="{{ $activities->nextPageUrl() }}" class="text-decoration-none mx-1" style="color: #667eea;">Next ›</a>
-            @endif
-        </div>
+            </div>
         @endif
     </div>
-</div>
 
-<!-- Activity Detail Modal -->
-<div class="modal fade" id="activityDetailModal" tabindex="-1" role="dialog">
-    <div class="modal-dialog modal-lg" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Activity Details</h5>
-                <button type="button" class="close" data-dismiss="modal">
-                    <span>&times;</span>
-                </button>
-            </div>
-            <div class="modal-body" id="modalContent">
-                <!-- Dynamic content will be loaded here -->
-            </div>
-        </div>
+    <!-- Loading State -->
+    <div class="loading" id="loadingState" style="display: none;">
+        <div class="spinner"></div>
     </div>
+
+    <!-- Standardized Pagination -->
+    @include('components.custom-pagination', ['items' => $activities])
 </div>
 @endsection
 
 @section('scripts')
-<script src="{{ asset('js/activities-enhanced.js') }}"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize the enhanced activities system
-    const activitiesSystem = new EnhancedActivitiesManager({
-        activities: @json($activitiesForJs ?? $activities),
-        itemsPerPage: {{ $activities->perPage() }},
-        currentPage: {{ $activities->currentPage() }},
-        totalPages: {{ $activities->lastPage() }},
-        defaultSort: 'name_asc'
+    const searchInput = document.getElementById('searchInput');
+    const filterTabs = document.querySelectorAll('.filter-tab');
+    const activityCards = document.querySelectorAll('.activity-card');
+    const activitiesGrid = document.getElementById('activitiesGrid');
+    const loadingState = document.getElementById('loadingState');
+
+    let currentFilter = 'all';
+
+    // Search functionality
+    searchInput.addEventListener('input', function(e) {
+        const searchTerm = e.target.value.toLowerCase().trim();
+        filterAndSearchActivities(currentFilter, searchTerm);
     });
-    
-    activitiesSystem.init();
-    
-    // Simple filter functionality
-    const filterTabs = document.querySelectorAll('.filter-tab-enhanced');
-    const activityCards = document.querySelectorAll('.activity-card-clean');
-    
+
+    // Filter functionality
     filterTabs.forEach(tab => {
         tab.addEventListener('click', function() {
+            // Update active tab
             filterTabs.forEach(t => t.classList.remove('active'));
             this.classList.add('active');
             
-            const filter = this.dataset.filter;
+            currentFilter = this.dataset.filter;
+            const searchTerm = searchInput.value.toLowerCase().trim();
+            filterAndSearchActivities(currentFilter, searchTerm);
+        });
+    });
+
+    function filterAndSearchActivities(filter, searchTerm) {
+        showLoading();
+        
+        setTimeout(() => {
+            let visibleCount = 0;
             
             activityCards.forEach(card => {
                 let shouldShow = true;
                 
-                if (filter === 'active') {
-                    shouldShow = card.querySelector('.activity-status.active') !== null;
-                } else if (filter === 'rehabilitation') {
-                    shouldShow = card.textContent.toLowerCase().includes('rehabilitation');
-                } else if (filter === 'academic') {
-                    shouldShow = card.textContent.toLowerCase().includes('academic');
-                } else if (filter === 'recreational') {
-                    shouldShow = card.textContent.toLowerCase().includes('creative') || 
-                              card.textContent.toLowerCase().includes('social');
+                // Apply category filter
+                if (filter !== 'all') {
+                    const category = card.dataset.category || '';
+                    const categoryType = card.dataset.categoryType || '';
+                    const status = card.dataset.status || '';
+                    
+                    switch(filter) {
+                        case 'active':
+                            shouldShow = status === 'active';
+                            break;
+                        case 'therapy':
+                            shouldShow = categoryType === 'therapy' ||
+                                        category.includes('therapy') ||
+                                        category.includes('speech') ||
+                                        category.includes('hearing') ||
+                                        category.includes('visual') ||
+                                        category.includes('physical') ||
+                                        category.includes('autism');
+                            break;
+                        case 'academic':
+                            shouldShow = categoryType === 'academic' ||
+                                        category.includes('academic') ||
+                                        category.includes('learning');
+                            break;
+                        case 'faith':
+                            shouldShow = categoryType === 'faith' ||
+                                        category.includes('faith') ||
+                                        category.includes('values');
+                            break;
+                    }
                 }
                 
-                card.style.display = (shouldShow || filter === 'all') ? 'block' : 'none';
+                // Apply search filter
+                if (searchTerm && shouldShow) {
+                    const name = card.dataset.name || '';
+                    const instructor = card.dataset.instructor || '';
+                    const content = card.textContent.toLowerCase();
+                    
+                    shouldShow = name.includes(searchTerm) || 
+                               instructor.includes(searchTerm) || 
+                               content.includes(searchTerm);
+                }
+                
+                if (shouldShow) {
+                    card.style.display = 'block';
+                    card.style.animation = 'fadeIn 0.3s ease forwards';
+                    visibleCount++;
+                } else {
+                    card.style.display = 'none';
+                }
             });
-        });
+            
+            // Show empty state if no results
+            const emptyState = document.querySelector('.empty-state');
+            if (visibleCount === 0 && !emptyState) {
+                showEmptySearchState();
+            } else if (visibleCount > 0) {
+                hideEmptySearchState();
+            }
+            
+            hideLoading();
+        }, 300);
+    }
+
+    function showLoading() {
+        loadingState.style.display = 'flex';
+        activitiesGrid.style.opacity = '0.5';
+    }
+
+    function hideLoading() {
+        loadingState.style.display = 'none';
+        activitiesGrid.style.opacity = '1';
+    }
+
+    function showEmptySearchState() {
+        const existingEmpty = document.querySelector('.empty-search-state');
+        if (existingEmpty) return;
+
+        const emptyDiv = document.createElement('div');
+        emptyDiv.className = 'empty-state empty-search-state';
+        emptyDiv.style.gridColumn = '1 / -1';
+        emptyDiv.innerHTML = `
+            <div class="empty-icon">
+                <i class="fas fa-search"></i>
+            </div>
+            <h3>No Activities Found</h3>
+            <p>Try adjusting your search terms or filters to find what you're looking for.</p>
+            <button class="modern-btn btn-primary" onclick="clearFilters()">
+                <i class="fas fa-refresh"></i>
+                Clear Filters
+            </button>
+        `;
+        activitiesGrid.appendChild(emptyDiv);
+    }
+
+    function hideEmptySearchState() {
+        const emptyState = document.querySelector('.empty-search-state');
+        if (emptyState) {
+            emptyState.remove();
+        }
+    }
+
+    // Global function for clear filters button
+    window.clearFilters = function() {
+        searchInput.value = '';
+        currentFilter = 'all';
+        filterTabs.forEach(t => t.classList.remove('active'));
+        filterTabs[0].classList.add('active');
+        filterAndSearchActivities('all', '');
+    };
+
+    // Add smooth scroll to cards on load
+    activityCards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+        setTimeout(() => {
+            card.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }, index * 100);
     });
 });
 </script>

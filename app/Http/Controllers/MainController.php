@@ -130,6 +130,7 @@ class MainController extends Controller
                 'password_confirmation' => 'required|same:password',
                 'centre_id' => 'required|exists:centres,centre_id',
                 'centre_location' => 'nullable|in:Gombak,Kuantan,Pagoh', // Add validation for the new field
+                'avatar' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // Avatar validation
             ], [
                 'iium_id.required' => 'IIUM ID is required.',
                 'iium_id.size' => 'IIUM ID must be exactly 8 characters.',
@@ -149,6 +150,9 @@ class MainController extends Controller
                 'centre_id.required' => 'Please select a centre location.',
                 'centre_id.exists' => 'The selected centre is invalid.',
                 'centre_location.in' => 'The selected centre location is invalid.', // Add error message for the new field
+                'avatar.image' => 'Avatar must be an image file.',
+                'avatar.mimes' => 'Avatar must be a file of type: jpeg, png, jpg, gif.',
+                'avatar.max' => 'Avatar may not be greater than 2MB.',
             ]);
 
             if ($validator->fails()) {
@@ -188,6 +192,33 @@ class MainController extends Controller
                 if (isset($validatedData['centre_location'])) {
                     $user->centre_location = $validatedData['centre_location'];
                     Log::info('Centre location set', ['centre_location' => $validatedData['centre_location']]);
+                }
+
+                // Handle avatar upload if provided
+                if ($request->hasFile('avatar')) {
+                    try {
+                        // Ensure the avatar directory exists
+                        $avatarsPath = storage_path('app/public/avatars');
+                        if (!file_exists($avatarsPath)) {
+                            mkdir($avatarsPath, 0775, true);
+                        }
+                        
+                        $avatar = $request->file('avatar');
+                        $avatarName = time() . '_' . strtoupper($validatedData['iium_id']) . '.' . $avatar->getClientOriginalExtension();
+                        $avatarPath = $avatar->storeAs('avatars', $avatarName, 'public');
+                        
+                        $user->avatar = $avatarName;
+                        Log::info('Avatar uploaded during registration', [
+                            'user_id' => strtoupper($validatedData['iium_id']),
+                            'avatar_name' => $avatarName
+                        ]);
+                    } catch (\Exception $e) {
+                        Log::error('Avatar upload failed during registration', [
+                            'error' => $e->getMessage(),
+                            'user_id' => strtoupper($validatedData['iium_id'])
+                        ]);
+                        // Continue without avatar if upload fails
+                    }
                 }
 
                 $user->status = 'active';

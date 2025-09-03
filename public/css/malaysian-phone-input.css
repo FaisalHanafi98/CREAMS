@@ -1,0 +1,91 @@
+/**
+ * Malaysian Phone Input Styles
+ */
+
+.phone-input-wrapper {
+    position: relative;
+    display: inline-block;
+    width: 100%;
+}
+
+.phone-input-wrapper input {
+    padding-left: 70px !important;
+    font-family: 'Courier New', monospace;
+}
+
+.phone-flag {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 14px;
+    color: #666;
+    pointer-events: none;
+    z-index: 2;
+    font-weight: 500;
+}
+
+/* Input validation states */
+.phone-input-wrapper input.is-invalid {
+    border-color: #dc3545;
+    box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+}
+
+.phone-input-wrapper input.is-valid {
+    border-color: #28a745;
+    box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+}
+
+/* Error message styling */
+.phone-error {
+    display: block;
+    width: 100%;
+    margin-top: 0.25rem;
+    font-size: 0.875em;
+    color: #dc3545;
+}
+
+/* Focus effects */
+.phone-input-wrapper input:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.phone-input-wrapper input:focus + .phone-flag {
+    color: #007bff;
+}
+
+/* Responsive design */
+@media (max-width: 576px) {
+    .phone-flag {
+        font-size: 12px;
+        left: 8px;
+    }
+    
+    .phone-input-wrapper input {
+        padding-left: 60px !important;
+    }
+}
+
+/* Form group integration */
+.form-group .phone-input-wrapper {
+    width: 100%;
+}
+
+.input-group .phone-input-wrapper {
+    flex: 1;
+}
+
+/* Bootstrap form control override */
+.form-control.phone-input {
+    padding-left: 70px;
+}
+
+/* Validation feedback positioning */
+.phone-input-wrapper .invalid-feedback {
+    display: block;
+}
+
+.phone-input-wrapper .valid-feedback {
+    display: block;
+}

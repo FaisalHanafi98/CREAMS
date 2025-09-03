@@ -235,7 +235,7 @@
                         <!-- Pagination -->
                         @if($outcomes->hasPages())
                             <div class="card-footer bg-white">
-                                {{ $outcomes->links() }}
+                                @include('components.custom-pagination', ['items' => $outcomes])
                             </div>
                         @endif
                     @else

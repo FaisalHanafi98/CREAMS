@@ -160,7 +160,7 @@
                                     <div class="col-md-2">
                                         <div class="text-center">
                                             <div class="fw-bold text-primary">
-                                                {{ $session->scheduled_date ? \Carbon\Carbon::parse($session->scheduled_date)->format('M d, Y') : 'Not Set' }}
+                                                {{ $session->session_date ? \Carbon\Carbon::parse($session->session_date)->format('M d, Y') : 'Not Set' }}
                                             </div>
                                             <div class="small text-muted">
                                                 {{ $session->start_time ? \Carbon\Carbon::parse($session->start_time)->format('g:i A') : 'Not set' }}
@@ -188,7 +188,7 @@
                                             <div class="small text-muted mb-1">
                                                 <i class="fas fa-map-marker-alt me-1"></i>LOCATION
                                             </div>
-                                            <div class="small">{{ $session->room_details ?? 'Location TBD' }}</div>
+                                            <div class="small">{{ $session->location ?? $session->activity->activity_location ?? 'Location TBD' }}</div>
                                         </div>
                                     </div>
 
@@ -198,10 +198,10 @@
                                             <div class="position-relative">
                                                 <div class="progress" style="height: 8px;">
                                                     <div class="progress-bar bg-info" role="progressbar" 
-                                                         style="width: {{ $session->max_capacity > 0 ? (($session->enrollments->count() ?? 0) / $session->max_capacity) * 100 : 0 }}%"></div>
+                                                         style="width: {{ $session->max_participants > 0 ? (($session->enrollments->count() ?? 0) / $session->max_participants) * 100 : 0 }}%"></div>
                                                 </div>
                                                 <div class="small text-muted mt-1">
-                                                    {{ $session->enrollments->count() ?? 0 }}/{{ $session->max_capacity ?? 'N/A' }} participants
+                                                    {{ $session->enrollments->count() ?? 0 }}/{{ $session->max_participants ?? 'N/A' }} participants
                                                 </div>
                                             </div>
                                         </div>
@@ -250,17 +250,60 @@
                     </div>
                 </div>
 
-                <!-- Pagination -->
-                @if(method_exists($sessions, 'links'))
-                    <div class="d-flex justify-content-between align-items-center p-4 border-top bg-light">
-                        <div class="small text-muted">
-                            Showing {{ $sessions->firstItem() }} to {{ $sessions->lastItem() }} of {{ $sessions->total() }} sessions
-                        </div>
-                        <div>
-                            {{ $sessions->appends(request()->query())->links() }}
-                        </div>
+                <!-- Custom Pagination -->
+                <div class="text-center mt-4">
+                    <div class="mb-2">
+                        <small class="text-muted">
+                            Page {{ $sessions->currentPage() }} of {{ $sessions->lastPage() }} • {{ $sessions->total() }} total sessions
+                        </small>
                     </div>
-                @endif
+                    
+                    @if($sessions->lastPage() > 1)
+                    <div class="d-inline-flex">
+                        @php
+                            $current = $sessions->currentPage();
+                            $last = $sessions->lastPage();
+                            $start = max(1, $current - 2);
+                            $end = min($last, $current + 2);
+                        @endphp
+                        
+                        {{-- Previous --}}
+                        @if(!$sessions->onFirstPage())
+                            <a href="{{ $sessions->appends(request()->query())->previousPageUrl() }}" class="text-decoration-none mx-1" style="color: #667eea;">‹ Prev</a>
+                        @endif
+                        
+                        {{-- First page --}}
+                        @if($start > 1)
+                            <a href="{{ $sessions->appends(request()->query())->url(1) }}" class="text-decoration-none mx-1 px-2 py-1 rounded {{ $current == 1 ? 'bg-primary text-white' : 'text-secondary' }}">1</a>
+                            @if($start > 2)
+                                <span class="mx-1 text-muted">…</span>
+                            @endif
+                        @endif
+                        
+                        {{-- Page range --}}
+                        @for($page = $start; $page <= $end; $page++)
+                            @if($page == $current)
+                                <span class="mx-1 px-2 py-1 rounded bg-primary text-white">{{ $page }}</span>
+                            @else
+                                <a href="{{ $sessions->appends(request()->query())->url($page) }}" class="text-decoration-none mx-1 px-2 py-1 rounded text-secondary hover-bg-light">{{ $page }}</a>
+                            @endif
+                        @endfor
+                        
+                        {{-- Last page --}}
+                        @if($end < $last)
+                            @if($end < $last - 1)
+                                <span class="mx-1 text-muted">…</span>
+                            @endif
+                            <a href="{{ $sessions->appends(request()->query())->url($last) }}" class="text-decoration-none mx-1 px-2 py-1 rounded text-secondary">{{ $last }}</a>
+                        @endif
+                        
+                        {{-- Next --}}
+                        @if($sessions->hasMorePages())
+                            <a href="{{ $sessions->appends(request()->query())->nextPageUrl() }}" class="text-decoration-none mx-1" style="color: #667eea;">Next ›</a>
+                        @endif
+                    </div>
+                    @endif
+                </div>
 
             @else
                 <!-- No Sessions -->

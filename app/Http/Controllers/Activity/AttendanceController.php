@@ -551,7 +551,7 @@ class AttendanceController extends Controller
             // Get session with activity and enrollments
             $session = ActivitySession::with([
                 'activity:id,activity_name,centre_id',
-                'sessionEnrollments.trainee:id,unique_identifier,trainee_first_name,trainee_last_name,date_of_birth'
+                'sessionEnrollments.trainee:id,trainee_id,trainee_first_name,trainee_last_name,trainee_date_of_birth'
             ])->findOrFail($sessionId);
 
             // Permission checks

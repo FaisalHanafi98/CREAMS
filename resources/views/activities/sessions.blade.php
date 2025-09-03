@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Sessions - ' . $activity->activity_name . ' [DEBUG VERSION]')
+@section('title', 'Sessions - ' . $activity->activity_name)
 
 @section('content')
 <div class="sessions-container">
@@ -15,8 +15,8 @@
                 <i class="fas fa-plus"></i> Schedule New Session
             </button>
             @endif
-            <a href="{{ route('activities.show', $activity->id) }}" class="btn btn-outline-secondary">
-                <i class="fas fa-arrow-left"></i> Back to Activity
+            <a href="{{ route('activities.home') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Activities
             </a>
         </div>
     </div>
@@ -71,42 +71,15 @@
                                 </td>
                                 <td>
                                     @php
-                                        // Calculate actual status based on date/time
-                                        $sessionDate = \Carbon\Carbon::parse($session->session_date);
-                                        $sessionStart = $sessionDate->copy()->setTimeFromTimeString($session->start_time);
-                                        $sessionEnd = $sessionDate->copy()->setTimeFromTimeString($session->end_time);
-                                        $now = \Carbon\Carbon::now();
+                                        // Use model method for real-time status calculation
+                                        $statusData = $session->getRealTimeStatus();
+                                        $actualStatus = $statusData['status'];
+                                        $statusClass = $statusData['class'];
                                         
-                                        // Calculate status based purely on date/time
-                                        $isPastSession = $now->greaterThan($sessionEnd);
-                                        $isOngoingSession = $now->greaterThanOrEqualTo($sessionStart) && $now->lessThanOrEqualTo($sessionEnd);
-                                        $isCancelled = $session->session_status == 'cancelled';
-                                        
-                                        $debug = "Date: {$session->session_date}, Now: {$now->format('Y-m-d H:i')}, End: {$sessionEnd->format('Y-m-d H:i')}, Past: " . ($isPastSession ? 'YES' : 'NO');
-                                        $debugExtra = "RAW: sessionDate={$session->session_date}, endTime={$session->end_time}, sessionEnd={$sessionEnd}, now={$now}";
-                                        
-                                        if ($isCancelled) {
-                                            $actualStatus = 'cancelled';
-                                        } elseif ($isPastSession) {
-                                            $actualStatus = 'completed';
-                                        } elseif ($isOngoingSession) {
-                                            $actualStatus = 'ongoing';
-                                        } else {
-                                            $actualStatus = 'scheduled';
-                                        }
-                                        
-                                        $statusClass = match($actualStatus) {
-                                            'completed' => 'success',
-                                            'ongoing' => 'warning', 
-                                            'cancelled' => 'danger',
-                                            'scheduled' => 'primary',
-                                            default => 'secondary'
-                                        };
                                     @endphp
-                                    <span class="badge badge-success">
-                                        COMPLETED
+                                    <span class="badge badge-{{ $statusClass }}">
+                                        {{ strtoupper($actualStatus) }}
                                     </span>
-                                    <br><small style="color: red;">HARDCODED TEST - All should show COMPLETED</small>
                                 </td>
                                 <td>
                                     <div class="action-buttons">

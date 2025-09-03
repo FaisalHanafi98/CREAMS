@@ -189,6 +189,11 @@
         .search-result-item:hover {
             background-color: rgba(50, 189, 234, 0.05);
             text-decoration: none;
+            color: #333;
+        }
+        
+        .search-result-item:visited {
+            color: #333;
         }
         
         .search-result-icon {
@@ -958,6 +963,9 @@
     
     <!-- Dashboard widgets styling -->
     <link rel="stylesheet" href="{{ asset('css/dashboard-widgets.css') }}">
+    
+    <!-- Malaysian Phone Input Styling -->
+    <link rel="stylesheet" href="{{ asset('css/malaysian-phone-input.css') }}">
     
     @yield('styles')
 </head>
@@ -1731,7 +1739,7 @@
                         const displayMeta = item.location ? `${item.location} • ${item.type}` : (item.meta || item.type);
                         
                         resultsHtml += `
-                            <div class="search-result-item" onclick="showSearchItemDetails('${item.type}', '${item.name}', '${displayMeta}', '${item.url || '#'}')">
+                            <a href="${item.url || '#'}" class="search-result-item">
                                 <div class="search-result-icon" style="color: ${iconColor}">
                                     <i class="fas fa-${icon}"></i>
                                 </div>
@@ -1740,21 +1748,27 @@
                                     <div class="search-result-meta">${displayMeta}</div>
                                 </div>
                                 <div class="search-result-action">
-                                    <i class="fas fa-eye" style="color: #6c757d;"></i>
+                                    <i class="fas fa-arrow-right" style="color: #6c757d;"></i>
                                 </div>
-                            </div>
+                            </a>
                         `;
                     });
                     
                     searchResults.innerHTML = resultsHtml;
+                    
+                    // Add click event listeners to close dropdown when result is clicked
+                    const resultLinks = searchResults.querySelectorAll('.search-result-item');
+                    resultLinks.forEach(link => {
+                        link.addEventListener('click', function() {
+                            closeSearchDropdown();
+                        });
+                    });
                 }
                 
-                // Show item details instead of navigating
-                function showSearchItemDetails(type, name, meta, url) {
+                // Close search dropdown when a result is clicked
+                function closeSearchDropdown() {
                     searchResults.style.display = 'none';
                     globalSearch.value = '';
-                    
-                    alert(`📋 ${type} Details\n\nName: ${name}\nInfo: ${meta}\n\n🚧 Full ${type.toLowerCase()} management system coming soon!\n\nThis will include:\n• Detailed ${type.toLowerCase()} profiles\n• Complete information management\n• Progress tracking\n• Advanced search and filtering\n\nStay tuned!`);
                 }
                 
                 // Mock results fallback function
@@ -2159,6 +2173,9 @@
         });
         
     </script>
+    
+    <!-- Malaysian Phone Input Handler -->
+    <script src="{{ asset('js/malaysian-phone-input.js') }}"></script>
     
     @yield('scripts')
 </body>

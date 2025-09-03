@@ -45,8 +45,6 @@ class ActivitySession extends Model
     protected $casts = [
         'session_date' => 'date',
         // 'scheduled_date' => 'date', // Column doesn't exist, using session_date
-        'start_time' => 'datetime:H:i',
-        'end_time' => 'datetime:H:i',
         'session_materials' => 'array',
         'recurring_pattern' => 'array',
         'attendance_marked' => 'boolean'
@@ -184,7 +182,12 @@ class ActivitySession extends Model
     public function getValidParticipantCountAttribute()
     {
         $sessionDate = Carbon::parse($this->session_date);
-        $sessionEnd = $sessionDate->copy()->setTimeFromTimeString($this->end_time);
+        try {
+            $sessionEnd = $sessionDate->copy()->setTimeFromTimeString(trim($this->end_time));
+        } catch (Exception $e) {
+            // Fallback to default time if parsing fails
+            $sessionEnd = $sessionDate->copy()->setTime(17, 0, 0);
+        }
         $now = Carbon::now();
         
         // For past/completed sessions, show actual attendees if available, otherwise all enrolled
@@ -409,7 +412,13 @@ class ActivitySession extends Model
     public function complete()
     {
         if ($this->canComplete()) {
-            $this->update(['status' => 'completed']);
+            $this->update(['session_status' => 'completed']);
+            
+            // Check if the parent activity should be marked as completed
+            if ($this->activity) {
+                $this->activity->updateCompletionStatus();
+            }
+            
             return true;
         }
         return false;
@@ -425,7 +434,7 @@ class ActivitySession extends Model
         $sessionData['cancelled_at'] = Carbon::now()->toISOString();
 
         $this->update([
-            'status' => 'cancelled',
+            'session_status' => 'cancelled',
             'session_data' => $sessionData
         ]);
 
@@ -674,5 +683,136 @@ class ActivitySession extends Model
             'status' => $this->status,
             'participants' => $this->current_participants . '/' . $this->max_participants
         ];
+    }
+
+    /**
+     * Get real-time status based on current date/time
+     * This always calculates status dynamically regardless of database status
+     */
+    public function getRealTimeStatus()
+    {
+        $now = Carbon::now();
+        
+        // Get the session date as a string
+        if (is_object($this->session_date)) {
+            $dateStr = $this->session_date->format('Y-m-d');
+        } else {
+            // If it's already a string, extract just the date part
+            $dateStr = substr($this->session_date, 0, 10);
+        }
+        
+        // Combine date with times to create proper datetime objects - with safe parsing
+        try {
+            // Clean and extract time portion only
+            $startTimeClean = $this->extractTimeOnly($this->start_time);
+            $endTimeClean = $this->extractTimeOnly($this->end_time);
+            
+            // Create datetime objects by combining session date with extracted times
+            $sessionStart = Carbon::parse($dateStr)->setTimeFromTimeString($startTimeClean);
+            $sessionEnd = Carbon::parse($dateStr)->setTimeFromTimeString($endTimeClean);
+            
+        } catch (Exception $e) {
+            // Ultimate fallback if any parsing fails
+            $baseDate = Carbon::parse($dateStr);
+            $sessionStart = $baseDate->copy()->setTime(9, 0, 0);
+            $sessionEnd = $baseDate->copy()->setTime(17, 0, 0);
+            
+            // Log the error for debugging
+            \Log::error('ActivitySession getRealTimeStatus parsing error: ' . $e->getMessage(), [
+                'session_id' => $this->id,
+                'date' => $dateStr,
+                'start_time' => $this->start_time,
+                'end_time' => $this->end_time,
+                'extracted_start' => $this->extractTimeOnly($this->start_time),
+                'extracted_end' => $this->extractTimeOnly($this->end_time)
+            ]);
+        }
+        
+        // Check if session is cancelled (this overrides time-based status)
+        if ($this->session_status === 'cancelled') {
+            return [
+                'status' => 'cancelled',
+                'class' => 'danger',
+                'reason' => 'Session was cancelled'
+            ];
+        }
+        
+        // Time-based status calculation
+        if ($now->greaterThan($sessionEnd)) {
+            return [
+                'status' => 'completed',
+                'class' => 'success', 
+                'reason' => 'Session has ended'
+            ];
+        } elseif ($now->greaterThanOrEqualTo($sessionStart) && $now->lessThanOrEqualTo($sessionEnd)) {
+            return [
+                'status' => 'ongoing',
+                'class' => 'warning',
+                'reason' => 'Session is currently running'
+            ];
+        } else {
+            return [
+                'status' => 'scheduled',
+                'class' => 'primary',
+                'reason' => 'Session is scheduled for the future'
+            ];
+        }
+    }
+
+    /**
+     * Get status attribute that always reflects real-time status
+     */
+    public function getActualStatusAttribute()
+    {
+        return $this->getRealTimeStatus()['status'];
+    }
+
+    /**
+     * Get status class for badges
+     */
+    public function getStatusClassAttribute()
+    {
+        return $this->getRealTimeStatus()['class'];
+    }
+
+    /**
+     * Extract time portion from a datetime string or time string
+     * Handles cases where time fields contain full datetime strings
+     */
+    private function extractTimeOnly($timeString)
+    {
+        if (!$timeString) {
+            return '09:00:00'; // Default time
+        }
+
+        $timeString = trim($timeString);
+
+        // If it looks like a full datetime (contains date), extract time portion
+        if (preg_match('/\d{4}-\d{2}-\d{2}\s+(\d{1,2}:\d{2}:\d{2})/', $timeString, $matches)) {
+            return $matches[1]; // Return just the time part (HH:MM:SS)
+        }
+
+        // If it looks like a full datetime without seconds, extract time portion
+        if (preg_match('/\d{4}-\d{2}-\d{2}\s+(\d{1,2}:\d{2})/', $timeString, $matches)) {
+            return $matches[1] . ':00'; // Add seconds
+        }
+
+        // If it's already just time (HH:MM:SS or HH:MM), return as is
+        if (preg_match('/^\d{1,2}:\d{2}(:\d{2})?$/', $timeString)) {
+            // Add seconds if missing
+            if (substr_count($timeString, ':') === 1) {
+                return $timeString . ':00';
+            }
+            return $timeString;
+        }
+
+        // Fallback: try to parse with Carbon and extract time
+        try {
+            $parsed = Carbon::parse($timeString);
+            return $parsed->format('H:i:s');
+        } catch (Exception $e) {
+            // Last resort: return default time
+            return '09:00:00';
+        }
     }
 }

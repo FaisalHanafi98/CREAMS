@@ -135,9 +135,7 @@
                         </div>
 
                         @if($letters->hasPages())
-                            <div class="d-flex justify-content-center mt-4">
-                                {{ $letters->links() }}
-                            </div>
+                            @include('components.custom-pagination', ['items' => $letters])
                         @endif
                     @else
                         <div class="text-center py-4">

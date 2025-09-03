@@ -681,7 +681,7 @@ class IRLSeeder extends Seeder
                 'description' => 'Prayer therapy to develop spiritual awareness and motor coordination',
                 'category' => 'Religious Therapy',
                 'duration' => 30,
-                'max_participants' => 10
+                'max_participants' => 12
             ],
             [
                 'name' => 'Terapi Dhikir',
@@ -736,7 +736,7 @@ class IRLSeeder extends Seeder
                 'description' => 'Music therapy using traditional and modern instruments',
                 'category' => 'Arts Therapy',
                 'duration' => 30,
-                'max_participants' => 10
+                'max_participants' => 12
             ],
             [
                 'name' => 'Kesenian Seni',

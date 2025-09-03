@@ -179,23 +179,24 @@
                             <span class="required">*</span>
                         </label>
                         <div class="input-wrapper">
-                            <select id="category_id" name="category_id" class="form-select-enhanced" required>
+                            <select id="category_id" name="category_id" class="form-select-enhanced @error('category_id') is-invalid @enderror" required>
                                 <option value="">Select a category...</option>
-                                @foreach(\App\Models\Category::where('is_active', true)->orderBy('category_type', 'asc')->get()->groupBy('category_type') as $type => $categories)
-                                    <optgroup label="{{ ucfirst($type) }}">
-                                        @foreach($categories as $category)
-                                            <option value="{{ $category->id }}" data-type="{{ $category->category_type }}">
-                                                {{ $category->category_name }}
-                                            </option>
-                                        @endforeach
-                                    </optgroup>
+                                @foreach($categories as $category)
+                                    <option value="{{ $category->id }}" 
+                                            {{ old('category_id') == $category->id ? 'selected' : '' }}>
+                                        {{ $category->category_name }}
+                                    </option>
                                 @endforeach
                             </select>
                             <div class="select-indicator">
                                 <i class="fas fa-chevron-down"></i>
                             </div>
                         </div>
-                        <div class="validation-message"></div>
+                        <div class="validation-message">
+                            @error('category_id')
+                                <span class="error-message">{{ $message }}</span>
+                            @enderror
+                        </div>
                     </div>
 
                     <!-- Activity Type is now handled by Category selection -->

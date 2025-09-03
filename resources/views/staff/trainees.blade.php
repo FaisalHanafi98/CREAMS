@@ -57,6 +57,18 @@
     .trainee-item:hover {
         box-shadow: 0 5px 15px rgba(0,0,0,0.1);
         transform: translateY(-2px);
+        background-color: #f8f9fa;
+    }
+    
+    .trainee-item.clickable {
+        cursor: pointer !important;
+        transition: all 0.2s ease;
+    }
+    
+    .trainee-item.clickable:hover {
+        box-shadow: 0 8px 25px rgba(50, 189, 234, 0.15);
+        border-left-color: var(--primary-color);
+        border-left-width: 6px;
     }
 
     .trainee-avatar {
@@ -175,20 +187,7 @@
         </ol>
     </nav>
 
-    <!-- Success/Error Message -->
-    @if(session('success'))
-    <div class="alert alert-success alert-dismissible fade show" role="alert">
-        <i class="fas fa-check-circle me-2"></i>{{ session('success') }}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-    @endif
-
-    @if(session('error'))
-    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-        <i class="fas fa-exclamation-circle me-2"></i>{{ session('error') }}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-    @endif
+    @include('components.flash-messages')
 
     <!-- Header -->
     <div class="trainees-header">
@@ -215,25 +214,19 @@
         
         <div class="stats-grid">
             <div class="stat-card">
-                <div class="stat-number">{{ count($trainees) }}</div>
+                <div class="stat-number">{{ $traineeStats['total_trainees'] ?? 0 }}</div>
                 <div class="stat-label">Total Trainee</div>
             </div>
             <div class="stat-card">
-                <div class="stat-number">
-                    {{ collect($trainees)->where('enrollment_status', 'active')->count() }}
-                </div>
+                <div class="stat-number">{{ $traineeStats['active_enrollments'] ?? 0 }}</div>
                 <div class="stat-label">Active Enrollments</div>
             </div>
             <div class="stat-card">
-                <div class="stat-number">
-                    {{ collect($trainees)->where('enrollment_status', 'enrolled')->count() }}
-                </div>
+                <div class="stat-number">{{ $traineeStats['total_enrollments'] ?? 0 }}</div>
                 <div class="stat-label">Enrolled</div>
             </div>
             <div class="stat-card">
-                <div class="stat-number">
-                    {{ collect($trainees)->unique('activity_name')->count() }}
-                </div>
+                <div class="stat-number">{{ $traineeStats['unique_activities'] ?? 0 }}</div>
                 <div class="stat-label">Unique Activity</div>
             </div>
         </div>
@@ -241,36 +234,62 @@
 
     <!-- Trainee List -->
     <div class="trainees-card">
-        <h3 class="mb-4">
-            <i class="fas fa-list me-2 text-primary"></i>All Assigned Trainee
-        </h3>
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3 class="mb-0">
+                <i class="fas fa-list me-2 text-primary"></i>All Assigned Trainee
+                @if(isset($pagination))
+                    <small class="text-muted">({{ $pagination->total }} total, showing {{ count($trainees) }} per page)</small>
+                @endif
+            </h3>
+        </div>
 
         @if(count($trainees) > 0)
             @foreach($trainees as $trainee)
-                <div class="trainee-item">
+                <div class="trainee-item clickable" onclick="window.location.href='{{ route('traineeprofile', $trainee->encrypted_id ?? '') }}'">
                     <div class="row align-items-center">
                         <div class="col-md-8">
                             <div class="d-flex align-items-center">
                                 <div class="trainee-avatar">
                                     {{ strtoupper(substr($trainee->name ?? 'T', 0, 2)) }}
                                 </div>
-                                <div>
+                                <div class="flex-grow-1">
                                     <div class="d-flex align-items-center mb-2">
-                                        @if(isset($trainee->ic_number))
-                                            <span class="trainee-id me-2">{{ $trainee->ic_number }}</span>
+                                        @if(isset($trainee->trainee_id))
+                                            <span class="trainee-id me-2">{{ $trainee->trainee_id }}</span>
                                         @endif
-                                        <div class="trainee-name">{{ $trainee->name ?? 'Unknown Trainee' }}</div>
+                                        <div class="trainee-name">
+                                            <a href="{{ route('traineeprofile', $trainee->encrypted_id ?? '') }}" class="text-decoration-none text-dark">
+                                                {{ $trainee->name ?? 'Unknown Trainee' }}
+                                            </a>
+                                        </div>
                                     </div>
                                     
                                     <div class="trainee-meta">
-                                        @if(isset($trainee->activity_name))
-                                            <i class="fas fa-tasks me-1"></i>Activity: {{ $trainee->activity_name }}
+                                        @if(isset($trainee->enrolled_activities))
+                                            <div class="mb-1">
+                                                <i class="fas fa-tasks me-1"></i>
+                                                <strong>Activities ({{ $trainee->activity_count ?? 1 }}):</strong> 
+                                                <span class="text-primary">{{ $trainee->enrolled_activities }}</span>
+                                            </div>
                                         @endif
-                                        @if(isset($trainee->enrollment_date))
-                                            | <i class="fas fa-calendar me-1"></i>Enrolled: {{ date('M j, Y', strtotime($trainee->enrollment_date)) }}
-                                        @endif
-                                        @if(isset($trainee->age))
-                                            | <i class="fas fa-user me-1"></i>Age: {{ $trainee->age }}
+                                        
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                @if(isset($trainee->first_enrollment_date))
+                                                    <i class="fas fa-calendar me-1"></i>First Enrolled: {{ date('M j, Y', strtotime($trainee->first_enrollment_date)) }}
+                                                @endif
+                                            </div>
+                                            <div class="col-md-6">
+                                                @if(isset($trainee->age))
+                                                    <i class="fas fa-user me-1"></i>Age: {{ $trainee->age }} years
+                                                @endif
+                                            </div>
+                                        </div>
+                                        
+                                        @if(isset($trainee->trainee_condition))
+                                            <div class="mt-1">
+                                                <i class="fas fa-heartbeat me-1"></i>Condition: {{ $trainee->trainee_condition }}
+                                            </div>
                                         @endif
                                     </div>
                                 </div>
@@ -278,38 +297,48 @@
                         </div>
                         
                         <div class="col-md-4 text-end">
-                            @if(isset($trainee->enrollment_status))
-                                <span class="status-badge status-{{ $trainee->enrollment_status }}">
-                                    {{ ucfirst($trainee->enrollment_status) }}
-                                </span>
-                            @else
-                                <span class="status-badge status-enrolled">
-                                    Centre Trainee
-                                </span>
-                            @endif
+                            <span class="status-badge status-enrolled">
+                                Enrolled
+                            </span>
+                            <div class="mt-2">
+                                <small class="text-muted">
+                                    <i class="fas fa-external-link-alt me-1"></i>Click to view profile
+                                </small>
+                            </div>
                             
                             @if(isset($trainee->gender))
                                 <div class="mt-2">
-                                    <small class="text-muted">{{ ucfirst($trainee->gender) }}</small>
+                                    <small class="text-muted">
+                                        <i class="fas fa-{{ $trainee->gender === 'male' ? 'mars' : 'venus' }} me-1"></i>
+                                        {{ ucfirst($trainee->gender) }}
+                                    </small>
+                                </div>
+                            @endif
+                            
+                            @if(isset($trainee->centre_name))
+                                <div class="mt-1">
+                                    <small class="text-muted">
+                                        <i class="fas fa-building me-1"></i>{{ $trainee->centre_name }}
+                                    </small>
                                 </div>
                             @endif
                         </div>
                     </div>
                     
-                    @if(isset($trainee->phone) || isset($trainee->emergency_contact))
+                    @if(isset($trainee->trainee_phone_number) || isset($trainee->trainee_email))
                         <div class="mt-3 pt-3 border-top">
                             <div class="row">
-                                @if(isset($trainee->phone))
+                                @if(isset($trainee->trainee_phone_number))
                                     <div class="col-md-6">
                                         <small class="text-muted">
-                                            <i class="fas fa-phone me-1"></i>Phone: {{ $trainee->phone }}
+                                            <i class="fas fa-phone me-1"></i>Phone: {{ $trainee->trainee_phone_number }}
                                         </small>
                                     </div>
                                 @endif
-                                @if(isset($trainee->emergency_contact))
+                                @if(isset($trainee->trainee_email))
                                     <div class="col-md-6">
                                         <small class="text-muted">
-                                            <i class="fas fa-exclamation-triangle me-1"></i>Emergency: {{ $trainee->emergency_contact }}
+                                            <i class="fas fa-envelope me-1"></i>Email: {{ $trainee->trainee_email }}
                                         </small>
                                     </div>
                                 @endif
@@ -318,6 +347,44 @@
                     @endif
                 </div>
             @endforeach
+
+            <!-- Pagination -->
+            @if(isset($pagination) && $pagination->lastPage > 1)
+                <div class="d-flex justify-content-between align-items-center mt-4">
+                    <div>
+                        <small class="text-muted">
+                            Showing {{ (($pagination->currentPage - 1) * $pagination->perPage) + 1 }} to 
+                            {{ min($pagination->currentPage * $pagination->perPage, $pagination->total) }} 
+                            of {{ $pagination->total }} trainees
+                        </small>
+                    </div>
+                    <nav>
+                        <ul class="pagination pagination-sm mb-0">
+                            @if($pagination->previousPageUrl)
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ $pagination->previousPageUrl }}">
+                                        <i class="fas fa-chevron-left"></i> Previous
+                                    </a>
+                                </li>
+                            @endif
+                            
+                            @for($i = max(1, $pagination->currentPage - 2); $i <= min($pagination->lastPage, $pagination->currentPage + 2); $i++)
+                                <li class="page-item {{ $i == $pagination->currentPage ? 'active' : '' }}">
+                                    <a class="page-link" href="?page={{ $i }}">{{ $i }}</a>
+                                </li>
+                            @endfor
+                            
+                            @if($pagination->nextPageUrl)
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ $pagination->nextPageUrl }}">
+                                        Next <i class="fas fa-chevron-right"></i>
+                                    </a>
+                                </li>
+                            @endif
+                        </ul>
+                    </nav>
+                </div>
+            @endif
         @else
             <div class="no-trainees">
                 <i class="fas fa-user-graduate fa-3x mb-3 text-muted"></i>

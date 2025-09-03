@@ -5,10 +5,12 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
+use App\Traits\HandlesPhoneNumbers;
+use App\Rules\MalaysianPhoneRule;
 
 class Trainee extends Model
 {
-    use HasFactory;
+    use HasFactory, HandlesPhoneNumbers;
 
     /**
      * The attributes that are mass assignable.
@@ -101,6 +103,42 @@ class Trainee extends Model
         'services_consent' => 'boolean',
         'date_of_birth' => 'date', // Compatibility
     ];
+
+    /**
+     * Phone number mutators - normalize before saving
+     */
+    public function setTraineePhoneNumberAttribute($value)
+    {
+        $this->attributes['trainee_phone_number'] = MalaysianPhoneRule::normalize($value);
+    }
+
+    public function setGuardianPhoneAttribute($value)
+    {
+        $this->attributes['guardian_phone'] = MalaysianPhoneRule::normalize($value);
+    }
+
+    public function setEmergencyContactPhoneAttribute($value)
+    {
+        $this->attributes['emergency_contact_phone'] = MalaysianPhoneRule::normalize($value);
+    }
+
+    /**
+     * Phone number accessors - format for display
+     */
+    public function getTraineePhoneFormattedAttribute()
+    {
+        return MalaysianPhoneRule::format($this->trainee_phone_number);
+    }
+
+    public function getGuardianPhoneFormattedAttribute()
+    {
+        return MalaysianPhoneRule::format($this->guardian_phone);
+    }
+
+    public function getEmergencyContactPhoneFormattedAttribute()
+    {
+        return MalaysianPhoneRule::format($this->emergency_contact_phone);
+    }
 
     /**
      * Get the trainee's full name.
@@ -482,6 +520,113 @@ class Trainee extends Model
         }
         
         return $activityCount > 0 ? round($totalRate / $activityCount, 2) : 0;
+    }
+
+    // =============================================
+    // BUSINESS LOGIC: SESSION-BASED ATTENDANCE
+    // =============================================
+
+    /**
+     * BUSINESS LOGIC: Trainees attend specific sessions, NOT daily check-ins
+     * This method enforces session-based attendance tracking
+     */
+    public function markSessionAttendance($sessionId, $status, $notes = null)
+    {
+        // Validate that the session exists and trainee is enrolled
+        $session = \App\Models\ActivitySession::findOrFail($sessionId);
+        
+        // Check if trainee is enrolled in this session's activity
+        $enrollment = \App\Models\ActivityEnrollment::where('activity_id', $session->activity_id)
+            ->where('trainee_id', $this->id)
+            ->where('status', 'active')
+            ->first();
+            
+        if (!$enrollment) {
+            throw new \Exception('Trainee is not enrolled in this activity session.');
+        }
+
+        // Business Rule: No attendance on weekends or holidays
+        if (\App\Helpers\MalaysiaHolidays::isNonWorkingDay($session->session_date)) {
+            $reason = \App\Helpers\MalaysiaHolidays::getNonWorkingDayReason($session->session_date);
+            throw new \Exception('Cannot mark attendance: ' . $reason);
+        }
+
+        // Create or update attendance record (session-based, NO check-in times for trainees)
+        return \App\Models\Attendance::updateOrCreate([
+            'trainee_id' => $this->id,
+            'activity_id' => $session->activity_id,
+            'session_id' => $sessionId,
+            'attendance_date' => $session->session_date,
+        ], [
+            'status' => $status,
+            'notes' => $notes,
+            'marked_by_user_id' => session('id'),
+            'marked_at' => now()
+        ]);
+    }
+
+    /**
+     * Get trainee's attendance for a specific session
+     */
+    public function getSessionAttendance($sessionId)
+    {
+        return \App\Models\Attendance::where('trainee_id', $this->id)
+            ->where('session_id', $sessionId)
+            ->first();
+    }
+
+    /**
+     * Get all sessions trainee is enrolled in for today
+     * Used to show what sessions they should attend today
+     */
+    public function getTodaySessions()
+    {
+        $today = now()->format('Y-m-d');
+        
+        return \App\Models\ActivitySession::whereDate('session_date', $today)
+            ->whereHas('activity.enrollments', function($query) {
+                $query->where('trainee_id', $this->id)
+                      ->where('status', 'active');
+            })
+            ->with(['activity', 'teacher'])
+            ->get();
+    }
+
+    /**
+     * Check if trainee has any sessions today
+     */
+    public function hasSessionsToday()
+    {
+        return $this->getTodaySessions()->count() > 0;
+    }
+
+    /**
+     * Validate that attendance can only be marked for enrolled sessions
+     */
+    public function canAttendSession($sessionId)
+    {
+        $session = \App\Models\ActivitySession::find($sessionId);
+        
+        if (!$session) {
+            return false;
+        }
+
+        // Check enrollment
+        $enrollment = \App\Models\ActivityEnrollment::where('activity_id', $session->activity_id)
+            ->where('trainee_id', $this->id)
+            ->where('status', 'active')
+            ->first();
+
+        if (!$enrollment) {
+            return false;
+        }
+
+        // Check if it's a working day
+        if (\App\Helpers\MalaysiaHolidays::isNonWorkingDay($session->session_date)) {
+            return false;
+        }
+
+        return true;
     }
 
     /**

@@ -176,7 +176,7 @@
 
     <!-- Pagination -->
     <div class="d-flex justify-content-center">
-        {{ $templates->links() }}
+        @include('components.custom-pagination', ['items' => $templates])
     </div>
 </div>
 

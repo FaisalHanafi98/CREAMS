@@ -631,37 +631,7 @@
 @section('content')
 <div class="profile-wrapper">
     <div class="container-fluid">
-        <!-- Alerts -->
-        @if(session('success'))
-        <div class="alert alert-success alert-dismissible fade show mb-4" role="alert">
-            <i class="fas fa-check-circle mr-2"></i> {{ session('success') }}
-            <button type="button" class="close" data-dismiss="alert">
-                <span>&times;</span>
-            </button>
-        </div>
-        @endif
-        
-        @if(session('error'))
-        <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
-            <i class="fas fa-exclamation-circle mr-2"></i> {{ session('error') }}
-            <button type="button" class="close" data-dismiss="alert">
-                <span>&times;</span>
-            </button>
-        </div>
-        @endif
-        
-        @if ($errors->any())
-        <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
-            <ul class="mb-0">
-                @foreach ($errors->all() as $error)
-                <li>{{ $error }}</li>
-                @endforeach
-            </ul>
-            <button type="button" class="close" data-dismiss="alert">
-                <span>&times;</span>
-            </button>
-        </div>
-        @endif
+        @include('components.flash-messages')
         
         <!-- Profile Container -->
         <div class="profile-container">
@@ -1192,19 +1162,27 @@ $(document).ready(function() {
     
     if (typeof window.showErrorAlert !== 'function') {
         window.showErrorAlert = function(message) {
-            // Check if there's already a server-side error message showing
-            if ($('.alert-danger').length > 0) {
+            // Check if there's already a modern error message showing
+            if ($('.alert-enhanced').length > 0) {
                 console.log('Skipping duplicate error alert:', message);
                 return; // Don't show duplicate alert
             }
             
-            // Create and show a temporary error alert
+            // Create and show a modern error alert
             const alertHtml = `
-                <div class="alert alert-danger alert-dismissible fade show js-alert" role="alert" style="position: fixed; top: 20px; right: 20px; z-index: 9999; min-width: 300px;">
-                    <i class="fas fa-exclamation-circle mr-2"></i> ${message}
-                    <button type="button" class="close" data-dismiss="alert">
-                        <span>&times;</span>
-                    </button>
+                <div class="alert alert-danger alert-enhanced js-alert" role="alert" style="position: fixed; top: 20px; right: 20px; z-index: 9999; min-width: 300px; max-width: 400px;">
+                    <div class="alert-content">
+                        <div class="alert-icon">
+                            <i class="fas fa-exclamation-circle"></i>
+                        </div>
+                        <div class="alert-text">
+                            <div class="alert-title">Error!</div>
+                            <div class="alert-message">${message}</div>
+                        </div>
+                        <button type="button" class="alert-dismiss" onclick="this.closest('.alert').style.display='none'">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
                 </div>
             `;
             $('body').append(alertHtml);
@@ -1632,21 +1610,31 @@ $(document).ready(function() {
     
     function showErrorAlert(message) {
         // Remove existing error alerts
-        $('.alert-danger').remove();
+        $('.alert-enhanced.alert-danger').remove();
         
-        // Add new error alert
+        // Add new modern error alert
         $('.profile-container').before(`
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                <i class="fas fa-exclamation-circle mr-2"></i> ${message}
-                <button type="button" class="close" data-dismiss="alert">
-                    <span>&times;</span>
-                </button>
+            <div class="alert alert-danger alert-enhanced" role="alert">
+                <div class="alert-content">
+                    <div class="alert-icon">
+                        <i class="fas fa-exclamation-circle"></i>
+                    </div>
+                    <div class="alert-text">
+                        <div class="alert-title">Error!</div>
+                        <div class="alert-message">${message}</div>
+                    </div>
+                    <button type="button" class="alert-dismiss" onclick="this.closest('.alert').style.display='none'">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
             </div>
         `);
         
         // Auto-hide after 5 seconds
         setTimeout(function() {
-            $('.alert-danger').alert('close');
+            $('.alert-enhanced.alert-danger').fadeOut(function() {
+                $(this).remove();
+            });
         }, 5000);
     }
     

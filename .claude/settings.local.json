@@ -1,43 +1,11 @@
 {
   "permissions": {
     "allow": [
-      "Bash(composer install:*)",
-      "Bash(php artisan:*)",
-      "Bash(ls:*)",
-      "Bash(mkdir:*)",
-      "Bash(cp:*)",
-      "Bash(rm:*)",
-      "Bash(php:*)",
-      "Bash(git init:*)",
-      "Bash(git remote add:*)",
-      "Bash(git add:*)",
-      "Bash(git commit:*)",
-      "Bash(git checkout:*)",
-      "Bash(git push:*)",
-      "Bash(curl:*)",
-      "Bash(grep:*)",
-      "Bash(mv:*)",
-      "Bash(find:*)",
-      "Bash(tail:*)",
-      "Bash(touch:*)",
-      "Bash(true)",
-      "Bash(cd \"C:\\laragon\\www\\CREAMS\\resources\\views\\staff\")",
-      "Bash(sed -i 's/teachershome/staffs.home/g' edit.blade.php schedule.blade.php trainees.blade.php)",
-      "Bash(for file in edit.blade.php schedule.blade.php trainees.blade.php)",
-      "Bash(do echo \"Updating encrypted IDs in: $file\")",
-      "Bash(sed -i 's/\\$staffMember->id/\\$staffMember->encrypted_id ?? \\$staffMember->id/g' \"$file\")",
-      "Bash(done)",
-      "Bash(cd \"C:\\laragon\\www\\CREAMS\\resources\\views\")",
-      "Bash(find . -name \"*.blade.php\" -exec grep -l \"teachershome\\|traineeshome\\|auth\\.registerpage\\|activities\\.index\\|rehabilitation\\.categories\\|staff\\.view\\|staff\\.edit\" {} ;)",
-      "Bash(wc:*)",
-      "Bash(composer:*)",
-      "Bash(mysql:*)",
-      "Bash(mysql:*)",
-      "Bash(time curl:*)",
-      "Bash(sed:*)",
-      "Bash(rg:*)"
+      "Bash(php -l:*)",
+      "Bash(php:*)"
     ],
     "deny": [],
+    "ask": [],
     "additionalDirectories": [
       "C:\\c\\laragon\\www"
     ]

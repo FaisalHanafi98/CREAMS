@@ -100,7 +100,29 @@ try {
             $numSessions = rand(1, 2);
             
             for ($s = 0; $s < $numSessions; $s++) {
+                // Skip weekends and holidays when generating session dates
                 $sessionDate = $startDate->copy()->addDays($s * 7);
+                
+                // Ensure session is on a weekday (Monday to Friday only)
+                while ($sessionDate->dayOfWeek === 0 || $sessionDate->dayOfWeek === 6) {
+                    $sessionDate->addDay();
+                }
+                
+                // Skip Malaysia public holidays (simplified check for major holidays)
+                $publicHolidays = [
+                    '2025-01-01', '2025-01-29', '2025-01-30', '2025-02-01', 
+                    '2025-03-31', '2025-04-01', '2025-05-01', '2025-06-03', 
+                    '2025-06-07', '2025-06-27', '2025-08-31', '2025-09-05', 
+                    '2025-09-16', '2025-10-20', '2025-12-25'
+                ];
+                
+                while (in_array($sessionDate->format('Y-m-d'), $publicHolidays)) {
+                    $sessionDate->addDay();
+                    // Also skip if the adjusted date falls on weekend
+                    while ($sessionDate->dayOfWeek === 0 || $sessionDate->dayOfWeek === 6) {
+                        $sessionDate->addDay();
+                    }
+                }
                 
                 $sessionData = [
                     'activity_id' => $activityId,

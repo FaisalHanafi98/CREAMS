@@ -318,7 +318,7 @@
                 </div>
                 @if(method_exists($sessions, 'links'))
                     <div class="d-flex justify-content-center mt-4">
-                        {{ $sessions->links() }}
+                        @include('components.custom-pagination', ['items' => $sessions])
                     </div>
                 @endif
             @else

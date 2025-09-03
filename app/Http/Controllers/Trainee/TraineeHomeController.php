@@ -652,13 +652,20 @@ class TraineeHomeController extends Controller
                 $weeklySchedule[$day] = [];
             }
             
-            // Get this week's sessions for the trainee
+            // Get this week's sessions for the trainee 
+            // For future dates: use enrollments, For past dates: use actual attendance
+            $startOfWeek = now()->startOfWeek();
+            $endOfWeek = now()->endOfWeek();
+            $today = now()->toDateString();
+            
             $thisWeekSessions = \DB::table('activity_sessions')
                 ->join('activities', 'activity_sessions.activity_id', '=', 'activities.id')
-                ->join('activity_enrollments', 'activities.id', '=', 'activity_enrollments.activity_id')
-                ->where('activity_enrollments.trainee_id', $id)
-                ->where('activity_enrollments.enrollment_status', 'enrolled')
-                ->whereBetween('activity_sessions.session_date', [now()->startOfWeek(), now()->endOfWeek()])
+                ->join('activity_enrollments', function($join) use ($id) {
+                    $join->on('activities.id', '=', 'activity_enrollments.activity_id')
+                         ->where('activity_enrollments.trainee_id', '=', $id)
+                         ->where('activity_enrollments.enrollment_status', '=', 'enrolled');
+                })
+                ->whereBetween('activity_sessions.session_date', [$startOfWeek, $endOfWeek])
                 ->select(
                     'activity_sessions.session_date',
                     'activity_sessions.start_time',
@@ -666,6 +673,7 @@ class TraineeHomeController extends Controller
                     'activity_sessions.location',
                     'activities.activity_name'
                 )
+                ->distinct()
                 ->orderBy('activity_sessions.session_date')
                 ->orderBy('activity_sessions.start_time')
                 ->get();
@@ -686,9 +694,11 @@ class TraineeHomeController extends Controller
             // Get upcoming activities (next 7 days beyond current week)
             $upcomingActivities = \DB::table('activity_sessions')
                 ->join('activities', 'activity_sessions.activity_id', '=', 'activities.id')
-                ->join('activity_enrollments', 'activities.id', '=', 'activity_enrollments.activity_id')
-                ->where('activity_enrollments.trainee_id', $id)
-                ->where('activity_enrollments.enrollment_status', 'enrolled')
+                ->join('activity_enrollments', function($join) use ($id) {
+                    $join->on('activities.id', '=', 'activity_enrollments.activity_id')
+                         ->where('activity_enrollments.trainee_id', '=', $id)
+                         ->where('activity_enrollments.enrollment_status', '=', 'enrolled');
+                })
                 ->whereBetween('activity_sessions.session_date', [now()->addWeek()->startOfWeek(), now()->addWeek()->endOfWeek()])
                 ->select(
                     'activity_sessions.session_date',
@@ -697,6 +707,7 @@ class TraineeHomeController extends Controller
                     'activity_sessions.location',
                     'activities.activity_name'
                 )
+                ->distinct()
                 ->orderBy('activity_sessions.session_date')
                 ->orderBy('activity_sessions.start_time')
                 ->limit(6)
@@ -875,15 +886,15 @@ class TraineeHomeController extends Controller
                 $message = 'Attendance updated successfully';
             } else {
                 // Create new attendance record
+                // BUSINESS LOGIC: Use session-based attendance for trainees
+                // Remove check_in_time and check_out_time as trainees are tracked per session, not daily
                 Attendance::create([
                     'trainee_id' => $id,
-                    'date' => $validatedData['attendance_date'],
+                    'attendance_date' => $validatedData['attendance_date'],
                     'status' => $validatedData['attendance_status'],
-                    'remarks' => $validatedData['attendance_remarks'],
-                    'marked_by' => session('id'),
-                    'check_in_time' => $validatedData['check_in_time'],
-                    'check_out_time' => $validatedData['check_out_time'],
-                    'activity_type' => $validatedData['activity_type']
+                    'notes' => $validatedData['attendance_remarks'],
+                    'marked_by_user_id' => session('id'),
+                    'marked_at' => now()
                 ]);
                 
                 $message = 'Attendance marked successfully';
@@ -891,7 +902,7 @@ class TraineeHomeController extends Controller
             
             Log::info('Trainee attendance marked successfully', [
                 'trainee_id' => $id,
-                'date' => $validatedData['attendance_date'],
+                'attendance_date' => $validatedData['attendance_date'],
                 'status' => $validatedData['attendance_status'],
                 'marked_by' => session('id')
             ]);

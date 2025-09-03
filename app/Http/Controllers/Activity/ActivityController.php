@@ -25,6 +25,7 @@ use App\Rules\InstructorQualificationRule;
 use App\Rules\TraineeCompatibilityRule;
 use App\Rules\ActivityTimeBufferRule;
 use App\Rules\MinimumEnrollmentRule;
+use App\Helpers\MalaysiaHolidays;
 
 class ActivityController extends Controller
 {
@@ -202,7 +203,25 @@ class ActivityController extends Controller
                 ->with(['trainee', 'session.activity'])
                 ->get();
 
-            if ($participantConflicts->isNotEmpty()) {
+            // Check for daily session limit (5 sessions per trainee per day)
+            $dailySessionCount = SessionEnrollment::where('trainee_id', $participantId)
+                ->whereHas('session', function($query) use ($date, $excludeActivityId) {
+                    $query->where('session_date', $date)
+                          ->whereIn('status', ['scheduled', 'ongoing']);
+                    if ($excludeActivityId) {
+                        $query->where('activity_id', '!=', $excludeActivityId);
+                    }
+                })
+                ->count();
+            
+            if ($dailySessionCount >= 5) {
+                $trainee = Trainee::find($participantId);
+                $traineeName = $trainee ? $trainee->trainee_first_name . ' ' . $trainee->trainee_last_name : 'Unknown';
+                $conflicts[] = [
+                    'trainee' => $traineeName,
+                    'conflicts' => [["Daily session limit exceeded: {$dailySessionCount} sessions already scheduled (maximum 5 sessions per trainee per day)"]]
+                ];
+            } elseif ($participantConflicts->isNotEmpty()) {
                 $trainee = Trainee::find($participantId);
                 $conflicts[] = [
                     'trainee' => $trainee ? $trainee->trainee_first_name . ' ' . $trainee->trainee_last_name : 'Unknown',
@@ -235,7 +254,7 @@ class ActivityController extends Controller
                     $q->with(['enrollments', 'teacher'])
                       ->orderBy('session_date', 'asc')
                       ->orderBy('start_time', 'asc');
-                }, 'category', 'centre', 'instructor'])
+                }, 'category', 'categoryModel', 'centre', 'instructor'])
                 ->withCount(['sessions', 'enrollments']);
 
             // Role-based filtering
@@ -249,8 +268,8 @@ class ActivityController extends Controller
                       ->where('centre_id', $userCentreId);
             }
 
-            // Get activities with pagination
-            $activities = $query->orderBy('created_at', 'desc')->paginate(12);
+            // Get activities with pagination - 9 per page for 3x3 grid
+            $activities = $query->orderBy('created_at', 'desc')->paginate(9);
 
             // Calculate enhanced statistics using direct DB queries
             $stats = [
@@ -561,7 +580,7 @@ class ActivityController extends Controller
                     ->where('is_active', true)
                     ->where('centre_id', session('centre_id'))
                     ->with(['sessions', 'creator'])
-                    ->paginate(12);
+                    ->paginate(9);
                 
                 if ($activities->count() > 0) {
                     // Create a mock category object for display with fallback values
@@ -584,7 +603,7 @@ class ActivityController extends Controller
                     ->where('is_active', true)
                     ->where('centre_id', session('centre_id'))
                     ->with(['sessions', 'creator'])
-                    ->paginate(12);
+                    ->paginate(9);
             }
 
             return view('rehabilitation.categoryshow', compact('category', 'activities'));
@@ -609,10 +628,13 @@ class ActivityController extends Controller
                 ->with('error', 'Only administrators can create activities.');
         }
 
-        // Get centres for the form
+        // Get centres and categories for the form
         $centres = Centre::active()->get();
+        $categories = ActivityCategory::where('is_active', true)
+                                    ->orderBy('category_name', 'asc')
+                                    ->get();
         
-        return view('activities.create', compact('centres'));
+        return view('activities.create-enhanced', compact('centres', 'categories'));
     }
 
     /**
@@ -647,12 +669,12 @@ class ActivityController extends Controller
             ],
             
             // Participants
-            'max_participants' => 'required|integer|min:1|max:50',
-            'min_participants' => 'required|integer|min:1|max:50',
+            'max_participants' => 'required|integer|min:3|max:10',
+            'min_participants' => 'required|integer|min:3|max:10',
             'participants' => [
                 'required',
                 'string',
-                new MinimumEnrollmentRule(1),
+                new MinimumEnrollmentRule(3),
                 new TraineeCompatibilityRule($request->input('category_id'))
             ],
             
@@ -679,7 +701,16 @@ class ActivityController extends Controller
         if (empty($validated['participants'])) {
             return redirect()->back()
                 ->withInput()
-                ->with('error', 'MANDATORY REQUIREMENT: Every activity must have at least 1 trainee enrolled before creation.');
+                ->with('error', 'MANDATORY REQUIREMENT: Every activity must have at least 3 trainees enrolled before creation.');
+        }
+
+        // Validate trainee count
+        $participantIds = explode(',', $validated['participants']);
+        $participantCount = count(array_filter($participantIds));
+        if ($participantCount < 3) {
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'MANDATORY REQUIREMENT: Every activity must have at least 3 trainees enrolled before creation.');
         }
 
         // Enhanced validation: Check for scheduling conflicts and duplicates
@@ -776,7 +807,7 @@ class ActivityController extends Controller
         try {
             Log::info('Loading activity details', ['activity_id' => $id, 'user_id' => session('id')]);
 
-            $activity = Activity::with(['sessions.teacher', 'enrollments.trainee', 'creator', 'centre'])
+            $activity = Activity::with(['sessions.teacher', 'enrollments.trainee', 'category', 'instructor', 'centre'])
                 ->findOrFail($id);
 
             $role = session('role');
@@ -905,7 +936,7 @@ class ActivityController extends Controller
                 'activity_start_time' => 'required|date_format:H:i',
                 'activity_end_time' => 'required|date_format:H:i|after:activity_start_time',
                 'activity_location' => 'required|string|max:255',
-                'max_participants' => 'required|integer|min:1|max:100',
+                'max_participants' => 'required|integer|min:3|max:10',
                 'activity_goals' => 'nullable|string',
                 'activity_outcomes' => 'nullable|string',
                 'required_resources' => 'nullable|string',
@@ -1031,7 +1062,7 @@ class ActivityController extends Controller
                 'error_file' => $e->getFile(),
                 'trace' => $e->getTraceAsString()
             ]);
-            return redirect()->route('activities.show', $id)
+            return redirect()->route('activities.home')
                 ->with('error', 'Unable to load sessions: ' . $e->getMessage());
         }
     }
@@ -1057,7 +1088,7 @@ class ActivityController extends Controller
                 'start_time' => 'required|date_format:H:i',
                 'duration' => 'required|integer|min:15|max:240',
                 'location' => 'required|string|max:255',
-                'max_capacity' => 'required|integer|min:1|max:50',
+                'max_capacity' => 'required|integer|min:3|max:10',
                 'status' => 'required|in:scheduled,active,cancelled,completed',
                 'room_number' => 'nullable|string|max:50',
                 'notes' => 'nullable|string|max:1000'
@@ -1068,25 +1099,26 @@ class ActivityController extends Controller
             $startTime = Carbon::parse($validated['start_time']);
             $endTime = $startTime->copy()->addMinutes($validated['duration']);
             
-            // Rule 1: No weekend sessions (Saturday = 6, Sunday = 0)
-            if ($sessionDate->dayOfWeek === 0 || $sessionDate->dayOfWeek === 6) {
+            // Rule 1: No sessions on weekends or Malaysia public holidays
+            if (MalaysiaHolidays::isNonWorkingDay($sessionDate)) {
+                $reason = MalaysiaHolidays::getNonWorkingDayReason($sessionDate);
                 return redirect()->back()
                     ->withInput()
-                    ->with('error', 'Sessions cannot be scheduled on weekends. Centre operates Monday to Friday only.');
+                    ->with('error', 'Sessions cannot be scheduled on this date. ' . $reason);
             }
             
-            // Rule 2: Sessions must start between 9:30 AM and 3:00 PM
-            if ($startTime->format('H:i') < '09:30' || $startTime->format('H:i') > '15:00') {
+            // Rule 2: Sessions must start between 9:30 AM and 3:30 PM
+            if ($startTime->format('H:i') < '09:30' || $startTime->format('H:i') > '15:30') {
                 return redirect()->back()
                     ->withInput()
-                    ->with('error', 'Sessions must start between 9:30 AM and 3:00 PM. Centre operates from 9:00 AM to 4:00 PM.');
+                    ->with('error', 'Sessions must start between 9:30 AM and 3:30 PM. Centre operates from 9:00 AM to 4:30 PM.');
             }
             
-            // Rule 3: All sessions must end by 4:00 PM
-            if ($endTime->format('H:i') > '16:00') {
+            // Rule 3: All sessions must end by 4:30 PM
+            if ($endTime->format('H:i') > '16:30') {
                 return redirect()->back()
                     ->withInput()
-                    ->with('error', 'Sessions must end by 4:00 PM. Please reduce the duration or start time.');
+                    ->with('error', 'Sessions must end by 4:30 PM. Please reduce the duration or start time.');
             }
 
             DB::beginTransaction();
@@ -1149,9 +1181,38 @@ class ActivityController extends Controller
 
             // Calculate actual session status based on date/time
             $sessionDate = Carbon::parse($session->session_date);
-            $sessionStart = $sessionDate->copy()->setTimeFromTimeString($session->start_time);
-            $sessionEnd = $sessionDate->copy()->setTimeFromTimeString($session->end_time);
+            
+            // Safer time parsing with error handling
+            try {
+                // Extract time portion only (handles datetime strings in time fields)
+                $startTimeClean = $this->extractTimeOnly($session->start_time);
+                $endTimeClean = $this->extractTimeOnly($session->end_time);
+                
+                // Parse times safely using extracted time portions
+                $sessionStart = $sessionDate->copy()->setTimeFromTimeString($startTimeClean);
+                $sessionEnd = $sessionDate->copy()->setTimeFromTimeString($endTimeClean);
+                
+            } catch (Exception $timeParseException) {
+                Log::error('Time parsing error for session ' . $sessionId . ': ' . $timeParseException->getMessage(), [
+                    'session_id' => $sessionId,
+                    'original_start_time' => $session->start_time,
+                    'original_end_time' => $session->end_time,
+                    'extracted_start_time' => $this->extractTimeOnly($session->start_time),
+                    'extracted_end_time' => $this->extractTimeOnly($session->end_time)
+                ]);
+                // Set default times if parsing fails
+                $sessionStart = $sessionDate->copy()->setTime(9, 0, 0);
+                $sessionEnd = $sessionDate->copy()->setTime(17, 0, 0);
+            }
+            
             $now = Carbon::now();
+            
+            // Business Rule: Prevent attendance marking on non-working days
+            if (MalaysiaHolidays::isNonWorkingDay($sessionDate)) {
+                $reason = MalaysiaHolidays::getNonWorkingDayReason($sessionDate);
+                return redirect()->route('activities.sessions', $activityId)
+                    ->with('error', 'Attendance cannot be marked for this session. ' . $reason);
+            }
             
             // Calculate actual status - prioritize date/time logic over database status
             if ($session->session_status == 'cancelled') {
@@ -1237,7 +1298,7 @@ class ActivityController extends Controller
                     Attendance::updateOrCreate([
                         'trainee_id' => $traineeId,
                         'activity_id' => $activityId,
-                        'date' => $validated['attendance_date'],
+                        'attendance_date' => $validated['attendance_date'],
                     ], [
                         'status' => $status,
                         'remarks' => $validated['notes'][$traineeId] ?? null,
@@ -1279,12 +1340,14 @@ class ActivityController extends Controller
                     ->with('error', 'You do not have permission to manage enrollments.');
             }
 
-            // Check if session is completed based on actual date/time (not database status)
+            // Check if session is completed - use proper field name and include database status  
             $sessionDate = Carbon::parse($session->session_date);
             $sessionEnd = $sessionDate->copy()->setTimeFromTimeString($session->end_time);
             $now = Carbon::now();
             
-            $isCompleted = $now->greaterThan($sessionEnd) && $session->session_status != 'cancelled';
+            // Session is completed if database status is 'completed' OR current time is past session end time
+            $isCompleted = $session->session_status === 'completed' || 
+                          ($now->greaterThan($sessionEnd) && $session->session_status !== 'cancelled');
 
             if ($isCompleted) {
                 // For completed sessions, show only attendees who were present or late
@@ -1343,12 +1406,16 @@ class ActivityController extends Controller
                     ->with('error', 'You do not have permission to add enrollments.');
             }
 
-            // Check if session is completed based on actual date/time (not database status)
+            // Check if session is completed - use proper field name and include database status
             $sessionDate = Carbon::parse($session->session_date);
             $sessionEnd = $sessionDate->copy()->setTimeFromTimeString($session->end_time);
             $now = Carbon::now();
             
-            if ($now->greaterThan($sessionEnd) && $session->session_status != 'cancelled') {
+            // Session is completed if database status is 'completed' OR current time is past session end time
+            $isCompleted = $session->session_status === 'completed' || 
+                          ($now->greaterThan($sessionEnd) && $session->session_status !== 'cancelled');
+            
+            if ($isCompleted) {
                 return redirect()->route('activities.enrollments', [$activityId, $sessionId])
                     ->with('error', 'Cannot add enrollments to a completed session.');
             }
@@ -1410,12 +1477,16 @@ class ActivityController extends Controller
                     ->with('error', 'You do not have permission to remove enrollments.');
             }
 
-            // Check if session is completed based on actual date/time (not database status)
+            // Check if session is completed - use proper field name and include database status
             $sessionDate = Carbon::parse($session->session_date);
             $sessionEnd = $sessionDate->copy()->setTimeFromTimeString($session->end_time);
             $now = Carbon::now();
             
-            if ($now->greaterThan($sessionEnd) && $session->session_status != 'cancelled') {
+            // Session is completed if database status is 'completed' OR current time is past session end time
+            $isCompleted = $session->session_status === 'completed' || 
+                          ($now->greaterThan($sessionEnd) && $session->session_status !== 'cancelled');
+            
+            if ($isCompleted) {
                 return redirect()->route('activities.enrollments', [$activityId, $sessionId])
                     ->with('error', 'Cannot remove enrollments from a completed session.');
             }
@@ -1571,24 +1642,35 @@ class ActivityController extends Controller
     {
         $enrolledCount = 0;
         
-        foreach ($participantIds as $traineeId) {
-            if (empty($traineeId)) continue;
+        foreach ($participantIds as $traineeIdentifier) {
+            if (empty($traineeIdentifier)) continue;
             
             try {
                 // Check if trainee exists and is active
-                $trainee = Trainee::where('id', $traineeId)
-                    ->where('status', 'active')
-                    ->first();
+                // Handle both integer IDs and string trainee_id formats (e.g., 'LD0001')
+                $trainee = null;
+                
+                if (is_numeric($traineeIdentifier)) {
+                    // If it's numeric, assume it's the primary key ID
+                    $trainee = Trainee::where('id', $traineeIdentifier)
+                        ->where('status', 'active')
+                        ->first();
+                } else {
+                    // If it's not numeric, assume it's the trainee_id string format
+                    $trainee = Trainee::where('trainee_id', $traineeIdentifier)
+                        ->where('status', 'active')
+                        ->first();
+                }
                     
                 if (!$trainee) {
-                    Log::warning('Trainee not found or inactive', ['trainee_id' => $traineeId]);
+                    Log::warning('Trainee not found or inactive', ['trainee_identifier' => $traineeIdentifier]);
                     continue;
                 }
                 
-                // Create activity enrollment
+                // Always use the integer ID for database relationships
                 ActivityEnrollment::create([
                     'activity_id' => $activity->id,
-                    'trainee_id' => $traineeId,
+                    'trainee_id' => $trainee->id, // Use the integer primary key
                     'enrollment_date' => $enrollmentDate,
                     'start_date' => $enrollmentDate,
                     'status' => 'enrolled',
@@ -1599,7 +1681,7 @@ class ActivityController extends Controller
                 
             } catch (Exception $e) {
                 Log::error('Error enrolling participant', [
-                    'trainee_id' => $traineeId,
+                    'trainee_identifier' => $traineeIdentifier,
                     'activity_id' => $activity->id,
                     'error' => $e->getMessage()
                 ]);
@@ -2130,7 +2212,7 @@ class ActivityController extends Controller
                 'recurring' => 'required|in:weekly,biweekly,monthly,one_time',
                 'start_date' => 'nullable|date',
                 'end_date' => 'nullable|date|after_or_equal:start_date',
-                'max_capacity' => 'nullable|integer|min:1',
+                'max_capacity' => 'nullable|integer|min:3|max:10',
                 'teacher_id' => 'nullable|exists:users,id'
             ]);
 
@@ -2295,7 +2377,7 @@ class ActivityController extends Controller
                 }
             }
 
-            // Check for daily workload limits (max 8 hours per day)
+            // Check for daily session limits (max 5 sessions per instructor per day)
             $dailySessions = ActivitySession::where('instructor_id', $teacherId)
                 ->where('scheduled_date', $scheduledDate)
                 ->whereIn('status', ['scheduled', 'ongoing'])
@@ -2304,10 +2386,9 @@ class ActivityController extends Controller
                 })
                 ->get();
 
-            $totalDailyMinutes = $dailySessions->sum('duration_minutes') + $newStart->diffInMinutes($newEnd);
-            if ($totalDailyMinutes > 480) { // 8 hours = 480 minutes
-                $totalHours = round($totalDailyMinutes / 60, 1);
-                $conflicts[] = "Daily workload exceeded: {$totalHours} hours scheduled (maximum 8 hours per day)";
+            $dailySessionCount = $dailySessions->count();
+            if ($dailySessionCount >= 5) {
+                $conflicts[] = "Daily session limit exceeded: {$dailySessionCount} sessions already scheduled (maximum 5 sessions per instructor per day)";
             }
 
             return [
@@ -2500,17 +2581,17 @@ class ActivityController extends Controller
             if ($statusFilter) {
                 switch ($statusFilter) {
                     case 'future':
-                        $query->where('status', 'scheduled')
+                        $query->where('session_status', 'scheduled')
                               ->where('session_date', '>', Carbon::now());
                         break;
                     case 'progress':
-                        $query->where('status', 'ongoing');
+                        $query->where('session_status', 'ongoing');
                         break;
                     case 'done':
-                        $query->where('status', 'completed');
+                        $query->where('session_status', 'completed');
                         break;
                     case 'cancelled':
-                        $query->where('status', 'cancelled');
+                        $query->where('session_status', 'cancelled');
                         break;
                 }
             }
@@ -2547,7 +2628,7 @@ class ActivityController extends Controller
                 END, 
                 session_date ASC, 
                 start_time ASC
-            ')->paginate(25);
+            ')->paginate(15);
 
             // Get filter options
             $centres = Centre::active()->orderBy('centre_name')->get();
@@ -3365,7 +3446,7 @@ class ActivityController extends Controller
             if (!empty($updateData)) {
                 // Update only future/upcoming sessions to avoid affecting completed ones
                 $updatedCount = ActivitySession::where('activity_id', $activity->id)
-                    ->whereIn('status', ['scheduled', 'active'])
+                    ->whereIn('session_status', ['scheduled', 'active'])
                     ->where('session_date', '>=', now()->toDateString())
                     ->update($updateData);
                 
@@ -3380,6 +3461,47 @@ class ActivityController extends Controller
                 'activity_id' => $activity->id,
                 'error' => $e->getTraceAsString()
             ]);
+        }
+    }
+
+    /**
+     * Extract time portion from a datetime string or time string
+     * Handles cases where time fields contain full datetime strings
+     */
+    private function extractTimeOnly($timeString)
+    {
+        if (!$timeString) {
+            return '09:00:00'; // Default time
+        }
+
+        $timeString = trim($timeString);
+
+        // If it looks like a full datetime (contains date), extract time portion
+        if (preg_match('/\d{4}-\d{2}-\d{2}\s+(\d{1,2}:\d{2}:\d{2})/', $timeString, $matches)) {
+            return $matches[1]; // Return just the time part (HH:MM:SS)
+        }
+
+        // If it looks like a full datetime without seconds, extract time portion
+        if (preg_match('/\d{4}-\d{2}-\d{2}\s+(\d{1,2}:\d{2})/', $timeString, $matches)) {
+            return $matches[1] . ':00'; // Add seconds
+        }
+
+        // If it's already just time (HH:MM:SS or HH:MM), return as is
+        if (preg_match('/^\d{1,2}:\d{2}(:\d{2})?$/', $timeString)) {
+            // Add seconds if missing
+            if (substr_count($timeString, ':') === 1) {
+                return $timeString . ':00';
+            }
+            return $timeString;
+        }
+
+        // Fallback: try to parse with Carbon and extract time
+        try {
+            $parsed = Carbon::parse($timeString);
+            return $parsed->format('H:i:s');
+        } catch (Exception $e) {
+            // Last resort: return default time
+            return '09:00:00';
         }
     }
 

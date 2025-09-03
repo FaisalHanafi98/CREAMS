@@ -377,9 +377,7 @@
         </div>
 
         @if(isset($assets) && method_exists($assets, 'links'))
-            <div class="d-flex justify-content-center mt-4">
-                {{ $assets->links() }}
-            </div>
+            @include('components.custom-pagination', ['items' => $assets])
         @endif
     </div>
 </div>

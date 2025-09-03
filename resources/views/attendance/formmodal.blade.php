@@ -19,7 +19,7 @@
                             <div class="trainee-info">
                                 <strong>{{ $enrollment->trainee->trainee_first_name }} {{ $enrollment->trainee->trainee_last_name }}</strong>
                                 <br>
-                                <small class="text-muted">ID: {{ $enrollment->trainee->unique_identifier }}</small>
+                                <small class="text-muted">ID: {{ $enrollment->trainee->trainee_id }}</small>
                             </div>
                         </div>
                         <div class="col-md-3">

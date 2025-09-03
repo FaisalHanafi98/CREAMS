@@ -9,7 +9,7 @@
             <h1 class="page-title">Mark Attendance</h1>
             <p class="page-subtitle">
                 {{ $session->activity->activity_name }} - 
-                {{ $session->scheduled_date ? $session->scheduled_date->format('M d, Y') : 'Date TBA' }} at 
+                {{ $session->session_date ? \Carbon\Carbon::parse($session->session_date)->format('M d, Y') : 'Date TBA' }} at 
                 {{ $session->start_time ? \Carbon\Carbon::parse($session->start_time)->format('h:i A') : 'Time TBA' }}
             </p>
         </div>

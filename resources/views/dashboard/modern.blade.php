@@ -40,7 +40,11 @@
                             <span class="subtitle-primary">Your {{ ucfirst($role ?? 'user') }} dashboard is ready.</span>
                             <span class="subtitle-secondary">Today is {{ $current_time ?? now()->format('l, F j, Y') }}</span>
                             @if(isset($todays_centre_activities) && count($todays_centre_activities) > 0)
-                                <span class="subtitle-highlight">• {{ count($todays_centre_activities) }} activities scheduled today</span>
+                                @if($role === 'admin')
+                                    <span class="subtitle-highlight">• {{ count($todays_centre_activities) }} activities scheduled today</span>
+                                @else
+                                    <span class="subtitle-highlight">• {{ count($todays_centre_activities) }} {{ count($todays_centre_activities) == 1 ? 'session' : 'sessions' }} scheduled today</span>
+                                @endif
                             @endif
                         </p>
                     </div>
@@ -59,7 +63,13 @@
                                 <div class="stat-icon"><i class="fas fa-tasks"></i></div>
                                 <div class="stat-content">
                                     <div class="stat-number">{{ count($todays_centre_activities ?? []) + count($upcoming_sessions ?? []) }}</div>
-                                    <div class="stat-label">Centre Activities</div>
+                                    <div class="stat-label">
+                                        @if($role === 'admin')
+                                            Centre Activities
+                                        @else
+                                            My Activities
+                                        @endif
+                                    </div>
                                 </div>
                             </div>
                             <div class="stat-mini">

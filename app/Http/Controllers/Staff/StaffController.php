@@ -790,12 +790,12 @@ class StaffController extends Controller
     }
 
     /**
-     * Show assigned trainees for teacher
+     * Show assigned trainees for teacher with pagination and accurate statistics
      *
      * @param string $encrypted_id
      * @return \Illuminate\View\View
      */
-    public function showTrainees($encrypted_id)
+    public function showTrainees($encrypted_id, Request $request)
     {
         try {
             // Decrypt the ID
@@ -812,71 +812,179 @@ class StaffController extends Controller
                     ->with('error', 'You do not have permission to view these trainees.');
             }
 
-            // Get trainees enrolled in this staff member's activities
-            $trainees = [];
+            // Calculate accurate statistics first
+            $traineeStats = $this->calculateTraineeStatistics($staffMember);
             
-            if (\Schema::hasTable('trainees') && \Schema::hasTable('activities')) {
-                if (\Schema::hasTable('activity_enrollments')) {
-                    // Get trainees through enrollment table
-                    $trainees = \DB::table('trainees')
-                        ->join('activity_enrollments', 'trainees.id', '=', 'activity_enrollments.trainee_id')
-                        ->join('activities', 'activity_enrollments.activity_id', '=', 'activities.id')
-                        ->where(function($query) use ($staffMember) {
-                            $query->where('activities.instructor_id', $staffMember->id);
-                            
-                            // For admin roles, also include activities from their centre
-                            if ($staffMember->role === 'admin' && $staffMember->centre_id) {
-                                $query->orWhere('activities.centre_id', $staffMember->centre_id);
-                            }
-                        })
-                        ->whereIn('activity_enrollments.enrollment_status', ['enrolled', 'active'])
-                        ->select(
-                            'trainees.*', 
-                            'activities.activity_name', 
-                            'activity_enrollments.enrollment_date', 
-                            'activity_enrollments.enrollment_status',
-                            'trainees.trainee_first_name',
-                            'trainees.trainee_last_name',
-                            'trainees.trainee_id'
-                        )
-                        ->distinct()
-                        ->get()
-                        ->map(function($trainee) {
-                            // Add computed name field for view compatibility
-                            $trainee->name = trim(($trainee->trainee_first_name ?? '') . ' ' . ($trainee->trainee_last_name ?? ''));
-                            if (empty(trim($trainee->name))) {
-                                $trainee->name = 'Unknown Trainee';
-                            }
-                            return $trainee;
-                        });
-                } else {
-                    // Fallback: get trainees from same centre
-                    $trainees = \DB::table('trainees')
-                        ->where('centre_id', $staffMember->centre_id)
-                        ->get()
-                        ->map(function($trainee) {
-                            // Add computed name field for view compatibility
-                            $trainee->name = trim(($trainee->trainee_first_name ?? '') . ' ' . ($trainee->trainee_last_name ?? ''));
-                            if (empty(trim($trainee->name))) {
-                                $trainee->name = 'Unknown Trainee';
-                            }
-                            return $trainee;
-                        });
-                }
-            }
+            // Get unique trainees with pagination (10 per page)
+            $traineesQuery = \DB::table('trainees')
+                ->join('activity_enrollments', 'trainees.id', '=', 'activity_enrollments.trainee_id')
+                ->join('activities', 'activity_enrollments.activity_id', '=', 'activities.id')
+                ->where(function($query) use ($staffMember) {
+                    $query->where('activities.instructor_id', $staffMember->id);
+                    
+                    // For admin roles, also include activities from their centre
+                    if ($staffMember->role === 'admin' && $staffMember->centre_id) {
+                        $query->orWhere('activities.centre_id', $staffMember->centre_id);
+                    }
+                })
+                ->where('activity_enrollments.enrollment_status', 'enrolled')
+                ->select(
+                    'trainees.id',
+                    'trainees.trainee_first_name',
+                    'trainees.trainee_last_name', 
+                    'trainees.trainee_id',
+                    'trainees.trainee_email',
+                    'trainees.trainee_phone_number',
+                    'trainees.trainee_condition',
+                    'trainees.centre_name',
+                    'trainees.status',
+                    'trainees.trainee_date_of_birth',
+                    'trainees.gender',
+                    \DB::raw('GROUP_CONCAT(DISTINCT activities.activity_name ORDER BY activities.activity_name SEPARATOR ", ") as enrolled_activities'),
+                    \DB::raw('COUNT(DISTINCT activities.id) as activity_count'),
+                    \DB::raw('MIN(activity_enrollments.enrollment_date) as first_enrollment_date')
+                )
+                ->groupBy(
+                    'trainees.id',
+                    'trainees.trainee_first_name',
+                    'trainees.trainee_last_name',
+                    'trainees.trainee_id',
+                    'trainees.trainee_email',
+                    'trainees.trainee_phone_number', 
+                    'trainees.trainee_condition',
+                    'trainees.centre_name',
+                    'trainees.status',
+                    'trainees.trainee_date_of_birth',
+                    'trainees.gender'
+                )
+                ->orderBy('trainees.trainee_first_name')
+                ->orderBy('trainees.trainee_last_name');
+
+            // Paginate the results (10 per page)
+            $perPage = 10;
+            $currentPage = $request->get('page', 1);
+            
+            // Fix: Get correct count for grouped query
+            $total = \DB::table('trainees')
+                ->join('activity_enrollments', 'trainees.id', '=', 'activity_enrollments.trainee_id')
+                ->join('activities', 'activity_enrollments.activity_id', '=', 'activities.id')
+                ->where(function($query) use ($staffMember) {
+                    $query->where('activities.instructor_id', $staffMember->id);
+                    
+                    // For admin roles, also include activities from their centre
+                    if ($staffMember->role === 'admin' && $staffMember->centre_id) {
+                        $query->orWhere('activities.centre_id', $staffMember->centre_id);
+                    }
+                })
+                ->where('activity_enrollments.enrollment_status', 'enrolled')
+                ->distinct('trainees.id')
+                ->count('trainees.id');
+            
+            $trainees = $traineesQuery
+                ->offset(($currentPage - 1) * $perPage)
+                ->limit($perPage)
+                ->get()
+                ->map(function($trainee) {
+                    // Add computed name field for view compatibility
+                    $trainee->name = trim(($trainee->trainee_first_name ?? '') . ' ' . ($trainee->trainee_last_name ?? ''));
+                    if (empty(trim($trainee->name))) {
+                        $trainee->name = 'Unknown Trainee';
+                    }
+                    
+                    // Calculate age if date of birth is available
+                    if ($trainee->trainee_date_of_birth) {
+                        $trainee->age = \Carbon\Carbon::parse($trainee->trainee_date_of_birth)->age;
+                    } else {
+                        $trainee->age = null;
+                    }
+                    
+                    // Generate encrypted ID for trainee profile link
+                    $trainee->encrypted_id = $this->generateEncryptedId($trainee->id);
+                    
+                    return $trainee;
+                });
+
+            // Create a simple pagination object
+            $pagination = new \stdClass();
+            $pagination->currentPage = $currentPage;
+            $pagination->perPage = $perPage;
+            $pagination->total = $total;
+            $pagination->lastPage = ceil($total / $perPage);
+            $pagination->hasMorePages = $currentPage < $pagination->lastPage;
+            $pagination->previousPageUrl = $currentPage > 1 ? 
+                url()->current() . '?page=' . ($currentPage - 1) : null;
+            $pagination->nextPageUrl = $pagination->hasMorePages ? 
+                url()->current() . '?page=' . ($currentPage + 1) : null;
 
             // Add encrypted ID to staff member object for view links
             $staffMember->encrypted_id = $encrypted_id;
             
             return view('staff.trainees', [
                 'staffMember' => $staffMember,
-                'trainees' => $trainees
+                'trainees' => $trainees,
+                'traineeStats' => $traineeStats,
+                'pagination' => $pagination
             ]);
 
         } catch (\Exception $e) {
             Log::error('Error showing staff trainees: ' . $e->getMessage());
             return redirect()->route('staffs.profile', ['encrypted_id' => $this->generateEncryptedId($id)])
                 ->with('error', 'Unable to load assigned trainees.');
+        }
+    }
+
+    /**
+     * Calculate accurate trainee statistics for a staff member
+     *
+     * @param User $staffMember
+     * @return array
+     */
+    private function calculateTraineeStatistics($staffMember)
+    {
+        try {
+            // Get staff activities
+            $staffActivities = Activity::where('instructor_id', $staffMember->id);
+            
+            // For admin roles, also include activities from their centre
+            if ($staffMember->role === 'admin' && $staffMember->centre_id) {
+                $staffActivities->orWhere('centre_id', $staffMember->centre_id);
+            }
+            
+            $activityIds = $staffActivities->pluck('id');
+            
+            // Get all enrollments in staff activities
+            $allEnrollments = \DB::table('activity_enrollments')
+                ->whereIn('activity_id', $activityIds)
+                ->where('enrollment_status', 'enrolled');
+            
+            // Count unique trainees (no duplicates)
+            $totalUniqueTrainees = \DB::table('activity_enrollments')
+                ->whereIn('activity_id', $activityIds)
+                ->where('enrollment_status', 'enrolled')
+                ->distinct('trainee_id')
+                ->count('trainee_id');
+            
+            // Count total enrollments (with duplicates - for active enrollments stat)
+            $totalEnrollments = $allEnrollments->count();
+            
+            // Count unique activities these trainees are enrolled in
+            $uniqueActivities = $activityIds->count();
+            
+            return [
+                'total_trainees' => $totalUniqueTrainees, // 31 (unique trainees)
+                'active_enrollments' => $totalEnrollments, // 56 (total enrollments)  
+                'total_enrollments' => $totalEnrollments, // Same as active for display
+                'unique_activities' => $uniqueActivities // 17 (unique activities)
+            ];
+            
+        } catch (\Exception $e) {
+            Log::error('Error calculating trainee statistics: ' . $e->getMessage());
+            return [
+                'total_trainees' => 0,
+                'active_enrollments' => 0,
+                'total_enrollments' => 0,
+                'unique_activities' => 0
+            ];
         }
     }
 

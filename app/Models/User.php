@@ -6,10 +6,12 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Facades\Log;
+use App\Traits\HandlesPhoneNumbers;
+use App\Rules\MalaysianPhoneRule;
 
 class User extends Authenticatable
 {
-    use Notifiable, HasFactory;
+    use Notifiable, HasFactory, HandlesPhoneNumbers;
 
     /**
      * The attributes that are mass assignable.
@@ -79,6 +81,22 @@ class User extends Authenticatable
         'user_last_accessed_at' => 'datetime',
         'date_of_birth' => 'date',
     ];
+
+    /**
+     * Phone number mutator - normalize before saving
+     */
+    public function setPhoneAttribute($value)
+    {
+        $this->attributes['phone'] = MalaysianPhoneRule::normalize($value);
+    }
+
+    /**
+     * Phone number accessor - format for display
+     */
+    public function getPhoneFormattedAttribute()
+    {
+        return MalaysianPhoneRule::format($this->phone);
+    }
 
     /**
      * Get the avatar URL for the user.

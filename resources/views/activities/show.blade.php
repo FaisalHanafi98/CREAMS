@@ -12,7 +12,7 @@
             <p class="activity-code">Activity #{{ $activity->id }}</p>
         </div>
         <div class="page-actions">
-            @if($role === 'admin')
+            @if($role === 'admin' && $activity->is_active)
                 <a href="{{ route('activities.edit', $activity->id) }}" class="btn btn-outline-primary">
                     <i class="fas fa-edit"></i> Edit Activity
                 </a>
@@ -69,19 +69,27 @@
                     <div class="detail-meta">
                         <div class="meta-item">
                             <i class="fas fa-folder"></i>
-                            <span>Category: {{ $activity->category ?? 'Not specified' }}</span>
+                            <span>Category: {{ $activity->category->category_name ?? 'Uncategorized' }}</span>
                         </div>
                         <div class="meta-item">
                             <i class="fas fa-users"></i>
-                            <span>Age Group: {{ $activity->age_group ?? 'Not specified' }}</span>
+                            <span>Max Participants: {{ $activity->max_participants }} trainees</span>
                         </div>
                         <div class="meta-item">
-                            <i class="fas fa-layer-group"></i>
-                            <span>Difficulty: {{ $activity->difficulty_level ?? 'Not specified' }}</span>
+                            <i class="fas fa-clock"></i>
+                            <span>Duration: {{ $activity->duration_weeks }} weeks ({{ $activity->sessions_per_week }} sessions/week)</span>
                         </div>
                         <div class="meta-item">
                             <i class="fas fa-user"></i>
-                            <span>Created by: {{ $activity->creator?->name ?? 'System Admin' }}</span>
+                            <span>Instructor: {{ $activity->instructor->name ?? 'Not assigned' }}</span>
+                        </div>
+                        <div class="meta-item">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span>Location: {{ $activity->activity_location }}</span>
+                        </div>
+                        <div class="meta-item">
+                            <i class="fas fa-building"></i>
+                            <span>Centre: {{ $activity->centre->centre_name ?? 'Not specified' }}</span>
                         </div>
                     </div>
                 </div>
@@ -171,7 +179,7 @@
                         <span>Schedule New Session</span>
                     </a>
                     @endif
-                    @if($role === 'admin')
+                    @if($role === 'admin' && $activity->is_active)
                     <a href="{{ route('activities.edit', $activity->id) }}" class="action-item">
                         <i class="fas fa-edit"></i>
                         <span>Edit Activity Details</span>

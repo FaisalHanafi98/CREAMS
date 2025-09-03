@@ -176,7 +176,7 @@
                 {{-- Pagination --}}
                 @if($assets instanceof \Illuminate\Pagination\LengthAwarePaginator)
                     <div class="pagination-wrapper">
-                        {{ $assets->links() }}
+                        @include('components.custom-pagination', ['items' => $assets])
                     </div>
                 @endif
             @else

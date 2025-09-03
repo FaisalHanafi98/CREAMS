@@ -623,9 +623,7 @@
         </div>
         
         @if(isset($assets) && $assets->hasPages())
-        <div class="d-flex justify-content-center py-3">
-            {{ $assets->links() }}
-        </div>
+            @include('components.custom-pagination', ['items' => $assets])
         @endif
     </div>
 </div>

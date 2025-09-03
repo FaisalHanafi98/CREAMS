@@ -174,9 +174,7 @@
 
                     {{-- Pagination --}}
                     @if($notifications instanceof \Illuminate\Pagination\AbstractPaginator)
-                        <div class="d-flex justify-content-center">
-                            {{ $notifications->links() }}
-                        </div>
+                        @include('components.custom-pagination', ['items' => $notifications])
                     @endif
                 @else
                     {{-- Empty State --}}

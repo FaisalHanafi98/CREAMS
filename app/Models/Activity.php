@@ -72,6 +72,14 @@ class Activity extends Model
     }
 
     /**
+     * Get the category model (avoids conflict with getCategoryAttribute)
+     */
+    public function categoryModel()
+    {
+        return $this->belongsTo(ActivityCategory::class, 'category_id');
+    }
+
+    /**
      * Get all sessions for this activity
      */
     public function sessions()
@@ -231,8 +239,52 @@ class Activity extends Model
         $totalSessions = $this->sessions()->count();
         if ($totalSessions === 0) return 0;
         
-        $completedSessions = $this->sessions()->where('status', 'completed')->count();
+        $completedSessions = $this->sessions()->where('session_status', 'completed')->count();
         return round(($completedSessions / $totalSessions) * 100, 1);
+    }
+
+    /**
+     * Check if all sessions are completed and activity should be marked as inactive
+     */
+    public function shouldBeCompleted()
+    {
+        $totalSessions = $this->sessions()->count();
+        
+        // If no sessions exist, activity should remain active
+        if ($totalSessions === 0) {
+            return false;
+        }
+        
+        // Check if all sessions are completed
+        $completedSessions = $this->sessions()->where('session_status', 'completed')->count();
+        
+        // Also check if there are any future scheduled sessions
+        $futureScheduledSessions = $this->sessions()
+            ->whereIn('session_status', ['scheduled', 'active'])
+            ->where('session_date', '>', now()->toDateString())
+            ->count();
+        
+        // Activity should be completed if all sessions are done AND no future sessions scheduled
+        return $completedSessions === $totalSessions && $futureScheduledSessions === 0;
+    }
+
+    /**
+     * Update activity status based on session completion
+     */
+    public function updateCompletionStatus()
+    {
+        if ($this->shouldBeCompleted() && $this->is_active) {
+            $this->update(['is_active' => false]);
+            
+            \Log::info('Activity marked as completed', [
+                'activity_id' => $this->id,
+                'activity_name' => $this->activity_name
+            ]);
+            
+            return true;
+        }
+        
+        return false;
     }
 
     /**

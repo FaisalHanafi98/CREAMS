@@ -457,6 +457,72 @@
             grid-template-columns: repeat(2, 1fr);
         }
     }
+
+    /* Avatar Upload Styles */
+    .avatar-upload-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .avatar-preview {
+        position: relative;
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        overflow: hidden;
+        border: 3px solid #e9ecef;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .avatar-preview:hover {
+        border-color: var(--primary-color);
+        transform: scale(1.05);
+    }
+
+    .avatar-preview img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .avatar-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.7);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        font-size: 12px;
+    }
+
+    .avatar-preview:hover .avatar-overlay {
+        opacity: 1;
+    }
+
+    .avatar-overlay i {
+        font-size: 24px;
+        margin-bottom: 5px;
+    }
+
+    .avatar-upload-info {
+        text-align: center;
+    }
+
+    .avatar-upload-info .form-help {
+        margin: 0;
+        font-size: 12px;
+        color: #666;
+    }
 </style>
 @endsection
 
@@ -490,29 +556,8 @@
         </div>
         
         <div class="form-content">
-            <!-- Global success messages are handled by the layout -->
-            
-            @if (session('fail'))
-                <div class="alert alert-danger alert-dismissible fade show">
-                    <i class="fas fa-exclamation-circle"></i> {{ session('fail') }}
-                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-            @endif
-            
-            @if ($errors->any())
-                <div class="alert alert-danger alert-dismissible fade show">
-                    <ul class="mb-0">
-                        @foreach ($errors->all() as $error)
-                            <li>{{ $error }}</li>
-                        @endforeach
-                    </ul>
-                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-            @endif
+            <!-- Modern flash messages -->
+            @include('components.flash-messages')
             
             <div class="tab-nav">
                 <button class="tab-btn active" id="tab-1">Account Details</button>
@@ -520,7 +565,7 @@
                 <button class="tab-btn" id="tab-3">Review & Submit</button>
             </div>
             
-            <form action="{{ route('auth.save') }}" method="POST" id="registration-form" onsubmit="return handleFormSubmit();">
+            <form action="{{ route('auth.save') }}" method="POST" id="registration-form" enctype="multipart/form-data" onsubmit="return handleFormSubmit();">
                 @csrf
                 
                 <div class="form-sections-container">
@@ -585,6 +630,28 @@
                             <label for="name">Full Name*</label>
                             <input type="text" class="form-control @error('name') is-invalid @enderror" id="name" name="name" value="{{ old('name') }}" required>
                             @error('name')
+                                <div class="form-error">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <!-- Avatar Upload -->
+                        <div class="form-group">
+                            <label for="avatar">Profile Picture (Optional)</label>
+                            <div class="avatar-upload-container">
+                                <div class="avatar-preview">
+                                    <img id="avatarPreview" src="{{ asset('images/default-avatar.svg') }}" alt="Avatar Preview">
+                                    <div class="avatar-overlay">
+                                        <i class="fas fa-camera"></i>
+                                        <span>Upload Photo</span>
+                                    </div>
+                                </div>
+                                <input type="file" class="form-control @error('avatar') is-invalid @enderror" id="avatar" name="avatar" accept="image/*" style="display: none;">
+                                <div class="avatar-upload-info">
+                                    <p class="form-help">Click the image to upload a profile picture (optional)</p>
+                                    <p class="form-help">Maximum size: 2MB. Supported formats: JPG, PNG, GIF</p>
+                                </div>
+                            </div>
+                            @error('avatar')
                                 <div class="form-error">{{ $message }}</div>
                             @enderror
                         </div>
@@ -775,6 +842,36 @@ $(document).ready(function() {
         }
     });
     
+    // Avatar upload functionality
+    $('.avatar-preview').click(function() {
+        $('#avatar').click();
+    });
+    
+    $('#avatar').change(function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            // Validate file type
+            const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+            if (!validTypes.includes(file.type)) {
+                alert('Please select a valid image file (JPG, PNG, GIF)');
+                return;
+            }
+            
+            // Validate file size (2MB max)
+            if (file.size > 2 * 1024 * 1024) {
+                alert('Image size must be less than 2MB');
+                return;
+            }
+            
+            // Show preview
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                $('#avatarPreview').attr('src', e.target.result);
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+
     // Role selection
     $('.role-option').click(function() {
         $('.role-option').removeClass('selected');

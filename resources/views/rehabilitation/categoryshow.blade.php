@@ -93,9 +93,7 @@
         </div>
 
         <!-- Pagination -->
-        <div class="d-flex justify-content-center">
-            {{ $activities->links() }}
-        </div>
+        @include('components.custom-pagination', ['items' => $activities])
     @else
         <div class="card shadow">
             <div class="card-body text-center py-5">

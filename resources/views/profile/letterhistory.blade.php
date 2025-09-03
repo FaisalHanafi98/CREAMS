@@ -168,7 +168,7 @@
                 
                 <!-- Pagination -->
                 <div class="card-footer">
-                    {{ $letters->appends(request()->query())->links() }}
+                    @include('components.custom-pagination', ['items' => $letters])
                 </div>
             @else
                 <div class="text-center py-5">

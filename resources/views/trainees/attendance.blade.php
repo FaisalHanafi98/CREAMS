@@ -357,7 +357,10 @@
                     </div>
                     Attendance Overview
                 </h5>
-                <span class="text-muted">Current Month: {{ date('F Y') }}</span>
+                <div class="text-muted">
+                    <div>Current Month: {{ date('F Y') }}</div>
+                    <div style="margin-top: 5px;">Today: {{ date('l, F j, Y') }}</div>
+                </div>
             </div>
 
             <div class="stats-grid">
@@ -441,7 +444,6 @@
                             <th>Day</th>
                             <th>Activity</th>
                             <th>Check In</th>
-                            <th>Check Out</th>
                             <th>Status</th>
                             <th>Remarks</th>
                         </tr>
@@ -455,7 +457,6 @@
                             <td>{{ \Carbon\Carbon::parse($record->date)->format('l') }}</td>
                             <td>{{ $record->activity ?? 'General Attendance' }}</td>
                             <td>{{ $record->marked_at ? \Carbon\Carbon::parse($record->marked_at)->format('h:i A') : '-' }}</td>
-                            <td>-</td>
                             <td>
                                 <span class="status-badge status-{{ $record->status }}">
                                     {{ ucfirst($record->status) }}
@@ -465,7 +466,7 @@
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="7" class="text-center text-muted py-4">
+                            <td colspan="6" class="text-center text-muted py-4">
                                 <i class="fas fa-calendar-times fa-2x mb-2"></i><br>
                                 No attendance records found for this trainee.
                             </td>
@@ -551,13 +552,9 @@
                     </div>
                     
                     <div class="row mb-3" id="timeFields" style="display: none;">
-                        <div class="col-md-6">
+                        <div class="col-md-12">
                             <label for="check_in_time" class="form-label">Check-in Time</label>
                             <input type="time" class="form-control" id="check_in_time" name="check_in_time">
-                        </div>
-                        <div class="col-md-6">
-                            <label for="check_out_time" class="form-label">Check-out Time</label>
-                            <input type="time" class="form-control" id="check_out_time" name="check_out_time">
                         </div>
                     </div>
                     
@@ -694,7 +691,6 @@ document.getElementById('attendance_status').addEventListener('change', function
     } else {
         timeFields.style.display = 'none';
         document.getElementById('check_in_time').value = '';
-        document.getElementById('check_out_time').value = '';
     }
 });
 
