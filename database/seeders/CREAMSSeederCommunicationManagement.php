@@ -298,6 +298,7 @@ class CREAMSSeederCommunicationManagement extends Seeder
                     'letter_type' => $template->template_type,
                     'letter_date' => $letterDate,
                     'created_by' => $instructor->id ?? 1,
+                    'centre_id' => $trainee->centre_id,
                     'letter_subject' => $subject,
                     'letter_content' => $content,
                     'letter_status' => ['draft', 'sent', 'delivered'][array_rand(['draft', 'sent', 'delivered'])],
