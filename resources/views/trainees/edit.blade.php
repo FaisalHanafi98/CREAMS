@@ -675,9 +675,10 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="trainee_phone_number">Phone Number <span class="text-danger">*</span></label>
-                                    <input type="text" class="form-control @error('trainee_phone_number') is-invalid @enderror" 
+                                    <input type="tel" class="form-control @error('trainee_phone_number') is-invalid @enderror" 
                                            id="trainee_phone_number" name="trainee_phone_number" 
-                                           value="{{ old('trainee_phone_number', $trainee->trainee_phone_number) }}" required>
+                                           value="{{ old('trainee_phone_number', $trainee->trainee_phone_number ?: '+60') }}" 
+                                           placeholder="+60123456789" required>
                                     @error('trainee_phone_number')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
@@ -817,9 +818,10 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="guardian_phone">Guardian's Phone <span class="text-danger">*</span></label>
-                                    <input type="text" class="form-control @error('guardian_phone') is-invalid @enderror" 
+                                    <input type="tel" class="form-control @error('guardian_phone') is-invalid @enderror" 
                                            id="guardian_phone" name="guardian_phone" 
-                                           value="{{ old('guardian_phone', $trainee->guardian_phone ?? '') }}" required>
+                                           value="{{ old('guardian_phone', $trainee->guardian_phone ?: '+60') }}" 
+                                           placeholder="+60123456789" required>
                                     @error('guardian_phone')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
@@ -929,9 +931,10 @@
                                 </div>
                                 <div class="form-group">
                                     <label for="emergency_contact_phone">Contact Phone</label>
-                                    <input type="text" class="form-control @error('emergency_contact_phone') is-invalid @enderror" 
+                                    <input type="tel" class="form-control @error('emergency_contact_phone') is-invalid @enderror" 
                                            id="emergency_contact_phone" name="emergency_contact_phone" 
-                                           value="{{ old('emergency_contact_phone', $trainee->emergency_contact_phone ?? '') }}">
+                                           value="{{ old('emergency_contact_phone', $trainee->emergency_contact_phone ?: '+60') }}" 
+                                           placeholder="+60123456789">
                                     @error('emergency_contact_phone')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror

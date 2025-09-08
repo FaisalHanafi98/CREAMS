@@ -6,9 +6,12 @@ use App\Models\Centre;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
+use App\Traits\HandlesErrors;
 class VolunteerController extends Controller
 {
-/**
+    use HandlesErrors;
+
+    /**
 * Display the volunteer page
 *
 * @return \Illuminate\View\View

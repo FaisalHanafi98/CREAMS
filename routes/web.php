@@ -124,13 +124,13 @@ Route::middleware('guest')->group(function () {
     Route::get('/registration', [MainController::class, 'registration'])->name('registration');
     Route::get('/staffs/register', [MainController::class, 'registration'])->name('staffs.register');
     Route::post('/auth/save', [MainController::class, 'save'])->name('auth.save');
-
-    // Password reset routes
-    Route::get('/forgot-password', [ForgotPasswordController::class, 'showForgotPasswordForm'])->name('password.request');
-    Route::post('/forgot-password', [ForgotPasswordController::class, 'submitForgotPasswordForm'])->name('password.email');
-    Route::get('/reset-password/{token}', [ForgotPasswordController::class, 'showResetPasswordForm'])->name('password.reset');
-    Route::post('/reset-password', [ForgotPasswordController::class, 'submitResetPasswordForm'])->name('password.update');
 });
+
+// Password reset routes - accessible to both guests and authenticated users
+Route::get('/forgot-password', [ForgotPasswordController::class, 'showForgotPasswordForm'])->name('password.request');
+Route::post('/forgot-password', [ForgotPasswordController::class, 'submitForgotPasswordForm'])->name('password.email');
+Route::get('/reset-password/{token}', [ForgotPasswordController::class, 'showResetPasswordForm'])->name('password.reset');
+Route::post('/reset-password', [ForgotPasswordController::class, 'submitResetPasswordForm'])->name('password.update');
 
 // Logout routes
 Route::middleware(['auth'])->group(function () {

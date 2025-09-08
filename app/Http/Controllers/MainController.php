@@ -434,8 +434,15 @@ class MainController extends Controller
                 'login_time' => now()->toDateTimeString()
             ]);
 
-            // Remember Me functionality
-            if ($request->has('remember') && $request->remember == 'on') {
+            // Debug remember me request data
+            Log::debug('Remember me check', [
+                'has_remember' => $request->has('remember'),
+                'remember_value' => $request->remember,
+                'all_request' => $request->all()
+            ]);
+            
+            // Remember Me functionality  
+            if ($request->has('remember') && ($request->remember == 'on' || $request->remember == '1')) {
                 // Create a remember token if it doesn't exist
                 if (empty($user->remember_token)) {
                     $user->remember_token = Str::random(60);
@@ -447,8 +454,24 @@ class MainController extends Controller
                     ]);
                 }
 
-                // Set a cookie with the remember token
-                Cookie::queue('remember_token', $user->remember_token, 43200); // 30 days
+                // Set a cookie with the remember token (1 day)
+                Cookie::queue('remember_token', $user->remember_token, 1440);
+                
+                // For remember me, we want sessions to persist
+                session(['remember_me' => true]);
+                
+                Log::info('Remember me enabled for user', [
+                    'user_id' => $user->id,
+                    'cookie_set' => true
+                ]);
+            } else {
+                // Clear any existing remember token and cookie for non-remember logins
+                Cookie::queue(Cookie::forget('remember_token'));
+                session(['remember_me' => false]);
+                
+                Log::info('Remember me disabled - session will expire on browser close', [
+                    'user_id' => $user->id
+                ]);
             }
 
             Log::info('User logged in successfully', [
@@ -677,15 +700,22 @@ class MainController extends Controller
             'ip' => $request->ip()
         ]);
 
-        // If the user is logged in, find their model and clear the remember token
+        // Check if user had remember me enabled before logout
+        $hadRememberMe = session('remember_me', false);
+        
+        // If the user is logged in and wants to clear remember me completely
         if ($userId) {
             try {
                 $user = User::find($userId);
 
-                if ($user) {
-                    Log::debug('Clearing remember token for user', ['user_id' => $userId]);
+                if ($user && !$hadRememberMe) {
+                    // Only clear remember token if they didn't have remember me enabled
+                    Log::debug('Clearing remember token for non-remember user', ['user_id' => $userId]);
                     $user->remember_token = null;
                     $user->save();
+                } elseif ($user && $hadRememberMe) {
+                    // Keep remember token for remember me users
+                    Log::debug('Preserving remember token for remember me user', ['user_id' => $userId]);
                 } else {
                     Log::warning('User not found during logout', ['user_id' => $userId]);
                 }
@@ -697,8 +727,13 @@ class MainController extends Controller
             }
         }
 
-        // Clear cookies
-        Cookie::queue(Cookie::forget('remember_token'));
+        // Clear remember token cookie only if they didn't have remember me
+        if (!$hadRememberMe) {
+            Cookie::queue(Cookie::forget('remember_token'));
+            Log::debug('Cleared remember token cookie for non-remember logout');
+        } else {
+            Log::debug('Preserving remember token cookie for remember me user');
+        }
 
         // Store log data before clearing session
         $logData = [

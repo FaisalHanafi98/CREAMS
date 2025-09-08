@@ -5,9 +5,12 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
+use App\Traits\HandlesErrors;
 class ContactController extends Controller
 {
-/**
+    use HandlesErrors;
+
+    /**
 * Display the contact page
 *
 * @return \Illuminate\View\View

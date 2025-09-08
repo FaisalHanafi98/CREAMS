@@ -28,6 +28,10 @@
             text-align: justify;
             margin-bottom: 40px;
             white-space: pre-wrap;
+            font-size: 12pt;
+            line-height: 1.8;
+            margin-left: 0;
+            padding-left: 0;
         }
         .letter-signature {
             margin-top: 60px;

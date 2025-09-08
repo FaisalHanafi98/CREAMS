@@ -9,6 +9,20 @@ class MalaysianPhoneInput {
     }
 
     /**
+     * Remove all existing flags from the page
+     */
+    removeAllExistingFlags() {
+        const flags = document.querySelectorAll('.phone-flag');
+        flags.forEach(flag => {
+            const input = flag.parentNode.querySelector('input');
+            if (input) {
+                input.style.paddingLeft = '12px';
+            }
+            flag.remove();
+        });
+    }
+
+    /**
      * Initialize all phone inputs on the page
      */
     initializePhoneInputs() {
@@ -19,6 +33,8 @@ class MalaysianPhoneInput {
             '.phone-input, #trainee_phone_number, #guardian_phone, #emergency_contact_phone'
         );
 
+        console.log('Found', phoneInputs.length, 'phone inputs on', window.location.pathname);
+        
         phoneInputs.forEach(input => {
             this.setupPhoneInput(input);
         });
@@ -28,18 +44,27 @@ class MalaysianPhoneInput {
      * Setup individual phone input
      */
     setupPhoneInput(input) {
-        // Add visual indicator
-        this.addMalaysianFlag(input);
-        
         // Set placeholder
         if (!input.placeholder) {
             input.placeholder = '+60 12-345 6789';
         }
 
-        // Set initial value if exists
-        if (input.value) {
-            input.value = this.formatPhoneNumber(input.value);
+        // Always remove existing flags for profile pages or readonly inputs
+        if (input.readOnly || input.hasAttribute('readonly') || 
+            window.location.pathname.includes('/profile') ||
+            input.id === 'phone') {
+            this.removeExistingFlag(input);
         }
+
+        // Remove +60 prefix from display
+        if (input.value) {
+            input.value = this.removePrefix(input.value);
+            console.log('Removed +60 prefix, new value:', input.value);
+        }
+
+        // NEVER add any overlay or flag - just remove any existing ones
+        this.removeExistingFlag(input);
+        console.log('No overlay added - overlay functionality disabled');
 
         // Add event listeners
         input.addEventListener('input', (e) => {
@@ -56,11 +81,59 @@ class MalaysianPhoneInput {
     }
 
     /**
+     * Remove +60 prefix from phone number for display
+     */
+    removePrefix(phone) {
+        if (!phone) return '';
+        
+        // Remove +60 prefix and any formatting
+        let cleaned = phone.replace(/[^\d]/g, ''); // Remove all non-digits
+        
+        // Remove 60 prefix if it starts with it
+        if (cleaned.startsWith('60')) {
+            cleaned = cleaned.substring(2);
+        }
+        
+        // Add local format with leading zero if needed
+        if (cleaned.length >= 8 && !cleaned.startsWith('0')) {
+            cleaned = '0' + cleaned;
+        }
+        
+        return cleaned;
+    }
+
+    /**
+     * Remove existing flag from input
+     */
+    removeExistingFlag(input) {
+        const flag = input.parentNode.querySelector('.phone-flag');
+        if (flag) {
+            flag.remove();
+            input.style.paddingLeft = '12px'; // Reset padding
+        }
+    }
+
+    /**
      * Add Malaysian flag visual indicator
      */
     addMalaysianFlag(input) {
+        // Completely skip flag for profile pages or readonly inputs
+        if (input.readOnly || input.hasAttribute('readonly') || 
+            window.location.pathname.includes('/profile') ||
+            input.id === 'phone') {
+            console.log('Skipping flag for profile/readonly input');
+            return;
+        }
+
         // Check if already has flag
         if (input.parentNode.querySelector('.phone-flag')) {
+            return;
+        }
+
+        // Don't add flag if input already has value with phone number
+        const currentValue = input.value ? input.value.trim() : '';
+        if (currentValue && (currentValue.includes('+60') || currentValue.length > 3)) {
+            console.log('Skipping flag for input with existing value:', currentValue);
             return;
         }
 
@@ -75,7 +148,7 @@ class MalaysianPhoneInput {
         // Add flag indicator
         const flag = document.createElement('span');
         flag.className = 'phone-flag';
-        flag.innerHTML = '🇲🇾 +60';
+        flag.innerHTML = '+60';
         flag.style.cssText = `
             position: absolute;
             left: 10px;
@@ -88,22 +161,24 @@ class MalaysianPhoneInput {
         `;
 
         input.parentNode.appendChild(flag);
-        input.style.paddingLeft = '70px';
+        input.style.paddingLeft = '50px';
     }
 
     /**
-     * Handle phone input formatting
+     * Handle phone input formatting - remove +60 prefix
      */
     handlePhoneInput(event) {
         const input = event.target;
         const cursorPosition = input.selectionStart;
         const oldValue = input.value;
-        const newValue = this.formatPhoneNumber(oldValue);
+        
+        // Remove +60 prefix from whatever they type
+        const newValue = this.removePrefix(oldValue);
         
         input.value = newValue;
         
         // Maintain cursor position
-        const newCursorPosition = cursorPosition + (newValue.length - oldValue.length);
+        const newCursorPosition = Math.min(cursorPosition, newValue.length);
         input.setSelectionRange(newCursorPosition, newCursorPosition);
         
         // Remove validation errors when user types
@@ -111,13 +186,14 @@ class MalaysianPhoneInput {
     }
 
     /**
-     * Handle phone focus - ensure +60 prefix
+     * Handle phone focus - DO NOT auto-add +60
      */
     handlePhoneFocus(event) {
         const input = event.target;
-        if (!input.value || input.value.trim() === '') {
-            input.value = '+60 ';
-        }
+        // Remove any existing overlay when focused
+        this.removeExistingFlag(input);
+        // Do not auto-add +60 - let user type naturally
+        console.log('Phone input focused, no auto +60 added');
     }
 
     /**
@@ -268,7 +344,10 @@ class MalaysianPhoneInput {
 
 // Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
-    new MalaysianPhoneInput();
+    // Add a small delay to ensure all values are loaded
+    setTimeout(() => {
+        new MalaysianPhoneInput();
+    }, 100);
 });
 
 // Also initialize on AJAX content updates

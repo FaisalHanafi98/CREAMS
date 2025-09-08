@@ -25,27 +25,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        // Register Malaysian date helper functions
-        if (!function_exists('malaysianDate')) {
-            function malaysianDate($date = null) {
-                $carbon = $date ? \Carbon\Carbon::parse($date) : now();
-                return $carbon->toMalaysianDate();
-            }
-        }
-        
-        if (!function_exists('malaysianDateTime')) {
-            function malaysianDateTime($date = null) {
-                $carbon = $date ? \Carbon\Carbon::parse($date) : now();
-                return $carbon->toMalaysianDateTime();
-            }
-        }
-        
-        if (!function_exists('malaysianTime')) {
-            function malaysianTime($date = null) {
-                $carbon = $date ? \Carbon\Carbon::parse($date) : now();
-                return $carbon->toMalaysianTime();
-            }
-        }
+        // Load Malaysian date helper functions
+        require_once app_path('Helpers/DateHelper.php');
         // Share user data with all views
         View::composer('*', function ($view) {
             // Only execute if user is logged in (session has id and role)

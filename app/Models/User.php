@@ -22,7 +22,6 @@ class User extends Authenticatable
         'iium_id',
         'name', 
         'email',
-        'password',
         'phone',
         'address',
         'position',
@@ -30,15 +29,8 @@ class User extends Authenticatable
         'education_specialization',
         'teaching_specialization',
         'avatar',
-        'staff_avatar',
         'about',
         'date_of_birth',
-        'role',
-        'status',
-        'centre_id',
-        'centre_location',
-        'review',
-        'updated_by',
     ];
     
     /**
@@ -48,16 +40,18 @@ class User extends Authenticatable
      * @var array<int, string>
      */
     protected $guarded = [
-        'password',          // Only allow password changes through specific methods
-        'status',           // Status changes require admin approval
-        'role',             // Role changes require admin approval
-        'centre_id',        // Centre assignment requires admin approval
-        'centre_location',  // Auto-derived from centre_id
+        'id',
+        'password',             // Only allow password changes through specific methods
+        'status',              // Status changes require admin approval
+        'role',                // Role changes require admin approval
+        'centre_id',           // Centre assignment requires admin approval
+        'centre_location',     // Auto-derived from centre_id
         'user_last_accessed_at', // System-managed field
-        'review',           // Performance reviews require supervisor approval
+        'encrypted_id',        // System-generated field
+        'email_verified_at',   // System-managed field
+        'remember_token',      // System-managed field
         'created_at',
         'updated_at',
-        'remember_token',
     ];
 
     /**

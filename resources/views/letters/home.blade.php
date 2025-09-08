@@ -39,30 +39,49 @@
                     <h5 class="card-title">Filter Letters</h5>
                     <form method="GET" action="{{ route('letters.index') }}">
                         <div class="row">
-                            <div class="col-md-4">
-                                <label class="form-label">Search</label>
-                                <input type="text" name="search" class="form-control" 
-                                       value="{{ request('search') }}" 
-                                       placeholder="Search letters...">
-                            </div>
-                            <div class="col-md-3">
-                                <label class="form-label">From Date</label>
-                                <input type="date" name="date_from" class="form-control" 
-                                       value="{{ request('date_from') }}">
-                            </div>
-                            <div class="col-md-3">
-                                <label class="form-label">To Date</label>
-                                <input type="date" name="date_to" class="form-control" 
-                                       value="{{ request('date_to') }}">
+                            <div class="col-md-2">
+                                <label class="form-label">Reference</label>
+                                <input type="text" name="reference_search" class="form-control" 
+                                       value="{{ request('reference_search') }}" 
+                                       placeholder="LTR/2024/01/0001">
                             </div>
                             <div class="col-md-2">
-                                <label class="form-label">&nbsp;</label>
+                                <label class="form-label">Letter Name</label>
+                                <input type="text" name="name_search" class="form-control" 
+                                       value="{{ request('name_search') }}" 
+                                       placeholder="Letter name...">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">Recipient</label>
+                                <input type="text" name="participants" class="form-control" 
+                                       value="{{ request('participants') }}" 
+                                       placeholder="Recipient name...">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">Subject</label>
+                                <input type="text" name="subject_search" class="form-control" 
+                                       value="{{ request('subject_search') }}" 
+                                       placeholder="Letter subject...">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">From Date</label>
+                                <input type="date" name="start_date" class="form-control" 
+                                       value="{{ request('start_date') }}">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">To Date</label>
+                                <input type="date" name="end_date" class="form-control" 
+                                       value="{{ request('end_date') }}">
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-md-12">
                                 <div class="d-flex gap-2">
                                     <button type="submit" class="btn btn-primary">
-                                        <i class="fas fa-search"></i>
+                                        <i class="fas fa-search"></i> Filter
                                     </button>
-                                    <a href="{{ route('letters.index') }}" class="btn btn-secondary">
-                                        <i class="fas fa-refresh"></i>
+                                    <a href="{{ route('letters.index') }}" class="btn btn-outline-secondary">
+                                        <i class="fas fa-times"></i> Clear All
                                     </a>
                                 </div>
                             </div>
@@ -81,23 +100,35 @@
                             <table class="table table-hover">
                                 <thead>
                                     <tr>
-                                        <th>Reference & Name</th>
-                                        <th>Letter Name</th>
-                                        <th>Recipient</th>
-                                        <th>Status</th>
-                                        <th>Created</th>
-                                        <th>Actions</th>
+                                        <th><i class="fas fa-hashtag"></i> Reference</th>
+                                        <th><i class="fas fa-file-signature"></i> Letter Name</th>
+                                        <th><i class="fas fa-user"></i> Recipient</th>
+                                        <th><i class="fas fa-tag"></i> Subject</th>
+                                        <th><i class="fas fa-info-circle"></i> Status</th>
+                                        <th><i class="fas fa-calendar"></i> Created</th>
+                                        <th><i class="fas fa-cog"></i> Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     @foreach($letters as $letter)
                                         <tr>
                                             <td>
-                                                <strong>{{ $letter->letter_reference ?? $letter->letter_reference_number }}</strong>
-                                                <br><small class="text-muted">{{ $letter->letter_name ?? 'Untitled Letter' }}</small>
+                                                <code class="reference-code">{{ $letter->letter_id }}</code>
                                             </td>
-                                            <td>{{ $letter->letter_name ?? $letter->letter_subject ?? 'Untitled Letter' }}</td>
-                                            <td>{{ $letter->recipient_name }}</td>
+                                            <td>
+                                                <strong>{{ $letter->letter_name ?? 'Untitled Letter' }}</strong>
+                                            </td>
+                                            <td>
+                                                <div class="recipient-info">
+                                                    <strong>{{ $letter->recipient_name }}</strong>
+                                                    @if($letter->recipient_address)
+                                                        <br><small class="text-muted">{{ \Str::limit($letter->recipient_address, 50) }}</small>
+                                                    @endif
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <span title="{{ $letter->letter_subject }}">{{ \Str::limit($letter->letter_subject, 40) }}</span>
+                                            </td>
                                             <td>
                                                 @if($letter->letter_status === 'draft')
                                                     <span class="badge badge-warning">Draft</span>
@@ -109,7 +140,14 @@
                                                     <span class="badge badge-secondary">{{ ucfirst($letter->letter_status) }}</span>
                                                 @endif
                                             </td>
-                                            <td>{{ $letter->created_at->format('M j, Y') }}</td>
+                                            <td>
+                                                <div class="generated-info">
+                                                    <small class="text-muted">
+                                                        {{ $letter->created_at->format('d M Y H:i') }}
+                                                        <br>by {{ $letter->generated_by_name }}
+                                                    </small>
+                                                </div>
+                                            </td>
                                             <td>
                                                 <div class="btn-group btn-group-sm">
                                                     <button class="btn btn-outline-info" 
@@ -246,5 +284,53 @@ function exportLetters() {
     alert('Export functionality will be implemented in a future update.');
 }
 </script>
+
+<style>
+.reference-code {
+    background: #e9ecef;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.875em;
+    font-weight: 600;
+}
+
+.recipient-info {
+    max-width: 200px;
+}
+
+.generated-info {
+    font-size: 0.875em;
+}
+
+.btn-group .btn {
+    border-radius: 0;
+}
+
+.btn-group .btn:first-child {
+    border-top-left-radius: 0.25rem;
+    border-bottom-left-radius: 0.25rem;
+}
+
+.btn-group .btn:last-child {
+    border-top-right-radius: 0.25rem;
+    border-bottom-right-radius: 0.25rem;
+}
+
+.table th {
+    border-top: none;
+    font-weight: 600;
+    font-size: 0.875em;
+}
+
+.table tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+.filter-form {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 5px;
+}
+</style>
 
 @endsection

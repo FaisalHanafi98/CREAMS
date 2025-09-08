@@ -252,6 +252,45 @@ class Letter extends Model
     }
     
     /**
+     * Scope to search by reference number.
+     */
+    public function scopeSearchReference($query, $term)
+    {
+        return $query->where('letter_id', 'like', "%{$term}%");
+    }
+    
+    /**
+     * Scope to search by letter name.
+     */
+    public function scopeSearchName($query, $term)
+    {
+        return $query->where('letter_name', 'like', "%{$term}%");
+    }
+    
+    /**
+     * Scope to search by participants (recipient or creator).
+     */
+    public function scopeSearchParticipants($query, $term)
+    {
+        return $query->where(function ($q) use ($term) {
+            $q->where('recipient_name', 'like', "%{$term}%")
+              ->orWhereJsonContains('letter_data->recipient_name', $term)
+              ->orWhereJsonContains('letter_data->generated_by_name', $term)
+              ->orWhereHas('createdBy', function($query) use ($term) {
+                  $query->where('name', 'like', "%{$term}%");
+              });
+        });
+    }
+    
+    /**
+     * Scope to search by subject.
+     */
+    public function scopeSearchSubject($query, $term)
+    {
+        return $query->where('letter_subject', 'like', "%{$term}%");
+    }
+    
+    /**
      * Get recipient name from letter data
      */
     public function getRecipientNameAttribute()

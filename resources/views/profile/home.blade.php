@@ -631,7 +631,7 @@
 @section('content')
 <div class="profile-wrapper">
     <div class="container-fluid">
-        @include('components.flash-messages')
+        {{-- Flash messages handled by JavaScript showSuccessAlert() function instead --}}
         
         <!-- Profile Container -->
         <div class="profile-container">
@@ -764,7 +764,7 @@
                                 <div class="col-md-6">
                                     <div class="form-group">
                                         <label for="phone">Phone Number</label>
-                                        <input type="text" class="form-control editable-field" id="phone" name="phone" value="{{ $user['phone'] ?? '' }}" readonly>
+                                        <input type="tel" class="form-control editable-field" id="phone" name="phone" value="{{ $user['phone'] ?? '' }}" placeholder="+60123456789" readonly>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
@@ -2554,6 +2554,40 @@ $(document).ready(function() {
     setTimeout(function() {
         $('.alert-dismissible').alert('close');
     }, 5000);
+
+    // FORCE CLEAN PHONE FIELD - Remove any +60 prefix and flag overlays
+    function forceCleanPhoneField() {
+        const phoneInput = document.getElementById('phone');
+        if (phoneInput) {
+            // Remove any flag overlays
+            const flags = document.querySelectorAll('.phone-flag');
+            flags.forEach(flag => flag.remove());
+            
+            // Clean the phone value - remove +60 prefix
+            let phoneValue = phoneInput.value || '';
+            if (phoneValue.includes('+60')) {
+                phoneValue = phoneValue.replace(/\+?60/g, '').replace(/[^\d]/g, '');
+                if (phoneValue && !phoneValue.startsWith('0')) {
+                    phoneValue = '0' + phoneValue;
+                }
+                phoneInput.value = phoneValue;
+            }
+            
+            // Reset any special styling
+            phoneInput.style.paddingLeft = '12px';
+            
+            console.log('Force cleaned phone field:', phoneInput.value);
+        }
+    }
+
+    // Run cleanup multiple times to catch any delayed additions
+    setTimeout(forceCleanPhoneField, 100);
+    setTimeout(forceCleanPhoneField, 500);
+    setTimeout(forceCleanPhoneField, 1000);
+    
+    // Also run on any dynamic content changes
+    const observer = new MutationObserver(forceCleanPhoneField);
+    observer.observe(document.body, { childList: true, subtree: true });
 });
 </script>
 @endsection

@@ -17,8 +17,8 @@ class DatabaseSeeder extends Seeder
         $this->command->info('🚀 Starting CREAMS Database Seeding - Consolidated Structure');
         
         try {
-            // CREAMS Consolidated Seeding - 7 Modules
-            $this->command->info("\n🏗️ CREAMS CONSOLIDATED SEEDING (7 MODULES)");
+            // CREAMS Consolidated Seeding - 7 Modules + Testing Data
+            $this->command->info("\n🏗️ CREAMS CONSOLIDATED SEEDING (7 MODULES + TESTING DATA)");
             $this->call([
                 CREAMSSeederFoundationManagement::class,      // Module 01: Centres, Users, System
                 CREAMSSeederClientManagement::class,          // Module 02: Trainees, Volunteers, Contacts  
@@ -27,6 +27,7 @@ class DatabaseSeeder extends Seeder
                 CREAMSSeederAssetManagement::class,           // Module 05: Assets, Maintenance, Inventory
                 CREAMSSeederCommunicationManagement::class,   // Module 06: Messages, Notifications, Letters
                 CREAMSSeederSystemConstraints::class,         // Module 07: Foreign Keys, Validation
+                TestingGuideDataSeeder::class,                // Testing Guide: All test credentials and data
             ]);
 
             // Show final comprehensive summary

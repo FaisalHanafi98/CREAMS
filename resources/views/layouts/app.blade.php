@@ -965,7 +965,7 @@
     <link rel="stylesheet" href="{{ asset('css/dashboard-widgets.css') }}">
     
     <!-- Malaysian Phone Input Styling -->
-    <link rel="stylesheet" href="{{ asset('css/malaysian-phone-input.css') }}">
+    {{-- <link rel="stylesheet" href="{{ asset('css/malaysian-phone-input.css') }}"> --}}
     
     @yield('styles')
 </head>
@@ -1319,134 +1319,6 @@
         <!-- Role-based Access Control Messages -->
         @include('components.role-access-denied')
         
-        <!-- Flash Messages -->
-        @if(session('success') || session('error') || session('warning') || session('info') || session('fail') || $errors->any())
-            <div id="flash-messages-container" style="position: fixed; top: 80px; right: 20px; z-index: 10000; max-width: 450px;">
-                @if(session('success'))
-                    <div class="alert alert-success flash-message" style="margin-bottom: 15px; border: none; border-radius: 12px; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15); animation: slideInRight 0.5s ease-out;">
-                        <div style="display: flex; align-items: flex-start; padding: 16px 20px; gap: 12px;">
-                            <i class="fas fa-check-circle" style="color: #2ed573; font-size: 18px; margin-top: 2px;"></i>
-                            <div style="flex: 1;">
-                                <strong>Success!</strong> {{ session('success') }}
-                            </div>
-                            <button type="button" onclick="this.parentElement.parentElement.remove()" style="background: none; border: none; color: rgba(0,0,0,0.4); font-size: 16px; cursor: pointer;">
-                                <i class="fas fa-times"></i>
-                            </button>
-                        </div>
-                    </div>
-                @endif
-
-                @if(session('error') || session('fail'))
-                    <div class="alert alert-danger flash-message" style="margin-bottom: 15px; border: none; border-radius: 12px; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15); animation: slideInRight 0.5s ease-out;">
-                        <div style="display: flex; align-items: flex-start; padding: 16px 20px; gap: 12px;">
-                            <i class="fas fa-exclamation-circle" style="color: #ff4757; font-size: 18px; margin-top: 2px;"></i>
-                            <div style="flex: 1;">
-                                <strong>Error!</strong> {{ session('error') ?? session('fail') }}
-                            </div>
-                            <button type="button" onclick="this.parentElement.parentElement.remove()" style="background: none; border: none; color: rgba(0,0,0,0.4); font-size: 16px; cursor: pointer;">
-                                <i class="fas fa-times"></i>
-                            </button>
-                        </div>
-                    </div>
-                @endif
-
-                @if(session('warning'))
-                    <div class="alert alert-warning flash-message" style="margin-bottom: 15px; border: none; border-radius: 12px; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15); animation: slideInRight 0.5s ease-out;">
-                        <div style="display: flex; align-items: flex-start; padding: 16px 20px; gap: 12px;">
-                            <i class="fas fa-exclamation-triangle" style="color: #ffa502; font-size: 18px; margin-top: 2px;"></i>
-                            <div style="flex: 1;">
-                                <strong>Warning!</strong> {{ session('warning') }}
-                            </div>
-                            <button type="button" onclick="this.parentElement.parentElement.remove()" style="background: none; border: none; color: rgba(0,0,0,0.4); font-size: 16px; cursor: pointer;">
-                                <i class="fas fa-times"></i>
-                            </button>
-                        </div>
-                    </div>
-                @endif
-
-                @if(session('info'))
-                    <div class="alert alert-info flash-message" style="margin-bottom: 15px; border: none; border-radius: 12px; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15); animation: slideInRight 0.5s ease-out;">
-                        <div style="display: flex; align-items: flex-start; padding: 16px 20px; gap: 12px;">
-                            <i class="fas fa-info-circle" style="color: #32bdea; font-size: 18px; margin-top: 2px;"></i>
-                            <div style="flex: 1;">
-                                <strong>Info:</strong> {{ session('info') }}
-                            </div>
-                            <button type="button" onclick="this.parentElement.parentElement.remove()" style="background: none; border: none; color: rgba(0,0,0,0.4); font-size: 16px; cursor: pointer;">
-                                <i class="fas fa-times"></i>
-                            </button>
-                        </div>
-                    </div>
-                @endif
-
-                @if($errors->any())
-                    <div class="alert alert-danger flash-message" style="margin-bottom: 15px; border: none; border-radius: 12px; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15); animation: slideInRight 0.5s ease-out;">
-                        <div style="display: flex; align-items: flex-start; padding: 16px 20px; gap: 12px;">
-                            <i class="fas fa-exclamation-circle" style="color: #ff4757; font-size: 18px; margin-top: 2px;"></i>
-                            <div style="flex: 1;">
-                                <strong>Validation Error{{ $errors->count() > 1 ? 's' : '' }}:</strong>
-                                @if($errors->count() == 1)
-                                    {{ $errors->first() }}
-                                @else
-                                    <ul style="margin: 8px 0 0 16px;">
-                                        @foreach($errors->all() as $error)
-                                            <li style="margin-bottom: 4px;">{{ $error }}</li>
-                                        @endforeach
-                                    </ul>
-                                @endif
-                            </div>
-                            <button type="button" onclick="this.parentElement.parentElement.remove()" style="background: none; border: none; color: rgba(0,0,0,0.4); font-size: 16px; cursor: pointer;">
-                                <i class="fas fa-times"></i>
-                            </button>
-                        </div>
-                    </div>
-                @endif
-            </div>
-
-            <style>
-                @keyframes slideInRight {
-                    from { opacity: 0; transform: translateX(100%); }
-                    to { opacity: 1; transform: translateX(0); }
-                }
-                
-                .flash-message {
-                    background: white;
-                    border-left: 4px solid;
-                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-                }
-                
-                .alert-success { border-left-color: #2ed573; }
-                .alert-danger { border-left-color: #ff4757; }
-                .alert-warning { border-left-color: #ffa502; }
-                .alert-info { border-left-color: #32bdea; }
-                
-                @media (max-width: 768px) {
-                    #flash-messages-container {
-                        top: 10px !important;
-                        right: 10px !important;
-                        left: 10px !important;
-                        max-width: none !important;
-                    }
-                }
-            </style>
-
-            <script>
-                document.addEventListener('DOMContentLoaded', function() {
-                    // Auto-dismiss flash messages after 7 seconds
-                    const flashMessages = document.querySelectorAll('.flash-message');
-                    flashMessages.forEach(function(message) {
-                        setTimeout(function() {
-                            message.style.opacity = '0';
-                            message.style.transform = 'translateX(100%)';
-                            setTimeout(function() {
-                                if (message.parentElement) {
-                                    message.remove();
-                                }
-                            }, 300);
-                        }, 7000);
-                    });
-                });
-            </script>
-        @endif
         
         @yield('content')
     </div>

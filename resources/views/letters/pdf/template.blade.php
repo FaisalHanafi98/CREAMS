@@ -6,7 +6,7 @@
     <title>{{ $letter->letter_subject }}</title>
     <style>
         @page {
-            margin: 2cm;
+            margin: 2cm 2cm 2cm 2cm;
             font-family: 'Times New Roman', serif;
         }
         
@@ -17,6 +17,16 @@
             color: #000;
             margin: 0;
             padding: 0;
+        }
+        
+        * {
+            box-sizing: border-box;
+        }
+        
+        div, p, br {
+            margin-left: 0 !important;
+            padding-left: 0 !important;
+            text-indent: 0 !important;
         }
         
         .letterhead {
@@ -77,10 +87,25 @@
             margin-bottom: 40px;
             font-size: 12pt;
             line-height: 1.8;
+            white-space: pre-wrap;
+            margin-left: 0 !important;
+            padding-left: 0 !important;
+            margin-right: 0;
+            padding-right: 0;
+            width: 100%;
+            display: block;
         }
         
         .letter-content p {
             margin-bottom: 15px;
+            margin-left: 0;
+            padding-left: 0;
+            text-indent: 0;
+        }
+        
+        .letter-content div {
+            margin-left: 0;
+            padding-left: 0;
         }
         
         .letter-signature {

@@ -20,39 +20,31 @@ class Asset extends Model
     protected $fillable = [
         'asset_tag',
         'asset_name',
-        'description',
+        'asset_description',
         'category_id',
+        'type_id',
         'centre_id',
-        'brand',
-        'model',
+        'location_id',
         'serial_number',
-        'purchase_price',
+        'model_number',
+        'manufacturer',
         'purchase_date',
+        'purchase_price',
         'warranty_expiry',
-        'warranty_months',
         'condition',
         'status',
-        'location',
         'assigned_to_user',
-        'assigned_date',
-        'depreciation_rate',
-        'current_value',
-        'specifications',
-        'images',
-        'primary_image',
         'notes',
-        'created_by'
+        'images',
+        'is_active'
     ];
 
     protected $casts = [
         'purchase_price' => 'decimal:2',
-        'current_value' => 'decimal:2',
-        'depreciation_rate' => 'decimal:2',
         'purchase_date' => 'date',
         'warranty_expiry' => 'date',
-        'assigned_date' => 'date',
-        'specifications' => 'array',
-        'images' => 'array'
+        'images' => 'array',
+        'is_active' => 'boolean'
     ];
 
     protected $appends = [
@@ -76,6 +68,22 @@ class Asset extends Model
     public function category(): BelongsTo
     {
         return $this->belongsTo(AssetCategory::class, 'category_id');
+    }
+
+    /**
+     * Get the type of the asset
+     */
+    public function type(): BelongsTo
+    {
+        return $this->belongsTo(AssetType::class, 'type_id');
+    }
+
+    /**
+     * Get the location of the asset
+     */
+    public function location(): BelongsTo
+    {
+        return $this->belongsTo(AssetLocation::class, 'location_id');
     }
 
     /**
@@ -200,10 +208,9 @@ class Asset extends Model
         return $query->where(function ($q) use ($search) {
             $q->where('asset_name', 'LIKE', "%{$search}%")
               ->orWhere('asset_tag', 'LIKE', "%{$search}%")
-              ->orWhere('model', 'LIKE', "%{$search}%")
-              ->orWhere('brand', 'LIKE', "%{$search}%")
-              ->orWhere('serial_number', 'LIKE', "%{$search}%")
-              ->orWhere('location', 'LIKE', "%{$search}%");
+              ->orWhere('model_number', 'LIKE', "%{$search}%")
+              ->orWhere('manufacturer', 'LIKE', "%{$search}%")
+              ->orWhere('serial_number', 'LIKE', "%{$search}%");
         });
     }
 

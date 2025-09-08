@@ -871,10 +871,8 @@ class UserProfileController extends Controller
                 ], 401);
             }
 
-            // Only deactivate templates by current user for better performance
-            LetterTemplate::where('created_by', $roleId)
-                          ->where('is_active', true)
-                          ->update(['is_active' => false]);
+            // Allow multiple templates to coexist - don't deactivate previous ones
+            // Users can choose which template to use for each letter
 
             // Handle base64 image conversion to files
             $headerImagePath = null;

@@ -22,16 +22,29 @@
     <div class="template-section mb-4">
         <h4><i class="fas fa-file-image"></i> Letter Template Settings</h4>
         
-        @if(isset($activeTemplate) && $activeTemplate)
+        @if(isset($allTemplates) && count($allTemplates) > 0)
+            <div class="available-templates alert alert-info">
+                <i class="fas fa-info-circle"></i>
+                <strong>Available Templates:</strong> {{ count($allTemplates) }} template(s) available
+                <div class="template-list mt-2">
+                    @foreach($allTemplates as $template)
+                        <span class="badge badge-primary mr-2">
+                            {{ $template->template_name }} 
+                            <small>({{ $template->created_at->format('M d, Y') }})</small>
+                        </span>
+                    @endforeach
+                </div>
+            </div>
+        @elseif(isset($activeTemplate) && $activeTemplate)
             <div class="current-template alert alert-info">
                 <i class="fas fa-info-circle"></i>
                 <strong>Current Template:</strong> {{ $activeTemplate->template_name }} 
-                (Active since: {{ $activeTemplate->created_at->format('d M Y H:i') }})
+                (Created: {{ $activeTemplate->created_at->format('d M Y H:i') }})
             </div>
         @else
             <div class="alert alert-warning">
                 <i class="fas fa-exclamation-triangle"></i>
-                <strong>No Active Template:</strong> Please create a template before generating letters.
+                <strong>No Templates Found:</strong> Please create a template before generating letters.
             </div>
         @endif
         
@@ -92,7 +105,7 @@
                 <i class="fas fa-save"></i> Save Template
             </button>
             <small class="form-text text-muted mt-2">
-                <i class="fas fa-info-circle"></i> Saving will create a new active template and deactivate previous ones.
+                <i class="fas fa-info-circle"></i> Saving will create a new template that you can use for generating letters.
             </small>
         </form>
     </div>
@@ -333,6 +346,14 @@ code {
 function directGenerateLetter() {
     console.log('Direct generation started');
     
+    const btn = document.getElementById('directGenerateBtn');
+    
+    // Simple prevention - disable button during generation
+    if (btn.disabled) {
+        console.log('Button already disabled, preventing duplicate submission');
+        return;
+    }
+    
     // Get form data
     const data = {
         letter_date: document.getElementById('letter_date').value,
@@ -348,7 +369,6 @@ function directGenerateLetter() {
         return;
     }
     
-    const btn = document.getElementById('directGenerateBtn');
     const originalText = btn.innerHTML;
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
@@ -363,6 +383,7 @@ function directGenerateLetter() {
         console.log('XHR Response Status:', xhr.status);
         console.log('XHR Response Text:', xhr.responseText);
         
+        // Reset button state
         btn.disabled = false;
         btn.innerHTML = originalText;
         
@@ -401,6 +422,7 @@ function directGenerateLetter() {
     
     xhr.onerror = function() {
         console.error('XHR Error occurred');
+        // Reset button state on error
         btn.disabled = false;
         btn.innerHTML = originalText;
         alert('Error: Network error occurred');

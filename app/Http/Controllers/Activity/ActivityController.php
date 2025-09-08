@@ -38,8 +38,9 @@ class ActivityController extends Controller
      */
     public function __construct()
     {
-        // Temporarily removing all middleware for debugging
-        // TODO: Re-add proper middleware after testing
+        $this->middleware('auth');
+        $this->middleware('enhanced.role:admin,supervisor,teacher')->except(['index', 'show']);
+        $this->middleware('enhanced.role:admin,supervisor')->only(['create', 'store', 'edit', 'update', 'destroy']);
     }
 
     /**

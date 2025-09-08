@@ -50,6 +50,8 @@ class Trainee extends Model
         // Consent fields
         'photo_consent',
         'services_consent',
+        'data_consent',
+        'registration_date',
         // Enhanced fields for data integrity
         'admission_date',
         'graduation_date',
@@ -101,6 +103,8 @@ class Trainee extends Model
         'emergency_contact' => 'array',
         'photo_consent' => 'boolean',
         'services_consent' => 'boolean',
+        'data_consent' => 'boolean',
+        'registration_date' => 'date',
         'date_of_birth' => 'date', // Compatibility
     ];
 
@@ -283,7 +287,7 @@ class Trainee extends Model
      */
     public function centre()
     {
-        return $this->belongsTo(Centre::class, 'centre_name', 'centre_name');
+        return $this->belongsTo(Centre::class, 'centre_id', 'centre_id');
     }
 
     /**

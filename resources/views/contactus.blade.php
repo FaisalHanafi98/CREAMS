@@ -163,7 +163,8 @@
                                     <label for="phone">Phone Number</label>
                                     <input type="tel" name="phone" id="phone" 
                                            class="form-control @error('phone') is-invalid @enderror" 
-                                           value="{{ old('phone') }}">
+                                           value="{{ old('phone', '+60') }}" 
+                                           placeholder="+60123456789">
                                     @error('phone')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror

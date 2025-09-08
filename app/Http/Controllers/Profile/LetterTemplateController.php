@@ -88,9 +88,9 @@ class LetterTemplateController extends Controller
                 $templateContent .= '<div class="footer-content">' . $validated['footer_content'] . '</div>';
             }
 
-            // Deactivate previous templates
-            LetterTemplate::where('is_active', true)->update(['is_active' => false]);
-
+            // Only deactivate previous templates if user specifically wants to
+            // For now, keep all templates active so users have choices
+            
             // Create new template
             $template = LetterTemplate::create([
                 'template_name' => $validated['template_name'],
@@ -181,15 +181,16 @@ class LetterTemplateController extends Controller
         try {
             Log::info('Letter generation initiated from profile', [
                 'user_id' => session('id'),
-                'role' => session('role')
+                'role' => session('role'),
+                'request_data' => $request->except(['_token'])
             ]);
 
             $validated = $request->validate([
-                'letter_name' => 'required|string|max:255',
+                'letter_name' => 'nullable|string|max:255',
                 'letter_date' => 'required|date',
                 'subject' => 'required|string|max:255',
                 'content' => 'required|string',
-                'recipient_name' => 'required|string|max:255', // Changed to required to match DB
+                'recipient_name' => 'required|string|max:255',
                 'recipient_address' => 'nullable|string',
                 'recipient_id' => 'nullable|integer',
                 'recipient_type' => 'nullable|string|max:255',
@@ -238,26 +239,26 @@ class LetterTemplateController extends Controller
 
             // Create letter record - let model auto-generate reference number
             $letter = Letter::create([
-                'letter_name' => $validated['letter_name'],
+                'letter_name' => $validated['letter_name'] ?? 'Letter_' . time(),
                 'letter_date' => $validated['letter_date'],
                 'letter_title' => $validated['subject'], // Use subject as title
                 'letter_subject' => $validated['subject'],
                 'letter_content' => $validated['content'],
                 'letter_type' => 'official_letter',
                 'recipient_id' => $validated['recipient_id'] ?? 0, // Default to 0 if not provided
-                'recipient_name' => $validated['recipient_name'] ?? 'Unknown', // Required field
+                'recipient_name' => $validated['recipient_name'],
                 'recipient_email' => $validated['recipient_email'] ?? null,
                 'recipient_address' => $validated['recipient_address'] ?? '',
                 'recipient_type' => $validated['recipient_type'] ?? 'external',
-                'template_id' => $template->id,
+                'template_id' => $template->id ?? null,
                 'letter_status' => 'generated',
-                'centre_id' => session('centre_id') ?? 'MAIN', // Required field
+                'centre_id' => session('centre_id') ?? '01',
                 'created_by' => session('id'),
-                'generated_by' => session('id'), // Required for audit tracking
+                'generated_by' => session('id'),
                 'letter_data' => [
                     'generated_by_name' => session('name') ?? $user->name,
                     'generated_by_position' => $user->position ?? ucfirst(session('role')),
-                    'recipient_name' => $validated['recipient_name'] ?? 'Unknown',
+                    'recipient_name' => $validated['recipient_name'],
                     'recipient_address' => $validated['recipient_address'] ?? '',
                 ]
             ]);
@@ -888,12 +889,38 @@ class LetterTemplateController extends Controller
                 $query->where('created_by', session('id'));
             }
             
-            // Apply search filter
+            // Apply individual search filters
+            if ($request->filled('reference_search')) {
+                $query->searchReference($request->reference_search);
+            }
+            
+            if ($request->filled('name_search')) {
+                $query->searchName($request->name_search);
+            }
+            
+            if ($request->filled('participants')) {
+                $query->searchParticipants($request->participants);
+            }
+            
+            if ($request->filled('subject_search')) {
+                $query->searchSubject($request->subject_search);
+            }
+            
+            // Keep backward compatibility with general search
             if ($request->filled('search')) {
                 $query->search($request->search);
             }
             
             // Apply date range filter
+            if ($request->filled('start_date')) {
+                $query->where('letter_date', '>=', $request->start_date);
+            }
+            
+            if ($request->filled('end_date')) {
+                $query->where('letter_date', '<=', $request->end_date);
+            }
+            
+            // Keep backward compatibility with old date parameter names
             if ($request->filled('date_from')) {
                 $query->where('letter_date', '>=', $request->date_from);
             }
@@ -916,10 +943,18 @@ class LetterTemplateController extends Controller
                 'role' => session('role'),
                 'letters_count' => $letters->total(),
                 'templates_count' => $templates->count(),
-                'search_term' => $request->search,
+                'search_filters' => [
+                    'reference' => $request->reference_search,
+                    'name' => $request->name_search,
+                    'participants' => $request->participants,
+                    'subject' => $request->subject_search,
+                    'general_search' => $request->search
+                ],
                 'date_filters' => [
-                    'from' => $request->date_from,
-                    'to' => $request->date_to
+                    'start_date' => $request->start_date,
+                    'end_date' => $request->end_date,
+                    'date_from' => $request->date_from,
+                    'date_to' => $request->date_to
                 ]
             ]);
             

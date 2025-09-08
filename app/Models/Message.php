@@ -14,35 +14,16 @@ class Message extends Model
 
     protected $fillable = [
         'sender_id',
-        'recipient_id',
-        'message_subject',
+        'subject',
         'message_body',
-        'message_type',
-        'message_priority',
-        'centre_id',
-        'parent_message_id',
-        'message_category_id',
-        'is_read',
-        'read_at',
-        'scheduled_at',
-        'delivered_at',
-        'expires_at',
-        'is_deleted',
-        'deleted_at',
-        'attachments',
-        'metadata'
+        'priority',
+        'status',
+        'sent_at',
+        'attachment_path'
     ];
 
     protected $casts = [
-        'is_read' => 'boolean',
-        'is_deleted' => 'boolean',
-        'read_at' => 'datetime',
-        'scheduled_at' => 'datetime',
-        'delivered_at' => 'datetime',
-        'expires_at' => 'datetime',
-        'deleted_at' => 'datetime',
-        'attachments' => 'array',
-        'metadata' => 'array'
+        'sent_at' => 'datetime'
     ];
 
     /**

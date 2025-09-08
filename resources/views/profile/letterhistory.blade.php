@@ -30,39 +30,62 @@
         <div class="card-body">
             <form method="GET" action="{{ route('admin.letters.history') }}" class="filter-form">
                 <div class="row">
-                    <div class="col-md-3">
+                    <div class="col-md-2">
                         <div class="form-group">
-                            <label for="search">Search</label>
-                            <input type="text" name="search" id="search" class="form-control" 
-                                   value="{{ request('search') }}" 
-                                   placeholder="Reference, recipient, or subject...">
+                            <label for="reference_search">Reference</label>
+                            <input type="text" name="reference_search" id="reference_search" class="form-control" 
+                                   value="{{ request('reference_search') }}" 
+                                   placeholder="LTR/2024/01/0001">
                         </div>
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-md-2">
+                        <div class="form-group">
+                            <label for="name_search">Letter Name</label>
+                            <input type="text" name="name_search" id="name_search" class="form-control" 
+                                   value="{{ request('name_search') }}" 
+                                   placeholder="Letter name...">
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="form-group">
+                            <label for="participants">Participants/Parties</label>
+                            <input type="text" name="participants" id="participants" class="form-control" 
+                                   value="{{ request('participants') }}" 
+                                   placeholder="Recipient or creator name...">
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="form-group">
+                            <label for="subject_search">Subject</label>
+                            <input type="text" name="subject_search" id="subject_search" class="form-control" 
+                                   value="{{ request('subject_search') }}" 
+                                   placeholder="Letter subject...">
+                        </div>
+                    </div>
+                    <div class="col-md-2">
                         <div class="form-group">
                             <label for="start_date">From Date</label>
                             <input type="date" name="start_date" id="start_date" class="form-control" 
                                    value="{{ request('start_date') }}">
                         </div>
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-md-2">
                         <div class="form-group">
                             <label for="end_date">To Date</label>
                             <input type="date" name="end_date" id="end_date" class="form-control" 
                                    value="{{ request('end_date') }}">
                         </div>
                     </div>
-                    <div class="col-md-3">
+                </div>
+                <div class="row">
+                    <div class="col-md-12">
                         <div class="form-group">
-                            <label>&nbsp;</label>
-                            <div class="d-flex">
-                                <button type="submit" class="btn btn-primary mr-2">
-                                    <i class="fas fa-search"></i> Filter
-                                </button>
-                                <a href="{{ route('admin.letters.history') }}" class="btn btn-outline-secondary">
-                                    <i class="fas fa-times"></i> Clear
-                                </a>
-                            </div>
+                            <button type="submit" class="btn btn-primary mr-2">
+                                <i class="fas fa-search"></i> Filter
+                            </button>
+                            <a href="{{ route('admin.letters.history') }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times"></i> Clear All
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -88,6 +111,7 @@
                         <thead class="thead-light">
                             <tr>
                                 <th><i class="fas fa-hashtag"></i> Reference</th>
+                                <th><i class="fas fa-file-signature"></i> Letter Name</th>
                                 <th><i class="fas fa-calendar"></i> Date</th>
                                 <th><i class="fas fa-user"></i> Recipient</th>
                                 <th><i class="fas fa-tag"></i> Subject</th>
@@ -100,7 +124,10 @@
                             @foreach($letters as $letter)
                                 <tr>
                                     <td>
-                                        <code class="reference-code">{{ $letter->reference_number }}</code>
+                                        <code class="reference-code">{{ $letter->letter_id }}</code>
+                                    </td>
+                                    <td>
+                                        <strong>{{ $letter->letter_name ?? 'Untitled Letter' }}</strong>
                                     </td>
                                     <td>
                                         <span class="text-nowrap">{{ $letter->letter_date->format('d M Y') }}</span>
@@ -114,7 +141,7 @@
                                         </div>
                                     </td>
                                     <td>
-                                        <span title="{{ $letter->subject }}">{{ \Str::limit($letter->subject, 40) }}</span>
+                                        <span title="{{ $letter->letter_subject }}">{{ \Str::limit($letter->letter_subject, 40) }}</span>
                                     </td>
                                     <td>
                                         @if($letter->hasPdf())
@@ -153,7 +180,7 @@
                                             @if($letter->generated_by === session('id'))
                                                 <button type="button" class="btn btn-sm btn-danger delete-letter" 
                                                         data-letter-id="{{ $letter->id }}" 
-                                                        data-reference="{{ $letter->reference_number }}"
+                                                        data-reference="{{ $letter->letter_id }}"
                                                         title="Delete Letter">
                                                     <i class="fas fa-trash"></i>
                                                 </button>

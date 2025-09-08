@@ -51,11 +51,19 @@ class LetterTemplate extends Model
     }
 
     /**
-     * Get the currently active template.
+     * Get the currently active template (most recent one).
      */
     public static function getActive()
     {
         return self::where('is_active', true)->latest()->first();
+    }
+    
+    /**
+     * Get all active templates for user selection.
+     */
+    public static function getAllActive()
+    {
+        return self::where('is_active', true)->orderBy('created_at', 'desc')->get();
     }
 
 
@@ -119,15 +127,21 @@ class LetterTemplate extends Model
     }
 
     /**
-     * Deactivate all templates and activate this one.
+     * Activate this template without deactivating others.
      */
     public function activate()
     {
-        // Deactivate all other templates
-        self::where('is_active', true)->update(['is_active' => false]);
-        
-        // Activate this template
+        // Just activate this template, allow multiple active templates
         $this->is_active = true;
+        $this->save();
+    }
+    
+    /**
+     * Deactivate this template.
+     */
+    public function deactivate()
+    {
+        $this->is_active = false;
         $this->save();
     }
 }
