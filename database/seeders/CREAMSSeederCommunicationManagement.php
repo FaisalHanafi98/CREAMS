@@ -76,6 +76,7 @@ class CREAMSSeederCommunicationManagement extends Seeder
                 'template_content' => $template['template_content'],
                 'template_type' => $template['template_type'],
                 'is_active' => $template['is_active'],
+                'centre_id' => null, // Global templates available to all centres
                 'created_by' => 1, // Default admin user
                 'created_at' => now(),
                 'updated_at' => now()

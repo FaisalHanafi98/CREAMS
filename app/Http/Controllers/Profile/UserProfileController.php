@@ -948,7 +948,10 @@ class UserProfileController extends Controller
         try {
             $centreId = session('centre_id');
             
-            $templates = LetterTemplate::where('centre_id', $centreId)
+            $templates = LetterTemplate::where(function($query) use ($centreId) {
+                    $query->where('centre_id', $centreId)
+                          ->orWhereNull('centre_id'); // Include global templates
+                })
                 ->where('is_active', true)
                 ->orderBy('last_used_at', 'desc')
                 ->orderBy('usage_count', 'desc')
