@@ -44,39 +44,30 @@ class CREAMSSeederServiceDeliveryManagement extends Seeder
     
     private function seedActivityCategories(): void
     {
-        $categories = [
-            ['category_name' => 'Autism Spectrum Support', 'category_description' => 'Communication and social skills programs'],
-            ['category_name' => 'Hearing Impairment', 'category_description' => 'Sign language and communication enhancement'],
-            ['category_name' => 'Visual Impairment', 'category_description' => 'Mobility training and adaptive technology'],
-            ['category_name' => 'Physical Disabilities', 'category_description' => 'Physical therapy and mobility aids'],
-            ['category_name' => 'Learning Support', 'category_description' => 'Educational approaches for learning challenges'],
-            ['category_name' => 'Speech Therapy', 'category_description' => 'Communication development programs'],
-            ['category_name' => 'Faith & Values', 'category_description' => 'Religious and moral development'],
-            ['category_name' => 'Academic Skills', 'category_description' => 'Educational and cognitive development']
-        ];
-        
-        foreach ($categories as $category) {
-            DB::table('activity_categories')->insertOrIgnore([
-                'category_name' => $category['category_name'],
-                'category_description' => $category['category_description'],
-                'created_at' => now(),
-                'updated_at' => now()
-            ]);
-        }
+        // No longer needed - categories are now direct enum values in activities table
+        // Categories: Autism Spectrum Support, Hearing Impairment, Visual Impairment,
+        // Physical Disabilities, Learning Support, Speech Therapy
     }
     
     private function seedActivities(): void
     {
         $centres = DB::table('centres')->get();
-        $categories = DB::table('activity_categories')->get();
+        $categories = [
+            'Autism Spectrum Support',
+            'Hearing Impairment',
+            'Visual Impairment',
+            'Physical Disabilities',
+            'Learning Support',
+            'Speech Therapy'
+        ];
         $instructors = DB::table('users')->get();
-        
+
         $totalActivities = 0;
-        
+
         foreach ($centres as $centre) {
             // 100 activities per centre
             for ($i = 1; $i <= 100; $i++) {
-                $category = $categories->random();
+                $category = $categories[array_rand($categories)];
                 $instructor = $instructors->where('centre_id', $centre->centre_id)->random();
                 
                 // Determine status (25% completed, 55% ongoing, 20% scheduled)
@@ -93,19 +84,18 @@ class CREAMSSeederServiceDeliveryManagement extends Seeder
                 }
                 
                 DB::table('activities')->insert([
-                    'activity_name' => $this->generateActivityName($category->category_name, $i),
-                    'activity_description' => $this->generateActivityDescription($category->category_name),
-                    'category_id' => $category->id,
+                    'activity_name' => $this->generateActivityName($category, $i),
+                    'activity_description' => $this->generateActivityDescription($category),
+                    'category' => $category,
                     'centre_id' => $centre->centre_id,
                     'duration_weeks' => rand(4, 12), // 1-3 months
                     'sessions_per_week' => rand(2, 4), // 2-4 sessions per week
                     'session_duration_minutes' => [60, 90, 120][array_rand([60, 90, 120])],
                     'max_participants' => rand(3, 10),
-                    'learning_outcomes' => $this->generateLearningOutcomes($category->category_name),
+                    'learning_outcomes' => $this->generateLearningOutcomes($category),
                     'activity_location' => 'Room ' . rand(101, 599),
                     'instructor_id' => $instructor ? $instructor->id : null,
                     'is_active' => $status !== 'completed',
-                    'times_conducted' => $status === 'completed' ? 1 : 0,
                     'created_at' => $createdDate,
                     'updated_at' => $createdDate
                 ]);
@@ -231,53 +221,55 @@ class CREAMSSeederServiceDeliveryManagement extends Seeder
     
     private function seedActivityEnrollments(): void
     {
-        $activities = DB::table('activities')
-            ->join('activity_categories', 'activities.category_id', '=', 'activity_categories.id')
-            ->select('activities.*', 'activity_categories.category_name')
-            ->get();
-        
+        $activities = DB::table('activities')->get();
         $trainees = DB::table('trainees')->get();
         $totalEnrollments = 0;
-        
+
         foreach ($trainees as $trainee) {
             $enrolledActivities = 0;
             $targetActivities = rand(4, 8); // Each trainee in 4-8 activities
-            
+
             foreach ($activities->shuffle() as $activity) {
                 if ($enrolledActivities >= $targetActivities) break;
-                
+
                 // Check if trainee should be enrolled based on category
                 $shouldEnroll = false;
-                
-                if (in_array($activity->category_name, ['Faith & Values', 'Academic Skills'])) {
+
+                if (in_array($activity->category, ['Learning Support'])) {
                     // All trainees can join faith and academic activities
                     $shouldEnroll = rand(1, 100) <= 70; // 70% chance
                 } else {
                     // Rehabilitation activities - match disability type
-                    $shouldEnroll = $this->shouldTraineeEnrollInActivity($trainee, $activity->category_name);
+                    $shouldEnroll = $this->shouldTraineeEnrollInActivity($trainee, $activity->category);
                 }
-                
+
                 if ($shouldEnroll) {
+                    // Calculate enrollment details based on activity status
+                    $enrollmentDetails = $this->calculateEnrollmentDetails($activity, $trainee);
+
                     DB::table('activity_enrollments')->insert([
                         'activity_id' => $activity->id,
                         'trainee_id' => $trainee->id,
                         'enrollment_date' => Carbon::parse($activity->created_at)->format('Y-m-d'),
-                        'enrollment_status' => $activity->times_conducted > 0 ? 'completed' : 'enrolled',
-                        'progress_percentage' => $activity->times_conducted > 0 ? 100.00 : rand(0, 80),
-                        'completion_date' => $activity->times_conducted > 0 ? Carbon::parse($activity->created_at)->addWeeks($activity->duration_weeks) : null,
+                        'enrollment_status' => $enrollmentDetails['status'],
+                        'enrollment_notes' => $enrollmentDetails['enrollment_notes'],
+                        'progress_percentage' => $enrollmentDetails['progress_percentage'],
+                        'completion_date' => $enrollmentDetails['completion_date'],
+                        'completion_notes' => $enrollmentDetails['completion_notes'],
+                        'attendance_count' => $enrollmentDetails['attendance_count'],
                         'created_at' => now(),
                         'updated_at' => now()
                     ]);
-                    
+
                     $totalEnrollments++;
                     $enrolledActivities++;
                 }
             }
         }
-        
+
         // Ensure each activity has at least 3 trainees (NEW BUSINESS RULE)
         $this->ensureMinimumEnrollments($activities, $trainees);
-        
+
         $this->command->line("      ✓ Created {$totalEnrollments} activity enrollments");
     }
     
@@ -341,61 +333,231 @@ class CREAMSSeederServiceDeliveryManagement extends Seeder
     private function generateLearningOutcomes($category): string
     {
         $outcomes = [
-            'Autism Spectrum Support' => '1. Improved social interaction skills\n2. Enhanced communication abilities\n3. Better behavioral self-regulation',
-            'Hearing Impairment' => '1. Proficiency in sign language\n2. Improved auditory processing\n3. Enhanced communication confidence',
-            'Visual Impairment' => '1. Independent mobility skills\n2. Adaptive technology proficiency\n3. Enhanced spatial awareness',
-            'Physical Disabilities' => '1. Improved motor function\n2. Enhanced physical strength\n3. Better coordination and balance',
-            'Learning Support' => '1. Improved academic performance\n2. Enhanced study skills\n3. Better cognitive strategies',
-            'Speech Therapy' => '1. Clear articulation\n2. Improved language comprehension\n3. Enhanced communication confidence',
-            'Faith & Values' => '1. Strong moral foundation\n2. Islamic knowledge\n3. Character development',
-            'Academic Skills' => '1. Academic competency\n2. Critical thinking skills\n3. Educational confidence'
+            'Autism Spectrum Support' => '1. Improved social interaction skills 2. Enhanced communication abilities 3. Better behavioral self-regulation',
+            'Hearing Impairment' => '1. Proficiency in sign language 2. Improved auditory processing 3. Enhanced communication confidence',
+            'Visual Impairment' => '1. Independent mobility skills 2. Adaptive technology proficiency 3. Enhanced spatial awareness',
+            'Physical Disabilities' => '1. Improved motor function 2. Enhanced physical strength 3. Better coordination and balance',
+            'Learning Support' => '1. Improved academic performance 2. Enhanced study skills 3. Better cognitive strategies',
+            'Speech Therapy' => '1. Clear articulation 2. Improved language comprehension 3. Enhanced communication confidence',
+            'Faith & Values' => '1. Strong moral foundation 2. Islamic knowledge 3. Character development',
+            'Academic Skills' => '1. Academic competency 2. Critical thinking skills 3. Educational confidence'
         ];
-        
-        return $outcomes[$category] ?? '1. Skill development\n2. Personal growth\n3. Independence enhancement';
+
+        return $outcomes[$category] ?? '1. Skill development 2. Personal growth 3. Independence enhancement';
     }
     
     /**
      * Ensure each activity has at least 3 trainees enrolled (NEW BUSINESS RULE)
      */
+    /**
+     * Calculate enrollment details based on activity and session status
+     */
+    private function calculateEnrollmentDetails($activity, $trainee): array
+    {
+        // Get all sessions for this activity
+        $totalSessions = DB::table('activity_sessions')
+            ->where('activity_id', $activity->id)
+            ->count();
+
+        if ($totalSessions === 0) {
+            // No sessions yet - activity is just enrolled
+            return [
+                'status' => 'enrolled',
+                'enrollment_notes' => $this->generateEnrollmentNotes($activity->category, $trainee),
+                'progress_percentage' => 0.00,
+                'completion_date' => null,
+                'completion_notes' => null,
+                'attendance_count' => 0
+            ];
+        }
+
+        // Check if activity has any future sessions
+        $futureSessions = DB::table('activity_sessions')
+            ->where('activity_id', $activity->id)
+            ->where('session_date', '>', now()->toDateString())
+            ->count();
+
+        $completedSessions = DB::table('activity_sessions')
+            ->where('activity_id', $activity->id)
+            ->where('session_status', 'completed')
+            ->count();
+
+        // Simulate realistic attendance (70-95% for most trainees)
+        $attendanceRate = rand(70, 95) / 100;
+        $attendedSessions = min($completedSessions, (int)ceil($completedSessions * $attendanceRate));
+
+        $progressPercentage = $totalSessions > 0 ? round(($attendedSessions / $totalSessions) * 100, 2) : 0;
+
+        if ($futureSessions === 0 && $completedSessions > 0) {
+            // Activity is completed - no more future sessions
+            $lastSessionDate = DB::table('activity_sessions')
+                ->where('activity_id', $activity->id)
+                ->where('session_status', 'completed')
+                ->orderBy('session_date', 'desc')
+                ->value('session_date');
+
+            return [
+                'status' => 'completed',
+                'enrollment_notes' => $this->generateEnrollmentNotes($activity->category, $trainee),
+                'progress_percentage' => $progressPercentage,
+                'completion_date' => $lastSessionDate,
+                'completion_notes' => $this->generateCompletionNotes($activity->category, $progressPercentage),
+                'attendance_count' => $attendedSessions
+            ];
+        } else {
+            // Activity is ongoing
+            return [
+                'status' => 'enrolled',
+                'enrollment_notes' => $this->generateEnrollmentNotes($activity->category, $trainee),
+                'progress_percentage' => $progressPercentage,
+                'completion_date' => null,
+                'completion_notes' => null,
+                'attendance_count' => $attendedSessions
+            ];
+        }
+    }
+
+    /**
+     * Generate realistic enrollment notes
+     */
+    private function generateEnrollmentNotes($category, $trainee): ?string
+    {
+        if (rand(1, 100) <= 70) { // 70% chance of having enrollment notes
+            $notes = [
+                'Autism Spectrum Support' => [
+                    'Trainee shows potential for social skill improvement',
+                    'Recommended by assessment team for communication development',
+                    'Parent requested enrollment for behavioral support',
+                    'Assessment indicates good potential for progress'
+                ],
+                'Hearing Impairment' => [
+                    'Requires sign language support during sessions',
+                    'Has basic hearing aid - accommodation needed',
+                    'Motivated to improve communication skills',
+                    'Previous therapy shows positive response'
+                ],
+                'Visual Impairment' => [
+                    'Needs braille materials and assistive technology',
+                    'Excellent tactile learning potential identified',
+                    'Requires mobility orientation support',
+                    'Family very supportive of independence goals'
+                ],
+                'Physical Disabilities' => [
+                    'Physiotherapy assessment completed - good prognosis',
+                    'Motivated for motor skill improvement',
+                    'Requires adaptive equipment during sessions',
+                    'Previous therapy shows steady progress'
+                ],
+                'Learning Support' => [
+                    'Academic assessment shows specific learning needs',
+                    'Responds well to structured learning environment',
+                    'Teacher recommendation for additional support',
+                    'Family committed to educational goals'
+                ],
+                'Speech Therapy' => [
+                    'Speech assessment indicates articulation needs',
+                    'Motivated to improve communication clarity',
+                    'Previous sessions show good compliance',
+                    'Family practices exercises at home'
+                ]
+            ];
+
+            $categoryNotes = $notes[$category] ?? ['General enrollment - standard admission criteria met'];
+            return $categoryNotes[array_rand($categoryNotes)];
+        }
+
+        return null;
+    }
+
+    /**
+     * Generate realistic completion notes
+     */
+    private function generateCompletionNotes($category, $progressPercentage): ?string
+    {
+        if (rand(1, 100) <= 80) { // 80% chance of having completion notes
+            if ($progressPercentage >= 90) {
+                $excellentNotes = [
+                    'Excellent progress achieved - all objectives met',
+                    'Outstanding attendance and participation throughout',
+                    'Significant improvement in targeted skills',
+                    'Ready for advanced level programs'
+                ];
+                return $excellentNotes[array_rand($excellentNotes)];
+            } elseif ($progressPercentage >= 70) {
+                $goodNotes = [
+                    'Good progress made - most objectives achieved',
+                    'Consistent attendance with positive outcomes',
+                    'Noticeable improvement in key areas',
+                    'Recommend continued similar programs'
+                ];
+                return $goodNotes[array_rand($goodNotes)];
+            } elseif ($progressPercentage >= 50) {
+                $moderateNotes = [
+                    'Moderate progress - some objectives met',
+                    'Irregular attendance affected overall progress',
+                    'Shows potential with more consistent participation',
+                    'May benefit from modified approach next time'
+                ];
+                return $moderateNotes[array_rand($moderateNotes)];
+            } else {
+                $concernNotes = [
+                    'Limited progress due to poor attendance',
+                    'Recommend reassessment of suitability',
+                    'May need different intervention approach',
+                    'Family support needed for better outcomes'
+                ];
+                return $concernNotes[array_rand($concernNotes)];
+            }
+        }
+
+        return null;
+    }
+
     private function ensureMinimumEnrollments($activities, $trainees): void
     {
         $additionalEnrollments = 0;
-        
+
         foreach ($activities as $activity) {
             $currentEnrollments = DB::table('activity_enrollments')
                 ->where('activity_id', $activity->id)
                 ->count();
-            
+
             if ($currentEnrollments < 3) {
                 $needed = 3 - $currentEnrollments;
-                
+
                 // Get trainees not already enrolled in this activity
                 $enrolledTraineeIds = DB::table('activity_enrollments')
                     ->where('activity_id', $activity->id)
                     ->pluck('trainee_id')
                     ->toArray();
-                
+
                 $availableTrainees = $trainees->whereNotIn('id', $enrolledTraineeIds)
                     ->shuffle()
                     ->take($needed);
-                
+
                 foreach ($availableTrainees as $trainee) {
+                    // Calculate enrollment details for additional trainees too
+                    $enrollmentDetails = $this->calculateEnrollmentDetails($activity, $trainee);
+
                     DB::table('activity_enrollments')->insert([
                         'activity_id' => $activity->id,
                         'trainee_id' => $trainee->id,
                         'enrollment_date' => Carbon::parse($activity->created_at)->format('Y-m-d'),
-                        'enrollment_status' => $activity->times_conducted > 0 ? 'completed' : 'enrolled',
-                        'progress_percentage' => $activity->times_conducted > 0 ? 100.00 : rand(0, 80),
-                        'completion_date' => $activity->times_conducted > 0 ? Carbon::parse($activity->created_at)->addWeeks($activity->duration_weeks) : null,
+                        'enrollment_status' => $enrollmentDetails['status'],
+                        'enrollment_notes' => $enrollmentDetails['enrollment_notes'],
+                        'progress_percentage' => $enrollmentDetails['progress_percentage'],
+                        'completion_date' => $enrollmentDetails['completion_date'],
+                        'completion_notes' => $enrollmentDetails['completion_notes'],
+                        'attendance_count' => $enrollmentDetails['attendance_count'],
                         'created_at' => now(),
                         'updated_at' => now()
                     ]);
-                    
+
                     $additionalEnrollments++;
                 }
             }
         }
-        
+
         if ($additionalEnrollments > 0) {
             $this->command->line("      ✓ Added {$additionalEnrollments} additional enrollments to ensure minimum 3 trainees per activity");
         }

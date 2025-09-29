@@ -1084,15 +1084,9 @@
                             <i class="fas fa-user-circle"></i> My Profile
                         </a>
                     @endif
-                    @if(Route::has('notifications.index'))
-                        <a href="{{ route('notifications.index') }}" class="dropdown-item">
+                        <a href="#" class="dropdown-item" onclick="event.preventDefault(); triggerNotificationDropdown(); return false;">
                             <i class="fas fa-bell"></i> Notification
                         </a>
-                    @else
-                        <a href="#" class="dropdown-item" onclick="event.preventDefault(); showNotificationMessage(); return false;">
-                            <i class="fas fa-bell"></i> Notification
-                        </a>
-                    @endif
                     @if(Route::has(session('role') . '.settings'))
                         <a href="{{ route(session('role') . '.settings') }}" class="dropdown-item">
                             <i class="fas fa-cog"></i> Settings
@@ -2018,6 +2012,27 @@
         function showNotificationMessage() {
             console.log('showNotificationMessage function called');
             alert('🔔 Notification Center coming soon!\n\nThis feature will be implemented in the next update:\n• Real-time notifications\n• Activity alerts\n• System announcements\n• Message notifications\n• Customizable alerts\n\nStay tuned for instant updates!');
+        }
+
+        function triggerNotificationDropdown() {
+            console.log('triggerNotificationDropdown function called');
+
+            // Close the user dropdown first
+            const userDropdown = document.getElementById('userDropdown');
+            if (userDropdown) {
+                userDropdown.classList.remove('show');
+            }
+
+            // Get the notification menu and show it
+            const notificationMenu = document.getElementById('notificationMenu');
+            if (notificationMenu) {
+                notificationMenu.classList.add('show');
+                // Load notifications content
+                renderNotificationDevelopmentMessage();
+            } else {
+                console.log('notificationMenu element not found, falling back to alert');
+                showNotificationMessage();
+            }
         }
         
         // Test function to verify JavaScript is working

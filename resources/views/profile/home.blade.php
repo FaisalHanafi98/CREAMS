@@ -908,25 +908,62 @@
                 <div class="tab-pane fade" id="security" role="tabpanel">
                     <div class="form-section">
                         <h4><i class="fas fa-key"></i> Change Password</h4>
+
+                        @if(session('success'))
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            <i class="fas fa-check-circle mr-2"></i>{{ session('success') }}
+                            <button type="button" class="close" data-dismiss="alert">&times;</button>
+                        </div>
+                        @endif
+
+                        @if(session('error'))
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <i class="fas fa-exclamation-circle mr-2"></i>{{ session('error') }}
+                            <button type="button" class="close" data-dismiss="alert">&times;</button>
+                        </div>
+                        @endif
+
+                        @if($errors->any())
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <i class="fas fa-exclamation-triangle mr-2"></i>
+                            <strong>Please fix the following errors:</strong>
+                            <ul class="mb-0 mt-2">
+                                @foreach($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                            <button type="button" class="close" data-dismiss="alert">&times;</button>
+                        </div>
+                        @endif
+
                         <form action="{{ route('profile.password') }}" method="POST">
                             @csrf
                             <div class="form-group">
                                 <label for="current_password">Current Password</label>
-                                <input type="password" class="form-control" id="current_password" name="current_password" required>
+                                <input type="password" class="form-control @error('current_password') is-invalid @enderror" id="current_password" name="current_password" required>
+                                @error('current_password')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
                                 <small class="form-text text-muted">Enter your current password to verify your identity.</small>
                             </div>
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="form-group">
                                         <label for="new_password">New Password</label>
-                                        <input type="password" class="form-control" id="new_password" name="new_password" required>
+                                        <input type="password" class="form-control @error('new_password') is-invalid @enderror" id="new_password" name="new_password" required>
+                                        @error('new_password')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
                                         <small class="form-text text-muted">Password must be at least 8 characters and include uppercase, lowercase, number, and special character.</small>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
                                     <div class="form-group">
                                         <label for="new_password_confirmation">Confirm New Password</label>
-                                        <input type="password" class="form-control" id="new_password_confirmation" name="new_password_confirmation" required>
+                                        <input type="password" class="form-control @error('new_password_confirmation') is-invalid @enderror" id="new_password_confirmation" name="new_password_confirmation" required>
+                                        @error('new_password_confirmation')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
                                     </div>
                                 </div>
                             </div>

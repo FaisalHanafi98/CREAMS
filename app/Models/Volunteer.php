@@ -19,11 +19,11 @@ class Volunteer extends Model
         'address',
         'date_of_birth',
         'gender',
-        'occupation',
         'skills',
         'availability',
         'motivation',
         'status',
+        'centre_id',
         // Admin fields (actual database columns)
         'reviewed_by',
         'reviewed_at',
@@ -127,6 +127,12 @@ class Volunteer extends Model
 
     public function approve($adminUserId, $notes = null)
     {
+        // Get the admin user's centre and auto-assign to volunteer
+        $adminUser = User::find($adminUserId);
+        if ($adminUser && $adminUser->centre_id) {
+            $this->centre_id = $adminUser->centre_id;
+        }
+
         $this->status = 'approved';
         $this->reviewed_by = $adminUserId;
         $this->review_notes = $notes;

@@ -36,7 +36,7 @@
                                 </div>
                             </div>
                             <div class="session-actions">
-                                <a href="{{ route('centre.enhanced-attendance.index') }}" class="btn btn-outline-secondary">
+                                <a href="{{ route('centre.attendance.index') }}" class="btn btn-outline-secondary">
                                     <i class="fas fa-arrow-left"></i> Back to Dashboard
                                 </a>
                             </div>
@@ -47,7 +47,7 @@
         </div>
     </div>
 
-    <form method="POST" action="{{ route('centre.enhanced-attendance.store-session', $session->id) }}" id="attendanceForm">
+    <form method="POST" action="{{ route('centre.attendance.store-session', $session->id) }}" id="attendanceForm">
         @csrf
         
         <div class="row">
@@ -281,18 +281,54 @@
                     </div>
                 @endif
 
+                <!-- Session Notes -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-secondary text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-sticky-note"></i>
+                            Session Notes
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="session-notes-section">
+                            <div class="mb-3">
+                                <label for="session_notes" class="form-label">Notes for this session:</label>
+                                <textarea class="form-control"
+                                          name="session_notes"
+                                          id="session_notes"
+                                          rows="4"
+                                          placeholder="Add notes about this session (activities, observations, issues, achievements, etc.)"
+                                          maxlength="1000">{{ $session->session_notes ?? '' }}</textarea>
+                                <div class="form-text">
+                                    <small class="text-muted">
+                                        <span id="notesCounter">{{ strlen($session->session_notes ?? '') }}</span>/1000 characters
+                                    </small>
+                                </div>
+                            </div>
+                            <div class="notes-actions">
+                                <button type="button" class="btn btn-sm btn-outline-info" onclick="saveSessionNotes()">
+                                    <i class="fas fa-save"></i> Save Notes Only
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="clearSessionNotes()">
+                                    <i class="fas fa-eraser"></i> Clear
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Submit Actions -->
                 <div class="card border-0 shadow-sm">
                     <div class="card-body">
                         <div class="d-grid gap-2">
                             <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
-                                <i class="fas fa-save"></i> Save Attendance
+                                <i class="fas fa-save"></i> Save Attendance & Notes
                             </button>
                             <button type="button" class="btn btn-outline-secondary" onclick="previewAttendance()">
                                 <i class="fas fa-eye"></i> Preview Before Save
                             </button>
                         </div>
-                        
+
                         <div class="attendance-summary mt-3" id="attendanceSummary" style="display: none;">
                             <h6>Attendance Summary:</h6>
                             <div class="summary-stats">
@@ -814,10 +850,85 @@ function saveAllProgressUpdates(traineeId) {
     $('#allOutcomesModal').modal('hide');
 }
 
+// Session Notes Functions
+function saveSessionNotes() {
+    const notes = $('#session_notes').val();
+    const sessionId = {{ $session->id }};
+
+    // Show loading state
+    const saveBtn = event.target;
+    const originalText = saveBtn.innerHTML;
+    saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+    saveBtn.disabled = true;
+
+    fetch(`/sessions/${sessionId}/notes`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+            session_notes: notes
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('Session notes saved successfully!', 'success');
+        } else {
+            showNotification(data.message || 'Error saving session notes', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('Network error occurred', 'error');
+    })
+    .finally(() => {
+        saveBtn.innerHTML = originalText;
+        saveBtn.disabled = false;
+    });
+}
+
+function clearSessionNotes() {
+    if (confirm('Are you sure you want to clear all session notes?')) {
+        $('#session_notes').val('');
+        updateNotesCounter();
+    }
+}
+
+function updateNotesCounter() {
+    const notes = $('#session_notes').val();
+    $('#notesCounter').text(notes.length);
+}
+
+function showNotification(message, type) {
+    const alertClass = type === 'success' ? 'alert-success' :
+                      type === 'error' ? 'alert-danger' :
+                      type === 'warning' ? 'alert-warning' : 'alert-info';
+
+    const notification = document.createElement('div');
+    notification.className = `alert ${alertClass} alert-dismissible fade show position-fixed`;
+    notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    notification.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+
+    document.body.appendChild(notification);
+
+    // Auto remove after 5 seconds
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.remove();
+        }
+    }, 5000);
+}
+
 // Initialize
 $(document).ready(function() {
     updateAttendanceSummary();
-    
+
     // Initialize any existing progress indicators
     $('.progress-selector').each(function() {
         if ($(this).val()) {
@@ -826,6 +937,12 @@ $(document).ready(function() {
             updateCompetencyScore(this, traineeId, outcomeId);
         }
     });
+
+    // Initialize session notes counter
+    updateNotesCounter();
+
+    // Update notes counter on input
+    $('#session_notes').on('input', updateNotesCounter);
 });
 </script>
 @endpush

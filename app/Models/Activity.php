@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Models\ActivityCategory;
 
 class Activity extends Model
 {
@@ -14,8 +13,8 @@ class Activity extends Model
 
     protected $fillable = [
         'activity_name',
-        'activity_description', 
-        'category_id',
+        'activity_description',
+        'category',
         'centre_id',
         'duration_weeks',
         'sessions_per_week',
@@ -24,13 +23,11 @@ class Activity extends Model
         'learning_outcomes',
         'activity_location',
         'instructor_id',
-        'is_active',
-        'times_conducted'
+        'is_active'
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
-        'times_conducted' => 'integer',
         'duration_weeks' => 'integer',
         'sessions_per_week' => 'integer',
         'session_duration_minutes' => 'integer',
@@ -63,21 +60,7 @@ class Activity extends Model
         return $this->belongsTo(User::class, 'instructor_id');
     }
 
-    /**
-     * Get the category that owns this activity
-     */
-    public function category()
-    {
-        return $this->belongsTo(ActivityCategory::class, 'category_id');
-    }
-
-    /**
-     * Get the category model (avoids conflict with getCategoryAttribute)
-     */
-    public function categoryModel()
-    {
-        return $this->belongsTo(ActivityCategory::class, 'category_id');
-    }
+    // Category is now a direct enum field, no relationship needed
 
     /**
      * Get all sessions for this activity
@@ -292,7 +275,17 @@ class Activity extends Model
      */
     public function getOverarchingTypeAttribute()
     {
-        return $this->category?->category_type ?? 'general';
+        // Map categories to overarching types
+        $categoryTypes = [
+            'Autism Spectrum Support' => 'rehabilitation',
+            'Hearing Impairment' => 'rehabilitation',
+            'Visual Impairment' => 'rehabilitation',
+            'Physical Disabilities' => 'rehabilitation',
+            'Learning Support' => 'academic',
+            'Speech Therapy' => 'rehabilitation'
+        ];
+
+        return $categoryTypes[$this->category] ?? 'general';
     }
 
     /**
@@ -330,9 +323,9 @@ class Activity extends Model
     /**
      * Scope for activities by category
      */
-    public function scopeByCategory($query, $categoryId)
+    public function scopeByCategory($query, $category)
     {
-        return $query->where('category_id', $categoryId);
+        return $query->where('category', $category);
     }
 
     /**
@@ -368,28 +361,15 @@ class Activity extends Model
     public function getCategoryIconAttribute()
     {
         $icons = [
-            'Physical Therapy' => 'fas fa-running',
-            'Occupational Therapy' => 'fas fa-hands-helping',
-            'Speech Therapy' => 'fas fa-comments',
-            'Behavioral Therapy' => 'fas fa-brain',
-            'Sensory Integration' => 'fas fa-hand-paper',
-            'Mathematics' => 'fas fa-calculator',
-            'Literacy' => 'fas fa-book',
-            'Science' => 'fas fa-flask',
-            'Computer Skills' => 'fas fa-laptop',
-            'Art & Creativity' => 'fas fa-palette',
-            'Music Therapy' => 'fas fa-music',
-            'Social Skills' => 'fas fa-users',
-            'Life Skills' => 'fas fa-home',
-            'Vocational Training' => 'fas fa-briefcase'
+            'Autism Spectrum Support' => 'fas fa-brain',
+            'Hearing Impairment' => 'fas fa-deaf',
+            'Visual Impairment' => 'fas fa-low-vision',
+            'Physical Disabilities' => 'fas fa-wheelchair',
+            'Learning Support' => 'fas fa-graduation-cap',
+            'Speech Therapy' => 'fas fa-comments'
         ];
 
-        $categoryName = null;
-        if ($this->category && is_object($this->category) && isset($this->category->category_name)) {
-            $categoryName = $this->category->category_name;
-        }
-
-        return $icons[$categoryName] ?? 'fas fa-circle';
+        return $icons[$this->category] ?? 'fas fa-circle';
     }
 
     /**
@@ -398,28 +378,15 @@ class Activity extends Model
     public function getCategoryColorAttribute()
     {
         $colors = [
-            'Physical Therapy' => '#4CAF50',
-            'Occupational Therapy' => '#2196F3',
-            'Speech Therapy' => '#FF9800',
-            'Behavioral Therapy' => '#9C27B0',
-            'Sensory Integration' => '#00BCD4',
-            'Mathematics' => '#F44336',
-            'Literacy' => '#3F51B5',
-            'Science' => '#009688',
-            'Computer Skills' => '#607D8B',
-            'Art & Creativity' => '#E91E63',
-            'Music Therapy' => '#673AB7',
-            'Social Skills' => '#795548',
-            'Life Skills' => '#FF5722',
-            'Vocational Training' => '#FFC107'
+            'Autism Spectrum Support' => '#9C27B0',
+            'Hearing Impairment' => '#FF9800',
+            'Visual Impairment' => '#00BCD4',
+            'Physical Disabilities' => '#4CAF50',
+            'Learning Support' => '#3F51B5',
+            'Speech Therapy' => '#F44336'
         ];
 
-        $categoryName = null;
-        if ($this->category && is_object($this->category) && isset($this->category->category_name)) {
-            $categoryName = $this->category->category_name;
-        }
-
-        return $colors[$categoryName] ?? '#6c757d';
+        return $colors[$this->category] ?? '#6c757d';
     }
 
     /**
@@ -649,43 +616,5 @@ class Activity extends Model
         ];
     }
 
-    /**
-     * Get therapy category based on activity name
-     */
-    public function getCategoryAttribute()
-    {
-        $name = strtolower($this->activity_name ?? '');
-        
-        if (strpos($name, 'speech') !== false || strpos($name, 'pertuturan') !== false) {
-            return 'Speech Therapy';
-        } elseif (strpos($name, 'occupational') !== false || strpos($name, 'okupasi') !== false) {
-            return 'Occupational Therapy';
-        } elseif (strpos($name, 'physiotherapy') !== false || strpos($name, 'fisioterapi') !== false) {
-            return 'Physical Therapy';
-        } elseif (strpos($name, 'behavioral') !== false || strpos($name, 'tingkah laku') !== false) {
-            return 'Behavioral Therapy';
-        } elseif (strpos($name, 'sensory') !== false || strpos($name, 'sensori') !== false) {
-            return 'Sensory Integration';
-        } elseif (strpos($name, 'social') !== false || strpos($name, 'sosial') !== false) {
-            return 'Social Skills';
-        } elseif (strpos($name, 'life') !== false || strpos($name, 'hidup') !== false) {
-            return 'Life Skills';
-        } elseif (strpos($name, 'art') !== false || strpos($name, 'seni') !== false) {
-            return 'Art & Creativity';
-        } elseif (strpos($name, 'music') !== false || strpos($name, 'muzik') !== false) {
-            return 'Music Therapy';
-        } elseif (strpos($name, 'academic') !== false || strpos($name, 'akademik') !== false) {
-            return 'Academic Support';
-        } elseif (strpos($name, 'literacy') !== false || strpos($name, 'literasi') !== false) {
-            return 'Literacy';
-        } elseif (strpos($name, 'computer') !== false || strpos($name, 'komputer') !== false) {
-            return 'Computer Skills';
-        } elseif (strpos($name, 'mathematics') !== false || strpos($name, 'matematik') !== false) {
-            return 'Mathematics';
-        } elseif (strpos($name, 'vocational') !== false || strpos($name, 'vokasional') !== false) {
-            return 'Vocational Training';
-        } else {
-            return 'Other';
-        }
-    }
+    // Category is now a direct enum field, no need for getCategoryAttribute method
 }

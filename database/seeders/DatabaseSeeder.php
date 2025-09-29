@@ -21,13 +21,14 @@ class DatabaseSeeder extends Seeder
             $this->command->info("\n🏗️ CREAMS CONSOLIDATED SEEDING (7 MODULES + TESTING DATA)");
             $this->call([
                 CREAMSSeederFoundationManagement::class,      // Module 01: Centres, Users, System
-                CREAMSSeederClientManagement::class,          // Module 02: Trainees, Volunteers, Contacts  
+                CREAMSSeederClientManagement::class,          // Module 02: Trainees, Volunteers, Contacts
                 CREAMSSeederServiceDeliveryManagement::class, // Module 03: Activities, Sessions, Enrollments
                 CREAMSSeederAttendanceManagement::class,      // Module 04: All Attendance Systems
                 CREAMSSeederAssetManagement::class,           // Module 05: Assets, Maintenance, Inventory
                 CREAMSSeederCommunicationManagement::class,   // Module 06: Messages, Notifications, Letters
                 CREAMSSeederSystemConstraints::class,         // Module 07: Foreign Keys, Validation
                 TestingGuideDataSeeder::class,                // Testing Guide: All test credentials and data
+                DataQualityImprovementSeeder::class,          // Data Quality: Fix NULL issues and improve integrity
             ]);
 
             // Show final comprehensive summary

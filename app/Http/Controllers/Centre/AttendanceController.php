@@ -17,10 +17,10 @@ use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 use Exception;
 
-class EnhancedAttendanceController extends Controller
+class AttendanceController extends Controller
 {
     /**
-     * Enhanced attendance dashboard showing both general and activity-based attendance
+     * Activity attendance dashboard showing both general and activity-based attendance
      */
     public function index(Request $request)
     {
@@ -49,7 +49,7 @@ class EnhancedAttendanceController extends Controller
             // Get attendance analytics
             $analytics = $this->getAttendanceAnalytics($centreId, $selectedDate);
 
-            return view('centre.enhanced-attendance.index', compact(
+            return view('centre.attendance.index', compact(
                 'centre',
                 'activitySessions',
                 'attendanceOverview',
@@ -105,7 +105,7 @@ class EnhancedAttendanceController extends Controller
                                      ->with('iep.trainee')
                                      ->get();
 
-            return view('centre.enhanced-attendance.mark-session', compact(
+            return view('centre.attendance.mark-session', compact(
                 'session',
                 'enrolledTrainees',
                 'learningOutcomes',
@@ -146,7 +146,8 @@ class EnhancedAttendanceController extends Controller
                 'learning_progress.*.trainee_id' => 'required|exists:trainees,id',
                 'learning_progress.*.outcome_id' => 'required|exists:learning_outcomes,id',
                 'learning_progress.*.progress_level' => 'required|in:Not Started,In Progress,Achieved,Mastered',
-                'learning_progress.*.notes' => 'nullable|string|max:500'
+                'learning_progress.*.notes' => 'nullable|string|max:500',
+                'session_notes' => 'nullable|string|max:1000'
             ]);
 
             DB::beginTransaction();
@@ -202,6 +203,13 @@ class EnhancedAttendanceController extends Controller
                         ]
                     );
                 }
+            }
+
+            // Update session notes if provided
+            if (isset($validated['session_notes'])) {
+                $session->update([
+                    'session_notes' => $validated['session_notes']
+                ]);
             }
 
             // Update session status
@@ -395,6 +403,66 @@ class EnhancedAttendanceController extends Controller
         ];
 
         return $percentages[$level] ?? 0;
+    }
+
+    /**
+     * Update session notes
+     */
+    public function updateSessionNotes(Request $request, $sessionId)
+    {
+        try {
+            $validated = $request->validate([
+                'session_notes' => 'nullable|string|max:1000'
+            ]);
+
+            $session = ActivitySession::findOrFail($sessionId);
+
+            // Check permissions - only assigned teacher, supervisors, and admins can edit
+            $userRole = session('role');
+            $userId = session('id');
+
+            if (!in_array($userRole, ['admin', 'supervisor']) &&
+                $session->teacher_id != $userId) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized access to edit session notes.'
+                ], 403);
+            }
+
+            // Update session notes
+            $session->update([
+                'session_notes' => $validated['session_notes']
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Session notes updated successfully',
+                'data' => [
+                    'session_id' => $sessionId,
+                    'notes_length' => strlen($validated['session_notes'] ?? ''),
+                    'updated_at' => $session->updated_at->format('Y-m-d H:i:s')
+                ]
+            ]);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $e->errors()
+            ], 422);
+
+        } catch (\Exception $e) {
+            Log::error('Session notes update error: ' . $e->getMessage(), [
+                'session_id' => $sessionId,
+                'user_id' => session('id'),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error updating session notes'
+            ], 500);
+        }
     }
 
     private function calculateWeeklyAttendanceRate($centreId, $weekStart, $weekEnd)

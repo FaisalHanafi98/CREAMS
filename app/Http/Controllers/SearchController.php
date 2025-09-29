@@ -64,13 +64,16 @@ class SearchController extends Controller
                     }
                 }
 
+                // Generate encrypted ID for the profile route
+                $encryptedId = encrypt($user->id);
+
                 $results[] = [
                     'id' => $user->id,
                     'name' => $user->name,
                     'type' => ucfirst($user->role),
                     'location' => $centreName,
                     'avatar' => $user->avatar ? asset('storage/avatars/' . $user->avatar) : asset('images/default-avatar.png'),
-                    'url' => route('staff.view', ['id' => $user->id])
+                    'url' => route('staffs.profile', ['encrypted_id' => $encryptedId])
                 ];
             }
 
@@ -97,13 +100,16 @@ class SearchController extends Controller
 
             // Format trainees results
             foreach ($trainees as $trainee) {
+                // Generate encrypted ID for the trainee profile route
+                $encryptedId = encrypt($trainee->id);
+
                 $results[] = [
                     'id' => $trainee->id,
                     'name' => $trainee->trainee_first_name . ' ' . $trainee->trainee_last_name,
                     'type' => 'Trainee',
-                    'location' => $trainee->trainee_condition,
-                    'avatar' => $trainee->trainee_avatar ? asset('storage/trainee_avatars/' . $trainee->trainee_avatar) : asset('images/default-avatar.png'),
-                    'url' => route('traineeprofile', ['id' => $trainee->id])
+                    'location' => $trainee->trainee_condition ?? 'No condition specified',
+                    'avatar' => asset('images/default-avatar.png'), // Use default avatar since trainee_avatar column doesn't exist
+                    'url' => route('traineeprofile', ['encrypted_id' => $encryptedId])
                 ];
             }
 

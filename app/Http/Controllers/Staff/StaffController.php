@@ -278,41 +278,9 @@ class StaffController extends Controller
      */
     private function checkViewPermission($targetUser)
     {
-        $currentUserRole = session('role');
-        $currentUserId = session('id');
-        
-        // User can always view their own profile
-        if ($currentUserId == $targetUser->id) {
-            return true;
-        }
-        
-        // Define role hierarchy (higher number = more permissions)
-        $roleHierarchy = [
-            'teacher' => 1,
-            'ajk' => 2,
-            'supervisor' => 3,
-            'admin' => 4
-        ];
-        
-        $currentUserLevel = $roleHierarchy[$currentUserRole] ?? 0;
-        $targetUserLevel = $roleHierarchy[$targetUser->role] ?? 0;
-        
-        // Admin can view all profiles
-        if ($currentUserRole === 'admin') {
-            return true;
-        }
-        
-        // Supervisor can view teachers and ajk
-        if ($currentUserRole === 'supervisor' && in_array($targetUser->role, ['teacher', 'ajk'])) {
-            return true;
-        }
-        
-        // Same role users can view each other (for collaboration)
-        if ($currentUserRole === $targetUser->role) {
-            return true;
-        }
-        
-        return false;
+        // All authenticated users can view any profile
+        // This allows transparency and collaboration between all roles
+        return true;
     }
 
     /**

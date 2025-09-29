@@ -790,11 +790,9 @@
                             <a href="{{ route('trainees.schedule', \App\Helpers\EncryptionHelper::generateEncryptedId($trainee->id)) }}" class="btn-action btn-schedule" title="View Schedule">
                                 <i class="fas fa-calendar"></i>Schedule
                             </a>
-                            @if(in_array(session('role'), ['admin', 'supervisor']))
                             <a href="{{ route('trainees.edit', \App\Helpers\EncryptionHelper::generateEncryptedId($trainee->id)) }}" class="btn-action btn-edit" title="Edit Trainee Information">
                                 <i class="fas fa-edit"></i>Edit
                             </a>
-                            @endif
                             <a href="{{ route('trainees.attendance', \App\Helpers\EncryptionHelper::generateEncryptedId($trainee->id)) }}" class="btn-action btn-attendance" title="View Attendance">
                                 <i class="fas fa-clipboard-check"></i>Attendance
                             </a>

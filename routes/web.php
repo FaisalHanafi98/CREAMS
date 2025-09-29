@@ -272,7 +272,14 @@ Route::middleware(['auth', 'validate.params'])->group(function () {
             Route::post('/{sessionId}/learning-outcomes/progress', [App\Http\Controllers\Activity\SessionLearningOutcomeController::class, 'updateTraineeProgress'])->name('learning-outcomes.update-progress');
             Route::get('/{sessionId}/learning-outcomes/analytics', [App\Http\Controllers\Activity\SessionLearningOutcomeController::class, 'getSessionAnalytics'])->name('learning-outcomes.analytics');
             Route::get('/{sessionId}/learning-outcomes/available', [App\Http\Controllers\Activity\SessionLearningOutcomeController::class, 'getAvailableOutcomes'])->name('learning-outcomes.available');
-            
+        });
+
+        // Session notes routes - accessible by teachers, admin, supervisor
+        Route::middleware(['role:teacher,admin,supervisor'])->group(function () {
+            Route::post('/sessions/{sessionId}/notes', [App\Http\Controllers\Centre\AttendanceController::class, 'updateSessionNotes'])->name('sessions.notes.update');
+        });
+
+        Route::prefix('sessions')->name('sessions.')->middleware(['role:teacher,admin,supervisor'])->group(function () {
             // Template Modification Routes (Admin, Supervisor only)
             Route::middleware(['role:admin,supervisor'])->group(function () {
                 Route::get('/{sessionId}/template-data', [App\Http\Controllers\Activity\SessionTemplateController::class, 'getTemplateData'])->name('template-data');
@@ -322,14 +329,14 @@ Route::middleware(['auth', 'validate.params'])->group(function () {
         Route::get('/schedule/teacher/{teacherId}', [ActivityController::class, 'teacherSchedule'])->name('schedule.teacher');
     });
 
-    // Enhanced Attendance Management (Activity-Centre Integration)
-    Route::prefix('centre/attendance')->name('centre.enhanced-attendance.')
+    // Activity Attendance Management (Activity-Centre Integration)
+    Route::prefix('centre/attendance')->name('centre.attendance.')
          ->middleware(['role:admin,supervisor,teacher'])->group(function () {
-        Route::get('/', [App\Http\Controllers\Centre\EnhancedAttendanceController::class, 'index'])->name('index');
-        Route::get('/analytics', [App\Http\Controllers\Centre\EnhancedAttendanceController::class, 'analytics'])->name('analytics');
-        Route::get('/export', [App\Http\Controllers\Centre\EnhancedAttendanceController::class, 'export'])->name('export');
-        Route::get('/session/{sessionId}/mark', [App\Http\Controllers\Centre\EnhancedAttendanceController::class, 'markActivityAttendance'])->name('mark-session');
-        Route::post('/session/{sessionId}/store', [App\Http\Controllers\Centre\EnhancedAttendanceController::class, 'storeActivityAttendance'])->name('store-session');
+        Route::get('/', [App\Http\Controllers\Centre\AttendanceController::class, 'index'])->name('index');
+        Route::get('/analytics', [App\Http\Controllers\Centre\AttendanceController::class, 'analytics'])->name('analytics');
+        Route::get('/export', [App\Http\Controllers\Centre\AttendanceController::class, 'export'])->name('export');
+        Route::get('/session/{sessionId}/mark', [App\Http\Controllers\Centre\AttendanceController::class, 'markActivityAttendance'])->name('mark-session');
+        Route::post('/session/{sessionId}/store', [App\Http\Controllers\Centre\AttendanceController::class, 'storeActivityAttendance'])->name('store-session');
     });
 
     // NEW ENHANCED ACTIVITY MANAGEMENT SYSTEM - COMMENTED OUT FOR NOW
@@ -542,8 +549,8 @@ Route::middleware(['auth', 'validate.params'])->group(function () {
         })->name('trainee');
     });
 
-    // Enhanced Attendance Management
-    Route::prefix('enhanced-attendance')->name('enhanced-attendance.')->group(function () {
+    // Activity Attendance Management
+    Route::prefix('activity-attendance')->name('activity-attendance.')->group(function () {
         Route::get('/', [App\Http\Controllers\Activity\AttendanceController::class, 'index'])->name('index');
         Route::post('/', [App\Http\Controllers\Activity\AttendanceController::class, 'store'])->name('store');
         Route::get('/stats/today', [App\Http\Controllers\Activity\AttendanceController::class, 'getTodayStats'])->name('stats.today');

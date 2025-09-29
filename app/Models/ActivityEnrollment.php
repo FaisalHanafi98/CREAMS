@@ -18,6 +18,11 @@ class ActivityEnrollment extends Model
         'session_id',
         'enrollment_status',
         'enrollment_date',
+        'enrollment_notes',
+        'progress_percentage',
+        'attendance_count',
+        'completion_date',
+        'completion_notes',
         'start_date',
         'status',
         'enrolled_by',
@@ -29,8 +34,11 @@ class ActivityEnrollment extends Model
 
     protected $casts = [
         'enrollment_date' => 'date',
+        'completion_date' => 'date',
         'attendance_marked' => 'boolean',
-        'assessment_data' => 'array'
+        'assessment_data' => 'array',
+        'progress_percentage' => 'decimal:2',
+        'attendance_count' => 'integer'
     ];
 
     protected $appends = ['status_badge_class', 'participation_level'];
@@ -57,6 +65,14 @@ class ActivityEnrollment extends Model
     public function session()
     {
         return $this->belongsTo(ActivitySession::class, 'session_id');
+    }
+
+    /**
+     * Get the staff member who enrolled this trainee
+     */
+    public function enrolledBy()
+    {
+        return $this->belongsTo(User::class, 'enrolled_by');
     }
 
     /**
@@ -225,6 +241,46 @@ class ActivityEnrollment extends Model
     public function isActive()
     {
         return $this->enrollment_status === 'enrolled';
+    }
+
+    /**
+     * Boot method to add model event listeners
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        // Update current_participants count when enrollments change
+        static::created(function ($enrollment) {
+            static::updateActivitySessionsParticipantCount($enrollment->activity_id);
+        });
+
+        static::updated(function ($enrollment) {
+            if ($enrollment->isDirty('enrollment_status')) {
+                static::updateActivitySessionsParticipantCount($enrollment->activity_id);
+            }
+        });
+
+        static::deleted(function ($enrollment) {
+            static::updateActivitySessionsParticipantCount($enrollment->activity_id);
+        });
+    }
+
+    /**
+     * Update current_participants count for all sessions of an activity
+     */
+    protected static function updateActivitySessionsParticipantCount($activityId)
+    {
+        \DB::statement("
+            UPDATE activity_sessions
+            SET current_participants = (
+                SELECT COUNT(DISTINCT ae.trainee_id)
+                FROM activity_enrollments ae
+                WHERE ae.activity_id = activity_sessions.activity_id
+                AND ae.enrollment_status IN ('enrolled', 'pending')
+            )
+            WHERE activity_id = ?
+        ", [$activityId]);
     }
 
     /**

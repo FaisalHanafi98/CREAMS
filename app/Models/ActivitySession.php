@@ -28,6 +28,7 @@ class ActivitySession extends Model
         'venue',
         'room_number',
         'max_participants',
+        'current_participants',
         'attendance_marked',
         'instructor_id',
         'supervisor_id',
@@ -47,7 +48,9 @@ class ActivitySession extends Model
         // 'scheduled_date' => 'date', // Column doesn't exist, using session_date
         'session_materials' => 'array',
         'recurring_pattern' => 'array',
-        'attendance_marked' => 'boolean'
+        'attendance_marked' => 'boolean',
+        'current_participants' => 'integer',
+        'max_participants' => 'integer'
     ];
 
     protected $appends = ['formatted_time', 'duration_minutes', 'is_current'];
@@ -293,15 +296,6 @@ class ActivitySession extends Model
         return false;
     }
 
-    /**
-     * Get current enrollment count
-     */
-    public function getCurrentEnrollmentCountAttribute()
-    {
-        return $this->enrollments()
-            ->where('enrollment_status', 'enrolled')
-            ->count();
-    }
 
     /**
      * Get attendance completion percentage
@@ -578,11 +572,13 @@ class ActivitySession extends Model
     }
 
     /**
-     * Get current participants count (computed from enrollments)
+     * Get current enrollment count (computed from enrollments for sessions without the field)
      */
-    public function getCurrentParticipantsAttribute()
+    public function getCurrentEnrollmentCountAttribute()
     {
-        return $this->enrollments()->count();
+        return $this->enrollments()
+            ->whereIn('enrollment_status', ['enrolled', 'pending'])
+            ->count();
     }
 
     /**
