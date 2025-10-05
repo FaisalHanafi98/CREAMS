@@ -73,7 +73,6 @@ class DatabaseSeeder extends Seeder
             
             // Activity System
             $this->command->info("\n🎯 ACTIVITY MANAGEMENT:");
-            $this->command->info("   📂 Activity Categories: " . $stats['activity_categories']);
             $this->command->info("   🎯 Activities: " . $stats['activities']);
             $this->command->info("   📅 Activity Sessions: " . $stats['activity_sessions']);
             $this->command->info("   📝 Activity Enrollments: " . $stats['activity_enrollments']);
@@ -114,7 +113,7 @@ class DatabaseSeeder extends Seeder
             $this->command->info("   🔑 Personal Access Tokens: " . $stats['personal_access_tokens']);
             
             $this->command->info("\n🎯 SYSTEM READY FOR PRODUCTION!");
-            $this->command->line("   ✅ All 29 tables populated according to DATABASE_ARCHITECTURE.txt");
+            $this->command->line("   ✅ All 28 tables populated with realistic data");
             $this->command->line("   ✅ Malaysian rehabilitation center data with realistic demographics");
             $this->command->line("   ✅ Complete role-based access control (Admin, Supervisor, Teacher, AJK)");
             $this->command->line("   ✅ Comprehensive activity scheduling and session management");
@@ -146,8 +145,7 @@ class DatabaseSeeder extends Seeder
             'trainees' => DB::table('trainees')->count(),
             'trainee_attendances' => DB::table('trainee_attendances')->count(),
             
-            // Activity Management (4 tables)
-            'activity_categories' => DB::table('activity_categories')->count(),
+            // Activity Management (3 tables - categories now ENUM in activities table)
             'activities' => DB::table('activities')->count(),
             'activity_sessions' => DB::table('activity_sessions')->count(),
             'activity_enrollments' => DB::table('activity_enrollments')->count(),
@@ -163,8 +161,8 @@ class DatabaseSeeder extends Seeder
             'asset_locations' => DB::table('asset_locations')->count(),
             'assets' => DB::table('assets')->count(),
             'asset_maintenance' => DB::table('asset_maintenance')->count(),
-            'asset_maintenance_history' => DB::table('asset_maintenance_history')->count(),
-            'asset_movements' => DB::table('asset_movements')->count(),
+            'asset_maintenance_history' => DB::table('asset_maintenance_history_backup')->count(),
+            'asset_movements' => DB::table('asset_movements_backup')->count(),
             
             // Communication (4 tables)
             'contact_messages' => DB::table('contact_messages')->count(),
