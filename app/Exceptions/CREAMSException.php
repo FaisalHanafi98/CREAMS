@@ -14,7 +14,7 @@ class CREAMSException extends Exception
     protected $userMessage;
     protected $context;
 
-    public function __construct($message = "", $userMessage = null, $errorCode = 'CREAMS_ERROR', $context = [], $code = 0, Exception $previous = null)
+    public function __construct($message = "", $userMessage = null, $errorCode = 'CREAMS_ERROR', $context = [], $code = 0, ?Exception $previous = null)
     {
         parent::__construct($message, $code, $previous);
         
@@ -70,7 +70,7 @@ class CREAMSException extends Exception
  */
 class DatabaseException extends CREAMSException
 {
-    public function __construct($message = "", $userMessage = null, $context = [], $code = 0, Exception $previous = null)
+    public function __construct($message = "", $userMessage = null, $context = [], $code = 0, ?Exception $previous = null)
     {
         $defaultUserMessage = 'A database error occurred. Please contact system administrator.';
         parent::__construct($message, $userMessage ?? $defaultUserMessage, 'DATABASE_ERROR', $context, $code, $previous);
@@ -82,7 +82,7 @@ class DatabaseException extends CREAMSException
  */
 class ValidationException extends CREAMSException
 {
-    public function __construct($message = "", $userMessage = null, $context = [], $code = 0, Exception $previous = null)
+    public function __construct($message = "", $userMessage = null, $context = [], $code = 0, ?Exception $previous = null)
     {
         $defaultUserMessage = 'The provided information is invalid. Please check your input and try again.';
         parent::__construct($message, $userMessage ?? $defaultUserMessage, 'VALIDATION_ERROR', $context, $code, $previous);
@@ -94,7 +94,7 @@ class ValidationException extends CREAMSException
  */
 class AuthorizationException extends CREAMSException
 {
-    public function __construct($message = "", $userMessage = null, $context = [], $code = 0, Exception $previous = null)
+    public function __construct($message = "", $userMessage = null, $context = [], $code = 0, ?Exception $previous = null)
     {
         $defaultUserMessage = 'You do not have permission to perform this action.';
         parent::__construct($message, $userMessage ?? $defaultUserMessage, 'AUTHORIZATION_ERROR', $context, $code, $previous);
@@ -106,7 +106,7 @@ class AuthorizationException extends CREAMSException
  */
 class FileUploadException extends CREAMSException
 {
-    public function __construct($message = "", $userMessage = null, $context = [], $code = 0, Exception $previous = null)
+    public function __construct($message = "", $userMessage = null, $context = [], $code = 0, ?Exception $previous = null)
     {
         $defaultUserMessage = 'File upload failed. Please check the file size and format.';
         parent::__construct($message, $userMessage ?? $defaultUserMessage, 'FILE_UPLOAD_ERROR', $context, $code, $previous);
@@ -118,7 +118,7 @@ class FileUploadException extends CREAMSException
  */
 class ModelException extends CREAMSException
 {
-    public function __construct($message = "", $userMessage = null, $context = [], $code = 0, Exception $previous = null)
+    public function __construct($message = "", $userMessage = null, $context = [], $code = 0, ?Exception $previous = null)
     {
         $defaultUserMessage = 'A data processing error occurred. Please try again.';
         parent::__construct($message, $userMessage ?? $defaultUserMessage, 'MODEL_ERROR', $context, $code, $previous);

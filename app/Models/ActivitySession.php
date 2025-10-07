@@ -7,6 +7,36 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
+/**
+ * ActivitySession Model
+ *
+ * @property int $id
+ * @property int $activity_id
+ * @property string|null $session_name
+ * @property string|null $session_description
+ * @property \Illuminate\Support\Carbon $session_date
+ * @property string|null $start_time
+ * @property string|null $end_time
+ * @property string|null $venue
+ * @property string|null $room_number
+ * @property int|null $max_participants
+ * @property int|null $current_participants
+ * @property boolean $attendance_marked
+ * @property int|null $instructor_id
+ * @property string|null $session_status
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ *
+ * @property-read Activity $activity
+ * @property-read User $instructor
+ * @property-read User $teacher
+ * @property-read \Illuminate\Database\Eloquent\Collection|SessionEnrollment[] $enrollments
+ * @property-read \Illuminate\Database\Eloquent\Collection|SessionAttendance[] $attendance
+ *
+ * @property-read string $formatted_time
+ * @property-read int $duration_minutes
+ * @property-read bool $is_current
+ */
 class ActivitySession extends Model
 {
     use HasFactory;

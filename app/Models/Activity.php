@@ -5,6 +5,50 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * Activity Model
+ *
+ * @property int $id
+ * @property string $activity_name
+ * @property string $activity_description
+ * @property string $category
+ * @property string $centre_id
+ * @property int|null $instructor_id
+ * @property int|null $created_by
+ * @property boolean $is_active
+ * @property int|null $duration_weeks
+ * @property int|null $sessions_per_week
+ * @property int|null $session_duration_minutes
+ * @property int|null $max_participants
+ * @property string|null $learning_outcomes
+ * @property string|null $activity_location
+ * @property string|null $activity_status
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ *
+ * @property-read Centre $centre
+ * @property-read User $instructor
+ * @property-read User $creator
+ * @property-read \Illuminate\Database\Eloquent\Collection|ActivitySession[] $sessions
+ * @property-read \Illuminate\Database\Eloquent\Collection|ActivityEnrollment[] $enrollments
+ * @property-read \Illuminate\Database\Eloquent\Collection|ActivityEnrollment[] $activeEnrollments
+ * @property-read \Illuminate\Database\Eloquent\Collection|Trainee[] $participants
+ * @property-read \Illuminate\Database\Eloquent\Collection|ActivitySession[] $upcomingSessions
+ * @property-read \Illuminate\Database\Eloquent\Collection|ActivitySession[] $completedSessions
+ * @property-read \Illuminate\Database\Eloquent\Collection|ActivityTemplateApplication[] $templateApplications
+ * @property-read \Illuminate\Database\Eloquent\Collection|ActivityPrerequisite[] $prerequisites
+ * @property-read \Illuminate\Database\Eloquent\Collection|ActivityPrerequisite[] $requiredPrerequisites
+ * @property-read \Illuminate\Database\Eloquent\Collection|ActivityPrerequisite[] $dependentActivities
+ *
+ * @property-read string $category_icon
+ * @property-read string $category_color
+ * @property-read string $formatted_duration
+ * @property-read int $active_enrollments_count
+ * @property-read int $total_sessions_count
+ * @property-read float $completion_rate
+ * @property-read string $overarching_type
+ * @property-read array $academic_progression_stats
+ */
 class Activity extends Model
 {
     use HasFactory;

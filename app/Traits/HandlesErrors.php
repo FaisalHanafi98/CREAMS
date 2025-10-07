@@ -124,7 +124,7 @@ trait HandlesErrors
     /**
      * Return success response (JSON or redirect)
      */
-    protected function successResponse(string $message, $data = null, string $redirectRoute = null)
+    protected function successResponse(string $message, $data = null, ?string $redirectRoute = null)
     {
         if (request()->expectsJson()) {
             $response = [

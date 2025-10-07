@@ -8,6 +8,35 @@ use Illuminate\Support\Carbon;
 use App\Traits\HandlesPhoneNumbers;
 use App\Rules\MalaysianPhoneRule;
 
+/**
+ * Trainee Model
+ *
+ * @property int $id
+ * @property string $trainee_id
+ * @property string $trainee_first_name
+ * @property string $trainee_last_name
+ * @property string|null $trainee_email
+ * @property string|null $trainee_phone_number
+ * @property \Illuminate\Support\Carbon|null $trainee_date_of_birth
+ * @property string|null $gender
+ * @property string|null $trainee_address
+ * @property string|null $trainee_avatar
+ * @property string|null $trainee_condition
+ * @property string|null $centre_id
+ * @property string|null $ic_number
+ * @property string $status
+ * @property string|null $guardian_name
+ * @property string|null $guardian_phone
+ * @property string|null $guardian_email
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ *
+ * @property-read Centre $centre
+ * @property-read \Illuminate\Database\Eloquent\Collection|ActivityEnrollment[] $enrollments
+ * @property-read \Illuminate\Database\Eloquent\Collection|ActivityEnrollment[] $activities
+ * @property-read \Illuminate\Database\Eloquent\Collection|TraineeProgress[] $progress
+ * @property-read \Illuminate\Database\Eloquent\Collection|TraineeDocument[] $documents
+ */
 class Trainee extends Model
 {
     use HasFactory, HandlesPhoneNumbers;
@@ -164,7 +193,7 @@ class Trainee extends Model
         if ($this->trainee_date_of_birth) {
             return Carbon::parse($this->trainee_date_of_birth)->age;
         }
-        
+
         return null;
     }
 

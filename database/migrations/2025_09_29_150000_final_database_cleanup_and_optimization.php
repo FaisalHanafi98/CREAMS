@@ -36,25 +36,33 @@ return new class extends Migration
      */
     private function addPerformanceIndexes(): void
     {
-        // Activity and enrollment queries
-        DB::statement("CREATE INDEX IF NOT EXISTS idx_activity_enrollments_status_date ON activity_enrollments (enrollment_status, enrollment_date)");
-        DB::statement("CREATE INDEX IF NOT EXISTS idx_activity_sessions_date_status ON activity_sessions (session_date, session_status)");
+        $indexes = [
+            ['table' => 'activity_enrollments', 'name' => 'idx_activity_enrollments_status_date', 'columns' => 'enrollment_status, enrollment_date'],
+            ['table' => 'activity_sessions', 'name' => 'idx_activity_sessions_date_status', 'columns' => 'session_date, session_status'],
+            ['table' => 'session_attendance', 'name' => 'idx_session_attendance_status_date', 'columns' => 'attendance_status, created_at'],
+            ['table' => 'trainee_attendances', 'name' => 'idx_trainee_attendance_search', 'columns' => 'trainee_id, attendance_date, status'],
+            ['table' => 'assets', 'name' => 'idx_assets_search', 'columns' => 'status, `condition`, is_active'],
+            ['table' => 'asset_maintenance', 'name' => 'idx_asset_maintenance_search', 'columns' => 'status, scheduled_date, priority'],
+            ['table' => 'attendance_alerts', 'name' => 'idx_attendance_alerts_unread', 'columns' => 'is_read, severity, created_at'],
+            ['table' => 'contact_messages', 'name' => 'idx_contact_messages_status', 'columns' => 'status, created_at'],
+            ['table' => 'users', 'name' => 'idx_users_active_role', 'columns' => 'status, role, centre_id'],
+            ['table' => 'trainees', 'name' => 'idx_trainees_active_centre', 'columns' => 'status, centre_id'],
+        ];
 
-        // Attendance performance
-        DB::statement("CREATE INDEX IF NOT EXISTS idx_session_attendance_status_date ON session_attendance (attendance_status, created_at)");
-        DB::statement("CREATE INDEX IF NOT EXISTS idx_trainee_attendance_search ON trainee_attendances (trainee_id, attendance_date, status)");
+        foreach ($indexes as $index) {
+            // Check if index exists
+            $exists = DB::selectOne("
+                SELECT COUNT(*) as count
+                FROM information_schema.statistics
+                WHERE table_schema = DATABASE()
+                AND table_name = ?
+                AND index_name = ?
+            ", [$index['table'], $index['name']]);
 
-        // Asset management performance
-        DB::statement("CREATE INDEX IF NOT EXISTS idx_assets_search ON assets (status, `condition`, is_active)");
-        DB::statement("CREATE INDEX IF NOT EXISTS idx_asset_maintenance_search ON asset_maintenance (status, scheduled_date, priority)");
-
-        // Communication and alerts
-        DB::statement("CREATE INDEX IF NOT EXISTS idx_attendance_alerts_unread ON attendance_alerts (is_read, severity, created_at)");
-        DB::statement("CREATE INDEX IF NOT EXISTS idx_contact_messages_status ON contact_messages (status, created_at)");
-
-        // User and auth performance
-        DB::statement("CREATE INDEX IF NOT EXISTS idx_users_active_role ON users (status, role, centre_id)");
-        DB::statement("CREATE INDEX IF NOT EXISTS idx_trainees_active_centre ON trainees (status, centre_id)");
+            if ($exists->count == 0) {
+                DB::statement("CREATE INDEX {$index['name']} ON {$index['table']} ({$index['columns']})");
+            }
+        }
     }
 
     /**

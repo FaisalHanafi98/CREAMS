@@ -3,7 +3,8 @@
     "allow": [
       "Bash(php -l:*)",
       "Bash(php:*)",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "Bash(./vendor/bin/phpstan:*)"
     ],
     "deny": [],
     "ask": [],
