@@ -1,42 +1,10 @@
-includes:
-    - vendor/nunomaduro/larastan/extension.neon
-
 parameters:
-    # Analysis level (0-9, where 9 is strictest)
     level: 5
-
-    # Paths to analyze
     paths:
         - app
-        - config
-        - routes
-
-    # Paths to exclude from analysis
     excludePaths:
         - app/Console/Kernel.php
         - app/Exceptions/Handler.php
-        - app/Http/Middleware/*.php
-        - */cache/*
-        - */database/migrations/*
-        - */database/seeders/*
-        - */tests/*
-        - */vendor/*
-        - */storage/*
-        - */bootstrap/*
-
-    # Check for missing return types
-    checkMissingIterableValueType: false
-    checkGenericClassInNonGenericObjectType: false
-
-    # Ignore errors related to Laravel magic methods
     ignoreErrors:
-        - '#Call to an undefined method Illuminate\\Database\\Eloquent\\.*#'
-        - '#Access to an undefined property Illuminate\\Database\\Eloquent\\.*#'
-        - '#Property .* does not accept null#'
-
-    # Report unreachable statements
-    reportUnmatchedIgnoredErrors: false
-    checkOctaneCompatibility: false
-
-    # Cache directory
-    tmpDir: storage/phpstan
+        - '#Unsafe usage of new static#'
+        - '#Call to an undefined method Illuminate\Database\Eloquent\Builder#'

@@ -1312,8 +1312,10 @@
     <div class="main-content">
         <!-- Role-based Access Control Messages -->
         @include('components.role-access-denied')
-        
-        
+
+        <!-- Toast Notifications (Modern notification system) -->
+        @include('components.toast-notifications')
+
         @yield('content')
     </div>
 

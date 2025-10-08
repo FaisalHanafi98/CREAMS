@@ -282,7 +282,7 @@ class CentreController extends Controller
             $centre = Centre::where('centre_id', $id)->firstOrFail();
             
             $assets = Asset::where('centre_id', $centre->centre_id)
-                ->orderBy('name')
+                ->orderBy('asset_name')
                 ->paginate(20);
             
             // Get real asset statistics from database
@@ -381,9 +381,9 @@ class CentreController extends Controller
     {
         try {
             return DB::table('activities')
-                ->select('id', 'activity_name as name', 'created_at as date', 'status')
+                ->select('id', 'activity_name as name', 'created_at as date', 'is_active', 'activity_status')
                 ->where('centre_id', $centreId)
-                ->whereIn('status', ['active', 'published']) // Use status instead of is_active
+                ->where('is_active', true) // Use is_active boolean field
                 ->orderBy('created_at', 'desc')
                 ->limit(5)
                 ->get();

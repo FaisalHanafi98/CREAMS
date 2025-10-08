@@ -68,7 +68,7 @@ class AssetController extends Controller
                 $assetsQuery->where(function($query) use ($search) {
                     $query->where('asset_name', 'like', "%{$search}%")
                           ->orWhere('asset_tag', 'like', "%{$search}%")
-                          ->orWhere('description', 'like', "%{$search}%");
+                          ->orWhere('asset_description', 'like', "%{$search}%");
                 });
             }
             
@@ -272,35 +272,35 @@ class AssetController extends Controller
 
             // Validate input
             $validated = $request->validate([
-                'name' => 'required|string|max:255',
-                'description' => 'nullable|string',
+                'asset_name' => 'required|string|max:255',
+                'asset_description' => 'nullable|string',
                 'category_id' => 'required|exists:asset_categories,id',
                 'centre_id' => 'required|exists:centres,centre_id',
-                'asset_code' => 'nullable|string|max:255',
-                'brand' => 'nullable|string|max:255',
-                'model' => 'nullable|string|max:255',
+                'asset_tag' => 'nullable|string|max:255',
+                'manufacturer' => 'nullable|string|max:255',
+                'model_number' => 'nullable|string|max:255',
                 'serial_number' => 'nullable|string|max:255',
                 'purchase_price' => 'nullable|numeric|min:0',
                 'purchase_date' => 'nullable|date',
                 'warranty_months' => 'nullable|integer|min:0|max:120',
                 'condition' => 'required|in:new,excellent,good,fair,poor,broken',
                 'status' => 'required|in:available,in_use,maintenance,retired',
-                'location' => 'nullable|string|max:255',
-                'specifications' => 'nullable|array',
+                'location_id' => 'nullable|exists:asset_locations,id',
+                'type_id' => 'nullable|exists:asset_types,id',
                 'images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
                 'notes' => 'nullable|string'
             ]);
 
-            // Generate asset code if not provided
-            $assetCode = $validated['asset_code'];
-            if (empty($assetCode)) {
+            // Generate asset tag if not provided
+            $assetTag = $validated['asset_tag'] ?? null;
+            if (empty($assetTag)) {
                 $category = AssetCategory::find($validated['category_id']);
-                $assetCode = $this->generateAssetCode($category->code ?? 'AST');
+                $assetTag = $this->generateAssetCode($category->code ?? 'AST');
             }
 
             // Handle warranty expiry calculation
             $warrantyExpiry = null;
-            if ($validated['purchase_date'] && $validated['warranty_months']) {
+            if (isset($validated['purchase_date']) && isset($validated['warranty_months'])) {
                 $warrantyExpiry = Carbon::parse($validated['purchase_date'])
                     ->addMonths($validated['warranty_months']);
             }
@@ -317,28 +317,24 @@ class AssetController extends Controller
 
             // Create asset
             $asset = Asset::create([
-                'asset_code' => $assetCode,
-                'name' => $validated['name'],
-                'description' => $validated['description'],
+                'asset_tag' => $assetTag,
+                'asset_name' => $validated['asset_name'],
+                'asset_description' => $validated['asset_description'] ?? null,
                 'category_id' => $validated['category_id'],
+                'type_id' => $validated['type_id'] ?? null,
                 'centre_id' => $validated['centre_id'],
-                'brand' => $validated['brand'],
-                'model' => $validated['model'],
-                'serial_number' => $validated['serial_number'],
-                'purchase_price' => $validated['purchase_price'],
-                'purchase_date' => $validated['purchase_date'],
-                'warranty_months' => $validated['warranty_months'] ?? 12,
+                'location_id' => $validated['location_id'] ?? null,
+                'manufacturer' => $validated['manufacturer'] ?? null,
+                'model_number' => $validated['model_number'] ?? null,
+                'serial_number' => $validated['serial_number'] ?? null,
+                'purchase_price' => $validated['purchase_price'] ?? null,
+                'purchase_date' => $validated['purchase_date'] ?? null,
                 'warranty_expiry' => $warrantyExpiry,
                 'condition' => $validated['condition'],
                 'status' => $validated['status'],
-                'location' => $validated['location'],
-                'depreciation_rate' => $category->depreciation_rate ?? 20,
-                'current_value' => $validated['purchase_price'],
-                'specifications' => $validated['specifications'] ?? [],
                 'images' => $images,
-                'primary_image' => !empty($images) ? $images[0] : null,
-                'notes' => $validated['notes'],
-                'created_by' => session('id')
+                'notes' => $validated['notes'] ?? null,
+                'is_active' => true
             ]);
 
             // Log asset creation
@@ -473,27 +469,27 @@ class AssetController extends Controller
 
             // Validate input
             $validated = $request->validate([
-                'name' => 'required|string|max:255',
-                'description' => 'nullable|string',
+                'asset_name' => 'required|string|max:255',
+                'asset_description' => 'nullable|string',
                 'category_id' => 'required|exists:asset_categories,id',
-                'brand' => 'nullable|string|max:255',
-                'model' => 'nullable|string|max:255',
+                'manufacturer' => 'nullable|string|max:255',
+                'model_number' => 'nullable|string|max:255',
                 'serial_number' => 'nullable|string|max:255',
                 'purchase_price' => 'nullable|numeric|min:0',
                 'purchase_date' => 'nullable|date',
                 'warranty_months' => 'nullable|integer|min:0|max:120',
                 'condition' => 'required|in:new,good,fair,poor,broken',
                 'status' => 'required|in:available,in_use,maintenance,disposed',
-                'location' => 'nullable|string|max:255',
-                'assigned_to' => 'nullable|exists:users,id',
-                'specifications' => 'nullable|array',
+                'location_id' => 'nullable|exists:asset_locations,id',
+                'type_id' => 'nullable|exists:asset_types,id',
+                'assigned_to_user' => 'nullable|exists:users,id',
                 'images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
                 'notes' => 'nullable|string'
             ]);
 
             // Handle warranty expiry calculation
             $warrantyExpiry = $asset->warranty_expiry;
-            if ($validated['purchase_date'] && $validated['warranty_months']) {
+            if (isset($validated['purchase_date']) && isset($validated['warranty_months'])) {
                 $warrantyExpiry = Carbon::parse($validated['purchase_date'])
                     ->addMonths($validated['warranty_months']);
             }
@@ -509,29 +505,27 @@ class AssetController extends Controller
             }
 
             // Handle assignment changes
-            $oldAssignedTo = $asset->assigned_to;
-            $newAssignedTo = $validated['assigned_to'];
+            $oldAssignedTo = $asset->assigned_to_user;
+            $newAssignedTo = $validated['assigned_to_user'] ?? null;
 
             // Update asset
             $asset->update([
-                'name' => $validated['name'],
-                'description' => $validated['description'],
+                'asset_name' => $validated['asset_name'],
+                'asset_description' => $validated['asset_description'] ?? null,
                 'category_id' => $validated['category_id'],
-                'brand' => $validated['brand'],
-                'model' => $validated['model'],
-                'serial_number' => $validated['serial_number'],
-                'purchase_price' => $validated['purchase_price'],
-                'purchase_date' => $validated['purchase_date'],
-                'warranty_months' => $validated['warranty_months'],
+                'type_id' => $validated['type_id'] ?? null,
+                'manufacturer' => $validated['manufacturer'] ?? null,
+                'model_number' => $validated['model_number'] ?? null,
+                'serial_number' => $validated['serial_number'] ?? null,
+                'purchase_price' => $validated['purchase_price'] ?? null,
+                'purchase_date' => $validated['purchase_date'] ?? null,
                 'warranty_expiry' => $warrantyExpiry,
                 'condition' => $validated['condition'],
                 'status' => $validated['status'],
-                'location' => $validated['location'],
-                'assigned_to' => $newAssignedTo,
-                'assigned_date' => $newAssignedTo ? ($oldAssignedTo != $newAssignedTo ? now() : $asset->assigned_date) : null,
-                'specifications' => $validated['specifications'] ?? [],
+                'location_id' => $validated['location_id'] ?? null,
+                'assigned_to_user' => $newAssignedTo,
                 'images' => $images,
-                'notes' => $validated['notes']
+                'notes' => $validated['notes'] ?? null
             ]);
 
             // Create movement record if assignment changed
