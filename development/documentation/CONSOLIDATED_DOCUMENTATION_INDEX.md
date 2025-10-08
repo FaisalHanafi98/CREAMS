@@ -51,20 +51,20 @@ This is the central index for all CREAMS documentation. All legacy and redundant
 - [Comprehensive Testing Report](05_Testing_Documentation/COMPREHENSIVE_TESTING_REPORT.md)
 
 ### **6. User Manuals**
-- [User Manuals Master Index](USER_MANUALS_MASTER_INDEX.md)
-- Authentication & Login
-- Dashboard (All Roles)
-- Activities Management
-- Attendance Tracking
-- User/Staff Management
-- Trainee Management
-- Letters & Documentation
-- System Administration
+- [User Manuals Master Index](10_User_Manuals/USER_MANUALS_MASTER_INDEX.md)
+- [Authentication & Login](10_User_Manuals/USER_MANUAL_01_AUTHENTICATION_LOGIN.md)
+- [Dashboard (All Roles)](10_User_Manuals/USER_MANUAL_02_DASHBOARD_ALL_ROLES.md)
+- [Activities Management](10_User_Manuals/USER_MANUAL_03_ACTIVITIES_MANAGEMENT.md)
+- [Attendance Tracking](10_User_Manuals/USER_MANUAL_04_ATTENDANCE_TRACKING.md)
+- [User/Staff Management](10_User_Manuals/USER_MANUAL_05_USER_STAFF_MANAGEMENT.md)
+- [Trainee Management](10_User_Manuals/USER_MANUAL_06_TRAINEE_MANAGEMENT.md)
+- [Letters & Documentation](10_User_Manuals/USER_MANUAL_07_LETTERS_DOCUMENTATION.md)
+- [System Administration](10_User_Manuals/USER_MANUAL_08_SYSTEM_ADMINISTRATION.md)
 
 ### **7. New Features (2025)**
-- [Toast Notification System](TOAST_NOTIFICATION_SYSTEM.md) ⭐ NEW
-- [Media Upload System](MEDIA_UPLOAD_SYSTEM.md) ⭐ NEW
-- [Media Upload Migration Examples](MEDIA_UPLOAD_MIGRATION_EXAMPLE.md)
+- [Toast Notification System](09_New_Features/TOAST_NOTIFICATION_SYSTEM.md) ⭐ NEW
+- [Media Upload System](09_New_Features/MEDIA_UPLOAD_SYSTEM.md) ⭐ NEW
+- [Media Upload Migration Examples](09_New_Features/MEDIA_UPLOAD_MIGRATION_EXAMPLE.md)
 
 ---
 
