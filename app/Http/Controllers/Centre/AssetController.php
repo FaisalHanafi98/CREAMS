@@ -27,7 +27,7 @@ class AssetController extends Controller
         $this->middleware('auth');
         // Admin and Supervisors can manage assets
         $this->middleware('enhanced.role:admin,supervisor');
-        
+
         // Only admin can create/edit/delete assets
         $this->middleware('enhanced.role:admin')->only(['create', 'store', 'edit', 'update', 'destroy']);
     }
@@ -44,7 +44,7 @@ class AssetController extends Controller
             }
 
             $role = session('role');
-            
+
             // Check if user can view this centre's assets
             if ($role !== 'admin' && session('centre_id') !== $centreId) {
                 abort(403, 'Unauthorized access to centre assets');
@@ -65,21 +65,21 @@ class AssetController extends Controller
 
             // Apply filters
             if ($search) {
-                $assetsQuery->where(function($query) use ($search) {
+                $assetsQuery->where(function ($query) use ($search) {
                     $query->where('asset_name', 'like', "%{$search}%")
-                          ->orWhere('asset_tag', 'like', "%{$search}%")
-                          ->orWhere('asset_description', 'like', "%{$search}%");
+                        ->orWhere('asset_tag', 'like', "%{$search}%")
+                        ->orWhere('asset_description', 'like', "%{$search}%");
                 });
             }
-            
+
             if ($category) {
                 $assetsQuery->where('category_id', $category);
             }
-            
+
             if ($status) {
                 $assetsQuery->where('status', $status);
             }
-            
+
             if ($condition) {
                 $assetsQuery->where('condition', $condition);
             }
@@ -100,13 +100,12 @@ class AssetController extends Controller
             $categories = AssetCategory::where('status', 'active')->get();
 
             return view('centres.assets.index', compact('assets', 'centre', 'categories', 'statistics'));
-
         } catch (Exception $e) {
             Log::error('Error displaying centre assets: ' . $e->getMessage(), [
                 'centre_id' => $centreId,
                 'user_id' => session('id')
             ]);
-            
+
             return redirect()->back()->with('error', 'Unable to load centre assets.');
         }
     }
@@ -180,8 +179,8 @@ class AssetController extends Controller
 
             // Get recent activity
             $recentActivity = AssetMovement::with(['asset', 'fromUser', 'toUser', 'performedBy'])
-                ->when($role !== 'admin', function($query) use ($centreId) {
-                    return $query->whereHas('asset', function($q) use ($centreId) {
+                ->when($role !== 'admin', function ($query) use ($centreId) {
+                    return $query->whereHas('asset', function ($q) use ($centreId) {
                         $q->where('centre_id', $centreId);
                     });
                 })
@@ -213,7 +212,6 @@ class AssetController extends Controller
                 'status',
                 'condition'
             ));
-
         } catch (Exception $e) {
             Log::error('Error in asset dashboard', [
                 'user_id' => session('id'),
@@ -240,7 +238,7 @@ class AssetController extends Controller
 
         // Get pre-selected centre from URL parameter
         $selectedCentre = $request->get('centre');
-        
+
         $categories = AssetCategory::active()->get();
         $centres = session('role') === 'admin' ? Centre::all() : Centre::where('centre_id', session('centre_id'))->get();
 
@@ -264,7 +262,7 @@ class AssetController extends Controller
             // Determine centre_id for validation and assignment
             $userRole = session('role');
             $sessionCentreId = session('centre_id');
-            
+
             // For non-admin users, force centre_id to their assigned centre
             if ($userRole !== 'admin' && $sessionCentreId) {
                 $request->merge(['centre_id' => $sessionCentreId]);
@@ -346,7 +344,6 @@ class AssetController extends Controller
 
             return redirect()->route('assets.show', $asset->id)
                 ->with('success', 'Asset created successfully');
-
         } catch (Exception $e) {
             Log::error('Error creating asset', [
                 'user_id' => session('id'),
@@ -380,12 +377,12 @@ class AssetController extends Controller
                 'centre',
                 'assignedTo',
                 'creator',
-                'maintenance' => function($query) {
+                'maintenance' => function ($query) {
                     $query->orderBy('scheduled_date', 'desc');
                 },
-                'movements' => function($query) {
+                'movements' => function ($query) {
                     $query->with(['fromUser', 'toUser', 'performedBy'])
-                          ->orderBy('movement_date', 'desc');
+                        ->orderBy('movement_date', 'desc');
                 }
             ]);
 
@@ -411,7 +408,6 @@ class AssetController extends Controller
                 'maintenanceStats',
                 'upcomingMaintenance'
             ));
-
         } catch (Exception $e) {
             Log::error('Error showing asset', [
                 'asset_id' => $asset->id ?? 'unknown',
@@ -561,7 +557,6 @@ class AssetController extends Controller
 
             return redirect()->route('assets.show', $asset->id)
                 ->with('success', 'Asset updated successfully');
-
         } catch (Exception $e) {
             Log::error('Error updating asset', [
                 'asset_id' => $asset->id,
@@ -624,7 +619,6 @@ class AssetController extends Controller
 
             return redirect()->route('assets.index')
                 ->with('success', 'Asset deleted successfully');
-
         } catch (Exception $e) {
             Log::error('Error deleting asset', [
                 'asset_id' => $asset->id,
@@ -670,7 +664,6 @@ class AssetController extends Controller
             ]);
 
             return back()->with('success', 'Maintenance scheduled successfully');
-
         } catch (Exception $e) {
             Log::error('Error scheduling maintenance', [
                 'asset_id' => $asset->id,
@@ -689,7 +682,7 @@ class AssetController extends Controller
     {
         $year = date('y');
         $sequence = Asset::whereYear('created_at', date('Y'))->count() + 1;
-        
+
         return sprintf("%s-%s-%05d", $categoryPrefix, $year, $sequence);
     }
 
@@ -754,7 +747,6 @@ class AssetController extends Controller
             }
 
             return back()->with('success', "Successfully updated {$updatedCount} assets");
-
         } catch (Exception $e) {
             Log::error('Error in bulk update', [
                 'user_id' => session('id'),
@@ -772,7 +764,7 @@ class AssetController extends Controller
     {
         try {
             $asset = Asset::findOrFail($id);
-            
+
             $validated = $request->validate([
                 'user_name' => 'required|string|max:255',
                 'quantity' => 'required|integer|min:1',
@@ -801,7 +793,6 @@ class AssetController extends Controller
             ]);
 
             return back()->with('success', "Asset successfully assigned to {$validated['user_name']}");
-
         } catch (Exception $e) {
             Log::error('Error renting asset', [
                 'asset_id' => $id,
@@ -820,7 +811,7 @@ class AssetController extends Controller
     {
         try {
             $asset = Asset::findOrFail($id);
-            
+
             // Reset rental status
             $asset->rented_quantity = 0;
             $asset->current_user = null;
@@ -834,7 +825,6 @@ class AssetController extends Controller
             ]);
 
             return back()->with('success', 'Asset marked as returned and available for use');
-
         } catch (Exception $e) {
             Log::error('Error returning asset', [
                 'asset_id' => $id,
