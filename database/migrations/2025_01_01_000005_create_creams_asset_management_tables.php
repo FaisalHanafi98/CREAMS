@@ -26,7 +26,7 @@ class CreateCreamsAssetManagementTables extends Migration
             // Removed parent_category_id - flat category structure preferred
             $table->boolean('is_active')->default(true);
             $table->timestamps();
-            
+
             $table->index('is_active');
         });
 
@@ -40,7 +40,7 @@ class CreateCreamsAssetManagementTables extends Migration
             $table->integer('default_maintenance_interval_days')->nullable();
             $table->boolean('is_active')->default(true);
             $table->timestamps();
-            
+
             $table->index(['category_id', 'is_active']);
         });
 
@@ -55,7 +55,7 @@ class CreateCreamsAssetManagementTables extends Migration
             $table->string('room')->nullable();
             $table->boolean('is_active')->default(true);
             $table->timestamps();
-            
+
             $table->index(['centre_id', 'is_active']);
         });
 
@@ -82,7 +82,7 @@ class CreateCreamsAssetManagementTables extends Migration
             $table->json('images')->nullable();
             $table->boolean('is_active')->default(true);
             $table->timestamps();
-            
+
             $table->index(['centre_id', 'category_id', 'status']);
             $table->index(['location_id', 'condition']);
         });
@@ -101,7 +101,7 @@ class CreateCreamsAssetManagementTables extends Migration
             $table->string('performed_by')->nullable();
             $table->text('notes')->nullable();
             $table->timestamps();
-            
+
             $table->index(['asset_id', 'scheduled_date', 'status']);
             $table->index(['maintenance_type', 'priority']);
         });
@@ -118,7 +118,7 @@ class CreateCreamsAssetManagementTables extends Migration
             $table->string('performed_by');
             $table->text('notes')->nullable();
             $table->timestamps();
-            
+
             $table->index(['asset_id', 'maintenance_date']);
             $table->index(['maintenance_id', 'maintenance_type']);
         });
@@ -134,7 +134,7 @@ class CreateCreamsAssetManagementTables extends Migration
             $table->string('reason')->nullable();
             $table->text('notes')->nullable();
             $table->timestamps();
-            
+
             $table->index(['asset_id', 'movement_date']);
             $table->index(['from_location_id', 'to_location_id']);
         });
