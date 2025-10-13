@@ -26,6 +26,7 @@ class CreateCreamsAssetManagementTables extends Migration
             // Removed parent_category_id - flat category structure preferred
             $table->boolean('is_active')->default(true);
             $table->timestamps();
+            $table->softDeletes();
 
             $table->index('is_active');
         });
@@ -33,13 +34,15 @@ class CreateCreamsAssetManagementTables extends Migration
         // 2. ASSET TYPES - Equipment types (preserves current structure)
         Schema::create('asset_types', function (Blueprint $table) {
             $table->id();
-            $table->string('type_name');
+            $table->string('name');
             $table->text('type_description')->nullable();
             $table->unsignedBigInteger('category_id');
+            $table->string('image_path')->nullable();
             $table->boolean('requires_maintenance')->default(false);
             $table->integer('default_maintenance_interval_days')->nullable();
             $table->boolean('is_active')->default(true);
             $table->timestamps();
+            $table->softDeletes();
 
             $table->index(['category_id', 'is_active']);
         });
@@ -55,6 +58,7 @@ class CreateCreamsAssetManagementTables extends Migration
             $table->string('room')->nullable();
             $table->boolean('is_active')->default(true);
             $table->timestamps();
+            $table->softDeletes();
 
             $table->index(['centre_id', 'is_active']);
         });
@@ -62,13 +66,13 @@ class CreateCreamsAssetManagementTables extends Migration
         // 4. ASSETS - Equipment inventory (preserves current structure)
         Schema::create('assets', function (Blueprint $table) {
             $table->id();
+            $table->unsignedBigInteger('type_id')->nullable();
+            $table->unsignedBigInteger('category_id');
+            $table->string('centre_id', 10);
+            $table->unsignedBigInteger('location_id')->nullable();
             $table->string('asset_tag')->unique();
             $table->string('asset_name');
             $table->text('asset_description')->nullable();
-            $table->unsignedBigInteger('category_id');
-            $table->unsignedBigInteger('type_id')->nullable();
-            $table->string('centre_id', 10);
-            $table->unsignedBigInteger('location_id')->nullable();
             $table->string('serial_number')->nullable();
             $table->string('model_number')->nullable();
             $table->string('manufacturer')->nullable();
@@ -82,8 +86,9 @@ class CreateCreamsAssetManagementTables extends Migration
             $table->json('images')->nullable();
             $table->boolean('is_active')->default(true);
             $table->timestamps();
+            $table->softDeletes();
 
-            $table->index(['centre_id', 'category_id', 'status']);
+            $table->index(['category_id', 'centre_id', 'status']);
             $table->index(['location_id', 'condition']);
         });
 
@@ -101,6 +106,7 @@ class CreateCreamsAssetManagementTables extends Migration
             $table->string('performed_by')->nullable();
             $table->text('notes')->nullable();
             $table->timestamps();
+            $table->softDeletes();
 
             $table->index(['asset_id', 'scheduled_date', 'status']);
             $table->index(['maintenance_type', 'priority']);
@@ -118,6 +124,7 @@ class CreateCreamsAssetManagementTables extends Migration
             $table->string('performed_by');
             $table->text('notes')->nullable();
             $table->timestamps();
+            $table->softDeletes();
 
             $table->index(['asset_id', 'maintenance_date']);
             $table->index(['maintenance_id', 'maintenance_type']);
@@ -134,6 +141,7 @@ class CreateCreamsAssetManagementTables extends Migration
             $table->string('reason')->nullable();
             $table->text('notes')->nullable();
             $table->timestamps();
+            $table->softDeletes();
 
             $table->index(['asset_id', 'movement_date']);
             $table->index(['from_location_id', 'to_location_id']);

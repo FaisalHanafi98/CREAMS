@@ -83,7 +83,7 @@ class CREAMSSeederAssetManagement extends Seeder
             if (isset($typesByCategory[$category->category_name])) {
                 foreach ($typesByCategory[$category->category_name] as $typeName) {
                     DB::table('asset_types')->insertOrIgnore([
-                        'type_name' => $typeName,
+                        'name' => $typeName,
                         'type_description' => 'Equipment for rehabilitation and therapy programs',
                         'category_id' => $category->id,
                         'created_at' => now(),
@@ -146,7 +146,7 @@ class CREAMSSeederAssetManagement extends Seeder
                 
                 DB::table('assets')->insert([
                     'asset_tag' => $assetId,
-                    'asset_name' => $type->type_name . ' #' . $i,
+                    'asset_name' => $type->name . ' #' . $i,
                     'asset_description' => 'Rehabilitation equipment for ' . $centre->centre_name,
                     'category_id' => $type->category_id,
                     'type_id' => $type->id,
@@ -216,7 +216,7 @@ class CREAMSSeederAssetManagement extends Seeder
                     'asset_name' => $asset['name'] . ($quantity > 1 ? " #{$i}" : ''),
                     'asset_description' => 'Real Gombak asset - ' . $asset['name'],
                     'category_id' => $categoryMapping[$asset['type']] ?? 1,
-                    'type_id' => $types->where('type_name', 'LIKE', '%' . explode(' ', $asset['name'])[0] . '%')->first()->id ?? 1,
+                    'type_id' => $types->where('name', 'LIKE', '%' . explode(' ', $asset['name'])[0] . '%')->first()->id ?? 1,
                     'centre_id' => '01',
                     'location_id' => $location->id,
                     'purchase_date' => $asset['date'],

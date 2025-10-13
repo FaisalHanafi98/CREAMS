@@ -213,9 +213,9 @@ class TestingGuideDataSeeder extends Seeder
         
         // Asset types
         $types = [
-            ['id' => 1, 'type_name' => 'Therapy Equipment', 'type_description' => 'Physical and occupational therapy equipment', 'category_id' => 1, 'is_active' => true, 'created_at' => now(), 'updated_at' => now()],
-            ['id' => 2, 'type_name' => 'Office Furniture', 'type_description' => 'Desks, chairs, and office furniture', 'category_id' => 2, 'is_active' => true, 'created_at' => now(), 'updated_at' => now()],
-            ['id' => 3, 'type_name' => 'Computer Equipment', 'type_description' => 'Computers, tablets, and peripherals', 'category_id' => 3, 'is_active' => true, 'created_at' => now(), 'updated_at' => now()],
+            ['id' => 1, 'name' => 'Therapy Equipment', 'type_description' => 'Physical and occupational therapy equipment', 'category_id' => 1, 'is_active' => true, 'created_at' => now(), 'updated_at' => now()],
+            ['id' => 2, 'name' => 'Office Furniture', 'type_description' => 'Desks, chairs, and office furniture', 'category_id' => 2, 'is_active' => true, 'created_at' => now(), 'updated_at' => now()],
+            ['id' => 3, 'name' => 'Computer Equipment', 'type_description' => 'Computers, tablets, and peripherals', 'category_id' => 3, 'is_active' => true, 'created_at' => now(), 'updated_at' => now()],
         ];
         
         foreach ($types as $type) {

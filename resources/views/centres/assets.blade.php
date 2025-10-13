@@ -89,9 +89,7 @@
                         <table class="table table-hover" id="assetsTable">
                             <thead>
                                 <tr>
-                                    <th>Asset ID</th>
                                     <th>Name</th>
-                                    <th>Type</th>
                                     <th>Brand</th>
                                     <th>Purchase Price</th>
                                     <th>Condition</th>
@@ -103,14 +101,12 @@
                                 @foreach ($assets as $asset)
                                     <tr>
                                         <td>
-                                            <code>{{ $asset->asset_id ?? $asset->id }}</code>
-                                        </td>
-                                        <td>
+                                            {{-- Name --}}
                                             <div class="asset-info">
                                                 <img src="{{ $asset->primary_image_url ?? asset('images/default-asset.png') }}"
                                                     alt="Asset" class="asset-thumbnail">
                                                 <div>
-                                                    <strong>{{ $asset->name ?? ($asset->asset_name ?? 'Unnamed Asset') }}</strong>
+                                                    <strong>{{ $asset->type->name ?? ($asset->asset_type ?? 'Unnamed Asset') }}</strong>
                                                     @if ($asset->description ?? $asset->asset_note)
                                                         <br><small
                                                             class="text-muted">{{ Str::limit($asset->description ?? $asset->asset_note, 50) }}</small>
@@ -119,11 +115,11 @@
                                             </div>
                                         </td>
                                         <td>
-                                            <span
-                                                class="badge badge-light">{{ $asset->type ?? ($asset->asset_type ?? 'N/A') }}</span>
+                                            {{-- Brand --}}
+                                            {{ $asset->brand ?? ($asset->asset_brand ?? 'N/A') }}
                                         </td>
-                                        <td>{{ $asset->brand ?? ($asset->asset_brand ?? 'N/A') }}</td>
                                         <td>
+                                            {{-- Purchase Price --}}
                                             @if ($asset->purchase_price ?? $asset->asset_price)
                                                 <strong>RM
                                                     {{ number_format($asset->purchase_price ?? $asset->asset_price, 2) }}</strong>
@@ -132,6 +128,7 @@
                                             @endif
                                         </td>
                                         <td>
+                                            {{-- Condition --}}
                                             @php
                                                 $condition =
                                                     $asset->condition ?? ($asset->asset_condition ?? 'unknown');
@@ -147,6 +144,7 @@
                                             </span>
                                         </td>
                                         <td>
+                                            {{-- Last Updated --}}
                                             @if ($asset->updated_at)
                                                 {{ $asset->updated_at->format('M j, Y') }}
                                             @else
@@ -154,6 +152,7 @@
                                             @endif
                                         </td>
                                         <td>
+                                            {{-- Actions --}}
                                             <div class="action-buttons">
                                                 <a href="{{ route('assets.show', $asset->id) }}"
                                                     class="btn btn-sm btn-outline-primary" title="View Details">
