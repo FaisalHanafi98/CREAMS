@@ -1,0 +1,991 @@
+Test ID,Module,Test Case Title,Test Description,User Role,Detailed Test Steps,Expected Result,Detailed Validation Points,Test Data Required,Test Environment,Browser Requirements,Priority,Status,Prerequisites,Postconditions,Notes
+AUTH001,Authentication,User Login with Email,Test successful login with valid email credentials for all user roles,All Roles,"1. Open web browser and navigate to CREAMS login page (http://localhost/CREAMS/login)
+2. Verify login page loads completely with all elements visible (email field, password field, login button, forgot password link)
+3. Click on email input field and enter valid email address: 'admin@creams.test'
+4. Click on password input field and enter correct password: 'Password123!'
+5. Verify password is masked with asterisks or dots
+6. Click 'Login' button
+7. Wait for redirect and verify user lands on appropriate dashboard
+8. Check top navigation shows user name and role
+9. Verify logout option is available","User successfully logs in and redirected to role-specific dashboard within 3 seconds. Session is established correctly.","1. Login page loads without errors in <2 seconds
+2. Email field accepts valid email format
+3. Password field masks input characters
+4. Login button is clickable and responds
+5. Successful authentication redirects to correct dashboard:
+   - Admin → Admin Dashboard with full navigation
+   - Teacher → Teacher Dashboard with limited navigation
+   - Supervisor → Supervisor Dashboard with reporting tools
+   - AJK → AJK Dashboard with facility management
+   - Trainee → Trainee Dashboard with personal info only
+6. User name displays correctly in top navigation
+7. User role is displayed or indicated
+8. Session cookie is set with appropriate expiration
+9. No error messages are displayed","Valid test accounts:
+- admin@creams.test / Password123!
+- teacher@creams.test / Password123!
+- supervisor@creams.test / Password123!
+- ajk@creams.test / Password123!
+- trainee@creams.test / Password123!
+Database with user records having 'active' status",Development environment with seeded database,Chrome 118+, Firefox 115+, Safari 16+, Edge 118+,High,Pending,System is running and accessible,User session is active and can access assigned features,Test with each role separately to verify role-specific access
+AUTH002,Authentication,User Login with IIUM ID,Test successful login using IIUM ID instead of email address,All Roles,"1. Navigate to CREAMS login page
+2. Verify login page accepts both email and IIUM ID formats
+3. Click on login identifier field
+4. Enter valid IIUM ID: '1234567890' (10-digit format)
+5. Tab to password field
+6. Enter correct password: 'Password123!'
+7. Click 'Login' button
+8. Monitor network requests for authentication call
+9. Verify successful redirect to dashboard
+10. Check user profile shows IIUM ID correctly
+11. Test logout and re-login to confirm persistence","User logs in successfully using IIUM ID, redirected to appropriate dashboard, IIUM ID displays correctly in profile","1. Login field accepts 10-digit IIUM ID format
+2. System validates IIUM ID against database
+3. Authentication process works identically to email login
+4. User profile correctly displays IIUM ID
+5. Dashboard access matches user role
+6. Navigation menu appropriate for user role
+7. Session timeout applies equally
+8. Audit log records IIUM ID login attempt","IIUM ID test accounts:
+- 1234567890 / Password123! (Admin)
+- 1234567891 / Password123! (Teacher)
+- 1234567892 / Password123! (Supervisor)
+Database configured to accept IIUM ID authentication",Development environment,Chrome, Firefox, Safari, Edge,High,Pending,IIUM ID authentication is enabled in system,User can access all assigned features using IIUM ID,Verify IIUM ID format validation works correctly
+AUTH003,Authentication,Invalid Login Credentials,Test system behavior with various invalid credential combinations,All Roles,"1. Navigate to login page
+2. Test Case 3a - Invalid Email Format:
+   - Enter: 'invalidemailformat'
+   - Enter valid password
+   - Click Login
+   - Verify appropriate format error message
+3. Test Case 3b - Non-existent Email:
+   - Enter: 'nonexistent@test.com'
+   - Enter any password
+   - Click Login
+   - Verify 'Invalid credentials' message
+4. Test Case 3c - Correct Email, Wrong Password:
+   - Enter: 'admin@creams.test'
+   - Enter: 'WrongPassword123'
+   - Click Login
+   - Verify authentication failure message
+5. Test Case 3d - Empty Fields:
+   - Leave both fields empty
+   - Click Login
+   - Verify validation messages for required fields
+6. Test Case 3e - SQL Injection Attempt:
+   - Enter: 'admin@test.com'; DROP TABLE users; --'
+   - Enter any password
+   - Verify system handles securely
+7. Test Case 3f - XSS Attempt:
+   - Enter: '<script>alert(""XSS"")</script>'
+   - Verify script is not executed
+8. Check that account is not locked after failed attempts","Login fails appropriately with user-friendly error messages. No sensitive information leaked. Security vulnerabilities are properly handled.","1. Invalid email format shows: 'Please enter a valid email address'
+2. Non-existent credentials show: 'Invalid email/ID or password'
+3. Wrong password shows same generic message as #2
+4. Empty fields show: 'Email/ID is required' and 'Password is required'
+5. Generic error message prevents user enumeration
+6. No SQL injection occurs - database remains intact
+7. XSS attempts are properly escaped/sanitized
+8. Error messages are user-friendly and not technical
+9. Failed login attempts are logged for security
+10. No account lockout after 3-5 failed attempts (verify policy)
+11. Page remains functional after failed attempts","Invalid test data:
+- Malformed emails: 'test', 'test@', '@test.com'
+- Non-existent accounts
+- Common weak passwords
+- SQL injection strings
+- XSS payloads
+- Special characters and Unicode","Development/Test environment,All supported browsers,High,Pending,System is accessible and functional,System remains secure and functional after tests,Document all error messages for consistency review
+AUTH004,Authentication,User Registration,Test complete user registration process with all validations,Admin,"1. Login as Admin user
+2. Navigate to User Management → Add New User
+3. Test Form Validation:
+   - Submit empty form → verify all required field messages
+   - Enter invalid email format → verify email validation
+   - Enter password not meeting requirements → verify password policy message
+4. Fill Complete Registration Form:
+   - Full Name: 'Test User Registration'
+   - Email: 'newuser@creams.test'
+   - IIUM ID: '9999999999'
+   - Password: 'NewUser123!'
+   - Confirm Password: 'NewUser123!'
+   - Role: Select 'Teacher'
+   - Centre: Select 'Centre 01'
+   - Phone: '+60123456789'
+   - Status: 'Active'
+5. Submit form and verify success message
+6. Verify new user appears in user list
+7. Test login with new credentials
+8. Check new user has correct role permissions
+9. Test password reset functionality for new user","New user account is created successfully with all information stored correctly. User can login and access appropriate features based on assigned role.","1. Form validation works for all required fields
+2. Email uniqueness validation prevents duplicates
+3. Password meets complexity requirements (min 8 chars, upper, lower, number, special)
+4. Password confirmation matching works
+5. IIUM ID uniqueness validation
+6. Phone number format validation
+7. Role assignment works correctly
+8. Centre assignment works correctly
+9. Success message displays after creation
+10. New user appears in user listing
+11. New user can login successfully
+12. Role-based permissions applied correctly
+13. Email notification sent to new user (if configured)
+14. Audit log records user creation","Registration form data:
+- Unique email addresses
+- Unique IIUM IDs
+- Valid phone numbers
+- All available roles
+- All available centres
+- Admin user credentials for testing",Development environment with email configuration (if applicable),Chrome, Firefox, Safari, Edge,High,Pending,Admin user is logged in and has user creation permissions,New user account is created and functional,Verify email uniqueness across the system
+AUTH005,Authentication,Session Timeout and Management,Test session timeout behavior and security,All Roles,"1. Login with valid credentials (any role)
+2. Note login timestamp
+3. Navigate to different pages and verify session maintains
+4. Check session cookie expiration time in browser dev tools
+5. Perform Test Case 5a - Normal Activity:
+   - Continue using system normally for 10 minutes
+   - Verify session remains active
+6. Perform Test Case 5b - Idle Timeout:
+   - Leave browser open but inactive for configured timeout period (default 30 minutes)
+   - Attempt to navigate to a protected page
+   - Verify redirect to login with timeout message
+7. Perform Test Case 5c - Session Hijacking Protection:
+   - Note session cookie value
+   - Open new browser/incognito window
+   - Try to manually set same cookie
+   - Verify security measures prevent unauthorized access
+8. Test Case 5d - Concurrent Sessions:
+   - Login from second browser with same credentials
+   - Verify both sessions work or policy enforcement
+9. Test Case 5e - Remember Me (if available):
+   - Login with 'Remember Me' checked
+   - Close browser and reopen
+   - Verify extended session duration","Session timeout works correctly with appropriate warnings. Security measures prevent session hijacking. User experience is smooth for normal usage.","1. Session remains active during normal usage
+2. Session expires after configured idle time (30 minutes default)
+3. Timeout redirect shows user-friendly message: 'Your session has expired. Please login again.'
+4. Session cookies have appropriate security flags (HttpOnly, Secure in production)
+5. Session ID regenerates on login (prevents fixation attacks)
+6. Concurrent session policy is enforced correctly
+7. Session data is properly cleared on logout
+8. Browser back button after logout doesn't access protected pages
+9. Session timeout warning appears 5 minutes before expiration (if implemented)
+10. 'Remember Me' extends session appropriately (if available)","Valid user credentials for testing
+Session timeout configuration
+Multiple browsers/devices for concurrent testing",Development environment,Multiple browsers and devices,Medium,Pending,User has valid account and system is configured with session management,All sessions are properly terminated and secure,Document session timeout values and policies
+AUTH006,Authentication,Logout Functionality and Security,Test comprehensive logout process and security cleanup,All Roles,"1. Login with valid user credentials
+2. Navigate to several pages to establish session history
+3. Perform actions that store temporary data (if any)
+4. Click logout button/link from main navigation
+5. Verify immediate redirect to login page
+6. Check that success message appears: 'You have been logged out successfully'
+7. Test Security Verification:
+   - Use browser back button
+   - Verify cannot access previous protected pages
+   - Check that cached pages show login prompt
+8. Test Session Cleanup:
+   - Open browser developer tools
+   - Check that session cookies are cleared/invalidated
+   - Verify localStorage/sessionStorage is cleared (if used)
+9. Test Multiple Logout Methods:
+   - Logout via main navigation
+   - Logout via user profile dropdown (if available)
+   - Test automatic logout on session timeout
+10. Test Post-Logout Navigation:
+    - Try direct URL access to protected pages
+    - Verify all requests redirect to login","User is completely logged out with all session data cleared. Cannot access protected resources after logout. Security is maintained.","1. Logout button/link is visible and accessible from all pages
+2. Logout process completes within 2 seconds
+3. User redirected to login page immediately
+4. Success message confirms logout: 'Logged out successfully'
+5. Browser back button cannot access protected pages
+6. Session cookie is deleted or invalidated
+7. Server-side session data is destroyed
+8. Local storage and session storage cleared (if used)
+9. Direct URL access to protected pages redirects to login
+10. CSRF token is regenerated for security
+11. Audit log records logout event with timestamp
+12. Any cached sensitive data is cleared","Valid user credentials
+Active user session
+Protected pages to test post-logout access",Development environment,All supported browsers,Medium,Pending,User is logged into the system,All session data is cleared and user cannot access protected resources,Test with different user roles to ensure consistent behavior
+DASH001,Dashboard,Admin Dashboard Comprehensive Testing,Test all admin dashboard components including statistics widgets and navigation,Admin,"1. Login as admin user (admin@creams.test)
+2. Verify Dashboard Loading:
+   - Time page load (should be <3 seconds)
+   - Check all widgets load without errors
+   - Verify no JavaScript console errors
+3. Test Statistics Widgets:
+   - Total Users Count: Verify number matches actual database count
+   - Total Trainees Count: Verify accuracy
+   - Active Activities Count: Verify only active activities counted
+   - Today's Attendance Count: Verify matches attendance records
+   - Total Centres Count: Verify centre count
+   - Recent Activities: Check last 5 activities display
+4. Test Dashboard Navigation:
+   - Verify all menu items accessible
+   - Check dropdown menus work correctly
+   - Test breadcrumb navigation
+   - Verify role-specific menu items visible
+5. Test Interactive Elements:
+   - Click on statistics widgets to drill down (if clickable)
+   - Test any charts or graphs for interactivity
+   - Verify search functionality (if available)
+   - Test notification panel (if present)
+6. Test Responsive Design:
+   - Resize browser window to mobile size
+   - Verify layout adapts correctly
+   - Test on tablet size (768px width)
+7. Test Real-time Updates:
+   - Open second browser, perform actions affecting statistics
+   - Refresh dashboard, verify counts update
+8. Test Performance:
+   - Open browser developer tools
+   - Monitor network requests and load times
+   - Verify no unnecessary API calls","Admin dashboard loads quickly with accurate statistics. All navigation works correctly. Responsive design functions properly. Performance is acceptable.","1. Page loads in <3 seconds on standard connection
+2. All widgets display without errors
+3. Statistics are mathematically correct:
+   - Users count = SELECT COUNT(*) FROM users WHERE status='active'
+   - Trainees count = SELECT COUNT(*) FROM trainees WHERE status='active'
+   - Activities count = SELECT COUNT(*) FROM activities WHERE status='active'
+   - Attendance count = today's attendance records
+4. Navigation menu shows admin-specific items:
+   - User Management
+   - Activity Management
+   - System Settings
+   - Reports and Analytics
+   - Centre Management
+5. No JavaScript errors in console
+6. Responsive breakpoints work at 768px and 480px
+7. Charts/graphs display data correctly (if present)
+8. Search functionality returns relevant results
+9. Notification system works (if implemented)
+10. Performance metrics acceptable (<100ms for API calls)","Admin user account: admin@creams.test / Password123!
+Database with:
+- Multiple users (different roles and statuses)
+- Multiple trainees (different centres)
+- Multiple activities (different categories)
+- Attendance records for current date
+- Historical data for statistics",Development environment with full database,Chrome, Firefox, Safari, Edge,High,Pending,Admin user exists and database contains test data,Dashboard displays correctly and all statistics are verified,Compare displayed statistics with direct database queries
+DASH002,Dashboard,Teacher Dashboard Role-Specific Testing,Test teacher dashboard shows only relevant information and functions,Teacher,"1. Login as teacher user (teacher@creams.test)
+2. Verify Teacher-Specific Dashboard Elements:
+   - My Assigned Activities widget
+   - My Schedule Today widget
+   - My Classes Attendance Summary
+   - Recent Notifications
+   - Quick Actions for teacher tasks
+3. Test Activity Management Access:
+   - Verify can view assigned activities
+   - Check cannot create new activities (admin-only)
+   - Verify can manage enrollments for assigned activities
+   - Test session management for assigned activities
+4. Test Schedule Management:
+   - Verify shows only teacher's assigned sessions
+   - Check calendar view filters correctly
+   - Test schedule conflicts detection
+5. Test Attendance Features:
+   - Verify can mark attendance for assigned sessions
+   - Check cannot access other teachers' attendance
+   - Test attendance history for own sessions
+6. Test Data Isolation:
+   - Verify sees only own assigned activities
+   - Check cannot access admin functions
+   - Verify trainee data shows only enrolled in teacher's activities
+7. Test Navigation Restrictions:
+   - Verify admin menu items are hidden
+   - Check user management is not accessible
+   - Verify system settings are not available
+8. Test Performance and Usability:
+   - Verify dashboard loads efficiently
+   - Check all teacher functions work smoothly
+   - Test mobile responsiveness for teachers using tablets","Teacher dashboard shows only relevant information for assigned activities and classes. Role-based restrictions are properly enforced. Performance is optimized for teacher workflows.","1. Dashboard shows teacher-specific widgets only
+2. Activity list filtered to assigned activities only
+3. Schedule shows only teacher's sessions
+4. Attendance management limited to own sessions
+5. Cannot access:
+   - User management functions
+   - System administration
+   - Other teachers' data
+   - Financial or billing information
+6. Can access:
+   - Assigned activity management
+   - Student enrollment for own activities
+   - Attendance marking
+   - Progress tracking for enrolled students
+   - Communication features
+7. Navigation menu appropriate for teacher role
+8. No unauthorized access warnings or errors
+9. Mobile-friendly interface for classroom use
+10. Quick access to daily teaching tasks","Teacher user account: teacher@creams.test / Password123!
+Activities assigned to the teacher
+Sessions scheduled for the teacher
+Trainees enrolled in teacher's activities
+Attendance data for verification",Development environment,Chrome, Firefox, Safari, Edge, Mobile browsers,High,Pending,Teacher user exists with assigned activities and sessions,Teacher can access all required functions without unauthorized access,Test role-based access control thoroughly
+DASH003,Dashboard,Supervisor Dashboard Analytics and Reporting,Test supervisor dashboard with team oversight and reporting capabilities,Supervisor,"1. Login as supervisor user (supervisor@creams.test)
+2. Verify Supervisor Dashboard Layout:
+   - Team Performance Overview
+   - Centre Statistics Summary
+   - Activity Completion Rates
+   - Staff Performance Metrics
+   - Trainee Progress Analytics
+3. Test Reporting Features:
+   - Generate attendance reports for supervised centre
+   - View activity effectiveness metrics
+   - Check staff performance indicators
+   - Test trainee progress summaries
+4. Test Team Management Functions:
+   - View list of supervised staff
+   - Check staff schedule overview
+   - Verify can view (not edit) staff assignments
+   - Test communication with team members
+5. Test Analytics and Charts:
+   - Verify charts display correctly (pie, bar, line charts)
+   - Test date range filters for reports
+   - Check export functionality (PDF, Excel if available)
+   - Verify data accuracy in charts
+6. Test Centre-Specific Data:
+   - Verify sees only data for assigned centre
+   - Check cannot access other centres' information
+   - Test data filtering by centre works correctly
+7. Test Real-time Monitoring:
+   - Check live attendance tracking
+   - Verify current session monitoring
+   - Test alert system for issues (if implemented)
+8. Test Report Generation:
+   - Generate weekly summary report
+   - Test monthly statistical report
+   - Verify custom date range reports
+   - Check report download and sharing","Supervisor dashboard provides comprehensive oversight tools with accurate analytics. Reporting functions work correctly. Centre-based data isolation is maintained.","1. Dashboard loads with supervisor-specific widgets
+2. All statistical data is accurate for supervised centre only
+3. Charts and graphs display correctly:
+   - Attendance trends over time
+   - Activity participation rates
+   - Staff performance metrics
+   - Trainee progress indicators
+4. Report generation works for:
+   - Daily attendance summaries
+   - Weekly activity reports
+   - Monthly statistical overviews
+   - Custom date range reports
+5. Team oversight functions available:
+   - Staff assignment viewing
+   - Schedule coordination
+   - Performance monitoring
+6. Data export functionality works (if available)
+7. Cannot access:
+   - Other centres' data
+   - Individual staff personal information
+   - System administration functions
+8. Real-time data updates correctly
+9. Mobile interface supports field supervision","Supervisor user account: supervisor@creams.test / Password123!
+Centre assignment for supervisor
+Staff members under supervision
+Activities with participation data
+Historical attendance and progress data",Development environment,Chrome, Firefox, Safari, Edge,High,Pending,Supervisor user exists with centre assignment and supervised staff,All reporting and analytics functions work correctly,Verify data accuracy by comparing with direct database queries
+ACT001,Activities,Comprehensive Activity Listing and Filtering,Test complete activity management interface with advanced filtering and search capabilities,All Roles,"1. Navigate to Activities page (/activities)
+2. Test Initial Page Load:
+   - Verify page loads within 3 seconds
+   - Check all activities display in grid/list view
+   - Verify pagination works if >20 activities
+   - Check loading indicators work properly
+3. Test Activity Display Information:
+   - Verify each activity shows: Name, Description, Category, Status, Instructor, Schedule
+   - Check activity images display correctly (if applicable)
+   - Verify enrollment counts are accurate
+   - Test 'View Details' links work
+4. Test Filtering Functionality:
+   - Filter by Category: Therapy, Education, Recreation, Life Skills
+   - Filter by Status: Active, Inactive, Scheduled, Completed
+   - Filter by Centre: Test multi-centre filtering
+   - Filter by Instructor: Show activities by specific teacher
+   - Test combined filters work correctly
+5. Test Search Functionality:
+   - Search by activity name (partial and full matches)
+   - Search by description keywords
+   - Search by instructor name
+   - Test search with special characters
+   - Verify search results highlight matches
+6. Test Sorting Options:
+   - Sort by Name (A-Z, Z-A)
+   - Sort by Date Created (newest/oldest)
+   - Sort by Enrollment Count (high to low)
+   - Sort by Category alphabetically
+7. Test Role-Based Viewing:
+   - Admin: Sees all activities with management options
+   - Teacher: Sees assigned activities with limited options
+   - Trainee: Sees enrolled activities only
+   - Test unauthorized access restrictions
+8. Test Performance with Large Dataset:
+   - Test with 100+ activities
+   - Verify pagination performance
+   - Check search performance
+   - Test filter combination performance","Activity listing loads efficiently with accurate information. Filtering and search work correctly. Role-based access is properly enforced. Performance remains good with large datasets.","1. Page loads all activities within 3 seconds
+2. Activity cards/rows show complete information:
+   - Activity name and description
+   - Category badge/label
+   - Current enrollment count vs. maximum capacity
+   - Next scheduled session date/time
+   - Assigned instructor name
+   - Activity status indicator
+3. Filtering works correctly:
+   - Category filter shows only selected categories
+   - Status filter respects current activity states
+   - Centre filter shows only activities for selected centre
+   - Multiple filters combine with AND logic
+4. Search functionality:
+   - Finds activities by partial name matches
+   - Searches in description text
+   - Case-insensitive search
+   - Results update in real-time or on enter key
+5. Sorting functions correctly:
+   - Alphabetical sorting works properly
+   - Date sorting shows newest/oldest first
+   - Numerical sorting for enrollment counts
+6. Role-based access control:
+   - Admins see 'Edit', 'Delete', 'Manage Sessions' buttons
+   - Teachers see 'View', 'Manage Enrollment' buttons
+   - Trainees see 'View Details', 'Enrollment Status' only
+7. Pagination works with page numbers and next/previous
+8. No JavaScript errors in console","Database with 50+ activities across different:
+- Categories (Therapy, Education, Recreation, Life Skills)
+- Statuses (Active, Inactive, Scheduled)
+- Centres (multiple centres)
+- Instructors (various teachers assigned)
+- Enrollment levels (some full, some with spaces)
+User accounts for all roles to test access",Development environment,Chrome, Firefox, Safari, Edge,High,Pending,Database contains diverse activity data and user accounts for all roles,Activity listing displays correctly with all filters and search working,Test with realistic data volumes and verify performance
+ACT002,Activities,Create New Activity (Admin Only),Test complete activity creation process with all validations and edge cases,Admin,"1. Login as admin user
+2. Navigate to Activities → Create New Activity
+3. Test Form Access Control:
+   - Verify only admin users can access creation form
+   - Test that other roles get 'Unauthorized' message
+4. Test Form Validation (Submit with missing fields):
+   - Empty Activity Name → 'Activity name is required'
+   - Empty Description → 'Description is required'
+   - No Category Selected → 'Please select a category'
+   - No Centre Selected → 'Please select a centre'
+   - Invalid Maximum Participants (0 or negative) → 'Must be greater than 0'
+5. Test Input Validation:
+   - Activity Name: Test special characters, length limits (max 100 chars)
+   - Description: Test HTML input sanitization, max 500 chars
+   - Category: Verify dropdown has all options (Therapy, Education, Recreation, Life Skills)
+   - Duration: Test time format validation (HH:MM)
+   - Age Group: Test range validation (e.g., 5-12, 13-18, 18+)
+6. Create Complete Activity:
+   - Activity Name: 'Advanced Therapy Session'
+   - Description: 'Comprehensive rehabilitation therapy for motor skills development'
+   - Category: 'Therapy'
+   - Centre: 'Centre 01'
+   - Duration: '01:30' (90 minutes)
+   - Maximum Participants: 8
+   - Age Group: '18+'
+   - Prerequisites: 'Basic mobility assessment completed'
+   - Equipment Required: 'Exercise mats, resistance bands'
+   - Instructor Assignment: Select available teacher
+7. Submit form and verify success
+8. Test Database Storage:
+   - Verify activity appears in activities list
+   - Check all data stored correctly
+   - Verify auto-generated fields (ID, created_at, created_by)
+9. Test Activity Status:
+   - Verify new activity has 'Active' status by default
+   - Test that it's immediately available for enrollment
+10. Test Duplicate Prevention:
+    - Try creating activity with same name
+    - Verify appropriate validation message","New activity is created successfully with all information stored correctly. Form validation prevents invalid data. Only admin users can create activities.","1. Activity creation form only accessible to admin users
+2. Form validation prevents submission with:
+   - Missing required fields
+   - Invalid data formats
+   - Inappropriate values (negative numbers, etc.)
+3. Activity name uniqueness validation works
+4. Category dropdown populated from database
+5. Centre dropdown shows available centres
+6. Duration accepts HH:MM format and validates time
+7. Maximum participants accepts positive integers only
+8. Rich text editor for description (if implemented)
+9. Success message after creation: 'Activity created successfully'
+10. New activity appears in activities list immediately
+11. Database entry contains:
+    - All form fields correctly stored
+    - created_by = admin user ID
+    - created_at = current timestamp
+    - status = 'active'
+    - Unique activity ID generated
+12. Activity is immediately available for session scheduling
+13. Audit log records activity creation","Admin user credentials
+Available centres in database
+Available instructors for assignment
+Activity categories configured in system",Development environment,Chrome, Firefox, Safari, Edge,High,Pending,Admin user logged in and activity creation permissions verified,New activity created and available for use,Verify created activity appears correctly in all relevant areas
+ACT003,Activities,Edit Activity Details (Admin Only),Test comprehensive activity editing with change tracking and validation,Admin,"1. Login as admin user
+2. Navigate to Activities list
+3. Select existing activity to edit
+4. Test Edit Access Control:
+   - Verify only admin users see 'Edit' button
+   - Test other roles cannot access edit URL directly
+5. Test Edit Form Pre-population:
+   - Verify all current activity data loads in form
+   - Check that dropdowns show current selections
+   - Verify rich text editor loads description correctly
+6. Test Field Modifications:
+   - Change Activity Name: 'Updated Therapy Session'
+   - Modify Description: Add 'Updated with new equipment requirements'
+   - Change Category: From 'Therapy' to 'Education'
+   - Modify Duration: From '01:30' to '02:00'
+   - Update Maximum Participants: From 8 to 10
+   - Change Age Group: From '18+' to '13-18'
+   - Update Prerequisites: 'No prerequisites required'
+7. Test Validation During Edit:
+   - Try to save with empty required fields
+   - Test invalid duration format
+   - Try negative maximum participants
+   - Test activity name uniqueness (if changing name)
+8. Test Impact Analysis:
+   - If activity has existing enrollments, verify warning message
+   - Check if sessions are affected by changes
+   - Test capacity increase/decrease handling
+9. Save Changes and Verify:
+   - Click 'Update Activity' button
+   - Verify success message appears
+   - Check activity list shows updated information
+   - Verify activity details page shows changes
+10. Test Change History:
+    - Check if system logs changes made
+    - Verify audit trail shows who made changes and when
+    - Test change notification to affected users (if implemented)
+11. Test Edge Cases:
+    - Edit activity with scheduled sessions
+    - Modify activity with existing enrollments
+    - Change capacity below current enrollment count","Activity is updated successfully with all changes saved correctly. Validation prevents invalid modifications. Change tracking maintains audit trail.","1. Edit form accessible only to admin users
+2. Form pre-populates with current activity data
+3. All validation rules apply during edit:
+   - Required fields cannot be empty
+   - Data format validation works
+   - Business rule validation (capacity vs enrollments)
+4. Changes save correctly to database
+5. Updated information appears immediately in:
+   - Activity listings
+   - Activity detail pages
+   - Search results
+   - Related schedules and enrollments
+6. Impact warnings shown for:
+   - Reducing capacity below current enrollments
+   - Changing category of activity with sessions
+   - Modifying requirements that affect enrollees
+7. Change history recorded:
+   - Previous values stored
+   - Change timestamp recorded
+   - Admin user ID who made changes
+   - Change reason (if field available)
+8. Affected users notified of changes (if implemented)
+9. Sessions and enrollments remain valid after edit
+10. Activity immediately available with new settings","Existing activity with various data
+Activity with scheduled sessions for impact testing
+Activity with current enrollments
+Admin user credentials",Development environment,Chrome, Firefox, Safari, Edge,High,Pending,Admin user logged in and existing activities available for editing,Activity updated correctly with change history maintained,Test editing activities with different combinations of existing data
+ATT001,Attendance,Mark Session Attendance with Comprehensive Validation,Test complete attendance marking process including bulk operations and edge cases,Teacher,"1. Login as teacher user
+2. Navigate to today's scheduled sessions
+3. Select active session for attendance marking
+4. Test Attendance Interface Loading:
+   - Verify session details display correctly (date, time, activity, location)
+   - Check enrolled trainee list loads completely
+   - Verify trainee photos display (if available)
+   - Check attendance status options (Present, Absent, Late, Excused)
+5. Test Individual Attendance Marking:
+   - Mark first trainee as 'Present'
+   - Mark second trainee as 'Absent'
+   - Mark third trainee as 'Late' with arrival time
+   - Mark fourth trainee as 'Excused' with reason
+   - Verify visual feedback for each selection
+6. Test Bulk Attendance Operations:
+   - Use 'Mark All Present' button
+   - Verify all trainees marked as present
+   - Use 'Mark All Absent' button
+   - Test 'Reset All' functionality
+7. Test Attendance Validation:
+   - Try to submit without marking all trainees
+   - Verify validation message appears
+   - Test late arrival time validation (cannot be before session start)
+   - Test excuse reason requirement for excused absences
+8. Test Special Cases:
+   - Mark attendance for trainee who arrived late
+   - Handle trainee who left early
+   - Mark partial attendance (attended part of session)
+   - Test medical leave or emergency absence
+9. Submit Attendance and Verify:
+   - Click 'Submit Attendance' button
+   - Verify success message appears
+   - Check attendance is locked for editing (or requires special permission)
+   - Verify attendance appears in reports immediately
+10. Test Attendance Modification:
+    - Test ability to modify attendance within time limit (if allowed)
+    - Verify audit trail for attendance changes
+    - Test supervisor override functionality (if available)
+11. Test Mobile Functionality:
+    - Test on tablet/mobile device
+    - Verify touch-friendly interface
+    - Test offline capability (if implemented)","Attendance is marked accurately for all trainees with proper validation. Bulk operations work correctly. Audit trail maintains data integrity.","1. Session attendance interface loads with:
+   - Complete trainee roster for the session
+   - Current session details (date, time, duration)
+   - Activity information and location
+   - Previous attendance patterns (if shown)
+2. Attendance marking works for all status types:
+   - Present: Simple checkbox or button
+   - Absent: Requires confirmation
+   - Late: Requires arrival time entry
+   - Excused: Requires reason from dropdown/text
+3. Bulk operations function correctly:
+   - Mark All Present updates all trainees
+   - Mark All Absent requires confirmation
+   - Reset All clears all selections
+4. Validation prevents:
+   - Submitting incomplete attendance
+   - Invalid time entries for late arrivals
+   - Missing excuse reasons for excused absences
+5. Attendance submission:
+   - Success message confirms submission
+   - Data immediately available in reports
+   - Timestamp recorded for submission
+   - Teacher ID recorded as marker
+6. Attendance modification rules enforced:
+   - Time limits for changes (if applicable)
+   - Supervisor approval for changes (if required)
+   - Full audit trail of all changes
+7. Mobile interface optimized for classroom use
+8. Data automatically saves (draft mode) to prevent loss","Active session with enrolled trainees
+Teacher assigned to the session
+Various trainee enrollment statuses for testing
+Mobile device or tablet for mobile testing",Development environment,Chrome, Firefox, Safari, Edge, Mobile browsers,High,Pending,Teacher user logged in with assigned sessions and enrolled trainees,Attendance marked and saved correctly with complete audit trail,Test attendance marking in various scenarios and session types
+USER001,Users/Staff,Create New Staff Member with Role Assignment,Test comprehensive staff creation process with validation and role-based permissions,Admin,"1. Login as admin user
+2. Navigate to User Management → Staff → Add New Staff
+3. Test Form Access Control:
+   - Verify only admin users can access staff creation
+   - Test that non-admin roles get access denied
+4. Test Form Field Validation:
+   - Leave all fields empty and submit → verify all required field messages
+   - Enter invalid email format → verify email validation
+   - Enter existing email → verify uniqueness validation
+   - Enter invalid phone format → verify phone validation
+   - Enter weak password → verify password policy
+5. Test IIUM ID Validation:
+   - Enter non-numeric IIUM ID → verify numeric validation
+   - Enter IIUM ID with wrong length → verify 10-digit requirement
+   - Enter existing IIUM ID → verify uniqueness
+6. Fill Complete Staff Information:
+   - Full Name: 'Dr. Sarah Johnson'
+   - Email: 'sarah.johnson@creams.test'
+   - IIUM ID: '2024567890'
+   - Phone: '+60123456789'
+   - Position: 'Senior Physiotherapist'
+   - Department: 'Rehabilitation Services'
+   - Hire Date: Today's date
+   - Employee ID: 'EMP2024001'
+7. Test Role Assignment:
+   - Select Role: 'Teacher'
+   - Verify role description displays
+   - Test role permissions preview (if available)
+   - Select Centre Assignment: 'Centre 01'
+8. Test Password Configuration:
+   - Set temporary password: 'TempPass123!'
+   - Check 'Force password change on first login'
+   - Verify password complexity requirements shown
+9. Test Additional Settings:
+   - Set Status: 'Active'
+   - Configure Department permissions (if applicable)
+   - Set supervisor assignment (if hierarchical)
+   - Configure work schedule (if managed)
+10. Submit and Verify Creation:
+    - Click 'Create Staff Member'
+    - Verify success message
+    - Check new staff appears in staff directory
+    - Verify email notification sent (if configured)
+11. Test New Staff Login:
+    - Logout as admin
+    - Login with new staff credentials
+    - Verify forced password change (if set)
+    - Test role-appropriate dashboard access
+12. Test Staff Profile:
+    - Verify all information displays correctly
+    - Test profile photo upload (if available)
+    - Check permission assignments are correct","New staff member is created successfully with all information stored correctly. Role assignments work properly. Account is immediately functional.","1. Staff creation form validates all required fields:
+   - Full name (2-50 characters)
+   - Valid email format and uniqueness
+   - 10-digit numeric IIUM ID
+   - Valid phone number format
+   - Strong password meeting policy
+2. Role assignment works correctly:
+   - Available roles: Admin, Teacher, Supervisor, AJK
+   - Role permissions applied immediately
+   - Centre assignment restricts data access
+3. Account security features:
+   - Password complexity enforced
+   - Account activation email sent (if configured)
+   - Temporary password requires change on first login
+4. Staff directory updated:
+   - New staff appears in listings
+   - Search functionality finds new staff
+   - Filtering by role/centre works
+5. New staff can login successfully:
+   - Authentication works with email and IIUM ID
+   - Dashboard appropriate for assigned role
+   - Permissions restrict access correctly
+6. Database integrity maintained:
+   - All fields stored correctly
+   - Foreign key relationships established
+   - Audit log records creation
+7. Staff profile complete:
+   - All personal information displays
+   - Contact information accessible
+   - Role and permissions clearly shown","Admin user credentials
+Available roles and centres in system
+Email configuration for notifications (if applicable)
+Department and position lists configured",Development environment with email setup,Chrome, Firefox, Safari, Edge,High,Pending,Admin user logged in with staff creation permissions,New staff member created and functional with appropriate access,Verify new staff appears in all relevant reports and can perform role-based functions
+TRAIN001,Trainees,Register New Trainee with Guardian Information,Test comprehensive trainee registration process including guardian details and centre assignment,Staff,"1. Login as staff user (Teacher, Admin, or Supervisor)
+2. Navigate to Trainee Management → Register New Trainee
+3. Test Form Access and Loading:
+   - Verify form loads with all sections (Personal Info, Guardian Info, Medical Info, Centre Assignment)
+   - Check required field indicators display
+   - Verify dropdown lists populate correctly
+4. Test Personal Information Section:
+   - Full Name: 'Ahmad Bin Abdullah'
+   - Identity Number: '991234567890' (12-digit Malaysian IC)
+   - Date of Birth: '1995-06-15' (age calculation should work)
+   - Gender: 'Male'
+   - Phone: '+60123456789'
+   - Email: 'ahmad.abdullah@email.com'
+   - Address: 'No. 123, Jalan Bukit Indah, 81200 Johor Bahru, Johor'
+5. Test Identity Number Validation:
+   - Verify IC format validation (12 digits)
+   - Test age calculation from IC
+   - Verify uniqueness validation
+   - Test foreign passport number format (if supported)
+6. Test Guardian Information Section:
+   - Guardian Name: 'Abdullah Bin Hassan'
+   - Relationship: 'Father'
+   - Guardian Phone: '+60187654321'
+   - Guardian Email: 'abdullah.hassan@email.com'
+   - Guardian Address: 'Same as trainee' (checkbox test)
+   - Emergency Contact: '+60198765432'
+   - Guardian Occupation: 'Engineer'
+7. Test Medical Information Section:
+   - Medical Conditions: 'Mild cerebral palsy'
+   - Allergies: 'None known'
+   - Medications: 'Daily physiotherapy'
+   - Emergency Medical Contact: 'Dr. Lee - +60123333333'
+   - Medical Insurance: 'Great Eastern - Policy 123456'
+8. Test Centre and Program Assignment:
+   - Select Centre: 'Centre 01'
+   - Select Primary Program: 'Rehabilitation Therapy'
+   - Select Secondary Programs: 'Life Skills Training'
+   - Assigned Counselor: Select from available staff
+9. Test Form Validation:
+   - Submit with missing required fields
+   - Test IC number format and uniqueness
+   - Verify age restrictions (if any)
+   - Test email format validation
+   - Test phone number format
+10. Submit Registration:
+    - Click 'Register Trainee'
+    - Verify success message appears
+    - Check confirmation details display
+    - Verify trainee ID is generated
+11. Test Post-Registration:
+    - Verify trainee appears in trainee directory
+    - Check guardian contact information stored
+    - Test trainee profile displays all information
+    - Verify centre assignment is correct","New trainee is registered successfully with all personal and guardian information stored correctly. Centre assignment and program enrollment work properly.","1. Registration form validates all required fields:
+   - Malaysian IC format (12 digits) or passport number
+   - Valid email formats for trainee and guardian
+   - Phone number format validation
+   - Age calculation from IC/birthdate works
+2. Guardian information captured completely:
+   - Full contact details stored
+   - Relationship to trainee recorded
+   - Emergency contact information saved
+   - Address copying functionality works
+3. Medical information stored securely:
+   - Medical conditions and allergies noted
+   - Emergency medical contacts saved
+   - Insurance information recorded
+4. Centre assignment works correctly:
+   - Trainee assigned to selected centre
+   - Data isolation by centre enforced
+   - Program enrollment completed
+5. Trainee profile created with:
+   - Unique trainee ID generated
+   - Registration date recorded
+   - Initial status set to 'Active'
+   - Staff member who registered recorded
+6. Trainee directory updated:
+   - New trainee appears in listings
+   - Search functionality includes new trainee
+   - Filtering by centre works correctly
+7. Guardian portal access created (if available):
+   - Guardian login credentials generated
+   - Welcome email sent to guardian
+   - Portal permissions configured","Available centres and programs
+Staff user credentials for registration
+Valid Malaysian IC numbers for testing
+Medical and guardian information examples",Development environment,Chrome, Firefox, Safari, Edge,High,Pending,Staff user logged in with trainee registration permissions,New trainee registered with complete information and proper centre assignment,Verify trainee information accessible to appropriate staff and guardian portal works (if available)
+SYS001,System,Data Backup and Recovery Testing,Test comprehensive system backup functionality and data recovery processes,Admin,"1. Login as system administrator
+2. Navigate to System Administration → Data Management → Backup
+3. Test Backup Interface:
+   - Verify backup status dashboard loads
+   - Check last backup information displayed
+   - Verify available backup types (Full, Incremental, Database Only)
+   - Check backup schedule configuration
+4. Test Manual Backup Creation:
+   - Select 'Full System Backup'
+   - Add backup description: 'UAT Testing Full Backup'
+   - Choose backup location (local/cloud)
+   - Initiate backup process
+   - Monitor backup progress indicator
+5. Test Backup Process Monitoring:
+   - Verify progress bar updates correctly
+   - Check estimated time remaining accuracy
+   - Test ability to view backup logs in real-time
+   - Verify backup doesn't impact system performance significantly
+6. Test Backup Completion:
+   - Verify backup completes successfully
+   - Check backup file size is reasonable
+   - Verify backup integrity check passes
+   - Test backup file accessibility
+7. Test Backup Verification:
+   - Verify backup contains all expected data
+   - Check database backup includes all tables
+   - Verify file backup includes uploaded content
+   - Test backup metadata is correct
+8. Test Database-Only Backup:
+   - Create database-only backup
+   - Verify faster completion time
+   - Check all tables and data included
+   - Test backup file format and compression
+9. Test Automated Backup Schedule:
+   - Configure daily automatic backup
+   - Set backup retention policy (30 days)
+   - Verify schedule saves correctly
+   - Test notification settings for backup completion
+10. Test Backup Restoration (if safe):
+    - Create test restoration environment
+    - Restore from recent backup
+    - Verify data integrity after restoration
+    - Test system functionality after restoration
+11. Test Backup Security:
+    - Verify backup files are encrypted
+    - Test access controls on backup location
+    - Check backup audit logging
+    - Verify sensitive data protection","System backup functionality works correctly with proper monitoring and verification. Backup files are created with integrity and security measures in place.","1. Backup interface accessible to admin users only
+2. Backup process works for all types:
+   - Full system backup includes database + files
+   - Database backup includes all tables and data
+   - Incremental backup captures changes only
+3. Backup monitoring provides:
+   - Real-time progress updates
+   - Accurate time estimates
+   - Detailed logging information
+   - Error reporting if issues occur
+4. Backup completion verification:
+   - Success message displayed clearly
+   - Backup file created in specified location
+   - File size indicates complete backup
+   - Integrity check confirms valid backup
+5. Backup security measures:
+   - Files encrypted with strong encryption
+   - Access controls prevent unauthorized access
+   - Backup location secured appropriately
+   - Audit trail records all backup activities
+6. Scheduled backup functionality:
+   - Automatic backup runs as scheduled
+   - Retention policy removes old backups
+   - Notifications sent on completion/failure
+   - Schedule configuration saved correctly
+7. System performance during backup:
+   - Minimal impact on user operations
+   - Database performance maintained
+   - File operations continue normally
+8. Backup restoration (if tested):
+   - Restoration process completes successfully
+   - All data restored correctly
+   - System functionality verified post-restoration","Admin user with system administration privileges
+Sufficient storage space for backup files
+Test environment for restoration testing (if available)
+Email configuration for backup notifications",Production-like environment or dedicated test environment,Chrome, Firefox, Safari, Edge,High,Pending,System administrator access and sufficient storage space available,Backup created successfully with verified integrity and proper security measures,Test backup process during low-usage periods to minimize impact
+SYS002,System,Performance Testing Under Load,Test system performance with multiple concurrent users and high data volume,All Roles,"1. Prepare Performance Testing Environment:
+   - Set up multiple user accounts (10 Admin, 10 Teacher, 20 Trainee)
+   - Populate database with realistic data volume (1000+ trainees, 500+ activities)
+   - Configure performance monitoring tools
+   - Clear browser caches and restart application
+2. Test Single User Performance (Baseline):
+   - Login as single user
+   - Measure page load times for key pages:
+     * Dashboard: <3 seconds
+     * Activities list: <2 seconds
+     * Trainee directory: <3 seconds
+     * Reports generation: <5 seconds
+   - Record baseline metrics
+3. Test Concurrent User Login:
+   - Simulate 20 users logging in simultaneously
+   - Measure login response times
+   - Verify all users can access their dashboards
+   - Check for authentication timeouts or failures
+4. Test Concurrent Database Operations:
+   - Multiple users creating activities simultaneously
+   - Concurrent attendance marking for different sessions
+   - Simultaneous trainee registration from different staff
+   - Multiple report generation requests
+5. Test High-Volume Data Operations:
+   - Generate attendance report for 500+ trainees
+   - Export large trainee directory to CSV/Excel
+   - Search across large activity database
+   - Filter large datasets with multiple criteria
+6. Test Memory and Resource Usage:
+   - Monitor server memory consumption
+   - Check CPU usage during peak operations
+   - Verify database connection pooling works
+   - Test garbage collection and memory cleanup
+7. Test Session Management Under Load:
+   - 50+ concurrent active sessions
+   - Session timeout handling with multiple users
+   - Concurrent session creation and destruction
+   - Session data isolation between users
+8. Test Network Performance:
+   - Large file uploads (trainee photos, documents)
+   - Multiple simultaneous file downloads
+   - AJAX requests under load
+   - API response times with concurrent calls
+9. Test Error Handling Under Stress:
+   - Database connection failures during load
+   - Timeout handling with slow operations
+   - Memory exhaustion scenarios
+   - Network interruption recovery
+10. Test Mobile Performance:
+    - Multiple mobile users accessing system
+    - Touch interface responsiveness
+    - Mobile data usage optimization
+    - Offline capability (if implemented)","System maintains acceptable performance under realistic load conditions. Response times remain within acceptable limits. Error handling works correctly under stress.","1. Single user baseline performance:
+   - Dashboard loads in <3 seconds
+   - Activity pages load in <2 seconds
+   - Search results return in <1 second
+   - Report generation completes in <5 seconds
+2. Concurrent user performance:
+   - 20 simultaneous logins complete in <5 seconds
+   - No authentication failures or timeouts
+   - All users access appropriate dashboards
+   - No session conflicts or data corruption
+3. Database performance under load:
+   - Query response times <500ms for simple queries
+   - Complex reports complete in <10 seconds
+   - No database deadlocks or connection failures
+   - Connection pooling manages load effectively
+4. Resource usage stays within limits:
+   - Server memory usage <80% during peak load
+   - CPU usage <70% during peak operations
+   - Database connection count <50% of maximum
+   - No memory leaks detected
+5. Error handling works correctly:
+   - Graceful degradation during high load
+   - Appropriate error messages for failures
+   - Automatic retry mechanisms work
+   - System recovery after stress conditions
+6. Network performance acceptable:
+   - File uploads complete reliably
+   - AJAX responses <1 second
+   - No timeout errors under normal load
+   - Mobile interface remains responsive
+7. Session management robust:
+   - No session conflicts between users
+   - Session cleanup works correctly
+   - Timeout handling works under load","Multiple user accounts for each role
+Large dataset (1000+ trainees, 500+ activities)
+Performance monitoring tools
+Multiple devices/browsers for concurrent testing
+Network testing tools",Load testing environment (separate from production),Chrome, Firefox, Safari, Edge, Mobile browsers,Low,Pending,System has realistic data volume and multiple test accounts available,Performance baseline established and system handles expected load correctly,Conduct performance testing during off-peak hours to avoid impacting real users

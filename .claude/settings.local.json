@@ -1,19 +1,16 @@
 {
   "permissions": {
     "allow": [
-      "Bash(php -l:*)",
+      "Bash(php artisan:*)",
       "Bash(php:*)",
-      "Bash(rm:*)",
-      "Bash(./vendor/bin/phpstan:*)",
-      "Bash(while read file)",
-      "Bash(do php /tmp/reduce_comments.php \"$file\")",
-      "Bash(done)",
-      "Bash(composer require:*)"
+      "Bash(tee:*)",
+      "Bash(mysql:*)",
+      "Bash(awk:*)",
+      "Bash(/dev/null)",
+      "Bash(python:*)",
+      "Bash(pip install:*)"
     ],
     "deny": [],
-    "ask": [],
-    "additionalDirectories": [
-      "C:\\c\\laragon\\www"
-    ]
+    "ask": []
   }
 }
