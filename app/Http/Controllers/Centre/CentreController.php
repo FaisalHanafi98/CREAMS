@@ -32,7 +32,7 @@ class CentreController extends Controller
         $this->middleware('auth');
         // All authenticated users can view centres, but only admin can perform CRUD operations
         $this->middleware('enhanced.role:admin,supervisor,teacher,ajk');
-        
+
         // Only admin can create/edit/delete centres
         $this->middleware('enhanced.role:admin')->only(['create', 'store', 'edit', 'update', 'destroy', 'refreshStatistics']);
     }
@@ -44,15 +44,14 @@ class CentreController extends Controller
     {
         try {
             Log::info('Loading centres index page', ['user_id' => session('id')]);
-            
+
             $centres = Centre::withCount(['users', 'trainees', 'assets'])
                 ->orderBy('centre_name')
                 ->get();
-            
-            Log::info('Successfully loaded centres', ['count' => $centres->count()]);
-            
-            return view('centres.home', compact('centres'));
 
+            Log::info('Successfully loaded centres', ['count' => $centres->count()]);
+
+            return view('centres.home', compact('centres'));
         } catch (Exception $e) {
             Log::error('Error loading centres: ' . $e->getMessage(), [
                 'user_id' => session('id'),
@@ -62,14 +61,14 @@ class CentreController extends Controller
                 ->with('error', 'Unable to load centres. Please try again.');
         }
     }
-    
+
     /**
      * Show the form for creating a new centre
      */
     public function create()
     {
         $role = session('role');
-        
+
         if ($role !== 'admin') {
             return redirect()->route('centres.index')
                 ->with('error', 'Only administrators can create centres.');
@@ -84,7 +83,7 @@ class CentreController extends Controller
     public function store(Request $request)
     {
         $role = session('role');
-        
+
         if ($role !== 'admin') {
             return redirect()->route('centres.index')
                 ->with('error', 'Only administrators can create centres.');
@@ -122,7 +121,6 @@ class CentreController extends Controller
 
             return redirect()->route('centres.show', $centre->centre_id)
                 ->with('success', 'Centre created successfully!');
-
         } catch (Exception $e) {
             Log::error('Error creating centre: ' . $e->getMessage());
             return redirect()->back()
@@ -130,7 +128,7 @@ class CentreController extends Controller
                 ->with('error', 'An error occurred while creating the centre.');
         }
     }
-    
+
     /**
      * Display the specified centre
      */
@@ -138,7 +136,7 @@ class CentreController extends Controller
     {
         try {
             Log::info('Loading centre details', ['centre_id' => $id, 'user_id' => session('id')]);
-            
+
             $centre = Centre::withCount(['users', 'trainees', 'assets'])
                 ->where('centre_id', $id)
                 ->firstOrFail();
@@ -154,15 +152,14 @@ class CentreController extends Controller
 
             // Get recent activities
             $recentActivities = $this->getRecentActivities($id);
-            
+
             Log::info('Successfully loaded centre details', [
                 'centre_id' => $id,
                 'centre_name' => $centre->centre_name,
                 'stats' => $stats
             ]);
-            
-            return view('centres.show', compact('centre', 'stats', 'recentActivities'));
 
+            return view('centres.show', compact('centre', 'stats', 'recentActivities'));
         } catch (Exception $e) {
             Log::error('Error showing centre: ' . $e->getMessage(), [
                 'centre_id' => $id,
@@ -180,7 +177,7 @@ class CentreController extends Controller
     public function edit($id)
     {
         $role = session('role');
-        
+
         if ($role !== 'admin') {
             return redirect()->route('centres.show', $id)
                 ->with('error', 'Only administrators can edit centres.');
@@ -189,7 +186,6 @@ class CentreController extends Controller
         try {
             $centre = Centre::where('centre_id', $id)->firstOrFail();
             return view('centres.edit', compact('centre'));
-
         } catch (Exception $e) {
             Log::error('Error loading centre for edit: ' . $e->getMessage());
             return redirect()->route('centres.index')
@@ -203,7 +199,7 @@ class CentreController extends Controller
     public function update(Request $request, $id)
     {
         $role = session('role');
-        
+
         if ($role !== 'admin') {
             return redirect()->route('centres.show', $id)
                 ->with('error', 'Only administrators can update centres.');
@@ -229,7 +225,6 @@ class CentreController extends Controller
 
             return redirect()->route('centres.show', $centre->centre_id)
                 ->with('success', 'Centre updated successfully!');
-
         } catch (Exception $e) {
             Log::error('Error updating centre: ' . $e->getMessage());
             return redirect()->back()
@@ -244,7 +239,7 @@ class CentreController extends Controller
     public function destroy($id)
     {
         $role = session('role');
-        
+
         if ($role !== 'admin') {
             return redirect()->route('centres.index')
                 ->with('error', 'Only administrators can delete centres.');
@@ -263,14 +258,13 @@ class CentreController extends Controller
 
             return redirect()->route('centres.index')
                 ->with('success', 'Centre deleted successfully!');
-
         } catch (Exception $e) {
             Log::error('Error deleting centre: ' . $e->getMessage());
             return redirect()->back()
                 ->with('error', 'An error occurred while deleting the centre.');
         }
     }
-    
+
     /**
      * Display assets for a specific centre
      */
@@ -278,13 +272,13 @@ class CentreController extends Controller
     {
         try {
             Log::info('Loading centre assets', ['centre_id' => $id, 'user_id' => session('id')]);
-            
+
             $centre = Centre::where('centre_id', $id)->firstOrFail();
-            
+
             $assets = Asset::where('centre_id', $centre->centre_id)
                 ->orderBy('asset_name')
                 ->paginate(20);
-            
+
             // Get real asset statistics from database
             $baseQuery = Asset::where('centre_id', $centre->centre_id);
             $stats = [
@@ -296,16 +290,15 @@ class CentreController extends Controller
                 'damaged' => $baseQuery->clone()->where('status', 'damaged')->count(),
                 'total_value' => $baseQuery->clone()->sum('purchase_price') ?? 0
             ];
-            
+
             Log::info('Successfully loaded centre assets', [
                 'centre_id' => $id,
                 'centre_name' => $centre->centre_name,
                 'assets_count' => $assets->count(),
                 'stats' => $stats
             ]);
-            
-            return view('centres.assets', compact('centre', 'assets', 'stats'));
 
+            return view('centres.assets', compact('centre', 'assets', 'stats'));
         } catch (Exception $e) {
             Log::error('Error loading centre assets: ' . $e->getMessage(), [
                 'centre_id' => $id,
@@ -336,7 +329,7 @@ class CentreController extends Controller
     private function calculateUtilization($centre)
     {
         $capacity = is_numeric($centre->centre_capacity) ? (int)$centre->centre_capacity : 0;
-        
+
         if ($capacity == 0) {
             return 0;
         }
@@ -350,18 +343,18 @@ class CentreController extends Controller
     private function getCachedCentreStats($centreId, $forceRefresh = false)
     {
         $cacheKey = "centre_stats_{$centreId}";
-        
+
         if ($forceRefresh) {
             Cache::forget($cacheKey);
         }
-        
+
         return Cache::remember($cacheKey, 300, function () use ($centreId) {
             $centre = Centre::withCount(['users', 'trainees', 'assets'])->find($centreId);
-            
+
             if (!$centre) {
                 return [];
             }
-            
+
             return [
                 'total_staff' => $centre->users_count,
                 'total_trainees' => $centre->trainees_count,
@@ -392,7 +385,7 @@ class CentreController extends Controller
             return collect([]); // Return empty collection on error
         }
     }
-    
+
     /**
      * Get centre performance metrics API endpoint
      */
@@ -417,10 +410,10 @@ class CentreController extends Controller
 
             $centre = Centre::findOrFail($id);
             $stats = $this->getCachedCentreStats($id, true);
-            
+
             // Get historical data for trends
             $historicalStats = $this->getHistoricalStats($id);
-            
+
             return response()->json([
                 'success' => true,
                 'centre' => [
@@ -432,27 +425,26 @@ class CentreController extends Controller
                 'historical_stats' => $historicalStats,
                 'generated_at' => now()->toISOString()
             ]);
-
         } catch (Exception $e) {
             Log::error('Error getting centre metrics', [
                 'centre_id' => $id,
                 'error' => $e->getMessage()
             ]);
-            
+
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to retrieve metrics'
             ], 500);
         }
     }
-    
+
     /**
      * Get historical statistics for trends
      */
     private function getHistoricalStats($centreId)
     {
         $thirtyDaysAgo = Carbon::now()->subDays(30);
-        
+
         return CentreStatistics::where('centre_id', $centreId)
             ->where('last_calculated', '>=', $thirtyDaysAgo)
             ->orderBy('last_calculated')
@@ -468,7 +460,7 @@ class CentreController extends Controller
                 ];
             });
     }
-    
+
     /**
      * Refresh centre statistics on demand
      */
@@ -492,31 +484,30 @@ class CentreController extends Controller
             }
 
             $centre = Centre::findOrFail($id);
-            
+
             // Force refresh statistics
             $stats = $this->getCachedCentreStats($id, true);
-            
+
             // Clear all related caches
             Cache::forget("centre_details_{$id}");
             Cache::forget("centres_summary_{$user->id}_{$user->role}");
-            
+
             Log::info('Centre statistics refreshed', [
                 'centre_id' => $id,
                 'refreshed_by' => $user->id
             ]);
-            
+
             return response()->json([
                 'success' => true,
                 'message' => 'Statistics refreshed successfully',
                 'stats' => $stats
             ]);
-
         } catch (\Exception $e) {
             Log::error('Error refreshing centre statistics', [
                 'centre_id' => $id,
                 'error' => $e->getMessage()
             ]);
-            
+
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to refresh statistics'
