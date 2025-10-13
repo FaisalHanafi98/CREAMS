@@ -8,7 +8,7 @@ class CreateCreamsAssetManagementTables extends Migration
 {
     /**
      * CREAMS Asset Management Migration
-     * Tables: asset_categories, asset_types, asset_locations, assets, asset_maintenance, asset_maintenance_history, asset_movements
+     * Tables: asset_categories, asset_parents, asset_locations, assets, asset_maintenance, asset_maintenance_history, asset_movements
      * Dependencies: Foundation Management
      */
     public function up(): void
@@ -32,7 +32,7 @@ class CreateCreamsAssetManagementTables extends Migration
         });
 
         // 2. ASSET TYPES - Equipment types (preserves current structure)
-        Schema::create('asset_types', function (Blueprint $table) {
+        Schema::create('asset_parents', function (Blueprint $table) {
             $table->id();
             $table->string('name');
             $table->text('type_description')->nullable();
@@ -158,7 +158,7 @@ class CreateCreamsAssetManagementTables extends Migration
         Schema::dropIfExists('asset_maintenance');
         Schema::dropIfExists('assets');
         Schema::dropIfExists('asset_locations');
-        Schema::dropIfExists('asset_types');
+        Schema::dropIfExists('asset_parents');
         Schema::dropIfExists('asset_categories');
     }
 }

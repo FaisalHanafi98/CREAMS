@@ -75,7 +75,7 @@ class Asset extends Model
      */
     public function type(): BelongsTo
     {
-        return $this->belongsTo(AssetType::class, 'type_id');
+        return $this->belongsTo(AssetParent::class, 'type_id');
     }
 
     /**
@@ -177,7 +177,7 @@ class Asset extends Model
 
         $currentValue = $this->current_value ?? $this->purchase_price;
         $depreciation = $this->purchase_price - $currentValue;
-        
+
         return round(($depreciation / $this->purchase_price) * 100, 2);
     }
 
@@ -190,12 +190,12 @@ class Asset extends Model
         if ($this->primary_image) {
             return asset('storage/' . $this->primary_image);
         }
-        
+
         // Fallback to first image in images array
         if ($this->images && count($this->images) > 0) {
             return asset('storage/' . $this->images[0]);
         }
-        
+
         // Default asset image
         return asset('images/default-asset.png');
     }
@@ -207,10 +207,10 @@ class Asset extends Model
     {
         return $query->where(function ($q) use ($search) {
             $q->where('asset_name', 'LIKE', "%{$search}%")
-              ->orWhere('asset_tag', 'LIKE', "%{$search}%")
-              ->orWhere('model_number', 'LIKE', "%{$search}%")
-              ->orWhere('manufacturer', 'LIKE', "%{$search}%")
-              ->orWhere('serial_number', 'LIKE', "%{$search}%");
+                ->orWhere('asset_tag', 'LIKE', "%{$search}%")
+                ->orWhere('model_number', 'LIKE', "%{$search}%")
+                ->orWhere('manufacturer', 'LIKE', "%{$search}%")
+                ->orWhere('serial_number', 'LIKE', "%{$search}%");
         });
     }
 
@@ -259,7 +259,7 @@ class Asset extends Model
      */
     public function scopeRequiresMaintenance($query)
     {
-        return $query->whereHas('upcomingMaintenance', function($q) {
+        return $query->whereHas('upcomingMaintenance', function ($q) {
             $q->where('scheduled_date', '<=', Carbon::now()->addDays(7));
         });
     }

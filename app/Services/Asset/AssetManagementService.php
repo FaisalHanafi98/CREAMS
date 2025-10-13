@@ -3,7 +3,7 @@
 namespace App\Services\Asset;
 
 use App\Models\Asset;
-use App\Models\AssetType;
+use App\Models\AssetParent;
 use App\Models\AssetLocation;
 use App\Models\AssetMovement;
 use Illuminate\Support\Facades\Cache;
@@ -45,25 +45,25 @@ class AssetManagementService
 
             // Generate unique asset code
             $data['asset_tag'] = $this->generateAssetCode($data['type_id']);
-            
+
             // Create asset
             $asset = Asset::create($data);
-            
+
             // Generate QR code
             $this->generateQRCode($asset);
-            
+
             // Create initial movement record
             if (isset($data['location_id'])) {
                 $this->recordMovement($asset, null, $data['location_id'], 'Asset Created');
             }
-            
+
             // Schedule initial maintenance if required
-            if ($asset->assetType && $asset->assetType->maintenance_schedule) {
+            if ($asset->assetParent && $asset->assetParent->maintenance_schedule) {
                 $this->scheduleInitialMaintenance($asset);
             }
 
             DB::commit();
-            
+
             Log::info('Asset created successfully', [
                 'asset_id' => $asset->id,
                 'asset_tag' => $asset->asset_tag,
@@ -71,7 +71,6 @@ class AssetManagementService
             ]);
 
             return $asset;
-
         } catch (Exception $e) {
             DB::rollBack();
             Log::error('Asset creation failed', [
@@ -89,18 +88,18 @@ class AssetManagementService
     {
         try {
             $oldValues = $asset->toArray();
-            
+
             $asset->update($data);
-            
+
             // Track significant changes
             $this->trackAssetChanges($asset, $oldValues, $data);
-            
+
             // Handle location change
             if (isset($data['location_id']) && $data['location_id'] !== $oldValues['location_id']) {
                 $this->recordMovement(
-                    $asset, 
-                    $oldValues['location_id'], 
-                    $data['location_id'], 
+                    $asset,
+                    $oldValues['location_id'],
+                    $data['location_id'],
                     'Asset Updated'
                 );
             }
@@ -112,7 +111,6 @@ class AssetManagementService
             ]);
 
             return $asset->fresh();
-
         } catch (Exception $e) {
             Log::error('Asset update failed', [
                 'asset_id' => $asset->id,
@@ -128,15 +126,15 @@ class AssetManagementService
      */
     public function searchAssets(array $filters): LengthAwarePaginator
     {
-        $query = Asset::with(['assetType', 'location', 'centre', 'assignedTo'])
+        $query = Asset::with(['assetParent', 'location', 'centre', 'assignedTo'])
             ->when($filters['search'] ?? null, function ($query, $search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('name', 'LIKE', "%{$search}%")
-                      ->orWhere('asset_tag', 'LIKE', "%{$search}%")
-                      ->orWhere('description', 'LIKE', "%{$search}%")
-                      ->orWhereHas('assetType', function ($subQ) use ($search) {
-                          $subQ->where('name', 'LIKE', "%{$search}%");
-                      });
+                        ->orWhere('asset_tag', 'LIKE', "%{$search}%")
+                        ->orWhere('description', 'LIKE', "%{$search}%")
+                        ->orWhereHas('assetParent', function ($subQ) use ($search) {
+                            $subQ->where('name', 'LIKE', "%{$search}%");
+                        });
                 });
             })
             ->when($filters['status'] ?? null, function ($query, $status) {
@@ -164,7 +162,7 @@ class AssetManagementService
     private function getAssetStatistics(?int $centreId = null): array
     {
         $query = Asset::query();
-        
+
         if ($centreId) {
             $query->where('centre_id', $centreId);
         }
@@ -186,8 +184,8 @@ class AssetManagementService
      */
     private function getAssetDistribution(?int $centreId = null): array
     {
-        $query = Asset::with(['assetType', 'location']);
-        
+        $query = Asset::with(['assetParent', 'location']);
+
         if ($centreId) {
             $query->where('centre_id', $centreId);
         }
@@ -195,7 +193,7 @@ class AssetManagementService
         return [
             'by_type' => $query->selectRaw('type_id, COUNT(*) as count')
                 ->groupBy('type_id')
-                ->with('assetType:id,name')
+                ->with('assetParent:id,name')
                 ->get()
                 ->toArray(),
             'by_location' => $query->selectRaw('asset_location, COUNT(*) as count')
@@ -214,19 +212,19 @@ class AssetManagementService
      */
     private function getMaintenanceAlerts(?int $centreId = null): array
     {
-        $query = Asset::with(['assetType']);
-        
+        $query = Asset::with(['assetParent']);
+
         if ($centreId) {
             $query->where('centre_id', $centreId);
         }
 
         $overdueAssets = $query->whereRaw('
-            last_maintenance_date IS NOT NULL 
+            last_maintenance_date IS NOT NULL
             AND DATE_ADD(last_maintenance_date, INTERVAL 365 DAY) < NOW()
         ')->get();
 
         $upcomingAssets = $query->whereRaw('
-            last_maintenance_date IS NOT NULL 
+            last_maintenance_date IS NOT NULL
             AND DATE_ADD(last_maintenance_date, INTERVAL 365 DAY) BETWEEN NOW() AND DATE_ADD(NOW(), INTERVAL 30 DAY)
         ')->get();
 
@@ -244,7 +242,7 @@ class AssetManagementService
     private function getFinancialMetrics(?int $centreId = null): array
     {
         $query = Asset::query();
-        
+
         if ($centreId) {
             $query->where('centre_id', $centreId);
         }
@@ -256,7 +254,7 @@ class AssetManagementService
             'total_purchase_value' => $totalPurchaseValue,
             'total_current_value' => $totalCurrentValue,
             'total_depreciation' => $totalPurchaseValue - $totalCurrentValue,
-            'depreciation_percentage' => $totalPurchaseValue > 0 ? 
+            'depreciation_percentage' => $totalPurchaseValue > 0 ?
                 (($totalPurchaseValue - $totalCurrentValue) / $totalPurchaseValue) * 100 : 0,
             'maintenance_cost_mtd' => $this->getMaintenanceCostMTD($centreId),
             'average_asset_value' => 0, // current_value column not available
@@ -279,7 +277,7 @@ class AssetManagementService
     private function getStatusBreakdown(?int $centreId = null): array
     {
         $query = Asset::query();
-        
+
         if ($centreId) {
             $query->where('centre_id', $centreId);
         }
@@ -297,14 +295,14 @@ class AssetManagementService
     private function getUtilizationRates(?int $centreId = null): array
     {
         $query = Asset::query();
-        
+
         if ($centreId) {
             $query->where('centre_id', $centreId);
         }
 
         $totalAssets = $query->count();
         $inUseAssets = $query->where('asset_status', 'in_use')->count();
-        
+
         return [
             'overall_utilization' => $totalAssets > 0 ? ($inUseAssets / $totalAssets) * 100 : 0,
             'available_rate' => $totalAssets > 0 ? ($query->where('asset_status', 'available')->count() / $totalAssets) * 100 : 0,
@@ -331,16 +329,16 @@ class AssetManagementService
     /**
      * Generate unique asset code
      */
-    private function generateAssetCode(int $assetTypeId): string
+    private function generateAssetCode(int $assetParentId): string
     {
-        $assetType = AssetType::find($assetTypeId);
-        $prefix = $assetType ? strtoupper(substr($assetType->name, 0, 3)) : 'AST';
+        $assetParent = AssetParent::find($assetParentId);
+        $prefix = $assetParent ? strtoupper(substr($assetParent->name, 0, 3)) : 'AST';
         $year = date('Y');
-        
-        $sequence = Asset::where('type_id', $assetTypeId)
+
+        $sequence = Asset::where('type_id', $assetParentId)
             ->whereYear('created_at', $year)
             ->count() + 1;
-        
+
         return sprintf('%s%s%04d', $prefix, $year, $sequence);
     }
 
@@ -350,7 +348,7 @@ class AssetManagementService
     private function calculateAverageAge($query): float
     {
         $assets = $query->whereNotNull('purchase_date')->get();
-        
+
         if ($assets->isEmpty()) {
             return 0;
         }
@@ -396,7 +394,7 @@ class AssetManagementService
     private function trackAssetChanges(Asset $asset, array $oldValues, array $newValues): void
     {
         $changes = array_diff_assoc($newValues, $oldValues);
-        
+
         if (!empty($changes)) {
             Log::info('Asset changes tracked', [
                 'asset_id' => $asset->id,

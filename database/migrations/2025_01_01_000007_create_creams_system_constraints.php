@@ -14,9 +14,11 @@ class CreateCreamsSystemConstraints extends Migration
     public function up(): void
     {
         // Skip if constraints already exist (preserves current logic)
-        if (Schema::hasColumn('users', 'centre_id') && 
-            collect(DB::select("SHOW CREATE TABLE users"))[0]->{'Create Table'} ?? '' && 
-            str_contains(collect(DB::select("SHOW CREATE TABLE users"))[0]->{'Create Table'} ?? '', 'FOREIGN KEY')) {
+        if (
+            Schema::hasColumn('users', 'centre_id') &&
+            collect(DB::select("SHOW CREATE TABLE users"))[0]->{'Create Table'} ?? '' &&
+            str_contains(collect(DB::select("SHOW CREATE TABLE users"))[0]->{'Create Table'} ?? '', 'FOREIGN KEY')
+        ) {
             return;
         }
 
@@ -25,7 +27,7 @@ class CreateCreamsSystemConstraints extends Migration
             $table->foreign('centre_id')->references('centre_id')->on('centres')->onDelete('set null');
         });
 
-        // 2. CLIENT MANAGEMENT CONSTRAINTS  
+        // 2. CLIENT MANAGEMENT CONSTRAINTS
         Schema::table('trainees', function (Blueprint $table) {
             $table->foreign('centre_id')->references('centre_id')->on('centres')->onDelete('set null');
         });
@@ -84,7 +86,7 @@ class CreateCreamsSystemConstraints extends Migration
         });
 
         // 5. ASSET MANAGEMENT CONSTRAINTS
-        Schema::table('asset_types', function (Blueprint $table) {
+        Schema::table('asset_parents', function (Blueprint $table) {
             $table->foreign('category_id')->references('id')->on('asset_categories')->onDelete('cascade');
         });
 
@@ -94,7 +96,7 @@ class CreateCreamsSystemConstraints extends Migration
 
         Schema::table('assets', function (Blueprint $table) {
             $table->foreign('category_id')->references('id')->on('asset_categories')->onDelete('cascade');
-            $table->foreign('type_id')->references('id')->on('asset_types')->onDelete('set null');
+            $table->foreign('type_id')->references('id')->on('asset_parents')->onDelete('set null');
             $table->foreign('centre_id')->references('centre_id')->on('centres')->onDelete('cascade');
             $table->foreign('location_id')->references('id')->on('asset_locations')->onDelete('set null');
             $table->foreign('assigned_to_user')->references('id')->on('users')->onDelete('set null');
@@ -181,7 +183,7 @@ class CreateCreamsSystemConstraints extends Migration
             $table->dropForeign(['centre_id']);
         });
 
-        Schema::table('asset_types', function (Blueprint $table) {
+        Schema::table('asset_parents', function (Blueprint $table) {
             $table->dropForeign(['category_id']);
         });
 

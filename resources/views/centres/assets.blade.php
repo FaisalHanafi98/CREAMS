@@ -106,7 +106,7 @@
                                                 <img src="{{ $asset->primary_image_url ?? asset('images/default-asset.png') }}"
                                                     alt="Asset" class="asset-thumbnail">
                                                 <div>
-                                                    <strong>{{ $asset->type->name ?? ($asset->asset_type ?? 'Unnamed Asset') }}</strong>
+                                                    <strong>{{ $asset->type->name ?? ($asset->asset_parent ?? 'Unnamed Asset') }}</strong>
                                                     @if ($asset->description ?? $asset->asset_note)
                                                         <br><small
                                                             class="text-muted">{{ Str::limit($asset->description ?? $asset->asset_note, 50) }}</small>

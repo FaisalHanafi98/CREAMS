@@ -209,7 +209,7 @@ class AssetMaintenance extends Model
     public function scopeOverdue($query)
     {
         return $query->where('scheduled_date', '<', now())
-                     ->whereIn('status', [self::STATUS_SCHEDULED, self::STATUS_IN_PROGRESS]);
+            ->whereIn('status', [self::STATUS_SCHEDULED, self::STATUS_IN_PROGRESS]);
     }
 
     /**
@@ -218,7 +218,7 @@ class AssetMaintenance extends Model
     public function scopeDueSoon($query, int $days = 7)
     {
         return $query->whereBetween('scheduled_date', [now(), now()->addDays($days)])
-                     ->where('status', self::STATUS_SCHEDULED);
+            ->where('status', self::STATUS_SCHEDULED);
     }
 
     /**
@@ -285,8 +285,8 @@ class AssetMaintenance extends Model
     public function getIsOverdueAttribute(): bool
     {
         return $this->scheduled_date &&
-               $this->scheduled_date->isPast() &&
-               !in_array($this->status, [self::STATUS_COMPLETED, self::STATUS_CANCELLED]);
+            $this->scheduled_date->isPast() &&
+            !in_array($this->status, [self::STATUS_COMPLETED, self::STATUS_CANCELLED]);
     }
 
     /**
@@ -297,7 +297,7 @@ class AssetMaintenance extends Model
         if (!$this->scheduled_date) {
             return null;
         }
-        
+
         $days = $this->scheduled_date->diffInDays(now(), false);
         return $this->scheduled_date->isFuture() ? $days : -$days;
     }
@@ -307,7 +307,7 @@ class AssetMaintenance extends Model
      */
     public function getStatusBadgeClassAttribute(): string
     {
-        return match($this->status) {
+        return match ($this->status) {
             self::STATUS_SCHEDULED => 'badge-info',
             self::STATUS_IN_PROGRESS => 'badge-warning',
             self::STATUS_ON_HOLD => 'badge-secondary',
@@ -323,7 +323,7 @@ class AssetMaintenance extends Model
      */
     public function getPriorityBadgeClassAttribute(): string
     {
-        return match($this->priority) {
+        return match ($this->priority) {
             self::PRIORITY_LOW => 'badge-light',
             self::PRIORITY_MEDIUM => 'badge-info',
             self::PRIORITY_HIGH => 'badge-warning',
@@ -342,12 +342,12 @@ class AssetMaintenance extends Model
         }
 
         $scheduledDays = $this->scheduled_date->diffInDays($this->completed_date, false);
-        
+
         // Perfect score if completed on time or early
         if ($scheduledDays <= 0) {
             return 100;
         }
-        
+
         // Reduce score based on delay
         $score = max(0, 100 - ($scheduledDays * 10));
         return round($score, 1);
@@ -390,24 +390,24 @@ class AssetMaintenance extends Model
     public function start(?int $performedById = null): bool
     {
         $this->status = self::STATUS_IN_PROGRESS;
-        
+
         if ($performedById) {
             $this->performed_by = $performedById;
         }
-        
+
         $success = $this->save();
-        
+
         if ($success) {
             // Update asset status to maintenance
             $this->asset->update(['status' => Asset::STATUS_MAINTENANCE]);
-            
+
             \Log::info('Maintenance started', [
                 'maintenance_id' => $this->id,
                 'asset_id' => $this->asset_id,
                 'performed_by' => $this->performed_by
             ]);
         }
-        
+
         return $success;
     }
 
@@ -418,7 +418,7 @@ class AssetMaintenance extends Model
     {
         $this->status = self::STATUS_COMPLETED;
         $this->completed_date = now();
-        
+
         // Update fields from data array
         if (isset($data['cost'])) {
             $this->cost = $data['cost'];
@@ -435,21 +435,21 @@ class AssetMaintenance extends Model
         if (isset($data['certification_obtained'])) {
             $this->certification_obtained = $data['certification_obtained'];
         }
-        
+
         $success = $this->save();
-        
+
         if ($success) {
             // Update asset status back to available
             $this->asset->update([
                 'status' => Asset::STATUS_AVAILABLE,
                 'last_maintenance_date' => $this->completed_date
             ]);
-            
+
             // Schedule next maintenance if it's preventive
             if ($this->preventive_maintenance && $this->next_maintenance_date) {
                 $this->scheduleNext();
             }
-            
+
             \Log::info('Maintenance completed', [
                 'maintenance_id' => $this->id,
                 'asset_id' => $this->asset_id,
@@ -457,7 +457,7 @@ class AssetMaintenance extends Model
                 'downtime_hours' => $this->downtime_hours
             ]);
         }
-        
+
         return $success;
     }
 
@@ -468,9 +468,9 @@ class AssetMaintenance extends Model
     {
         $this->status = self::STATUS_CANCELLED;
         $this->notes = $this->notes ? $this->notes . "\nCancelled: " . $reason : "Cancelled: " . $reason;
-        
+
         $success = $this->save();
-        
+
         if ($success) {
             \Log::info('Maintenance cancelled', [
                 'maintenance_id' => $this->id,
@@ -478,7 +478,7 @@ class AssetMaintenance extends Model
                 'reason' => $reason
             ]);
         }
-        
+
         return $success;
     }
 
@@ -489,7 +489,7 @@ class AssetMaintenance extends Model
     {
         $this->status = self::STATUS_ON_HOLD;
         $this->notes = $this->notes ? $this->notes . "\nOn hold: " . $reason : "On hold: " . $reason;
-        
+
         return $this->save();
     }
 
@@ -500,7 +500,7 @@ class AssetMaintenance extends Model
     {
         $this->status = self::STATUS_IN_PROGRESS;
         $this->notes = $this->notes ? $this->notes . "\nResumed at: " . now() : "Resumed at: " . now();
-        
+
         return $this->save();
     }
 
@@ -511,12 +511,12 @@ class AssetMaintenance extends Model
     {
         $oldDate = $this->scheduled_date;
         $this->scheduled_date = $newDate;
-        $this->notes = $this->notes ? 
-            $this->notes . "\nRescheduled from {$oldDate} to {$newDate}: {$reason}" : 
+        $this->notes = $this->notes ?
+            $this->notes . "\nRescheduled from {$oldDate} to {$newDate}: {$reason}" :
             "Rescheduled from {$oldDate} to {$newDate}: {$reason}";
-        
+
         $success = $this->save();
-        
+
         if ($success) {
             \Log::info('Maintenance rescheduled', [
                 'maintenance_id' => $this->id,
@@ -526,7 +526,7 @@ class AssetMaintenance extends Model
                 'reason' => $reason
             ]);
         }
-        
+
         return $success;
     }
 
@@ -538,7 +538,7 @@ class AssetMaintenance extends Model
         if (!$this->preventive_maintenance || !$this->next_maintenance_date) {
             return null;
         }
-        
+
         return self::create([
             'asset_id' => $this->asset_id,
             'maintenance_type' => $this->maintenance_type,
@@ -561,17 +561,17 @@ class AssetMaintenance extends Model
     public static function getStatistics(?int $centreId = null, ?Carbon $startDate = null, ?Carbon $endDate = null): array
     {
         $query = self::query();
-        
+
         if ($centreId) {
             $query->whereHas('asset', function ($q) use ($centreId) {
                 $q->where('centre_id', $centreId);
             });
         }
-        
+
         if ($startDate && $endDate) {
             $query->betweenDates($startDate, $endDate);
         }
-        
+
         return [
             'total_maintenance' => $query->count(),
             'completed_count' => $query->completed()->count(),
@@ -580,18 +580,18 @@ class AssetMaintenance extends Model
             'total_cost' => $query->completed()->sum('cost'),
             'average_cost' => $query->completed()->avg('cost'),
             'average_downtime' => $query->completed()
-                                       ->whereNotNull('scheduled_date')
-                                       ->whereNotNull('completed_date')
-                                       ->get()
-                                       ->avg('downtime_hours'),
+                ->whereNotNull('scheduled_date')
+                ->whereNotNull('completed_date')
+                ->get()
+                ->avg('downtime_hours'),
             'by_type' => $query->selectRaw('maintenance_type, COUNT(*) as count')
-                              ->groupBy('maintenance_type')
-                              ->pluck('count', 'maintenance_type')
-                              ->toArray(),
+                ->groupBy('maintenance_type')
+                ->pluck('count', 'maintenance_type')
+                ->toArray(),
             'by_priority' => $query->selectRaw('priority, COUNT(*) as count')
-                                  ->groupBy('priority')
-                                  ->pluck('count', 'priority')
-                                  ->toArray(),
+                ->groupBy('priority')
+                ->pluck('count', 'priority')
+                ->toArray(),
         ];
     }
 
@@ -601,31 +601,31 @@ class AssetMaintenance extends Model
     public static function getRequiringAttention(?int $centreId = null): array
     {
         $baseQuery = self::query();
-        
+
         if ($centreId) {
             $baseQuery->whereHas('asset', function ($q) use ($centreId) {
                 $q->where('centre_id', $centreId);
             });
         }
-        
+
         return [
             'overdue' => $baseQuery->overdue()
-                                  ->with(['asset', 'performedBy'])
-                                  ->orderBy('scheduled_date')
-                                  ->get(),
+                ->with(['asset', 'performedBy'])
+                ->orderBy('scheduled_date')
+                ->get(),
             'due_soon' => $baseQuery->dueSoon()
-                                   ->with(['asset', 'performedBy'])
-                                   ->orderBy('scheduled_date')
-                                   ->get(),
+                ->with(['asset', 'performedBy'])
+                ->orderBy('scheduled_date')
+                ->get(),
             'high_priority' => $baseQuery->highPriority()
-                                        ->scheduled()
-                                        ->with(['asset', 'performedBy'])
-                                        ->orderBy('scheduled_date')
-                                        ->get(),
+                ->scheduled()
+                ->with(['asset', 'performedBy'])
+                ->orderBy('scheduled_date')
+                ->get(),
             'long_running' => $baseQuery->inProgress()
-                                       ->where('scheduled_date', '<', now()->subDays(3))
-                                       ->with(['asset', 'performedBy'])
-                                       ->get(),
+                ->where('scheduled_date', '<', now()->subDays(3))
+                ->with(['asset', 'performedBy'])
+                ->get(),
         ];
     }
 
@@ -635,17 +635,17 @@ class AssetMaintenance extends Model
     public static function generateScheduleForAsset(Asset $asset, int $months = 12): array
     {
         $schedule = [];
-        
-        if (!$asset->assetType || !$asset->assetType->maintenance_interval) {
+
+        if (!$asset->assetParent || !$asset->assetParent->maintenance_interval) {
             return $schedule;
         }
-        
+
         $startDate = $asset->last_maintenance_date ?? $asset->purchase_date ?? now();
-        $interval = $asset->assetType->maintenance_interval;
-        
+        $interval = $asset->assetParent->maintenance_interval;
+
         for ($i = 1; $i <= $months; $i++) {
             $scheduledDate = $startDate->copy()->addDays($interval * $i);
-            
+
             if ($scheduledDate->isFuture()) {
                 $schedule[] = [
                     'scheduled_date' => $scheduledDate,
@@ -655,7 +655,7 @@ class AssetMaintenance extends Model
                 ];
             }
         }
-        
+
         return $schedule;
     }
 
@@ -666,16 +666,16 @@ class AssetMaintenance extends Model
     {
         $startDate = $startDate ?? now()->startOfMonth();
         $endDate = $endDate ?? now()->endOfMonth();
-        
+
         $query = self::betweenDates($startDate, $endDate)
-                     ->with(['asset', 'performedBy']);
-        
+            ->with(['asset', 'performedBy']);
+
         if ($centreId) {
             $query->whereHas('asset', function ($q) use ($centreId) {
                 $q->where('centre_id', $centreId);
             });
         }
-        
+
         return $query->get()->map(function ($maintenance) {
             return [
                 'id' => $maintenance->id,
@@ -701,7 +701,7 @@ class AssetMaintenance extends Model
      */
     private static function getStatusColor(string $status): string
     {
-        return match($status) {
+        return match ($status) {
             self::STATUS_SCHEDULED => '#007bff',
             self::STATUS_IN_PROGRESS => '#ffc107',
             self::STATUS_COMPLETED => '#28a745',
@@ -716,7 +716,7 @@ class AssetMaintenance extends Model
      */
     private static function getPriorityColor(string $priority): string
     {
-        return match($priority) {
+        return match ($priority) {
             self::PRIORITY_LOW => '#28a745',
             self::PRIORITY_MEDIUM => '#007bff',
             self::PRIORITY_HIGH => '#ffc107',

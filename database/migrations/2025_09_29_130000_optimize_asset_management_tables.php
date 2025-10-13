@@ -36,7 +36,7 @@ return new class extends Migration
 
             // Add proper foreign key constraints
             $table->foreign('category_id')->references('id')->on('asset_categories')->onDelete('restrict');
-            $table->foreign('type_id')->references('id')->on('asset_types')->onDelete('set null');
+            $table->foreign('type_id')->references('id')->on('asset_parents')->onDelete('set null');
             $table->foreign('location_id')->references('id')->on('asset_locations')->onDelete('set null');
             $table->foreign('assigned_to_user')->references('id')->on('users')->onDelete('set null');
 
@@ -63,7 +63,7 @@ return new class extends Migration
         });
 
         // 6. ADD FOREIGN KEY CONSTRAINTS TO LOOKUP TABLES
-        Schema::table('asset_types', function (Blueprint $table) {
+        Schema::table('asset_parents', function (Blueprint $table) {
             $table->foreign('category_id')->references('id')->on('asset_categories')->onDelete('restrict');
         });
 
@@ -136,7 +136,7 @@ return new class extends Migration
             $table->integer('asset_id')->change();
         });
 
-        Schema::table('asset_types', function (Blueprint $table) {
+        Schema::table('asset_parents', function (Blueprint $table) {
             $table->dropForeign(['category_id']);
         });
 

@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * Asset Location Model
- * 
+ *
  * This model represents physical locations where assets can be placed,
  * supporting hierarchical location management and capacity tracking.
  */
@@ -19,10 +19,21 @@ class AssetLocation extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'name', 'description', 'centre_id', 'parent_location_id',
-        'location_type', 'building', 'floor', 'room_number',
-        'capacity', 'coordinates_lat', 'coordinates_lng',
-        'access_level', 'contact_person', 'notes', 'is_active'
+        'name',
+        'description',
+        'centre_id',
+        'parent_location_id',
+        'location_type',
+        'building',
+        'floor',
+        'room_number',
+        'capacity',
+        'coordinates_lat',
+        'coordinates_lng',
+        'access_level',
+        'contact_person',
+        'notes',
+        'is_active'
     ];
 
     protected $casts = [
@@ -35,8 +46,11 @@ class AssetLocation extends Model
     protected $dates = ['deleted_at'];
 
     protected $appends = [
-        'full_path', 'current_asset_count', 'available_capacity',
-        'utilization_percentage', 'is_over_capacity'
+        'full_path',
+        'current_asset_count',
+        'available_capacity',
+        'utilization_percentage',
+        'is_over_capacity'
     ];
 
     /**
@@ -131,7 +145,7 @@ class AssetLocation extends Model
     public function incomingMovements(): HasMany
     {
         return $this->hasMany(AssetMovement::class, 'to_location_id')
-                    ->latest('movement_date');
+            ->latest('movement_date');
     }
 
     /**
@@ -140,7 +154,7 @@ class AssetLocation extends Model
     public function outgoingMovements(): HasMany
     {
         return $this->hasMany(AssetMovement::class, 'from_location_id')
-                    ->latest('movement_date');
+            ->latest('movement_date');
     }
 
     /**
@@ -150,7 +164,7 @@ class AssetLocation extends Model
     {
         $incoming = $this->incomingMovements()->get();
         $outgoing = $this->outgoingMovements()->get();
-        
+
         return $incoming->merge($outgoing)->sortByDesc('movement_date');
     }
 
@@ -205,8 +219,8 @@ class AssetLocation extends Model
     {
         return $query->whereHas('assets', function ($q) {
             $q->selectRaw('location_id, COUNT(*) as asset_count')
-              ->groupBy('location_id')
-              ->havingRaw('asset_count > capacity');
+                ->groupBy('location_id')
+                ->havingRaw('asset_count > capacity');
         });
     }
 
@@ -217,9 +231,9 @@ class AssetLocation extends Model
     {
         return $query->where(function ($q) use ($search) {
             $q->where('name', 'LIKE', "%{$search}%")
-              ->orWhere('description', 'LIKE', "%{$search}%")
-              ->orWhere('building', 'LIKE', "%{$search}%")
-              ->orWhere('room_number', 'LIKE', "%{$search}%");
+                ->orWhere('description', 'LIKE', "%{$search}%")
+                ->orWhere('building', 'LIKE', "%{$search}%")
+                ->orWhere('room_number', 'LIKE', "%{$search}%");
         });
     }
 
@@ -234,12 +248,12 @@ class AssetLocation extends Model
     {
         $path = [];
         $location = $this;
-        
+
         while ($location) {
             array_unshift($path, $location->name);
             $location = $location->parentLocation;
         }
-        
+
         return implode(' > ', $path);
     }
 
@@ -259,7 +273,7 @@ class AssetLocation extends Model
         if (!$this->capacity) {
             return 0;
         }
-        
+
         return max(0, $this->capacity - $this->current_asset_count);
     }
 
@@ -271,7 +285,7 @@ class AssetLocation extends Model
         if (!$this->capacity || $this->capacity <= 0) {
             return 0;
         }
-        
+
         return min(100, ($this->current_asset_count / $this->capacity) * 100);
     }
 
@@ -283,7 +297,7 @@ class AssetLocation extends Model
         if (!$this->capacity) {
             return false;
         }
-        
+
         return $this->current_asset_count > $this->capacity;
     }
 
@@ -316,7 +330,7 @@ class AssetLocation extends Model
                 'lng' => (float) $this->coordinates_lng,
             ];
         }
-        
+
         return null;
     }
 
@@ -328,15 +342,15 @@ class AssetLocation extends Model
         if (!$this->is_active) {
             return 'badge-secondary';
         }
-        
+
         if ($this->is_over_capacity) {
             return 'badge-danger';
         }
-        
+
         if ($this->utilization_percentage > 80) {
             return 'badge-warning';
         }
-        
+
         return 'badge-success';
     }
 
@@ -352,7 +366,7 @@ class AssetLocation extends Model
         if (!$this->capacity) {
             return true; // No capacity limit
         }
-        
+
         return ($this->current_asset_count + $additionalAssets) <= $this->capacity;
     }
 
@@ -362,12 +376,12 @@ class AssetLocation extends Model
     public function getAllDescendants(): \Illuminate\Database\Eloquent\Collection
     {
         $descendants = collect();
-        
+
         foreach ($this->childLocations as $child) {
             $descendants->push($child);
             $descendants = $descendants->merge($child->getAllDescendants());
         }
-        
+
         return $descendants;
     }
 
@@ -378,12 +392,12 @@ class AssetLocation extends Model
     {
         $ancestors = collect();
         $location = $this->parentLocation;
-        
+
         while ($location) {
             $ancestors->push($location);
             $location = $location->parentLocation;
         }
-        
+
         return $ancestors;
     }
 
@@ -394,24 +408,23 @@ class AssetLocation extends Model
     {
         try {
             \DB::beginTransaction();
-            
+
             $assets = $this->assets()->get();
-            
+
             foreach ($assets as $asset) {
                 $asset->moveTo($targetLocation->id, $reason);
             }
-            
+
             \DB::commit();
-            
+
             \Log::info('All assets moved from location', [
                 'from_location_id' => $this->id,
                 'to_location_id' => $targetLocation->id,
                 'asset_count' => $assets->count(),
                 'reason' => $reason
             ]);
-            
+
             return true;
-            
         } catch (\Exception $e) {
             \DB::rollBack();
             \Log::error('Failed to move all assets from location', [
@@ -419,7 +432,7 @@ class AssetLocation extends Model
                 'to_location_id' => $targetLocation->id,
                 'error' => $e->getMessage()
             ]);
-            
+
             return false;
         }
     }
@@ -448,18 +461,18 @@ class AssetLocation extends Model
     public function getStatistics(): array
     {
         $assets = $this->assets;
-        
+
         return [
             'total_assets' => $assets->count(),
             'asset_value' => 0, // current_value column not available
             'available_capacity' => $this->available_capacity,
             'utilization_percentage' => $this->utilization_percentage,
-            'asset_types' => $assets->groupBy('asset_type_id')->count(),
+            'asset_parents' => $assets->groupBy('asset_parent_id')->count(),
             'movements_this_month' => $this->allMovements()
-                                          ->filter(function ($movement) {
-                                              return $movement->movement_date >= now()->startOfMonth();
-                                          })
-                                          ->count(),
+                ->filter(function ($movement) {
+                    return $movement->movement_date >= now()->startOfMonth();
+                })
+                ->count(),
         ];
     }
 
@@ -473,10 +486,10 @@ class AssetLocation extends Model
     public static function getHierarchyForCentre(int $centreId): \Illuminate\Database\Eloquent\Collection
     {
         return self::forCentre($centreId)
-                   ->rootLocations()
-                   ->with('childLocations.childLocations')
-                   ->orderBy('name')
-                   ->get();
+            ->rootLocations()
+            ->with('childLocations.childLocations')
+            ->orderBy('name')
+            ->get();
     }
 
     /**
@@ -485,21 +498,21 @@ class AssetLocation extends Model
     public static function getRequiringAttention(?int $centreId = null): array
     {
         $query = self::active();
-        
+
         if ($centreId) {
             $query->forCentre($centreId);
         }
-        
+
         return [
             'over_capacity' => $query->overCapacity()->with(['assets', 'centre'])->get(),
             'near_capacity' => $query->withCapacity()
-                                    ->whereHas('assets', function ($q) {
-                                        $q->selectRaw('location_id, COUNT(*) as asset_count')
-                                          ->groupBy('location_id')
-                                          ->havingRaw('asset_count >= (capacity * 0.9)');
-                                    })
-                                    ->with(['assets', 'centre'])
-                                    ->get(),
+                ->whereHas('assets', function ($q) {
+                    $q->selectRaw('location_id, COUNT(*) as asset_count')
+                        ->groupBy('location_id')
+                        ->havingRaw('asset_count >= (capacity * 0.9)');
+                })
+                ->with(['assets', 'centre'])
+                ->get(),
             'no_assets' => $query->doesntHave('assets')->get(),
         ];
     }
@@ -510,13 +523,13 @@ class AssetLocation extends Model
     public static function getTreeStructure(?int $centreId = null): array
     {
         $query = self::active();
-        
+
         if ($centreId) {
             $query->forCentre($centreId);
         }
-        
+
         $locations = $query->with('childLocations')->get();
-        
+
         return self::buildTree($locations->whereNull('parent_location_id'), $locations);
     }
 
@@ -526,10 +539,10 @@ class AssetLocation extends Model
     private static function buildTree($parents, $allLocations): array
     {
         $tree = [];
-        
+
         foreach ($parents as $parent) {
             $children = $allLocations->where('parent_location_id', $parent->id);
-            
+
             $node = [
                 'id' => $parent->id,
                 'name' => $parent->name,
@@ -538,10 +551,10 @@ class AssetLocation extends Model
                 'capacity' => $parent->capacity,
                 'children' => self::buildTree($children, $allLocations),
             ];
-            
+
             $tree[] = $node;
         }
-        
+
         return $tree;
     }
 }

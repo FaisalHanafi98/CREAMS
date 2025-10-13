@@ -45,7 +45,7 @@ The Assets module provides comprehensive asset and equipment management for reha
 - `asset_id`: Unique asset identifier (string primary key)
 - `asset_name`: Asset name/title
 - `asset_description`: Detailed description
-- `asset_type_id`: Asset type/category reference
+- `asset_parent_id`: Asset type/category reference
 - `asset_model`: Model number/specification
 - `asset_brand`: Manufacturer/brand name
 - `asset_serial_number`: Serial number for tracking
@@ -92,7 +92,7 @@ The Assets module provides comprehensive asset and equipment management for reha
 - asset_id (string, unique) - Custom asset identifier
 - asset_name (string) - Asset name
 - asset_description (text, nullable) - Detailed description
-- asset_type_id (foreign key) - Asset type reference
+- asset_parent_id (foreign key) - Asset type reference
 - asset_model (string, nullable) - Model information
 - asset_brand (string, nullable) - Brand/manufacturer
 - asset_serial_number (string, nullable) - Serial number
@@ -115,7 +115,7 @@ The Assets module provides comprehensive asset and equipment management for reha
 
 **Indexes**:
 - `asset_id` (unique index for fast lookups)
-- `asset_type_id` (for type-based filtering)
+- `asset_parent_id` (for type-based filtering)
 - `asset_status` (for status-based queries)
 - `centre_id` (for centre-based filtering)
 - `assigned_to` (for assignment tracking)
@@ -255,7 +255,7 @@ Route::get('/api/assets', [AssetController::class, 'getAssetsJson'])->name('api.
 // Basic asset statistics
 $stats = [
     'total' => Asset::count(),
-    'types' => Asset::distinct('asset_type_id')->count(),
+    'types' => Asset::distinct('asset_parent_id')->count(),
     'centres' => Asset::distinct('centre_id')->count(),
     'total_value' => Asset::sum('asset_value')
 ];
@@ -285,8 +285,8 @@ $valueAnalytics = [
     'avg_value' => Asset::avg('asset_value'),
     'centre_values' => Asset::selectRaw('centre_id, SUM(asset_value) as total')
         ->groupBy('centre_id')->get(),
-    'type_values' => Asset::selectRaw('asset_type_id, SUM(asset_value) as total')
-        ->groupBy('asset_type_id')->get()
+    'type_values' => Asset::selectRaw('asset_parent_id, SUM(asset_value) as total')
+        ->groupBy('asset_parent_id')->get()
 ];
 ```
 
@@ -307,7 +307,7 @@ The system includes comprehensive mock data generation for:
 
 ### 3. Asset Type Categorization
 ```php
-$assetTypes = [
+$assetParents = [
     'Computer Equipment', 'Furniture', 'Medical Equipment',
     'Sports Equipment', 'Office Supplies', 'Vehicles',
     'Tools', 'Electronics', 'Kitchen Equipment', 'Safety Equipment'
@@ -373,7 +373,7 @@ $assets = Asset::with(['centre'])
 // Efficient statistical queries
 $stats = Asset::selectRaw('
     COUNT(*) as total,
-    COUNT(DISTINCT asset_type_id) as types,
+    COUNT(DISTINCT asset_parent_id) as types,
     SUM(asset_value) as total_value
 ')->first();
 ```

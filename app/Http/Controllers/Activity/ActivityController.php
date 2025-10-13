@@ -49,7 +49,7 @@ class ActivityController extends Controller
     private function checkActivityConflicts($activityData, $sessionData = null, $excludeActivityId = null)
     {
         $conflicts = [];
-        
+
         try {
             // Check for instructor conflicts
             if (isset($sessionData) && isset($sessionData['teacher_id'])) {
@@ -60,12 +60,12 @@ class ActivityController extends Controller
                     $sessionData['end_time'] ?? null,
                     $excludeActivityId
                 );
-                
+
                 if (!empty($instructorConflicts)) {
                     $conflicts['instructor'] = $instructorConflicts;
                 }
             }
-            
+
             // Check for venue conflicts
             if (isset($activityData['activity_location'])) {
                 $venueConflicts = $this->checkVenueAvailability(
@@ -75,12 +75,12 @@ class ActivityController extends Controller
                     $sessionData['end_time'] ?? null,
                     $excludeActivityId
                 );
-                
+
                 if (!empty($venueConflicts)) {
                     $conflicts['venue'] = $venueConflicts;
                 }
             }
-            
+
             // Check for participant overlaps
             if (isset($sessionData['participants'])) {
                 $participantConflicts = $this->checkParticipantAvailability(
@@ -90,17 +90,16 @@ class ActivityController extends Controller
                     $sessionData['end_time'] ?? null,
                     $excludeActivityId
                 );
-                
+
                 if (!empty($participantConflicts)) {
                     $conflicts['participants'] = $participantConflicts;
                 }
             }
-            
         } catch (Exception $e) {
             Log::error('Error checking activity conflicts: ' . $e->getMessage());
             $conflicts['system'] = ['message' => 'Unable to verify conflicts. Please check manually.'];
         }
-        
+
         return $conflicts;
     }
 
@@ -115,20 +114,20 @@ class ActivityController extends Controller
 
         $conflicts = ActivitySession::where('instructor_id', $teacherId)
             ->where('session_date', $date)
-            ->where(function($query) use ($startTime, $endTime) {
+            ->where(function ($query) use ($startTime, $endTime) {
                 $query->whereBetween('start_time', [$startTime, $endTime])
-                      ->orWhereBetween('end_time', [$startTime, $endTime])
-                      ->orWhere(function($q) use ($startTime, $endTime) {
-                          $q->where('start_time', '<=', $startTime)
+                    ->orWhereBetween('end_time', [$startTime, $endTime])
+                    ->orWhere(function ($q) use ($startTime, $endTime) {
+                        $q->where('start_time', '<=', $startTime)
                             ->where('end_time', '>=', $endTime);
-                      });
+                    });
             });
 
         if ($excludeActivityId) {
             $conflicts->where('activity_id', '!=', $excludeActivityId);
         }
 
-        return $conflicts->with('activity')->get()->map(function($session) {
+        return $conflicts->with('activity')->get()->map(function ($session) {
             return [
                 'activity' => $session->activity->activity_name,
                 'time' => $session->start_time . ' - ' . $session->end_time,
@@ -147,26 +146,26 @@ class ActivityController extends Controller
         }
 
         $conflicts = Activity::where('activity_location', $venue)
-            ->whereHas('sessions', function($query) use ($date, $startTime, $endTime) {
+            ->whereHas('sessions', function ($query) use ($date, $startTime, $endTime) {
                 $query->where('session_date', $date)
-                      ->where(function($q) use ($startTime, $endTime) {
-                          $q->whereBetween('start_time', [$startTime, $endTime])
+                    ->where(function ($q) use ($startTime, $endTime) {
+                        $q->whereBetween('start_time', [$startTime, $endTime])
                             ->orWhereBetween('end_time', [$startTime, $endTime])
-                            ->orWhere(function($subQ) use ($startTime, $endTime) {
+                            ->orWhere(function ($subQ) use ($startTime, $endTime) {
                                 $subQ->where('start_time', '<=', $startTime)
-                                     ->where('end_time', '>=', $endTime);
+                                    ->where('end_time', '>=', $endTime);
                             });
-                      });
+                    });
             });
 
         if ($excludeActivityId) {
             $conflicts->where('id', '!=', $excludeActivityId);
         }
 
-        return $conflicts->with('sessions')->get()->map(function($activity) {
+        return $conflicts->with('sessions')->get()->map(function ($activity) {
             return [
                 'activity' => $activity->activity_name,
-                'sessions' => $activity->sessions->map(function($session) {
+                'sessions' => $activity->sessions->map(function ($session) {
                     return $session->start_time . ' - ' . $session->end_time;
                 })->toArray()
             ];
@@ -183,20 +182,20 @@ class ActivityController extends Controller
         }
 
         $conflicts = [];
-        
+
         foreach ($participants as $participantId) {
             $participantConflicts = SessionEnrollment::where('trainee_id', $participantId)
-                ->whereHas('session', function($query) use ($date, $startTime, $endTime, $excludeActivityId) {
+                ->whereHas('session', function ($query) use ($date, $startTime, $endTime, $excludeActivityId) {
                     $query->where('session_date', $date)
-                          ->where(function($q) use ($startTime, $endTime) {
-                              $q->whereBetween('start_time', [$startTime, $endTime])
+                        ->where(function ($q) use ($startTime, $endTime) {
+                            $q->whereBetween('start_time', [$startTime, $endTime])
                                 ->orWhereBetween('end_time', [$startTime, $endTime])
-                                ->orWhere(function($subQ) use ($startTime, $endTime) {
+                                ->orWhere(function ($subQ) use ($startTime, $endTime) {
                                     $subQ->where('start_time', '<=', $startTime)
-                                         ->where('end_time', '>=', $endTime);
+                                        ->where('end_time', '>=', $endTime);
                                 });
-                          });
-                    
+                        });
+
                     if ($excludeActivityId) {
                         $query->where('activity_id', '!=', $excludeActivityId);
                     }
@@ -206,15 +205,15 @@ class ActivityController extends Controller
 
             // Check for daily session limit (5 sessions per trainee per day)
             $dailySessionCount = SessionEnrollment::where('trainee_id', $participantId)
-                ->whereHas('session', function($query) use ($date, $excludeActivityId) {
+                ->whereHas('session', function ($query) use ($date, $excludeActivityId) {
                     $query->where('session_date', $date)
-                          ->whereIn('status', ['scheduled', 'ongoing']);
+                        ->whereIn('status', ['scheduled', 'ongoing']);
                     if ($excludeActivityId) {
                         $query->where('activity_id', '!=', $excludeActivityId);
                     }
                 })
                 ->count();
-            
+
             if ($dailySessionCount >= 5) {
                 $trainee = Trainee::find($participantId);
                 $traineeName = $trainee ? $trainee->trainee_first_name . ' ' . $trainee->trainee_last_name : 'Unknown';
@@ -226,7 +225,7 @@ class ActivityController extends Controller
                 $trainee = Trainee::find($participantId);
                 $conflicts[] = [
                     'trainee' => $trainee ? $trainee->trainee_first_name . ' ' . $trainee->trainee_last_name : 'Unknown',
-                    'conflicts' => $participantConflicts->map(function($enrollment) {
+                    'conflicts' => $participantConflicts->map(function ($enrollment) {
                         return [
                             'activity' => $enrollment->session->activity->activity_name,
                             'time' => $enrollment->session->start_time . ' - ' . $enrollment->session->end_time
@@ -251,11 +250,11 @@ class ActivityController extends Controller
             Log::info('Loading activities index', ['user_id' => $userId, 'role' => $role]);
 
             // Build the base query with necessary relationships
-            $query = Activity::with(['sessions' => function($q) {
-                    $q->with(['enrollments', 'teacher'])
-                      ->orderBy('session_date', 'asc')
-                      ->orderBy('start_time', 'asc');
-                }, 'category', 'categoryModel', 'centre', 'instructor'])
+            $query = Activity::with(['sessions' => function ($q) {
+                $q->with(['enrollments', 'teacher'])
+                    ->orderBy('session_date', 'asc')
+                    ->orderBy('start_time', 'asc');
+            }, 'category', 'categoryModel', 'centre', 'instructor'])
                 ->withCount(['sessions', 'enrollments']);
 
             // Role-based filtering
@@ -266,7 +265,7 @@ class ActivityController extends Controller
             } elseif ($role === 'ajk') {
                 // AJK can only view active activities from their centre
                 $query->where('is_active', true)
-                      ->where('centre_id', $userCentreId);
+                    ->where('centre_id', $userCentreId);
             }
 
             // Get activities with pagination - 9 per page for 3x3 grid
@@ -286,24 +285,24 @@ class ActivityController extends Controller
 
             // Get categories with counts for sidebar
             $categories = ActivityCategory::withCount('activities')->get();
-            
+
             // Calculate category-based statistics
             $categoryCounts = [
                 'total' => $stats['total_activities'],
                 'active' => $stats['active_activities'],
-                'rehabilitation' => Activity::whereHas('category', function($q) {
+                'rehabilitation' => Activity::whereHas('category', function ($q) {
                     $q->where('category_name', 'like', '%rehabilitation%');
                 })->count(),
-                'academic' => Activity::whereHas('category', function($q) {
+                'academic' => Activity::whereHas('category', function ($q) {
                     $q->where('category_name', 'like', '%academic%');
                 })->count(),
-                'creative_social' => Activity::whereHas('category', function($q) {
+                'creative_social' => Activity::whereHas('category', function ($q) {
                     $q->where('category_name', 'like', '%creative%')
-                      ->orWhere('category_name', 'like', '%social%');
+                        ->orWhere('category_name', 'like', '%social%');
                 })->count(),
-                'faith' => Activity::whereHas('category', function($q) {
+                'faith' => Activity::whereHas('category', function ($q) {
                     $q->where('category_name', 'like', '%faith%')
-                      ->orWhere('category_name', 'like', '%spiritual%');
+                        ->orWhere('category_name', 'like', '%spiritual%');
                 })->count()
             ];
 
@@ -311,14 +310,14 @@ class ActivityController extends Controller
             $trainees = \App\Models\Trainee::select('trainee_id', 'trainee_first_name', 'trainee_last_name')
                 ->orderBy('trainee_first_name')
                 ->get();
-            
+
             $venues = \App\Models\Centre::select('centre_id', 'centre_name', 'centre_address')
                 ->where('is_active', true)
                 ->orderBy('centre_name')
                 ->get();
 
             // Prepare activities for JavaScript (avoiding Carbon serialization issues)
-            $activitiesForJs = $activities->getCollection()->map(function($activity) {
+            $activitiesForJs = $activities->getCollection()->map(function ($activity) {
                 return [
                     'id' => $activity->id,
                     'activity_name' => $activity->activity_name,
@@ -333,23 +332,22 @@ class ActivityController extends Controller
             });
 
             return view('activities.home', compact(
-                'activities', 
-                'activitiesForJs', 
-                'stats', 
-                'role', 
-                'categories', 
-                'trainees', 
-                'venues', 
+                'activities',
+                'activitiesForJs',
+                'stats',
+                'role',
+                'categories',
+                'trainees',
+                'venues',
                 'categoryCounts'
             ));
-
         } catch (Exception $e) {
             Log::error('Error loading activities index: ' . $e->getMessage(), [
                 'file' => $e->getFile(),
                 'line' => $e->getLine(),
                 'trace' => $e->getTraceAsString()
             ]);
-            
+
             return redirect()->route('dashboard')
                 ->with('error', 'Unable to load activities. Please try again.');
         }
@@ -382,10 +380,10 @@ class ActivityController extends Controller
             $activities = $query->orderBy('created_at', 'desc')->get();
 
             // Transform activities for modern view
-            $activitiesData = $activities->map(function($activity) {
+            $activitiesData = $activities->map(function ($activity) {
                 $latestSession = $activity->sessions->sortByDesc('session_date')->first();
                 $teacher = $latestSession ? $latestSession->teacher : $activity->creator;
-                
+
                 return [
                     'id' => $activity->id,
                     'name' => $activity->activity_name ?? $activity->name,
@@ -396,8 +394,8 @@ class ActivityController extends Controller
                     'status_bg_color' => $this->getStatusBgColor($this->getActivityStatus($activity)),
                     'teacher_name' => $teacher ? $teacher->name : 'Not assigned',
                     'participant_count' => $activity->enrollments->count(),
-                    'schedule_time' => $latestSession ? 
-                        Carbon::parse($latestSession->start_time)->format('g:i A') . ' - ' . 
+                    'schedule_time' => $latestSession ?
+                        Carbon::parse($latestSession->start_time)->format('g:i A') . ' - ' .
                         Carbon::parse($latestSession->end_time)->format('g:i A') : 'Time TBA',
                     'next_session_info' => $this->getNextSessionInfo($activity)
                 ];
@@ -442,19 +440,19 @@ class ActivityController extends Controller
             // Get teachers and trainees for modal
             $teachers = [];
             $trainees = [];
-            
+
             if (in_array($role, ['admin', 'supervisor', 'teacher'])) {
                 $teachersQuery = User::where('role', 'teacher')->where('status', 'active');
                 $traineesQuery = Trainee::where('status', 'active');
-                
+
                 if ($role !== 'admin') {
                     $teachersQuery->where('centre_id', $centreId);
                     $traineesQuery->where('centre_id', $centreId);
                 }
-                
+
                 $teachers = $teachersQuery->get(['id', 'name']);
                 $trainees = $traineesQuery->get(['id', 'trainee_first_name as first_name', 'trainee_last_name as last_name'])
-                    ->map(function($trainee) {
+                    ->map(function ($trainee) {
                         return [
                             'id' => $trainee->id,
                             'name' => trim($trainee->first_name . ' ' . $trainee->last_name)
@@ -476,7 +474,7 @@ class ActivityController extends Controller
 
             // Pass the transformed activities data
             $activities = $activitiesData;
-            
+
             // Individual stats for backward compatibility
             $total_activities = $activities->count();
             $ongoing_activities = $activities->where('status', 'ongoing')->count();
@@ -484,19 +482,18 @@ class ActivityController extends Controller
             $scheduled_activities = $activities->where('status', 'scheduled')->count();
 
             return view('activities.modernhome', compact(
-                'activities', 
-                'activity_stats', 
-                'role', 
-                'categories', 
-                'teachers', 
+                'activities',
+                'activity_stats',
+                'role',
+                'categories',
+                'teachers',
                 'trainees',
                 'calendar_events',
                 'total_activities',
-                'ongoing_activities', 
+                'ongoing_activities',
                 'completed_today',
                 'scheduled_activities'
             ));
-
         } catch (Exception $e) {
             Log::error('Error loading modern activities home: ' . $e->getMessage());
             return redirect()->route('dashboard')
@@ -512,7 +509,7 @@ class ActivityController extends Controller
         try {
             // Get all categories with their activity counts using the proper relationship
             $allCategories = Category::active()
-                ->withCount(['activities as activities_count' => function($query) {
+                ->withCount(['activities as activities_count' => function ($query) {
                     $query->where('is_active', true);
                 }])
                 ->ordered()
@@ -528,7 +525,7 @@ class ActivityController extends Controller
 
             // Transform categories to include proper data structure
             foreach ($categoriesGrouped as $type => $categories) {
-                $categoriesGrouped[$type] = $categories->map(function($category) {
+                $categoriesGrouped[$type] = $categories->map(function ($category) {
                     return (object)[
                         'id' => $category->id,
                         'name' => $category->category_name,
@@ -550,7 +547,6 @@ class ActivityController extends Controller
             ]);
 
             return view('rehabilitation.categories', ['categories' => $categoriesGrouped]);
-
         } catch (Exception $e) {
             Log::error('Error loading activity categories: ' . $e->getMessage());
             return redirect()->route('activities.home')
@@ -565,24 +561,24 @@ class ActivityController extends Controller
     {
         try {
             $this->logUserAction('view_category_activities', ['category_slug' => $categorySlug]);
-            
+
             // [ClaudeFix: 2025-07-07] Handle slug normalization and fallback to ENUM category search
             $category = Category::where('slug', $categorySlug)->first();
-            
+
             if (!$category) {
                 // Try to find by converting slug to title case for ENUM matching
                 $categoryName = str_replace('-', ' ', $categorySlug);
                 $categoryName = ucwords($categoryName);
-                
+
                 // Check if activities exist with this category directly (for ENUM-based categories)
-                $activities = Activity::whereHas('category', function($q) use ($categoryName) {
-                        $q->where('category_name', $categoryName);
-                    })
+                $activities = Activity::whereHas('category', function ($q) use ($categoryName) {
+                    $q->where('category_name', $categoryName);
+                })
                     ->where('is_active', true)
                     ->where('centre_id', session('centre_id'))
                     ->with(['sessions', 'creator'])
                     ->paginate(9);
-                
+
                 if ($activities->count() > 0) {
                     // Create a mock category object for display with fallback values
                     $category = (object) [
@@ -608,7 +604,6 @@ class ActivityController extends Controller
             }
 
             return view('rehabilitation.categoryshow', compact('category', 'activities'));
-
         } catch (Exception $e) {
             return $this->handleException($e, 'loading category activities', [
                 'category_slug' => $categorySlug
@@ -622,7 +617,7 @@ class ActivityController extends Controller
     public function create()
     {
         $role = session('role');
-        
+
         // Admin-only restriction as per new requirements
         if ($role !== 'admin') {
             return redirect()->route('activities.home')
@@ -632,9 +627,9 @@ class ActivityController extends Controller
         // Get centres and categories for the form
         $centres = Centre::active()->get();
         $categories = ActivityCategory::where('is_active', true)
-                                    ->orderBy('category_name', 'asc')
-                                    ->get();
-        
+            ->orderBy('category_name', 'asc')
+            ->get();
+
         return view('activities.create-enhanced', compact('centres', 'categories'));
     }
 
@@ -644,7 +639,7 @@ class ActivityController extends Controller
     public function store(Request $request)
     {
         $role = session('role');
-        
+
         // Admin-only restriction as per new requirements
         if ($role !== 'admin') {
             return redirect()->route('activities.home')
@@ -657,18 +652,18 @@ class ActivityController extends Controller
             'activity_description' => 'required|string|max:2000',
             'category_id' => 'required|exists:activity_categories,id',
             'learning_outcomes' => 'nullable|string|max:2000',
-            
+
             // Location & Centre
             'centre_id' => 'required|exists:centres,centre_id',
             'activity_location' => 'required|string|max:255',
-            
+
             // Instructor with qualification validation
             'instructor_id' => [
                 'required',
                 'exists:users,id',
                 new InstructorQualificationRule($request->input('category_id'))
             ],
-            
+
             // Participants
             'max_participants' => 'required|integer|min:3|max:10',
             'min_participants' => 'required|integer|min:3|max:10',
@@ -678,7 +673,7 @@ class ActivityController extends Controller
                 new MinimumEnrollmentRule(3),
                 new TraineeCompatibilityRule($request->input('category_id'))
             ],
-            
+
             // Schedule
             'sessions_per_week' => 'required|integer|min:1|max:5',
             'duration_hours' => 'required|numeric|min:0.5|max:3',
@@ -787,7 +782,6 @@ class ActivityController extends Controller
 
             return redirect()->route('activities.show', $activity->id)
                 ->with('success', 'Activity created successfully with scheduled sessions!');
-
         } catch (Exception $e) {
             DB::rollBack();
             Log::error('Error creating activity: ' . $e->getMessage(), [
@@ -824,7 +818,7 @@ class ActivityController extends Controller
                 $completedSessions = $activity->sessions ? $activity->sessions->where('status', 'completed')->count() : 0;
                 $totalEnrollments = $activity->enrollments ? $activity->enrollments->count() : 0;
                 $averageAttendance = $this->calculateAverageAttendance($activity);
-                
+
                 $stats = [
                     'totalSessions' => $totalSessions,
                     'activeSessions' => $activeSessions,
@@ -833,7 +827,7 @@ class ActivityController extends Controller
                     'totalEnrollments' => $totalEnrollments,
                     'averageAttendance' => $averageAttendance
                 ];
-                
+
                 Log::info('Activity stats calculated', [
                     'activity_id' => $id,
                     'stats' => $stats
@@ -860,7 +854,6 @@ class ActivityController extends Controller
             ]);
 
             return view('activities.show', compact('activity', 'stats', 'role'));
-
         } catch (Exception $e) {
             Log::error('Error showing activity: ' . $e->getMessage(), [
                 'activity_id' => $id,
@@ -878,7 +871,7 @@ class ActivityController extends Controller
     public function edit($id)
     {
         $role = session('role');
-        
+
         if (!in_array($role, ['admin', 'supervisor'])) {
             Log::warning('Unauthorized activity edit attempt', [
                 'user_id' => session('id'),
@@ -894,14 +887,13 @@ class ActivityController extends Controller
 
             $activity = Activity::findOrFail($id);
             $categories = Category::active()->ordered()->get();
-            
+
             Log::info('Successfully loaded activity for edit', [
                 'activity_id' => $id,
                 'activity_name' => $activity->activity_name
             ]);
-            
-            return view('activities.edit', compact('activity', 'categories', 'role'));
 
+            return view('activities.edit', compact('activity', 'categories', 'role'));
         } catch (Exception $e) {
             Log::error('Error loading activity for edit: ' . $e->getMessage(), [
                 'activity_id' => $id,
@@ -919,7 +911,7 @@ class ActivityController extends Controller
     public function update(Request $request, $id)
     {
         $role = session('role');
-        
+
         if (!in_array($role, ['admin', 'supervisor'])) {
             return redirect()->route('activities.home')
                 ->with('error', 'You do not have permission to update activities.');
@@ -970,7 +962,6 @@ class ActivityController extends Controller
 
             return redirect()->route('activities.show', $activity->id)
                 ->with('success', $message);
-
         } catch (Exception $e) {
             Log::error('Error updating activity: ' . $e->getMessage());
             return redirect()->back()
@@ -985,7 +976,7 @@ class ActivityController extends Controller
     public function destroy($id)
     {
         $role = session('role');
-        
+
         if (!in_array($role, ['admin', 'supervisor'])) {
             return redirect()->route('activities.home')
                 ->with('error', 'You do not have permission to delete activities.');
@@ -993,7 +984,7 @@ class ActivityController extends Controller
 
         try {
             $activity = Activity::findOrFail($id);
-            
+
             // Check if activity has upcoming sessions
             if ($activity->upcomingSessions->count() > 0) {
                 return redirect()->back()
@@ -1004,7 +995,6 @@ class ActivityController extends Controller
 
             return redirect()->route('activities.home')
                 ->with('success', 'Activity deleted successfully!');
-
         } catch (Exception $e) {
             Log::error('Error deleting activity: ' . $e->getMessage());
             return redirect()->back()
@@ -1023,10 +1013,10 @@ class ActivityController extends Controller
             'session_data' => session()->all(),
             'request_url' => request()->fullUrl()
         ]);
-        
+
         // Also dump to error log
         error_log("SESSIONS METHOD DEBUG: ID=$id, User=" . session('name') . ", Role=" . session('role'));
-        
+
         try {
             Log::info('Sessions method accessed', [
                 'activity_id' => $id,
@@ -1034,7 +1024,7 @@ class ActivityController extends Controller
                 'user_role' => session('role'),
                 'user_name' => session('name')
             ]);
-            
+
             $activity = Activity::with(['sessions.enrollments.trainee', 'sessions.teacher'])
                 ->findOrFail($id);
 
@@ -1055,7 +1045,6 @@ class ActivityController extends Controller
                 ->get(['id', 'name']);
 
             return view('activities.sessions', compact('activity', 'sessions', 'role', 'teachers'));
-
         } catch (Exception $e) {
             Log::error('Error loading activity sessions: ' . $e->getMessage(), [
                 'activity_id' => $id,
@@ -1074,7 +1063,7 @@ class ActivityController extends Controller
     public function createSession(Request $request, $id)
     {
         $role = session('role');
-        
+
         if ($role !== 'admin') {
             return redirect()->route('activities.sessions', $id)
                 ->with('error', 'Only centre administrators can create sessions.');
@@ -1099,7 +1088,7 @@ class ActivityController extends Controller
             $sessionDate = Carbon::parse($validated['date']);
             $startTime = Carbon::parse($validated['start_time']);
             $endTime = $startTime->copy()->addMinutes($validated['duration']);
-            
+
             // Rule 1: No sessions on weekends or Malaysia public holidays
             if (MalaysiaHolidays::isNonWorkingDay($sessionDate)) {
                 $reason = MalaysiaHolidays::getNonWorkingDayReason($sessionDate);
@@ -1107,14 +1096,14 @@ class ActivityController extends Controller
                     ->withInput()
                     ->with('error', 'Sessions cannot be scheduled on this date. ' . $reason);
             }
-            
+
             // Rule 2: Sessions must start between 9:30 AM and 3:30 PM
             if ($startTime->format('H:i') < '09:30' || $startTime->format('H:i') > '15:30') {
                 return redirect()->back()
                     ->withInput()
                     ->with('error', 'Sessions must start between 9:30 AM and 3:30 PM. Centre operates from 9:00 AM to 4:30 PM.');
             }
-            
+
             // Rule 3: All sessions must end by 4:30 PM
             if ($endTime->format('H:i') > '16:30') {
                 return redirect()->back()
@@ -1151,7 +1140,6 @@ class ActivityController extends Controller
 
             return redirect()->route('activities.sessions', $id)
                 ->with('success', 'Session created successfully!');
-
         } catch (Exception $e) {
             DB::rollBack();
             Log::error('Error creating session: ' . $e->getMessage());
@@ -1182,17 +1170,16 @@ class ActivityController extends Controller
 
             // Calculate actual session status based on date/time
             $sessionDate = Carbon::parse($session->session_date);
-            
+
             // Safer time parsing with error handling
             try {
                 // Extract time portion only (handles datetime strings in time fields)
                 $startTimeClean = $this->extractTimeOnly($session->start_time);
                 $endTimeClean = $this->extractTimeOnly($session->end_time);
-                
+
                 // Parse times safely using extracted time portions
                 $sessionStart = $sessionDate->copy()->setTimeFromTimeString($startTimeClean);
                 $sessionEnd = $sessionDate->copy()->setTimeFromTimeString($endTimeClean);
-                
             } catch (Exception $timeParseException) {
                 Log::error('Time parsing error for session ' . $sessionId . ': ' . $timeParseException->getMessage(), [
                     'session_id' => $sessionId,
@@ -1205,16 +1192,16 @@ class ActivityController extends Controller
                 $sessionStart = $sessionDate->copy()->setTime(9, 0, 0);
                 $sessionEnd = $sessionDate->copy()->setTime(17, 0, 0);
             }
-            
+
             $now = Carbon::now();
-            
+
             // Business Rule: Prevent attendance marking on non-working days
             if (MalaysiaHolidays::isNonWorkingDay($sessionDate)) {
                 $reason = MalaysiaHolidays::getNonWorkingDayReason($sessionDate);
                 return redirect()->route('activities.sessions', $activityId)
                     ->with('error', 'Attendance cannot be marked for this session. ' . $reason);
             }
-            
+
             // Calculate actual status - prioritize date/time logic over database status
             if ($session->session_status == 'cancelled') {
                 $actualStatus = 'cancelled';
@@ -1225,7 +1212,7 @@ class ActivityController extends Controller
             } else {
                 $actualStatus = 'scheduled';
             }
-            
+
             // Allow attendance marking for scheduled, ongoing, and completed sessions (but not cancelled)
             if ($actualStatus === 'cancelled') {
                 return redirect()->route('activities.sessions', $activityId)
@@ -1238,7 +1225,6 @@ class ActivityController extends Controller
                 ->exists();
 
             return view('activities.attendance', compact('session', 'attendanceExists'));
-
         } catch (Exception $e) {
             Log::error('Error loading attendance form: ' . $e->getMessage());
             return redirect()->route('activities.sessions', $activityId)
@@ -1315,7 +1301,6 @@ class ActivityController extends Controller
 
             return redirect()->route('activities.sessions', $activityId)
                 ->with('success', 'Attendance marked successfully!');
-
         } catch (Exception $e) {
             DB::rollBack();
             Log::error('Error marking attendance: ' . $e->getMessage());
@@ -1341,14 +1326,14 @@ class ActivityController extends Controller
                     ->with('error', 'You do not have permission to manage enrollments.');
             }
 
-            // Check if session is completed - use proper field name and include database status  
+            // Check if session is completed - use proper field name and include database status
             $sessionDate = Carbon::parse($session->session_date);
             $sessionEnd = $sessionDate->copy()->setTimeFromTimeString($session->end_time);
             $now = Carbon::now();
-            
+
             // Session is completed if database status is 'completed' OR current time is past session end time
-            $isCompleted = $session->session_status === 'completed' || 
-                          ($now->greaterThan($sessionEnd) && $session->session_status !== 'cancelled');
+            $isCompleted = $session->session_status === 'completed' ||
+                ($now->greaterThan($sessionEnd) && $session->session_status !== 'cancelled');
 
             if ($isCompleted) {
                 // For completed sessions, show only attendees who were present or late
@@ -1358,7 +1343,7 @@ class ActivityController extends Controller
                     ->whereIn('session_attendance.attendance_status', ['present', 'late'])
                     ->select('trainees.*', 'session_attendance.attendance_status', 'session_attendance.check_in_time', 'session_attendance.notes')
                     ->get();
-                
+
                 $enrolledTrainees = $attendedTrainees;
                 $eligibleTrainees = collect(); // Empty collection for completed sessions
             } else {
@@ -1367,12 +1352,12 @@ class ActivityController extends Controller
                     ->where('enrollment_date', '<=', $session->session_date)
                     ->with('trainee')
                     ->get();
-                    
-                $enrolledTrainees = $validEnrollments->map(function($enrollment) {
+
+                $enrolledTrainees = $validEnrollments->map(function ($enrollment) {
                     $enrollment->attendance_status = null; // No attendance yet
                     return $enrollment;
                 });
-                
+
                 $enrolledTraineeIds = $validEnrollments->pluck('trainee_id');
                 $eligibleTrainees = Trainee::with(['centre'])
                     ->whereNotIn('id', $enrolledTraineeIds)
@@ -1381,7 +1366,6 @@ class ActivityController extends Controller
             }
 
             return view('activities.enrollments', compact('session', 'eligibleTrainees', 'enrolledTrainees', 'isCompleted'));
-
         } catch (Exception $e) {
             Log::error('Error loading enrollments: ' . $e->getMessage());
             return redirect()->route('activities.sessions', $activityId)
@@ -1411,11 +1395,11 @@ class ActivityController extends Controller
             $sessionDate = Carbon::parse($session->session_date);
             $sessionEnd = $sessionDate->copy()->setTimeFromTimeString($session->end_time);
             $now = Carbon::now();
-            
+
             // Session is completed if database status is 'completed' OR current time is past session end time
-            $isCompleted = $session->session_status === 'completed' || 
-                          ($now->greaterThan($sessionEnd) && $session->session_status !== 'cancelled');
-            
+            $isCompleted = $session->session_status === 'completed' ||
+                ($now->greaterThan($sessionEnd) && $session->session_status !== 'cancelled');
+
             if ($isCompleted) {
                 return redirect()->route('activities.enrollments', [$activityId, $sessionId])
                     ->with('error', 'Cannot add enrollments to a completed session.');
@@ -1456,7 +1440,6 @@ class ActivityController extends Controller
 
             return redirect()->route('activities.enrollments', [$activityId, $sessionId])
                 ->with('success', 'Trainee enrolled successfully.');
-
         } catch (Exception $e) {
             Log::error('Error adding enrollment: ' . $e->getMessage());
             return redirect()->route('activities.enrollments', [$activityId, $sessionId])
@@ -1482,11 +1465,11 @@ class ActivityController extends Controller
             $sessionDate = Carbon::parse($session->session_date);
             $sessionEnd = $sessionDate->copy()->setTimeFromTimeString($session->end_time);
             $now = Carbon::now();
-            
+
             // Session is completed if database status is 'completed' OR current time is past session end time
-            $isCompleted = $session->session_status === 'completed' || 
-                          ($now->greaterThan($sessionEnd) && $session->session_status !== 'cancelled');
-            
+            $isCompleted = $session->session_status === 'completed' ||
+                ($now->greaterThan($sessionEnd) && $session->session_status !== 'cancelled');
+
             if ($isCompleted) {
                 return redirect()->route('activities.enrollments', [$activityId, $sessionId])
                     ->with('error', 'Cannot remove enrollments from a completed session.');
@@ -1515,7 +1498,6 @@ class ActivityController extends Controller
 
             return redirect()->route('activities.enrollments', [$activityId, $sessionId])
                 ->with('success', 'Trainee removed from session successfully.');
-
         } catch (Exception $e) {
             Log::error('Error removing enrollment: ' . $e->getMessage());
             return redirect()->route('activities.enrollments', [$activityId, $sessionId])
@@ -1553,12 +1535,12 @@ class ActivityController extends Controller
             // Get total sessions and enrollments
             $totalSessions = DB::table('activity_sessions')->count();
             $totalEnrollments = DB::table('activity_enrollments')->count();
-            
+
             // If teacher role, filter sessions by teacher
             if ($role === 'teacher') {
                 $totalSessions = DB::table('activity_sessions')->where('instructor_id', $userId)->count();
                 $totalEnrollments = DB::table('activity_enrollments')
-                    ->whereIn('activity_id', function($subQuery) use ($userId) {
+                    ->whereIn('activity_id', function ($subQuery) use ($userId) {
                         $subQuery->select('activity_id')
                             ->from('activity_sessions')
                             ->where('instructor_id', $userId);
@@ -1574,10 +1556,10 @@ class ActivityController extends Controller
                 'active' => $query->where('is_active', true)->count(), // Backward compatibility
                 'sessions' => $totalSessions, // For activities home view
                 'enrollments' => $totalEnrollments, // For activities home view
-                'rehabilitation' => $query->get()->filter(function($activity) {
+                'rehabilitation' => $query->get()->filter(function ($activity) {
                     return in_array($activity->category, ['Physical Therapy', 'Occupational Therapy', 'Speech Therapy', 'Sensory Integration']);
                 })->count(),
-                'academic' => $query->get()->filter(function($activity) {
+                'academic' => $query->get()->filter(function ($activity) {
                     return in_array($activity->category, ['Mathematics', 'Literacy', 'Science', 'Computer Skills']);
                 })->count()
             ];
@@ -1594,20 +1576,20 @@ class ActivityController extends Controller
         $sessionsPerWeek = $validated['sessions_per_week'];
         $duration = $validated['duration_hours'];
         $startTime = $validated['start_time'];
-        
+
         // Create sessions for the next 12 weeks (3 months)
         $currentDate = $startDate->copy();
         $endDate = $startDate->copy()->addWeeks(12);
         $sessionCount = 0;
-        
+
         while ($currentDate->lte($endDate) && $sessionCount < ($sessionsPerWeek * 12)) {
             $dayName = $currentDate->format('l'); // Full day name
-            
+
             if (in_array($dayName, $scheduleDays)) {
                 // Calculate end time
                 $sessionStart = Carbon::parse($currentDate->format('Y-m-d') . ' ' . $startTime);
                 $sessionEnd = $sessionStart->copy()->addHours($duration);
-                
+
                 ActivitySession::create([
                     'activity_id' => $activity->id,
                     'instructor_id' => $validated['instructor_id'],
@@ -1622,13 +1604,13 @@ class ActivityController extends Controller
                     'session_name' => $activity->activity_name . ' - Session ' . ($sessionCount + 1),
                     'session_description' => 'Session for ' . $activity->activity_name
                 ]);
-                
+
                 $sessionCount++;
             }
-            
+
             $currentDate->addDay();
         }
-        
+
         Log::info('Created activity sessions', [
             'activity_id' => $activity->id,
             'session_count' => $sessionCount,
@@ -1642,15 +1624,15 @@ class ActivityController extends Controller
     private function enrollParticipants($activity, $participantIds, $enrollmentDate)
     {
         $enrolledCount = 0;
-        
+
         foreach ($participantIds as $traineeIdentifier) {
             if (empty($traineeIdentifier)) continue;
-            
+
             try {
                 // Check if trainee exists and is active
                 // Handle both integer IDs and string trainee_id formats (e.g., 'LD0001')
                 $trainee = null;
-                
+
                 if (is_numeric($traineeIdentifier)) {
                     // If it's numeric, assume it's the primary key ID
                     $trainee = Trainee::where('id', $traineeIdentifier)
@@ -1662,12 +1644,12 @@ class ActivityController extends Controller
                         ->where('status', 'active')
                         ->first();
                 }
-                    
+
                 if (!$trainee) {
                     Log::warning('Trainee not found or inactive', ['trainee_identifier' => $traineeIdentifier]);
                     continue;
                 }
-                
+
                 // Always use the integer ID for database relationships
                 ActivityEnrollment::create([
                     'activity_id' => $activity->id,
@@ -1677,9 +1659,8 @@ class ActivityController extends Controller
                     'status' => 'enrolled',
                     'enrolled_by' => session('id')
                 ]);
-                
+
                 $enrolledCount++;
-                
             } catch (Exception $e) {
                 Log::error('Error enrolling participant', [
                     'trainee_identifier' => $traineeIdentifier,
@@ -1688,10 +1669,10 @@ class ActivityController extends Controller
                 ]);
             }
         }
-        
+
         // Update activity current participant count if this field exists in the model
         // Note: The current Activity model doesn't have current_participants field
-        
+
         Log::info('Enrolled participants in activity', [
             'activity_id' => $activity->id,
             'enrolled_count' => $enrolledCount,
@@ -1706,16 +1687,16 @@ class ActivityController extends Controller
     {
         // Get total attendance records for this activity
         $totalAttendanceRecords = \App\Models\Attendance::where('activity_id', $activity->id)->count();
-        
+
         if ($totalAttendanceRecords === 0) {
             return 0;
         }
-        
+
         // Count present and late (both considered as attended)
         $attendedCount = \App\Models\Attendance::where('activity_id', $activity->id)
             ->whereIn('status', ['present', 'late'])
             ->count();
-        
+
         // Calculate percentage
         return round(($attendedCount / $totalAttendanceRecords) * 100, 2);
     }
@@ -1760,7 +1741,7 @@ class ActivityController extends Controller
             $query = Activity::with(['sessions', 'creator']);
 
             if ($request->has('category')) {
-                $query->whereHas('category', function($q) use ($request) {
+                $query->whereHas('category', function ($q) use ($request) {
                     $q->where('category_name', $request->category);
                 });
             }
@@ -1769,8 +1750,8 @@ class ActivityController extends Controller
                 $search = $request->search;
                 $query->where(function ($q) use ($search) {
                     $q->where('activity_name', 'LIKE', "%{$search}%")
-                      ->orWhere('description', 'LIKE', "%{$search}%")
-                      ->orWhere('activity_id', 'LIKE', "%{$search}%");
+                        ->orWhere('description', 'LIKE', "%{$search}%")
+                        ->orWhere('activity_id', 'LIKE', "%{$search}%");
                 });
             }
 
@@ -1780,7 +1761,6 @@ class ActivityController extends Controller
                 'success' => true,
                 'data' => $activities
             ]);
-
         } catch (Exception $e) {
             Log::error('API Error fetching activities: ' . $e->getMessage());
             return response()->json([
@@ -1797,12 +1777,11 @@ class ActivityController extends Controller
     {
         try {
             $categories = $this->getActivityCategories();
-            
+
             return response()->json([
                 'success' => true,
                 'data' => $categories
             ]);
-
         } catch (Exception $e) {
             Log::error('API Error fetching categories: ' . $e->getMessage());
             return response()->json([
@@ -1834,7 +1813,6 @@ class ActivityController extends Controller
                 ->get();
 
             return response()->json($instructors);
-
         } catch (Exception $e) {
             Log::error('Error fetching instructors: ' . $e->getMessage());
             return response()->json([], 500);
@@ -1863,7 +1841,6 @@ class ActivityController extends Controller
             });
 
             return response()->json($trainees);
-
         } catch (Exception $e) {
             Log::error('Error fetching trainees: ' . $e->getMessage());
             return response()->json([], 500);
@@ -1879,42 +1856,86 @@ class ActivityController extends Controller
         return [
             // Welcome Page Service Categories (Updated August 2025)
             'Physical Disabilities' => [
-                'Physical Therapy', 'Occupational Therapy', 'Art & Creativity', 
-                'Computer Skills', 'Mathematics', 'Literacy', 'Music Therapy', 'Vocational Training',
-                'Speech Therapy', 'Life Skills'
+                'Physical Therapy',
+                'Occupational Therapy',
+                'Art & Creativity',
+                'Computer Skills',
+                'Mathematics',
+                'Literacy',
+                'Music Therapy',
+                'Vocational Training',
+                'Speech Therapy',
+                'Life Skills'
             ],
-            
+
             'Learning Support' => [
-                'Mathematics', 'Literacy', 'Computer Skills', 'Art & Creativity',
-                'Occupational Therapy', 'Life Skills', 'Vocational Training', 'Science',
-                'Social Skills', 'Music Therapy', 'Behavioral Therapy'
+                'Mathematics',
+                'Literacy',
+                'Computer Skills',
+                'Art & Creativity',
+                'Occupational Therapy',
+                'Life Skills',
+                'Vocational Training',
+                'Science',
+                'Social Skills',
+                'Music Therapy',
+                'Behavioral Therapy'
             ],
-            
+
             'Visual Impairment' => [
-                'Music Therapy', 'Computer Skills', 'Mathematics', 'Literacy',
-                'Life Skills', 'Vocational Training', 'Physical Therapy', 'Art & Creativity'
+                'Music Therapy',
+                'Computer Skills',
+                'Mathematics',
+                'Literacy',
+                'Life Skills',
+                'Vocational Training',
+                'Physical Therapy',
+                'Art & Creativity'
             ],
-            
+
             'Autism Spectrum Support' => [
-                'Mathematics', 'Computer Skills', 'Art & Creativity', 'Music Therapy',
-                'Sensory Integration', 'Behavioral Therapy', 'Life Skills', 'Science',
-                'Social Skills', 'Speech Therapy'
+                'Mathematics',
+                'Computer Skills',
+                'Art & Creativity',
+                'Music Therapy',
+                'Sensory Integration',
+                'Behavioral Therapy',
+                'Life Skills',
+                'Science',
+                'Social Skills',
+                'Speech Therapy'
             ],
-            
+
             'Hearing Impairment' => [
-                'Art & Creativity', 'Computer Skills', 'Mathematics', 'Science',
-                'Vocational Training', 'Life Skills', 'Physical Therapy', 'Literacy'
+                'Art & Creativity',
+                'Computer Skills',
+                'Mathematics',
+                'Science',
+                'Vocational Training',
+                'Life Skills',
+                'Physical Therapy',
+                'Literacy'
             ],
-            
+
             'Speech Therapy' => [
-                'Speech Therapy', 'Art & Creativity', 'Music Therapy', 'Computer Skills',
-                'Social Skills', 'Mathematics', 'Literacy', 'Life Skills'
+                'Speech Therapy',
+                'Art & Creativity',
+                'Music Therapy',
+                'Computer Skills',
+                'Social Skills',
+                'Mathematics',
+                'Literacy',
+                'Life Skills'
             ],
-            
+
             // Sensory conditions benefit from specialized interventions
             'Sensory Processing Disorder' => [
-                'Sensory Integration', 'Occupational Therapy', 'Art & Creativity',
-                'Music Therapy', 'Physical Therapy', 'Behavioral Therapy'
+                'Sensory Integration',
+                'Occupational Therapy',
+                'Art & Creativity',
+                'Music Therapy',
+                'Physical Therapy',
+                'Behavioral Therapy'
             ]
         ];
     }
@@ -1931,18 +1952,18 @@ class ActivityController extends Controller
                 ->orderBy('trainee_first_name');
 
             $trainees = $query->get();
-            
+
             // If category is provided, filter trainees by condition appropriateness
             if ($categoryId) {
                 $category = Category::find($categoryId);
                 if ($category) {
                     $conditionMapping = $this->getConditionActivityMapping();
                     $categoryName = $category->category_name;
-                    
+
                     $trainees = $trainees->filter(function ($trainee) use ($conditionMapping, $categoryName) {
                         $condition = $trainee->condition;
-                        return isset($conditionMapping[$condition]) && 
-                               in_array($categoryName, $conditionMapping[$condition]);
+                        return isset($conditionMapping[$condition]) &&
+                            in_array($categoryName, $conditionMapping[$condition]);
                     });
                 }
             }
@@ -1996,7 +2017,6 @@ class ActivityController extends Controller
                 'conflicts' => $conflicts['conflicts'],
                 'message' => $conflicts['message']
             ]);
-
         } catch (Exception $e) {
             Log::error('API Error checking conflicts: ' . $e->getMessage());
             return response()->json([
@@ -2019,18 +2039,17 @@ class ActivityController extends Controller
     {
         try {
             $activity = Activity::with(['schedules', 'activeEnrollments.trainee'])->findOrFail($id);
-            
+
             // Check permissions
             $role = session('role');
             $userId = session('id');
-            
+
             if (!$this->canManageActivity($activity, $role, $userId)) {
                 return redirect()->route('activities.home')
                     ->with('error', 'You do not have permission to manage this activity schedule.');
             }
 
             return view('activities.schedule', compact('activity'));
-
         } catch (Exception $e) {
             Log::error('Error loading activity schedule: ' . $e->getMessage());
             return redirect()->route('activities.home')
@@ -2051,9 +2070,8 @@ class ActivityController extends Controller
                 ->groupBy('day_of_week');
 
             $days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-            
-            return view('activities.weekly-schedule', compact('schedules', 'days'));
 
+            return view('activities.weekly-schedule', compact('schedules', 'days'));
         } catch (Exception $e) {
             Log::error('Error loading weekly schedule: ' . $e->getMessage());
             return redirect()->route('activities.home')
@@ -2068,20 +2086,20 @@ class ActivityController extends Controller
     {
         try {
             $teacher = User::findOrFail($teacherId);
-            
+
             // Check permissions - users can only view their own schedule unless admin/supervisor
             $role = session('role');
             $currentUserId = session('id');
-            
+
             if (!in_array($role, ['admin', 'supervisor']) && $currentUserId != $teacherId) {
                 return redirect()->route('activities.home')
                     ->with('error', 'You can only view your own schedule.');
             }
 
             // Get sessions for this teacher - using ActivitySession model to match existing view
-            $sessions = \App\Models\ActivitySession::whereHas('activity', function($query) use ($teacherId) {
-                    $query->where('created_by', $teacherId);
-                })
+            $sessions = \App\Models\ActivitySession::whereHas('activity', function ($query) use ($teacherId) {
+                $query->where('created_by', $teacherId);
+            })
                 ->with(['activity', 'enrollments'])
                 ->where('status', 'scheduled')
                 ->orderBy('day_of_week')
@@ -2092,7 +2110,6 @@ class ActivityController extends Controller
             $groupedSessions = $sessions->groupBy('day_of_week');
 
             return view('activities.activitiesteacherschedule', compact('teacher', 'groupedSessions'));
-
         } catch (Exception $e) {
             Log::error('Error loading teacher schedule: ' . $e->getMessage());
             return redirect()->route('activities.home')
@@ -2107,7 +2124,7 @@ class ActivityController extends Controller
     {
         try {
             $activity = Activity::with(['activeEnrollments.trainee', 'schedules'])->findOrFail($id);
-            
+
             // Get available trainees (not already enrolled in this activity)
             $enrolledTraineeIds = $activity->activeEnrollments->pluck('trainee_id');
             $availableTrainees = Trainee::whereNotIn('id', $enrolledTraineeIds)
@@ -2115,7 +2132,6 @@ class ActivityController extends Controller
                 ->get();
 
             return view('activities.enroll', compact('activity', 'availableTrainees'));
-
         } catch (Exception $e) {
             Log::error('Error loading enrollment form: ' . $e->getMessage());
             return redirect()->route('activities.show', $id)
@@ -2130,7 +2146,7 @@ class ActivityController extends Controller
     {
         try {
             $activity = Activity::findOrFail($id);
-            
+
             $request->validate([
                 'trainee_ids' => 'required|array|min:1',
                 'trainee_ids.*' => 'exists:trainees,id',
@@ -2173,7 +2189,6 @@ class ActivityController extends Controller
                     ]);
 
                     $enrolledCount++;
-
                 } catch (Exception $e) {
                     Log::error('Error enrolling trainee: ' . $e->getMessage());
                     $errors[] = 'Error enrolling trainee ID: ' . $traineeId;
@@ -2187,7 +2202,6 @@ class ActivityController extends Controller
 
             return redirect()->route('activities.show', $id)
                 ->with($enrolledCount > 0 ? 'success' : 'error', $message);
-
         } catch (Exception $e) {
             Log::error('Error processing enrollments: ' . $e->getMessage());
             return redirect()->back()
@@ -2203,7 +2217,7 @@ class ActivityController extends Controller
     {
         try {
             $activity = Activity::findOrFail($id);
-            
+
             $validated = $request->validate([
                 'day_of_week' => 'required|in:Monday,Tuesday,Wednesday,Thursday,Friday,Saturday,Sunday',
                 'start_time' => 'required|date_format:H:i',
@@ -2251,7 +2265,6 @@ class ActivityController extends Controller
 
             return redirect()->route('activities.schedule', $id)
                 ->with('success', 'Schedule added successfully.');
-
         } catch (Exception $e) {
             Log::error('Error storing schedule: ' . $e->getMessage());
             return redirect()->back()
@@ -2268,11 +2281,11 @@ class ActivityController extends Controller
         if (in_array($role, ['admin', 'supervisor'])) {
             return true;
         }
-        
+
         if ($role === 'teacher' && $activity->created_by == $userId) {
             return true;
         }
-        
+
         return false;
     }
 
@@ -2283,7 +2296,7 @@ class ActivityController extends Controller
     {
         try {
             $today = Carbon::now()->format('l'); // Full day name
-            
+
             $schedules = ActivitySchedule::with(['activity.teacher', 'activity.activeEnrollments'])
                 ->where('day_of_week', $today)
                 ->where('status', 'active')
@@ -2291,7 +2304,6 @@ class ActivityController extends Controller
                 ->get();
 
             return $schedules;
-
         } catch (Exception $e) {
             Log::error('Error getting today\'s schedule: ' . $e->getMessage());
             return collect([]);
@@ -2395,11 +2407,10 @@ class ActivityController extends Controller
             return [
                 'hasConflict' => $hasConflict || !empty($conflicts),
                 'conflicts' => $conflicts,
-                'message' => $hasConflict || !empty($conflicts) 
+                'message' => $hasConflict || !empty($conflicts)
                     ? 'Scheduling conflict detected: ' . implode(' | ', $conflicts)
                     : 'No conflicts found'
             ];
-
         } catch (Exception $e) {
             Log::error('Error checking session conflicts: ' . $e->getMessage());
             return [
@@ -2433,8 +2444,8 @@ class ActivityController extends Controller
 
             // Check teacher availability for this day of week
             $teacherSchedules = ActivitySchedule::whereHas('activity', function ($query) use ($teacherId) {
-                    $query->where('created_by', $teacherId);
-                })
+                $query->where('created_by', $teacherId);
+            })
                 ->where('day_of_week', $dayOfWeek)
                 ->where('status', 'active')
                 ->when($excludeScheduleId, function ($query, $excludeScheduleId) {
@@ -2495,11 +2506,10 @@ class ActivityController extends Controller
             return [
                 'hasConflict' => $hasConflict || !empty($conflicts),
                 'conflicts' => $conflicts,
-                'message' => $hasConflict || !empty($conflicts) 
+                'message' => $hasConflict || !empty($conflicts)
                     ? 'Recurring schedule conflict detected: ' . implode(' | ', $conflicts)
                     : 'No conflicts found'
             ];
-
         } catch (Exception $e) {
             Log::error('Error checking recurring schedule conflicts: ' . $e->getMessage());
             return [
@@ -2512,7 +2522,7 @@ class ActivityController extends Controller
 
     /**
      * Show the schedule index page with all sessions.
-     * 
+     *
      * @param Request $request
      * @return \Illuminate\View\View
      */
@@ -2520,7 +2530,7 @@ class ActivityController extends Controller
     {
         try {
             $this->logUserAction('view_schedule_index', $request->all());
-            
+
             $role = session('role');
             $userId = session('id');
             $userCentreId = session('centre_id');
@@ -2540,25 +2550,25 @@ class ActivityController extends Controller
             if ($searchValue) {
                 switch ($searchType) {
                     case 'activity':
-                        $query->whereHas('activity', function($q) use ($searchValue) {
+                        $query->whereHas('activity', function ($q) use ($searchValue) {
                             $q->where('activity_name', 'LIKE', "%{$searchValue}%");
                         });
                         break;
                     case 'staff':
-                        $query->whereHas('teacher', function($q) use ($searchValue) {
+                        $query->whereHas('teacher', function ($q) use ($searchValue) {
                             $q->where('name', 'LIKE', "%{$searchValue}%");
                         });
                         break;
                     case 'trainee':
-                        $query->whereHas('enrollments.trainee', function($q) use ($searchValue) {
+                        $query->whereHas('enrollments.trainee', function ($q) use ($searchValue) {
                             $q->where('trainee_first_name', 'LIKE', "%{$searchValue}%")
-                              ->orWhere('trainee_last_name', 'LIKE', "%{$searchValue}%");
+                                ->orWhere('trainee_last_name', 'LIKE', "%{$searchValue}%");
                         });
                         break;
                     case 'room':
-                        $query->where(function($q) use ($searchValue) {
+                        $query->where(function ($q) use ($searchValue) {
                             $q->where('venue', 'LIKE', "%{$searchValue}%")
-                              ->orWhere('room_number', 'LIKE', "%{$searchValue}%");
+                                ->orWhere('room_number', 'LIKE', "%{$searchValue}%");
                         });
                         break;
                 }
@@ -2566,14 +2576,14 @@ class ActivityController extends Controller
 
             // Apply centre filter
             if ($centreFilter) {
-                $query->whereHas('activity', function($q) use ($centreFilter) {
+                $query->whereHas('activity', function ($q) use ($centreFilter) {
                     $q->where('centre_id', $centreFilter);
                 });
             }
 
             // Apply category filter
             if ($categoryFilter) {
-                $query->whereHas('activity.category', function($q) use ($categoryFilter) {
+                $query->whereHas('activity.category', function ($q) use ($categoryFilter) {
                     $q->where('category_name', $categoryFilter);
                 });
             }
@@ -2583,7 +2593,7 @@ class ActivityController extends Controller
                 switch ($statusFilter) {
                     case 'future':
                         $query->where('session_status', 'scheduled')
-                              ->where('session_date', '>', Carbon::now());
+                            ->where('session_date', '>', Carbon::now());
                         break;
                     case 'progress':
                         $query->where('session_status', 'ongoing');
@@ -2623,17 +2633,17 @@ class ActivityController extends Controller
 
             // Default ordering - show upcoming sessions first, then recent past
             $sessions = $query->orderByRaw('
-                CASE 
-                    WHEN session_date >= CURDATE() THEN 0 
-                    ELSE 1 
-                END, 
-                session_date ASC, 
+                CASE
+                    WHEN session_date >= CURDATE() THEN 0
+                    ELSE 1
+                END,
+                session_date ASC,
                 start_time ASC
             ')->paginate(15);
 
             // Get filter options
             $centres = Centre::active()->orderBy('centre_name')->get();
-            
+
             // Get categories from existing activities
             $categories = \App\Models\Category::active()
                 ->pluck('category_name')
@@ -2650,14 +2660,13 @@ class ActivityController extends Controller
             ]);
 
             return view('activities.schedule.index', compact('sessions', 'centres', 'categories', 'role'));
-
         } catch (Exception $e) {
             Log::error('Error loading schedule index: ' . $e->getMessage(), [
                 'user_id' => $userId ?? null,
                 'filters' => $request->all(),
                 'trace' => $e->getTraceAsString()
             ]);
-            
+
             return redirect()->route('dashboard')
                 ->with('error', 'Unable to load schedule. Please try again.');
         }
@@ -2701,29 +2710,29 @@ class ActivityController extends Controller
             ->where('status', 'ongoing')
             ->whereDate('scheduled_date', today())
             ->count();
-            
+
         if ($ongoingSessions > 0) {
             return 'ongoing';
         }
-        
+
         // Check if activity has upcoming sessions
         $upcomingSessions = $activity->sessions()
             ->where('status', 'scheduled')
             ->where('scheduled_date', '>=', today())
             ->count();
-            
+
         if ($upcomingSessions > 0) {
             return 'scheduled';
         }
-        
+
         // Check activity status field if it exists
         if (isset($activity->activity_status)) {
             return $activity->activity_status;
         }
-        
+
         return 'completed';
     }
-    
+
     private function getStatusColor($status)
     {
         $colors = [
@@ -2734,29 +2743,29 @@ class ActivityController extends Controller
         ];
         return $colors[$status] ?? 'bg-gray-500';
     }
-    
+
     private function getStatusTextColor($status)
     {
         $colors = [
             'ongoing' => 'text-green-600',
-            'scheduled' => 'text-orange-600',  
+            'scheduled' => 'text-orange-600',
             'completed' => 'text-blue-600',
             'cancelled' => 'text-red-600'
         ];
         return $colors[$status] ?? 'text-gray-600';
     }
-    
+
     private function getStatusBgColor($status)
     {
         $colors = [
             'ongoing' => 'bg-green-100',
             'scheduled' => 'bg-orange-100',
-            'completed' => 'bg-blue-100', 
+            'completed' => 'bg-blue-100',
             'cancelled' => 'bg-red-100'
         ];
         return $colors[$status] ?? 'bg-gray-100';
     }
-    
+
     private function getNextSessionInfo($activity)
     {
         $nextSession = $activity->sessions()
@@ -2765,18 +2774,18 @@ class ActivityController extends Controller
             ->orderBy('session_date')
             ->orderBy('start_time')
             ->first();
-            
+
         if (!$nextSession) {
             return null;
         }
-        
+
         $sessionDate = Carbon::parse($nextSession->session_date);
         $now = Carbon::now();
-        
+
         if ($sessionDate->isToday()) {
             $sessionTime = Carbon::parse($nextSession->start_time);
             $minutesUntil = $now->diffInMinutes($sessionTime);
-            
+
             if ($minutesUntil < 60) {
                 return "Starts in {$minutesUntil} minutes";
             } else {
@@ -2788,17 +2797,17 @@ class ActivityController extends Controller
             return "Next session " . $sessionDate->format('M j') . " at " . Carbon::parse($nextSession->start_time)->format('g:i A');
         }
     }
-    
+
     private function getTodayCompletedCount($activities)
     {
-        return $activities->filter(function($activity) {
+        return $activities->filter(function ($activity) {
             return $activity->sessions()
                 ->where('status', 'completed')
                 ->whereDate('scheduled_date', today())
                 ->count() > 0;
         })->count();
     }
-    
+
     /**
      * Check for scheduling conflicts during activity creation
      */
@@ -2836,9 +2845,9 @@ class ActivityController extends Controller
 
                 // Check instructor conflicts using ActivitySessions
                 $instructorConflicts = ActivitySession::whereHas('activity', function ($query) use ($validated) {
-                        $query->where('instructor_id', $validated['instructor_id'])
-                              ->where('activity_status', '!=', 'cancelled');
-                    })
+                    $query->where('instructor_id', $validated['instructor_id'])
+                        ->where('activity_status', '!=', 'cancelled');
+                })
                     ->where('day_of_week', $dayOfWeek)
                     ->whereIn('status', ['scheduled', 'ongoing'])
                     ->with('activity')
@@ -2847,7 +2856,7 @@ class ActivityController extends Controller
                 foreach ($instructorConflicts as $session) {
                     $existingStart = Carbon::parse($session->start_time);
                     $existingEnd = Carbon::parse($session->end_time);
-                    
+
                     if ($this->timesOverlap($startTime, $endTime, $existingStart, $existingEnd)) {
                         $hasConflicts = true;
                         $conflicts[] = [
@@ -2861,9 +2870,9 @@ class ActivityController extends Controller
                 // Check location conflicts if location is specified
                 if (!empty($validated['location'])) {
                     $locationConflicts = ActivitySession::whereHas('activity', function ($query) use ($validated) {
-                            $query->where('activity_location', $validated['location'])
-                                  ->where('activity_status', '!=', 'cancelled');
-                        })
+                        $query->where('activity_location', $validated['location'])
+                            ->where('activity_status', '!=', 'cancelled');
+                    })
                         ->where('day_of_week', $dayOfWeek)
                         ->whereIn('status', ['scheduled', 'ongoing'])
                         ->with('activity')
@@ -2872,7 +2881,7 @@ class ActivityController extends Controller
                     foreach ($locationConflicts as $session) {
                         $existingStart = Carbon::parse($session->start_time);
                         $existingEnd = Carbon::parse($session->end_time);
-                        
+
                         if ($this->timesOverlap($startTime, $endTime, $existingStart, $existingEnd)) {
                             $hasConflicts = true;
                             $conflicts[] = [
@@ -2888,9 +2897,9 @@ class ActivityController extends Controller
                 if (!empty($validated['participants'])) {
                     foreach ($validated['participants'] as $traineeId) {
                         $participantConflicts = SessionEnrollment::whereHas('session', function ($query) use ($dayOfWeek) {
-                                $query->where('day_of_week', $dayOfWeek)
-                                      ->whereIn('status', ['scheduled', 'ongoing']);
-                            })
+                            $query->where('day_of_week', $dayOfWeek)
+                                ->whereIn('status', ['scheduled', 'ongoing']);
+                        })
                             ->whereHas('session.activity', function ($query) {
                                 $query->where('activity_status', '!=', 'cancelled');
                             })
@@ -2902,12 +2911,12 @@ class ActivityController extends Controller
                             $session = $enrollment->session;
                             $existingStart = Carbon::parse($session->start_time);
                             $existingEnd = Carbon::parse($session->end_time);
-                            
+
                             if ($this->timesOverlap($startTime, $endTime, $existingStart, $existingEnd)) {
                                 $hasConflicts = true;
                                 $trainee = Trainee::find($traineeId);
                                 $traineeName = $trainee ? $trainee->trainee_first_name . ' ' . $trainee->trainee_last_name : "Trainee #{$traineeId}";
-                                
+
                                 $conflicts[] = [
                                     'type' => 'participant',
                                     'day' => $dayOfWeek,
@@ -2925,7 +2934,6 @@ class ActivityController extends Controller
                 'conflicts' => $conflicts,
                 'summary' => $hasConflicts ? count($conflicts) . ' conflict(s) detected' : 'No conflicts detected'
             ]);
-
         } catch (Exception $e) {
             Log::error('Error checking schedule conflicts: ' . $e->getMessage());
             return response()->json([
@@ -2948,7 +2956,7 @@ class ActivityController extends Controller
         try {
             $userId = session('id');
             $role = session('role');
-            
+
             if (!$userId) {
                 return redirect()->route('login');
             }
@@ -2957,28 +2965,27 @@ class ActivityController extends Controller
 
             // Get user's sessions based on role
             $query = ActivitySession::with(['activity', 'enrollments.trainee']);
-            
+
             if ($role === 'teacher') {
                 $query->where('instructor_id', $userId);
             } elseif ($role === 'trainee') {
-                $query->whereHas('enrollments', function($q) use ($userId) {
+                $query->whereHas('enrollments', function ($q) use ($userId) {
                     $q->where('trainee_id', $userId);
                 });
             } else {
                 // For other roles, show centre-specific sessions
                 $centreId = session('centre_id');
-                $query->whereHas('activity', function($q) use ($centreId) {
+                $query->whereHas('activity', function ($q) use ($centreId) {
                     $q->where('centre_id', $centreId);
                 });
             }
 
             $sessions = $query->where('session_date', '>=', Carbon::now()->subDays(30))
-                             ->orderBy('session_date', 'asc')
-                             ->orderBy('start_time', 'asc')
-                             ->get();
+                ->orderBy('session_date', 'asc')
+                ->orderBy('start_time', 'asc')
+                ->get();
 
             return view('activities.schedule.personal', compact('sessions', 'role'));
-
         } catch (Exception $e) {
             Log::error('Error loading personal schedule: ' . $e->getMessage());
             return redirect()->route('dashboard')
@@ -2993,7 +3000,7 @@ class ActivityController extends Controller
     {
         try {
             $currentRole = session('role');
-            
+
             // Only admin can view other staff schedules
             if ($currentRole !== 'admin') {
                 return redirect()->route('activities.schedule.personal')
@@ -3002,7 +3009,7 @@ class ActivityController extends Controller
 
             $staffId = decrypt($encryptedId);
             $staff = User::findOrFail($staffId);
-            
+
             Log::info('Admin viewing staff schedule', [
                 'admin_id' => session('id'),
                 'iium_id' => $staff->iium_id,
@@ -3017,7 +3024,6 @@ class ActivityController extends Controller
                 ->get();
 
             return view('activities.schedule.staff', compact('sessions', 'staff'));
-
         } catch (Exception $e) {
             Log::error('Error loading staff schedule: ' . $e->getMessage());
             return redirect()->route('activities.schedule')
@@ -3033,10 +3039,10 @@ class ActivityController extends Controller
         try {
             $currentRole = session('role');
             $currentUserId = session('id');
-            
+
             $traineeId = decrypt($encryptedId);
             $trainee = Trainee::findOrFail($traineeId);
-            
+
             // Check access permissions
             if ($currentRole === 'parent') {
                 // Parents can only view their own child's schedule
@@ -3055,7 +3061,7 @@ class ActivityController extends Controller
             ]);
 
             $sessions = ActivitySession::with(['activity', 'enrollments'])
-                ->whereHas('enrollments', function($q) use ($traineeId) {
+                ->whereHas('enrollments', function ($q) use ($traineeId) {
                     $q->where('trainee_id', $traineeId);
                 })
                 ->where('session_date', '>=', Carbon::now()->subDays(30))
@@ -3064,7 +3070,6 @@ class ActivityController extends Controller
                 ->get();
 
             return view('activities.schedule.trainee', compact('sessions', 'trainee'));
-
         } catch (Exception $e) {
             Log::error('Error loading trainee schedule: ' . $e->getMessage());
             return redirect()->route('activities.schedule')
@@ -3100,12 +3105,12 @@ class ActivityController extends Controller
                 if ($role === 'teacher') {
                     $query->where('instructor_id', $userId);
                 } elseif ($role === 'trainee') {
-                    $query->whereHas('enrollments', function($q) use ($userId) {
+                    $query->whereHas('enrollments', function ($q) use ($userId) {
                         $q->where('trainee_id', $userId);
                     });
                 } else {
                     $centreId = session('centre_id');
-                    $query->whereHas('activity', function($q) use ($centreId) {
+                    $query->whereHas('activity', function ($q) use ($centreId) {
                         $q->where('centre_id', $centreId);
                     });
                 }
@@ -3114,19 +3119,18 @@ class ActivityController extends Controller
                 $query->where('instructor_id', $staffId);
             } elseif ($view === 'trainee' && in_array($role, ['admin', 'supervisor', 'parent']) && $targetId) {
                 $traineeId = decrypt($targetId);
-                $query->whereHas('enrollments', function($q) use ($traineeId) {
+                $query->whereHas('enrollments', function ($q) use ($traineeId) {
                     $q->where('trainee_id', $traineeId);
                 });
             }
 
             $sessions = $query->get();
-            
-            $events = $sessions->map(function($session) {
+
+            $events = $sessions->map(function ($session) {
                 return $session->calendar_event;
             });
 
             return response()->json($events);
-
         } catch (Exception $e) {
             Log::error('Error fetching calendar data: ' . $e->getMessage());
             return response()->json([]);
@@ -3141,19 +3145,19 @@ class ActivityController extends Controller
         try {
             $userId = session('id');
             $role = session('role');
-            
+
             $query = ActivitySession::with(['activity']);
 
             // Get today's and upcoming sessions
             if ($role === 'teacher') {
                 $query->where('instructor_id', $userId);
             } elseif ($role === 'trainee') {
-                $query->whereHas('enrollments', function($q) use ($userId) {
+                $query->whereHas('enrollments', function ($q) use ($userId) {
                     $q->where('trainee_id', $userId);
                 });
             } else {
                 $centreId = session('centre_id');
-                $query->whereHas('activity', function($q) use ($centreId) {
+                $query->whereHas('activity', function ($q) use ($centreId) {
                     $q->where('centre_id', $centreId);
                 });
             }
@@ -3178,7 +3182,6 @@ class ActivityController extends Controller
                 'total_today' => $todaySessions->count(),
                 'total_week' => $upcomingSessions->count()
             ];
-
         } catch (Exception $e) {
             Log::error('Error fetching dashboard schedule data: ' . $e->getMessage());
             return [
@@ -3196,23 +3199,23 @@ class ActivityController extends Controller
     private function validateActivityConflicts(array $validated): array
     {
         $errors = [];
-        
+
         // Check for duplicate activity names in the same centre
         $duplicateName = Activity::where('activity_name', $validated['activity_name'])
             ->where('centre_id', $validated['centre_id'])
             ->where('is_active', true)
             ->exists();
-            
+
         if ($duplicateName) {
             $errors['activity_name'] = 'An active activity with this name already exists in this centre.';
         }
-        
+
         // Check for similar activity descriptions (potential duplicates)
         $similarActivities = Activity::where('centre_id', $validated['centre_id'])
             ->where('is_active', true)
             ->where('category_id', $validated['category_id'])
             ->get();
-            
+
         foreach ($similarActivities as $activity) {
             $similarity = $this->calculateStringSimilarity($validated['activity_description'], $activity->activity_description);
             if ($similarity > 85) { // 85% similarity threshold
@@ -3220,41 +3223,41 @@ class ActivityController extends Controller
                 break;
             }
         }
-        
+
         // Check for maximum activities per instructor
         $instructorActivityCount = Activity::where('instructor_id', $validated['instructor_id'])
             ->where('is_active', true)
             ->whereDate('end_date', '>=', now())
             ->count();
-            
+
         if ($instructorActivityCount >= 10) { // Maximum 10 active activities per instructor
             $errors['instructor_id'] = 'This instructor already has the maximum number of active activities (10). Please choose another instructor.';
         }
-        
+
         // Check for overlapping activity periods
         $startDate = Carbon::parse($validated['start_date']);
         $endDate = $startDate->copy()->addMonths($validated['activity_period']);
-        
+
         $overlappingActivities = Activity::where('instructor_id', $validated['instructor_id'])
             ->where('is_active', true)
-            ->where(function($query) use ($startDate, $endDate) {
+            ->where(function ($query) use ($startDate, $endDate) {
                 $query->whereBetween('start_date', [$startDate, $endDate])
-                      ->orWhereBetween('end_date', [$startDate, $endDate])
-                      ->orWhere(function($q) use ($startDate, $endDate) {
-                          $q->where('start_date', '<=', $startDate)
+                    ->orWhereBetween('end_date', [$startDate, $endDate])
+                    ->orWhere(function ($q) use ($startDate, $endDate) {
+                        $q->where('start_date', '<=', $startDate)
                             ->where('end_date', '>=', $endDate);
-                      });
+                    });
             })
             ->get();
-            
+
         if ($overlappingActivities->count() > 0) {
             $conflictingActivities = $overlappingActivities->pluck('activity_name')->take(3)->implode(', ');
             $errors['activity_period'] = "Activity period overlaps with existing activities: {$conflictingActivities}. Please adjust the dates.";
         }
-        
+
         return $errors;
     }
-    
+
     /**
      * Check instructor availability for scheduling conflicts
      */
@@ -3264,45 +3267,46 @@ class ActivityController extends Controller
         $startTime = Carbon::parse($validated['start_time']);
         $endTime = $startTime->copy()->addHours($validated['duration_hours']);
         $scheduleDays = $validated['schedule_days'];
-        
+
         // Check for time conflicts with existing sessions
-        $existingSessions = ActivitySession::whereHas('activity', function($query) use ($validated) {
-                $query->where('instructor_id', $validated['instructor_id'])
-                      ->where('is_active', true);
-            })
+        $existingSessions = ActivitySession::whereHas('activity', function ($query) use ($validated) {
+            $query->where('instructor_id', $validated['instructor_id'])
+                ->where('is_active', true);
+        })
             ->where('status', '!=', 'cancelled')
             ->get();
-            
+
         foreach ($existingSessions as $session) {
             $sessionDay = Carbon::parse($session->session_date)->format('l'); // Full day name
-            
+
             if (in_array($sessionDay, $scheduleDays)) {
                 $sessionStart = Carbon::parse($session->start_time);
                 $sessionEnd = Carbon::parse($session->end_time);
-                
+
                 // Check for time overlap
                 if (($startTime >= $sessionStart && $startTime < $sessionEnd) ||
                     ($endTime > $sessionStart && $endTime <= $sessionEnd) ||
-                    ($startTime <= $sessionStart && $endTime >= $sessionEnd)) {
-                    
+                    ($startTime <= $sessionStart && $endTime >= $sessionEnd)
+                ) {
+
                     $conflicts[] = "Conflict on {$sessionDay} {$sessionStart->format('H:i')}-{$sessionEnd->format('H:i')} with activity: {$session->activity->activity_name}";
                 }
             }
         }
-        
+
         // Check for daily hour limits (max 8 hours per day)
         foreach ($scheduleDays as $day) {
             $dailyHours = $this->calculateInstructorDailyHours($validated['instructor_id'], $day);
             $newHours = $validated['duration_hours'];
-            
+
             if (($dailyHours + $newHours) > 8) {
                 $conflicts[] = "Adding this activity would exceed daily hour limit (8 hours) on {$day}. Current: {$dailyHours}h, New: {$newHours}h";
             }
         }
-        
+
         return $conflicts;
     }
-    
+
     /**
      * Check room availability and capacity conflicts
      */
@@ -3313,44 +3317,45 @@ class ActivityController extends Controller
         $endTime = $startTime->copy()->addHours($validated['duration_hours']);
         $scheduleDays = $validated['schedule_days'];
         $location = $validated['activity_location'];
-        
+
         // Check for room booking conflicts
-        $conflictingSessions = ActivitySession::whereHas('activity', function($query) use ($validated) {
-                $query->where('centre_id', $validated['centre_id'])
-                      ->where('is_active', true);
-            })
+        $conflictingSessions = ActivitySession::whereHas('activity', function ($query) use ($validated) {
+            $query->where('centre_id', $validated['centre_id'])
+                ->where('is_active', true);
+        })
             ->where('location', $location)
             ->where('status', '!=', 'cancelled')
             ->get();
-            
+
         foreach ($conflictingSessions as $session) {
             $sessionDay = Carbon::parse($session->session_date)->format('l');
-            
+
             if (in_array($sessionDay, $scheduleDays)) {
                 $sessionStart = Carbon::parse($session->start_time);
                 $sessionEnd = Carbon::parse($session->end_time);
-                
+
                 // Check for time overlap
                 if (($startTime >= $sessionStart && $startTime < $sessionEnd) ||
                     ($endTime > $sessionStart && $endTime <= $sessionEnd) ||
-                    ($startTime <= $sessionStart && $endTime >= $sessionEnd)) {
-                    
+                    ($startTime <= $sessionStart && $endTime >= $sessionEnd)
+                ) {
+
                     $conflicts[] = "Room '{$location}' is already booked on {$sessionDay} {$sessionStart->format('H:i')}-{$sessionEnd->format('H:i')} for: {$session->activity->activity_name}";
                 }
             }
         }
-        
+
         // Check room capacity (if room data exists)
         $maxParticipants = $validated['max_participants'];
         $roomCapacity = $this->getRoomCapacity($location, $validated['centre_id']);
-        
+
         if ($roomCapacity && $maxParticipants > $roomCapacity) {
             $conflicts[] = "Activity capacity ({$maxParticipants}) exceeds room capacity ({$roomCapacity}) for '{$location}'";
         }
-        
+
         return $conflicts;
     }
-    
+
     /**
      * Calculate string similarity percentage
      */
@@ -3358,39 +3363,39 @@ class ActivityController extends Controller
     {
         $str1 = strtolower(trim($str1));
         $str2 = strtolower(trim($str2));
-        
+
         if ($str1 === $str2) return 100;
         if (empty($str1) || empty($str2)) return 0;
-        
+
         similar_text($str1, $str2, $percent);
         return round($percent, 2);
     }
-    
+
     /**
      * Calculate instructor's daily hours for a specific day
      */
     private function calculateInstructorDailyHours(int $instructorId, string $day): float
     {
-        $existingSessions = ActivitySession::whereHas('activity', function($query) use ($instructorId) {
-                $query->where('instructor_id', $instructorId)
-                      ->where('is_active', true);
-            })
+        $existingSessions = ActivitySession::whereHas('activity', function ($query) use ($instructorId) {
+            $query->where('instructor_id', $instructorId)
+                ->where('is_active', true);
+        })
             ->where('status', '!=', 'cancelled')
             ->get()
-            ->filter(function($session) use ($day) {
+            ->filter(function ($session) use ($day) {
                 return Carbon::parse($session->session_date)->format('l') === $day;
             });
-            
+
         $totalMinutes = 0;
         foreach ($existingSessions as $session) {
             $start = Carbon::parse($session->start_time);
             $end = Carbon::parse($session->end_time);
             $totalMinutes += $start->diffInMinutes($end);
         }
-        
+
         return round($totalMinutes / 60, 2);
     }
-    
+
     /**
      * Get room capacity from database or configuration
      */
@@ -3400,14 +3405,14 @@ class ActivityController extends Controller
         $room = DB::table('assets')
             ->where('asset_name', 'LIKE', "%{$location}%")
             ->where('centre_id', $centreId)
-            ->where('asset_type', 'Room')
+            ->where('asset_parent', 'Room')
             ->first();
-            
+
         if ($room && isset($room->specifications)) {
             $specs = json_decode($room->specifications, true);
             return $specs['capacity'] ?? null;
         }
-        
+
         // Default room capacities based on common room types
         $defaultCapacities = [
             'therapy room' => 6,
@@ -3417,14 +3422,14 @@ class ActivityController extends Controller
             'meeting room' => 12,
             'activity room' => 15
         ];
-        
+
         $locationLower = strtolower($location);
         foreach ($defaultCapacities as $roomType => $capacity) {
             if (str_contains($locationLower, $roomType)) {
                 return $capacity;
             }
         }
-        
+
         return null; // Unknown capacity
     }
 
@@ -3435,22 +3440,22 @@ class ActivityController extends Controller
     {
         try {
             $updateData = [];
-            
+
             if ($locationChanged) {
                 $updateData['location'] = $activity->activity_location;
             }
-            
+
             if ($capacityChanged) {
                 $updateData['max_participants'] = $activity->max_participants;
             }
-            
+
             if (!empty($updateData)) {
                 // Update only future/upcoming sessions to avoid affecting completed ones
                 $updatedCount = ActivitySession::where('activity_id', $activity->id)
                     ->whereIn('session_status', ['scheduled', 'active'])
                     ->where('session_date', '>=', now()->toDateString())
                     ->update($updateData);
-                
+
                 Log::info('Synced activity changes to sessions', [
                     'activity_id' => $activity->id,
                     'sessions_updated' => $updatedCount,
@@ -3505,5 +3510,4 @@ class ActivityController extends Controller
             return '09:00:00';
         }
     }
-
 }

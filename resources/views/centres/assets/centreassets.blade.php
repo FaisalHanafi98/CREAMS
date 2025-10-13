@@ -135,7 +135,7 @@
                                             </div>
                                         </td>
                                         <td>
-                                            <span class="badge badge-light">{{ $asset->asset_type ?? 'N/A' }}</span>
+                                            <span class="badge badge-light">{{ $asset->asset_parent ?? 'N/A' }}</span>
                                         </td>
                                         <td>{{ $asset->asset_brand ?? 'N/A' }}</td>
                                         <td>

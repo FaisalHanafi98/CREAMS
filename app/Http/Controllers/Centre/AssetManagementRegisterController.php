@@ -18,7 +18,7 @@ class AssetManagementRegisterController extends Controller
         $request->validate([
             'asset_id' => 'required',
             'asset_name' => 'required',
-            'asset_type' => 'required',
+            'asset_parent' => 'required',
             'asset_brand' => 'required',
             'asset_price' => 'required|numeric',
             'asset_quantity' => 'required|integer',
@@ -30,7 +30,7 @@ class AssetManagementRegisterController extends Controller
         $asset = Asset::create([
             'asset_id' => $request->asset_id,
             'asset_name' => $request->asset_name,
-            'asset_type' => $request->asset_type,
+            'asset_parent' => $request->asset_parent,
             'asset_brand' => $request->asset_brand,
             'asset_price' => $request->asset_price,
             'asset_quantity' => $request->asset_quantity,

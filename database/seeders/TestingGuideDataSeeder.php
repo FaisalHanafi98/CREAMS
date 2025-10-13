@@ -16,40 +16,40 @@ class TestingGuideDataSeeder extends Seeder
     public function run(): void
     {
         $this->command->info('📋 Seeding Testing Guide Data...');
-        
+
         // Ensure centres exist first
         $this->seedRequiredCentres();
-        
+
         // Seed authentication users
         $this->seedTestingUsers();
-        
+
         // Seed asset categories and types
         $this->seedAssetData();
-        
+
         // Seed existing trainees for testing
         $this->seedExistingTrainees();
-        
+
         // Seed existing volunteers
         $this->seedExistingVolunteers();
-        
+
         // Seed existing contact messages
         $this->seedExistingContactMessages();
-        
+
         // Seed activity categories
         $this->seedActivityCategories();
-        
+
         // Seed realistic activities for comprehensive testing
         $this->seedRealisticActivities();
-        
+
         // Seed activity sessions for time conflict testing
         $this->seedActivitySessions();
-        
+
         // Seed additional trainees for activity testing
         $this->seedAdditionalTrainees();
-        
+
         $this->command->info('✅ Testing Guide Data seeding completed with enhanced activity testing data');
     }
-    
+
     /**
      * Seed required centres
      */
@@ -74,21 +74,21 @@ class TestingGuideDataSeeder extends Seeder
                 'updated_at' => now(),
             ],
         ];
-        
+
         foreach ($centres as $centre) {
             DB::table('centres')->insertOrIgnore($centre);
         }
-        
+
         $this->command->line('   📍 Centres seeded');
     }
-    
+
     /**
      * Seed users referenced in testing guide
      */
     private function seedTestingUsers(): void
     {
         $this->command->info('   👥 Seeding testing guide users...');
-        
+
         $users = [
             // Admin user from testing guide
             [
@@ -179,7 +179,7 @@ class TestingGuideDataSeeder extends Seeder
                 'updated_at' => now(),
             ],
         ];
-        
+
         $userCount = 0;
         foreach ($users as $user) {
             try {
@@ -189,60 +189,60 @@ class TestingGuideDataSeeder extends Seeder
                 // Skip if already exists
             }
         }
-        
+
         $this->command->line("   ✓ Seeded {$userCount} testing guide users");
     }
-    
+
     /**
      * Seed asset categories and types for testing
      */
     private function seedAssetData(): void
     {
         $this->command->info('   📦 Seeding asset categories and types...');
-        
+
         // Asset categories
         $categories = [
             ['id' => 1, 'category_name' => 'Medical Equipment', 'category_description' => 'Therapy and medical equipment', 'is_active' => true, 'created_at' => now(), 'updated_at' => now()],
             ['id' => 2, 'category_name' => 'Furniture', 'category_description' => 'Office and therapy furniture', 'is_active' => true, 'created_at' => now(), 'updated_at' => now()],
             ['id' => 3, 'category_name' => 'Electronics', 'category_description' => 'Computers and electronic devices', 'is_active' => true, 'created_at' => now(), 'updated_at' => now()],
         ];
-        
+
         foreach ($categories as $category) {
             DB::table('asset_categories')->insertOrIgnore($category);
         }
-        
+
         // Asset types
         $types = [
             ['id' => 1, 'name' => 'Therapy Equipment', 'type_description' => 'Physical and occupational therapy equipment', 'category_id' => 1, 'is_active' => true, 'created_at' => now(), 'updated_at' => now()],
             ['id' => 2, 'name' => 'Office Furniture', 'type_description' => 'Desks, chairs, and office furniture', 'category_id' => 2, 'is_active' => true, 'created_at' => now(), 'updated_at' => now()],
             ['id' => 3, 'name' => 'Computer Equipment', 'type_description' => 'Computers, tablets, and peripherals', 'category_id' => 3, 'is_active' => true, 'created_at' => now(), 'updated_at' => now()],
         ];
-        
+
         foreach ($types as $type) {
-            DB::table('asset_types')->insertOrIgnore($type);
+            DB::table('asset_parents')->insertOrIgnore($type);
         }
-        
+
         // Asset locations
         $locations = [
             ['id' => 1, 'location_name' => 'Therapy Room', 'location_description' => 'Main therapy and treatment room', 'centre_id' => '01', 'is_active' => true, 'created_at' => now(), 'updated_at' => now()],
             ['id' => 2, 'location_name' => 'Office Area', 'location_description' => 'Administrative office space', 'centre_id' => '01', 'is_active' => true, 'created_at' => now(), 'updated_at' => now()],
             ['id' => 3, 'location_name' => 'Computer Lab', 'location_description' => 'Computer training laboratory', 'centre_id' => '01', 'is_active' => true, 'created_at' => now(), 'updated_at' => now()],
         ];
-        
+
         foreach ($locations as $location) {
             DB::table('asset_locations')->insertOrIgnore($location);
         }
-        
+
         $this->command->line('   ✓ Asset master data seeded');
     }
-    
+
     /**
      * Seed existing trainees for testing edit scenarios
      */
     private function seedExistingTrainees(): void
     {
         $this->command->info('   👶 Seeding existing trainees for testing...');
-        
+
         $trainees = [
             [
                 'trainee_id' => 'AU0001',
@@ -274,7 +274,7 @@ class TestingGuideDataSeeder extends Seeder
                 'updated_at' => now(),
             ],
         ];
-        
+
         $traineeCount = 0;
         foreach ($trainees as $trainee) {
             try {
@@ -284,17 +284,17 @@ class TestingGuideDataSeeder extends Seeder
                 // Skip if already exists
             }
         }
-        
+
         $this->command->line("   ✓ Seeded {$traineeCount} existing trainees");
     }
-    
+
     /**
      * Seed existing volunteers for testing
      */
     private function seedExistingVolunteers(): void
     {
         $this->command->info('   🙋 Seeding existing volunteers for testing...');
-        
+
         $volunteers = [
             [
                 'volunteer_id' => 'VL0001',
@@ -315,7 +315,7 @@ class TestingGuideDataSeeder extends Seeder
                 'updated_at' => now(),
             ],
         ];
-        
+
         $volunteerCount = 0;
         foreach ($volunteers as $volunteer) {
             try {
@@ -325,17 +325,17 @@ class TestingGuideDataSeeder extends Seeder
                 // Skip if already exists
             }
         }
-        
+
         $this->command->line("   ✓ Seeded {$volunteerCount} existing volunteers");
     }
-    
+
     /**
      * Seed existing contact messages for testing
      */
     private function seedExistingContactMessages(): void
     {
         $this->command->info('   📧 Seeding existing contact messages...');
-        
+
         $messages = [
             [
                 'name' => 'Previous Inquirer',
@@ -350,7 +350,7 @@ class TestingGuideDataSeeder extends Seeder
                 'updated_at' => now()->subDays(3),
             ],
         ];
-        
+
         $messageCount = 0;
         foreach ($messages as $message) {
             try {
@@ -360,21 +360,21 @@ class TestingGuideDataSeeder extends Seeder
                 // Skip if already exists
             }
         }
-        
+
         $this->command->line("   ✓ Seeded {$messageCount} existing contact messages");
     }
-    
+
     /**
      * Seed activity categories for testing
      */
     private function seedActivityCategories(): void
     {
         $this->command->info('   🎯 Seeding activity categories...');
-        
+
         // Realistic activity categories aligned with database schema
         $categories = [
             [
-                'id' => 1, 
+                'id' => 1,
                 'category_name' => 'Speech Therapy',
                 'category_name_bm' => 'Terapi Pertuturan',
                 'category_type' => 'rehabilitation',
@@ -382,13 +382,13 @@ class TestingGuideDataSeeder extends Seeder
                 'category_icon' => 'fas fa-comments',
                 'category_description' => 'Speech and communication therapy programs',
                 'is_active' => true,
-                'created_at' => now(), 
+                'created_at' => now(),
                 'updated_at' => now()
             ],
             [
                 'id' => 2,
                 'category_name' => 'Occupational Therapy',
-                'category_name_bm' => 'Terapi Okupasi', 
+                'category_name_bm' => 'Terapi Okupasi',
                 'category_type' => 'rehabilitation',
                 'category_color' => '#4ECDC4',
                 'category_icon' => 'fas fa-hands-helping',
@@ -401,7 +401,7 @@ class TestingGuideDataSeeder extends Seeder
                 'id' => 3,
                 'category_name' => 'Physical Therapy',
                 'category_name_bm' => 'Fisioterapi',
-                'category_type' => 'rehabilitation', 
+                'category_type' => 'rehabilitation',
                 'category_color' => '#45B7D1',
                 'category_icon' => 'fas fa-running',
                 'category_description' => 'Physical rehabilitation and motor skills',
@@ -410,7 +410,7 @@ class TestingGuideDataSeeder extends Seeder
                 'updated_at' => now()
             ]
         ];
-        
+
         // Only seed if the table exists
         try {
             foreach ($categories as $category) {
@@ -421,14 +421,14 @@ class TestingGuideDataSeeder extends Seeder
             $this->command->line('   ⚠️ Activity categories table may not exist - skipping');
         }
     }
-    
+
     /**
      * Seed realistic activities for testing comprehensive scenarios
      */
     private function seedRealisticActivities(): void
     {
         $this->command->info('   🏃 Seeding realistic activities for testing...');
-        
+
         $activities = [
             [
                 'id' => 1,
@@ -500,7 +500,7 @@ class TestingGuideDataSeeder extends Seeder
                 'updated_at' => now()
             ]
         ];
-        
+
         try {
             foreach ($activities as $activity) {
                 DB::table('activities')->insertOrIgnore($activity);
@@ -510,14 +510,14 @@ class TestingGuideDataSeeder extends Seeder
             $this->command->line('   ⚠️ Activities table may not exist - skipping');
         }
     }
-    
+
     /**
      * Seed activity sessions for testing time conflicts
      */
     private function seedActivitySessions(): void
     {
         $this->command->info('   📅 Seeding activity sessions for conflict testing...');
-        
+
         $sessions = [
             [
                 'id' => 1,
@@ -571,7 +571,7 @@ class TestingGuideDataSeeder extends Seeder
                 'updated_at' => now()
             ]
         ];
-        
+
         try {
             foreach ($sessions as $session) {
                 DB::table('activity_sessions')->insertOrIgnore($session);
@@ -581,14 +581,14 @@ class TestingGuideDataSeeder extends Seeder
             $this->command->line('   ⚠️ Activity sessions table may not exist - skipping');
         }
     }
-    
+
     /**
      * Seed additional realistic trainees for activity testing
      */
     private function seedAdditionalTrainees(): void
     {
         $this->command->info('   👶 Seeding additional trainees for activity testing...');
-        
+
         $trainees = [
             [
                 'trainee_id' => 'AU0002',
@@ -678,7 +678,7 @@ class TestingGuideDataSeeder extends Seeder
                 'updated_at' => now()
             ]
         ];
-        
+
         $traineeCount = 0;
         foreach ($trainees as $trainee) {
             try {
@@ -688,7 +688,7 @@ class TestingGuideDataSeeder extends Seeder
                 // Skip if already exists
             }
         }
-        
+
         $this->command->line("   ✓ Seeded {$traineeCount} additional trainees for activity testing");
     }
 }

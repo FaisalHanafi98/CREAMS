@@ -11,7 +11,7 @@ use Carbon\Carbon;
 
 /**
  * Enhanced Asset Model
- * 
+ *
  * This model provides comprehensive asset management capabilities
  * including tracking, maintenance, depreciation, and movement history.
  */
@@ -22,12 +22,28 @@ class AssetEnhanced extends Model
     protected $table = 'assets';
 
     protected $fillable = [
-        'asset_tag', 'asset_name', 'asset_description', 'type_id', 'centre_id',
-        'location_id', 'assigned_to_user', 'manufacturer', 'model_number', 'serial_number',
-        'purchase_date', 'purchase_price', 'status',
-        'warranty_date', 'last_maintenance_date', 'next_maintenance_date',
-        'maintenance_interval', 'image_path', 'qr_code', 'rfid_tag',
-        'barcode', 'notes'
+        'asset_tag',
+        'asset_name',
+        'asset_description',
+        'type_id',
+        'centre_id',
+        'location_id',
+        'assigned_to_user',
+        'manufacturer',
+        'model_number',
+        'serial_number',
+        'purchase_date',
+        'purchase_price',
+        'status',
+        'warranty_date',
+        'last_maintenance_date',
+        'next_maintenance_date',
+        'maintenance_interval',
+        'image_path',
+        'qr_code',
+        'rfid_tag',
+        'barcode',
+        'notes'
     ];
 
     protected $casts = [
@@ -70,9 +86,9 @@ class AssetEnhanced extends Model
     /**
      * Get the asset type
      */
-    public function assetType(): BelongsTo
+    public function assetParent(): BelongsTo
     {
-        return $this->belongsTo(AssetType::class, 'type_id');
+        return $this->belongsTo(AssetParent::class, 'type_id');
     }
 
     /**
@@ -149,7 +165,7 @@ class AssetEnhanced extends Model
     public function scopeNeedingMaintenance($query)
     {
         return $query->where('next_maintenance_date', '<=', now())
-                     ->whereNotNull('next_maintenance_date');
+            ->whereNotNull('next_maintenance_date');
     }
 
     /**
@@ -159,10 +175,10 @@ class AssetEnhanced extends Model
     {
         return $query->where(function ($q) use ($search) {
             $q->where('name', 'LIKE', "%{$search}%")
-              ->orWhere('asset_tag', 'LIKE', "%{$search}%")
-              ->orWhere('brand', 'LIKE', "%{$search}%")
-              ->orWhere('model', 'LIKE', "%{$search}%")
-              ->orWhere('serial_number', 'LIKE', "%{$search}%");
+                ->orWhere('asset_tag', 'LIKE', "%{$search}%")
+                ->orWhere('brand', 'LIKE', "%{$search}%")
+                ->orWhere('model', 'LIKE', "%{$search}%")
+                ->orWhere('serial_number', 'LIKE', "%{$search}%");
         });
     }
 
@@ -177,9 +193,9 @@ class AssetEnhanced extends Model
     /**
      * Scope to filter by asset type
      */
-    public function scopeOfType($query, $assetTypeId)
+    public function scopeOfType($query, $assetParentId)
     {
-        return $query->where('type_id', $assetTypeId);
+        return $query->where('type_id', $assetParentId);
     }
 
     // =============================================
@@ -264,7 +280,7 @@ class AssetEnhanced extends Model
      */
     public function getStatusBadgeClassAttribute(): string
     {
-        return match($this->status) {
+        return match ($this->status) {
             self::STATUS_AVAILABLE => 'badge-success',
             self::STATUS_IN_USE => 'badge-primary',
             self::STATUS_MAINTENANCE => 'badge-warning',
@@ -299,10 +315,10 @@ class AssetEnhanced extends Model
         if ($notes) {
             $this->notes = ($this->notes ? $this->notes . "\n" : '') . "Assigned: " . $notes;
         }
-        
+
         // Log the movement
         $this->logMovement('assignment', "Assigned to user ID: {$userId}", $notes);
-        
+
         return $this->save();
     }
 
@@ -317,10 +333,10 @@ class AssetEnhanced extends Model
         if ($notes) {
             $this->notes = ($this->notes ? $this->notes . "\n" : '') . "Returned: " . $notes;
         }
-        
+
         // Log the movement
         $this->logMovement('return', "Returned from user ID: {$previousAssignee}", $notes);
-        
+
         return $this->save();
     }
 
@@ -334,12 +350,12 @@ class AssetEnhanced extends Model
         if ($notes) {
             $this->notes = ($this->notes ? $this->notes . "\n" : '') . "Maintenance: " . $notes;
         }
-        
+
         // Calculate next maintenance date if interval is set
         if ($this->maintenance_interval) {
             $this->next_maintenance_date = now()->addDays($this->maintenance_interval);
         }
-        
+
         // Log maintenance record
         $this->maintenanceRecords()->create([
             'maintenance_type' => 'scheduled',
@@ -348,7 +364,7 @@ class AssetEnhanced extends Model
             'status' => 'in_progress',
             'performed_by' => session('id'),
         ]);
-        
+
         return $this->save();
     }
 
@@ -362,13 +378,13 @@ class AssetEnhanced extends Model
         if ($notes) {
             $this->notes = ($this->notes ? $this->notes . "\n" : '') . "Maintenance completed: " . $notes;
         }
-        
+
         // Update the latest maintenance record
         $latestMaintenance = $this->maintenanceRecords()
-                                  ->where('status', 'in_progress')
-                                  ->latest()
-                                  ->first();
-        
+            ->where('status', 'in_progress')
+            ->latest()
+            ->first();
+
         if ($latestMaintenance) {
             $latestMaintenance->update([
                 'completed_date' => now(),
@@ -377,7 +393,7 @@ class AssetEnhanced extends Model
                 'cost' => $cost,
             ]);
         }
-        
+
         return $this->save();
     }
 
@@ -391,10 +407,10 @@ class AssetEnhanced extends Model
         if ($notes) {
             $this->notes = ($this->notes ? $this->notes . "\n" : '') . "Moved: " . $notes;
         }
-        
+
         // Log the movement
         $this->logMovement('relocation', "Moved from location {$previousLocation} to {$locationId}", $notes);
-        
+
         return $this->save();
     }
 
@@ -408,10 +424,10 @@ class AssetEnhanced extends Model
         if ($reason) {
             $this->notes = ($this->notes ? $this->notes . "\n" : '') . "Retired: " . $reason;
         }
-        
+
         // Log the retirement
         $this->logMovement('retirement', 'Asset retired', $reason);
-        
+
         return $this->save();
     }
 
@@ -420,9 +436,9 @@ class AssetEnhanced extends Model
      */
     public function updateCurrentValue(): bool
     {
-        if ($this->assetType && $this->purchase_price && $this->purchase_date) {
-            $this->current_value = $this->assetType->calculateDepreciatedValue(
-                $this->purchase_price, 
+        if ($this->assetParent && $this->purchase_price && $this->purchase_date) {
+            $this->current_value = $this->assetParent->calculateDepreciatedValue(
+                $this->purchase_price,
                 $this->purchase_date
             );
             return $this->save();
@@ -460,7 +476,7 @@ class AssetEnhanced extends Model
         do {
             $code = $prefix . '-' . strtoupper(uniqid());
         } while (self::where('asset_tag', $code)->exists());
-        
+
         return $code;
     }
 
@@ -470,17 +486,17 @@ class AssetEnhanced extends Model
     public static function getRequiringAttention(): array
     {
         return [
-            'maintenance_due' => self::needingMaintenance()->with(['assetType', 'centre'])->get(),
+            'maintenance_due' => self::needingMaintenance()->with(['assetParent', 'centre'])->get(),
             'warranty_expiring' => self::whereNotNull('warranty_date')
-                                       ->where('warranty_date', '<=', now()->addDays(30))
-                                       ->where('warranty_date', '>', now())
-                                       ->with(['assetType', 'centre'])
-                                       ->get(),
+                ->where('warranty_date', '<=', now()->addDays(30))
+                ->where('warranty_date', '>', now())
+                ->with(['assetParent', 'centre'])
+                ->get(),
             'unassigned_valuable' => self::available()
-                                         ->where('purchase_price', '>', 1000)
-                                         ->whereNull('assigned_to_user')
-                                         ->with(['assetType', 'centre'])
-                                         ->get(),
+                ->where('purchase_price', '>', 1000)
+                ->whereNull('assigned_to_user')
+                ->with(['assetParent', 'centre'])
+                ->get(),
         ];
     }
 
@@ -498,9 +514,9 @@ class AssetEnhanced extends Model
             'total_value' => self::sum('current_value'),
             'maintenance_due' => self::needingMaintenance()->count(),
             'warranty_expiring' => self::whereNotNull('warranty_date')
-                                       ->where('warranty_date', '<=', now()->addDays(30))
-                                       ->where('warranty_date', '>', now())
-                                       ->count(),
+                ->where('warranty_date', '<=', now()->addDays(30))
+                ->where('warranty_date', '>', now())
+                ->count(),
         ];
     }
 }

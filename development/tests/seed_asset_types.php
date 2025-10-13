@@ -9,8 +9,8 @@ $app->make('Illuminate\Contracts\Console\Kernel')->bootstrap();
 echo "=== SEEDING ASSET TYPES ===" . PHP_EOL;
 
 try {
-    // Create AssetType model if it doesn't exist or use direct DB
-    $assetTypes = [
+    // Create AssetParent model if it doesn't exist or use direct DB
+    $assetParents = [
         [
             'name' => 'Equipment',
             'type_description' => 'Medical and therapy equipment',
@@ -48,8 +48,8 @@ try {
         ]
     ];
 
-    foreach ($assetTypes as $type) {
-        DB::table('asset_types')->updateOrInsert(
+    foreach ($assetParents as $type) {
+        DB::table('asset_parents')->updateOrInsert(
             ['name' => $type['name']],
             array_merge($type, [
                 'created_at' => now(),
@@ -60,7 +60,6 @@ try {
     }
 
     echo PHP_EOL . "Asset types seeded successfully!" . PHP_EOL;
-
 } catch (Exception $e) {
     echo "❌ Error seeding asset types: " . $e->getMessage() . PHP_EOL;
 }

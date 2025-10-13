@@ -19,9 +19,9 @@ class SystemHealthCheck extends Command
     public function handle()
     {
         $this->info('🔍 Starting CREAMS System Health Check...');
-        
+
         $issues = [];
-        
+
         // Check database connection
         $this->info('📊 Checking database connection...');
         try {
@@ -30,7 +30,7 @@ class SystemHealthCheck extends Command
         } catch (\Exception $e) {
             $issues[] = '❌ Database connection failed: ' . $e->getMessage();
         }
-        
+
         // Check critical tables exist
         $this->info('🗃️  Checking critical tables...');
         $criticalTables = ['users', 'trainees', 'activities', 'centres', 'assets'];
@@ -41,30 +41,30 @@ class SystemHealthCheck extends Command
                 $issues[] = "❌ Critical table '{$table}' does not exist";
             }
         }
-        
+
         // Check model relationships
         $this->info('🔗 Checking model relationships...');
         try {
             // Test User model
             $userCount = User::count();
             $this->info("✅ User model: {$userCount} records");
-            
+
             // Test Trainee model and avatar field
             $traineeCount = Trainee::count();
             $this->info("✅ Trainee model: {$traineeCount} records");
-            
+
             // Test if avatar field exists in trainees
             if (Schema::hasColumn('trainees', 'avatar')) {
                 $this->info('✅ Trainee avatar field: EXISTS');
             } else {
                 $issues[] = '❌ Trainee avatar field missing';
             }
-            
+
             // Test Activity model with creator relationship
             if (class_exists('App\Models\Activity')) {
                 $activityCount = Activity::count();
                 $this->info("✅ Activity model: {$activityCount} records");
-                
+
                 // Test creator relationship
                 $activityWithCreator = Activity::with('creator')->first();
                 if ($activityWithCreator) {
@@ -73,32 +73,31 @@ class SystemHealthCheck extends Command
                     $this->info('⚠️  Activity-Creator relationship: No data to test');
                 }
             }
-            
+
             // Test Asset model
             if (class_exists('App\Models\Asset')) {
                 $assetCount = Asset::count();
                 $this->info("✅ Asset model: {$assetCount} records");
             }
-            
+
             // Test Centre model
             $centreCount = Centre::count();
             $this->info("✅ Centre model: {$centreCount} records");
-            
         } catch (\Exception $e) {
             $issues[] = '❌ Model relationship error: ' . $e->getMessage();
         }
-        
+
         // Check asset management system
         $this->info('🏗️  Checking asset management system...');
         try {
-            // Check asset_types table
-            if (Schema::hasTable('asset_types')) {
-                $assetTypesCount = DB::table('asset_types')->count();
-                $this->info("✅ Asset types table: {$assetTypesCount} records");
+            // Check asset_parents table
+            if (Schema::hasTable('asset_parents')) {
+                $assetParentsCount = DB::table('asset_parents')->count();
+                $this->info("✅ Asset types table: {$assetParentsCount} records");
             } else {
                 $issues[] = '❌ Asset types table missing';
             }
-            
+
             // Check enhanced asset tables
             $enhancedTables = ['assets', 'asset_locations', 'asset_movements', 'asset_maintenance'];
             foreach ($enhancedTables as $table) {
@@ -112,7 +111,7 @@ class SystemHealthCheck extends Command
         } catch (\Exception $e) {
             $issues[] = '❌ Asset management system error: ' . $e->getMessage();
         }
-        
+
         // Check avatar standardization
         $this->info('🖼️  Checking avatar standardization...');
         try {
@@ -123,7 +122,7 @@ class SystemHealthCheck extends Command
                 } else {
                     $issues[] = "❌ {$table}.avatar field missing";
                 }
-                
+
                 // Check if old avatar fields still exist (should be removed)
                 $oldFields = ['user_avatar', 'trainee_avatar'];
                 foreach ($oldFields as $field) {
@@ -135,12 +134,12 @@ class SystemHealthCheck extends Command
         } catch (\Exception $e) {
             $issues[] = '❌ Avatar standardization check error: ' . $e->getMessage();
         }
-        
+
         // Summary
         $this->info('');
         $this->info('📋 HEALTH CHECK SUMMARY');
         $this->info('========================');
-        
+
         if (empty($issues)) {
             $this->info('🎉 All checks passed! System is healthy.');
             return 0;

@@ -284,7 +284,7 @@ class AssetController extends Controller
                 'condition' => 'required|in:new,excellent,good,fair,poor,broken',
                 'status' => 'required|in:available,in_use,maintenance,retired',
                 'location_id' => 'nullable|exists:asset_locations,id',
-                'type_id' => 'nullable|exists:asset_types,id',
+                'type_id' => 'nullable|exists:asset_parents,id',
                 'images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
                 'notes' => 'nullable|string'
             ]);
@@ -477,7 +477,7 @@ class AssetController extends Controller
                 'condition' => 'required|in:new,good,fair,poor,broken',
                 'status' => 'required|in:available,in_use,maintenance,disposed',
                 'location_id' => 'nullable|exists:asset_locations,id',
-                'type_id' => 'nullable|exists:asset_types,id',
+                'type_id' => 'nullable|exists:asset_parents,id',
                 'assigned_to_user' => 'nullable|exists:users,id',
                 'images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
                 'notes' => 'nullable|string'

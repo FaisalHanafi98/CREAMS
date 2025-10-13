@@ -25,7 +25,7 @@ class AssetManagementUpdateController extends Controller
         // Validate the request data
         $validatedData = $request->validate([
             'asset_name' => 'required',
-            'asset_type' => 'required',
+            'asset_parent' => 'required',
             'asset_quantity' => 'required|numeric',
             'asset_price' => 'required|numeric',
             'centre_name' => 'required',
@@ -42,7 +42,7 @@ class AssetManagementUpdateController extends Controller
 
         // Update the asset fields with the validated data
         $asset->asset_name = $validatedData['asset_name'];
-        $asset->asset_type = $validatedData['asset_type'];
+        $asset->asset_parent = $validatedData['asset_parent'];
         $asset->asset_quantity = $validatedData['asset_quantity'];
         $asset->asset_price = $validatedData['asset_price'];
         $asset->centre_name = $validatedData['centre_name'];
@@ -65,4 +65,3 @@ class AssetManagementUpdateController extends Controller
         return redirect()->route('assetupdatepage', ['asset_id' => $assetId])->with('success', 'Asset updated successfully');
     }
 }
-

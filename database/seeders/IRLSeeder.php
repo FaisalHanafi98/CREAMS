@@ -22,28 +22,28 @@ class IRLSeeder extends Seeder
     public function run(): void
     {
         $this->command->info('🏥 Seeding IRL (In Real Life) data for Gombak Centre...');
-        
+
         $faker = Faker::create('ms_MY'); // Malaysian locale
-        
+
         // Get Gombak centre
         $gombakCentre = Centre::where('centre_id', '01')->first();
         if (!$gombakCentre) {
             $this->command->error('Gombak Centre (01) not found!');
             return;
         }
-        
+
         $this->command->info('📍 Target Centre: ' . $gombakCentre->centre_name . ' (ID: ' . $gombakCentre->centre_id . ')');
 
         // Clear existing Gombak-specific data to avoid conflicts
         $this->clearExistingGombakData($gombakCentre->centre_id);
-        
+
         // Seed data in logical order
         $this->seedAssets($gombakCentre, $faker);
         $this->seedTrainees($gombakCentre, $faker);
         $this->seedStaff($gombakCentre, $faker);
         $this->seedActivities($gombakCentre, $faker);
         $this->seedSchedules($gombakCentre, $faker);
-        
+
         $this->command->info('✅ IRL seeding completed successfully for Gombak Centre!');
     }
 
@@ -53,18 +53,18 @@ class IRLSeeder extends Seeder
     private function clearExistingGombakData($centreId)
     {
         $this->command->info('🧹 Clearing existing Gombak data to prevent conflicts...');
-        
+
         // Delete in reverse dependency order
         $activityIds = Activity::where('centre_id', $centreId)->pluck('id');
         DB::table('activity_sessions')->whereIn('activity_id', $activityIds)->delete();
-        
+
         Activity::where('centre_id', $centreId)->delete();
         Asset::where('centre_id', $centreId)->delete();
         Trainee::where('centre_id', $centreId)->delete();
-        
+
         // Remove all users for this centre to prevent duplicates
         User::where('centre_id', $centreId)->delete();
-        
+
         $this->command->info('✅ Existing Gombak data cleared');
     }
 
@@ -74,9 +74,9 @@ class IRLSeeder extends Seeder
     private function seedAssets($centre, $faker)
     {
         $this->command->info('📦 Seeding asset inventory...');
-        
+
         // Get asset type IDs for mapping
-        $assetTypeMapping = [
+        $assetParentMapping = [
             'Gym Equipment' => 1,        // Medical Equipment (closest match for therapy equipment)
             'Storage' => 4,              // Furniture
             'Furniture' => 4,            // Furniture
@@ -92,13 +92,13 @@ class IRLSeeder extends Seeder
             'Musical Instrument' => 2,   // Learning Materials
             'Educational Equipment' => 2 // Learning Materials
         ];
-        
+
         $assetData = [
             // PPT EDU SUPPLIES GYM EQUIPMENT (24/02/2023)
             [
                 'asset_tag' => 'PDCARE/2025/G-PPT/PB4590-1/1',
                 'asset_name' => 'Peanut Ball 45cm x 90cm',
-                'asset_type' => 'Gym Equipment',
+                'asset_parent' => 'Gym Equipment',
                 'supplier' => 'PPT EDU SUPPLIES',
                 'purchase_date' => '2023-02-24',
                 'quantity' => 1
@@ -106,7 +106,7 @@ class IRLSeeder extends Seeder
             [
                 'asset_tag' => 'PDCARE/2025/G-PPT/TB75-1/1',
                 'asset_name' => 'Touch Ball 75cm',
-                'asset_type' => 'Gym Equipment',
+                'asset_parent' => 'Gym Equipment',
                 'supplier' => 'PPT EDU SUPPLIES',
                 'purchase_date' => '2023-02-24',
                 'quantity' => 1
@@ -114,7 +114,7 @@ class IRLSeeder extends Seeder
             [
                 'asset_tag' => 'PDCARE/2025/G-PPT/GR-1/1',
                 'asset_name' => 'Gym Roller',
-                'asset_type' => 'Gym Equipment',
+                'asset_parent' => 'Gym Equipment',
                 'supplier' => 'PPT EDU SUPPLIES',
                 'purchase_date' => '2023-02-24',
                 'quantity' => 1
@@ -122,7 +122,7 @@ class IRLSeeder extends Seeder
             [
                 'asset_tag' => 'PDCARE/2025/G-PPT/BSCCN-1/1',
                 'asset_name' => 'Bench Storage (Castors & Cushion Not)',
-                'asset_type' => 'Storage',
+                'asset_parent' => 'Storage',
                 'supplier' => 'PPT EDU SUPPLIES',
                 'purchase_date' => '2023-02-24',
                 'quantity' => 1
@@ -130,7 +130,7 @@ class IRLSeeder extends Seeder
             [
                 'asset_tag' => 'PDCARE/2025/G-PPT/12LEAS-1/1',
                 'asset_name' => '12 Level Economy Adjustable Shelf',
-                'asset_type' => 'Storage',
+                'asset_parent' => 'Storage',
                 'supplier' => 'PPT EDU SUPPLIES',
                 'purchase_date' => '2023-02-24',
                 'quantity' => 1
@@ -138,7 +138,7 @@ class IRLSeeder extends Seeder
             [
                 'asset_tag' => 'PDCARE/2025/G-PPT/6LEMPSS-1/1',
                 'asset_name' => '6 Level Economy Multi-Purpose Storage Shelf',
-                'asset_type' => 'Storage',
+                'asset_parent' => 'Storage',
                 'supplier' => 'PPT EDU SUPPLIES',
                 'purchase_date' => '2023-02-24',
                 'quantity' => 1
@@ -146,7 +146,7 @@ class IRLSeeder extends Seeder
             [
                 'asset_tag' => 'PDCARE/2025/G-PPT/3LESS-1/1',
                 'asset_name' => '3 Level Economy Storage Shelf',
-                'asset_type' => 'Storage',
+                'asset_parent' => 'Storage',
                 'supplier' => 'PPT EDU SUPPLIES',
                 'purchase_date' => '2023-02-24',
                 'quantity' => 1
@@ -154,7 +154,7 @@ class IRLSeeder extends Seeder
             [
                 'asset_tag' => 'PDCARE/2025/G-PPT/WOTDGM-1/1',
                 'asset_name' => 'Wooden Office Table (Dark Grey + Maple)',
-                'asset_type' => 'Furniture',
+                'asset_parent' => 'Furniture',
                 'supplier' => 'PPT EDU SUPPLIES',
                 'purchase_date' => '2023-02-24',
                 'quantity' => 1
@@ -162,7 +162,7 @@ class IRLSeeder extends Seeder
             [
                 'asset_tag' => 'PDCARE/2025/G-PPT/MP3DDGM-1/1',
                 'asset_name' => 'Mobile Pedestal 3 Drawer (Dark Grey + Maple)',
-                'asset_type' => 'Storage',
+                'asset_parent' => 'Storage',
                 'supplier' => 'PPT EDU SUPPLIES',
                 'purchase_date' => '2023-02-24',
                 'quantity' => 1
@@ -170,7 +170,7 @@ class IRLSeeder extends Seeder
             [
                 'asset_tag' => 'PDCARE/2025/G-PPT/JBFP-1/3',
                 'asset_name' => 'Jumping Ball (Free Pump)',
-                'asset_type' => 'Gym Equipment',
+                'asset_parent' => 'Gym Equipment',
                 'supplier' => 'PPT EDU SUPPLIES',
                 'purchase_date' => '2023-02-24',
                 'quantity' => 3
@@ -178,7 +178,7 @@ class IRLSeeder extends Seeder
             [
                 'asset_tag' => 'PDCARE/2025/G-PPT/24HH-1/5',
                 'asset_name' => '24" Hula Hoop',
-                'asset_type' => 'Gym Equipment',
+                'asset_parent' => 'Gym Equipment',
                 'supplier' => 'PPT EDU SUPPLIES',
                 'purchase_date' => '2023-02-24',
                 'quantity' => 5
@@ -188,7 +188,7 @@ class IRLSeeder extends Seeder
             [
                 'asset_tag' => 'PDCARE/2025/F-PPT/PC49.55B-1/12',
                 'asset_name' => 'Plastic Chair Blue (49.5cm x 51cm x 86.5cm)',
-                'asset_type' => 'Furniture',
+                'asset_parent' => 'Furniture',
                 'supplier' => 'PPT EDU SUPPLIES',
                 'purchase_date' => '2023-08-25',
                 'quantity' => 12,
@@ -197,7 +197,7 @@ class IRLSeeder extends Seeder
             [
                 'asset_tag' => 'PDCARE/2025/F-PPT/PC49.55G-1/12',
                 'asset_name' => 'Plastic Chair Green (49.5cm x 51cm x 86.5cm)',
-                'asset_type' => 'Furniture',
+                'asset_parent' => 'Furniture',
                 'supplier' => 'PPT EDU SUPPLIES',
                 'purchase_date' => '2023-08-25',
                 'quantity' => 12,
@@ -208,7 +208,7 @@ class IRLSeeder extends Seeder
             [
                 'asset_tag' => 'PDCARE/2025/F-USL/RB-1/2',
                 'asset_name' => 'Ring Bell',
-                'asset_type' => 'Musical Instrument',
+                'asset_parent' => 'Musical Instrument',
                 'supplier' => 'USL EDUCATIONAL SUPPLIES (M) SDN. BHD.',
                 'purchase_date' => '2024-12-31',
                 'quantity' => 2
@@ -216,7 +216,7 @@ class IRLSeeder extends Seeder
             [
                 'asset_tag' => 'PDCARE/2025/F-USL/WT6-1/1',
                 'asset_name' => 'Wooden Tambourine 6"',
-                'asset_type' => 'Musical Instrument',
+                'asset_parent' => 'Musical Instrument',
                 'supplier' => 'USL EDUCATIONAL SUPPLIES (M) SDN. BHD.',
                 'purchase_date' => '2024-12-31',
                 'quantity' => 1
@@ -224,7 +224,7 @@ class IRLSeeder extends Seeder
             [
                 'asset_tag' => 'PDCARE/2025/F-USL/T6-1/2',
                 'asset_name' => 'Triangle 6"',
-                'asset_type' => 'Musical Instrument',
+                'asset_parent' => 'Musical Instrument',
                 'supplier' => 'USL EDUCATIONAL SUPPLIES (M) SDN. BHD.',
                 'purchase_date' => '2024-12-31',
                 'quantity' => 2
@@ -232,7 +232,7 @@ class IRLSeeder extends Seeder
             [
                 'asset_tag' => 'PDCARE/2025/F-USL/RT24W-1/2',
                 'asset_name' => 'Rectangular Table 2\'x4\' - Wood',
-                'asset_type' => 'Furniture',
+                'asset_parent' => 'Furniture',
                 'supplier' => 'USL EDUCATIONAL SUPPLIES (M) SDN. BHD.',
                 'purchase_date' => '2024-12-31',
                 'quantity' => 2
@@ -240,7 +240,7 @@ class IRLSeeder extends Seeder
             [
                 'asset_tag' => 'PDCARE/2025/F-USL/PCC28B-1/8',
                 'asset_name' => 'Premium Children Chair 28cm - Brown',
-                'asset_type' => 'Furniture',
+                'asset_parent' => 'Furniture',
                 'supplier' => 'USL EDUCATIONAL SUPPLIES (M) SDN. BHD.',
                 'purchase_date' => '2024-12-31',
                 'quantity' => 8,
@@ -249,7 +249,7 @@ class IRLSeeder extends Seeder
             [
                 'asset_tag' => 'PDCARE/2025/F-USL/MWB36-1/1',
                 'asset_name' => 'Magnetic White Board 3\'x6\'',
-                'asset_type' => 'Educational Equipment',
+                'asset_parent' => 'Educational Equipment',
                 'supplier' => 'USL EDUCATIONAL SUPPLIES (M) SDN. BHD.',
                 'purchase_date' => '2024-12-31',
                 'quantity' => 1
@@ -263,9 +263,9 @@ class IRLSeeder extends Seeder
                 Asset::create([
                     'asset_tag' => $data['quantity'] > 1 ? $data['asset_tag'] . '-' . $i : $data['asset_tag'],
                     'asset_name' => $data['asset_name'],
-                    'asset_description' => $data['asset_name'] . ' - ' . $data['asset_type'],
-                    'type_id' => $assetTypeMapping[$data['asset_type']] ?? 2, // Default to Educational Materials
-                    'category_id' => $assetCategoryMapping[$data['asset_type']] ?? 2, // Default to Learning Materials
+                    'asset_description' => $data['asset_name'] . ' - ' . $data['asset_parent'],
+                    'type_id' => $assetParentMapping[$data['asset_parent']] ?? 2, // Default to Educational Materials
+                    'category_id' => $assetCategoryMapping[$data['asset_parent']] ?? 2, // Default to Learning Materials
                     'centre_id' => $centre->centre_id,
                     'serial_number' => 'SN' . strtoupper($faker->bothify('##??####')),
                     'manufacturer' => $data['supplier'],
@@ -289,7 +289,7 @@ class IRLSeeder extends Seeder
     private function seedTrainees($centre, $faker)
     {
         $this->command->info('👨‍🎓 Seeding trainee records...');
-        
+
         $realTrainees = [
             [
                 'name' => 'Aariz Hakimi bin Muhamad Nasrul',
@@ -398,7 +398,7 @@ class IRLSeeder extends Seeder
             $lastName = implode(' ', array_slice($nameParts, 1));
 
             $dob = Carbon::now()->subYears($data['age'])->subMonths(rand(1, 11))->subDays(rand(1, 28));
-            
+
             Trainee::create([
                 'trainee_id' => 'GMK' . sprintf('%04d', $traineeCount + 1),
                 'trainee_first_name' => $firstName,
@@ -423,7 +423,7 @@ class IRLSeeder extends Seeder
                 'medical_history' => 'OKU Card: ' . $data['oku_card'],
                 'additional_notes' => 'Real trainee record from PPDK UIAM Gombak'
             ]);
-            
+
             $traineeCount++;
         }
 
@@ -436,11 +436,11 @@ class IRLSeeder extends Seeder
     private function seedStaff($centre, $faker)
     {
         $this->command->info('👥 Seeding staff members...');
-        
+
         // Function to generate IIUM staff ID (ABCD1234 format)
-        $generateStaffId = function() {
+        $generateStaffId = function () {
             $letters = '';
-            for($i = 0; $i < 4; $i++) {
+            for ($i = 0; $i < 4; $i++) {
                 $letters .= chr(rand(65, 90)); // A-Z
             }
             $numbers = str_pad(rand(1000, 9999), 4, '0', STR_PAD_LEFT);
@@ -450,7 +450,7 @@ class IRLSeeder extends Seeder
         // Gombak addresses
         $gombakAddresses = [
             'Jalan 7/27A, Taman Gombak Setia, 53100 Kuala Lumpur',
-            'Jalan Gombak 3/1, Taman Gombak Jaya, 53000 Kuala Lumpur', 
+            'Jalan Gombak 3/1, Taman Gombak Jaya, 53000 Kuala Lumpur',
             'Jalan Keranji 5, Taman Keranji, 68100 Batu Caves, Selangor',
             'Jalan Wangsa 8/2, Wangsa Maju, 53300 Kuala Lumpur',
             'Jalan AU5, Taman Keramat AU, 54200 Kuala Lumpur',
@@ -462,12 +462,20 @@ class IRLSeeder extends Seeder
         // Education levels and specializations for special needs education
         $educationLevels = ['Bachelor\'s Degree', 'Master\'s Degree', 'Diploma'];
         $educationSpecializations = [
-            'Special Education', 'Early Childhood Education', 'Psychology', 
-            'Rehabilitation Sciences', 'Islamic Studies', 'Educational Psychology'
+            'Special Education',
+            'Early Childhood Education',
+            'Psychology',
+            'Rehabilitation Sciences',
+            'Islamic Studies',
+            'Educational Psychology'
         ];
         $teachingSpecializations = [
-            'Learning Disabilities', 'Autism Spectrum Disorders', 'Physical Disabilities',
-            'Speech and Language Development', 'Behavioral Interventions', 'Life Skills Training'
+            'Learning Disabilities',
+            'Autism Spectrum Disorders',
+            'Physical Disabilities',
+            'Speech and Language Development',
+            'Behavioral Interventions',
+            'Life Skills Training'
         ];
 
         $staffMembers = [
@@ -482,7 +490,7 @@ class IRLSeeder extends Seeder
                 'education_specialization' => 'Special Education',
                 'teaching_specialization' => 'Learning Disabilities'
             ],
-            
+
             // Existing real staff from attendance records (Teachers)
             [
                 'name' => 'Nabilah binti Ahmad',
@@ -496,7 +504,7 @@ class IRLSeeder extends Seeder
             ],
             [
                 'name' => 'Najwa binti Ibrahim',
-                'position' => 'Therapy Assistant', 
+                'position' => 'Therapy Assistant',
                 'role' => 'teacher',
                 'birth_year' => 1990,
                 'about' => 'Experienced therapy assistant focusing on speech and language development for children with communication disorders.',
@@ -514,7 +522,7 @@ class IRLSeeder extends Seeder
                 'education_specialization' => 'Psychology',
                 'teaching_specialization' => 'Autism Spectrum Disorders'
             ],
-            
+
             // Real Supervisors from organization
             [
                 'name' => 'Nor Aisyah binti Muhamad Asri',
@@ -536,7 +544,7 @@ class IRLSeeder extends Seeder
                 'education_specialization' => 'Rehabilitation Sciences',
                 'teaching_specialization' => 'Physical Disabilities'
             ],
-            
+
             // Real AJK Committee Members from organization chart
             [
                 'name' => 'Encik Ahmad Zaki bin Mohamed',
@@ -578,7 +586,7 @@ class IRLSeeder extends Seeder
                 'education_specialization' => 'Islamic Studies',
                 'teaching_specialization' => 'Behavioral Interventions'
             ],
-            
+
             // Additional real teachers and support staff
             [
                 'name' => 'Cikgu Nurul Hidayah binti Mohd Yusof',
@@ -617,12 +625,12 @@ class IRLSeeder extends Seeder
             $staffId = $generateStaffId();
             $address = $gombakAddresses[array_rand($gombakAddresses)];
             $dob = Carbon::create($data['birth_year'], rand(1, 12), rand(1, 28));
-            
+
             // Generate proper email by removing titles and handling Malaysian names correctly
             $cleanName = str_replace(['Dr. ', 'Puan ', 'Encik ', 'Cikgu ', 'Ustaz '], '', $data['name']);
             $cleanName = str_replace([' bin ', ' binti ', ' '], ['.', '.', '.'], $cleanName);
             $email = strtolower($cleanName) . '@iium.edu.my';
-            
+
             User::create([
                 'iium_id' => $staffId,
                 'name' => $data['name'],
@@ -656,7 +664,7 @@ class IRLSeeder extends Seeder
     private function seedActivities($centre, $faker)
     {
         $this->command->info('📚 Seeding Islamic therapy and educational activities...');
-        
+
         // Category mapping
         $categoryMapping = [
             'Religious Therapy' => 11,    // Islamic Education
@@ -666,7 +674,7 @@ class IRLSeeder extends Seeder
             'Arts Therapy' => 6,          // Creative Arts
             'Social Skills' => 7,         // Social Skills Training
         ];
-        
+
         $activities = [
             // Islamic Therapy Activities
             [
@@ -690,7 +698,7 @@ class IRLSeeder extends Seeder
                 'duration' => 30,
                 'max_participants' => 12
             ],
-            
+
             // Motor Skills Activities
             [
                 'name' => 'Motor Halus',
@@ -700,13 +708,13 @@ class IRLSeeder extends Seeder
                 'max_participants' => 6
             ],
             [
-                'name' => 'Motor Kasar', 
+                'name' => 'Motor Kasar',
                 'description' => 'Gross motor skills development through whole body movement',
                 'category' => 'Physical Therapy',
                 'duration' => 30,
                 'max_participants' => 8
             ],
-            
+
             // Educational Activities
             [
                 'name' => 'Pre-Akademik Asas 3M',
@@ -729,7 +737,7 @@ class IRLSeeder extends Seeder
                 'duration' => 30,
                 'max_participants' => 8
             ],
-            
+
             // Arts and Music
             [
                 'name' => 'Terapi Muzik',
@@ -752,7 +760,7 @@ class IRLSeeder extends Seeder
                 'duration' => 30,
                 'max_participants' => 6
             ],
-            
+
             // Social Activities
             [
                 'name' => 'Circle Time',
@@ -768,7 +776,7 @@ class IRLSeeder extends Seeder
 
         foreach ($activities as $data) {
             $teacher = $teachers->random();
-            
+
             Activity::create([
                 'activity_name' => $data['name'],
                 'activity_description' => $data['description'],
@@ -783,7 +791,7 @@ class IRLSeeder extends Seeder
                 'duration_weeks' => 12,
                 'sessions_per_week' => 2
             ]);
-            
+
             $activityCount++;
         }
 
@@ -796,17 +804,17 @@ class IRLSeeder extends Seeder
     private function seedSchedules($centre, $faker)
     {
         $this->command->info('📅 Seeding daily schedules...');
-        
+
         $activities = Activity::where('centre_id', $centre->centre_id)->get();
         $sessionCount = 0;
 
         // Create sessions for the next 4 weeks (Monday-Thursday schedule)
         $startDate = Carbon::now()->startOfWeek(); // Start from this Monday
-        
+
         for ($week = 0; $week < 4; $week++) {
             for ($day = 0; $day < 4; $day++) { // Monday to Thursday
                 $sessionDate = $startDate->copy()->addWeeks($week)->addDays($day);
-                
+
                 // Morning sessions based on real schedule (adjusted for business rules)
                 $timeSlots = [
                     ['09:30', '10:00'], // Terapi Al-Quran / Religious (shifted to comply with rules)
@@ -814,11 +822,11 @@ class IRLSeeder extends Seeder
                     ['10:30', '11:00'], // Motor skills / Arts
                     ['11:00', '11:30'], // Academic / Circle Time
                 ];
-                
+
                 foreach ($timeSlots as $index => $slot) {
                     if ($activities->count() > $index) {
                         $activity = $activities->skip($index)->first();
-                        
+
                         ActivitySession::create([
                             'activity_id' => $activity->id,
                             'session_name' => $activity->activity_name . ' - ' . $sessionDate->format('l'),
@@ -831,7 +839,7 @@ class IRLSeeder extends Seeder
                             'max_participants' => $activity->max_participants,
                             'session_notes' => 'Real-world schedule based on PPDK daily timetable'
                         ]);
-                        
+
                         $sessionCount++;
                     }
                 }
@@ -848,23 +856,23 @@ class IRLSeeder extends Seeder
     {
         $malePrefixes = ['bin', 'Bin'];
         $femalePrefixes = ['binti', 'Binti'];
-        
+
         foreach ($malePrefixes as $prefix) {
             if (strpos($name, $prefix) !== false) {
                 return 'Male';
             }
         }
-        
+
         foreach ($femalePrefixes as $prefix) {
             if (strpos($name, $prefix) !== false) {
                 return 'Female';
             }
         }
-        
+
         // Default fallback based on first name
         $maleNames = ['Muhammad', 'Mohd', 'Ahmad', 'Aariz', 'Ariff', 'Irfan'];
         $firstName = explode(' ', $name)[0];
-        
+
         return in_array($firstName, $maleNames) ? 'Male' : 'Female';
     }
 }

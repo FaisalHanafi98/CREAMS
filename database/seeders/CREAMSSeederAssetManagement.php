@@ -14,27 +14,27 @@ class CREAMSSeederAssetManagement extends Seeder
     public function run(): void
     {
         $this->command->info('🔧 Seeding CREAMS Asset Management...');
-        
+
         // Create asset categories first
         $this->command->info('   🏷️ Creating asset categories...');
         $this->seedAssetCategories();
-        
+
         // Create asset types
         $this->command->info('   📂 Creating asset types...');
-        $this->seedAssetTypes();
-        
+        $this->seedAssetParents();
+
         // Create asset locations
         $this->command->info('   📍 Creating asset locations...');
         $this->seedAssetLocations();
-        
+
         // Create assets (including real Gombak assets)
         $this->command->info('   🏭 Creating assets...');
         $this->seedAssets();
-        
+
         // Create asset maintenance records
         $this->command->info('   🔧 Creating asset maintenance records...');
         $this->seedAssetMaintenance();
-        
+
         $this->command->info('✅ Asset Management seeding completed');
     }
 
@@ -50,7 +50,7 @@ class CREAMSSeederAssetManagement extends Seeder
             ['category_name' => 'Storage Solutions', 'category_description' => 'Storage cabinets and organizational equipment'],
             ['category_name' => 'Technology', 'category_description' => 'Educational technology and assistive devices']
         ];
-        
+
         foreach ($categories as $category) {
             DB::table('asset_categories')->insertOrIgnore([
                 'category_name' => $category['category_name'],
@@ -59,15 +59,15 @@ class CREAMSSeederAssetManagement extends Seeder
                 'updated_at' => now()
             ]);
         }
-        
+
         $this->command->line('      ✓ Created ' . count($categories) . ' asset categories');
     }
-    
-    private function seedAssetTypes(): void
+
+    private function seedAssetParents(): void
     {
         $categories = DB::table('asset_categories')->get();
         $totalTypes = 0;
-        
+
         $typesByCategory = [
             'Medical Equipment' => ['Physiotherapy Ball', 'Therapy Mat', 'Exercise Equipment', 'Sensory Tools'],
             'Educational Materials' => ['Learning Books', 'Educational Games', 'Teaching Aids', 'Flashcards'],
@@ -78,11 +78,11 @@ class CREAMSSeederAssetManagement extends Seeder
             'Storage Solutions' => ['Filing Cabinet', 'Storage Shelf', 'Mobile Pedestal', 'Book Rack'],
             'Technology' => ['Computer', 'Tablet', 'Interactive Board', 'Assistive Device']
         ];
-        
+
         foreach ($categories as $category) {
             if (isset($typesByCategory[$category->category_name])) {
                 foreach ($typesByCategory[$category->category_name] as $typeName) {
-                    DB::table('asset_types')->insertOrIgnore([
+                    DB::table('asset_parents')->insertOrIgnore([
                         'name' => $typeName,
                         'type_description' => 'Equipment for rehabilitation and therapy programs',
                         'category_id' => $category->id,
@@ -93,17 +93,17 @@ class CREAMSSeederAssetManagement extends Seeder
                 }
             }
         }
-        
+
         $this->command->line("      ✓ Created {$totalTypes} asset types");
     }
-    
+
     private function seedAssetLocations(): void
     {
         $centres = DB::table('centres')->get();
         $totalLocations = 0;
-        
+
         $locationTypes = ['Therapy Room', 'Classroom', 'Storage Room', 'Office', 'Common Area', 'Music Room'];
-        
+
         foreach ($centres as $centre) {
             foreach ($locationTypes as $locationType) {
                 for ($i = 1; $i <= rand(2, 3); $i++) {
@@ -118,32 +118,32 @@ class CREAMSSeederAssetManagement extends Seeder
                 }
             }
         }
-        
+
         $this->command->line("      ✓ Created {$totalLocations} asset locations across centres");
     }
-    
+
     private function seedAssets(): void
     {
         // First, seed real Gombak assets from IRLSeeder data
         $this->seedRealGombakAssets();
-        
+
         // Then create additional assets for other centres
-        $types = DB::table('asset_types')->get();
+        $types = DB::table('asset_parents')->get();
         $locations = DB::table('asset_locations')->get();
         $centres = DB::table('centres')->where('centre_id', '!=', '01')->get(); // Exclude Gombak
         $totalAssets = 0;
-        
+
         foreach ($centres as $centre) {
             $centreLocations = $locations->where('centre_id', $centre->centre_id);
             $assetsPerCentre = rand(25, 40); // 25-40 assets per non-Gombak centre
-            
+
             for ($i = 1; $i <= $assetsPerCentre; $i++) {
                 $type = $types->random();
                 $location = $centreLocations->random();
                 $purchaseDate = now()->subDays(rand(30, 1095)); // 1 month to 3 years ago
-                
+
                 $assetId = 'AST' . $centre->centre_id . sprintf('%03d', $i);
-                
+
                 DB::table('assets')->insert([
                     'asset_tag' => $assetId,
                     'asset_name' => $type->name . ' #' . $i,
@@ -161,18 +161,18 @@ class CREAMSSeederAssetManagement extends Seeder
                     'created_at' => $purchaseDate,
                     'updated_at' => $purchaseDate
                 ]);
-                
+
                 $totalAssets++;
             }
         }
-        
+
         $this->command->line("      ✓ Created {$totalAssets} additional assets for other centres");
     }
-    
+
     private function seedRealGombakAssets(): void
     {
         $this->command->info('   🏗️ Integrating real Gombak assets from IRLSeeder...');
-        
+
         // Real asset data from IRLSeeder (simplified for asset management)
         $realAssetData = [
             ['name' => 'Peanut Ball 45cm x 90cm', 'type' => 'Gym Equipment', 'supplier' => 'PPT EDU SUPPLIES', 'date' => '2023-02-24'],
@@ -189,12 +189,12 @@ class CREAMSSeederAssetManagement extends Seeder
             ['name' => 'Rectangular Table 2\'x4\' - Wood', 'type' => 'Furniture', 'supplier' => 'USL EDUCATIONAL SUPPLIES', 'date' => '2024-12-31', 'qty' => 2],
             ['name' => 'Magnetic White Board 3\'x6\'', 'type' => 'Educational Equipment', 'supplier' => 'USL EDUCATIONAL SUPPLIES', 'date' => '2024-12-31']
         ];
-        
+
         $gombakLocations = DB::table('asset_locations')->where('centre_id', '01')->get();
         $categories = DB::table('asset_categories')->get();
-        $types = DB::table('asset_types')->get();
+        $types = DB::table('asset_parents')->get();
         $assetsCreated = 0;
-        
+
         // Category mapping for real assets
         $categoryMapping = [
             'Gym Equipment' => $categories->where('category_name', 'Sports Equipment')->first()->id ?? 5,
@@ -203,14 +203,14 @@ class CREAMSSeederAssetManagement extends Seeder
             'Musical Instrument' => $categories->where('category_name', 'Musical Instruments')->first()->id ?? 6,
             'Educational Equipment' => $categories->where('category_name', 'Educational Materials')->first()->id ?? 2
         ];
-        
+
         foreach ($realAssetData as $asset) {
             $quantity = $asset['qty'] ?? 1;
             $location = $gombakLocations->random();
-            
+
             for ($i = 1; $i <= $quantity; $i++) {
                 $assetId = 'GMK' . sprintf('%03d', $assetsCreated + 1);
-                
+
                 DB::table('assets')->insert([
                     'asset_tag' => $assetId,
                     'asset_name' => $asset['name'] . ($quantity > 1 ? " #{$i}" : ''),
@@ -231,32 +231,32 @@ class CREAMSSeederAssetManagement extends Seeder
                 $assetsCreated++;
             }
         }
-        
+
         $this->command->line("      ✓ Integrated {$assetsCreated} real Gombak assets");
     }
-    
+
     private function seedAssetMaintenance(): void
     {
         $assets = DB::table('assets')->get();
         $staff = DB::table('users')->get();
         $totalMaintenanceRecords = 0;
-        
+
         foreach ($assets as $asset) {
             $maintenanceCount = rand(1, 3); // 1-3 maintenance records per asset
-            
+
             for ($i = 0; $i < $maintenanceCount; $i++) {
                 $maintenanceDate = now()->subDays(rand(30, 365));
                 $staffMember = $staff->random();
-                
+
                 $maintenanceTypes = ['routine', 'repair', 'inspection'];
                 $maintenanceType = $maintenanceTypes[array_rand($maintenanceTypes)];
-                
+
                 $descriptions = [
                     'routine' => 'Regular maintenance and safety check',
                     'repair' => 'Repair and component replacement',
                     'inspection' => 'Safety inspection and functionality test'
                 ];
-                
+
                 DB::table('asset_maintenance')->insert([
                     'asset_id' => $asset->id,
                     'maintenance_type' => $maintenanceType,
@@ -270,11 +270,11 @@ class CREAMSSeederAssetManagement extends Seeder
                     'created_at' => $maintenanceDate,
                     'updated_at' => $maintenanceDate
                 ]);
-                
+
                 $totalMaintenanceRecords++;
             }
         }
-        
+
         $this->command->line("      ✓ Created {$totalMaintenanceRecords} maintenance records");
     }
 }

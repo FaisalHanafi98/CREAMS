@@ -20,18 +20,18 @@ $fileMoves = [
         'VOLUNTEER_MODULE_FIX_SUMMARY.md' => 'docs/module-summaries/',
         'SYSTEM_COMPLETION_REPORT.md' => 'docs/module-summaries/',
     ],
-    
+
     'reports' => [
         'PDF_ISSUE_ANALYSIS.md' => 'docs/reports/',
         'ROUTE_ACCESSIBILITY_REPORT.md' => 'docs/reports/',
         'SYSTEM_BUG_FIXES_DOCUMENTATION.md' => 'docs/reports/',
         'SYSTEM_PROGRESS_SUMMARY.md' => 'docs/reports/',
     ],
-    
+
     'fixes' => [
         'fix_log_20250717.md' => 'docs/fixes/',
     ],
-    
+
     'system-info' => [
         'CREAMS GENERAL OVERVIEW.txt' => 'docs/system-info/',
         'PROJECT_STATE.txt' => 'docs/system-info/',
@@ -39,7 +39,7 @@ $fileMoves = [
         'SETUP_GUIDE.md' => 'docs/system-info/',
         'cookie.txt' => 'docs/system-info/',
     ],
-    
+
     // Development files to development-resources/
     'debugging' => [
         'debug_current_issue.php' => 'development-resources/debugging/',
@@ -48,7 +48,7 @@ $fileMoves = [
         'debug_pdf_generation.php' => 'development-resources/debugging/',
         'debug_pdf_template.php' => 'development-resources/debugging/',
     ],
-    
+
     'testing' => [
         'test_activities.php' => 'development-resources/testing/',
         'test_activity_routes.php' => 'development-resources/testing/',
@@ -85,7 +85,7 @@ $fileMoves = [
         'test_volunteer_controller.php' => 'development-resources/testing/',
         'test_volunteer_form.php' => 'development-resources/testing/',
     ],
-    
+
     'database-checks' => [
         'check_activity_sessions.php' => 'development-resources/database-checks/',
         'check_activity_tables.php' => 'development-resources/database-checks/',
@@ -98,17 +98,17 @@ $fileMoves = [
         'check_users_table.php' => 'development-resources/database-checks/',
         'check_volunteers_table.php' => 'development-resources/database-checks/',
     ],
-    
+
     'utilities' => [
         'cleanup_test_trainees.php' => 'development-resources/utilities/',
         'comprehensive_test.php' => 'development-resources/utilities/',
         'final_verification.php' => 'development-resources/utilities/',
         'fix_pdf_generation.php' => 'development-resources/utilities/',
-        'seed_asset_types.php' => 'development-resources/utilities/',
+        'seed_asset_parents.php' => 'development-resources/utilities/',
         'seed_categories.php' => 'development-resources/utilities/',
         'setup_test_data.php' => 'development-resources/utilities/',
     ],
-    
+
     'deployment' => [
         'automation_script.sh' => 'development-resources/deployment/',
         'deploy.sh' => 'development-resources/deployment/',
@@ -142,16 +142,16 @@ echo "---------------------------------------------\n";
 
 foreach ($fileMoves as $category => $files) {
     echo "\n📁 Moving {$category} files:\n";
-    
+
     foreach ($files as $sourceFile => $targetDir) {
         if (file_exists($sourceFile)) {
             // Ensure target directory exists
             if (!is_dir($targetDir)) {
                 mkdir($targetDir, 0755, true);
             }
-            
+
             $targetFile = $targetDir . basename($sourceFile);
-            
+
             if (rename($sourceFile, $targetFile)) {
                 echo "  ✅ Moved: {$sourceFile} → {$targetFile}\n";
                 $totalFilesMoved++;
@@ -281,5 +281,3 @@ echo "└── deployment/\n";
 echo "\n=====================================\n";
 echo "CREAMS project is now properly organized!\n";
 echo "Time to fix those database schema issues! 🚀\n";
-
-?>

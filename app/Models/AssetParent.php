@@ -9,20 +9,30 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * Enhanced Asset Type Model
- * 
+ *
  * This model represents asset types/categories with enhanced features
  * for maintenance scheduling, depreciation tracking, and specifications.
  */
-class AssetType extends Model
+class AssetParent extends Model
 {
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'name', 'category', 'description', 'default_value', 
-        'expected_lifespan', 'maintenance_schedule', 'maintenance_interval',
-        'depreciation_method', 'depreciation_rate', 'vendor', 
-        'image_path', 'specifications', 'required_certifications',
-        'warranty_period', 'is_active'
+        'name',
+        'category',
+        'description',
+        'default_value',
+        'expected_lifespan',
+        'maintenance_schedule',
+        'maintenance_interval',
+        'depreciation_method',
+        'depreciation_rate',
+        'vendor',
+        'image_path',
+        'specifications',
+        'required_certifications',
+        'warranty_period',
+        'is_active'
     ];
 
     protected $casts = [
@@ -104,8 +114,8 @@ class AssetType extends Model
     {
         return $query->where(function ($q) use ($search) {
             $q->where('name', 'LIKE', "%{$search}%")
-              ->orWhere('category', 'LIKE', "%{$search}%")
-              ->orWhere('description', 'LIKE', "%{$search}%");
+                ->orWhere('category', 'LIKE', "%{$search}%")
+                ->orWhere('description', 'LIKE', "%{$search}%");
         });
     }
 
@@ -115,7 +125,7 @@ class AssetType extends Model
     public function scopeRequiresMaintenance($query)
     {
         return $query->whereNotNull('maintenance_interval')
-                     ->where('maintenance_interval', '>', 0);
+            ->where('maintenance_interval', '>', 0);
     }
 
     // =============================================
@@ -204,8 +214,8 @@ class AssetType extends Model
         }
 
         $ageInDays = $purchaseDate->diffInDays(now());
-        
-        return match($this->depreciation_method) {
+
+        return match ($this->depreciation_method) {
             self::DEPRECIATION_STRAIGHT_LINE => $this->calculateStraightLineDepreciation($purchasePrice, $ageInDays),
             self::DEPRECIATION_DECLINING_BALANCE => $this->calculateDecliningBalanceDepreciation($purchasePrice, $ageInDays),
             default => $purchasePrice,
@@ -266,9 +276,9 @@ class AssetType extends Model
     {
         $attributes = $this->attributesToArray();
         unset($attributes['id'], $attributes['created_at'], $attributes['updated_at']);
-        
+
         $attributes['name'] = $newName;
-        
+
         return self::create($attributes);
     }
 
@@ -287,7 +297,7 @@ class AssetType extends Model
 
         $depreciationPerDay = $purchasePrice / $this->expected_lifespan;
         $totalDepreciation = min($depreciationPerDay * $ageInDays, $purchasePrice);
-        
+
         return max(0, $purchasePrice - $totalDepreciation);
     }
 
@@ -302,7 +312,7 @@ class AssetType extends Model
 
         $yearsOld = $ageInDays / 365;
         $currentValue = $purchasePrice * pow((1 - $this->depreciation_rate), $yearsOld);
-        
+
         return max(0, $currentValue);
     }
 
@@ -324,12 +334,12 @@ class AssetType extends Model
     public static function getByCategory(): array
     {
         return self::active()
-                   ->get()
-                   ->groupBy('category')
-                   ->map(function ($types) {
-                       return $types->sortBy('name');
-                   })
-                   ->toArray();
+            ->get()
+            ->groupBy('category')
+            ->map(function ($types) {
+                return $types->sortBy('name');
+            })
+            ->toArray();
     }
 
     /**
@@ -346,10 +356,10 @@ class AssetType extends Model
     public static function getPopular(int $limit = 10): \Illuminate\Database\Eloquent\Collection
     {
         return self::withCount('assets')
-                   ->active()
-                   ->orderBy('assets_count', 'desc')
-                   ->limit($limit)
-                   ->get();
+            ->active()
+            ->orderBy('assets_count', 'desc')
+            ->limit($limit)
+            ->get();
     }
 
     /**
@@ -360,17 +370,17 @@ class AssetType extends Model
         return [
             'no_assets' => self::active()->doesntHave('assets')->get(),
             'high_maintenance' => self::requiresMaintenance()
-                                     ->whereHas('assets', function ($query) {
-                                         $query->needingMaintenance();
-                                     })
-                                     ->withCount(['assets' => function ($query) {
-                                         $query->needingMaintenance();
-                                     }])
-                                     ->get(),
+                ->whereHas('assets', function ($query) {
+                    $query->needingMaintenance();
+                })
+                ->withCount(['assets' => function ($query) {
+                    $query->needingMaintenance();
+                }])
+                ->get(),
             'inactive_with_assets' => self::where('is_active', false)
-                                          ->has('assets')
-                                          ->withCount('assets')
-                                          ->get(),
+                ->has('assets')
+                ->withCount('assets')
+                ->get(),
         ];
     }
 }

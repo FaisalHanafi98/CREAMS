@@ -45,9 +45,9 @@ echo PHP_EOL . "Testing CRUD operations..." . PHP_EOL;
 echo "Testing CREATE operation..." . PHP_EOL;
 try {
     // Get first asset type
-    $assetType = DB::table('asset_types')->first();
-    if (!$assetType) {
-        echo "❌ No asset types found. Please run seed_asset_types.php first." . PHP_EOL;
+    $assetParent = DB::table('asset_parents')->first();
+    if (!$assetParent) {
+        echo "❌ No asset types found. Please run seed_asset_parents.php first." . PHP_EOL;
         exit;
     }
 
@@ -55,7 +55,7 @@ try {
         'asset_id' => 'TEST' . now()->format('mdHi'),
         'asset_name' => 'Test Asset ' . now()->format('Y-m-d H:i:s'),
         'asset_description' => 'Test Description',
-        'type_id' => $assetType->id,
+        'type_id' => $assetParent->id,
         'asset_model' => 'Test Model',
         'asset_brand' => 'Test Brand',
         'asset_serial_number' => 'TEST' . now()->format('mdHis'),
