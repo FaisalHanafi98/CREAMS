@@ -29,7 +29,7 @@ This document provides a comprehensive audit of the Centre and Activity modules 
 - `centres.edit` - GET /centres/{id}/edit (Edit centre form)
 - `centres.update` - PUT /centres/{id} (Update centre)
 - `centres.destroy` - DELETE /centres/{id} (Delete centre)
-- `centres.assets` - GET /centres/{id}/assets (Centre assets)
+- `centres.asset-parents` - GET /centres/{id}/assets (Centre assets)
 - `admin.centres.*` - All admin routes mirror the above
 
 ### ✅ **Button Functionality Verification**
@@ -38,16 +38,16 @@ This document provides a comprehensive audit of the Centre and Activity modules 
 - **"Add New Centre" Button**: ✅ Routes to `centres.create` - WORKING
 - **"View" Button**: ✅ Routes to `centres.show` - WORKING  
 - **"Edit" Button**: ✅ Routes to `centres.edit` - WORKING
-- **"Assets" Button**: ✅ Routes to `centres.assets` - WORKING
+- **"Assets" Button**: ✅ Routes to `centres.asset-parents` - WORKING
 
 **centres/show.blade.php:**
 - **"Edit Centre" Button**: ✅ Routes to `centres.edit` - WORKING
-- **"View Assets" Button**: ✅ Routes to `centres.assets` - WORKING
+- **"View Assets" Button**: ✅ Routes to `centres.asset-parents` - WORKING
 - **"Back to Centres" Button**: ✅ Routes to `centres.index` - WORKING
 - **"View All Activities" Button**: ✅ Routes to `activities.index` - WORKING
 - **"Create Activity" Button**: ✅ Routes to `activities.create` - WORKING
-- **"Manage Assets" Button**: ✅ Routes to `centres.assets` - WORKING
-- **"Add Assets" Button**: ✅ Routes to `centres.assets` - WORKING
+- **"Manage Assets" Button**: ✅ Routes to `centres.asset-parents` - WORKING
+- **"Add Assets" Button**: ✅ Routes to `centres.asset-parents` - WORKING
 
 **centres/assets.blade.php:**
 - **"Back to Centre" Button**: ✅ Routes to `centres.show` - WORKING

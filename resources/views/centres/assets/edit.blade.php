@@ -427,7 +427,7 @@
                     <p>Update asset information and details</p>
                 </div>
                 <div class="col-md-4 text-end">
-                    <a href="{{ route('centres.assets.index') }}" class="btn btn-light">
+                    <a href="{{ route('centres.asset-parents.index') }}" class="btn btn-light">
                         <i class="fas fa-arrow-left me-2"></i>Back to Asset
                     </a>
                 </div>
@@ -475,8 +475,8 @@
         </div>
 
         <!-- Asset Edit Form -->
-        <form action="{{ route('centres.assets.update', $asset->asset_id) }}" method="POST" enctype="multipart/form-data"
-            id="assetForm">
+        <form action="{{ route('centres.asset-parents.update', $asset->asset_id) }}" method="POST"
+            enctype="multipart/form-data" id="assetForm">
             @csrf
             @method('PUT')
 
@@ -736,7 +736,7 @@
             <div class="form-card">
                 <div class="form-actions">
                     <div>
-                        <a href="{{ route('centres.assets.index') }}" class="btn btn-outline-secondary">
+                        <a href="{{ route('centres.asset-parents.index') }}" class="btn btn-outline-secondary">
                             <i class="fas fa-times"></i>Cancel
                         </a>
                     </div>

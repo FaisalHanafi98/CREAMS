@@ -465,7 +465,7 @@
                     <p>Detailed information and specifications for this asset</p>
                 </div>
                 <div class="col-md-4 text-end">
-                    <a href="{{ route('centres.assets.index') }}" class="btn btn-light">
+                    <a href="{{ route('centres.asset-parents.index') }}" class="btn btn-light">
                         <i class="fas fa-arrow-left me-2"></i>Back to Asset
                     </a>
                 </div>
@@ -522,7 +522,8 @@
                         </div>
                         <div class="meta-item">
                             <div class="meta-label">Centre</div>
-                            <div class="meta-value">{{ $asset->centre_name ?? ($asset->center_name ?? 'Unassigned') }}</div>
+                            <div class="meta-value">{{ $asset->centre_name ?? ($asset->center_name ?? 'Unassigned') }}
+                            </div>
                         </div>
                         <div class="meta-item">
                             <div class="meta-label">Status</div>
@@ -609,7 +610,8 @@
                 <div class="detail-card-body">
                     <div class="detail-item">
                         <span class="detail-label">Assigned Centre</span>
-                        <span class="detail-value">{{ $asset->centre_name ?? ($asset->center_name ?? 'Unassigned') }}</span>
+                        <span
+                            class="detail-value">{{ $asset->centre_name ?? ($asset->center_name ?? 'Unassigned') }}</span>
                     </div>
                     <div class="detail-item">
                         <span class="detail-label">Current Status</span>
@@ -668,13 +670,13 @@
         <!-- Action Buttons -->
         <div class="action-buttons">
             <div>
-                <a href="{{ route('centres.assets.index') }}" class="btn btn-outline-secondary">
+                <a href="{{ route('centres.asset-parents.index') }}" class="btn btn-outline-secondary">
                     <i class="fas fa-list"></i>View All Asset
                 </a>
             </div>
             <div class="d-flex gap-2 flex-wrap">
                 @if (in_array(session('role'), ['admin', 'supervisor']))
-                    <a href="{{ route('centres.assets.edit', $asset->asset_id) }}" class="btn btn-warning">
+                    <a href="{{ route('centres.asset-parents.edit', $asset->asset_id) }}" class="btn btn-warning">
                         <i class="fas fa-edit"></i>Edit Asset
                     </a>
                 @endif

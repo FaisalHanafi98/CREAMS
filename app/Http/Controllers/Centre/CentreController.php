@@ -10,6 +10,7 @@ use App\Models\Asset;
 use App\Models\User;
 use App\Models\Trainee;
 use App\Models\Activity;
+use App\Models\AssetParent;
 use App\Models\CentreAuditLog;
 use App\Models\CentreStatistics;
 use Illuminate\Support\Facades\Log;
@@ -268,7 +269,7 @@ class CentreController extends Controller
     /**
      * Display assets for a specific centre
      */
-    public function assets($id)
+    /* public function assets($id)
     {
         try {
             Log::info('Loading centre assets', ['centre_id' => $id, 'user_id' => session('id')]);
@@ -298,7 +299,7 @@ class CentreController extends Controller
                 'stats' => $stats
             ]);
 
-            return view('centres.assets', compact('centre', 'assets', 'stats'));
+            return view('centres.asset-parents', compact('centre', 'assets', 'stats'));
         } catch (Exception $e) {
             Log::error('Error loading centre assets: ' . $e->getMessage(), [
                 'centre_id' => $id,
@@ -307,6 +308,51 @@ class CentreController extends Controller
             ]);
             return redirect()->route('centres.show', $id)
                 ->with('error', 'Unable to load assets. Please try again.');
+        }
+    } */
+
+    /**
+     * Display asset parents for a specific centre
+     */
+    public function assetParents($id)
+    {
+        try {
+            Log::info('Loading centre assets', ['centre_id' => $id, 'user_id' => session('id')]);
+
+            $centre = Centre::where('centre_id', $id)->firstOrFail();
+
+            $asset_parents = AssetParent::where('centre_id', $centre->centre_id)
+                ->orderBy('name')
+                ->paginate(20);
+
+            // Get real asset statistics from database
+            $baseQuery = Asset::where('centre_id', $centre->centre_id);
+            $stats = [
+                'total_asset_parents' => $baseQuery->count(),
+                'available' => $baseQuery->clone()->where('status', 'available')->count(),
+                'in_use' => $baseQuery->clone()->where('status', 'in_use')->count(),
+                'maintenance' => $baseQuery->clone()->where('status', 'maintenance')->count(),
+                'disposed' => $baseQuery->clone()->where('status', 'disposed')->count(),
+                'damaged' => $baseQuery->clone()->where('status', 'damaged')->count(),
+                'total_value' => $baseQuery->clone()->sum('purchase_price') ?? 0
+            ];
+
+            Log::info('Successfully loaded centre asset parents', [
+                'centre_id' => $id,
+                'centre_name' => $centre->centre_name,
+                'asset_parents_count' => $asset_parents->count(),
+                'stats' => $stats
+            ]);
+
+            return view('centres.asset-parents', compact('centre', 'asset_parents', 'stats'));
+        } catch (Exception $e) {
+            Log::error('Error loading centre asset parents: ' . $e->getMessage(), [
+                'centre_id' => $id,
+                'user_id' => session('id'),
+                'error' => $e->getTraceAsString()
+            ]);
+            return redirect()->route('centres.show', $id)
+                ->with('error', 'Unable to load asset parents. Please try again.');
         }
     }
 

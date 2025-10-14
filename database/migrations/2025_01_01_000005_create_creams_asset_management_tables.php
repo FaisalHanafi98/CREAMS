@@ -34,10 +34,12 @@ class CreateCreamsAssetManagementTables extends Migration
         // 2. ASSET TYPES - Equipment types (preserves current structure)
         Schema::create('asset_parents', function (Blueprint $table) {
             $table->id();
+            $table->string('centre_id', 10);
             $table->string('name');
             $table->text('type_description')->nullable();
             $table->unsignedBigInteger('category_id');
             $table->string('image_path')->nullable();
+            $table->string('manufacturer')->nullable();
             $table->boolean('requires_maintenance')->default(false);
             $table->integer('default_maintenance_interval_days')->nullable();
             $table->boolean('is_active')->default(true);

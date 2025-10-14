@@ -1,8 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0, minimal-ui">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0, minimal-ui">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="user-role" content="{{ session('role', 'default') }}">
     <meta name="mobile-web-app-capable" content="yes">
@@ -12,22 +14,23 @@
     <meta name="theme-color" content="#764ba2">
     <meta name="msapplication-TileColor" content="#667eea">
     <meta name="description" content="CREAMS - Community-based REhAbilitation Management System Dashboard">
-    
+
     <!-- PWA Manifest -->
     <link rel="manifest" href="/manifest.json">
-    
+
     <!-- iOS Icons -->
     <link rel="apple-touch-icon" sizes="180x180" href="/favicon.ico">
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
-    
+
     <title>@yield('title', ucfirst(session('role')) . ' Dashboard - CREAMS')</title>
-    
+
     <!-- External CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css" />
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600;700&display=swap" rel="stylesheet">
-    
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600;700&display=swap"
+        rel="stylesheet">
+
     <style>
         :root {
             --primary-color: #32bdea;
@@ -41,14 +44,14 @@
             --border-color: #e9ecef;
             --transition-speed: 0.3s;
         }
-        
+
         body {
             font-family: 'Poppins', sans-serif;
             background-color: var(--light-color);
             color: #333;
             overflow-x: hidden;
         }
-        
+
         /* Topbar styles */
         .topbar {
             position: fixed;
@@ -57,13 +60,13 @@
             right: 0;
             height: 60px;
             background: #fff;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
             z-index: 999;
             display: flex;
             align-items: center;
             padding: 0 15px 0 0;
         }
-        
+
         .sidebar-toggle {
             width: 60px;
             height: 60px;
@@ -75,7 +78,7 @@
             color: #fff;
             background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
         }
-        
+
         .topbar-logo {
             width: 190px;
             height: 60px;
@@ -84,7 +87,7 @@
             justify-content: center;
             background: linear-gradient(to right, var(--primary-color), var(--secondary-color));
         }
-        
+
         .topbar-logo a {
             display: flex;
             align-items: center;
@@ -97,11 +100,11 @@
             width: 100%;
             height: 100%;
         }
-        
+
         .topbar-logo i {
             margin-right: 10px;
         }
-        
+
         .topbar-title {
             margin-left: 20px;
             font-size: 18px;
@@ -113,23 +116,23 @@
             position: relative;
             padding-bottom: 3px;
         }
-        
+
         .topbar-spacer {
             flex-grow: 1;
         }
-        
+
         .topbar-right {
             display: flex;
             align-items: center;
             gap: 15px;
         }
-        
+
         /* Search box */
         .search-container {
             position: relative;
             margin-right: 15px;
         }
-        
+
         .search-box {
             display: flex;
             align-items: center;
@@ -139,7 +142,7 @@
             width: 200px;
             overflow: hidden;
         }
-        
+
         .search-box input {
             flex-grow: 1;
             border: none;
@@ -148,7 +151,7 @@
             height: 100%;
             outline: none;
         }
-        
+
         .btn-search {
             border: none;
             background: transparent;
@@ -156,7 +159,7 @@
             height: 100%;
             color: #777;
         }
-        
+
         .search-results-dropdown {
             position: absolute;
             top: 100%;
@@ -164,14 +167,14 @@
             right: 0;
             background: white;
             border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
             margin-top: 5px;
             z-index: 1000;
             display: none;
             max-height: 300px;
             overflow-y: auto;
         }
-        
+
         .search-result-item {
             display: flex;
             align-items: center;
@@ -181,21 +184,21 @@
             transition: all var(--transition-speed) ease;
             border-bottom: 1px solid var(--border-color);
         }
-        
+
         .search-result-item:last-child {
             border-bottom: none;
         }
-        
+
         .search-result-item:hover {
             background-color: rgba(50, 189, 234, 0.05);
             text-decoration: none;
             color: #333;
         }
-        
+
         .search-result-item:visited {
             color: #333;
         }
-        
+
         .search-result-icon {
             width: 40px;
             height: 40px;
@@ -207,32 +210,33 @@
             margin-right: 15px;
             color: var(--primary-color);
         }
-        
+
         .search-result-content {
             flex-grow: 1;
         }
-        
+
         .search-result-name {
             font-weight: 500;
             margin-bottom: 2px;
         }
-        
+
         .search-result-meta {
             font-size: 12px;
             color: #777;
         }
-        
-        .search-no-results, .search-loading {
+
+        .search-no-results,
+        .search-loading {
             padding: 15px;
             text-align: center;
             color: #777;
         }
-        
+
         .search-loading i {
             margin-right: 5px;
             color: var(--primary-color);
         }
-        
+
         .search-results-header {
             padding: 10px 15px;
             background: var(--light-color);
@@ -241,15 +245,15 @@
             color: var(--primary-color);
             border-bottom: 1px solid #eee;
         }
-        
+
         .search-result-action {
             opacity: 0.6;
         }
-        
+
         .search-result-item:hover .search-result-action {
             opacity: 1;
         }
-        
+
         /* Mobile search toggle */
         .search-mobile-toggle {
             display: none;
@@ -262,7 +266,7 @@
             color: #777;
             cursor: pointer;
         }
-        
+
         .mobile-search {
             position: absolute;
             top: 60px;
@@ -270,20 +274,20 @@
             right: 0;
             background: white;
             padding: 15px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
             display: none;
             z-index: 999;
         }
-        
+
         .mobile-search.show {
             display: block;
         }
-        
+
         /* Notification dropdown */
         .notifications-dropdown {
             position: relative;
         }
-        
+
         .icon-button {
             width: 38px;
             height: 38px;
@@ -295,7 +299,7 @@
             cursor: pointer;
             position: relative;
         }
-        
+
         .notification-count {
             position: absolute;
             top: -5px;
@@ -310,7 +314,7 @@
             align-items: center;
             justify-content: center;
         }
-        
+
         .notification-menu {
             position: absolute;
             top: 100%;
@@ -318,17 +322,17 @@
             width: 320px;
             background: white;
             border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
             margin-top: 10px;
             z-index: 1000;
             display: none;
             overflow: hidden;
         }
-        
+
         .notification-menu.show {
             display: block;
         }
-        
+
         .notification-icon {
             width: 40px;
             height: 40px;
@@ -338,27 +342,27 @@
             justify-content: center;
             color: white;
         }
-        
+
         .notification-icon.primary {
             background: var(--primary-color);
         }
-        
+
         .notification-icon.success {
             background: var(--success-color);
         }
-        
+
         .notification-icon.warning {
             background: var(--warning-color);
         }
-        
+
         .notification-icon.danger {
             background: var(--danger-color);
         }
-        
+
         .smallest {
             font-size: 10px;
         }
-        
+
         /* User profile */
         .user-profile {
             display: flex;
@@ -369,7 +373,7 @@
             padding: 6px 6px 6px 12px;
             position: relative;
         }
-        
+
         .user-avatar {
             width: 32px;
             height: 32px;
@@ -377,31 +381,31 @@
             overflow: hidden;
             margin-right: 10px;
         }
-        
+
         .user-avatar img {
             width: 100%;
             height: 100%;
             object-fit: cover;
         }
-        
+
         .user-info {
             display: flex;
             flex-direction: column;
             margin-right: 8px;
         }
-        
+
         .user-name {
             font-size: 14px;
             font-weight: 500;
             color: #888 !important;
         }
-        
+
         .user-role {
             font-size: 12px;
             color: #888;
             margin-top: -2px;
         }
-        
+
         .user-dropdown {
             position: absolute;
             top: 100%;
@@ -409,50 +413,50 @@
             width: 250px;
             background: white;
             border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
             margin-top: 10px;
             z-index: 1000;
             display: none;
             overflow: hidden;
         }
-        
+
         .user-dropdown.show {
             display: block;
         }
-        
+
         .dropdown-header {
             padding: 15px;
             background-color: #f8f9fa;
             border-bottom: 1px solid var(--border-color);
         }
-        
+
         .user-details {
             display: flex;
             align-items: center;
         }
-        
+
         .dropdown-item {
             padding: 12px 15px;
             color: #333;
             transition: all var(--transition-speed) ease;
         }
-        
+
         .dropdown-item:hover {
             background-color: rgba(50, 189, 234, 0.05);
         }
-        
+
         .dropdown-item i {
             margin-right: 10px;
             width: 16px;
             text-align: center;
         }
-        
+
         .dropdown-divider {
             height: 1px;
             background-color: var(--border-color);
             margin: 0;
         }
-        
+
         /* Sidebar styles */
         .sidebar {
             position: fixed;
@@ -461,22 +465,22 @@
             height: calc(100% - 60px);
             width: 250px;
             background: #fff;
-            box-shadow: 2px 0 10px rgba(0,0,0,0.05);
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.05);
             z-index: 998;
             overflow-y: auto;
             transition: width var(--transition-speed) ease;
         }
-        
+
         .sidebar-menu {
             list-style: none;
             padding: 15px 0;
             margin: 0;
         }
-        
+
         .sidebar-item {
             margin-bottom: 5px;
         }
-        
+
         .sidebar-link {
             display: flex;
             align-items: center;
@@ -486,19 +490,19 @@
             text-decoration: none;
             position: relative;
         }
-        
+
         .sidebar-link:hover {
             color: var(--primary-color);
             background: rgba(50, 189, 234, 0.05);
             text-decoration: none;
         }
-        
+
         .sidebar-link.active {
             color: var(--primary-color);
             background: rgba(50, 189, 234, 0.1);
             font-weight: 500;
         }
-        
+
         .sidebar-link.active::before {
             content: '';
             position: absolute;
@@ -508,31 +512,31 @@
             width: 4px;
             background: linear-gradient(to bottom, var(--primary-color), var(--secondary-color));
         }
-        
+
         .sidebar-icon {
             width: 20px;
             text-align: center;
             margin-right: 10px;
             font-size: 16px;
         }
-        
+
         .sidebar-text {
             flex-grow: 1;
             font-size: 14px;
         }
-        
+
         .sidebar-toggle-submenu {
             margin-left: auto;
             font-size: 12px;
             transition: transform var(--transition-speed) ease;
         }
-        
+
         .sidebar-divider {
             height: 1px;
             background: var(--border-color);
             margin: 15px 0;
         }
-        
+
         .sidebar-title {
             padding: 0 20px;
             margin: 15px 0 8px;
@@ -541,7 +545,7 @@
             color: #888;
             letter-spacing: 0.5px;
         }
-        
+
         .sidebar-submenu {
             list-style: none;
             padding: 0;
@@ -550,15 +554,15 @@
             overflow: hidden;
             transition: max-height var(--transition-speed) ease;
         }
-        
+
         .submenu-open .sidebar-submenu {
             max-height: 200px;
         }
-        
+
         .submenu-open .sidebar-toggle-submenu {
             transform: rotate(90deg);
         }
-        
+
         .sidebar-submenu-link {
             display: block;
             padding: 10px 20px 10px 50px;
@@ -567,19 +571,19 @@
             font-size: 13px;
             transition: all var(--transition-speed) ease;
         }
-        
+
         .sidebar-submenu-link:hover {
             color: var(--primary-color);
             background: rgba(50, 189, 234, 0.05);
             text-decoration: none;
         }
-        
+
         .sidebar-submenu-link.active {
             color: var(--primary-color);
             background: rgba(50, 189, 234, 0.1);
             font-weight: 500;
         }
-        
+
         .feature-badge {
             font-size: 10px;
             padding: 2px 6px;
@@ -588,17 +592,17 @@
             color: white;
             margin-left: auto;
         }
-        
+
         /* Logout button styles */
         .sidebar-link.logout-btn {
             color: #dc3545 !important;
         }
-        
+
         .sidebar-link.logout-btn:hover {
             color: white !important;
             background: #dc3545 !important;
         }
-        
+
         .sidebar form button.sidebar-link {
             border: none;
             background: transparent;
@@ -606,41 +610,41 @@
             text-align: left;
             cursor: pointer;
         }
-        
+
         .sidebar form button.sidebar-link:focus {
             outline: none;
             box-shadow: none;
         }
-        
+
         /* Collapsed sidebar styles */
         body.sidebar-collapsed .sidebar {
             width: 60px;
         }
-        
+
         body.sidebar-collapsed .sidebar-text,
         body.sidebar-collapsed .sidebar-title,
         body.sidebar-collapsed .sidebar-toggle-submenu,
         body.sidebar-collapsed .feature-badge {
             display: none;
         }
-        
+
         body.sidebar-collapsed .sidebar-link {
             justify-content: center;
             padding: 15px;
         }
-        
+
         body.sidebar-collapsed .sidebar-icon {
             margin-right: 0;
         }
-        
+
         body.sidebar-collapsed .main-content {
             margin-left: 60px;
         }
-        
+
         body.sidebar-collapsed .sidebar-item:hover .sidebar-submenu {
             display: none;
         }
-        
+
         /* Main content styles */
         .main-content {
             margin-left: 250px;
@@ -649,26 +653,26 @@
             min-height: calc(100vh - 60px);
             transition: margin-left var(--transition-speed) ease;
         }
-        
+
         /* Dashboard header */
         .dashboard-header {
             margin-bottom: 20px;
             padding-bottom: 15px;
             border-bottom: 1px solid var(--border-color);
         }
-        
+
         .dashboard-title {
             font-size: 24px;
             font-weight: 600;
             margin-bottom: 5px;
             color: var(--dark-color);
         }
-        
+
         .dashboard-subtitle {
             color: #6c757d;
             font-size: 14px;
         }
-        
+
         .breadcrumb {
             display: flex;
             align-items: center;
@@ -677,21 +681,21 @@
             margin: 0;
             background: none;
         }
-        
+
         .breadcrumb a {
             color: var(--primary-color);
             text-decoration: none;
         }
-        
+
         .breadcrumb .separator {
             margin: 0 8px;
             color: #6c757d;
         }
-        
+
         .breadcrumb .current {
             color: #6c757d;
         }
-        
+
         /* Date display */
         .date-display {
             display: inline-flex;
@@ -702,18 +706,18 @@
             color: #6c757d;
             font-size: 14px;
         }
-        
+
         .date-display i {
             margin-right: 8px;
         }
-        
+
         /* Recent access card */
         .recent-access-card {
             border-radius: 10px;
             overflow: hidden;
             transition: all var(--transition-speed) ease;
         }
-        
+
         .recent-access-header {
             background: var(--light-color);
             padding: 15px 20px;
@@ -721,35 +725,35 @@
             justify-content: space-between;
             align-items: center;
         }
-        
+
         .recent-access-title {
             margin: 0;
             font-weight: 600;
         }
-        
+
         .section-action {
             color: #6c757d;
             text-decoration: none;
             font-size: 13px;
             transition: all var(--transition-speed) ease;
         }
-        
+
         .section-action:hover {
             color: var(--primary-color);
             text-decoration: none;
         }
-        
+
         .recent-items {
             list-style: none;
             margin: 0;
             padding: 0;
         }
-        
+
         .recent-item {
             border-bottom: 1px solid var(--border-color);
             transition: all var(--transition-speed) ease;
         }
-        
+
         .recent-link {
             display: flex;
             align-items: center;
@@ -757,13 +761,13 @@
             color: #555;
             text-decoration: none;
         }
-        
+
         .recent-link:hover {
             background-color: rgba(50, 189, 234, 0.05);
             color: #555;
             text-decoration: none;
         }
-        
+
         .recent-icon {
             width: 40px;
             height: 40px;
@@ -775,41 +779,41 @@
             color: var(--primary-color);
             margin-right: 15px;
         }
-        
+
         .recent-content {
             flex-grow: 1;
         }
-        
+
         .recent-name {
             font-weight: 500;
             font-size: 14px;
             margin-bottom: 2px;
         }
-        
+
         .recent-meta {
             color: #6c757d;
             font-size: 12px;
         }
-        
+
         .recent-time {
             color: #6c757d;
             font-size: 12px;
             margin-left: 15px;
         }
-        
+
         /* Stats cards */
         .stats-card {
             border-radius: 10px;
             overflow: hidden;
-            box-shadow: 0 0 10px rgba(0,0,0,0.05);
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
             transition: all var(--transition-speed) ease;
         }
-        
+
         .stats-card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
         }
-        
+
         .stats-icon {
             width: 50px;
             height: 50px;
@@ -819,7 +823,7 @@
             justify-content: center;
             color: white;
         }
-        
+
         /* Rehab categories */
         .rehab-category {
             padding: 15px;
@@ -830,172 +834,174 @@
             background: var(--light-color);
             transition: all var(--transition-speed) ease;
         }
-        
+
         .rehab-category:hover {
             transform: translateY(-3px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
         }
-        
+
         .rehab-category-autism {
             background: linear-gradient(to right, rgba(79, 172, 254, 0.15), rgba(0, 242, 254, 0.15));
             border-left: 3px solid #4facfe;
         }
-        
+
         .rehab-category-hearing {
             background: linear-gradient(to right, rgba(255, 154, 158, 0.15), rgba(250, 208, 196, 0.15));
             border-left: 3px solid #ff9a9e;
         }
-        
+
         .rehab-category-visual {
             background: linear-gradient(to right, rgba(51, 204, 255, 0.15), rgba(0, 196, 154, 0.15));
             border-left: 3px solid #33ccff;
         }
-        
+
         .rehab-category-physical {
             background: linear-gradient(to right, rgba(246, 211, 101, 0.15), rgba(253, 160, 133, 0.15));
             border-left: 3px solid #f6d365;
         }
-        
+
         .rehab-category-learning {
             background: linear-gradient(to right, rgba(200, 80, 192, 0.15), rgba(65, 88, 208, 0.15));
             border-left: 3px solid #c850c0;
         }
-        
+
         .rehab-category-speech {
             background: linear-gradient(to right, rgba(161, 140, 209, 0.15), rgba(251, 194, 235, 0.15));
             border-left: 3px solid #a18cd1;
         }
-        
+
         .rehab-category-title {
             font-weight: 500;
             font-size: 14px;
         }
-        
+
         .rehab-category-count {
             font-weight: 600;
             font-size: 18px;
             color: #555;
         }
-        
+
         /* Media queries */
         @media (max-width: 991px) {
             body {
                 overflow-x: hidden;
             }
-            
+
             body:not(.sidebar-collapsed) .sidebar {
                 transform: translateX(-100%);
             }
-            
+
             body.sidebar-collapsed .sidebar {
                 transform: translateX(0);
                 width: 250px;
             }
-            
+
             body.sidebar-collapsed .sidebar-text,
             body.sidebar-collapsed .sidebar-title,
             body.sidebar-collapsed .sidebar-toggle-submenu,
             body.sidebar-collapsed .feature-badge {
                 display: block;
             }
-            
+
             body.sidebar-collapsed .sidebar-link {
                 justify-content: flex-start;
                 padding: 12px 20px;
             }
-            
+
             body.sidebar-collapsed .sidebar-icon {
                 margin-right: 10px;
             }
-            
+
             .main-content {
                 margin-left: 0 !important;
                 width: 100%;
             }
-            
+
             .topbar-title {
                 max-width: 200px;
                 overflow: hidden;
                 text-overflow: ellipsis;
                 white-space: nowrap;
             }
-            
+
             .search-container.d-none.d-md-block {
                 display: none !important;
             }
-            
+
             .search-mobile-toggle {
                 display: flex;
             }
         }
-        
+
         @media (max-width: 767px) {
             .user-info.d-none.d-md-flex {
                 display: none !important;
             }
-            
+
             .user-profile {
                 padding: 6px;
             }
-            
+
             .user-avatar {
                 margin-right: 0;
             }
-            
+
             .notification-menu,
             .user-dropdown {
                 width: 280px;
             }
-            
+
             .topbar-title {
                 font-size: 16px;
                 max-width: 150px;
             }
-            
+
             .categories-container {
                 grid-template-columns: 1fr;
             }
         }
     </style>
-    
+
     <!-- Dropdown visibility improvements -->
     <link rel="stylesheet" href="{{ asset('css/dropdown-improvements.css') }}">
-    
+
     <!-- Dashboard widgets styling -->
     <link rel="stylesheet" href="{{ asset('css/dashboard-widgets.css') }}">
-    
+
     <!-- Malaysian Phone Input Styling -->
     {{-- <link rel="stylesheet" href="{{ asset('css/malaysian-phone-input.css') }}"> --}}
-    
+
     @yield('styles')
 </head>
+
 <body>
     <!-- Topbar -->
     <div class="topbar">
         <div class="sidebar-toggle" id="sidebarToggle">
             <i class="fas fa-bars"></i>
         </div>
-        
+
         <div class="topbar-logo">
             <a href="{{ session('role') ? route(session('role') . '.dashboard') : route('home') }}">
                 <i class="fas fa-clinic-medical"></i>
                 <span>CREAMS</span>
             </a>
         </div>
-        
+
         <div class="topbar-title">
             <!-- Dynamic title based on current page -->
-            @if(Route::currentRouteName() == 'trainees.home' || strpos(Route::currentRouteName(), 'trainee') !== false)
+            @if (Route::currentRouteName() == 'trainees.home' || strpos(Route::currentRouteName(), 'trainee') !== false)
                 Trainee Management
-            @elseif(Route::currentRouteName() == 'activities.categories' || strpos(Route::currentRouteName(), 'rehabilitation') !== false)
+            @elseif(Route::currentRouteName() == 'activities.categories' ||
+                    strpos(Route::currentRouteName(), 'rehabilitation') !== false)
                 Rehabilitation Category
             @else
                 {{ ucfirst(session('role')) }} Dashboard
             @endif
         </div>
-        
+
         <div class="topbar-spacer"></div>
-        
+
         <div class="search-container" style="display: block !important;">
             <form id="searchForm" action="{{ Route::has('search') ? route('search') : '#' }}" method="GET">
                 <div class="search-box">
@@ -1007,12 +1013,12 @@
             </form>
             <div id="searchResults" class="search-results-dropdown"></div>
         </div>
-        
+
         <div class="topbar-right">
             <div class="search-mobile-toggle d-md-none">
                 <i class="fas fa-search"></i>
             </div>
-            
+
             <div class="mobile-search">
                 <form action="{{ Route::has('search') ? route('search') : '#' }}" method="GET" class="mb-0">
                     <div class="input-group">
@@ -1025,11 +1031,11 @@
                     </div>
                 </form>
             </div>
-            
+
             <div class="notifications-dropdown" id="notificationToggle">
                 <div class="icon-button">
                     <i class="fas fa-bell"></i>
-                    @if(isset($unreadNotifications) && $unreadNotifications > 0)
+                    @if (isset($unreadNotifications) && $unreadNotifications > 0)
                         <span class="notification-count">{{ $unreadNotifications }}</span>
                     @endif
                 </div>
@@ -1037,7 +1043,7 @@
                     <!-- Notification will be loaded via JavaScript -->
                 </div>
             </div>
-            
+
             <div class="user-profile" id="userProfileToggle">
                 <div class="user-avatar">
                     @php
@@ -1047,16 +1053,17 @@
                         } else {
                             $avatarUrl = asset('images/default-avatar.svg');
                         }
-                        
+
                         $roleDisplayNames = [
                             'admin' => 'Administration',
-                            'supervisor' => 'Supervisor', 
+                            'supervisor' => 'Supervisor',
                             'teacher' => 'Teacher',
-                            'ajk' => 'AJK'
+                            'ajk' => 'AJK',
                         ];
                         $roleDisplay = $roleDisplayNames[session('role')] ?? ucfirst(session('role') ?? 'User');
                     @endphp
-                    <img src="{{ $avatarUrl }}" alt="User Avatar" onerror="this.src='{{ asset('images/default-avatar.svg') }}'">
+                    <img src="{{ $avatarUrl }}" alt="User Avatar"
+                        onerror="this.src='{{ asset('images/default-avatar.svg') }}'">
                 </div>
                 <div class="user-info d-none d-md-flex">
                     <div class="user-name">{{ session('name') ?? 'User' }}</div>
@@ -1066,7 +1073,8 @@
                     <div class="dropdown-header">
                         <div class="user-details d-flex align-items-center">
                             <div class="user-avatar mr-3">
-                                <img src="{{ $avatarUrl }}" alt="User Avatar" onerror="this.src='{{ asset('images/default-avatar.svg') }}'">
+                                <img src="{{ $avatarUrl }}" alt="User Avatar"
+                                    onerror="this.src='{{ asset('images/default-avatar.svg') }}'">
                             </div>
                             <div class="user-info">
                                 <div class="user-name">{{ session('name') ?? 'User' }}</div>
@@ -1075,7 +1083,7 @@
                         </div>
                     </div>
                     <div class="dropdown-divider"></div>
-                    @if(Route::has('profile'))
+                    @if (Route::has('profile'))
                         <a href="{{ Route::has('profile') ? route('profile') : '#' }}" class="dropdown-item">
                             <i class="fas fa-user-circle"></i> My Profile
                         </a>
@@ -1084,15 +1092,17 @@
                             <i class="fas fa-user-circle"></i> My Profile
                         </a>
                     @endif
-                        <a href="#" class="dropdown-item" onclick="event.preventDefault(); triggerNotificationDropdown(); return false;">
-                            <i class="fas fa-bell"></i> Notification
-                        </a>
-                    @if(Route::has(session('role') . '.settings'))
+                    <a href="#" class="dropdown-item"
+                        onclick="event.preventDefault(); triggerNotificationDropdown(); return false;">
+                        <i class="fas fa-bell"></i> Notification
+                    </a>
+                    @if (Route::has(session('role') . '.settings'))
                         <a href="{{ route(session('role') . '.settings') }}" class="dropdown-item">
                             <i class="fas fa-cog"></i> Settings
                         </a>
                     @else
-                        <a href="#" class="dropdown-item" onclick="if(typeof showSettingsMessage === 'function') { showSettingsMessage(); } else { alert('Function not available!'); }">
+                        <a href="#" class="dropdown-item"
+                            onclick="if(typeof showSettingsMessage === 'function') { showSettingsMessage(); } else { alert('Function not available!'); }">
                             <i class="fas fa-cog"></i> Settings
                         </a>
                     @endif
@@ -1109,13 +1119,15 @@
     <div class="sidebar">
         <ul class="sidebar-menu">
             <li class="sidebar-item">
-                <a href="{{ session('role') ? route(session('role') . '.dashboard') : route('home') }}" class="sidebar-link {{ strpos(Route::currentRouteName(), 'dashboard') !== false ? 'active' : '' }}">
+                <a href="{{ session('role') ? route(session('role') . '.dashboard') : route('home') }}"
+                    class="sidebar-link {{ strpos(Route::currentRouteName(), 'dashboard') !== false ? 'active' : '' }}">
                     <span class="sidebar-icon"><i class="fas fa-home"></i></span>
                     <span class="sidebar-text">Dashboard</span>
                 </a>
             </li>
 
-            <li class="sidebar-item {{ strpos(Route::currentRouteName(), 'profile') !== false || (in_array(session('role'), ['admin', 'supervisor']) && strpos(Route::currentRouteName(), 'volunteer') !== false) ? 'submenu-open' : '' }}">
+            <li
+                class="sidebar-item {{ strpos(Route::currentRouteName(), 'profile') !== false || (in_array(session('role'), ['admin', 'supervisor']) && strpos(Route::currentRouteName(), 'volunteer') !== false) ? 'submenu-open' : '' }}">
                 <a href="#" class="sidebar-link">
                     <span class="sidebar-icon"><i class="fas fa-user-circle"></i></span>
                     <span class="sidebar-text">My Profile</span>
@@ -1123,22 +1135,25 @@
                 </a>
                 <ul class="sidebar-submenu">
                     <li>
-                        @if(Route::has('profile'))
-                            <a href="{{ route('profile') }}" class="sidebar-submenu-link {{ Route::currentRouteName() == 'profile' ? 'active' : '' }}">
+                        @if (Route::has('profile'))
+                            <a href="{{ route('profile') }}"
+                                class="sidebar-submenu-link {{ Route::currentRouteName() == 'profile' ? 'active' : '' }}">
                                 Personal Info
                             </a>
                         @else
-                            <a href="#" class="sidebar-submenu-link" onclick="alert('Profile feature coming soon')">
+                            <a href="#" class="sidebar-submenu-link"
+                                onclick="alert('Profile feature coming soon')">
                                 Personal Info
                             </a>
                         @endif
                     </li>
-                    @if(in_array(session('role'), ['admin', 'supervisor']))
-                    <li>
-                        <a href="{{ route('admin.volunteers.index') }}" class="sidebar-submenu-link {{ Route::currentRouteName() == 'admin.volunteers.index' ? 'active' : '' }}">
-                            Volunteer Applications
-                        </a>
-                    </li>
+                    @if (in_array(session('role'), ['admin', 'supervisor']))
+                        <li>
+                            <a href="{{ route('admin.volunteers.index') }}"
+                                class="sidebar-submenu-link {{ Route::currentRouteName() == 'admin.volunteers.index' ? 'active' : '' }}">
+                                Volunteer Applications
+                            </a>
+                        </li>
                     @endif
                 </ul>
             </li>
@@ -1147,41 +1162,47 @@
 
             <li class="sidebar-title">Management</li>
 
-            @if(in_array(session('role'), ['admin', 'supervisor']))
-            <li class="sidebar-item {{ strpos(Route::currentRouteName(), '.users') !== false ? 'submenu-open' : '' }}">
-                <a href="#" class="sidebar-link">
-                    <span class="sidebar-icon"><i class="fas fa-users"></i></span>
-                    <span class="sidebar-text">Staffs</span>
-                    <i class="fas fa-chevron-right sidebar-toggle-submenu"></i>
-                </a>
-                <ul class="sidebar-submenu">
-                    <li>
-                        @if(Route::has(session('role') . '.users'))
-                            <a href="{{ route(session('role') . '.users') }}" class="sidebar-submenu-link {{ Route::currentRouteName() == session('role') . '.users' ? 'active' : '' }}">
-                                Home
-                            </a>
-                        @else
-                            <a href="#" class="sidebar-submenu-link" onclick="alert('User feature coming soon')">
-                                Home
-                            </a>
-                        @endif
-                    </li>
-                    <li>
-                        @if(Route::has('staffs.register'))
-                            <a href="{{ route('staffs.register') }}" class="sidebar-submenu-link {{ Route::currentRouteName() == 'staffs.register' ? 'active' : '' }}">
-                                Registration
-                            </a>
-                        @else
-                            <a href="#" class="sidebar-submenu-link" onclick="alert('Registration feature coming soon')">
-                                Registration
-                            </a>
-                        @endif
-                    </li>
-                </ul>
-            </li>
+            @if (in_array(session('role'), ['admin', 'supervisor']))
+                <li
+                    class="sidebar-item {{ strpos(Route::currentRouteName(), '.users') !== false ? 'submenu-open' : '' }}">
+                    <a href="#" class="sidebar-link">
+                        <span class="sidebar-icon"><i class="fas fa-users"></i></span>
+                        <span class="sidebar-text">Staffs</span>
+                        <i class="fas fa-chevron-right sidebar-toggle-submenu"></i>
+                    </a>
+                    <ul class="sidebar-submenu">
+                        <li>
+                            @if (Route::has(session('role') . '.users'))
+                                <a href="{{ route(session('role') . '.users') }}"
+                                    class="sidebar-submenu-link {{ Route::currentRouteName() == session('role') . '.users' ? 'active' : '' }}">
+                                    Home
+                                </a>
+                            @else
+                                <a href="#" class="sidebar-submenu-link"
+                                    onclick="alert('User feature coming soon')">
+                                    Home
+                                </a>
+                            @endif
+                        </li>
+                        <li>
+                            @if (Route::has('staffs.register'))
+                                <a href="{{ route('staffs.register') }}"
+                                    class="sidebar-submenu-link {{ Route::currentRouteName() == 'staffs.register' ? 'active' : '' }}">
+                                    Registration
+                                </a>
+                            @else
+                                <a href="#" class="sidebar-submenu-link"
+                                    onclick="alert('Registration feature coming soon')">
+                                    Registration
+                                </a>
+                            @endif
+                        </li>
+                    </ul>
+                </li>
             @endif
 
-            <li class="sidebar-item {{ strpos(Route::currentRouteName(), 'trainee') !== false ? 'submenu-open' : '' }}">
+            <li
+                class="sidebar-item {{ strpos(Route::currentRouteName(), 'trainee') !== false ? 'submenu-open' : '' }}">
                 <a href="#" class="sidebar-link">
                     <span class="sidebar-icon"><i class="fas fa-user-graduate"></i></span>
                     <span class="sidebar-text">Trainee</span>
@@ -1189,19 +1210,22 @@
                 </a>
                 <ul class="sidebar-submenu">
                     <li>
-                        <a href="{{ route('trainees.home') }}" class="sidebar-submenu-link {{ Route::currentRouteName() == 'trainees.home' ? 'active' : '' }}">
+                        <a href="{{ route('trainees.home') }}"
+                            class="sidebar-submenu-link {{ Route::currentRouteName() == 'trainees.home' ? 'active' : '' }}">
                             Home
                         </a>
                     </li>
                     <li>
-                        <a href="{{ route('trainees.create') }}" class="sidebar-submenu-link {{ Route::currentRouteName() == 'trainees.create' ? 'active' : '' }}">
+                        <a href="{{ route('trainees.create') }}"
+                            class="sidebar-submenu-link {{ Route::currentRouteName() == 'trainees.create' ? 'active' : '' }}">
                             Registration
                         </a>
                     </li>
                 </ul>
             </li>
 
-            <li class="sidebar-item {{ strpos(Route::currentRouteName(), 'activities') !== false || strpos(Route::currentRouteName(), 'rehabilitation') !== false ? 'submenu-open' : '' }}">
+            <li
+                class="sidebar-item {{ strpos(Route::currentRouteName(), 'activities') !== false || strpos(Route::currentRouteName(), 'rehabilitation') !== false ? 'submenu-open' : '' }}">
                 <a href="#" class="sidebar-link">
                     <span class="sidebar-icon"><i class="fas fa-heartbeat"></i></span>
                     <span class="sidebar-text">Activity</span>
@@ -1209,24 +1233,28 @@
                 </a>
                 <ul class="sidebar-submenu">
                     <li>
-                        <a href="{{ route('activities.home') }}" class="sidebar-submenu-link {{ Route::currentRouteName() == 'activities.home' ? 'active' : '' }}">
+                        <a href="{{ route('activities.home') }}"
+                            class="sidebar-submenu-link {{ Route::currentRouteName() == 'activities.home' ? 'active' : '' }}">
                             Home
                         </a>
                     </li>
                     <li>
-                        <a href="{{ route('activities.categories') }}" class="sidebar-submenu-link {{ Route::currentRouteName() == 'activities.categories' ? 'active' : '' }}">
+                        <a href="{{ route('activities.categories') }}"
+                            class="sidebar-submenu-link {{ Route::currentRouteName() == 'activities.categories' ? 'active' : '' }}">
                             Category
                         </a>
                     </li>
                     <li>
-                        <a href="{{ route('activities.schedule') }}" class="sidebar-submenu-link {{ strpos(Route::currentRouteName(), 'activities.schedule') !== false ? 'active' : '' }}">
+                        <a href="{{ route('activities.schedule') }}"
+                            class="sidebar-submenu-link {{ strpos(Route::currentRouteName(), 'activities.schedule') !== false ? 'active' : '' }}">
                             Schedule
                         </a>
                     </li>
                 </ul>
             </li>
 
-            <li class="sidebar-item {{ strpos(Route::currentRouteName(), '.centres') !== false ? 'submenu-open' : '' }}">
+            <li
+                class="sidebar-item {{ strpos(Route::currentRouteName(), '.centres') !== false ? 'submenu-open' : '' }}">
                 <a href="#" class="sidebar-link">
                     <span class="sidebar-icon"><i class="fas fa-building"></i></span>
                     <span class="sidebar-text">Centre</span>
@@ -1234,27 +1262,31 @@
                 </a>
                 <ul class="sidebar-submenu">
                     <li>
-                        @if(Route::has(session('role') . '.centres'))
-                            <a href="{{ route(session('role') . '.centres') }}" class="sidebar-submenu-link {{ Route::currentRouteName() == session('role') . '.centres' ? 'active' : '' }}">
+                        @if (Route::has(session('role') . '.centres'))
+                            <a href="{{ route(session('role') . '.centres') }}"
+                                class="sidebar-submenu-link {{ Route::currentRouteName() == session('role') . '.centres' ? 'active' : '' }}">
                                 Home
                             </a>
                         @else
-                            <a href="#" class="sidebar-submenu-link" onclick="alert('Centre feature coming soon')">
+                            <a href="#" class="sidebar-submenu-link"
+                                onclick="alert('Centre feature coming soon')">
                                 Home
                             </a>
                         @endif
                     </li>
                     <li>
-                        <a href="{{ route('centre.assets') }}" class="sidebar-submenu-link {{ strpos(Route::currentRouteName(), 'centre.assets') !== false ? 'active' : '' }}">
+                        <a href="{{ route('centre.asset-parents') }}"
+                            class="sidebar-submenu-link {{ strpos(Route::currentRouteName(), 'centre.asset-parents') !== false ? 'active' : '' }}">
                             Asset
                         </a>
                     </li>
-                    @if(in_array(session('role'), ['admin', 'supervisor']))
-                    <li>
-                        <a href="{{ route('centres.attendance.index') }}" class="sidebar-submenu-link {{ strpos(Route::currentRouteName(), 'centres.attendance') !== false ? 'active' : '' }}">
-                            Attendance
-                        </a>
-                    </li>
+                    @if (in_array(session('role'), ['admin', 'supervisor']))
+                        <li>
+                            <a href="{{ route('centres.attendance.index') }}"
+                                class="sidebar-submenu-link {{ strpos(Route::currentRouteName(), 'centres.attendance') !== false ? 'active' : '' }}">
+                                Attendance
+                            </a>
+                        </li>
                     @endif
                 </ul>
             </li>
@@ -1264,14 +1296,16 @@
             <li class="sidebar-title">Reports & Settings</li>
 
             <li class="sidebar-item">
-                @if(Route::has(session('role') . '.reports'))
-                    <a href="{{ route(session('role') . '.reports') }}" class="sidebar-link {{ Route::currentRouteName() == session('role') . '.reports' ? 'active' : '' }}">
+                @if (Route::has(session('role') . '.reports'))
+                    <a href="{{ route(session('role') . '.reports') }}"
+                        class="sidebar-link {{ Route::currentRouteName() == session('role') . '.reports' ? 'active' : '' }}">
                         <span class="sidebar-icon"><i class="fas fa-chart-bar"></i></span>
                         <span class="sidebar-text">Reports</span>
                         <span class="feature-badge">Development</span>
                     </a>
                 @else
-                    <a href="#" class="sidebar-link" onclick="if(typeof showReportsMessage === 'function') { showReportsMessage(); } else { alert('Function not available!'); }">
+                    <a href="#" class="sidebar-link"
+                        onclick="if(typeof showReportsMessage === 'function') { showReportsMessage(); } else { alert('Function not available!'); }">
                         <span class="sidebar-icon"><i class="fas fa-chart-bar"></i></span>
                         <span class="sidebar-text">Reports</span>
                         <span class="feature-badge">Development</span>
@@ -1280,20 +1314,22 @@
             </li>
 
             <li class="sidebar-item">
-                @if(Route::has(session('role') . '.settings'))
-                    <a href="{{ route(session('role') . '.settings') }}" class="sidebar-link {{ Route::currentRouteName() == session('role') . '.settings' ? 'active' : '' }}">
+                @if (Route::has(session('role') . '.settings'))
+                    <a href="{{ route(session('role') . '.settings') }}"
+                        class="sidebar-link {{ Route::currentRouteName() == session('role') . '.settings' ? 'active' : '' }}">
                         <span class="sidebar-icon"><i class="fas fa-cog"></i></span>
                         <span class="sidebar-text">Settings</span>
                     </a>
                 @else
-                    <a href="#" class="sidebar-link" onclick="if(typeof showSettingsMessage === 'function') { showSettingsMessage(); } else { alert('Function not available!'); }">
+                    <a href="#" class="sidebar-link"
+                        onclick="if(typeof showSettingsMessage === 'function') { showSettingsMessage(); } else { alert('Function not available!'); }">
                         <span class="sidebar-icon"><i class="fas fa-cog"></i></span>
                         <span class="sidebar-text">Settings</span>
                         <span class="feature-badge">Development</span>
                     </a>
                 @endif
             </li>
-            
+
             <!-- Logout Button -->
             <li class="sidebar-divider"></li>
             <li class="sidebar-item">
@@ -1323,7 +1359,7 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.min.js"></script>
-    
+
     <!-- Expiry Handler CSS and JS -->
     <link rel="stylesheet" href="{{ asset('css/expiry-handler.css') }}">
     <script src="{{ asset('js/expiry-handler.js') }}"></script>
@@ -1334,55 +1370,59 @@
             if (sidebarToggle) {
                 sidebarToggle.addEventListener('click', function() {
                     document.body.classList.toggle('sidebar-collapsed');
-                    
+
                     // Store preference in localStorage
-                    localStorage.setItem('sidebar-collapsed', document.body.classList.contains('sidebar-collapsed'));
+                    localStorage.setItem('sidebar-collapsed', document.body.classList.contains(
+                        'sidebar-collapsed'));
                 });
             }
-            
+
             // Check if sidebar was previously collapsed
             if (localStorage.getItem('sidebar-collapsed') === 'true') {
                 document.body.classList.add('sidebar-collapsed');
             }
-            
+
             // Handle sidebar submenu toggles
             const submenuLinks = document.querySelectorAll('.sidebar-link');
             submenuLinks.forEach(link => {
-                if (link.nextElementSibling && link.nextElementSibling.classList.contains('sidebar-submenu')) {
+                if (link.nextElementSibling && link.nextElementSibling.classList.contains(
+                    'sidebar-submenu')) {
                     link.addEventListener('click', function(e) {
                         e.preventDefault();
                         const parent = this.parentElement;
-                        
+
                         // Toggle submenu-open class
                         parent.classList.toggle('submenu-open');
-                        
+
                         // Close other submenus
-                        const siblings = Array.from(parent.parentElement.children).filter(el => el !== parent);
+                        const siblings = Array.from(parent.parentElement.children).filter(el =>
+                            el !== parent);
                         siblings.forEach(sibling => {
                             sibling.classList.remove('submenu-open');
                         });
                     });
                 }
             });
-            
+
             // Handle notifications dropdown
             const notificationToggle = document.getElementById('notificationToggle');
             const notificationMenu = document.getElementById('notificationMenu');
-            
+
             if (notificationToggle && notificationMenu) {
                 notificationToggle.addEventListener('click', function(e) {
                     e.stopPropagation();
                     notificationMenu.classList.toggle('show');
-                    
+
                     // Close user dropdown if open
                     const userDropdown = document.getElementById('userDropdown');
                     if (userDropdown) {
                         userDropdown.classList.remove('show');
                     }
-                    
+
                     // Load notifications if menu is showing
                     if (notificationMenu.classList.contains('show')) {
-                        console.log('Notification menu opened, calling renderNotificationDevelopmentMessage');
+                        console.log(
+                            'Notification menu opened, calling renderNotificationDevelopmentMessage');
                         renderNotificationDevelopmentMessage();
                     } else {
                         console.log('Notification menu closed');
@@ -1394,16 +1434,16 @@
                     notificationMenu: notificationMenu
                 });
             }
-            
+
             // Handle user profile dropdown
             const userProfileToggle = document.getElementById('userProfileToggle');
             const userDropdown = document.getElementById('userDropdown');
-            
+
             if (userProfileToggle && userDropdown) {
                 userProfileToggle.addEventListener('click', function(e) {
                     e.stopPropagation();
                     userDropdown.classList.toggle('show');
-                    
+
                     // Close notification menu if open
                     if (notificationMenu) {
                         notificationMenu.classList.remove('show');
@@ -1415,24 +1455,24 @@
                     userDropdown: userDropdown
                 });
             }
-            
+
             // Close dropdowns when clicking outside
             document.addEventListener('click', function() {
                 if (notificationMenu) {
                     notificationMenu.classList.remove('show');
                 }
-                
+
                 if (userDropdown) {
                     userDropdown.classList.remove('show');
                 }
-                
+
                 // Also close mobile search if open
                 const mobileSearch = document.querySelector('.mobile-search');
                 if (mobileSearch) {
                     mobileSearch.classList.remove('show');
                 }
             });
-            
+
             // Prevent dropdown close when clicking inside
             [notificationMenu, userDropdown].forEach(el => {
                 if (el) {
@@ -1441,55 +1481,60 @@
                     });
                 }
             });
-            
+
             // Mobile search toggle
             const searchMobileToggle = document.querySelector('.search-mobile-toggle');
             const mobileSearch = document.querySelector('.mobile-search');
-            
+
             if (searchMobileToggle && mobileSearch) {
                 searchMobileToggle.addEventListener('click', function(e) {
                     e.stopPropagation();
                     mobileSearch.classList.toggle('show');
                 });
-                
+
                 mobileSearch.addEventListener('click', function(e) {
                     e.stopPropagation();
                 });
             }
-            
+
             // Search functionality
             const globalSearch = document.getElementById('globalSearch');
             const searchResults = document.getElementById('searchResults');
-            
-            console.log('Search elements found:', { globalSearch, searchResults });
-            
+
+            console.log('Search elements found:', {
+                globalSearch,
+                searchResults
+            });
+
             if (globalSearch && searchResults) {
                 console.log('Initializing search functionality');
-                
+
                 // Test search API availability on page load
                 const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
                 if (csrfToken) {
                     fetch('/search', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': csrfToken
-                        },
-                        body: JSON.stringify({ query: 'test' })
-                    })
-                    .then(response => {
-                        console.log('Search API test - Status:', response.status);
-                        if (response.ok) {
-                            console.log('✅ Search API is accessible');
-                        } else {
-                            console.log('⚠️ Search API returned error status');
-                        }
-                    })
-                    .catch(error => {
-                        console.log('❌ Search API not accessible:', error.message);
-                    });
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': csrfToken
+                            },
+                            body: JSON.stringify({
+                                query: 'test'
+                            })
+                        })
+                        .then(response => {
+                            console.log('Search API test - Status:', response.status);
+                            if (response.ok) {
+                                console.log('✅ Search API is accessible');
+                            } else {
+                                console.log('⚠️ Search API returned error status');
+                            }
+                        })
+                        .catch(error => {
+                            console.log('❌ Search API not accessible:', error.message);
+                        });
                 }
-                
+
                 // Add a simple test - simulate typing "test" after 2 seconds (for debugging)
                 setTimeout(() => {
                     console.log('🧪 Running automatic search test...');
@@ -1497,13 +1542,13 @@
                     displayMockResults('test');
                     console.log('🔍 If you see search results above, the search system is working!');
                 }, 2000);
-                
+
                 // Add a simple click handler to test search manually
                 globalSearch.addEventListener('focus', function() {
                     console.log('Search input focused - ready for input');
                 });
                 let searchTimer;
-                
+
                 // Handle Enter key press
                 globalSearch.addEventListener('keydown', function(e) {
                     if (e.key === 'Enter') {
@@ -1512,26 +1557,26 @@
                         performSearch(this.value);
                     }
                 });
-                
+
                 globalSearch.addEventListener('input', function() {
                     const query = this.value;
                     console.log('Search input changed:', query);
                     clearTimeout(searchTimer);
-                    
+
                     // Don't search for very short queries
                     if (query.length < 2) {
                         searchResults.innerHTML = '';
                         searchResults.style.display = 'none';
                         return;
                     }
-                    
+
                     // Set a small delay to avoid too many requests
                     searchTimer = setTimeout(function() {
                         console.log('Triggering search after delay for:', query);
                         performSearch(query);
                     }, 300);
                 });
-                
+
                 // Simplified search function - just use mock data for now
                 function performSearch(query) {
                     console.log('performSearch called with query:', query);
@@ -1540,40 +1585,42 @@
                         searchResults.style.display = 'none';
                         return;
                     }
-                    
+
                     // Show loading indicator
-                    searchResults.innerHTML = '<div class="search-loading"><i class="fas fa-spinner fa-spin"></i> Searching...</div>';
+                    searchResults.innerHTML =
+                        '<div class="search-loading"><i class="fas fa-spinner fa-spin"></i> Searching...</div>';
                     searchResults.style.display = 'block';
-                    
+
                     // Perform actual search API call
                     fetch(`{{ route('search') }}?query=${encodeURIComponent(query)}`, {
-                        method: 'GET',
-                        headers: {
-                            'Accept': 'application/json',
-                            'X-Requested-With': 'XMLHttpRequest',
-                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                        }
-                    })
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error(`HTTP error! status: ${response.status}`);
-                        }
-                        return response.json();
-                    })
-                    .then(data => {
-                        console.log('Search results received:', data);
-                        if (data.results) {
-                            displaySearchResults(data.results, query, 'API');
-                        } else {
-                            displaySearchResults([], query, 'API');
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Search error:', error);
-                        searchResults.innerHTML = '<div class="search-error"><i class="fas fa-exclamation-triangle"></i> Search error. Please try again.</div>';
-                    });
+                            method: 'GET',
+                            headers: {
+                                'Accept': 'application/json',
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                            }
+                        })
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error(`HTTP error! status: ${response.status}`);
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            console.log('Search results received:', data);
+                            if (data.results) {
+                                displaySearchResults(data.results, query, 'API');
+                            } else {
+                                displaySearchResults([], query, 'API');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Search error:', error);
+                            searchResults.innerHTML =
+                                '<div class="search-error"><i class="fas fa-exclamation-triangle"></i> Search error. Please try again.</div>';
+                        });
                 }
-                
+
                 // Display search results function
                 function displaySearchResults(results, query, source = 'Mock') {
                     if (results.length === 0) {
@@ -1585,14 +1632,16 @@
                         `;
                         return;
                     }
-                    
-                    let resultsHtml = `<div class="search-results-header">Found ${results.length} results for "${query}" ${source === 'API' ? '🔍' : '(Demo)'}</div>`;
-                    
+
+                    let resultsHtml =
+                        `<div class="search-results-header">Found ${results.length} results for "${query}" ${source === 'API' ? '🔍' : '(Demo)'}</div>`;
+
                     results.forEach(function(item) {
                         let icon = 'file';
                         let iconColor = '#007bff';
-                        
-                        if (item.type === 'Staff' || item.type === 'Admin' || item.type === 'Supervisor' || item.type === 'Teacher') {
+
+                        if (item.type === 'Staff' || item.type === 'Admin' || item.type === 'Supervisor' ||
+                            item.type === 'Teacher') {
                             icon = 'user-tie';
                             iconColor = '#28a745';
                         } else if (item.type === 'Trainee') {
@@ -1602,10 +1651,11 @@
                             icon = 'heartbeat';
                             iconColor = '#fd7e14';
                         }
-                        
+
                         // Handle both API response format and mock format
-                        const displayMeta = item.location ? `${item.location} • ${item.type}` : (item.meta || item.type);
-                        
+                        const displayMeta = item.location ? `${item.location} • ${item.type}` : (item
+                            .meta || item.type);
+
                         resultsHtml += `
                             <a href="${item.url || '#'}" class="search-result-item">
                                 <div class="search-result-icon" style="color: ${iconColor}">
@@ -1621,9 +1671,9 @@
                             </a>
                         `;
                     });
-                    
+
                     searchResults.innerHTML = resultsHtml;
-                    
+
                     // Add click event listeners to close dropdown when result is clicked
                     const resultLinks = searchResults.querySelectorAll('.search-result-item');
                     resultLinks.forEach(link => {
@@ -1632,78 +1682,77 @@
                         });
                     });
                 }
-                
+
                 // Close search dropdown when a result is clicked
                 function closeSearchDropdown() {
                     searchResults.style.display = 'none';
                     globalSearch.value = '';
                 }
-                
+
                 // Mock results fallback function
                 function displayMockResults(query) {
                     console.log('displayMockResults called with query:', query);
-                        const mockResults = [
-                            {
-                                name: 'Ahmad Ibrahim',
-                                type: 'Trainee',
-                                meta: 'Centre Kuala Lumpur • Physical Disability',
-                                url: '/trainees/1'
-                            },
-                            {
-                                name: 'Siti Aminah',
-                                type: 'Trainee', 
-                                meta: 'Centre Selangor • Learning Disability',
-                                url: '/trainees/2'
-                            },
-                            {
-                                name: 'Nur Aisyah',
-                                type: 'Trainee',
-                                meta: 'Centre Kuala Lumpur • Autism',
-                                url: '/trainees/3'
-                            },
-                            {
-                                name: 'Muhammad Ali',
-                                type: 'Trainee',
-                                meta: 'Centre Johor • Visual Impairment',
-                                url: '/trainees/4'
-                            },
-                            {
-                                name: 'Dr. Sarah Abdullah',
-                                type: 'Admin',
-                                meta: 'Centre Kuala Lumpur • System Administrator',
-                                url: '/staff/1'
-                            },
-                            {
-                                name: 'Faizah Ahmad',
-                                type: 'Teacher',
-                                meta: 'Centre Selangor • Special Education',
-                                url: '/staff/2'
-                            },
-                            {
-                                name: 'Speech Therapy',
-                                type: 'Activity',
-                                meta: 'Communication Skills',
-                                url: '/activities/1'
-                            },
-                            {
-                                name: 'Physical Therapy',
-                                type: 'Activity',
-                                meta: 'Motor Skills Development',
-                                url: '/activities/2'
-                            }
-                        ];
-                        
-                        // Filter results based on query
-                        const filteredResults = mockResults.filter(item => 
-                            item.name.toLowerCase().includes(query.toLowerCase()) ||
-                            item.meta.toLowerCase().includes(query.toLowerCase()) ||
-                            item.type.toLowerCase().includes(query.toLowerCase())
-                        );
-                        
-                        // Use the new displaySearchResults function
-                        displaySearchResults(filteredResults, query, 'Mock');
+                    const mockResults = [{
+                            name: 'Ahmad Ibrahim',
+                            type: 'Trainee',
+                            meta: 'Centre Kuala Lumpur • Physical Disability',
+                            url: '/trainees/1'
+                        },
+                        {
+                            name: 'Siti Aminah',
+                            type: 'Trainee',
+                            meta: 'Centre Selangor • Learning Disability',
+                            url: '/trainees/2'
+                        },
+                        {
+                            name: 'Nur Aisyah',
+                            type: 'Trainee',
+                            meta: 'Centre Kuala Lumpur • Autism',
+                            url: '/trainees/3'
+                        },
+                        {
+                            name: 'Muhammad Ali',
+                            type: 'Trainee',
+                            meta: 'Centre Johor • Visual Impairment',
+                            url: '/trainees/4'
+                        },
+                        {
+                            name: 'Dr. Sarah Abdullah',
+                            type: 'Admin',
+                            meta: 'Centre Kuala Lumpur • System Administrator',
+                            url: '/staff/1'
+                        },
+                        {
+                            name: 'Faizah Ahmad',
+                            type: 'Teacher',
+                            meta: 'Centre Selangor • Special Education',
+                            url: '/staff/2'
+                        },
+                        {
+                            name: 'Speech Therapy',
+                            type: 'Activity',
+                            meta: 'Communication Skills',
+                            url: '/activities/1'
+                        },
+                        {
+                            name: 'Physical Therapy',
+                            type: 'Activity',
+                            meta: 'Motor Skills Development',
+                            url: '/activities/2'
+                        }
+                    ];
+
+                    // Filter results based on query
+                    const filteredResults = mockResults.filter(item =>
+                        item.name.toLowerCase().includes(query.toLowerCase()) ||
+                        item.meta.toLowerCase().includes(query.toLowerCase()) ||
+                        item.type.toLowerCase().includes(query.toLowerCase())
+                    );
+
+                    // Use the new displaySearchResults function
+                    displaySearchResults(filteredResults, query, 'Mock');
                 }
-                
+
                 // Close search results when clicking outside
                 document.addEventListener('click', function(e) {
                     if (!e.target.closest('.search-container')) {
@@ -1711,7 +1760,7 @@
                     }
                 });
             }
-            
+
             // Prevent search form submission
             const searchForm = document.getElementById('searchForm');
             if (searchForm) {
@@ -1726,11 +1775,11 @@
                     }
                 });
             }
-            
+
             // Function to load notifications
             function loadNotifications() {
                 if (!notificationMenu) return;
-                
+
                 // Show loading indicator
                 notificationMenu.innerHTML = `
                     <div class="p-3 text-center">
@@ -1738,30 +1787,31 @@
                         <p class="m-0 mt-2">Loading notifications...</p>
                     </div>
                 `;
-                
+
                 // Make AJAX request to get unread notifications
-                fetch('{{ route("notifications.unread") }}', {
-                    method: 'GET',
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        renderNotifications(data.notifications, data.count);
-                        updateNotificationCount(data.count);
-                    } else {
-                        renderNotificationError();
-                    }
-                })
-                .catch(error => {
-                    console.error('Error loading notifications:', error);
-                    renderNotificationDevelopmentMessage();
-                });
+                fetch('{{ route('notifications.unread') }}', {
+                        method: 'GET',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute(
+                                'content')
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            renderNotifications(data.notifications, data.count);
+                            updateNotificationCount(data.count);
+                        } else {
+                            renderNotificationError();
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error loading notifications:', error);
+                        renderNotificationDevelopmentMessage();
+                    });
             }
-            
+
             // Function to render notifications
             function renderNotifications(notifications, count) {
                 let notificationsHtml = `
@@ -1772,7 +1822,7 @@
                         </div>
                     </div>
                 `;
-                
+
                 if (notifications.length > 0) {
                     notifications.forEach(notification => {
                         const actionUrl = notification.action_url || '#';
@@ -1799,7 +1849,7 @@
                         </div>
                     `;
                 }
-                
+
                 notificationsHtml += `
                     <div class="p-2 text-center border-top">
                         <a href="{{ route('notifications.index') }}" class="btn btn-sm btn-light w-100">
@@ -1807,9 +1857,9 @@
                         </a>
                     </div>
                 `;
-                
+
                 notificationMenu.innerHTML = notificationsHtml;
-                
+
                 // Set up mark all read button
                 const markAllReadBtn = document.getElementById('mark-all-read');
                 if (markAllReadBtn) {
@@ -1818,7 +1868,7 @@
                         markAllNotificationsAsRead();
                     });
                 }
-                
+
                 // Set up individual notification click handlers
                 const notificationItems = document.querySelectorAll('.notification-item');
                 notificationItems.forEach(item => {
@@ -1828,7 +1878,7 @@
                     });
                 });
             }
-            
+
             // Function to render notification error
             function renderNotificationError() {
                 notificationMenu.innerHTML = `
@@ -1841,7 +1891,7 @@
                     </div>
                 `;
             }
-            
+
             // Function to render notification development message
             function renderNotificationDevelopmentMessage() {
                 console.log('renderNotificationDevelopmentMessage called');
@@ -1850,7 +1900,7 @@
                     console.log('notificationMenu element not found!');
                     return;
                 }
-                
+
                 console.log('Setting notification menu content');
                 notificationMenu.innerHTML = `
                     <div class="p-3 text-center text-muted">
@@ -1867,7 +1917,7 @@
                     </div>
                 `;
             }
-            
+
             // Function to update notification count badge
             function updateNotificationCount(count) {
                 const notificationCountEl = document.querySelector('.notification-count');
@@ -1891,72 +1941,77 @@
                     }
                 }
             }
-            
+
             // Function to mark all notifications as read
             function markAllNotificationsAsRead() {
-                fetch('{{ route("notifications.mark-all-read") }}', {
-                    method: 'POST',
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                        'Content-Type': 'application/json',
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        updateNotificationCount(0);
-                        notificationMenu.classList.remove('show');
-                        // Optionally reload notifications to show updated state
-                        loadNotifications();
-                    }
-                })
-                .catch(error => {
-                    console.error('Error marking notifications as read:', error);
-                });
+                fetch('{{ route('notifications.mark-all-read') }}', {
+                        method: 'POST',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute(
+                                'content'),
+                            'Content-Type': 'application/json',
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            updateNotificationCount(0);
+                            notificationMenu.classList.remove('show');
+                            // Optionally reload notifications to show updated state
+                            loadNotifications();
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error marking notifications as read:', error);
+                    });
             }
-            
+
             // Function to mark individual notification as read
             function markNotificationAsRead(notificationId) {
                 fetch(`/notifications/${notificationId}/mark-read`, {
-                    method: 'POST',
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                        'Content-Type': 'application/json',
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        // Update count without full reload
-                        const currentCount = parseInt(document.querySelector('.notification-count')?.textContent || '0');
-                        updateNotificationCount(Math.max(0, currentCount - 1));
-                    }
-                })
-                .catch(error => {
-                    console.error('Error marking notification as read:', error);
-                });
+                        method: 'POST',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute(
+                                'content'),
+                            'Content-Type': 'application/json',
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Update count without full reload
+                            const currentCount = parseInt(document.querySelector('.notification-count')
+                                ?.textContent || '0');
+                            updateNotificationCount(Math.max(0, currentCount - 1));
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error marking notification as read:', error);
+                    });
             }
-            
+
             // Fix avatar images - optimized to prevent infinite loops
             function fixAvatarImages() {
-                const avatarImages = document.querySelectorAll('.user-avatar img, .profile-img, .rounded-circle[src*="profile"]');
+                const avatarImages = document.querySelectorAll(
+                    '.user-avatar img, .profile-img, .rounded-circle[src*="profile"]');
                 avatarImages.forEach(function(img) {
                     // Skip if already processed or already showing default
                     if (img.dataset.avatarProcessed || img.src.includes('default-avatar')) {
                         return;
                     }
-                    
+
                     // Mark as processed to prevent reprocessing
                     img.dataset.avatarProcessed = 'true';
-                    
+
                     // Check if src is empty, null, or undefined
-                    if (!img.getAttribute('src') || img.getAttribute('src') === '' || img.getAttribute('src').includes('null')) {
+                    if (!img.getAttribute('src') || img.getAttribute('src') === '' || img.getAttribute(
+                            'src').includes('null')) {
                         img.src = '/images/default-avatar.png';
                         return;
                     }
-                    
+
                     // Add error handler for loading failures (only once)
                     if (!img.dataset.errorHandlerAdded) {
                         img.dataset.errorHandlerAdded = 'true';
@@ -1967,18 +2022,18 @@
                             }
                         });
                     }
-                    
+
                     // Also check if the src contains storage path but file doesn't exist
                     if (img.src.includes('storage/avatars/') && img.src.includes('null')) {
                         img.src = '/images/default-avatar.png';
                     }
                 });
             }
-            
+
             // Run avatar fix only once on page load
             fixAvatarImages();
         });
-        
+
         // PWA Service Worker Registration
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', function() {
@@ -1991,29 +2046,32 @@
                     });
             });
         }
-        
+
         // Mobile-specific optimizations
         if (window.innerWidth <= 768) {
             document.body.classList.add('mobile-device');
         }
     </script>
-    
+
     <!-- Global development message functions -->
     <script>
         // Global development message functions for sidebar and topbar buttons
         function showReportsMessage() {
             console.log('showReportsMessage function called');
-            alert('📊 Advanced Reports coming soon!\n\nUpcoming features:\n• Activity analytics\n• Performance metrics\n• Attendance reports\n• Progress tracking\n• Data export options\n\nStay tuned for comprehensive insights!');
+            alert(
+                '📊 Advanced Reports coming soon!\n\nUpcoming features:\n• Activity analytics\n• Performance metrics\n• Attendance reports\n• Progress tracking\n• Data export options\n\nStay tuned for comprehensive insights!');
         }
-        
+
         function showSettingsMessage() {
             console.log('showSettingsMessage function called');
-            alert('⚙️ Settings Panel coming soon!\n\nThis feature will include:\n• User preferences\n• System configuration\n• Theme customization\n• Notification settings\n• Privacy controls\n\nStay tuned for updates!');
+            alert(
+                '⚙️ Settings Panel coming soon!\n\nThis feature will include:\n• User preferences\n• System configuration\n• Theme customization\n• Notification settings\n• Privacy controls\n\nStay tuned for updates!');
         }
-        
+
         function showNotificationMessage() {
             console.log('showNotificationMessage function called');
-            alert('🔔 Notification Center coming soon!\n\nThis feature will be implemented in the next update:\n• Real-time notifications\n• Activity alerts\n• System announcements\n• Message notifications\n• Customizable alerts\n\nStay tuned for instant updates!');
+            alert(
+                '🔔 Notification Center coming soon!\n\nThis feature will be implemented in the next update:\n• Real-time notifications\n• Activity alerts\n• System announcements\n• Message notifications\n• Customizable alerts\n\nStay tuned for instant updates!');
         }
 
         function triggerNotificationDropdown() {
@@ -2036,12 +2094,12 @@
                 showNotificationMessage();
             }
         }
-        
+
         // Test function to verify JavaScript is working
         function testJS() {
             alert('JavaScript is working!');
         }
-        
+
         // CSRF Token Auto-Refresh
         function refreshCSRFToken() {
             $.get('/csrf-token', function(data) {
@@ -2052,20 +2110,20 @@
                 console.log('Failed to refresh CSRF token');
             });
         }
-        
+
         // Refresh CSRF token every 30 minutes (1800000 ms)
         setInterval(refreshCSRFToken, 1800000);
-        
+
         // Also refresh on window focus (when user returns to tab)
         $(window).focus(function() {
             refreshCSRFToken();
         });
-        
     </script>
-    
+
     <!-- Malaysian Phone Input Handler -->
     <script src="{{ asset('js/malaysian-phone-input.js') }}"></script>
-    
+
     @yield('scripts')
 </body>
+
 </html>

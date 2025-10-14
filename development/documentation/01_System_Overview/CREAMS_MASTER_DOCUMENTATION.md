@@ -653,7 +653,7 @@ public function upcomingSessions()
 - QR/RFID support for asset identification
 
 **Recent Fixes (Aug 2025):**
-- ✅ Form submission route fixed (centre.assets.store)
+- ✅ Form submission route fixed (centre.asset-parents.store)
 - ✅ Centre assignment validation corrected
 - ✅ All assets now properly assigned to centres
 

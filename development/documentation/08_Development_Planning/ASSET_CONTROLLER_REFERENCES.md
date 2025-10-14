@@ -14,21 +14,21 @@ All asset views have been consolidated and moved to: `resources/views/centres/as
 
 ### Asset Controller References:
 **File: `app/Http/Controllers/Centre/AssetController.php`**
-- Change `return view('assetmanagement', ...)` to `return view('centres.assets.index', ...)`
-- Change `return view('assetmanagementregister', ...)` to `return view('centres.assets.create', ...)`
-- Change `return view('assetmanagementupdate', ...)` to `return view('centres.assets.edit', ...)`
-- Change `return view('assets.index', ...)` to `return view('centres.assets.index', ...)`
-- Change `return view('assets.create', ...)` to `return view('centres.assets.create', ...)`
-- Change `return view('assets.show', ...)` to `return view('centres.assets.show', ...)`
-- Change `return view('assets.edit', ...)` to `return view('centres.assets.edit', ...)`
+- Change `return view('assetmanagement', ...)` to `return view('centres.asset-parents.index', ...)`
+- Change `return view('assetmanagementregister', ...)` to `return view('centres.asset-parents.create', ...)`
+- Change `return view('assetmanagementupdate', ...)` to `return view('centres.asset-parents.edit', ...)`
+- Change `return view('assets.index', ...)` to `return view('centres.asset-parents.index', ...)`
+- Change `return view('assets.create', ...)` to `return view('centres.asset-parents.create', ...)`
+- Change `return view('assets.show', ...)` to `return view('centres.asset-parents.show', ...)`
+- Change `return view('assets.edit', ...)` to `return view('centres.asset-parents.edit', ...)`
 
 ### Centre Controller References:
 **File: `app/Http/Controllers/CentreController.php`**
-- Change `return view('centres.assets', ...)` to `return view('centres.assets.centre-assets', ...)`
+- Change `return view('centres.asset-parents', ...)` to `return view('centres.asset-parents.centre-assets', ...)`
 
 ### Route References:
 **File: `routes/web.php`**
-- Update asset-related route names to use `centres.assets.*` prefix
+- Update asset-related route names to use `centres.asset-parents.*` prefix
 - Example: `Route::get('assets', ...)` should point to centres/assets views
 
 ### Possible Additional Controllers:
@@ -39,11 +39,11 @@ All asset views have been consolidated and moved to: `resources/views/centres/as
 - Any controller that returns asset-related views
 
 ## Route Names to Update:
-1. `route('assets.index')` → `route('centres.assets.index')`
-2. `route('assets.create')` → `route('centres.assets.create')`
-3. `route('assets.show', $id)` → `route('centres.assets.show', $id)`
-4. `route('assets.edit', $id)` → `route('centres.assets.edit', $id)`
-5. `route('centres.assets')` → `route('centres.assets.centre-assets')`
+1. `route('assets.index')` → `route('centres.asset-parents.index')`
+2. `route('assets.create')` → `route('centres.asset-parents.create')`
+3. `route('assets.show', $id)` → `route('centres.asset-parents.show', $id)`
+4. `route('assets.edit', $id)` → `route('centres.asset-parents.edit', $id)`
+5. `route('centres.asset-parents')` → `route('centres.asset-parents.centre-assets')`
 
 ## CSS/JS References:
 The new views use modern styling with pink/blue gradient theme. Old CSS files related to assets can be deprecated:

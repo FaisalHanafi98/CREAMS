@@ -469,7 +469,7 @@
         <!-- Filters -->
         <div class="filter-section">
             <h5><i class="fas fa-filter me-2"></i>Filter Asset</h5>
-            <form method="GET" action="{{ route('centres.assets.index') }}" class="row align-items-end">
+            <form method="GET" action="{{ route('centres.asset-parents.index') }}" class="row align-items-end">
                 <div class="col-md-4 mb-3">
                     <label for="search" class="form-label">Search Asset</label>
                     <div class="position-relative">

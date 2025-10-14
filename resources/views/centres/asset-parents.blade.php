@@ -3,10 +3,10 @@
 @section('title', $centre->centre_name . ' - Assets')
 
 @section('content')
-    <div class="assets-container">
+    <div class="asset-parents-container">
         <div class="page-header">
             <div>
-                <h1 class="page-title">{{ $centre->centre_name }} Assets</h1>
+                <h1 class="page-title">{{ $centre->centre_name }} Asset Parents</h1>
                 <p class="subtitle">Asset management for {{ $centre->centre_name }}</p>
             </div>
             <div class="page-actions">
@@ -14,8 +14,8 @@
                     <i class="fas fa-arrow-left"></i> Back to Centre
                 </a>
                 @if (in_array(session('role'), ['admin', 'supervisor']))
-                    <a href="{{ route('assets.create') }}?centre={{ $centre->centre_name }}" class="btn btn-primary">
-                        <i class="fas fa-plus"></i> Add New Asset
+                    <a href="{{ route('asset-parents.create') }}?centre={{ $centre->centre_name }}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Add New Asset Parent
                     </a>
                 @endif
             </div>
@@ -32,8 +32,8 @@
                         <i class="fas fa-box text-primary"></i>
                     </div>
                     <div class="stat-content">
-                        <h3>{{ $stats['total_assets'] ?? 0 }}</h3>
-                        <p>Total Assets</p>
+                        <h3>{{ $stats['total_asset_parents'] ?? 0 }}</h3>
+                        <p>Total Asset Parents</p>
                     </div>
                 </div>
             </div>
@@ -72,66 +72,71 @@
             </div>
         </div>
 
-        {{-- Assets Table --}}
-        <div class="assets-table-card">
+        {{-- Asset Parents Table --}}
+        <div class="asset-parents-table-card">
             <div class="table-header">
                 <h3>Asset Inventory</h3>
                 <div class="table-actions">
                     <div class="search-box">
-                        <input type="text" id="assetSearch" placeholder="Search assets..." class="form-control">
+                        <input type="text" id="assetParentSearch" placeholder="Search asset parents..."
+                            class="form-control">
                         <i class="fas fa-search"></i>
                     </div>
                 </div>
             </div>
             <div class="table-body">
-                @if ($assets && count($assets) > 0)
+                @if ($asset_parents && count($asset_parents) > 0)
                     <div class="table-responsive">
-                        <table class="table table-hover" id="assetsTable">
+                        <table class="table table-hover" id="assetParentsTable">
                             <thead>
                                 <tr>
                                     <th>Name</th>
-                                    <th>Brand</th>
+                                    <th>Category</th>
                                     <th>Purchase Price</th>
-                                    <th>Condition</th>
+                                    <th>Manufacturer</th>
                                     <th>Last Updated</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach ($assets as $asset)
+                                @foreach ($asset_parents as $parent)
                                     <tr>
                                         <td>
                                             {{-- Name --}}
                                             <div class="asset-info">
-                                                <img src="{{ $asset->primary_image_url ?? asset('images/default-asset.png') }}"
+                                                <img src="{{ $parent->primary_image_url ?? asset('images/default-asset.png') }}"
                                                     alt="Asset" class="asset-thumbnail">
                                                 <div>
-                                                    <strong>{{ $asset->type->name ?? ($asset->asset_parent ?? 'Unnamed Asset') }}</strong>
-                                                    @if ($asset->description ?? $asset->asset_note)
+                                                    <strong>{{ $parent->name ?? ($parent->asset_parent ?? 'Unnamed Asset') }}</strong>
+                                                    @if ($parent->description ?? $parent->asset_note)
                                                         <br><small
-                                                            class="text-muted">{{ Str::limit($asset->description ?? $asset->asset_note, 50) }}</small>
+                                                            class="text-muted">{{ Str::limit($parent->description ?? $parent->asset_note, 50) }}</small>
                                                     @endif
                                                 </div>
                                             </div>
                                         </td>
                                         <td>
-                                            {{-- Brand --}}
-                                            {{ $asset->brand ?? ($asset->asset_brand ?? 'N/A') }}
+                                            {{-- Category --}}
+                                            {{ $parent->category->category_name ?? 'N/A' }}
                                         </td>
                                         <td>
                                             {{-- Purchase Price --}}
-                                            @if ($asset->purchase_price ?? $asset->asset_price)
+                                            @if ($parent->purchase_price ?? $parent->asset_price)
                                                 <strong>RM
-                                                    {{ number_format($asset->purchase_price ?? $asset->asset_price, 2) }}</strong>
+                                                    {{ number_format($parent->purchase_price ?? $parent->asset_price, 2) }}</strong>
                                             @else
                                                 <span class="text-muted">N/A</span>
                                             @endif
                                         </td>
                                         <td>
+                                            {{-- Manufacturer --}}
+                                            {{ $parent->manufacturer ?? 'N/A' }}
+                                        </td>
+                                        <td>
                                             {{-- Condition --}}
                                             @php
                                                 $condition =
-                                                    $asset->condition ?? ($asset->asset_condition ?? 'unknown');
+                                                    $parent->condition ?? ($parent->asset_condition ?? 'unknown');
                                             @endphp
                                             <span
                                                 class="badge
@@ -145,8 +150,8 @@
                                         </td>
                                         <td>
                                             {{-- Last Updated --}}
-                                            @if ($asset->updated_at)
-                                                {{ $asset->updated_at->format('M j, Y') }}
+                                            @if ($parent->updated_at)
+                                                {{ $parent->updated_at->format('M j, Y') }}
                                             @else
                                                 <span class="text-muted">Never</span>
                                             @endif
@@ -154,12 +159,12 @@
                                         <td>
                                             {{-- Actions --}}
                                             <div class="action-buttons">
-                                                <a href="{{ route('assets.show', $asset->id) }}"
+                                                <a href="{{ route('asset-parents.show', $parent->id) }}"
                                                     class="btn btn-sm btn-outline-primary" title="View Details">
                                                     <i class="fas fa-eye"></i>
                                                 </a>
                                                 @if (in_array(session('role'), ['admin', 'supervisor']))
-                                                    <a href="{{ route('assets.edit', $asset->id) }}"
+                                                    <a href="{{ route('asset-parents.edit', $parent->id) }}"
                                                         class="btn btn-sm btn-outline-warning" title="Edit Asset">
                                                         <i class="fas fa-edit"></i>
                                                     </a>
@@ -173,9 +178,9 @@
                     </div>
 
                     {{-- Pagination --}}
-                    @if ($assets instanceof \Illuminate\Pagination\LengthAwarePaginator)
+                    @if ($asset_parents instanceof \Illuminate\Pagination\LengthAwarePaginator)
                         <div class="pagination-wrapper">
-                            @include('components.custom-pagination', ['items' => $assets])
+                            @include('components.custom-pagination', ['items' => $asset_parents])
                         </div>
                     @endif
                 @else
@@ -183,10 +188,10 @@
                         <div class="empty-icon">
                             <i class="fas fa-box-open"></i>
                         </div>
-                        <h4>No Assets Found</h4>
-                        <p>This centre doesn't have any assets registered yet.</p>
+                        <h4>No Asset Parents Found</h4>
+                        <p>This centre doesn't have any asset parents registered yet.</p>
                         @if (in_array(session('role'), ['admin', 'supervisor']))
-                            <a href="{{ route('assets.create') }}?centre={{ $centre->centre_name }}"
+                            <a href="{{ route('asset-parents.create') }}?centre={{ $centre->centre_name }}"
                                 class="btn btn-primary">
                                 <i class="fas fa-plus"></i> Add First Asset
                             </a>
@@ -200,7 +205,7 @@
 
 @section('styles')
     <style>
-        .assets-container {
+        .asset-parents-container {
             max-width: 1400px;
             margin: 0 auto;
         }
@@ -258,7 +263,7 @@
             font-weight: 500;
         }
 
-        .assets-table-card {
+        .asset-parents-table-card {
             background: white;
             border-radius: 10px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
@@ -404,11 +409,11 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Live search functionality
-            const searchInput = document.getElementById('assetSearch');
+            const searchInput = document.getElementById('assetParentSearch');
             if (searchInput) {
                 searchInput.addEventListener('input', function() {
                     const searchTerm = this.value.toLowerCase();
-                    const tableRows = document.querySelectorAll('#assetsTable tbody tr');
+                    const tableRows = document.querySelectorAll('#assetParentsTable tbody tr');
 
                     tableRows.forEach(row => {
                         const text = row.textContent.toLowerCase();

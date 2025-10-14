@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -18,6 +19,7 @@ class AssetParent extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
+        'centre_id',
         'name',
         'category',
         'description',
@@ -70,6 +72,11 @@ class AssetParent extends Model
     // =============================================
     // RELATIONSHIPS
     // =============================================
+
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(AssetCategory::class, 'category_id');
+    }
 
     /**
      * Get all assets of this type

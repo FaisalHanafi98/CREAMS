@@ -99,7 +99,7 @@ class AssetController extends Controller
             // Get categories for filter dropdown
             $categories = AssetCategory::where('status', 'active')->get();
 
-            return view('centres.assets.index', compact('assets', 'centre', 'categories', 'statistics'));
+            return view('centres.asset-parents.index', compact('assets', 'centre', 'categories', 'statistics'));
         } catch (Exception $e) {
             Log::error('Error displaying centre assets: ' . $e->getMessage(), [
                 'centre_id' => $centreId,

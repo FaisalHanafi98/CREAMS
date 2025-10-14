@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Centre;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
@@ -83,6 +84,7 @@ class CREAMSSeederAssetManagement extends Seeder
             if (isset($typesByCategory[$category->category_name])) {
                 foreach ($typesByCategory[$category->category_name] as $typeName) {
                     DB::table('asset_parents')->insertOrIgnore([
+                        'centre_id' => Centre::pluck('centre_id')->random(),
                         'name' => $typeName,
                         'type_description' => 'Equipment for rehabilitation and therapy programs',
                         'category_id' => $category->id,

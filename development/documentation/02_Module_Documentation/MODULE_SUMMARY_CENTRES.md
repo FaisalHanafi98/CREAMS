@@ -171,7 +171,7 @@ Route::put('/centres/{id}', [CentreController::class, 'update'])->name('centres.
 Route::delete('/centres/{id}', [CentreController::class, 'destroy'])->name('centres.destroy');
 
 // Centre Assets
-Route::get('/centres/{id}/assets', [CentreController::class, 'assets'])->name('centres.assets');
+Route::get('/centres/{id}/assets', [CentreController::class, 'assets'])->name('centres.asset-parents');
 ```
 
 ## Key Features

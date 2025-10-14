@@ -33,7 +33,7 @@ class EnhancedCentresManager {
         this.setupPagination();
         this.setupViewToggle();
         this.renderCentres();
-        
+
         console.log('Enhanced Centres Manager initialized');
     }
 
@@ -136,10 +136,10 @@ class EnhancedCentresManager {
     showSearchSuggestions() {
         const suggestions = document.getElementById('searchSuggestions');
         const searchInput = document.getElementById('centreSearch');
-        
+
         if (!suggestions || !searchInput || searchInput.value.trim()) return;
 
-        suggestions.innerHTML = this.searchSuggestions.map(suggestion => 
+        suggestions.innerHTML = this.searchSuggestions.map(suggestion =>
             `<div class="suggestion-item" onclick="centresManager.applySuggestion('${suggestion}')">${suggestion}</div>`
         ).join('');
 
@@ -280,19 +280,19 @@ class EnhancedCentresManager {
 
     getCentreCardHTML(centre) {
         const statusClass = centre.centre_status || 'unknown';
-        const imageUrl = centre.centre_image ? 
-            `/storage/centres/${centre.centre_image}` : 
+        const imageUrl = centre.centre_image ?
+            `/storage/centres/${centre.centre_image}` :
             '/images/centre-placeholder.jpg';
 
         return `
-            <div class="centre-card slide-in-up" 
+            <div class="centre-card slide-in-up"
                  data-name="${(centre.centre_name || '').toLowerCase()}"
                  data-location="${(centre.centre_address || '').toLowerCase()}"
                  data-status="${centre.centre_status || ''}"
                  data-capacity="${centre.centre_capacity || 0}"
                  data-staff="${centre.users_count || 0}"
                  data-trainees="${centre.trainees_count || 0}">
-                
+
                 <div class="card-header">
                     <div class="centre-status">
                         <span class="status-indicator status-${statusClass}"></span>
@@ -326,7 +326,7 @@ class EnhancedCentresManager {
                 </div>
 
                 <div class="card-image">
-                    <img src="${imageUrl}" 
+                    <img src="${imageUrl}"
                          alt="${centre.centre_name || 'Centre'}"
                          onerror="this.src='/images/centre-placeholder.jpg'">
                     <div class="image-overlay">
@@ -374,7 +374,7 @@ class EnhancedCentresManager {
                                 <i class="fas fa-boxes"></i>
                             </div>
                             <div class="stat-details">
-                                <span class="stat-value">${centre.assets_count || 0}</span>
+                                <span class="stat-value">${centre.asset-parents_count || 0}</span>
                                 <span class="stat-label">Assets</span>
                             </div>
                         </div>
@@ -419,22 +419,22 @@ class EnhancedCentresManager {
 
     getCentreListItemHTML(centre) {
         const statusClass = centre.centre_status || 'unknown';
-        const imageUrl = centre.centre_image ? 
-            `/storage/centres/${centre.centre_image}` : 
+        const imageUrl = centre.centre_image ?
+            `/storage/centres/${centre.centre_image}` :
             '/images/centre-placeholder.jpg';
 
         return `
-            <div class="list-item fade-in" 
+            <div class="list-item fade-in"
                  data-name="${(centre.centre_name || '').toLowerCase()}"
                  data-location="${(centre.centre_address || '').toLowerCase()}"
                  data-status="${centre.centre_status || ''}"
                  data-capacity="${centre.centre_capacity || 0}"
                  data-staff="${centre.users_count || 0}"
                  data-trainees="${centre.trainees_count || 0}">
-                
+
                 <div class="list-cell centre-info">
                     <div class="centre-avatar">
-                        <img src="${imageUrl}" 
+                        <img src="${imageUrl}"
                              alt="${centre.centre_name || 'Centre'}"
                              onerror="this.src='/images/centre-placeholder.jpg'">
                     </div>
@@ -499,7 +499,7 @@ class EnhancedCentresManager {
 
     getEmptyStateHTML() {
         const canCreate = this.options.currentUser.role === 'admin' || this.options.currentUser.role === 'supervisor';
-        
+
         return `
             <div class="empty-state">
                 <div class="empty-icon">
@@ -520,7 +520,7 @@ class EnhancedCentresManager {
         if (view === this.currentView) return;
 
         this.currentView = view;
-        
+
         // Update view toggle buttons
         document.querySelectorAll('.view-mode-btn').forEach(btn => {
             btn.classList.toggle('active', btn.dataset.view === view);
@@ -560,8 +560,8 @@ class EnhancedCentresManager {
                 return '<span class="pagination-ellipsis">...</span>';
             }
             return `
-                <button class="pagination-number ${page === this.currentPage ? 'active' : ''}" 
-                        data-page="${page}" 
+                <button class="pagination-number ${page === this.currentPage ? 'active' : ''}"
+                        data-page="${page}"
                         onclick="centresManager.goToPage(${page})">
                     ${page}
                 </button>
@@ -614,9 +614,9 @@ class EnhancedCentresManager {
         this.updateResultsCount();
 
         // Scroll to top of results
-        document.querySelector('.centres-display-section').scrollIntoView({ 
-            behavior: 'smooth', 
-            block: 'start' 
+        document.querySelector('.centres-display-section').scrollIntoView({
+            behavior: 'smooth',
+            block: 'start'
         });
     }
 
@@ -666,7 +666,7 @@ class EnhancedCentresManager {
 
         const modal = document.getElementById('quickViewModal');
         const content = document.getElementById('quickViewContent');
-        
+
         if (!modal || !content) return;
 
         // Show loading state
@@ -688,8 +688,8 @@ class EnhancedCentresManager {
 
     getQuickViewHTML(centre) {
         const statusClass = centre.centre_status || 'unknown';
-        const imageUrl = centre.centre_image ? 
-            `/storage/centres/${centre.centre_image}` : 
+        const imageUrl = centre.centre_image ?
+            `/storage/centres/${centre.centre_image}` :
             '/images/centre-placeholder.jpg';
 
         return `
@@ -697,7 +697,7 @@ class EnhancedCentresManager {
                 <div class="row">
                     <div class="col-md-5">
                         <div class="centre-image-container">
-                            <img src="${imageUrl}" 
+                            <img src="${imageUrl}"
                                  alt="${centre.centre_name}"
                                  class="img-fluid rounded"
                                  style="width: 100%; height: 200px; object-fit: cover;">
@@ -711,7 +711,7 @@ class EnhancedCentresManager {
                     <div class="col-md-7">
                         <h4>${centre.centre_name}</h4>
                         <p class="text-muted">${centre.centre_description || 'No description available'}</p>
-                        
+
                         <div class="centre-info-grid">
                             <div class="info-item">
                                 <strong><i class="fas fa-map-marker-alt"></i> Address:</strong>
@@ -741,7 +741,7 @@ class EnhancedCentresManager {
                                 <div class="stat-label">Trainees</div>
                             </div>
                             <div class="stat-col">
-                                <div class="stat-number">${centre.assets_count || 0}</div>
+                                <div class="stat-number">${centre.asset-parents_count || 0}</div>
                                 <div class="stat-label">Assets</div>
                             </div>
                         </div>
@@ -827,7 +827,7 @@ class EnhancedCentresManager {
         document.getElementById('statusFilter').value = '';
         document.getElementById('capacityFilter').value = '';
         document.getElementById('sortFilter').value = 'name_asc';
-        
+
         // Clear search
         this.clearSearch();
 
@@ -854,12 +854,12 @@ class EnhancedCentresManager {
             'Capacity': centre.centre_capacity,
             'Staff Count': centre.users_count || 0,
             'Trainee Count': centre.trainees_count || 0,
-            'Asset Count': centre.assets_count || 0
+            'Asset Count': centre.asset-parents_count || 0
         }));
 
         // Convert to CSV
         const csv = this.convertToCSV(exportData);
-        
+
         // Download file
         const blob = new Blob([csv], { type: 'text/csv' });
         const url = window.URL.createObjectURL(blob);
@@ -880,7 +880,7 @@ class EnhancedCentresManager {
         const headers = Object.keys(data[0]);
         const csvContent = [
             headers.join(','),
-            ...data.map(row => 
+            ...data.map(row =>
                 headers.map(header => {
                     const value = row[header] || '';
                     return `"${value.toString().replace(/"/g, '""')}"`;
@@ -934,12 +934,12 @@ function toggleView() {
     const currentView = centresManager.currentView;
     const newView = currentView === 'grid' ? 'list' : 'grid';
     centresManager.switchView(newView);
-    
+
     // Update button text
     const toggleBtn = document.querySelector('[onclick="toggleView()"]');
     const icon = document.getElementById('viewToggleIcon');
     const text = document.getElementById('viewToggleText');
-    
+
     if (toggleBtn && icon && text) {
         if (newView === 'list') {
             icon.className = 'fas fa-th';
@@ -1012,12 +1012,12 @@ const notificationStyles = `
         animation: slideInRight 0.3s ease;
         box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     }
-    
+
     .notification-success { background: #2ed573; }
     .notification-error { background: #ff4757; }
     .notification-warning { background: #ffa726; }
     .notification-info { background: #3742fa; }
-    
+
     @keyframes slideInRight {
         from { transform: translateX(100%); opacity: 0; }
         to { transform: translateX(0); opacity: 1; }
