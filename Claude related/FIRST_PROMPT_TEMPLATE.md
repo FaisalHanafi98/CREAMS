@@ -1,13 +1,3 @@
-# 🚀 CREAMS - Optimal First Prompt for New Sessions
-
-**Copy and paste this prompt at the start of EVERY new Claude Code session for best comprehension.**
-
----
-
-## 📋 THE FIRST PROMPT (Copy Everything Below This Line)
-
----
-
 Hello! I'm working on the **CREAMS** (Community-based REhAbilitation Management System) project - a Laravel 10.x application for Malaysian rehabilitation centers serving children with special needs.
 
 **Please start by reading these files in this exact order:**
@@ -260,24 +250,3 @@ After Claude has loaded the initial context, you can reference these additional 
 - Test Credentials: See CREAMS_FORM_TESTING_GUIDE.txt setup section
 
 ---
-
-## 💾 SAVE THIS TEMPLATE
-
-**Recommended Location:**
-`development/documentation/01_System_Overview/FIRST_PROMPT_TEMPLATE.md`
-
-**Quick Access:**
-1. Bookmark this file in your editor
-2. Keep a copy in your notes app
-3. Create a keyboard shortcut to paste it
-4. Add to your project README as "How to start a new session"
-
----
-
-**Last Updated:** January 2025
-**Purpose:** Ensure every new Claude Code session starts with complete context
-**Status:** Living Template - Update as system evolves
-
----
-
-**END OF FIRST PROMPT TEMPLATE**

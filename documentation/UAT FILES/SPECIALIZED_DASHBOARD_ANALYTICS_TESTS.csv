@@ -1,0 +1,475 @@
+Test ID,Module,Test Case Title,Test Description,User Role,Specialized Test Steps,Expected Result,Analytics Validation Points,Test Data Required,Performance Metrics,Dashboard KPIs,Browser Requirements,Priority,Status,Complexity Level,Notes
+DASH-ANAL-001,Dashboard,Real-Time Analytics Engine Performance Testing,Test dashboard analytics engine with real-time data processing and complex statistical calculations,Admin,"1. Setup Analytics Testing Environment:
+   - Populate database with 1000+ trainees, 200+ activities, 10,000+ attendance records
+   - Configure real-time data processing services
+   - Setup analytics cache layer testing
+   - Enable performance monitoring tools
+2. Test Real-Time Statistics Calculation:
+   - Monitor dashboard auto-refresh (every 30 seconds)
+   - Verify statistics update without page reload
+   - Test WebSocket/SSE connection for real-time updates
+   - Measure calculation time for complex aggregations
+3. Test Statistical Accuracy and Performance:
+   - Overall attendance rate: SUM(present)/SUM(total_enrolled) * 100
+   - Activity completion rate: COUNT(completed_activities)/COUNT(total_activities) * 100
+   - Trainee progress metrics: Average progress per trainee per activity
+   - Centre performance comparison: Cross-centre statistical analysis
+   - Monthly trend analysis: 12-month rolling statistics
+4. Test Complex Dashboard Queries:
+   - Multi-dimensional data cube queries (Time x Centre x Activity x Outcome)
+   - Cross-tabulation reports with statistical significance testing
+   - Cohort analysis for trainee progression tracking
+   - Predictive analytics for resource planning
+5. Test Dashboard Widget Performance:
+   - Load 15+ widgets simultaneously
+   - Measure individual widget load times (<500ms each)
+   - Test widget lazy loading and pagination
+   - Verify widget data independence (one widget failure doesn't affect others)
+6. Test Data Visualization Accuracy:
+   - Chart data verification against raw database queries
+   - Test chart responsiveness and interactivity
+   - Verify drill-down functionality preserves data accuracy
+   - Test export functionality (PDF, PNG, SVG, Excel)
+7. Test Dashboard Caching Strategy:
+   - Test cache hit rates for frequently accessed data
+   - Verify cache invalidation on data updates
+   - Test cache warming for dashboard initialization
+   - Measure cache performance improvement metrics
+8. Test Concurrent Dashboard Usage:
+   - 20+ users accessing dashboard simultaneously
+   - Test analytics engine load balancing
+   - Verify data consistency across concurrent sessions
+   - Test dashboard performance degradation thresholds
+9. Test Historical Data Processing:
+   - Generate 5-year historical trend analysis
+   - Test data aggregation for large date ranges
+   - Verify historical data accuracy and completeness
+   - Test archival data integration with current analytics
+10. Test Analytics API Performance:
+    - Test REST API endpoints for analytics data
+    - Measure API response times under load
+    - Test API rate limiting and throttling
+    - Verify API data consistency with dashboard displays","Dashboard analytics engine processes real-time data accurately with sub-second response times. Complex statistical calculations are performed correctly with proper caching strategies.","1. Real-time data updates within 30 seconds of source changes
+2. Statistical calculations mathematically verified:
+   - Attendance rates calculated using proper denominators
+   - Percentage calculations rounded to 2 decimal places
+   - Trend analysis uses appropriate statistical methods
+   - Confidence intervals calculated for statistical significance
+3. Performance benchmarks met:
+   - Individual widget loads in <500ms
+   - Complex queries complete in <2 seconds
+   - Dashboard initialization in <3 seconds
+   - Real-time updates process in <100ms
+4. Data visualization accuracy:
+   - Charts display identical data to source queries
+   - Interactive elements (zoom, filter, drill-down) work correctly
+   - Export functions preserve data fidelity
+   - Color schemes accessible (colorblind-friendly)
+5. Caching effectiveness:
+   - Cache hit rate >80% for dashboard data
+   - Cache invalidation within 1 minute of data changes
+   - Memory usage stays within configured limits
+6. Concurrent user handling:
+   - 20+ users without performance degradation
+   - Analytics engine scales horizontally if needed
+   - Data consistency maintained across all sessions
+7. Historical data processing:
+   - 5-year trends calculated in <10 seconds
+   - Data completeness verification passes
+   - Archival integration seamless and accurate","Database with realistic volume:
+- 1000+ trainees across multiple centres
+- 200+ activities with various statuses
+- 10,000+ attendance records spanning 2+ years
+- 50+ staff members with different roles
+- Historical data for trend analysis
+Performance monitoring tools
+Analytics API access credentials",Page load time <3 seconds,Attendance rate accuracy ±0.1%,Chrome 118+, Firefox 115+, Safari 16+, Edge 118+,Critical,Pending,Level 4 - Very High,Requires high-volume test data
+DASH-ANAL-002,Dashboard,Interactive Data Visualization and Business Intelligence,Test advanced data visualization components including interactive charts and drill-down analytics,Supervisor,"1. Test Interactive Chart Components:
+   - Line charts for attendance trends with zoom functionality
+   - Bar charts for activity participation with click-to-drill-down
+   - Pie charts for trainee demographics with segment selection
+   - Heat maps for centre performance with hover details
+   - Scatter plots for correlation analysis with data point inspection
+2. Test Chart Interactivity Features:
+   - Zoom: Select date range on timeline charts
+   - Filter: Click legend items to show/hide data series
+   - Drill-down: Click chart segments to view detailed breakdown
+   - Cross-filtering: Selection in one chart filters related charts
+   - Tooltip: Hover shows detailed data with formatting
+3. Test Business Intelligence Dashboard:
+   - KPI scorecard with target vs actual comparisons
+   - Executive summary with key insights and recommendations
+   - Variance analysis showing deviations from expected values
+   - Trend forecasting with confidence intervals
+   - Benchmark comparisons against industry standards
+4. Test Advanced Analytics Visualizations:
+   - Cohort analysis charts showing trainee progression over time
+   - Funnel charts for trainee journey from registration to completion
+   - Sankey diagrams for activity flow and resource allocation
+   - Geographic maps for multi-centre performance visualization
+   - Network diagrams for staff-activity-trainee relationships
+5. Test Chart Data Export and Sharing:
+   - Export charts as high-resolution PNG/SVG
+   - Generate PDF reports with embedded charts
+   - Share dashboard views via secure URLs
+   - Email scheduled reports with chart attachments
+   - Embed charts in external presentations
+6. Test Mobile-Responsive Visualizations:
+   - Test charts on tablet (768px) and mobile (480px) screens
+   - Verify touch interactions (pinch-zoom, swipe, tap)
+   - Test chart legibility on small screens
+   - Verify responsive chart resizing and layout adaptation
+7. Test Real-Time Chart Updates:
+   - Charts update automatically when underlying data changes
+   - Smooth transitions and animations for data updates
+   - Preserve user interactions (zoom level, filters) during updates
+   - Test update frequency optimization to prevent performance issues
+8. Test Chart Performance with Large Datasets:
+   - Render charts with 10,000+ data points
+   - Test chart responsiveness with large datasets
+   - Verify chart memory usage remains reasonable
+   - Test data sampling/aggregation for performance optimization
+9. Test Accessibility Features:
+   - Screen reader compatibility for chart data
+   - Keyboard navigation for chart interactions
+   - High contrast mode support
+   - Alternative text descriptions for chart content
+10. Test Custom Dashboard Creation:
+    - Drag-and-drop dashboard designer
+    - Custom widget configuration and sizing
+    - Save and share custom dashboard layouts
+    - Version control for dashboard configurations","Interactive data visualizations work correctly with smooth user experience. Business intelligence features provide actionable insights. Chart performance remains optimal with large datasets.","1. Interactive chart features work smoothly:
+   - Zoom operations complete in <200ms
+   - Drill-down maintains data context and accuracy
+   - Cross-filtering updates all related charts within 500ms
+   - Tooltip displays formatted data instantly on hover
+2. Business intelligence accuracy:
+   - KPI calculations match business rules exactly
+   - Variance analysis uses appropriate statistical methods
+   - Forecasting models provide reasonable predictions
+   - Benchmark data is current and relevant
+3. Advanced visualization correctness:
+   - Cohort analysis shows accurate progression percentages
+   - Funnel charts display proper conversion rates
+   - Sankey diagrams maintain data flow consistency
+   - Geographic visualizations use accurate location data
+4. Export functionality:
+   - PNG exports are high-resolution (300 DPI minimum)
+   - PDF reports maintain chart formatting and quality
+   - Shared URLs preserve dashboard state accurately
+   - Email reports deliver within 5 minutes
+5. Mobile responsiveness:
+   - Charts remain functional on 480px screens
+   - Touch interactions work smoothly without lag
+   - Text remains legible at minimum screen sizes
+   - Layout adapts without horizontal scrolling
+6. Performance with large datasets:
+   - Charts with 10,000+ points load in <3 seconds
+   - Interactions remain responsive with large data
+   - Memory usage stays under 100MB per chart
+   - Data sampling maintains visual accuracy
+7. Accessibility compliance:
+   - WCAG 2.1 AA compliance verified
+   - Screen reader can describe chart data
+   - Keyboard navigation covers all interactive elements","Comprehensive dataset for visualization:
+- Multi-year attendance data for trend analysis
+- Demographic data for cohort analysis
+- Geographic data for mapping visualizations
+- Performance benchmarks for comparison
+- Large datasets (10,000+ records) for performance testing
+Mobile devices for responsive testing",Chart load time <3 seconds,Data accuracy 99.9%,Chrome, Firefox, Safari, Edge, Mobile browsers,High,Pending,Level 3 - High,Test with screen readers and accessibility tools
+DASH-ANAL-003,Dashboard,Role-Based Dashboard Customization and Personalization,Test comprehensive dashboard customization features including role-based layouts and personal preferences,All Roles,"1. Test Default Dashboard Layouts by Role:
+   - Admin: Full system overview with all metrics and management tools
+   - Teacher: Focus on assigned activities, classes, and student progress
+   - Supervisor: Team performance, centre metrics, and reporting tools
+   - AJK: Facility management, asset tracking, and scheduling
+   - Trainee: Personal progress, schedule, and achievement tracking
+2. Test Dashboard Widget Customization:
+   - Drag-and-drop widget repositioning with grid snapping
+   - Resize widgets (1x1, 1x2, 2x1, 2x2 grid sizes)
+   - Add/remove widgets from widget library
+   - Configure widget refresh rates (real-time, 1min, 5min, manual)
+   - Widget color theme customization
+3. Test Personal Dashboard Preferences:
+   - Save custom dashboard layouts with names
+   - Set default dashboard view for login
+   - Import/export dashboard configurations
+   - Share dashboard layouts with other users (same role)
+   - Reset to system default layout option
+4. Test Widget Configuration Options:
+   - Chart type selection (bar, line, pie, table)
+   - Date range configuration (last 7 days, last month, custom)
+   - Data filtering options (centre, activity type, user group)
+   - Display format preferences (numbers, percentages, ratios)
+   - Threshold alerts and color coding rules
+5. Test Dashboard Theme and Appearance:
+   - Light/dark mode toggle with system preference detection
+   - Color scheme selection (default, high contrast, custom)
+   - Font size adjustment (small, medium, large, extra large)
+   - Widget border and spacing preferences
+   - Compact vs. expanded layout modes
+6. Test Dashboard Performance with Customizations:
+   - Load time with maximum widgets (20+ widgets)
+   - Performance impact of real-time widgets vs. cached widgets
+   - Memory usage with complex dashboard configurations
+   - Browser responsiveness during heavy customization operations
+7. Test Multi-Device Dashboard Sync:
+   - Login from desktop and customize dashboard
+   - Access same account from mobile/tablet
+   - Verify dashboard preferences sync across devices
+   - Test device-specific layout adaptations
+8. Test Dashboard Access Control:
+   - Verify users can only access widgets appropriate for their role
+   - Test that sensitive data widgets are hidden from lower privilege roles
+   - Verify admin can configure organization-wide dashboard templates
+   - Test that users cannot access data outside their centre assignment
+9. Test Dashboard Collaboration Features:
+   - Share dashboard snapshots via email or link
+   - Collaborative annotation on dashboard widgets
+   - Team dashboard creation for shared monitoring
+   - Dashboard commenting and discussion features (if available)
+10. Test Dashboard Backup and Recovery:
+    - Backup custom dashboard configurations
+    - Restore dashboard from backup after data loss
+    - Version history for dashboard configurations
+    - Migration of dashboard settings during system updates","Dashboard customization works seamlessly across all roles with proper access controls. Personal preferences are maintained and synchronized across devices. Performance remains optimal with complex customizations.","1. Role-based dashboard templates load correctly:
+   - Each role sees appropriate default widgets
+   - Sensitive information hidden from unauthorized roles
+   - Navigation elements match role permissions
+   - Default layouts optimized for role workflows
+2. Widget customization functionality:
+   - Drag-and-drop works smoothly with visual feedback
+   - Grid snapping aligns widgets properly
+   - Resize operations maintain widget functionality
+   - Widget library filtered by role permissions
+   - Color themes apply consistently across all widgets
+3. Personal preferences persistence:
+   - Custom layouts save automatically
+   - Preferences restore correctly on next login
+   - Export/import functions preserve all settings
+   - Shared layouts work for users with same role
+   - Reset function restores original default layout
+4. Widget configuration accuracy:
+   - Chart type changes update immediately
+   - Date range filters apply correct business logic
+   - Data filtering maintains statistical accuracy
+   - Display format changes preserve underlying data
+   - Threshold alerts trigger at configured values
+5. Theme and appearance:
+   - Dark/light mode switches instantly without refresh
+   - Color schemes apply to all dashboard elements
+   - Font size changes don't break layout
+   - Compact mode maintains all functionality
+   - Accessibility requirements met for all themes
+6. Multi-device synchronization:
+   - Preferences sync within 30 seconds across devices
+   - Mobile layouts adapt appropriately
+   - Touch interactions work on mobile devices
+   - Responsive design maintains functionality
+7. Performance benchmarks:
+   - Dashboard with 20 widgets loads in <5 seconds
+   - Customization operations complete in <1 second
+   - Memory usage stays under 200MB
+   - No browser freezing during heavy operations","User accounts for each role type
+Large dataset for realistic widget testing
+Multiple devices for sync testing
+Dashboard templates for each role
+Collaboration features testing accounts",Dashboard load time <5 seconds,Widget response time <1 second,Chrome, Firefox, Safari, Edge, Mobile browsers,High,Pending,Level 3 - High,Test on various screen sizes and devices
+DASH-ANAL-004,Dashboard,Advanced Reporting and Data Export Capabilities,Test comprehensive reporting engine with advanced export options and scheduled report generation,Admin/Supervisor,"1. Test Standard Report Generation:
+   - Attendance Summary Report: Daily, weekly, monthly, custom date range
+   - Activity Performance Report: Participation rates, completion statistics
+   - Trainee Progress Report: Individual and cohort progress tracking
+   - Staff Performance Report: Activity management and effectiveness metrics
+   - Centre Comparison Report: Multi-centre performance analysis
+2. Test Advanced Report Customization:
+   - Custom report builder with drag-and-drop fields
+   - Advanced filtering options (multiple criteria, date ranges, user groups)
+   - Sorting and grouping options with sub-totals
+   - Calculated fields and custom formulas
+   - Conditional formatting rules for highlighting key metrics
+3. Test Report Export Formats:
+   - PDF: Professional layout with headers, footers, page numbers
+   - Excel: Multiple sheets, formulas preserved, charts included
+   - CSV: Comma-separated values for data analysis
+   - Word: Formatted document with embedded charts and tables
+   - PowerPoint: Executive summary with key charts and insights
+4. Test Scheduled Report Automation:
+   - Daily reports: Automated generation at 6 AM daily
+   - Weekly reports: Generated every Monday at 8 AM
+   - Monthly reports: Generated on 1st of each month
+   - Custom schedules: User-defined frequency and timing
+   - Email delivery to distribution lists with secure attachments
+5. Test Large Dataset Report Processing:
+   - Generate reports with 10,000+ records
+   - Test report generation time and memory usage
+   - Verify data accuracy in large reports
+   - Test pagination and chunked processing for very large datasets
+   - Background processing for time-intensive reports
+6. Test Report Template Management:
+   - Create custom report templates for reuse
+   - Share templates across users and roles
+   - Version control for template modifications
+   - Template library with organization standards
+   - Import/export template configurations
+7. Test Interactive Report Features:
+   - Clickable charts that drill down to detailed data
+   - Hyperlinks to related records or detailed views
+   - Interactive tables with sorting and filtering
+   - Dynamic parameters for real-time report customization
+   - Print preview with layout optimization
+8. Test Report Security and Access Control:
+   - Role-based report access (users see only permitted reports)
+   - Data security in exported files (watermarks, encryption)
+   - Audit trail for report generation and access
+   - Secure sharing via password-protected links
+   - Auto-expiring shared report links
+9. Test Report Performance Optimization:
+   - Report caching for frequently requested reports
+   - Incremental report generation for large datasets
+   - Database query optimization for complex reports
+   - Load balancing for concurrent report generation
+   - Resource usage monitoring and limits
+10. Test Report Data Validation:
+    - Cross-reference report data with source database
+    - Verify statistical calculations and aggregations
+    - Test data consistency across related reports
+    - Validate chart data matches tabular data
+    - Check for data truncation or formatting issues","Advanced reporting system generates accurate reports efficiently with comprehensive export options. Scheduled automation works reliably with proper security controls.","1. Report generation accuracy:
+   - All statistical calculations verified against source data
+   - Date range filtering works correctly for all time periods
+   - Grouping and aggregation functions produce correct results
+   - Cross-tabulation reports maintain data relationships
+   - Trend analysis uses appropriate statistical methods
+2. Export format quality:
+   - PDF reports maintain professional formatting
+   - Excel exports preserve formulas and chart formatting
+   - CSV files handle special characters and large numbers correctly
+   - Word documents maintain layout and embedded objects
+   - PowerPoint exports create presentation-ready slides
+3. Scheduled automation reliability:
+   - Reports generate at exactly scheduled times ±2 minutes
+   - Email delivery success rate >99%
+   - Failed report generation triggers admin notifications
+   - Retry mechanisms work for temporary failures
+   - Resource usage stays within configured limits
+4. Performance benchmarks:
+   - Standard reports (1,000 records) generate in <30 seconds
+   - Large reports (10,000+ records) complete in <5 minutes
+   - Background processing doesn't impact system performance
+   - Concurrent report generation (5+ users) works smoothly
+   - Memory usage per report stays under 500MB
+5. Security compliance:
+   - Reports contain only data user is authorized to see
+   - Exported files include security watermarks
+   - Audit logs capture all report access and generation
+   - Shared links expire according to security policy
+   - Encrypted attachments use strong encryption (AES-256)
+6. Template functionality:
+   - Custom templates save all formatting and logic
+   - Template sharing works across authorized users
+   - Version control maintains template history
+   - Template library searchable and categorized
+   - Template import/export preserves all functionality","Comprehensive dataset spanning multiple time periods
+Email server configuration for automated delivery
+Large datasets for performance testing
+Multiple user accounts for access control testing
+Report template examples",Report generation time <5 minutes for large datasets,Data accuracy 99.9%,Chrome, Firefox, Safari, Edge,High,Pending,Level 4 - Very High,Test with enterprise-scale datasets
+DASH-ANAL-005,Dashboard,Data Integration and ETL (Extract Transform Load) Testing,Test data integration capabilities including external data sources and automated data processing,Admin,"1. Test External Data Source Integration:
+   - CSV file import: Student records, attendance data, activity schedules
+   - Excel spreadsheet import: Budget data, resource allocation, staff schedules
+   - Database integration: Connect to external student information systems
+   - API integration: Third-party healthcare systems, government databases
+   - Real-time data feeds: IoT sensors, attendance scanners, mobile apps
+2. Test Data Extraction Processes:
+   - Scheduled data extraction from external systems (daily at 2 AM)
+   - Manual data extraction with user-initiated import
+   - Incremental data extraction (only new/changed records)
+   - Full data refresh with complete dataset replacement
+   - Error handling for extraction failures and data source unavailability
+3. Test Data Transformation Rules:
+   - Data type conversion (text to number, date format standardization)
+   - Data validation and cleansing (remove duplicates, fix inconsistencies)
+   - Data mapping (external field names to internal schema)
+   - Calculated fields and derived values (age from birthdate, etc.)
+   - Data normalization and standardization rules
+4. Test Data Loading and Validation:
+   - Load processed data into target tables
+   - Referential integrity checking (foreign key validation)
+   - Data quality validation rules (required fields, format validation)
+   - Duplicate detection and resolution strategies
+   - Error reporting and failed record handling
+5. Test ETL Performance and Scalability:
+   - Process large datasets (50,000+ records) efficiently
+   - Parallel processing for multiple data sources
+   - Memory usage optimization during large imports
+   - Database transaction management for data consistency
+   - Recovery mechanisms for interrupted ETL processes
+6. Test Data Synchronization:
+   - Bi-directional sync with external systems
+   - Conflict resolution for simultaneous updates
+   - Change tracking and audit trails for synchronized data
+   - Sync frequency optimization (real-time vs. batch)
+   - Data consistency verification across systems
+7. Test Data Security During Integration:
+   - Encryption of data in transit and at rest
+   - Secure authentication for external system connections
+   - Data masking for sensitive information (PII, medical data)
+   - Access control for ETL processes and imported data
+   - Compliance with data protection regulations (GDPR, HIPAA)
+8. Test Error Handling and Recovery:
+   - Network failures during data extraction
+   - Malformed data handling and error reporting
+   - Partial load recovery (resume from failure point)
+   - Data rollback mechanisms for failed imports
+   - Notification systems for ETL failures
+9. Test Data Lineage and Auditing:
+   - Track data source and transformation history
+   - Audit trail for all data changes and imports
+   - Data quality metrics and monitoring
+   - Impact analysis for data schema changes
+   - Compliance reporting for data processing activities
+10. Test Integration Monitoring and Alerting:
+    - Real-time monitoring of ETL job status
+    - Performance metrics tracking (throughput, error rates)
+    - Automated alerts for ETL failures or anomalies
+    - Dashboard for ETL process management
+    - Scheduled health checks for external data sources","Data integration processes work reliably with comprehensive error handling. ETL performance meets requirements for large datasets. Data quality and security are maintained throughout the integration process.","1. External data source connectivity:
+   - All configured data sources accessible and responsive
+   - Authentication mechanisms work for all external systems
+   - Connection pooling and timeout handling work correctly
+   - Fallback mechanisms activate when sources unavailable
+   - SSL/TLS encryption verified for all connections
+2. Data extraction accuracy:
+   - Extracted data matches source system exactly
+   - Incremental extraction captures all new/changed records
+   - Date range filtering works correctly for historical data
+   - Large dataset extraction completes without data loss
+   - Error handling preserves data integrity
+3. Transformation rule effectiveness:
+   - Data type conversions preserve information accuracy
+   - Validation rules catch all data quality issues
+   - Field mapping correctly associates source and target fields
+   - Calculated fields use correct business logic formulas
+   - Standardization rules applied consistently
+4. Loading process reliability:
+   - Target database updated correctly with new data
+   - Referential integrity maintained throughout load process
+   - Duplicate handling follows configured business rules
+   - Failed records reported with clear error descriptions
+   - Transaction boundaries ensure data consistency
+5. Performance benchmarks:
+   - 50,000 record dataset processes in <30 minutes
+   - Memory usage stays under 2GB during large imports
+   - Parallel processing improves throughput by 50%+
+   - Database remains responsive during ETL operations
+   - Recovery from interruption completes successfully
+6. Security compliance:
+   - All data encrypted using AES-256 encryption
+   - PII data properly masked or encrypted
+   - Access controls prevent unauthorized data access
+   - Audit logs capture all data processing activities
+   - Compliance reports generated automatically","External data sources for integration testing
+Large datasets (50,000+ records) for performance testing
+Database connections for testing integration
+Sample data files (CSV, Excel) with various formats
+ETL monitoring and alerting tools",ETL processing time <30 minutes for 50K records,Data accuracy 99.9%,All browsers (web interface) + Server components,Critical,Pending,Level 5 - Enterprise,Requires external system access and large datasets

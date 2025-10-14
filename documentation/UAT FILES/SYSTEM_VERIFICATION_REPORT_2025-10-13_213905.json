@@ -1,0 +1,1058 @@
+{
+    "summary": {
+        "total": 64,
+        "passed": 49,
+        "partial": 1,
+        "failed": 14,
+        "pass_rate": 76.6,
+        "implementation_rate": 78.1
+    },
+    "results": {
+        "HOME001": {
+            "name": "Welcome\/Landing Page",
+            "status": "PASS",
+            "passed": 2,
+            "failed": 0,
+            "warnings": 0,
+            "pass_rate": 100,
+            "details": [
+                {
+                    "status": "PASS",
+                    "check": "Home route exists"
+                },
+                {
+                    "status": "PASS",
+                    "check": "Welcome view file exists"
+                }
+            ]
+        },
+        "HOME002": {
+            "name": "Public Information Display",
+            "status": "PASS",
+            "passed": 1,
+            "failed": 0,
+            "warnings": 0,
+            "pass_rate": 100,
+            "details": [
+                {
+                    "status": "PASS",
+                    "check": "About route or section exists"
+                }
+            ]
+        },
+        "CONTACT001": {
+            "name": "Contact Form",
+            "status": "PASS",
+            "passed": 5,
+            "failed": 0,
+            "warnings": 0,
+            "pass_rate": 100,
+            "details": [
+                {
+                    "status": "PASS",
+                    "check": "Contact route exists"
+                },
+                {
+                    "status": "PASS",
+                    "check": "Contact POST route exists"
+                },
+                {
+                    "status": "PASS",
+                    "check": "ContactController exists"
+                },
+                {
+                    "status": "PASS",
+                    "check": "contact_messages table exists"
+                },
+                {
+                    "status": "PASS",
+                    "check": "contact_messages has required columns"
+                }
+            ]
+        },
+        "VOL001": {
+            "name": "Volunteer Registration",
+            "status": "PASS",
+            "passed": 4,
+            "failed": 0,
+            "warnings": 0,
+            "pass_rate": 100,
+            "details": [
+                {
+                    "status": "PASS",
+                    "check": "Volunteer route exists"
+                },
+                {
+                    "status": "PASS",
+                    "check": "Volunteer POST route exists"
+                },
+                {
+                    "status": "PASS",
+                    "check": "volunteers table exists"
+                },
+                {
+                    "status": "PASS",
+                    "check": "volunteers has required columns"
+                }
+            ]
+        },
+        "AUTH001": {
+            "name": "Standard Login",
+            "status": "PARTIAL",
+            "passed": 3,
+            "failed": 1,
+            "warnings": 0,
+            "pass_rate": 75,
+            "details": [
+                {
+                    "status": "FAIL",
+                    "check": "Login route exists",
+                    "reason": false
+                },
+                {
+                    "status": "PASS",
+                    "check": "Login POST route exists"
+                },
+                {
+                    "status": "PASS",
+                    "check": "users table exists"
+                },
+                {
+                    "status": "PASS",
+                    "check": "users has auth columns"
+                }
+            ]
+        },
+        "AUTH002": {
+            "name": "Multiple Role Login",
+            "status": "PASS",
+            "passed": 2,
+            "failed": 0,
+            "warnings": 0,
+            "pass_rate": 100,
+            "details": [
+                {
+                    "status": "PASS",
+                    "check": "users has role column"
+                },
+                {
+                    "status": "PASS",
+                    "check": "Multiple roles exist in DB"
+                }
+            ]
+        },
+        "AUTH003": {
+            "name": "Invalid Login Handling",
+            "status": "PASS",
+            "passed": 1,
+            "failed": 0,
+            "warnings": 0,
+            "pass_rate": 100,
+            "details": [
+                {
+                    "status": "PASS",
+                    "check": "Login validation implemented"
+                }
+            ]
+        },
+        "AUTH004": {
+            "name": "Password Reset",
+            "status": "FAIL",
+            "passed": 1,
+            "failed": 1,
+            "warnings": 0,
+            "pass_rate": 50,
+            "details": [
+                {
+                    "status": "FAIL",
+                    "check": "Password reset route exists",
+                    "reason": false
+                },
+                {
+                    "status": "PASS",
+                    "check": "password_resets table exists"
+                }
+            ]
+        },
+        "AUTH005": {
+            "name": "Account Status",
+            "status": "PASS",
+            "passed": 2,
+            "failed": 0,
+            "warnings": 0,
+            "pass_rate": 100,
+            "details": [
+                {
+                    "status": "PASS",
+                    "check": "users has status column"
+                },
+                {
+                    "status": "PASS",
+                    "check": "Status values exist"
+                }
+            ]
+        },
+        "DASH001": {
+            "name": "Admin Dashboard",
+            "status": "PASS",
+            "passed": 2,
+            "failed": 0,
+            "warnings": 0,
+            "pass_rate": 100,
+            "details": [
+                {
+                    "status": "PASS",
+                    "check": "Dashboard route exists"
+                },
+                {
+                    "status": "PASS",
+                    "check": "DashboardController exists"
+                }
+            ]
+        },
+        "DASH002": {
+            "name": "Supervisor Dashboard",
+            "status": "PASS",
+            "passed": 2,
+            "failed": 0,
+            "warnings": 0,
+            "pass_rate": 100,
+            "details": [
+                {
+                    "status": "PASS",
+                    "check": "Centre filtering possible"
+                },
+                {
+                    "status": "PASS",
+                    "check": "centres table exists"
+                }
+            ]
+        },
+        "DASH003": {
+            "name": "Teacher Dashboard",
+            "status": "PASS",
+            "passed": 1,
+            "failed": 0,
+            "warnings": 0,
+            "pass_rate": 100,
+            "details": [
+                {
+                    "status": "PASS",
+                    "check": "activities table exists"
+                }
+            ]
+        },
+        "DASH004": {
+            "name": "Dashboard Statistics",
+            "status": "PASS",
+            "passed": 1,
+            "failed": 0,
+            "warnings": 0,
+            "pass_rate": 100,
+            "details": [
+                {
+                    "status": "PASS",
+                    "check": "Can query user count"
+                }
+            ]
+        },
+        "PROF001": {
+            "name": "View Profile",
+            "status": "PASS",
+            "passed": 2,
+            "failed": 0,
+            "warnings": 0,
+            "pass_rate": 100,
+            "details": [
+                {
+                    "status": "PASS",
+                    "check": "Profile route exists"
+                },
+                {
+                    "status": "PASS",
+                    "check": "ProfileController exists"
+                }
+            ]
+        },
+        "PROF002": {
+            "name": "Edit Profile",
+            "status": "FAIL",
+            "passed": 0,
+            "failed": 1,
+            "warnings": 0,
+            "pass_rate": 0,
+            "details": [
+                {
+                    "status": "FAIL",
+                    "check": "Profile update route exists",
+                    "reason": false
+                }
+            ]
+        },
+        "PROF003": {
+            "name": "Change Password",
+            "status": "FAIL",
+            "passed": 0,
+            "failed": 1,
+            "warnings": 0,
+            "pass_rate": 0,
+            "details": [
+                {
+                    "status": "FAIL",
+                    "check": "Password update route exists",
+                    "reason": false
+                }
+            ]
+        },
+        "PROF004": {
+            "name": "Upload Photo",
+            "status": "PASS",
+            "passed": 1,
+            "failed": 0,
+            "warnings": 0,
+            "pass_rate": 100,
+            "details": [
+                {
+                    "status": "PASS",
+                    "check": "Profile photo column exists"
+                }
+            ]
+        },
+        "STAFF001": {
+            "name": "Create Staff",
+            "status": "PASS",
+            "passed": 2,
+            "failed": 0,
+            "warnings": 0,
+            "pass_rate": 100,
+            "details": [
+                {
+                    "status": "PASS",
+                    "check": "Staff create route exists"
+                },
+                {
+                    "status": "PASS",
+                    "check": "users table ready for staff"
+                }
+            ]
+        },
+        "STAFF002": {
+            "name": "Edit Staff",
+            "status": "FAIL",
+            "passed": 0,
+            "failed": 1,
+            "warnings": 0,
+            "pass_rate": 0,
+            "details": [
+                {
+                    "status": "FAIL",
+                    "check": "Staff update route exists",
+                    "reason": false
+                }
+            ]
+        },
+        "STAFF003": {
+            "name": "View Staff List",
+            "status": "PASS",
+            "passed": 1,
+            "failed": 0,
+            "warnings": 0,
+            "pass_rate": 100,
+            "details": [
+                {
+                    "status": "PASS",
+                    "check": "Staff list route exists"
+                }
+            ]
+        },
+        "STAFF004": {
+            "name": "Staff Role Management",
+            "status": "PASS",
+            "passed": 1,
+            "failed": 0,
+            "warnings": 0,
+            "pass_rate": 100,
+            "details": [
+                {
+                    "status": "PASS",
+                    "check": "Role column exists"
+                }
+            ]
+        },
+        "STAFF005": {
+            "name": "Deactivate Staff",
+            "status": "PASS",
+            "passed": 1,
+            "failed": 0,
+            "warnings": 0,
+            "pass_rate": 100,
+            "details": [
+                {
+                    "status": "PASS",
+                    "check": "Status column exists"
+                }
+            ]
+        },
+        "STAFF006": {
+            "name": "View Staff Profile",
+            "status": "PASS",
+            "passed": 1,
+            "failed": 0,
+            "warnings": 0,
+            "pass_rate": 100,
+            "details": [
+                {
+                    "status": "PASS",
+                    "check": "Staff show route exists"
+                }
+            ]
+        },
+        "TRAIN001": {
+            "name": "Register Trainee",
+            "status": "PASS",
+            "passed": 3,
+            "failed": 0,
+            "warnings": 0,
+            "pass_rate": 100,
+            "details": [
+                {
+                    "status": "PASS",
+                    "check": "Trainee create route exists"
+                },
+                {
+                    "status": "PASS",
+                    "check": "trainees table exists"
+                },
+                {
+                    "status": "PASS",
+                    "check": "trainees has required columns"
+                }
+            ]
+        },
+        "TRAIN002": {
+            "name": "Edit Trainee",
+            "status": "PASS",
+            "passed": 1,
+            "failed": 0,
+            "warnings": 0,
+            "pass_rate": 100,
+            "details": [
+                {
+                    "status": "PASS",
+                    "check": "Trainee update route exists"
+                }
+            ]
+        },
+        "TRAIN003": {
+            "name": "View Trainee List",
+            "status": "FAIL",
+            "passed": 1,
+            "failed": 1,
+            "warnings": 0,
+            "pass_rate": 50,
+            "details": [
+                {
+                    "status": "PASS",
+                    "check": "Trainee list route exists"
+                },
+                {
+                    "status": "FAIL",
+                    "check": "TraineeController exists",
+                    "reason": false
+                }
+            ]
+        },
+        "TRAIN004": {
+            "name": "Trainee Progress",
+            "status": "PASS",
+            "passed": 1,
+            "failed": 0,
+            "warnings": 0,
+            "pass_rate": 100,
+            "details": [
+                {
+                    "status": "PASS",
+                    "check": "activity_enrollments table exists"
+                }
+            ]
+        },
+        "TRAIN005": {
+            "name": "Guardian Management",
+            "status": "PASS",
+            "passed": 1,
+            "failed": 0,
+            "warnings": 0,
+            "pass_rate": 100,
+            "details": [
+                {
+                    "status": "PASS",
+                    "check": "Guardian columns exist"
+                }
+            ]
+        },
+        "TRAIN006": {
+            "name": "Trainee Status",
+            "status": "PASS",
+            "passed": 1,
+            "failed": 0,
+            "warnings": 0,
+            "pass_rate": 100,
+            "details": [
+                {
+                    "status": "PASS",
+                    "check": "Status column exists"
+                }
+            ]
+        },
+        "ACT001": {
+            "name": "Activity Listing",
+            "status": "FAIL",
+            "passed": 2,
+            "failed": 1,
+            "warnings": 0,
+            "pass_rate": 66.7,
+            "details": [
+                {
+                    "status": "PASS",
+                    "check": "Activity list route exists"
+                },
+                {
+                    "status": "PASS",
+                    "check": "activities table exists"
+                },
+                {
+                    "status": "FAIL",
+                    "check": "ActivityController exists",
+                    "reason": false
+                }
+            ]
+        },
+        "ACT002": {
+            "name": "Create Activity",
+            "status": "PASS",
+            "passed": 1,
+            "failed": 0,
+            "warnings": 0,
+            "pass_rate": 100,
+            "details": [
+                {
+                    "status": "PASS",
+                    "check": "Activity create route exists"
+                }
+            ]
+        },
+        "ACT003": {
+            "name": "Edit Activity",
+            "status": "FAIL",
+            "passed": 0,
+            "failed": 1,
+            "warnings": 0,
+            "pass_rate": 0,
+            "details": [
+                {
+                    "status": "FAIL",
+                    "check": "Activity update route exists",
+                    "reason": false
+                }
+            ]
+        },
+        "ACT004": {
+            "name": "Delete Activity",
+            "status": "PASS",
+            "passed": 1,
+            "failed": 0,
+            "warnings": 0,
+            "pass_rate": 100,
+            "details": [
+                {
+                    "status": "PASS",
+                    "check": "Activity delete route exists"
+                }
+            ]
+        },
+        "ACT005": {
+            "name": "Activity Categories",
+            "status": "FAIL",
+            "passed": 0,
+            "failed": 1,
+            "warnings": 0,
+            "pass_rate": 0,
+            "details": [
+                {
+                    "status": "FAIL",
+                    "check": "Category system exists",
+                    "reason": false
+                }
+            ]
+        },
+        "ACT006": {
+            "name": "Create Session",
+            "status": "FAIL",
+            "passed": 1,
+            "failed": 1,
+            "warnings": 0,
+            "pass_rate": 50,
+            "details": [
+                {
+                    "status": "PASS",
+                    "check": "Sessions table exists"
+                },
+                {
+                    "status": "FAIL",
+                    "check": "Session routes exist",
+                    "reason": false
+                }
+            ]
+        },
+        "ACT007": {
+            "name": "Enroll Trainee",
+            "status": "FAIL",
+            "passed": 1,
+            "failed": 1,
+            "warnings": 0,
+            "pass_rate": 50,
+            "details": [
+                {
+                    "status": "PASS",
+                    "check": "activity_enrollments table exists"
+                },
+                {
+                    "status": "FAIL",
+                    "check": "Enrollment route exists",
+                    "reason": false
+                }
+            ]
+        },
+        "ACT008": {
+            "name": "View Schedule",
+            "status": "PASS",
+            "passed": 1,
+            "failed": 0,
+            "warnings": 0,
+            "pass_rate": 100,
+            "details": [
+                {
+                    "status": "PASS",
+                    "check": "Schedule route exists"
+                }
+            ]
+        },
+        "ACT009": {
+            "name": "Weekly Schedule",
+            "status": "PASS",
+            "passed": 1,
+            "failed": 0,
+            "warnings": 0,
+            "pass_rate": 100,
+            "details": [
+                {
+                    "status": "PASS",
+                    "check": "Calendar\/Schedule functionality exists"
+                }
+            ]
+        },
+        "ACT010": {
+            "name": "Teacher Schedule",
+            "status": "PASS",
+            "passed": 1,
+            "failed": 0,
+            "warnings": 0,
+            "pass_rate": 100,
+            "details": [
+                {
+                    "status": "PASS",
+                    "check": "Teacher filtering possible"
+                }
+            ]
+        },
+        "ATT001": {
+            "name": "Mark Attendance",
+            "status": "FAIL",
+            "passed": 2,
+            "failed": 1,
+            "warnings": 0,
+            "pass_rate": 66.7,
+            "details": [
+                {
+                    "status": "PASS",
+                    "check": "Attendance table exists"
+                },
+                {
+                    "status": "PASS",
+                    "check": "Attendance route exists"
+                },
+                {
+                    "status": "FAIL",
+                    "check": "AttendanceController exists",
+                    "reason": false
+                }
+            ]
+        },
+        "ATT002": {
+            "name": "View Attendance",
+            "status": "PASS",
+            "passed": 1,
+            "failed": 0,
+            "warnings": 0,
+            "pass_rate": 100,
+            "details": [
+                {
+                    "status": "PASS",
+                    "check": "Attendance list route exists"
+                }
+            ]
+        },
+        "ATT003": {
+            "name": "Attendance History",
+            "status": "PASS",
+            "passed": 1,
+            "failed": 0,
+            "warnings": 0,
+            "pass_rate": 100,
+            "details": [
+                {
+                    "status": "PASS",
+                    "check": "Can query historical data"
+                }
+            ]
+        },
+        "ATT004": {
+            "name": "Excuse Management",
+            "status": "PASS",
+            "passed": 1,
+            "failed": 0,
+            "warnings": 0,
+            "pass_rate": 100,
+            "details": [
+                {
+                    "status": "PASS",
+                    "check": "Excuse status exists"
+                }
+            ]
+        },
+        "CENT001": {
+            "name": "View Centres",
+            "status": "PASS",
+            "passed": 2,
+            "failed": 0,
+            "warnings": 0,
+            "pass_rate": 100,
+            "details": [
+                {
+                    "status": "PASS",
+                    "check": "centres table exists"
+                },
+                {
+                    "status": "PASS",
+                    "check": "Centre route exists"
+                }
+            ]
+        },
+        "CENT002": {
+            "name": "Centre Details",
+            "status": "PASS",
+            "passed": 1,
+            "failed": 0,
+            "warnings": 0,
+            "pass_rate": 100,
+            "details": [
+                {
+                    "status": "PASS",
+                    "check": "Centre show route exists"
+                }
+            ]
+        },
+        "CENT003": {
+            "name": "Multi-Centre Support",
+            "status": "PASS",
+            "passed": 1,
+            "failed": 0,
+            "warnings": 0,
+            "pass_rate": 100,
+            "details": [
+                {
+                    "status": "PASS",
+                    "check": "Multiple centres exist"
+                }
+            ]
+        },
+        "CENT004": {
+            "name": "Centre Switching",
+            "status": "PASS",
+            "passed": 1,
+            "failed": 0,
+            "warnings": 0,
+            "pass_rate": 100,
+            "details": [
+                {
+                    "status": "PASS",
+                    "check": "Users have centre_id"
+                }
+            ]
+        },
+        "ASSET001": {
+            "name": "View Assets",
+            "status": "FAIL",
+            "passed": 2,
+            "failed": 1,
+            "warnings": 0,
+            "pass_rate": 66.7,
+            "details": [
+                {
+                    "status": "PASS",
+                    "check": "assets table exists"
+                },
+                {
+                    "status": "PASS",
+                    "check": "Asset route exists"
+                },
+                {
+                    "status": "FAIL",
+                    "check": "AssetController exists",
+                    "reason": false
+                }
+            ]
+        },
+        "ASSET002": {
+            "name": "Create Asset",
+            "status": "PASS",
+            "passed": 1,
+            "failed": 0,
+            "warnings": 0,
+            "pass_rate": 100,
+            "details": [
+                {
+                    "status": "PASS",
+                    "check": "Asset create route exists"
+                }
+            ]
+        },
+        "ASSET003": {
+            "name": "Edit Asset",
+            "status": "FAIL",
+            "passed": 0,
+            "failed": 1,
+            "warnings": 0,
+            "pass_rate": 0,
+            "details": [
+                {
+                    "status": "FAIL",
+                    "check": "Asset update route exists",
+                    "reason": false
+                }
+            ]
+        },
+        "ASSET004": {
+            "name": "Delete Asset",
+            "status": "PASS",
+            "passed": 1,
+            "failed": 0,
+            "warnings": 0,
+            "pass_rate": 100,
+            "details": [
+                {
+                    "status": "PASS",
+                    "check": "Asset delete route exists"
+                }
+            ]
+        },
+        "ASSET005": {
+            "name": "Asset Categories",
+            "status": "PASS",
+            "passed": 1,
+            "failed": 0,
+            "warnings": 0,
+            "pass_rate": 100,
+            "details": [
+                {
+                    "status": "PASS",
+                    "check": "asset_categories table exists"
+                }
+            ]
+        },
+        "ASSET006": {
+            "name": "Asset Maintenance",
+            "status": "PASS",
+            "passed": 1,
+            "failed": 0,
+            "warnings": 0,
+            "pass_rate": 100,
+            "details": [
+                {
+                    "status": "PASS",
+                    "check": "Maintenance tracking exists"
+                }
+            ]
+        },
+        "LETT001": {
+            "name": "Generate Letter",
+            "status": "PASS",
+            "passed": 3,
+            "failed": 0,
+            "warnings": 0,
+            "pass_rate": 100,
+            "details": [
+                {
+                    "status": "PASS",
+                    "check": "letters table exists"
+                },
+                {
+                    "status": "PASS",
+                    "check": "Letter route exists"
+                },
+                {
+                    "status": "PASS",
+                    "check": "LetterController exists"
+                }
+            ]
+        },
+        "LETT002": {
+            "name": "View Letters",
+            "status": "PASS",
+            "passed": 1,
+            "failed": 0,
+            "warnings": 0,
+            "pass_rate": 100,
+            "details": [
+                {
+                    "status": "PASS",
+                    "check": "Letter list route exists"
+                }
+            ]
+        },
+        "LETT003": {
+            "name": "Letter Templates",
+            "status": "PASS",
+            "passed": 1,
+            "failed": 0,
+            "warnings": 0,
+            "pass_rate": 100,
+            "details": [
+                {
+                    "status": "PASS",
+                    "check": "letter_templates table exists"
+                }
+            ]
+        },
+        "MSG001": {
+            "name": "Send Message",
+            "status": "PASS",
+            "passed": 2,
+            "failed": 0,
+            "warnings": 0,
+            "pass_rate": 100,
+            "details": [
+                {
+                    "status": "PASS",
+                    "check": "messages table exists"
+                },
+                {
+                    "status": "PASS",
+                    "check": "Message route exists"
+                }
+            ]
+        },
+        "MSG002": {
+            "name": "View Messages",
+            "status": "PASS",
+            "passed": 1,
+            "failed": 0,
+            "warnings": 0,
+            "pass_rate": 100,
+            "details": [
+                {
+                    "status": "PASS",
+                    "check": "Message list route exists"
+                }
+            ]
+        },
+        "MSG003": {
+            "name": "Notifications",
+            "status": "PASS",
+            "passed": 1,
+            "failed": 0,
+            "warnings": 0,
+            "pass_rate": 100,
+            "details": [
+                {
+                    "status": "PASS",
+                    "check": "notifications table exists"
+                }
+            ]
+        },
+        "SYS001": {
+            "name": "System Health",
+            "status": "PASS",
+            "passed": 1,
+            "failed": 0,
+            "warnings": 0,
+            "pass_rate": 100,
+            "details": [
+                {
+                    "status": "PASS",
+                    "check": "Database connection"
+                }
+            ]
+        },
+        "SYS002": {
+            "name": "Backup System",
+            "status": "FAIL",
+            "passed": 0,
+            "failed": 0,
+            "warnings": 1,
+            "pass_rate": 0,
+            "details": [
+                {
+                    "status": "WARN",
+                    "check": "Backup functionality exists"
+                }
+            ]
+        },
+        "SYS003": {
+            "name": "Audit Logs",
+            "status": "PASS",
+            "passed": 1,
+            "failed": 0,
+            "warnings": 0,
+            "pass_rate": 100,
+            "details": [
+                {
+                    "status": "PASS",
+                    "check": "audit_logs table exists"
+                }
+            ]
+        },
+        "SYS004": {
+            "name": "Performance Monitoring",
+            "status": "PASS",
+            "passed": 1,
+            "failed": 0,
+            "warnings": 0,
+            "pass_rate": 100,
+            "details": [
+                {
+                    "status": "PASS",
+                    "check": "System can handle queries efficiently"
+                }
+            ]
+        },
+        "SYS005": {
+            "name": "Configuration",
+            "status": "PASS",
+            "passed": 2,
+            "failed": 0,
+            "warnings": 0,
+            "pass_rate": 100,
+            "details": [
+                {
+                    "status": "PASS",
+                    "check": "App configured"
+                },
+                {
+                    "status": "PASS",
+                    "check": "Database configured"
+                }
+            ]
+        }
+    }
+}
