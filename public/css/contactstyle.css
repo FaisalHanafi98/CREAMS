@@ -515,3 +515,44 @@ textarea.form-control {
         transform: none;
     }
 }
+
+/* ===== Error Pagination Styles ===== */
+.error-pagination {
+    position: relative;
+}
+
+.error-message-container {
+    position: relative;
+    min-height: 24px;
+}
+
+.error-message {
+    display: none;
+    transition: opacity 0.3s ease;
+}
+
+.error-message.active {
+    display: block;
+}
+
+.error-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.error-prev,
+.error-next {
+    padding: 4px 12px;
+    font-size: 12px;
+}
+
+.error-counter {
+    font-size: 14px;
+    font-weight: 500;
+    color: #721c24;
+}
+
+.current-error {
+    font-weight: 700;
+}

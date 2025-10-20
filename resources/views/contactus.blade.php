@@ -5,18 +5,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Contact Us - IIUM PD-CARE</title>
-{{-- Favicon --}}
-<link rel="shortcut icon" href="{{ asset('images/favicon.png') }}" type="image/x-icon">
 
-{{-- CSS Dependencies --}}
-<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css">
+    {{-- Favicon --}}
+    <link rel="shortcut icon" href="{{ asset('images/favicon.png') }}" type="image/x-icon">
 
-{{-- External Custom Styles --}}
-<link rel="stylesheet" href="{{ asset('css/contactstyle.css') }}">
-<link rel="stylesheet" href="{{ asset('css/headerstyle.css') }}">
-<link rel="stylesheet" href="{{ asset('css/footerstyle.css') }}">
+    {{-- Google Fonts --}}
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    {{-- CSS Dependencies --}}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css">
+
+    {{-- Shared Header/Footer Styles --}}
+    <link rel="stylesheet" href="{{ asset('css/headerstyle.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/footerstyle.css') }}">
+
+    {{-- Page-specific Styles --}}
+    <link rel="stylesheet" href="{{ asset('css/contactstyle.css') }}">
 </head>
 <body>
     {{-- Preloader --}}
@@ -112,9 +117,28 @@
 
                     @if($errors->any())
                         <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                            @foreach($errors->all() as $error)
-                                <p class="mb-0">{{ $error }}</p>
-                            @endforeach
+                            <div class="error-pagination">
+                                <div class="error-message-container">
+                                    @foreach($errors->all() as $index => $error)
+                                        <p class="error-message mb-0 {{ $index === 0 ? 'active' : '' }}" data-error-index="{{ $index }}">
+                                            {{ $error }}
+                                        </p>
+                                    @endforeach
+                                </div>
+                                @if(count($errors->all()) > 1)
+                                <div class="error-controls mt-2">
+                                    <button type="button" class="btn btn-sm btn-outline-danger error-prev" onclick="changeError(-1)">
+                                        <i class="fas fa-chevron-left"></i>
+                                    </button>
+                                    <span class="error-counter mx-2">
+                                        <span class="current-error">1</span> / {{ count($errors->all()) }}
+                                    </span>
+                                    <button type="button" class="btn btn-sm btn-outline-danger error-next" onclick="changeError(1)">
+                                        <i class="fas fa-chevron-right"></i>
+                                    </button>
+                                </div>
+                                @endif
+                            </div>
                             <button type="button" class="close" data-dismiss="alert">
                                 <span>&times;</span>
                             </button>
@@ -294,5 +318,35 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="{{ asset('js/contact.js') }}"></script>
+
+{{-- Error Pagination Script --}}
+<script>
+let currentErrorIndex = 0;
+const errorMessages = document.querySelectorAll('.error-message');
+const totalErrors = errorMessages.length;
+
+function changeError(direction) {
+    if (totalErrors === 0) return;
+
+    // Hide current error
+    errorMessages[currentErrorIndex].classList.remove('active');
+
+    // Update index
+    currentErrorIndex += direction;
+
+    // Loop around
+    if (currentErrorIndex < 0) {
+        currentErrorIndex = totalErrors - 1;
+    } else if (currentErrorIndex >= totalErrors) {
+        currentErrorIndex = 0;
+    }
+
+    // Show new error
+    errorMessages[currentErrorIndex].classList.add('active');
+
+    // Update counter
+    document.querySelector('.current-error').textContent = currentErrorIndex + 1;
+}
+</script>
 </body>
 </html>
