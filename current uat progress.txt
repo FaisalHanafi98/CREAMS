@@ -1,0 +1,48 @@
+GENERAL
+contact
+f0r contact001 and contact002:
+the new paginated d0es yet implemented here, its still the 0ld status message f0rmat h0wever f0r v0unteeer it already changes 
+i need all f0rms in the system t0 implement the flash message f0rmat f0r the status 0f the pri0r 0perati0n
+
+volunteer
+f0r vol001 and vol002:
+**Result:** Yes the forms works the page works
+**Issues:** The successful message is too fast, i cant even read it already goes away
+
+
+AUTHENTICATION
+AUTH001: Admin Login
+when i try to login with ruzita.abd..rahim@iium.edu.my and password  it stated error No account found with this IIUM ID i also tried with password123 still the same error and the status message should state No account found with this email or IIUM ID, i also remembered i have my own user named Faisal Hanafi with email: asbourne1998@gmail.com with password Mifune1998@, with this credentials i can enter the dashboard, and it bring me to the correct dsahboard 
+AUTH002: Supervisor Login
+then nor.aisyah.muhamad.asri@iium.edu.my and password it stated Error The password you entered is incorrect, ok, i can succefully enter but the password is password123 not password, yes the system correctly shows the supervisor dashboard
+AUTH003: Teacher Login
+yes same case as before i can enter with password123, and it does shows the correct dsahboard
+AUTH004: AJK Login
+yes same case as before i can enter with password123, and it does shows the correct dsahboard per the user role
+AUTH005: Logout Functionality
+yes it shows correctly that user need to login first with the message Error Please log in to access this page
+
+
+DASHBOARDS
+DASH001: Admin Dashboard
+i had entered as Faisal Hanafi an admin of Gombak centre 001, this admin dsahboard got a lot of problem however i already anticipated this,
+as usual we start from the top of the page,
+the left navbar is interactive where if i click the items icon at the top left it will display and not display the left navbar, this navbar will dissapear if the size of the display is too small which is my intention, then the creams icon also works as the homepage button, where if i click it, it will the user back to the dsahboard default state where if its admin iits the genral section, and thers is the personal section, then to the right we have the search function, the search function currently is not working, supposedly it will check the keyword and match it for the name of Trainee or User/Staff, then supposedlt the results section should display simple thing to differentiate the results such as for User must have the name + role + centre, for trainee name + type of disability + centre name, for activities it should show the name + the instructor + centre, oh we supposedly also if the user wanted to know about the search results can just press enter or click the search icon where per the keyword it will bring to a specific page to show the search results,  the notificiation bell icon is for notification function is working as per intended where it will state "Notification Center This feature will be implemented in the next update! Soon you'll receive alerts for: Activity updates System announcements Task reminders Letter status changes Feature coming soon!", for the right most is the profile area which is working as per intended
+now unto the hero section,
+this is the current display "🌅 Good Morning 👨‍💼 Admin 👨‍💼 Welcome back, Faisal Hanafi! Your Admin dashboard is ready. Today is Tuesday, October 21, 2025 - 2:56 AM • 18 activities scheduled today 18 Today 23 Centre Activities 98% Completion Online" its a pretty confusing statistics maybe instead we can remove the "Online" since obviously we are online that is why we are accessing the system, then remove all the right section statistics of "18 Today 23 Centre Activities 98% Completion" then change with the Date and Time that is currently on the left to the right and maybe with api we can also include the current weather + temperature, and for the "18 activities scheduled today" part maybe we need to be more specific such as the gombak centre have 18 activity sessions scheduled today but this is supposed to admin level, hence we can also create another  message below it which is how many session scheduled for that specific user, this message is for all users dont matter the role 
+moving on to the general section, 
+because just in my last session i am also debugging something that i forgot hence just below the stats which are all 0 which are wrong the debug message window which are: "Debug: Recent Activities Section Recent activities data count: 0 Data exists: Yes Data type: array" this is in the general section of the dsahboard since only the admin level role user can have access to these section, if im not mistaken these debug section is supposed to be the most recent actions where for each update to the system by any of the users no matter the level will be displayed in this section, i am currently in process of implementing it however i do not know how to whether to make it stream or batch style of data since it supposes to always update, i prefer 1 minute batch and also put a refresh button just make it a typical refresh icon button where if user click it will update, but in order to do this we will need to track each actions hence i was thinking of creating a specific table that tracks hence the function can just displayed the information in this specific table, but in order to do that dont we need to change every forms? but for the today schedule i believe already corrects which it shows every activities associated with the centre the admin is located,
+moving on to the personal section
+we start with the statistics section, i wish that " Live Data: Statistics updated from database records • Centre: Your Centre • Last updated: Oct 21, 2025 at 2:56 AM" is placed before the statistics instead of after/below, in here also the recent activities function also nothing since i am unable to implement it yet, the myschedule section is correct as it is is with the mark attendance button working, however to avoid redundant attendance, supposedly after clicking and marked the attendance, the mark attendacen eshould not be able to be click again for the daay, and we need to add some symbol into the calendar marking the user attendance
+DASH002: Supervisor Dashboard
+ok, i found an interesting something, for some reason when i browse the dashbard i noticed that that the mark attendance button had change into already marked today instead of mark attendnace, but i d9d not mark for the user yet, i think this is because the system is wrong the mark is not when 1 user mark it every other user also marked, it is per individual user, 1 cannot mark for everyone else with that 1 button
+DASH003: Teacher Dashboard
+i noticed that for quick actions every user of every role has the same actions, however for a lot of users they will not be able to creat activity hence i believe we may need to change the quick actions buttons based on the user role sicne differnt user rle has differnt level of access, only admin has the full access of every function of every module
+DASH004: AJK Dashboard
+ok, for the ajk level it is supposed to be on the same level as supervisor not the lowest, another thing is that for the quck actions section ajk only have view schedule and profile settinggs i think more options needed, other than that why is ajk left navbar dont have the staff module access, every staff need to have that access, they may not be able to edit but they supposedly can go and check and view others
+
+PROFILE
+PROF001: View Profile
+PROF002: Edit Profile
+PROF003: Change Password
+PROF004: Upload Profile Photo
