@@ -961,7 +961,7 @@ Route::middleware(['auth'])->prefix('api')->name('api.')->group(function () {
 */
 
 // Search routes accessible to authenticated users (using session-based auth)
-Route::middleware(['web'])->group(function () {
+Route::middleware(['auth'])->group(function () {
     Route::get('/search', [App\Http\Controllers\SearchController::class, 'search'])->name('search');
     Route::post('/search', [App\Http\Controllers\SearchController::class, 'search'])->name('search.post');
 });

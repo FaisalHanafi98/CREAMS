@@ -91,13 +91,19 @@ class ActivitySessionController extends Controller
             'teacher_id' => 'required|exists:users,id',
             'class_name' => 'required|string|max:50',
             'semester' => 'required|string|max:10',
-            'day_of_week' => 'required|in:Monday,Tuesday,Wednesday,Thursday,Friday,Saturday,Sunday',
+            'day_of_week' => 'required|in:Monday,Tuesday,Wednesday,Thursday,Friday',
             'start_time' => 'required|date_format:H:i',
             'end_time' => 'required|date_format:H:i|after:start_time',
             'location' => 'nullable|string|max:100',
             'max_trainees' => 'required|integer|min:1|max:50',
             'notes' => 'nullable|string'
         ]);
+
+        // Block weekend days
+        if (in_array($validated['day_of_week'], ['Saturday', 'Sunday'])) {
+            return back()->withInput()
+                ->with('error', 'Sessions cannot be scheduled on weekends (Saturday or Sunday).');
+        }
         
         try {
             // Check for conflicts

@@ -19,19 +19,29 @@ class SearchController extends Controller
      */
     public function search(Request $request)
     {
-        // Check if user is authenticated (using session-based auth)
-        if (!session()->has('id')) {
-            return response()->json(['results' => [], 'error' => 'Unauthorized'], 401);
-        }
-
         // Get the search query
         $query = $request->input('query');
+
+        // Get user's centre ID from session, fetch from user record if not in session
+        $centreId = session('centre_id');
+        if (!$centreId) {
+            $userId = session('id');
+            $user = User::find($userId);
+            if ($user && $user->centre_id) {
+                $centreId = $user->centre_id;
+                session(['centre_id' => $centreId]);
+            } else {
+                // Default to centre 01 if still not found
+                $centreId = '01';
+            }
+        }
 
         // Log the search request
         Log::info('Global search initiated', [
             'query' => $query,
             'user_id' => session('id'),
-            'role' => session('role')
+            'role' => session('role'),
+            'centre_id' => $centreId
         ]);
 
         // Initialize results array
@@ -43,13 +53,14 @@ class SearchController extends Controller
                 return response()->json(['results' => $results]);
             }
 
-            // Search for staffs/teachers in User model
+            // Search for staffs/teachers in User model (centre-specific)
             $users = User::where(function ($q) use ($query) {
                 $q->where('name', 'LIKE', "%{$query}%")
                   ->orWhere('email', 'LIKE', "%{$query}%")
                   ->orWhere('iium_id', 'LIKE', "%{$query}%");
             })
             ->where('status', 'active')
+            ->where('centre_id', $centreId)
             ->limit(5)
             ->get();
 
@@ -70,64 +81,91 @@ class SearchController extends Controller
                 $results[] = [
                     'id' => $user->id,
                     'name' => $user->name,
-                    'type' => ucfirst($user->role),
+                    'type' => 'Staff',
+                    'role' => ucfirst($user->role),
+                    'subtitle' => ucfirst($user->role) . ' • ' . $centreName,
                     'location' => $centreName,
                     'avatar' => $user->avatar ? asset('storage/avatars/' . $user->avatar) : asset('images/default-avatar.png'),
                     'url' => route('staffs.profile', ['encrypted_id' => $encryptedId])
                 ];
             }
 
-            // Search for trainees
+            // Search for trainees (centre-specific and active only)
             $trainees = Trainee::where(function ($q) use ($query) {
                 $q->where('trainee_first_name', 'LIKE', "%{$query}%")
                   ->orWhere('trainee_last_name', 'LIKE', "%{$query}%")
                   ->orWhere('trainee_email', 'LIKE', "%{$query}%");
             })
+            ->where('centre_id', $centreId)
+            ->where('status', 'active')
             ->limit(5)
             ->get();
 
-            // Search for activities
+            // Search for activities (centre-specific and active only)
             $activities = Activity::where(function ($q) use ($query) {
                 $q->where('activity_name', 'LIKE', "%{$query}%")
-                  ->orWhere('activity_description', 'LIKE', "%{$query}%")
-                  ->orWhereHas('category', function($subQuery) use ($query) {
-                      $subQuery->where('category_name', 'LIKE', "%{$query}%");
-                  });
+                  ->orWhere('activity_description', 'LIKE', "%{$query}%");
             })
-            ->with('category')
+            ->where('centre_id', $centreId)
+            ->where('is_active', true)
             ->limit(5)
             ->get();
 
             // Format trainees results
             foreach ($trainees as $trainee) {
+                // Get centre name
+                $centreName = "Unknown";
+                if ($trainee->centre_id) {
+                    $centre = Centre::where('centre_id', $trainee->centre_id)->first();
+                    if ($centre) {
+                        $centreName = $centre->centre_name;
+                    }
+                }
+
                 // Generate encrypted ID for the trainee profile route
                 $encryptedId = encrypt($trainee->id);
+
+                $disability = $trainee->trainee_condition ?? 'No condition specified';
 
                 $results[] = [
                     'id' => $trainee->id,
                     'name' => $trainee->trainee_first_name . ' ' . $trainee->trainee_last_name,
                     'type' => 'Trainee',
-                    'location' => $trainee->trainee_condition ?? 'No condition specified',
-                    'avatar' => asset('images/default-avatar.png'), // Use default avatar since trainee_avatar column doesn't exist
+                    'subtitle' => $disability . ' • ' . $centreName,
+                    'location' => $centreName,
+                    'avatar' => asset('images/default-avatar.png'),
                     'url' => route('traineeprofile', ['encrypted_id' => $encryptedId])
                 ];
             }
 
             // Format activities results
             foreach ($activities as $activity) {
-                // Get category name safely
-                $categoryName = 'Uncategorized';
-                if ($activity->relationLoaded('category') && $activity->category) {
-                    $categoryName = $activity->category->category_name ?? 'Uncategorized';
+                // Get instructor name
+                $instructorName = 'No instructor';
+                if ($activity->teacher_id) {
+                    $instructor = User::find($activity->teacher_id);
+                    if ($instructor) {
+                        $instructorName = $instructor->name;
+                    }
                 }
-                
+
+                // Get centre name
+                $centreName = "Unknown";
+                if ($activity->centre_id) {
+                    $centre = Centre::where('centre_id', $activity->centre_id)->first();
+                    if ($centre) {
+                        $centreName = $centre->centre_name;
+                    }
+                }
+
                 $results[] = [
                     'id' => $activity->id,
                     'name' => $activity->activity_name,
                     'type' => 'Activity',
-                    'location' => $categoryName,
+                    'subtitle' => $instructorName . ' • ' . $centreName,
+                    'location' => $centreName,
                     'avatar' => asset('images/activity-icon.png'),
-                    'url' => route('activities.home') . '?activity=' . $activity->id
+                    'url' => route('activities.show', ['id' => $activity->id])
                 ];
             }
 
@@ -149,15 +187,26 @@ class SearchController extends Controller
             return response()->json(['results' => $results]);
 
         } catch (\Exception $e) {
-            // Log error
+            // Log error with detailed information
             Log::error('Error during global search', [
                 'query' => $query,
+                'centre_id' => $centreId,
+                'user_id' => session('id'),
                 'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
                 'trace' => $e->getTraceAsString()
             ]);
 
-            // Return empty results on error
-            return response()->json(['results' => [], 'error' => 'An error occurred while searching']);
+            // Return detailed error for debugging
+            return response()->json([
+                'results' => [],
+                'error' => 'Search error: ' . $e->getMessage(),
+                'debug' => [
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine()
+                ]
+            ], 500);
         }
     }
 

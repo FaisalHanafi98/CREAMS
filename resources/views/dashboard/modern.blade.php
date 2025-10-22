@@ -6,7 +6,7 @@
 <div class="enhanced-dashboard">
     <!-- Role-based Access Denied Messages -->
     @include('components.role-access-denied')
-    
+
     <!-- Enhanced Header Section -->
     <div class="dashboard-header-enhanced mb-4">
         <div class="header-gradient"></div>
@@ -38,12 +38,20 @@
                         </h1>
                         <p class="dashboard-subtitle-enhanced">
                             <span class="subtitle-primary">Your {{ ucfirst($role ?? 'user') }} dashboard is ready.</span>
-                            <span class="subtitle-secondary">Today is {{ $current_time ?? now()->format('l, F j, Y') }}</span>
                             @if(isset($todays_centre_activities) && count($todays_centre_activities) > 0)
+                                @php
+                                    $centreName = session('centre_name', 'your centre');
+                                    $userSessions = isset($my_schedule) ? count(array_filter($my_schedule, function($session) {
+                                        return isset($session['date']) && date('Y-m-d', strtotime($session['date'])) === date('Y-m-d');
+                                    })) : 0;
+                                @endphp
                                 @if($role === 'admin')
-                                    <span class="subtitle-highlight">• {{ count($todays_centre_activities) }} activities scheduled today</span>
+                                    <span class="subtitle-highlight">• {{ $centreName }} has {{ count($todays_centre_activities) }} activity {{ count($todays_centre_activities) == 1 ? 'session' : 'sessions' }} scheduled today</span>
                                 @else
-                                    <span class="subtitle-highlight">• {{ count($todays_centre_activities) }} {{ count($todays_centre_activities) == 1 ? 'session' : 'sessions' }} scheduled today</span>
+                                    <span class="subtitle-highlight">• {{ $centreName }} has {{ count($todays_centre_activities) }} {{ count($todays_centre_activities) == 1 ? 'session' : 'sessions' }} scheduled today</span>
+                                @endif
+                                @if($userSessions > 0)
+                                    <span class="subtitle-highlight">• You have {{ $userSessions }} {{ $userSessions == 1 ? 'session' : 'sessions' }} to conduct today</span>
                                 @endif
                             @endif
                         </p>
@@ -51,38 +59,20 @@
                 </div>
                 <div class="col-lg-4 col-md-5 text-end">
                     <div class="header-actions">
-                        <div class="dashboard-stats-mini">
-                            <div class="stat-mini">
-                                <div class="stat-icon"><i class="fas fa-calendar-day"></i></div>
-                                <div class="stat-content">
-                                    <div class="stat-number">{{ count($todays_centre_activities ?? []) }}</div>
-                                    <div class="stat-label">Today</div>
+                        <div class="dashboard-datetime">
+                            <div class="datetime-display">
+                                <div class="date-info">
+                                    <i class="fas fa-calendar-alt"></i>
+                                    <span id="currentDate">{{ now()->format('l, F j, Y') }}</span>
                                 </div>
-                            </div>
-                            <div class="stat-mini">
-                                <div class="stat-icon"><i class="fas fa-tasks"></i></div>
-                                <div class="stat-content">
-                                    <div class="stat-number">{{ count($todays_centre_activities ?? []) + count($upcoming_sessions ?? []) }}</div>
-                                    <div class="stat-label">
-                                        @if($role === 'admin')
-                                            Centre Activities
-                                        @else
-                                            My Activities
-                                        @endif
-                                    </div>
+                                <div class="time-info">
+                                    <i class="fas fa-clock"></i>
+                                    <span id="currentTime">{{ now()->format('g:i A') }}</span>
                                 </div>
-                            </div>
-                            <div class="stat-mini">
-                                <div class="stat-icon"><i class="fas fa-chart-line"></i></div>
-                                <div class="stat-content">
-                                    <div class="stat-number">{{ $personal_stats['completion_rate'] ?? 0 }}%</div>
-                                    <div class="stat-label">{{ $role === 'trainee' ? 'Attendance' : 'Completion' }}</div>
+                                <div class="weather-info" id="weatherWidget">
+                                    <i class="fas fa-spinner fa-spin"></i>
+                                    <span>Loading weather...</span>
                                 </div>
-                            </div>
-                        </div>
-                        <div class="performance-indicator">
-                            <div class="performance-circle">
-                                <span class="performance-text">{{ $performance['cache_status'] ?? 'Ready' }}</span>
                             </div>
                         </div>
                     </div>
@@ -123,13 +113,13 @@
         <div class="col-xl-3 col-lg-6 col-md-6">
             <div class="stats-card-enhanced primary-card">
                 <div class="stats-icon-enhanced">
-                    <i class="fas fa-users"></i>
+                    <i class="fas fa-user-tie"></i>
                 </div>
                 <div class="stats-content-enhanced">
                     <h3 class="stats-number-enhanced">{{ $stats_flat['total_users'] ?? 0 }}</h3>
-                    <p class="stats-label-enhanced">Total Users</p>
+                    <p class="stats-label-enhanced">Active Staff</p>
                     <div class="stats-trend-enhanced positive">
-                        <i class="fas fa-arrow-up"></i> Active
+                        <i class="fas fa-check-circle"></i> In Service
                     </div>
                 </div>
             </div>
@@ -158,7 +148,7 @@
                 </div>
                 <div class="stats-content-enhanced">
                     <h3 class="stats-number-enhanced">{{ $stats_flat['total_activities'] ?? 0 }}</h3>
-                    <p class="stats-label-enhanced">Active Programs</p>
+                    <p class="stats-label-enhanced">Ongoing Activities</p>
                     <div class="stats-trend-enhanced positive">
                         <i class="fas fa-arrow-up"></i> Running
                     </div>
@@ -166,22 +156,20 @@
             </div>
         </div>
 
-        @if(in_array($role, ['admin', 'supervisor']))
         <div class="col-xl-3 col-lg-6 col-md-6">
             <div class="stats-card-enhanced info-card">
                 <div class="stats-icon-enhanced">
-                    <i class="fas fa-building"></i>
+                    <i class="fas fa-calendar-week"></i>
                 </div>
                 <div class="stats-content-enhanced">
-                    <h3 class="stats-number-enhanced">{{ $stats_flat['active_centres'] ?? 1 }}</h3>
-                    <p class="stats-label-enhanced">Active Centres</p>
-                    <div class="stats-trend-enhanced stable">
-                        <i class="fas fa-minus"></i> Stable
+                    <h3 class="stats-number-enhanced">{{ $stats_flat['sessions_this_week'] ?? 0 }}</h3>
+                    <p class="stats-label-enhanced">Sessions This Week</p>
+                    <div class="stats-trend-enhanced {{ ($stats_flat['sessions_this_week'] ?? 0) > 0 ? 'positive' : 'stable' }}">
+                        <i class="fas {{ ($stats_flat['sessions_this_week'] ?? 0) > 0 ? 'fa-arrow-up' : 'fa-minus' }}"></i> {{ ($stats_flat['sessions_this_week'] ?? 0) > 0 ? 'Active' : 'None' }}
                     </div>
                 </div>
             </div>
         </div>
-        @endif
     </div>
 
             <!-- Main Dashboard Content -->
@@ -235,13 +223,7 @@
             @endif
 
             <!-- Interactive Activity Timeline -->
-            <!-- Debug: Check if data exists -->
-            @php 
-                $debug_activities = $recent_activities_centre ?? []; 
-                $debug_count = count($debug_activities);
-            @endphp
-            
-            @if($debug_count > 0)
+            @if(isset($recent_activities_centre) && count($recent_activities_centre) > 0)
             <div class="dashboard-widget activity-timeline-widget" id="activityTimelineWidget">
                 <div class="widget-header">
                     <h5 class="widget-title">
@@ -268,33 +250,60 @@
                             $activityTime = $activity['time'];
                             $activityIcon = $activity['icon'];
                             $activityUser = $activity['user_name'];
+                            $activityRole = $activity['user_role'] ?? 'system';
+                            $activityAction = $activity['action'] ?? 'action';
+                            $activityDescription = $activity['description'] ?? '';
+
+                            // Role color mapping
+                            $roleColors = [
+                                'admin' => '#dc3545',
+                                'supervisor' => '#fd7e14',
+                                'teacher' => '#0d6efd',
+                                'ajk' => '#6f42c1',
+                                'parent' => '#20c997',
+                                'system' => '#6c757d'
+                            ];
+                            $roleColor = $roleColors[$activityRole] ?? '#6c757d';
+
+                            // Action result mapping
+                            $actionLabels = [
+                                'created' => 'Created',
+                                'updated' => 'Updated',
+                                'deleted' => 'Deleted'
+                            ];
+                            $actionLabel = $actionLabels[$activityAction] ?? ucfirst($activityAction);
                         @endphp
-                        <div class="timeline-item-enhanced" data-category="{{ $activityType }}" data-status="{{ strtolower($activityStatus) }}" data-id="{{ $activity['id'] ?? '' }}" data-type="{{ $activityType }}" onclick="navigateToItem(this)">
+                        <div class="timeline-item-enhanced" data-category="{{ $activityType }}" data-status="{{ strtolower($activityStatus) }}" data-id="{{ $activity['id'] ?? '' }}" data-type="{{ $activityType }}">
                             <div class="timeline-marker-enhanced timeline-{{ $activityType }}">
                                 <i class="fas fa-{{ $activityIcon }}"></i>
                             </div>
                             <div class="timeline-content-enhanced">
                                 <div class="timeline-header">
-                                    <h6 class="timeline-title timeline-clickable">{{ $activityTitle }}</h6>
+                                    <h6 class="timeline-title">{{ $activityTitle }}</h6>
                                     <span class="timeline-time">{{ $activityTime }}</span>
                                 </div>
+                                @if($activityDescription)
+                                    <div class="timeline-description">
+                                        <small class="text-muted">{{ $activityDescription }}</small>
+                                    </div>
+                                @endif
                                 <div class="timeline-meta">
-                                    <span class="timeline-category activity-{{ $activityType }}">{{ $activity['category_name'] }}</span>
+                                    <span class="timeline-category activity-{{ strtolower($activityType) }}">
+                                        {{ $activity['category_name'] }}
+                                    </span>
+                                    <span class="timeline-action action-{{ strtolower($activityAction) }}">
+                                        {{ $actionLabel }}
+                                    </span>
+                                    <span class="timeline-status status-{{ strtolower($activityStatus) }}">
+                                        {{ ucfirst($activityStatus) }}
+                                    </span>
                                     @if($activityUser !== 'System')
-                                        <span class="timeline-user">by {{ $activityUser }}</span>
+                                        <span class="timeline-user" style="background-color: {{ $roleColor }}15; color: {{ $roleColor }}; border: 1px solid {{ $roleColor }}40;">
+                                            <i class="fas fa-user-circle"></i> {{ $activityUser }}
+                                            <span style="font-size: 0.75em; opacity: 0.8;">({{ ucfirst($activityRole) }})</span>
+                                        </span>
                                     @endif
-                                    <span class="timeline-status status-{{ strtolower($activityStatus) }}">{{ ucfirst($activityStatus) }}</span>
                                 </div>
-                                @if(isset($activity['condition']) && $activity['condition'])
-                                    <div class="timeline-detail">
-                                        <small class="text-muted">Condition: {{ $activity['condition'] }}</small>
-                                    </div>
-                                @endif
-                                @if(isset($activity['session_date']) && $activity['session_date'])
-                                    <div class="timeline-detail">
-                                        <small class="text-muted">Date: {{ $activity['session_date'] }}</small>
-                                    </div>
-                                @endif
                             </div>
                         </div>
                         @endforeach
@@ -302,17 +311,11 @@
                 </div>
             </div>
             @else
-            <!-- Debug: Show when no recent activities data -->
+            <!-- No Recent Activities -->
             <div class="dashboard-widget">
-                <div class="widget-content text-center py-4">
-                    <div class="alert alert-info">
-                        <h5>Debug: Recent Activities Section</h5>
-                        <p>Recent activities data count: {{ $debug_count }}</p>
-                        <p>Data exists: {{ isset($recent_activities_centre) ? 'Yes' : 'No' }}</p>
-                        @if(isset($recent_activities_centre))
-                            <p>Data type: {{ gettype($recent_activities_centre) }}</p>
-                        @endif
-                    </div>
+                <div class="widget-content text-center py-5">
+                    <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                    <p class="text-muted">No recent activities to display</p>
                 </div>
             </div>
             @endif
@@ -394,7 +397,28 @@
 
         <!-- Personal Tab -->
         <div class="tab-pane fade {{ $role !== 'admin' ? 'show active' : '' }}" id="personal" role="tabpanel">
-            
+
+            <!-- Data Source Indicator -->
+            <div class="row mb-3">
+                <div class="col-12">
+                    <div class="data-source-indicator">
+                        <div class="data-source-content">
+                            <i class="fas fa-database"></i>
+                            <span class="data-source-text">
+                                <strong>Live Data:</strong>
+                                Statistics updated from database records •
+                                Centre: {{ session('centre_name', 'Your Centre') }} •
+                                Last updated: {{ now()->format('M j, Y \a\t g:i A') }}
+                            </span>
+                            <button class="data-refresh-btn" onclick="refreshPersonalStats()">
+                                <i class="fas fa-sync-alt"></i>
+                                Refresh
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Personal Statistics Section - DATA-BASED -->
             <div class="row g-4 mb-4">
                 @php
@@ -544,27 +568,6 @@
                 @endforeach
             </div>
 
-            <!-- Data Source Indicator -->
-            <div class="row mb-4">
-                <div class="col-12">
-                    <div class="data-source-indicator">
-                        <div class="data-source-content">
-                            <i class="fas fa-database"></i>
-                            <span class="data-source-text">
-                                <strong>Live Data:</strong> 
-                                Statistics updated from database records • 
-                                Centre: {{ session('centre_name', 'Your Centre') }} • 
-                                Last updated: {{ now()->format('M j, Y \a\t g:i A') }}
-                            </span>
-                            <button class="data-refresh-btn" onclick="refreshPersonalStats()">
-                                <i class="fas fa-sync-alt"></i>
-                                Refresh
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
             <div class="row g-4">
                 <!-- Personal Content -->
                 <div class="col-12">
@@ -700,7 +703,10 @@
 
                                                 <div class="schedule-week-grid">
                                                     @foreach($weekDays as $dateKey => $dayData)
-                                                        <div class="day-column {{ $dayData['date']->isToday() ? 'today-column' : '' }} {{ count($dayData['events']) > 0 ? 'has-events' : '' }}">
+                                                        @php
+                                                            $dayIsHolidayCheck = isset($calendar_data['holidays'][$dateKey]);
+                                                        @endphp
+                                                        <div class="day-column {{ $dayData['date']->isToday() ? 'today-column' : '' }} {{ count($dayData['events']) > 0 ? 'has-events' : '' }} {{ $dayIsHolidayCheck ? 'holiday-column' : '' }}">
                                                             <!-- Day Header -->
                                                             <div class="day-header">
                                                                 <div class="day-info">
@@ -709,16 +715,27 @@
                                                                         {{ $dayData['date']->format('j') }}
                                                                     </span>
                                                                 </div>
-                                                                @if($dayData['date']->isToday())
+                                                                @php
+                                                                    $dayIsHoliday = isset($calendar_data['holidays'][$dateKey]) ? $calendar_data['holidays'][$dateKey] : null;
+                                                                @endphp
+                                                                @if($dayIsHoliday)
+                                                                    <div class="holiday-badge" title="{{ $dayIsHoliday->name }}">
+                                                                        <i class="fas fa-umbrella-beach"></i> Holiday
+                                                                    </div>
+                                                                @elseif($dayData['date']->isToday())
                                                                     <div class="today-badge">Today</div>
                                                                 @endif
                                                             </div>
 
                                                             <!-- Day Events -->
                                                             <div class="day-events">
+                                                                @php
+                                                                    $isHoliday = isset($calendar_data['holidays'][$dateKey]) ? $calendar_data['holidays'][$dateKey] : null;
+                                                                @endphp
+
                                                                 @if(count($dayData['events']) > 0)
                                                                     @foreach(array_slice($dayData['events'], 0, 3) as $event)
-                                                                        <div class="event-card event-{{ $event['color'] ?? 'primary' }} clickable-event" 
+                                                                        <div class="event-card event-{{ $event['color'] ?? 'primary' }} clickable-event"
                                                                              onclick="navigateToSession('{{ $event['activity_id'] ?? '' }}', '{{ $event['session_id'] ?? $event['id'] ?? '' }}')"
                                                                              style="cursor: pointer;"
                                                                              title="Click to view session details">
@@ -740,6 +757,16 @@
                                                                             +{{ count($dayData['events']) - 3 }} more
                                                                         </div>
                                                                     @endif
+                                                                @elseif($isHoliday)
+                                                                    <div class="holiday-indicator">
+                                                                        <i class="fas fa-umbrella-beach"></i>
+                                                                        <span class="holiday-name">{{ $isHoliday->name }}</span>
+                                                                        @if($isHoliday->type === 'state')
+                                                                            <span class="holiday-type">{{ $isHoliday->state }}</span>
+                                                                        @else
+                                                                            <span class="holiday-type">Public Holiday</span>
+                                                                        @endif
+                                                                    </div>
                                                                 @else
                                                                     <div class="no-events">
                                                                         <i class="fas fa-coffee"></i>
@@ -857,24 +884,101 @@
                                     </div>
                                     <div class="card-content-modern">
                                         <div class="quick-actions-grid">
-                                            @if(in_array($role, ['admin', 'supervisor', 'teacher']))
-                                            <a href="{{ route('activities.create') }}" class="quick-action-btn">
-                                                <i class="fas fa-plus"></i>
-                                                <span>Create Activity</span>
-                                            </a>
-                                            <a href="{{ route('activities.home') }}" class="quick-action-btn">
-                                                <i class="fas fa-clipboard-check"></i>
-                                                <span>Mark Attendance</span>
-                                            </a>
+                                            @if($role === 'admin')
+                                                {{-- Admin: Full access to all functions --}}
+                                                <a href="{{ route('activities.create') }}" class="quick-action-btn">
+                                                    <i class="fas fa-plus"></i>
+                                                    <span>Create Activity</span>
+                                                </a>
+                                                <a href="{{ route('activities.home') }}" class="quick-action-btn">
+                                                    <i class="fas fa-clipboard-check"></i>
+                                                    <span>Mark Attendance</span>
+                                                </a>
+                                                <a href="{{ route('staffs.home') }}" class="quick-action-btn">
+                                                    <i class="fas fa-users"></i>
+                                                    <span>Manage Staff</span>
+                                                </a>
+                                                <a href="{{ route('trainees.home') }}" class="quick-action-btn">
+                                                    <i class="fas fa-user-graduate"></i>
+                                                    <span>Manage Trainees</span>
+                                                </a>
+                                                <a href="{{ route('staffs.schedule', ['encrypted_id' => $user_encrypted_id]) }}" class="quick-action-btn">
+                                                    <i class="fas fa-calendar"></i>
+                                                    <span>View Schedule</span>
+                                                </a>
+                                                <a href="{{ route('profile.home') }}" class="quick-action-btn">
+                                                    <i class="fas fa-user-cog"></i>
+                                                    <span>Profile Settings</span>
+                                                </a>
+                                            @elseif($role === 'supervisor')
+                                                {{-- Supervisor: Can create activities, manage staff, mark attendance --}}
+                                                <a href="{{ route('activities.create') }}" class="quick-action-btn">
+                                                    <i class="fas fa-plus"></i>
+                                                    <span>Create Activity</span>
+                                                </a>
+                                                <a href="{{ route('activities.home') }}" class="quick-action-btn">
+                                                    <i class="fas fa-clipboard-check"></i>
+                                                    <span>Mark Attendance</span>
+                                                </a>
+                                                <a href="{{ route('staffs.home') }}" class="quick-action-btn">
+                                                    <i class="fas fa-users"></i>
+                                                    <span>View Staff</span>
+                                                </a>
+                                                <a href="{{ route('staffs.schedule', ['encrypted_id' => $user_encrypted_id]) }}" class="quick-action-btn">
+                                                    <i class="fas fa-calendar"></i>
+                                                    <span>View Schedule</span>
+                                                </a>
+                                                <a href="{{ route('profile.home') }}" class="quick-action-btn">
+                                                    <i class="fas fa-user-cog"></i>
+                                                    <span>Profile Settings</span>
+                                                </a>
+                                            @elseif($role === 'teacher')
+                                                {{-- Teacher: Can create activities and mark attendance --}}
+                                                <a href="{{ route('activities.create') }}" class="quick-action-btn">
+                                                    <i class="fas fa-plus"></i>
+                                                    <span>Create Activity</span>
+                                                </a>
+                                                <a href="{{ route('activities.home') }}" class="quick-action-btn">
+                                                    <i class="fas fa-clipboard-check"></i>
+                                                    <span>Mark Attendance</span>
+                                                </a>
+                                                <a href="{{ route('staffs.schedule', ['encrypted_id' => $user_encrypted_id]) }}" class="quick-action-btn">
+                                                    <i class="fas fa-calendar"></i>
+                                                    <span>View Schedule</span>
+                                                </a>
+                                                <a href="{{ route('profile.home') }}" class="quick-action-btn">
+                                                    <i class="fas fa-user-cog"></i>
+                                                    <span>Profile Settings</span>
+                                                </a>
+                                            @elseif($role === 'ajk')
+                                                {{-- AJK: Can view staff, mark attendance, view schedule --}}
+                                                <a href="{{ route('activities.home') }}" class="quick-action-btn">
+                                                    <i class="fas fa-clipboard-check"></i>
+                                                    <span>Mark Attendance</span>
+                                                </a>
+                                                <a href="{{ route('staffs.home') }}" class="quick-action-btn">
+                                                    <i class="fas fa-users"></i>
+                                                    <span>View Staff</span>
+                                                </a>
+                                                <a href="{{ route('staffs.schedule', ['encrypted_id' => $user_encrypted_id]) }}" class="quick-action-btn">
+                                                    <i class="fas fa-calendar"></i>
+                                                    <span>View Schedule</span>
+                                                </a>
+                                                <a href="{{ route('profile.home') }}" class="quick-action-btn">
+                                                    <i class="fas fa-user-cog"></i>
+                                                    <span>Profile Settings</span>
+                                                </a>
+                                            @else
+                                                {{-- Default: Basic access --}}
+                                                <a href="{{ route('staffs.schedule', ['encrypted_id' => $user_encrypted_id]) }}" class="quick-action-btn">
+                                                    <i class="fas fa-calendar"></i>
+                                                    <span>View Schedule</span>
+                                                </a>
+                                                <a href="{{ route('profile.home') }}" class="quick-action-btn">
+                                                    <i class="fas fa-user-cog"></i>
+                                                    <span>Profile Settings</span>
+                                                </a>
                                             @endif
-                                            <a href="{{ route('staffs.schedule', ['encrypted_id' => $user_encrypted_id]) }}" class="quick-action-btn">
-                                                <i class="fas fa-calendar"></i>
-                                                <span>View Schedule</span>
-                                            </a>
-                                            <a href="{{ route('profile.home') }}" class="quick-action-btn">
-                                                <i class="fas fa-user-cog"></i>
-                                                <span>Profile Settings</span>
-                                            </a>
                                         </div>
                                     </div>
                                 </div>
@@ -1171,49 +1275,69 @@
     font-weight: 500;
 }
 
-/* Mini Dashboard Stats */
-.dashboard-stats-mini {
+/* Dashboard Date/Time Display */
+.dashboard-datetime {
     display: flex;
-    gap: 1rem;
-    margin-bottom: 1rem;
     justify-content: flex-end;
+    align-items: center;
 }
 
-.stat-mini {
+.datetime-display {
     background: rgba(255, 255, 255, 0.15);
-    padding: 0.75rem;
+    padding: 1rem 1.5rem;
     border-radius: 12px;
     backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.1);
-    text-align: center;
-    min-width: 70px;
-    transition: all 0.3s ease;
 }
 
-.stat-mini:hover {
-    background: rgba(255, 255, 255, 0.2);
-    transform: translateY(-2px);
+.date-info, .time-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1rem;
+    font-weight: 500;
 }
 
-.stat-mini .stat-icon {
-    font-size: 1.25rem;
-    margin-bottom: 0.25rem;
+.date-info {
+    margin-bottom: 0.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.date-info i, .time-info i {
+    font-size: 1.1rem;
     opacity: 0.9;
 }
 
-.stat-mini .stat-number {
-    font-size: 1.5rem;
-    font-weight: 700;
-    line-height: 1;
-    margin-bottom: 0.125rem;
+.time-info {
+    font-size: 1.1rem;
+    font-weight: 600;
 }
 
-.stat-mini .stat-label {
-    font-size: 0.7rem;
-    opacity: 0.8;
+.weather-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.95rem;
     font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+    margin-top: 0.5rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.weather-info i {
+    font-size: 1.1rem;
+    opacity: 0.9;
+}
+
+.weather-info span {
+    font-weight: 600;
+}
+
+.weather-info small {
+    font-size: 0.75rem;
+    opacity: 0.8;
+    margin-left: 0.25rem;
 }
 
 .dashboard-title-enhanced {
@@ -1610,12 +1734,59 @@
     padding: 0.125rem 0.5rem;
     border-radius: 0.25rem;
     font-weight: 600;
+    font-size: 0.7rem;
     text-transform: uppercase;
 }
 
-.status-active {
+.timeline-action {
+    padding: 0.125rem 0.5rem;
+    border-radius: 0.25rem;
+    font-weight: 600;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+}
+
+.timeline-description {
+    margin: 0.5rem 0;
+    padding: 0.5rem;
+    background: #f8f9fa;
+    border-left: 3px solid #dee2e6;
+    border-radius: 0.25rem;
+}
+
+.action-created {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.action-updated {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.action-deleted {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.status-active, .status-success {
     background: #c6f6d5;
     color: #276749;
+}
+
+.status-info {
+    background: #bee3f8;
+    color: #2c5282;
+}
+
+.status-warning {
+    background: #feebc8;
+    color: #7c2d12;
+}
+
+.status-danger {
+    background: #fed7d7;
+    color: #742a2a;
 }
 
 /* Calendar Events */
@@ -1897,29 +2068,6 @@
     font-weight: 500;
 }
 
-/* Performance Indicator */
-.performance-indicator {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-}
-
-.performance-circle {
-    width: 3rem;
-    height: 3rem;
-    border-radius: 50%;
-    background: rgba(255,255,255,0.2);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: 2px solid rgba(255,255,255,0.3);
-}
-
-.performance-text {
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: white;
-}
 
 
 .tab-navigation-enhanced {
@@ -2152,6 +2300,15 @@
     background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
 }
 
+.day-column.holiday-column {
+    border-color: #fdcb6e;
+    background: linear-gradient(135deg, rgba(255, 234, 167, 0.15), rgba(253, 203, 110, 0.15));
+}
+
+.day-column.holiday-column .day-header {
+    background: linear-gradient(135deg, rgba(255, 234, 167, 0.4), rgba(253, 203, 110, 0.4));
+}
+
 .day-column.has-events {
     background: white;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -2204,6 +2361,24 @@
     border-radius: 6px;
     font-size: 0.625rem;
     font-weight: 600;
+}
+
+.holiday-badge {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%);
+    color: #e17055;
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    font-size: 0.625rem;
+    font-weight: 700;
+    box-shadow: 0 2px 4px rgba(225, 112, 85, 0.3);
+    border: 1px solid #e17055;
+}
+
+.holiday-badge i {
+    font-size: 0.65rem;
 }
 
 .day-events {
@@ -2284,6 +2459,40 @@
 .no-events i {
     font-size: 1.25rem;
     margin-bottom: 0.5rem;
+}
+
+.holiday-indicator {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100px;
+    background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%);
+    border-radius: 8px;
+    padding: 1rem;
+    text-align: center;
+}
+
+.holiday-indicator i {
+    font-size: 1.5rem;
+    color: #e17055;
+    margin-bottom: 0.5rem;
+}
+
+.holiday-name {
+    font-weight: 600;
+    font-size: 0.75rem;
+    color: #2d3748;
+    margin-bottom: 0.25rem;
+    line-height: 1.2;
+}
+
+.holiday-type {
+    font-size: 0.65rem;
+    color: #e17055;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 /* Today's Agenda */
@@ -2801,6 +3010,87 @@
 </style>
 
 <script>
+// Real-time Clock Update
+function updateDateTime() {
+    const now = new Date();
+
+    // Update time
+    const timeElement = document.getElementById('currentTime');
+    if (timeElement) {
+        const hours = now.getHours();
+        const minutes = now.getMinutes();
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        const displayHours = hours % 12 || 12;
+        const displayMinutes = minutes < 10 ? '0' + minutes : minutes;
+        timeElement.textContent = `${displayHours}:${displayMinutes} ${ampm}`;
+    }
+}
+
+// Update time every second
+setInterval(updateDateTime, 1000);
+updateDateTime(); // Initial update
+
+// Weather Widget - Fetch weather for centre location
+async function fetchWeather() {
+    const weatherWidget = document.getElementById('weatherWidget');
+    if (!weatherWidget) return;
+
+    try {
+        // Using wttr.in - free weather API that doesn't require API key
+        // Get centre name for location-based weather
+        const centreName = '{{ session("centre_name", "Gombak") }}';
+        const location = centreName.includes('Gombak') ? 'Gombak,Malaysia' : 'Kuala Lumpur,Malaysia';
+
+        // Fetch weather data in simple JSON format
+        const response = await fetch(`https://wttr.in/${encodeURIComponent(location)}?format=j1`);
+
+        if (!response.ok) {
+            throw new Error('Weather service unavailable');
+        }
+
+        const data = await response.json();
+        const current = data.current_condition[0];
+        const temp = current.temp_C;
+        const feelsLike = current.FeelsLikeC;
+        const desc = current.weatherDesc[0].value;
+        const humidity = current.humidity;
+
+        // Weather icon mapping
+        const weatherCode = parseInt(current.weatherCode);
+        let weatherIcon = 'fa-cloud';
+
+        // Map weather codes to icons
+        if (weatherCode === 113) weatherIcon = 'fa-sun';
+        else if ([116, 119, 122].includes(weatherCode)) weatherIcon = 'fa-cloud';
+        else if ([143, 248, 260].includes(weatherCode)) weatherIcon = 'fa-smog';
+        else if ([176, 263, 266, 281, 284, 293, 296, 299, 302, 305, 308, 311, 314, 317, 353, 356, 359].includes(weatherCode)) weatherIcon = 'fa-cloud-rain';
+        else if ([179, 182, 185, 227, 230, 317, 320, 323, 326, 329, 332, 335, 338, 350, 362, 365, 368, 371, 374, 377].includes(weatherCode)) weatherIcon = 'fa-snowflake';
+        else if ([200, 386, 389, 392, 395].includes(weatherCode)) weatherIcon = 'fa-bolt';
+
+        // Get location name for display
+        const locationName = centreName.includes('Gombak') ? 'Gombak' : 'Kuala Lumpur';
+
+        // Update widget
+        weatherWidget.innerHTML = `
+            <i class="fas ${weatherIcon}"></i>
+            <span>${temp}°C</span>
+            <small>${desc} • ${locationName}</small>
+        `;
+        weatherWidget.title = `Feels like ${feelsLike}°C • Humidity: ${humidity}% • ${locationName}, Malaysia`;
+
+    } catch (error) {
+        console.error('Weather fetch error:', error);
+        weatherWidget.innerHTML = `
+            <i class="fas fa-cloud"></i>
+            <span>Weather unavailable</span>
+        `;
+    }
+}
+
+// Fetch weather on load and refresh every 30 minutes
+fetchWeather();
+setInterval(fetchWeather, 30 * 60 * 1000);
+
 // Dashboard functionality
 function refreshWidget(widgetName) {
     console.log('Refreshing widget:', widgetName);
@@ -3310,53 +3600,64 @@ document.addEventListener('DOMContentLoaded', function() {
 function markAttendance() {
     const attendanceBtn = document.getElementById('attendanceBtn');
     const originalHTML = attendanceBtn.innerHTML;
-    
-    // Check if already marked today
+
+    // Get current user ID (unique per user)
+    const userId = '{{ $user_encrypted_id ?? session("id", "guest") }}';
+
+    // Check if already marked today (per user)
     const today = new Date().toDateString();
-    const lastMarked = localStorage.getItem('attendance_last_marked');
-    
+    const lastMarkedKey = `attendance_last_marked_${userId}`;
+    const lastTimeKey = `attendance_time_${userId}`;
+    const lastMarked = localStorage.getItem(lastMarkedKey);
+
     if (lastMarked === today) {
         // Show already marked message
+        const markedTime = localStorage.getItem(lastTimeKey);
         attendanceBtn.innerHTML = '<i class="fas fa-check-circle"></i> Already Marked Today';
         attendanceBtn.classList.add('attendance-marked');
-        
+
         setTimeout(() => {
             attendanceBtn.innerHTML = originalHTML;
             attendanceBtn.classList.remove('attendance-marked');
         }, 3000);
+
+        if (markedTime) {
+            showAttendanceNotification('You already marked attendance today at ' + markedTime, 'success');
+        }
         return;
     }
-    
+
     // Show confirmation dialog
     const confirmed = confirm('Are you sure you want to mark your attendance for today?');
     if (!confirmed) {
         return;
     }
-    
+
     // Show loading state
     attendanceBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Marking...';
     attendanceBtn.disabled = true;
-    
+
     // Simulate attendance marking (replace with actual API call)
     setTimeout(() => {
         // Mark as successful
         attendanceBtn.innerHTML = '<i class="fas fa-check-circle"></i> Marked Successfully!';
         attendanceBtn.classList.add('attendance-success');
-        
-        // Store in localStorage to remember for today
-        localStorage.setItem('attendance_last_marked', today);
-        localStorage.setItem('attendance_time', new Date().toLocaleTimeString());
-        
+
+        // Store in localStorage to remember for today (per user)
+        const currentTime = new Date().toLocaleTimeString();
+        localStorage.setItem(lastMarkedKey, today);
+        localStorage.setItem(lastTimeKey, currentTime);
+
         // Reset button after 3 seconds
         setTimeout(() => {
             attendanceBtn.innerHTML = '<i class="fas fa-user-check"></i> Mark Attendance';
             attendanceBtn.classList.remove('attendance-success');
             attendanceBtn.disabled = false;
         }, 3000);
-        
+
         // Show success notification
-        showAttendanceNotification('Attendance marked successfully at ' + new Date().toLocaleTimeString(), 'success');
-        
+        showAttendanceNotification('Attendance marked successfully at ' + currentTime, 'success');
+
     }, 1500); // Simulate API delay
 }
 
@@ -3384,14 +3685,17 @@ function showAttendanceNotification(message, type) {
 // Check attendance status on page load
 document.addEventListener('DOMContentLoaded', function() {
     const today = new Date().toDateString();
-    const lastMarked = localStorage.getItem('attendance_last_marked');
+    const userId = '{{ $user_encrypted_id ?? session("id", "guest") }}';
+    const lastMarkedKey = `attendance_last_marked_${userId}`;
+    const lastTimeKey = `attendance_time_${userId}`;
+    const lastMarked = localStorage.getItem(lastMarkedKey);
     const attendanceBtn = document.getElementById('attendanceBtn');
-    
+
     if (lastMarked === today && attendanceBtn) {
         attendanceBtn.innerHTML = '<i class="fas fa-check-circle"></i> Marked Today';
         attendanceBtn.classList.add('attendance-marked');
-        
-        const markedTime = localStorage.getItem('attendance_time');
+
+        const markedTime = localStorage.getItem(lastTimeKey);
         if (markedTime) {
             attendanceBtn.title = `Attendance marked at ${markedTime}`;
         }

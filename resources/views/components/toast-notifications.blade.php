@@ -123,7 +123,7 @@ window.ToastNotification = {
 // Show session flash messages as toasts on page load
 document.addEventListener('DOMContentLoaded', function() {
     @if(session('success'))
-        ToastNotification.success('{{ session('success') }}');
+        ToastNotification.success('{{ session('success') }}', 10000);
     @endif
 
     @if(session('error'))

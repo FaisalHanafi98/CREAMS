@@ -677,14 +677,24 @@ class ActivityController extends Controller
             // Schedule
             'sessions_per_week' => 'required|integer|min:1|max:5',
             'duration_hours' => 'required|numeric|min:0.5|max:3',
-            'start_date' => 'required|date|after_or_equal:today',
+            'start_date' => [
+                'required',
+                'date',
+                'after_or_equal:today',
+                new \App\Rules\NoWeekendOrHolidayRule($request->input('centre_id'))
+            ],
             'start_time' => [
                 'required',
                 'date_format:H:i'
             ],
             'activity_period' => 'required|integer|min:1|max:24', // Duration in months
-            'schedule_days' => 'required|array|min:1',
-            'schedule_days.*' => 'in:Monday,Tuesday,Wednesday,Thursday,Friday,Saturday,Sunday'
+            'schedule_days' => [
+                'required',
+                'array',
+                'min:1',
+                new \App\Rules\NoWeekendDaysRule()
+            ],
+            'schedule_days.*' => 'in:Monday,Tuesday,Wednesday,Thursday,Friday'
         ]);
 
         // Additional mandatory requirements validation
@@ -773,6 +783,17 @@ class ActivityController extends Controller
             }
 
             DB::commit();
+
+            // Log activity
+            \App\Models\ActivityLog::log([
+                'action_type' => 'created',
+                'model_type' => 'Activity',
+                'model_id' => $activity->id,
+                'title' => 'New Activity Created: ' . $activity->activity_name,
+                'description' => 'Duration: ' . ($activity->duration_weeks ?? 'N/A') . ' weeks | Max Participants: ' . ($activity->max_participants ?? 'N/A'),
+                'icon' => 'calendar-plus',
+                'status' => 'success'
+            ]);
 
             Log::info('Activity created successfully', [
                 'activity_id' => $activity->id,
@@ -954,6 +975,17 @@ class ActivityController extends Controller
             if ($locationChanged || $capacityChanged) {
                 $this->syncActivityChangesToSessions($activity, $locationChanged, $capacityChanged);
             }
+
+            // Log activity
+            \App\Models\ActivityLog::log([
+                'action_type' => 'updated',
+                'model_type' => 'Activity',
+                'model_id' => $activity->id,
+                'title' => 'Activity Updated: ' . $activity->activity_name,
+                'description' => $locationChanged || $capacityChanged ? 'Location/Capacity changed - sessions updated' : 'Activity details updated',
+                'icon' => 'edit',
+                'status' => 'info'
+            ]);
 
             $message = 'Activity updated successfully!';
             if ($locationChanged || $capacityChanged) {

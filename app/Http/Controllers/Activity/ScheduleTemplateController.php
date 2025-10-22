@@ -104,10 +104,18 @@ class ScheduleTemplateController extends Controller
      */
     public function applyTemplate(Request $request)
     {
+        // Get centre_id from session for holiday checking
+        $centreId = session('centre_id');
+
         $request->validate([
             'activity_id' => 'required|exists:activities,id',
             'template_id' => 'required|exists:activity_schedule_templates,id',
-            'start_date' => 'required|date|after_or_equal:today',
+            'start_date' => [
+                'required',
+                'date',
+                'after_or_equal:today',
+                new \App\Rules\NoWeekendOrHolidayRule($centreId)
+            ],
             'customizations' => 'nullable|array'
         ]);
 

@@ -380,7 +380,7 @@ class MainController extends Controller
                 ]);
 
                 return redirect()->route('auth.loginpage')
-                    ->with('error', 'No account found with this ' . ($isEmail ? 'email address' : 'IIUM ID'));
+                    ->with('error', 'No account found with this email or IIUM ID');
             }
 
             Log::info('User found', [

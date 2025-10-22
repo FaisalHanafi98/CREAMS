@@ -271,13 +271,24 @@ class TraineeController extends Controller
             ]);
             
             DB::commit();
-            
+
+            // Log activity
+            \App\Models\ActivityLog::log([
+                'action_type' => 'created',
+                'model_type' => 'Trainee',
+                'model_id' => $trainee->id,
+                'title' => 'New Trainee Registered: ' . $trainee->trainee_first_name . ' ' . $trainee->trainee_last_name,
+                'description' => 'Trainee ID: ' . $trainee->trainee_id . ' | Condition: ' . $trainee->trainee_condition,
+                'icon' => 'user-plus',
+                'status' => 'success'
+            ]);
+
             Log::info('Trainee registered successfully', [
                 'trainee_id' => $trainee->id,
                 'name' => $trainee->full_name,
                 'registered_by' => $userId
             ]);
-            
+
             return redirect()->route('trainees.show', $trainee->id)
                 ->with('success', 'Trainee registered successfully!');
                 
@@ -455,14 +466,25 @@ class TraineeController extends Controller
             
             // Update trainee
             $trainee->update($validated);
-            
+
             DB::commit();
-            
+
+            // Log activity
+            \App\Models\ActivityLog::log([
+                'action_type' => 'updated',
+                'model_type' => 'Trainee',
+                'model_id' => $trainee->id,
+                'title' => 'Trainee Profile Updated: ' . $trainee->trainee_first_name . ' ' . $trainee->trainee_last_name,
+                'description' => 'Trainee ID: ' . $trainee->trainee_id,
+                'icon' => 'user-edit',
+                'status' => 'info'
+            ]);
+
             Log::info('Trainee updated successfully', [
                 'trainee_id' => $trainee->id,
                 'updated_by' => $userId
             ]);
-            
+
             return redirect()->route('trainees.show', $trainee->id)
                 ->with('success', 'Trainee updated successfully!');
                 
@@ -525,12 +547,24 @@ class TraineeController extends Controller
             
             // Store name for message
             $traineeName = $trainee->full_name;
-            
+            $traineeIdNumber = $trainee->trainee_id;
+
+            // Log activity BEFORE deletion
+            \App\Models\ActivityLog::log([
+                'action_type' => 'deleted',
+                'model_type' => 'Trainee',
+                'model_id' => $trainee->id,
+                'title' => 'Trainee Deleted: ' . $traineeName,
+                'description' => 'Trainee ID: ' . $traineeIdNumber,
+                'icon' => 'user-times',
+                'status' => 'warning'
+            ]);
+
             // Delete trainee
             $trainee->delete();
-            
+
             DB::commit();
-            
+
             Log::info('Trainee deleted successfully', [
                 'trainee_id' => $id,
                 'trainee_name' => $traineeName,

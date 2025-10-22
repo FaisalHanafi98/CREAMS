@@ -106,53 +106,7 @@
                     <h2 class="form-title">Send Us a Message</h2>
                     <p class="form-subtitle">Fill out the form below and we'll get back to you as soon as possible.</p>
                     
-                    @if(session('success'))
-                        <div class="alert alert-success alert-dismissible fade show" role="alert">
-                            {{ session('success') }}
-                            <button type="button" class="close" data-dismiss="alert">
-                                <span>&times;</span>
-                            </button>
-                        </div>
-                    @endif
-
-                    @if($errors->any())
-                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                            <div class="error-pagination">
-                                <div class="error-message-container">
-                                    @foreach($errors->all() as $index => $error)
-                                        <p class="error-message mb-0 {{ $index === 0 ? 'active' : '' }}" data-error-index="{{ $index }}">
-                                            {{ $error }}
-                                        </p>
-                                    @endforeach
-                                </div>
-                                @if(count($errors->all()) > 1)
-                                <div class="error-controls mt-2">
-                                    <button type="button" class="btn btn-sm btn-outline-danger error-prev" onclick="changeError(-1)">
-                                        <i class="fas fa-chevron-left"></i>
-                                    </button>
-                                    <span class="error-counter mx-2">
-                                        <span class="current-error">1</span> / {{ count($errors->all()) }}
-                                    </span>
-                                    <button type="button" class="btn btn-sm btn-outline-danger error-next" onclick="changeError(1)">
-                                        <i class="fas fa-chevron-right"></i>
-                                    </button>
-                                </div>
-                                @endif
-                            </div>
-                            <button type="button" class="close" data-dismiss="alert">
-                                <span>&times;</span>
-                            </button>
-                        </div>
-                    @endif
-
-                    @if(session('error'))
-                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                            {{ session('error') }}
-                            <button type="button" class="close" data-dismiss="alert">
-                                <span>&times;</span>
-                            </button>
-                        </div>
-                    @endif
+                    @include('components.toast-notifications')
 
                     <form action="{{ route('contact.submit') }}" method="POST" id="contactForm">
                         @csrf
@@ -318,35 +272,5 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="{{ asset('js/contact.js') }}"></script>
-
-{{-- Error Pagination Script --}}
-<script>
-let currentErrorIndex = 0;
-const errorMessages = document.querySelectorAll('.error-message');
-const totalErrors = errorMessages.length;
-
-function changeError(direction) {
-    if (totalErrors === 0) return;
-
-    // Hide current error
-    errorMessages[currentErrorIndex].classList.remove('active');
-
-    // Update index
-    currentErrorIndex += direction;
-
-    // Loop around
-    if (currentErrorIndex < 0) {
-        currentErrorIndex = totalErrors - 1;
-    } else if (currentErrorIndex >= totalErrors) {
-        currentErrorIndex = 0;
-    }
-
-    // Show new error
-    errorMessages[currentErrorIndex].classList.add('active');
-
-    // Update counter
-    document.querySelector('.current-error').textContent = currentErrorIndex + 1;
-}
-</script>
 </body>
 </html>

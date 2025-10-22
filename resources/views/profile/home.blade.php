@@ -699,7 +699,7 @@
                 @csrf
                 <input type="file" id="avatarInput" name="avatar" accept="image/jpeg,image/png,image/jpg,image/gif">
             </form>
-            
+
             <!-- Horizontal Navigation Tabs -->
             <div class="profile-tabs">
                 <ul class="nav nav-tabs" id="profileTabs" role="tablist">
@@ -909,33 +909,6 @@
                     <div class="form-section">
                         <h4><i class="fas fa-key"></i> Change Password</h4>
 
-                        @if(session('success'))
-                        <div class="alert alert-success alert-dismissible fade show" role="alert">
-                            <i class="fas fa-check-circle mr-2"></i>{{ session('success') }}
-                            <button type="button" class="close" data-dismiss="alert">&times;</button>
-                        </div>
-                        @endif
-
-                        @if(session('error'))
-                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                            <i class="fas fa-exclamation-circle mr-2"></i>{{ session('error') }}
-                            <button type="button" class="close" data-dismiss="alert">&times;</button>
-                        </div>
-                        @endif
-
-                        @if($errors->any())
-                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                            <i class="fas fa-exclamation-triangle mr-2"></i>
-                            <strong>Please fix the following errors:</strong>
-                            <ul class="mb-0 mt-2">
-                                @foreach($errors->all() as $error)
-                                    <li>{{ $error }}</li>
-                                @endforeach
-                            </ul>
-                            <button type="button" class="close" data-dismiss="alert">&times;</button>
-                        </div>
-                        @endif
-
                         <form action="{{ route('profile.password') }}" method="POST">
                             @csrf
                             <div class="form-group">
@@ -964,6 +937,12 @@
                                         @error('new_password_confirmation')
                                             <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror
+                                        <small class="form-text" id="password-match-indicator" style="display: none;">
+                                            <i class="fas fa-check-circle text-success"></i> Passwords match
+                                        </small>
+                                        <small class="form-text text-danger" id="password-mismatch-indicator" style="display: none;">
+                                            <i class="fas fa-times-circle"></i> Passwords do not match
+                                        </small>
                                     </div>
                                 </div>
                             </div>
@@ -1168,68 +1147,26 @@ $(document).ready(function() {
     // Restore edit mode from localStorage
     let editMode = localStorage.getItem('profileEditMode') === 'true';
     
-    // Define global alert functions to prevent JavaScript errors
+    // Define global alert functions using new Toast system
     if (typeof window.showSuccessAlert !== 'function') {
         window.showSuccessAlert = function(message) {
-            // Check if there's already a server-side success message showing
-            if ($('.alert-success').length > 0) {
-                console.log('Skipping duplicate success alert:', message);
-                return; // Don't show duplicate alert
+            // Use new toast notification system
+            if (typeof ToastNotification !== 'undefined') {
+                ToastNotification.success(message);
+            } else {
+                console.error('ToastNotification not available');
             }
-            
-            // Create and show a temporary success alert
-            const alertHtml = `
-                <div class="alert alert-success alert-dismissible fade show js-alert" role="alert" style="position: fixed; top: 20px; right: 20px; z-index: 9999; min-width: 300px;">
-                    <i class="fas fa-check-circle mr-2"></i> ${message}
-                    <button type="button" class="close" data-dismiss="alert">
-                        <span>&times;</span>
-                    </button>
-                </div>
-            `;
-            $('body').append(alertHtml);
-            
-            // Auto-dismiss after 5 seconds
-            setTimeout(function() {
-                $('.alert-success.js-alert').fadeOut(function() {
-                    $(this).remove();
-                });
-            }, 5000);
         };
     }
     
     if (typeof window.showErrorAlert !== 'function') {
         window.showErrorAlert = function(message) {
-            // Check if there's already a modern error message showing
-            if ($('.alert-enhanced').length > 0) {
-                console.log('Skipping duplicate error alert:', message);
-                return; // Don't show duplicate alert
+            // Use new toast notification system
+            if (typeof ToastNotification !== 'undefined') {
+                ToastNotification.error(message, 7000); // Errors stay 7 seconds
+            } else {
+                console.error('ToastNotification not available');
             }
-            
-            // Create and show a modern error alert
-            const alertHtml = `
-                <div class="alert alert-danger alert-enhanced js-alert" role="alert" style="position: fixed; top: 20px; right: 20px; z-index: 9999; min-width: 300px; max-width: 400px;">
-                    <div class="alert-content">
-                        <div class="alert-icon">
-                            <i class="fas fa-exclamation-circle"></i>
-                        </div>
-                        <div class="alert-text">
-                            <div class="alert-title">Error!</div>
-                            <div class="alert-message">${message}</div>
-                        </div>
-                        <button type="button" class="alert-dismiss" onclick="this.closest('.alert').style.display='none'">
-                            <i class="fas fa-times"></i>
-                        </button>
-                    </div>
-                </div>
-            `;
-            $('body').append(alertHtml);
-            
-            // Auto-dismiss after 7 seconds (errors should stay longer)
-            setTimeout(function() {
-                $('.alert-danger.js-alert').fadeOut(function() {
-                    $(this).remove();
-                });
-            }, 7000);
         };
     }
     
@@ -1421,18 +1358,16 @@ $(document).ready(function() {
             success: function(response) {
                 hideLoadingOverlay();
                 if (response.success || $(response).find('.alert-success').length > 0) {
-                    showSuccessAlert('Profile photo updated successfully!');
-                    
+                    showSuccessAlert('Profile photo updated successfully! Refreshing page...');
+
                     // Clear edit mode after successful avatar update
                     editMode = false;
                     localStorage.setItem('profileEditMode', 'false');
-                    $('#edit-profile-toggle').removeClass('editing');
-                    $('#edit-profile-toggle').html('<i class="fas fa-edit"></i><span>Edit Profile</span>');
-                    disableEditing();
-                    
-                    // Force refresh the avatar with a new timestamp
-                    const newSrc = $('#avatar-preview').attr('src').split('?')[0] + '?v=' + new Date().getTime();
-                    $('#avatar-preview').attr('src', newSrc);
+
+                    // Reload the page after a short delay to show the success message
+                    setTimeout(function() {
+                        window.location.reload();
+                    }, 1500);
                 } else {
                     showErrorAlert('Failed to update profile photo. Please try again.');
                 }
@@ -1644,37 +1579,7 @@ $(document).ready(function() {
     function hideLoadingOverlay() {
         $('#loading-overlay').remove();
     }
-    
-    function showErrorAlert(message) {
-        // Remove existing error alerts
-        $('.alert-enhanced.alert-danger').remove();
-        
-        // Add new modern error alert
-        $('.profile-container').before(`
-            <div class="alert alert-danger alert-enhanced" role="alert">
-                <div class="alert-content">
-                    <div class="alert-icon">
-                        <i class="fas fa-exclamation-circle"></i>
-                    </div>
-                    <div class="alert-text">
-                        <div class="alert-title">Error!</div>
-                        <div class="alert-message">${message}</div>
-                    </div>
-                    <button type="button" class="alert-dismiss" onclick="this.closest('.alert').style.display='none'">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-            </div>
-        `);
-        
-        // Auto-hide after 5 seconds
-        setTimeout(function() {
-            $('.alert-enhanced.alert-danger').fadeOut(function() {
-                $(this).remove();
-            });
-        }, 5000);
-    }
-    
+
     // Hide loading overlay when page loads (in case of redirects)
     $(window).on('load', function() {
         hideLoadingOverlay();
@@ -1728,18 +1633,57 @@ $(document).ready(function() {
     function updateStrengthMeter(percentage, message, cssClass) {
         const progressBar = $('#password-strength-meter .progress-bar');
         const messageEl = $('#password-strength-text');
-        
+
         progressBar.css('width', percentage + '%');
         progressBar.attr('aria-valuenow', percentage);
-        
+
         progressBar.removeClass('bg-danger bg-warning bg-info bg-success');
         if (cssClass) {
             progressBar.addClass(cssClass);
         }
-        
+
         messageEl.text(message);
     }
-    
+
+    // Real-time Password Confirmation Validation
+    function checkPasswordMatch() {
+        const newPassword = $('#new_password').val();
+        const confirmPassword = $('#new_password_confirmation').val();
+        const matchIndicator = $('#password-match-indicator');
+        const mismatchIndicator = $('#password-mismatch-indicator');
+        const confirmField = $('#new_password_confirmation');
+        const newPasswordField = $('#new_password');
+
+        // Clear server-side validation errors when user starts typing
+        confirmField.siblings('.invalid-feedback').hide();
+        newPasswordField.siblings('.invalid-feedback').hide();
+
+        // Only show indicators if confirm password field has content
+        if (confirmPassword.length > 0) {
+            if (newPassword === confirmPassword && newPassword.length > 0) {
+                // Passwords match
+                matchIndicator.show();
+                mismatchIndicator.hide();
+                confirmField.removeClass('is-invalid').addClass('is-valid');
+            } else {
+                // Passwords don't match
+                matchIndicator.hide();
+                mismatchIndicator.show();
+                confirmField.removeClass('is-valid').addClass('is-invalid');
+            }
+        } else {
+            // No confirm password entered yet
+            matchIndicator.hide();
+            mismatchIndicator.hide();
+            confirmField.removeClass('is-valid is-invalid');
+        }
+    }
+
+    // Bind real-time validation to both password fields
+    $('#new_password, #new_password_confirmation').on('input keyup', function() {
+        checkPasswordMatch();
+    });
+
     // Letter Generator Functions
     $('#header-input').change(function() {
         handleImageUpload(this, '#header-preview');

@@ -36,26 +36,8 @@
 </style>
 @endif
 
-@if(session('error') && !session('access_denied'))
-<div class="alert alert-danger alert-dismissible fade show" role="alert">
-    <div class="d-flex align-items-center">
-        <i class="fas fa-exclamation-circle me-3" style="font-size: 1.2em;"></i>
-        <div class="flex-grow-1">
-            <strong>Error:</strong> {{ session('error') }}
-        </div>
-    </div>
-    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-</div>
-@endif
-
-@if(session('success'))
-<div class="alert alert-success alert-dismissible fade show" role="alert">
-    <div class="d-flex align-items-center">
-        <i class="fas fa-check-circle me-3" style="font-size: 1.2em;"></i>
-        <div class="flex-grow-1">
-            {{ session('success') }}
-        </div>
-    </div>
-    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-</div>
-@endif
+{{--
+    Session success and error messages are now handled by the toast notification system
+    @include('components.toast-notifications')
+    These old Bootstrap alert banners have been removed to prevent duplicate messages
+--}}

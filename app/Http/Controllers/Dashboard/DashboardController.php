@@ -13,6 +13,7 @@ use App\Models\Activity;
 use App\Models\ActivitySession;
 use App\Models\Centre;
 use App\Models\Asset;
+use App\Models\ActivityLog;
 use App\Traits\HandlesEncryptedIds;
 
 class DashboardController extends Controller
@@ -254,29 +255,88 @@ class DashboardController extends Controller
     private function getAdminStats()
     {
         try {
-            // Calculate growth rates dynamically
-            $currentMonthUsers = DB::table('users')->whereMonth('created_at', now()->month)->count();
-            $lastMonthUsers = DB::table('users')->whereMonth('created_at', now()->subMonth()->month)->count();
+            // Get centre ID for filtering - if null/empty, get from logged-in user
+            $centreId = session('centre_id');
+
+            // If centre_id is not in session, get it from the user's record
+            if (!$centreId) {
+                $userId = session('id');
+                $user = DB::table('users')->where('id', $userId)->first();
+                $centreId = $user->centre_id ?? '01';
+
+                // Update session with centre_id for future use
+                session(['centre_id' => $centreId]);
+            }
+
+            // Calculate growth rates dynamically - CENTRE SPECIFIC
+            $currentMonthUsers = DB::table('users')
+                ->where('centre_id', $centreId)
+                ->where('status', 'active')
+                ->whereMonth('created_at', now()->month)
+                ->count();
+            $lastMonthUsers = DB::table('users')
+                ->where('centre_id', $centreId)
+                ->where('status', 'active')
+                ->whereMonth('created_at', now()->subMonth()->month)
+                ->count();
             $userGrowthRate = $lastMonthUsers > 0 ? round((($currentMonthUsers - $lastMonthUsers) / $lastMonthUsers) * 100, 1) : 0;
-            
-            $currentMonthTrainees = DB::table('trainees')->whereMonth('created_at', now()->month)->count();
-            $lastMonthTrainees = DB::table('trainees')->whereMonth('created_at', now()->subMonth()->month)->count();
+
+            $currentMonthTrainees = DB::table('trainees')
+                ->where('centre_id', $centreId)
+                ->where('status', 'active')
+                ->whereMonth('created_at', now()->month)
+                ->count();
+            $lastMonthTrainees = DB::table('trainees')
+                ->where('centre_id', $centreId)
+                ->where('status', 'active')
+                ->whereMonth('created_at', now()->subMonth()->month)
+                ->count();
             $traineeGrowthRate = $lastMonthTrainees > 0 ? round((($currentMonthTrainees - $lastMonthTrainees) / $lastMonthTrainees) * 100, 1) : 0;
-            
-            $currentMonthActivities = DB::table('activities')->whereMonth('created_at', now()->month)->count();
-            $lastMonthActivities = DB::table('activities')->whereMonth('created_at', now()->subMonth()->month)->count();
+
+            $currentMonthActivities = DB::table('activities')
+                ->where('centre_id', $centreId)
+                ->where('is_active', true)
+                ->whereMonth('created_at', now()->month)
+                ->count();
+            $lastMonthActivities = DB::table('activities')
+                ->where('centre_id', $centreId)
+                ->where('is_active', true)
+                ->whereMonth('created_at', now()->subMonth()->month)
+                ->count();
             $activityGrowthRate = $lastMonthActivities > 0 ? round((($currentMonthActivities - $lastMonthActivities) / $lastMonthActivities) * 100, 1) : 0;
-            
-            $totalUsers = DB::table('users')->where('status', 'active')->count();
-            $activeTrainees = DB::table('trainees')->where('status', 'active')->count();
-            $totalActivities = DB::table('activities')->where('is_active', true)->count();
-            $activeCentres = DB::table('centres')->where('is_active', true)->count();
-            
+
+            // CENTRE-SPECIFIC COUNTS - Active staff in this centre
+            $totalUsers = DB::table('users')
+                ->where('centre_id', $centreId)
+                ->where('status', 'active')
+                ->count();
+
+            // Active trainees in this centre
+            $activeTrainees = DB::table('trainees')
+                ->where('centre_id', $centreId)
+                ->where('status', 'active')
+                ->count();
+
+            // Active activities (ongoing programs) in this centre
+            $totalActivities = DB::table('activities')
+                ->where('centre_id', $centreId)
+                ->where('is_active', true)
+                ->count();
+
+            // Sessions this week in this centre
+            $startOfWeek = now()->startOfWeek();
+            $endOfWeek = now()->endOfWeek();
+            $sessionsThisWeek = DB::table('activity_sessions')
+                ->join('activities', 'activity_sessions.activity_id', '=', 'activities.id')
+                ->where('activities.centre_id', $centreId)
+                ->whereBetween('activity_sessions.session_date', [$startOfWeek->format('Y-m-d'), $endOfWeek->format('Y-m-d')])
+                ->count();
+
             return [
                 'total_users' => $totalUsers,
                 'total_trainees' => $activeTrainees,
                 'total_activities' => $totalActivities,
-                'active_centres' => $activeCentres,
+                'sessions_this_week' => $sessionsThisWeek,
                 'user_growth_rate' => $userGrowthRate,
                 'trainee_growth_rate' => $traineeGrowthRate,
                 'activity_growth_rate' => $activityGrowthRate,
@@ -324,28 +384,34 @@ class DashboardController extends Controller
                         'completed' => DB::table('activities')->where('is_active', false)->count(),
                         'cancelled' => 0,
                         'today_sessions' => DB::table('activity_sessions')->whereDate('session_date', today())->count(),
-                        'total_sessions' => DB::table('activity_sessions')->count(),
-                        'by_type' => DB::table('activities')
-                            ->leftJoin('activity_categories', 'activities.category_id', '=', 'activity_categories.id')
-                            ->select('activity_categories.category_name', DB::raw('count(*) as count'))
-                            ->groupBy('activity_categories.category_name')
-                            ->pluck('count', 'category_name')
-                            ->toArray()
+                        'total_sessions' => DB::table('activity_sessions')->count()
+                        // Removed 'by_type' query - activity_categories table doesn't exist
                     ]
                 ],
                 [
-                    'title' => 'Active Centres',
-                    'value' => $activeCentres,
-                    'icon' => 'fas fa-building',
+                    'title' => 'Sessions This Week',
+                    'value' => $sessionsThisWeek,
+                    'icon' => 'fas fa-calendar-week',
                     'color' => 'warning',
-                    'trend' => 'stable',
+                    'trend' => $sessionsThisWeek > 0 ? 'active' : 'none',
                     'details' => [
-                        'total_centres' => DB::table('centres')->count(),
-                        'inactive_centres' => DB::table('centres')->where('is_active', false)->count(),
-                        'total_assets' => DB::table('assets')->count(),
-                        'maintenance_due' => $this->getMaintenanceDueCount(),
-                        'centre_capacity' => DB::table('centres')
-                            ->sum('centre_capacity')
+                        'today_sessions' => DB::table('activity_sessions')
+                            ->join('activities', 'activity_sessions.activity_id', '=', 'activities.id')
+                            ->where('activities.centre_id', $centreId)
+                            ->whereDate('activity_sessions.session_date', today())
+                            ->count(),
+                        'completed_this_week' => DB::table('activity_sessions')
+                            ->join('activities', 'activity_sessions.activity_id', '=', 'activities.id')
+                            ->where('activities.centre_id', $centreId)
+                            ->whereBetween('activity_sessions.session_date', [$startOfWeek->format('Y-m-d'), now()->format('Y-m-d')])
+                            ->where('activity_sessions.session_status', 'completed')
+                            ->count(),
+                        'upcoming_this_week' => DB::table('activity_sessions')
+                            ->join('activities', 'activity_sessions.activity_id', '=', 'activities.id')
+                            ->where('activities.centre_id', $centreId)
+                            ->whereBetween('activity_sessions.session_date', [now()->format('Y-m-d'), $endOfWeek->format('Y-m-d')])
+                            ->where('activity_sessions.session_status', 'scheduled')
+                            ->count()
                     ]
                 ],
                 [
@@ -372,12 +438,18 @@ class DashboardController extends Controller
                 ]
             ];
         } catch (\Exception $e) {
-            Log::error('Error calculating admin stats', ['error' => $e->getMessage()]);
+            Log::error('Error calculating admin stats', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'line' => $e->getLine(),
+                'file' => $e->getFile()
+            ]);
+
             return [
                 'total_users' => 0,
                 'total_trainees' => 0,
                 'total_activities' => 0,
-                'active_centres' => 0,
+                'sessions_this_week' => 0,
                 [
                     'title' => 'Total Users',
                     'value' => 0,
@@ -1012,12 +1084,39 @@ class DashboardController extends Controller
                 })
                 ->filter(); // Remove null entries
 
-            // Return events with week info
+            // Get centre's state for state-specific holidays
+            $centreState = null;
+            if ($centreId && $centreId !== 'admin') {
+                $centre = DB::table('centres')->where('centre_id', $centreId)->first();
+                $centreState = $centre->state ?? null;
+            }
+
+            // Get public holidays for this week (federal + state-specific)
+            $holidays = \App\Models\PublicHoliday::whereBetween('date', [
+                    $weekStart->format('Y-m-d'),
+                    $weekEnd->format('Y-m-d')
+                ])
+                ->where('is_active', true)
+                ->where(function($query) use ($centreState) {
+                    // Include federal holidays (state is null)
+                    $query->whereNull('state');
+                    // Also include holidays for this centre's state
+                    if ($centreState) {
+                        $query->orWhere('state', $centreState);
+                    }
+                })
+                ->get()
+                ->keyBy(function($holiday) {
+                    return $holiday->date->format('Y-m-d');
+                });
+
+            // Return events with week info and holidays
             return [
                 'events' => $results,
                 'week_start' => $weekStart,
                 'week_end' => $weekEnd,
-                'week_offset' => $weekOffset
+                'week_offset' => $weekOffset,
+                'holidays' => $holidays
             ];
         } catch (\Exception $e) {
             Log::error('Calendar events error', ['error' => $e->getMessage()]);
@@ -1184,7 +1283,7 @@ class DashboardController extends Controller
                 'total_users' => $quickStats['total_users'] ?? 0,
                 'total_trainees' => $quickStats['total_trainees'] ?? 0,
                 'total_activities' => $quickStats['total_activities'] ?? 0,
-                'active_centres' => $quickStats['active_centres'] ?? 0,
+                'sessions_this_week' => $quickStats['sessions_this_week'] ?? 0,
                 'completion_rate' => 0
             ];
         }
@@ -1194,14 +1293,14 @@ class DashboardController extends Controller
             'total_users' => 0,
             'total_trainees' => 0,
             'total_activities' => 0,
-            'active_centres' => 0,
+            'sessions_this_week' => 0,
             'completion_rate' => 0
         ];
-        
+
         foreach ($quickStats as $card) {
             $title = strtolower(str_replace(' ', '_', $card['title'] ?? ''));
             $value = $card['value'] ?? 0;
-            
+
             // Map card titles to flat array keys
             switch ($title) {
                 case 'centre_staff':
@@ -1216,9 +1315,8 @@ class DashboardController extends Controller
                 case 'total_activities':
                     $flatStats['total_activities'] = $value;
                     break;
-                case 'assets':
-                case 'active_centres':
-                    $flatStats['active_centres'] = $value;
+                case 'sessions_this_week':
+                    $flatStats['sessions_this_week'] = $value;
                     break;
             }
         }
@@ -1798,164 +1896,55 @@ class DashboardController extends Controller
     private function getComprehensiveRecentChanges($centreId, $limit = 10)
     {
         try {
-            $changes = collect();
-
-            // 1. Recent Activity Changes - Simple and working
-            $activityChanges = DB::table('activities')
-                ->leftJoin('activity_categories', 'activities.category_id', '=', 'activity_categories.id')
-                ->leftJoin('users', 'activities.instructor_id', '=', 'users.id')
-                ->select([
-                    'activities.id',
-                    'activities.activity_name as title',
-                    'activities.created_at',
-                    'activities.updated_at',
-                    'activities.is_active as status',
-                    'activity_categories.category_name',
-                    'users.name as user_name'
-                ])
-                ->when($centreId && $centreId !== 'admin', function($query) use ($centreId) {
-                    return $query->where('activities.centre_id', $centreId);
-                })
-                ->where('activities.updated_at', '>=', now()->subDays(14)) // Extended to 14 days to ensure data
-                ->orderBy('activities.updated_at', 'desc')
-                ->limit(8)
-                ->get();
-
-            foreach ($activityChanges as $change) {
-                $action = ($change->created_at == $change->updated_at) ? 'created' : 'updated';
-                $changes->push([
-                    'title' => ucfirst($action) . ' Activity: ' . $change->title,
-                    'time' => Carbon::parse($change->updated_at)->diffForHumans(),
-                    'status' => $change->status ?: 'active',
-                    'type' => 'activity',
-                    'category_name' => $change->category_name ?: 'General',
-                    'user_name' => $change->user_name ?: 'System',
-                    'action' => $action,
-                    'icon' => $action === 'created' ? 'plus-circle' : 'edit',
-                    'id' => $change->id
-                ]);
-            }
-
-            // 2. Recent User Changes (simplified)
-            $userChanges = DB::table('users')
-                ->select(['id', 'name as title', 'created_at', 'updated_at', 'role'])
+            // Use ActivityLog model for recent activities
+            $activityLogs = \App\Models\ActivityLog::query()
                 ->when($centreId && $centreId !== 'admin', function($query) use ($centreId) {
                     return $query->where('centre_id', $centreId);
                 })
-                ->where('updated_at', '>=', now()->subDays(3))
-                ->orderBy('updated_at', 'desc')
-                ->limit(3)
+                ->orderBy('created_at', 'desc')
+                ->limit($limit)
                 ->get();
 
-            foreach ($userChanges as $change) {
-                $action = ($change->created_at == $change->updated_at) ? 'registered' : 'updated';
-                $actionText = $action === 'registered' ? 'New Registration' : 'Profile Updated';
-                
+            $changes = collect();
+
+            foreach ($activityLogs as $log) {
                 $changes->push([
-                    'title' => $actionText . ': ' . $change->title . ' (' . ucfirst($change->role ?? 'User') . ')',
-                    'time' => Carbon::parse($change->updated_at)->diffForHumans(),
-                    'status' => 'info',
-                    'type' => 'user',
-                    'category_name' => 'User Management',
-                    'user_name' => $change->title,
-                    'action' => $action,
-                    'icon' => $action === 'registered' ? 'user-plus' : 'user-edit'
+                    'title' => $log->title,
+                    'description' => $log->description,
+                    'time' => $log->created_at->diffForHumans(),
+                    'status' => $log->status,
+                    'type' => $log->model_type,
+                    'category_name' => $this->getActivityLogCategoryName($log->model_type),
+                    'user_name' => $log->user_name ?? 'System',
+                    'user_role' => $log->user_role ?? 'system',
+                    'action' => $log->action_type,
+                    'icon' => $log->icon,
+                    'id' => $log->id
                 ]);
             }
 
-            // 3. Recent Trainee Changes (new registrations, status updates, profile changes)
-            $traineeChanges = DB::table('trainees')
-                ->select([
-                    'trainees.id',
-                    DB::raw("CONCAT(trainees.trainee_first_name, ' ', trainees.trainee_last_name) as title"),
-                    'trainees.created_at as timestamp',
-                    'trainees.updated_at',
-                    'trainees.status',
-                    'trainees.trainee_condition',
-                    'trainees.guardian_name as parent_name',
-                    DB::raw("'trainee' as change_type"),
-                    DB::raw("CASE 
-                        WHEN trainees.created_at = trainees.updated_at THEN 'registered'
-                        ELSE 'updated' 
-                    END as action")
-                ])
-                ->when($centreId && $centreId !== 'admin', function($query) use ($centreId) {
-                    return $query->where('trainees.centre_id', $centreId);
-                })
-                ->where(function($query) {
-                    $query->where('trainees.created_at', '>=', now()->subDays(7))
-                          ->orWhere('trainees.updated_at', '>=', now()->subDays(3));
-                })
-                ->orderBy('trainees.updated_at', 'desc')
-                ->limit(5)
-                ->get();
-
-            foreach ($traineeChanges as $change) {
-                $actionText = $change->action === 'registered' ? 'New Trainee Registration' : 'Trainee Profile Updated';
-                
-                $changes->push([
-                    'title' => $actionText . ': ' . $change->title,
-                    'time' => Carbon::parse($change->updated_at)->diffForHumans(),
-                    'status' => $change->status ?? 'active',
-                    'type' => 'trainee',
-                    'category_name' => 'Trainee Management',
-                    'user_name' => $change->parent_name ?? 'System',
-                    'action' => $change->action,
-                    'condition' => $change->trainee_condition,
-                    'icon' => $change->action === 'registered' ? 'user-graduate' : 'user-edit'
-                ]);
-            }
-
-            // 4. Recent Activity Session Changes (scheduled, completed, cancelled)
-            $sessionChanges = DB::table('activity_sessions')
-                ->join('activities', 'activity_sessions.activity_id', '=', 'activities.id')
-                ->leftJoin('users as teachers', 'activity_sessions.instructor_id', '=', 'teachers.id')
-                ->select([
-                    'activity_sessions.id',
-                    'activities.activity_name',
-                    'activity_sessions.session_date',
-                    'activity_sessions.created_at as timestamp',
-                    'activity_sessions.updated_at',
-                    'activity_sessions.session_status',
-                    'teachers.name as teacher_name',
-                    DB::raw("'session' as change_type"),
-                    DB::raw("CASE 
-                        WHEN activity_sessions.created_at = activity_sessions.updated_at THEN 'scheduled'
-                        ELSE 'updated' 
-                    END as action")
-                ])
-                ->when($centreId && $centreId !== 'admin', function($query) use ($centreId) {
-                    return $query->where('activities.centre_id', $centreId);
-                })
-                ->where('activity_sessions.updated_at', '>=', now()->subDays(5))
-                ->orderBy('activity_sessions.updated_at', 'desc')
-                ->limit(5)
-                ->get();
-
-            foreach ($sessionChanges as $change) {
-                $actionText = $change->action === 'scheduled' ? 'Session Scheduled' : 'Session Updated';
-                $sessionDate = Carbon::parse($change->session_date)->format('M d, Y');
-                
-                $changes->push([
-                    'title' => $actionText . ': ' . $change->activity_name . ' (' . $sessionDate . ')',
-                    'time' => Carbon::parse($change->updated_at)->diffForHumans(),
-                    'status' => $change->status ?? 'scheduled',
-                    'type' => 'session',
-                    'category_name' => 'Session Management',
-                    'user_name' => $change->teacher_name ?? 'System',
-                    'action' => $change->action,
-                    'session_date' => $sessionDate,
-                    'icon' => $change->action === 'scheduled' ? 'calendar-plus' : 'calendar-check'
-                ]);
-            }
-
-            // Return activity changes only for now
-            return $changes->take($limit)->toArray();
+            return $changes->toArray();
 
         } catch (\Exception $e) {
             Log::error('Comprehensive recent changes error', ['error' => $e->getMessage()]);
             return [];
         }
+    }
+
+    /**
+     * Get category name for ActivityLog model type
+     */
+    private function getActivityLogCategoryName($modelType)
+    {
+        $categories = [
+            'User' => 'Staff Management',
+            'Trainee' => 'Trainee Management',
+            'Activity' => 'Activity Management',
+            'Session' => 'Session Management',
+            'ActivitySession' => 'Session Management',
+        ];
+
+        return $categories[$modelType] ?? 'General';
     }
 
     /**
@@ -1971,6 +1960,7 @@ class DashboardController extends Controller
                 $userActivities = DB::table('activities')
                     ->where('instructor_id', $userId)
                     ->where('centre_id', $centreId) // Filter by user's centre
+                    ->where('is_active', true) // Only count active activities
                     ->count();
 
                 // Get sessions this week (using correct schema)
@@ -2020,15 +2010,15 @@ class DashboardController extends Controller
                     })
                     ->pluck('activity_sessions.id');
 
-                $totalAttendanceRecords = DB::table('trainee_attendances')
+                $totalAttendanceRecords = DB::table('session_attendance')
                     ->whereIn('session_id', $userSessionIds)
                     ->count();
-                
-                $presentAttendanceRecords = DB::table('trainee_attendances')
+
+                $presentAttendanceRecords = DB::table('session_attendance')
                     ->whereIn('session_id', $userSessionIds)
-                    ->where('status', 'present')
+                    ->where('attendance_status', 'present')
                     ->count();
-                
+
                 $avgAttendance = $totalAttendanceRecords > 0 ? round(($presentAttendanceRecords / $totalAttendanceRecords) * 100) : 0;
 
                 // Get additional stats for more comprehensive view

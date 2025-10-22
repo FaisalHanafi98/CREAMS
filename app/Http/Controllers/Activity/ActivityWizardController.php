@@ -192,11 +192,24 @@ class ActivityWizardController extends Controller
      */
     private function validateScheduleConfiguration($data)
     {
+        // Get centre_id from session for holiday checking
+        $centreId = session('centre_id');
+
         $validator = Validator::make($data, [
             'schedule_type' => 'required|in:template,custom',
             'template_id' => 'required_if:schedule_type,template|nullable|exists:activity_schedule_templates,id',
-            'start_date' => 'required|date|after_or_equal:today',
-            'end_date' => 'required|date|after:start_date',
+            'start_date' => [
+                'required',
+                'date',
+                'after_or_equal:today',
+                new \App\Rules\NoWeekendOrHolidayRule($centreId)
+            ],
+            'end_date' => [
+                'required',
+                'date',
+                'after:start_date',
+                new \App\Rules\NoWeekendOrHolidayRule($centreId)
+            ],
             'venue' => 'required|string|max:100',
             'room_number' => 'nullable|string|max:50'
         ]);

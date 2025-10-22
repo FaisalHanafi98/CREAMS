@@ -223,6 +223,37 @@
         .search-result-meta {
             font-size: 12px;
             color: #777;
+            margin-bottom: 4px;
+        }
+
+        .search-result-type {
+            display: inline-block;
+            font-size: 10px;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .search-result-type:contains("Staff") {
+            background: rgba(40, 167, 69, 0.1);
+            color: #28a745;
+        }
+
+        .search-result-item:has(.search-result-content:contains("Staff")) .search-result-type {
+            background: rgba(40, 167, 69, 0.1);
+            color: #28a745;
+        }
+
+        .search-result-item:has(.search-result-content:contains("Trainee")) .search-result-type {
+            background: rgba(23, 162, 184, 0.1);
+            color: #17a2b8;
+        }
+
+        .search-result-item:has(.search-result-content:contains("Activity")) .search-result-type {
+            background: rgba(253, 126, 20, 0.1);
+            color: #fd7e14;
         }
 
         .search-no-results,
@@ -1162,7 +1193,7 @@
 
             <li class="sidebar-title">Management</li>
 
-            @if (in_array(session('role'), ['admin', 'supervisor']))
+            @if (in_array(session('role'), ['admin', 'supervisor', 'ajk']))
                 <li
                     class="sidebar-item {{ strpos(Route::currentRouteName(), '.users') !== false ? 'submenu-open' : '' }}">
                     <a href="#" class="sidebar-link">
@@ -1175,7 +1206,7 @@
                             @if (Route::has(session('role') . '.users'))
                                 <a href="{{ route(session('role') . '.users') }}"
                                     class="sidebar-submenu-link {{ Route::currentRouteName() == session('role') . '.users' ? 'active' : '' }}">
-                                    Home
+                                    {{ session('role') === 'ajk' ? 'View Staffs' : 'Home' }}
                                 </a>
                             @else
                                 <a href="#" class="sidebar-submenu-link"
@@ -1184,6 +1215,7 @@
                                 </a>
                             @endif
                         </li>
+                        @if(session('role') !== 'ajk')
                         <li>
                             @if (Route::has('staffs.register'))
                                 <a href="{{ route('staffs.register') }}"
@@ -1197,6 +1229,7 @@
                                 </a>
                             @endif
                         </li>
+                        @endif
                     </ul>
                 </li>
             @endif
@@ -1594,6 +1627,7 @@
                     // Perform actual search API call
                     fetch(`{{ route('search') }}?query=${encodeURIComponent(query)}`, {
                             method: 'GET',
+                            credentials: 'same-origin',
                             headers: {
                                 'Accept': 'application/json',
                                 'X-Requested-With': 'XMLHttpRequest',
@@ -1652,9 +1686,8 @@
                             iconColor = '#fd7e14';
                         }
 
-                        // Handle both API response format and mock format
-                        const displayMeta = item.location ? `${item.location} • ${item.type}` : (item
-                            .meta || item.type);
+                        // Use subtitle if available, otherwise fallback to old format
+                        const displayMeta = item.subtitle || (item.location ? `${item.location} • ${item.type}` : (item.meta || item.type));
 
                         resultsHtml += `
                             <a href="${item.url || '#'}" class="search-result-item">
@@ -1664,6 +1697,7 @@
                                 <div class="search-result-content">
                                     <div class="search-result-name">${item.name}</div>
                                     <div class="search-result-meta">${displayMeta}</div>
+                                    <div class="search-result-type">${item.type}</div>
                                 </div>
                                 <div class="search-result-action">
                                     <i class="fas fa-arrow-right" style="color: #6c757d;"></i>

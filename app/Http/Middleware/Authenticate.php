@@ -36,7 +36,15 @@ class Authenticate
                 'ip' => $request->ip(),
                 'session_id' => session()->getId()
             ]);
-            
+
+            // Return JSON response for AJAX requests
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json([
+                    'error' => 'Unauthorized',
+                    'message' => 'Please log in to access this resource'
+                ], 401);
+            }
+
             return redirect()->route('auth.loginpage')->with('error', 'Please log in to access this page');
         }
         

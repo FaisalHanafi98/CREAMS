@@ -67,8 +67,15 @@ class SessionTemplateController extends Controller
      */
     public function previewTemplateChanges(Request $request, $sessionId)
     {
+        // Get centre_id from session for holiday checking
+        $centreId = session('centre_id');
+
         $validator = Validator::make($request->all(), [
-            'session_date' => 'required|date',
+            'session_date' => [
+                'required',
+                'date',
+                new \App\Rules\NoWeekendOrHolidayRule($centreId)
+            ],
             'start_time' => 'required|date_format:H:i',
             'end_time' => 'required|date_format:H:i|after:start_time',
             'venue' => 'required|string|max:255',
@@ -140,8 +147,15 @@ class SessionTemplateController extends Controller
      */
     public function applyTemplateModifications(Request $request, $sessionId)
     {
+        // Get centre_id from session for holiday checking
+        $centreId = session('centre_id');
+
         $validator = Validator::make($request->all(), [
-            'session_date' => 'required|date',
+            'session_date' => [
+                'required',
+                'date',
+                new \App\Rules\NoWeekendOrHolidayRule($centreId)
+            ],
             'start_time' => 'required|date_format:H:i',
             'end_time' => 'required|date_format:H:i|after:start_time',
             'venue' => 'required|string|max:255',
@@ -555,10 +569,18 @@ class SessionTemplateController extends Controller
      */
     public function bulkReschedule(Request $request)
     {
+        // Get centre_id from session for holiday checking
+        $centreId = session('centre_id');
+
         $validator = Validator::make($request->all(), [
             'session_ids' => 'required|array|min:1',
             'session_ids.*' => 'exists:activity_sessions,id',
-            'new_date' => 'required|date|after:today',
+            'new_date' => [
+                'required',
+                'date',
+                'after:today',
+                new \App\Rules\NoWeekendOrHolidayRule($centreId)
+            ],
             'time_offset_hours' => 'nullable|integer|min:-12|max:12',
             'preserve_enrollments' => 'boolean',
             'preserve_learning_outcomes' => 'boolean',
