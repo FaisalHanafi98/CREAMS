@@ -94,18 +94,18 @@ class Handler extends ExceptionHandler
             'line' => $e->getLine(),
             'code' => $e->getCode(),
             'trace' => $e->getTraceAsString(),
-            'user_id' => session('id'),
-            'user_role' => session('role'),
-            'url' => request()->fullUrl(),
-            'method' => request()->method(),
-            'ip' => request()->ip(),
-            'user_agent' => request()->userAgent(),
+            'user_id' => app()->bound('session') ? session('id') : null,
+            'user_role' => app()->bound('session') ? session('role') : null,
+            'url' => app()->bound('request') ? request()->fullUrl() : null,
+            'method' => app()->bound('request') ? request()->method() : null,
+            'ip' => app()->bound('request') ? request()->ip() : null,
+            'user_agent' => app()->bound('request') ? request()->userAgent() : null,
             'timestamp' => now(),
             'environment' => app()->environment(),
         ];
 
         // Add request data if available (excluding sensitive info)
-        if (request()) {
+        if (app()->bound('request') && request()) {
             $context['request_data'] = $this->sanitizeRequestData(request()->all());
             $context['headers'] = $this->sanitizeHeaders(request()->headers->all());
         }
@@ -287,8 +287,8 @@ class Handler extends ExceptionHandler
                     'message' => $e->getMessage(),
                     'file' => $e->getFile(),
                     'line' => $e->getLine(),
-                    'url' => request()->fullUrl(),
-                    'user_id' => session('id'),
+                    'url' => app()->bound('request') ? request()->fullUrl() : null,
+                    'user_id' => app()->bound('session') ? session('id') : null,
                     'timestamp' => now(),
                 ];
 

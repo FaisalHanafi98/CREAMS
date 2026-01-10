@@ -1,0 +1,2431 @@
+# CREAMS User Acceptance Testing (UAT)
+## Comprehensive Test Cases - Detailed Format
+
+---
+
+## PUBLIC ACCESS MODULE
+
+### HOME001 - Welcome/Landing Page Load and Verification
+1. Navigate to Application Homepage
+   - Open browser (Chrome, Firefox, Safari, Edge)
+   - Navigate to the CREAMS application URL
+   - Clear browser cache before testing
+
+2. Test Initial Page Load:
+   - Verify page loads within 3 seconds
+   - Check that no console errors appear
+   - Verify all images load correctly
+   - Check that CSS styling is applied properly
+   - Verify responsive design on different screen sizes
+
+3. Test Welcome Page Content:
+   - Verify page title displays correctly
+   - Check that organization logo/branding appears
+   - Verify welcome message is clear and visible
+   - Check that navigation menu is accessible
+   - Verify footer information displays
+
+4. Test Navigation Elements:
+   - Verify "About Us" link is clickable
+   - Check "Contact Us" link functionality
+   - Verify "Login" button is prominent and accessible
+   - Test all menu items for proper linking
+
+5. Test Performance:
+   - Measure page load time (should be <3 seconds)
+   - Check loading indicators work properly
+   - Verify smooth scrolling behavior
+   - Test page on slow network connection
+
+6. Test Accessibility:
+   - Verify keyboard navigation works
+   - Check screen reader compatibility
+   - Verify color contrast meets standards
+   - Test with browser zoom at 150% and 200%
+
+---
+
+### HOME002 - Public Information Display
+1. Navigate to About Us Section
+   - Click on "About Us" from navigation menu
+   - Verify URL changes appropriately
+
+2. Test Information Display:
+   - Verify organization mission statement displays
+   - Check that program descriptions are complete
+   - Verify contact information is accurate
+   - Check that all text is readable and properly formatted
+
+3. Test Content Accessibility:
+   - Verify all sections load without authentication
+   - Check that public content is not restricted
+   - Verify no sensitive data is exposed
+   - Test content on mobile devices
+
+4. Test Navigation:
+   - Verify ability to navigate between sections
+   - Check breadcrumb navigation if applicable
+   - Test "Back to Home" functionality
+
+---
+
+### CONTACT001 - Contact Us Form Submission
+1. Navigate to Contact Us Page (/contact)
+   - Click "Contact Us" from navigation
+   - Verify form loads completely
+
+2. Test Form Display:
+   - Verify all required fields are marked with asterisk (*)
+   - Check field labels are clear and visible
+   - Verify form instructions are provided
+   - Check that CAPTCHA/anti-spam protection displays
+
+3. Test Form Validation:
+   - Submit empty form - verify error messages appear
+   - Enter invalid email format - check validation message
+   - Enter phone number with letters - verify validation
+   - Leave required fields empty - check error handling
+   - Enter special characters in name field - verify validation
+
+4. Test Valid Form Submission:
+   - Fill in Name: "Test User"
+   - Enter valid Email: "testuser@example.com"
+   - Enter Phone: "+60123456789"
+   - Enter Subject: "General Inquiry"
+   - Enter Message: "This is a test inquiry message"
+   - Submit form
+
+5. Test Submission Confirmation:
+   - Verify success message displays
+   - Check that confirmation email is sent (if applicable)
+   - Verify form clears after successful submission
+   - Check that submission is saved in system
+
+6. Test Error Handling:
+   - Test submission with network disconnected
+   - Verify appropriate error message displays
+   - Check that form data is preserved after error
+   - Test retry functionality
+
+---
+
+## AUTHENTICATION MODULE
+
+### AUTH001 - Standard Login Functionality
+1. Navigate to Login Page (/login)
+   - Click "Login" button from homepage
+   - Verify login form displays correctly
+   - Check page loads within 2 seconds
+
+2. Test Login Form Display:
+   - Verify username/email field is visible
+   - Check password field masks characters
+   - Verify "Show Password" toggle works
+   - Check "Remember Me" checkbox (if applicable)
+   - Verify "Forgot Password?" link is present
+
+3. Test Login Validation:
+   - Submit empty form - verify validation messages
+   - Enter invalid email format - check error message
+   - Enter whitespace in fields - verify trimming/validation
+   - Test SQL injection attempts - verify protection
+   - Test XSS attempts - verify sanitization
+
+4. Test Invalid Login Attempts:
+   - Enter valid username, wrong password - verify error
+   - Enter invalid username - verify generic error message
+   - Test account lockout after 5 failed attempts
+   - Verify error messages don't reveal user existence
+
+5. Test Valid Login - Administrator:
+   - Username: Valid admin username
+   - Password: Correct password
+   - Click "Login" button
+   - Verify redirect to admin dashboard
+   - Check session is created
+   - Verify user role is set correctly
+
+6. Test Valid Login - Teacher:
+   - Enter valid teacher credentials
+   - Verify redirect to teacher dashboard
+   - Check appropriate permissions are applied
+
+7. Test Valid Login - Supervisor:
+   - Enter valid supervisor credentials
+   - Verify redirect to supervisor dashboard
+   - Check role-specific features are accessible
+
+8. Test Session Management:
+   - Verify session timeout after 30 minutes inactivity
+   - Test "Remember Me" functionality (7-day session)
+   - Verify single session enforcement (optional)
+   - Test concurrent login handling
+
+9. Test Security Features:
+   - Verify CSRF token is present
+   - Check that password is sent over HTTPS
+   - Verify session cookie is secure and HttpOnly
+   - Test brute force protection
+
+---
+
+### AUTH002 - Enhanced Login with Multi-Factor Options
+1. Navigate to Enhanced Login (/enhanced-login)
+   - Access the enhanced login page
+   - Verify modern UI displays correctly
+
+2. Test Enhanced Features:
+   - Verify password strength indicator
+   - Test "Show/Hide Password" toggle
+   - Check biometric login option (if available)
+   - Verify QR code login (if implemented)
+
+3. Test Two-Factor Authentication:
+   - Login with valid credentials
+   - Verify 2FA prompt appears
+   - Enter valid OTP code
+   - Check successful authentication
+   - Test invalid OTP handling
+   - Verify OTP expiration (5 minutes)
+
+4. Test Remember Device Feature:
+   - Enable "Remember this device"
+   - Logout and login again
+   - Verify 2FA is skipped on remembered device
+   - Test device trust duration (30 days)
+
+---
+
+### AUTH003 - User Registration Process
+1. Navigate to Registration Page (/staffs/register)
+   - Access staff registration page
+   - Verify only admin can access (role check)
+
+2. Test Registration Form Display:
+   - Verify all required fields are marked
+   - Check field groupings are logical
+   - Verify helper text is provided
+   - Check password requirements are displayed
+
+3. Test Form Validation:
+   - Test IIUM ID format validation (uppercase, correct pattern)
+   - Verify email uniqueness check
+   - Test password strength requirements:
+     * Minimum 8 characters
+     * At least one uppercase letter
+     * At least one lowercase letter
+     * At least one number
+     * At least one special character
+   - Verify password confirmation matching
+
+4. Test Role Selection:
+   - Verify Administrator option available
+   - Check Teacher option available
+   - Verify Supervisor option available
+   - Test radio button functionality
+
+5. Test Centre Assignment:
+   - Verify centre dropdown populates
+   - Check multiple centres available
+   - Test required field validation
+
+6. Test Valid Registration - Administrator:
+   - IIUM ID: "ADMIN123"
+   - Name: "Test Administrator"
+   - Email: "admin.test@example.com"
+   - Password: "SecurePass123!"
+   - Confirm Password: "SecurePass123!"
+   - Role: Administrator
+   - Centre: Select valid centre
+   - Submit form
+
+7. Test Registration Success:
+   - Verify success message displays
+   - Check redirect to user list
+   - Verify new user appears in system
+   - Check welcome email sent (if applicable)
+
+8. Test Duplicate Prevention:
+   - Attempt to register with existing IIUM ID
+   - Verify error message displays
+   - Test duplicate email handling
+   - Check form preserves data after error
+
+9. Test Role-Based Registration:
+   - Register Teacher account - verify limited permissions
+   - Register Supervisor account - verify supervisor capabilities
+   - Test that registered users can login immediately
+
+---
+
+### AUTH004 - Password Reset Flow
+1. Navigate to Forgot Password Page (/forgot-password)
+   - Click "Forgot Password?" link from login
+   - Verify reset form displays
+
+2. Test Password Reset Request:
+   - Enter registered email address
+   - Submit reset request
+   - Verify success message displays
+   - Check that reset email is sent
+   - Verify reset token is generated
+
+3. Test Reset Email:
+   - Check email received in inbox
+   - Verify reset link is present
+   - Check token expiration notice (24 hours)
+   - Test link formatting is correct
+
+4. Test Reset Link Access:
+   - Click reset link from email
+   - Verify redirect to reset password page
+   - Check token is valid
+   - Verify form displays with token pre-filled
+
+5. Test New Password Setting:
+   - Enter new password: "NewSecurePass456!"
+   - Confirm new password: "NewSecurePass456!"
+   - Verify password strength indicator
+   - Submit new password
+
+6. Test Reset Success:
+   - Verify success confirmation message
+   - Check redirect to login page
+   - Test login with new password succeeds
+   - Verify old password no longer works
+
+7. Test Security Validations:
+   - Test expired token (after 24 hours)
+   - Test already-used token
+   - Verify invalid token returns error
+   - Test rate limiting on reset requests
+
+---
+
+### AUTH005 - Logout Functionality
+1. Test Standard Logout:
+   - Click "Logout" button from any page
+   - Verify confirmation prompt (optional)
+   - Check session is destroyed
+   - Verify redirect to homepage/login
+
+2. Test Post-Logout Security:
+   - Attempt to access protected pages after logout
+   - Verify redirect to login page
+   - Check browser back button doesn't restore session
+   - Verify session cookie is cleared
+
+3. Test Session Timeout Logout:
+   - Login and remain inactive for 30 minutes
+   - Attempt to perform an action
+   - Verify automatic logout occurs
+   - Check timeout warning message (if implemented)
+
+---
+
+## DASHBOARD MODULE
+
+### DASH001 - Admin Dashboard Display
+1. Login as Administrator
+   - Use valid admin credentials
+   - Verify successful authentication
+
+2. Navigate to Dashboard (/dashboard)
+   - Check automatic redirect after login
+   - Verify page loads within 2 seconds
+
+3. Test Dashboard Widgets:
+   - Verify total users count displays
+   - Check total trainees count is accurate
+   - Verify active activities count
+   - Check attendance summary widget
+   - Verify recent registrations list
+   - Check system notifications panel
+
+4. Test Statistics Display:
+   - Verify charts render correctly (bar, pie, line charts)
+   - Check data accuracy by comparing with database
+   - Test chart interactions (hover, click)
+   - Verify date range filters work
+
+5. Test Quick Actions Panel:
+   - Verify "Add New Trainee" button present
+   - Check "Create Activity" shortcut works
+   - Verify "Generate Report" link functions
+   - Test "System Settings" access
+
+6. Test Recent Activity Feed:
+   - Verify last 10 activities display
+   - Check timestamps are correct
+   - Verify activity links are clickable
+   - Test real-time updates (if implemented)
+
+7. Test Navigation Sidebar:
+   - Verify all menu items are accessible
+   - Check active menu highlighting
+   - Test menu collapse/expand functionality
+   - Verify submenu navigation
+
+8. Test Role-Based Content:
+   - Verify admin-only sections are visible
+   - Check that sensitive data displays appropriately
+   - Test that all management options are available
+
+---
+
+### DASH002 - Teacher Dashboard Display
+1. Login as Teacher
+   - Use valid teacher credentials
+   - Navigate to dashboard
+
+2. Test Teacher-Specific Widgets:
+   - Verify "My Classes" widget displays assigned activities
+   - Check "Today's Schedule" shows current day sessions
+   - Verify "My Trainees" count displays
+   - Check "Pending Attendance" alerts
+
+3. Test Limited Access:
+   - Verify system administration options are hidden
+   - Check that teacher can only see own classes
+   - Verify financial data is not accessible
+   - Test that user management is restricted
+
+4. Test Class Management Shortcuts:
+   - Verify "Mark Attendance" quick access
+   - Check "View My Schedule" link
+   - Test "Message Trainees" functionality
+
+---
+
+### DASH003 - Supervisor Dashboard Display
+1. Login as Supervisor
+   - Use valid supervisor credentials
+   - Navigate to dashboard
+
+2. Test Supervisor-Specific Features:
+   - Verify oversight of assigned teachers
+   - Check team performance metrics
+   - Verify ability to view teacher schedules
+   - Test access to teacher management options
+
+3. Test Reporting Access:
+   - Verify access to team reports
+   - Check performance analytics
+   - Test export functionality for supervisor reports
+
+---
+
+### DASH004 - Dashboard Responsiveness
+1. Test on Desktop (1920x1080):
+   - Verify full layout displays correctly
+   - Check all widgets are properly sized
+   - Test sidebar and content area proportions
+
+2. Test on Tablet (768x1024):
+   - Verify responsive layout adapts
+   - Check sidebar collapses to hamburger menu
+   - Test widget stacking behavior
+
+3. Test on Mobile (375x667):
+   - Verify mobile-optimized layout
+   - Check touch-friendly controls
+   - Test scrolling behavior
+   - Verify no horizontal scrolling
+
+---
+
+## PROFILE MODULE
+
+### PROF001 - View User Profile
+1. Navigate to Profile Page (/profile)
+   - Click on user avatar/name in navigation
+   - Select "My Profile" option
+
+2. Test Profile Display:
+   - Verify IIUM ID displays (read-only)
+   - Check full name is correct
+   - Verify email address shows
+   - Check role displays correctly
+   - Verify centre assignment shows
+   - Check profile image displays (or default avatar)
+
+3. Test Profile Information Layout:
+   - Verify sections are clearly labeled
+   - Check data is properly formatted
+   - Test responsive layout on different screens
+
+---
+
+### PROF002 - Edit Profile Information
+1. Navigate to Profile Page
+   - Access profile edit mode
+   - Click "Edit Profile" button
+
+2. Test Edit Mode Activation:
+   - Verify fields become editable
+   - Check IIUM ID remains disabled (non-editable)
+   - Verify edit/save buttons appear
+
+3. Test Profile Updates:
+   - Update Name: "Updated Test Name"
+   - Modify Email: "updated.email@example.com"
+   - Click "Save Changes"
+
+4. Test Update Validation:
+   - Attempt to enter invalid email format
+   - Verify validation error appears
+   - Test required field validation
+   - Check special character handling in name
+
+5. Test Update Success:
+   - Verify success message displays
+   - Check profile refreshes with new data
+   - Verify edit mode deactivates
+   - Test that changes persist after logout/login
+
+6. Test Update Cancellation:
+   - Click "Edit Profile"
+   - Modify some fields
+   - Click "Cancel"
+   - Verify changes are discarded
+   - Check original data is restored
+
+---
+
+### PROF003 - Change Password
+1. Navigate to Profile Page
+   - Scroll to password section
+   - Click "Change Password"
+
+2. Test Password Change Form:
+   - Verify "Current Password" field displays
+   - Check "New Password" field present
+   - Verify "Confirm New Password" field present
+   - Check password strength indicator works
+
+3. Test Password Validation:
+   - Enter wrong current password - verify error
+   - Enter weak new password - check strength warning
+   - Enter mismatched passwords - verify error message
+   - Test password requirements enforcement
+
+4. Test Successful Password Change:
+   - Current Password: Enter correct password
+   - New Password: "NewStrongPass789!"
+   - Confirm Password: "NewStrongPass789!"
+   - Click "Update Password"
+
+5. Test Change Confirmation:
+   - Verify success message appears
+   - Check email notification sent (if applicable)
+   - Test immediate logout (security feature)
+   - Verify login with new password works
+   - Confirm old password no longer works
+
+---
+
+### PROF004 - Update Profile Image
+1. Navigate to Profile Page
+   - Locate profile image section
+   - Click "Change Photo" or edit icon
+
+2. Test Image Upload:
+   - Click "Browse" or upload button
+   - Select valid image file (JPG, PNG)
+   - Verify image preview displays
+   - Click "Upload"
+
+3. Test Image Validation:
+   - Test file size limit (max 2MB)
+   - Verify unsupported formats rejected (PDF, DOC)
+   - Test oversized image handling
+   - Check file extension validation
+
+4. Test Upload Success:
+   - Verify success message displays
+   - Check new image appears immediately
+   - Test image displays across all pages
+   - Verify image is properly resized/cropped
+
+5. Test Image Removal:
+   - Click "Remove Photo" option
+   - Verify confirmation prompt appears
+   - Confirm removal
+   - Check default avatar displays
+
+---
+
+## STAFF MODULE
+
+### STAFF001 - Staff Listing and Search
+1. Navigate to Staff Page (/staffs)
+   - Access staff management section
+   - Verify page loads with staff list
+
+2. Test Initial Staff Display:
+   - Verify page loads within 2 seconds
+   - Check staff members display in table/grid format
+   - Verify pagination works if >20 staff members
+   - Check loading indicators work properly
+
+3. Test Staff Information Display:
+   - Verify each staff shows: IIUM ID, Name, Role, Email, Centre
+   - Check staff status indicators (Active/Inactive)
+   - Verify action buttons (View, Edit, Delete)
+   - Test profile images display correctly
+
+4. Test Search Functionality:
+   - Search by Name (partial matches)
+   - Search by IIUM ID
+   - Search by Email
+   - Test search with special characters
+   - Verify search results update in real-time
+
+5. Test Filtering Options:
+   - Filter by Role: Administrator, Teacher, Supervisor
+   - Filter by Centre: Test multi-centre filtering
+   - Filter by Status: Active, Inactive
+   - Test combined filters work correctly
+
+6. Test Sorting Options:
+   - Sort by Name (A-Z, Z-A)
+   - Sort by IIUM ID
+   - Sort by Role
+   - Sort by Date Added (newest/oldest)
+
+7. Test Role-Based Access:
+   - Admin: Sees all staff with full management options
+   - Supervisor: Sees assigned teachers only
+   - Teacher: No access to staff list (redirect or error)
+
+8. Test Pagination:
+   - Test "Next" and "Previous" buttons
+   - Verify page number navigation
+   - Test "Items per page" dropdown (10, 25, 50, 100)
+   - Check total count accuracy
+
+---
+
+### STAFF002 - Add New Staff Member
+1. Navigate to Add Staff Page
+   - Click "Add New Staff" button
+   - Verify registration form displays
+
+2. Test Form Completion:
+   - Follow AUTH003 registration process
+   - Verify all validations work
+   - Test successful staff creation
+
+3. Test Post-Creation Actions:
+   - Verify new staff appears in list
+   - Check welcome email sent
+   - Test immediate login capability
+
+---
+
+### STAFF003 - View Staff Profile
+1. From Staff List, Click "View" on a Staff Member
+   - Select specific staff member
+   - Click view/details button
+
+2. Test Profile Display:
+   - Verify all staff information displays
+   - Check employment details
+   - Verify assigned activities (for teachers)
+   - Check supervision hierarchy (for supervisors)
+   - Verify performance metrics (if applicable)
+
+3. Test Related Information:
+   - View assigned classes/trainees
+   - Check attendance records
+   - Verify activity history
+   - Test document access (if applicable)
+
+---
+
+### STAFF004 - Edit Staff Information
+1. Navigate to Staff Edit Page
+   - Click "Edit" button on staff profile
+   - Verify edit form populates with current data
+
+2. Test Editable Fields:
+   - Update Name
+   - Modify Email
+   - Change Role (admin privilege required)
+   - Reassign Centre
+   - Update Status (Active/Inactive)
+
+3. Test Edit Restrictions:
+   - Verify IIUM ID cannot be changed
+   - Check supervisors can only edit assigned teachers
+   - Test self-edit limitations
+
+4. Test Edit Validation:
+   - Test required field validation
+   - Verify email format validation
+   - Check duplicate email detection
+   - Test role change permissions
+
+5. Test Update Success:
+   - Save changes
+   - Verify success message
+   - Check updates reflect in system
+   - Verify audit trail logged
+
+---
+
+### STAFF005 - Delete/Deactivate Staff
+1. Navigate to Staff Profile
+   - Select staff member to delete
+   - Click "Delete" or "Deactivate" button
+
+2. Test Deletion Warning:
+   - Verify confirmation dialog appears
+   - Check warning about dependent data
+   - Test cancellation option
+
+3. Test Soft Delete (Deactivation):
+   - Confirm deactivation
+   - Verify status changes to "Inactive"
+   - Check staff removed from active lists
+   - Verify data is preserved
+
+4. Test Hard Delete:
+   - Confirm permanent deletion
+   - Check staff removed from system
+   - Verify dependent data handling:
+     * Activities reassignment
+     * Attendance records preservation
+     * Historical data maintained
+
+5. Test Deletion Restrictions:
+   - Verify cannot delete self
+   - Check admin approval required for certain roles
+   - Test protection against accidental deletion
+
+---
+
+### STAFF006 - Teacher Assignment Management
+1. Navigate to Teacher Profile
+   - Access teacher's detail page
+   - Locate assignment section
+
+2. Test Activity Assignment:
+   - Click "Assign Activity" button
+   - Select activity from dropdown
+   - Assign start and end dates
+   - Save assignment
+
+3. Test Assignment Display:
+   - Verify assigned activities list
+   - Check schedule conflicts highlighted
+   - Test assignment history
+
+4. Test Assignment Removal:
+   - Click "Remove Assignment"
+   - Verify confirmation prompt
+   - Check impact on scheduled sessions
+   - Test trainee notifications (if applicable)
+
+---
+
+## TRAINEES MODULE
+
+### TRAIN001 - Trainee Listing and Comprehensive Search
+1. Navigate to Trainees Page (/trainees)
+   - Access trainee management section
+   - Verify page loads with trainee list
+
+2. Test Initial Page Load:
+   - Verify page loads within 3 seconds
+   - Check all trainees display in grid/list view
+   - Verify pagination works if >20 trainees
+   - Check loading indicators work properly
+
+3. Test Trainee Display Information:
+   - Verify each trainee shows: ID, Name, Age, Status, Guardian Contact
+   - Check disability/condition information (if authorized)
+   - Verify enrollment status and current activities
+   - Test profile images display correctly
+
+4. Test Search Functionality:
+   - Search by trainee name (full and partial matches)
+   - Search by unique identifier
+   - Search by guardian name
+   - Search by phone number
+   - Test search with special characters
+   - Verify search results highlight matches
+
+5. Test Advanced Filtering:
+   - Filter by Status: Active, Inactive, Graduated
+   - Filter by Age Range: 0-5, 6-12, 13-18, 18+
+   - Filter by Centre: Test multi-centre filtering
+   - Filter by Disability Type/Condition
+   - Filter by Enrollment Status
+   - Test combined filters work correctly
+
+6. Test Sorting Options:
+   - Sort by Name (A-Z, Z-A)
+   - Sort by Age (youngest/oldest)
+   - Sort by Registration Date (newest/oldest)
+   - Sort by Last Activity Date
+
+7. Test Role-Based Viewing:
+   - Admin: Sees all trainees with management options
+   - Supervisor: Sees trainees in assigned centres
+   - Teacher: Sees enrolled trainees in their activities
+   - Test unauthorized access restrictions
+
+8. Test Performance with Large Dataset:
+   - Test with 100+ trainee records
+   - Verify pagination performance
+   - Check search performance
+   - Test filter combination performance
+   - Verify export functionality (CSV, PDF)
+
+---
+
+### TRAIN002 - Register New Trainee
+1. Navigate to Trainee Registration Page (/trainees/register)
+   - Click "Add New Trainee" button
+   - Verify registration form displays
+
+2. Test Registration Form Sections:
+   - Personal Information section
+   - Guardian/Parent Information section
+   - Emergency Contact section
+   - Medical/Disability Information section
+   - Centre Assignment section
+
+3. Test Personal Information Entry:
+   - Enter First Name: "Test"
+   - Enter Last Name: "Trainee"
+   - Select Date of Birth
+   - Select Gender
+   - Enter unique identifier (auto-generated or manual)
+
+4. Test Guardian Information:
+   - Enter Guardian Name: "Test Guardian"
+   - Enter Relationship: "Parent"
+   - Enter Guardian Phone: "+60123456789"
+   - Enter Guardian Email: "guardian@example.com"
+   - Enter Address
+
+5. Test Emergency Contact:
+   - Enter Emergency Contact Name
+   - Enter Emergency Phone (different from guardian)
+   - Verify validation requires at least one contact
+
+6. Test Medical Information Entry:
+   - Select Disability/Condition Type from dropdown
+   - Enter Detailed Condition Description
+   - Enter Medications (if applicable)
+   - Enter Allergies
+   - Enter Special Requirements/Accommodations
+   - Upload medical documents (optional)
+
+7. Test Centre Assignment:
+   - Select Centre from dropdown
+   - Verify only accessible centres shown
+   - Test required field validation
+
+8. Test Form Validation:
+   - Submit empty form - verify all required field errors
+   - Enter invalid phone format - check validation
+   - Enter future date of birth - verify error
+   - Test age calculation from DOB
+   - Verify email format validation
+
+9. Test Successful Registration:
+   - Complete all required fields
+   - Upload trainee photo (optional)
+   - Click "Register Trainee"
+   - Verify success message displays
+   - Check unique identifier is generated
+   - Verify trainee appears in system
+   - Test welcome packet generation (if applicable)
+
+10. Test Post-Registration Actions:
+    - Verify guardian notification sent
+    - Check trainee profile is accessible
+    - Test ability to immediately enroll in activities
+
+---
+
+### TRAIN002 - Register New Trainee
+1. Navigate to Trainee Registration Page (/trainees/register)
+   - Click "Add New Trainee" button
+   - Verify registration form displays
+
+2. Test Registration Form Sections:
+   - Personal Information section
+   - Guardian/Parent Information section
+   - Emergency Contact section
+   - Medical/Disability Information section
+   - Centre Assignment section
+
+3. Test Personal Information Entry:
+   - Enter First Name: "Test"
+   - Enter Last Name: "Trainee"
+   - Select Date of Birth
+   - Select Gender
+   - Enter unique identifier (auto-generated or manual)
+
+4. Test Guardian Information:
+   - Enter Guardian Name: "Test Guardian"
+   - Enter Relationship: "Parent"
+   - Enter Guardian Phone: "+60123456789"
+   - Enter Guardian Email: "guardian@example.com"
+   - Enter Address
+
+5. Test Emergency Contact:
+   - Enter Emergency Contact Name
+   - Enter Emergency Phone (different from guardian)
+   - Verify validation requires at least one contact
+
+6. Test Medical Information Entry:
+   - Select Disability/Condition Type from dropdown
+   - Enter Detailed Condition Description
+   - Enter Medications (if applicable)
+   - Enter Allergies
+   - Enter Special Requirements/Accommodations
+   - Upload medical documents (optional)
+
+7. Test Centre Assignment:
+   - Select Centre from dropdown
+   - Verify only accessible centres shown
+   - Test required field validation
+
+8. Test Form Validation:
+   - Submit empty form - verify all required field errors
+   - Enter invalid phone format - check validation
+   - Enter future date of birth - verify error
+   - Test age calculation from DOB
+   - Verify email format validation
+
+9. Test Successful Registration:
+   - Complete all required fields
+   - Upload trainee photo (optional)
+   - Click "Register Trainee"
+   - Verify success message displays
+   - Check unique identifier is generated
+   - Verify trainee appears in system
+   - Test welcome packet generation (if applicable)
+
+10. Test Post-Registration Actions:
+    - Verify guardian notification sent
+    - Check trainee profile is accessible
+    - Test ability to immediately enroll in activities
+
+---
+
+### TRAIN004 - Edit Trainee Information
+1. Navigate to Trainee Edit Page
+   - Click "Edit" button on trainee profile
+   - Verify edit form populates with current data
+
+2. Test Editable Information:
+   - Update personal details
+   - Modify guardian information
+   - Update emergency contacts
+   - Update medical information
+   - Change centre assignment (if applicable)
+
+3. Test Update Validation:
+   - Verify required fields cannot be cleared
+   - Test email and phone format validation
+   - Check date validation
+   - Test duplicate identifier detection
+
+4. Test Update Restrictions:
+   - Verify unique identifier cannot be changed
+   - Check authorization for medical info updates
+   - Test audit trail for sensitive changes
+
+5. Test Update Success:
+   - Save all changes
+   - Verify success message
+   - Check updates reflect immediately
+   - Verify affected parties notified (guardians)
+   - Test change history logged
+
+---
+
+### TRAIN005 - Manage Trainee Status
+1. Navigate to Trainee Profile
+   - Access status management section
+   - View current status
+
+2. Test Status Options:
+   - Active - Currently enrolled
+   - Inactive - Temporarily not attending
+   - Graduated - Completed program
+   - Withdrawn - Left program
+
+3. Test Status Change Process:
+   - Select new status
+   - Enter reason for change (required)
+   - Enter effective date
+   - Add notes (optional)
+
+4. Test Status Change Validation:
+   - Verify confirmation required for status change
+   - Check impact warning displays (affects enrollments)
+   - Test cannot set future-dated status
+
+5. Test Status Change Effects:
+   - Verify enrollment status updates
+   - Check activity participation adjusted
+   - Test notification sent to guardians
+   - Verify reports reflect status change
+   - Test reactivation process (if set to Inactive)
+
+---
+
+### TRAIN006 - Delete/Archive Trainee
+1. Navigate to Trainee Profile
+   - Click "Delete" or "Archive" option
+   - Verify authorization required
+
+2. Test Deletion Warning:
+   - Check comprehensive warning displays
+   - Verify list of affected data shown:
+     * Activity enrollments
+     * Attendance records
+     * Progress reports
+     * Medical records
+   - Test cancellation option
+
+3. Test Soft Delete (Archive):
+   - Confirm archive action
+   - Verify trainee moved to archive
+   - Check data preservation
+   - Test searchability in archive
+   - Verify restore capability
+
+4. Test Hard Delete:
+   - Require super admin authorization
+   - Verify permanent deletion warning
+   - Check data retention policy compliance
+   - Test dependent data handling
+   - Verify irreversible action confirmation
+
+---
+
+### TRAIN007 - Trainee Document Management
+1. Navigate to Trainee Documents Section
+   - Access documents tab in trainee profile
+   - Verify document list displays
+
+2. Test Document Upload:
+   - Click "Upload Document"
+   - Select document type: Medical, Legal, Academic, Other
+   - Choose file (PDF, DOC, JPG, PNG)
+   - Enter document title
+   - Add description
+   - Click "Upload"
+
+3. Test Upload Validation:
+   - Test file size limit (max 10MB)
+   - Verify file type restrictions
+   - Check virus scanning (if implemented)
+   - Test upload progress indicator
+
+4. Test Document Access:
+   - View document list
+   - Click to download document
+   - Test document preview
+   - Verify access logging
+
+5. Test Document Management:
+   - Edit document metadata
+   - Replace document with newer version
+   - Delete document
+   - Test version history (if applicable)
+
+6. Test Authorization:
+   - Verify only authorized users can access sensitive docs
+   - Test guardian access to non-medical documents
+   - Check audit trail for document access
+
+---
+
+## ACTIVITIES MODULE
+
+### ACT001 - Comprehensive Activity Listing and Filtering
+1. Navigate to Activities Page (/activities)
+
+2. Test Initial Page Load:
+   - Verify page loads within 3 seconds
+   - Check all activities display in grid/list view
+   - Verify pagination works if >20 activities
+   - Check loading indicators work properly
+
+3. Test Activity Display Information:
+   - Verify each activity shows: Name, Description, Category, Status, Instructor
+   - Check activity images display correctly (if applicable)
+   - Verify enrollment counts are accurate
+   - Check session schedules visible
+   - Test 'View Details' links work
+
+4. Test Filtering Functionality:
+   - Filter by Category: Therapy, Education, Recreation, Life Skills, Sports, Arts
+   - Filter by Status: Active, Inactive, Scheduled, Completed, Cancelled
+   - Filter by Centre: Test multi-centre filtering
+   - Filter by Instructor: Show activities by specific teacher
+   - Filter by Day of Week: Monday through Sunday
+   - Filter by Time Slot: Morning, Afternoon, Evening
+   - Test combined filters work correctly
+
+5. Test Search Functionality:
+   - Search by activity name (partial and full matches)
+   - Search by description keywords
+   - Search by instructor name
+   - Search by category
+   - Test search with special characters
+   - Verify search results highlight matches
+
+6. Test Sorting Options:
+   - Sort by Name (A-Z, Z-A)
+   - Sort by Date Created (newest/oldest)
+   - Sort by Enrollment Count (high to low)
+   - Sort by Category alphabetically
+   - Sort by Next Session Date
+
+7. Test Role-Based Viewing:
+   - Admin: Sees all activities with management options
+   - Supervisor: Sees activities in assigned centres
+   - Teacher: Sees assigned activities with limited options
+   - Trainee/Guardian: Sees available activities for enrollment
+   - Test unauthorized access restrictions
+
+8. Test Performance with Large Dataset:
+   - Test with 100+ activities
+   - Verify pagination performance
+   - Check search performance
+   - Test filter combination performance
+   - Verify smooth scrolling
+
+9. Test Activity Cards/List Items:
+   - Verify thumbnail images display
+   - Check enrollment capacity displayed (5/10)
+   - Test quick action buttons work
+   - Verify status badges clear and visible
+
+---
+
+### ACT002 - Create New Activity
+1. Navigate to Create Activity Page
+   - Click "Create New Activity" button
+   - Verify form displays with all required fields
+
+2. Test Activity Basic Information:
+   - Enter Activity Name: "Art Therapy Session"
+   - Select Category: "Therapy"
+   - Enter Description: Detailed activity description
+   - Upload Activity Image
+   - Select Centre
+
+3. Test Activity Details:
+   - Enter Duration: 60 minutes
+   - Set Capacity: 10 trainees
+   - Enter Room/Location
+   - Select Required Equipment/Assets
+   - Set Age Range: 6-12 years
+
+4. Test Instructor Assignment:
+   - Select Primary Instructor from dropdown
+   - Assign Co-instructor (optional)
+   - Verify only qualified staff shown
+
+5. Test Schedule Creation:
+   - Select Recurring or One-time
+   - For Recurring:
+     * Select Days of Week
+     * Set Start Time: 10:00 AM
+     * Set End Time: 11:00 AM
+     * Enter Start Date
+     * Enter End Date (or ongoing)
+   - For One-time:
+     * Select specific date
+     * Set time
+
+6. Test Form Validation:
+   - Submit with required fields empty - verify errors
+   - Enter capacity as 0 - check validation
+   - Set end date before start date - verify error
+   - Test schedule conflict detection
+   - Verify instructor availability check
+
+7. Test Activity Creation Success:
+   - Complete all required fields
+   - Click "Create Activity"
+   - Verify success message displays
+   - Check activity appears in activities list
+   - Verify instructor notified
+   - Test activity becomes available for enrollment
+
+8. Test Activity Preview:
+   - Before creating, click "Preview"
+   - Verify activity displays as trainees will see it
+   - Check all information formatted correctly
+
+---
+
+### ACT003 - Edit Activity Details
+1. Navigate to Activity Edit Page
+   - Select activity from list
+   - Click "Edit" button
+
+2. Test Editable Fields:
+   - Update activity name
+   - Modify description
+   - Change category
+   - Update capacity
+   - Modify duration
+   - Change location
+
+3. Test Instructor Reassignment:
+   - Change primary instructor
+   - Verify conflict checking
+   - Check enrolled trainee notifications
+
+4. Test Schedule Modification:
+   - Update session times
+   - Modify recurring pattern
+   - Change dates
+
+5. Test Edit with Enrollments:
+   - Verify warning for changes affecting enrollments
+   - Test capacity reduction validation
+   - Check notification to affected trainees
+   - Verify instructor change notifications
+
+6. Test Edit Restrictions:
+   - Cannot reduce capacity below current enrollments
+   - Cannot delete past sessions
+   - Verify authorization requirements for certain changes
+
+7. Test Update Success:
+   - Save all changes
+   - Verify success message
+   - Check updates reflect across system
+   - Verify change history logged
+   - Test notifications sent
+
+---
+
+### ACT004 - Delete Activity
+1. Navigate to Activity Details Page
+   - Select activity to delete
+   - Click "Delete" button
+
+2. Test Deletion Warning:
+   - Verify comprehensive warning displays
+   - Check list of enrolled trainees shown
+   - Verify scheduled sessions count
+   - Check attendance records warning
+   - Test cancellation option
+
+3. Test Deletion with No Enrollments:
+   - Confirm deletion
+   - Verify activity removed from system
+   - Check all related data cleaned up
+
+4. Test Deletion with Active Enrollments:
+   - Verify prevented or requires additional confirmation
+   - Check option to "Archive" instead of delete
+   - Test notification to enrolled trainees
+   - Verify refund process triggered (if applicable)
+
+5. Test Archive Option:
+   - Select "Archive" instead of delete
+   - Verify activity marked as archived
+   - Check removed from active lists
+   - Test historical data preserved
+   - Verify reports still accessible
+
+6. Test Cascade Delete Protection:
+   - Verify attendance records preserved
+   - Check trainee enrollment history maintained
+   - Test progress reports remain accessible
+
+---
+
+### ACT005 - Activity Categories View
+1. Navigate to Activities Page
+   - View category filter section
+
+2. Test Category Filtering:
+   - Click "Therapy" category
+   - Verify only therapy activities display
+   - Check count matches filtered results
+
+3. Test Multiple Categories:
+   - Select "Education" category
+   - Verify filtering updates
+   - Test category switching speed
+
+4. Test Category Display:
+   - Verify all categories listed:
+     * Therapy
+     * Education
+     * Recreation
+     * Life Skills
+     * Sports
+     * Arts & Crafts
+     * Music
+     * Physical Therapy
+     * Occupational Therapy
+   - Check activity count per category
+   - Test "All Categories" option
+
+5. Test Category Management (Admin):
+   - Add new category
+   - Edit category name
+   - Delete unused category
+   - Test category icon/color customization
+
+---
+
+### ACT006 - Create Activity Session
+1. Navigate to Activity Details Page
+   - Select activity
+   - Click "Schedule New Session"
+
+2. Test Session Scheduling:
+   - Select Date
+   - Set Start Time: 2:00 PM
+   - Set End Time: 3:00 PM
+   - Select Instructor (from activity instructors)
+   - Set Room/Location
+   - Enter Session Notes
+
+3. Test Session Validation:
+   - Check date not in past
+   - Verify instructor availability
+   - Check room availability
+   - Test schedule conflict detection
+   - Verify within activity parameters
+
+4. Test Session Creation:
+   - Click "Create Session"
+   - Verify success message
+   - Check session appears in schedule
+   - Test enrolled trainees notified
+   - Verify instructor receives notification
+
+5. Test Recurring Session:
+   - Create multiple sessions at once
+   - Select date range
+   - Set recurring pattern (daily, weekly)
+   - Verify all sessions created correctly
+
+---
+
+### ACT007 - Enroll Trainee in Activity
+1. Navigate to Activity Details Page
+   - Select activity for enrollment
+   - Click "Enroll Trainee"
+
+2. Test Enrollment Form:
+   - Search and select trainee
+   - Verify trainee eligibility:
+     * Age range match
+     * No schedule conflicts
+     * Available capacity
+   - Enter enrollment date
+   - Add enrollment notes
+
+3. Test Capacity Validation:
+   - Attempt enrollment when activity full
+   - Verify waitlist option offered
+   - Check capacity warning displays
+
+4. Test Schedule Conflict Check:
+   - Enroll trainee already in conflicting activity
+   - Verify warning displays
+   - Test override option (admin only)
+
+5. Test Enrollment Success:
+   - Complete enrollment
+   - Verify success message
+   - Check trainee added to participant list
+   - Verify guardian notification sent
+   - Test enrollment confirmation generated
+
+6. Test Waitlist Enrollment:
+   - When activity full, add to waitlist
+   - Verify waitlist position displayed
+   - Test automatic promotion when spot opens
+
+---
+
+### ACT008 - View Activity Schedule
+1. Navigate to Schedule Page (/schedule)
+   - Access schedule view
+   - Verify calendar interface loads
+
+2. Test Calendar Display:
+   - Verify current month/week displays
+   - Check all scheduled sessions appear
+   - Test color-coding by category
+   - Verify session details on hover
+
+3. Test Date Range Selection:
+   - Select specific date range
+   - Test week view
+   - Test month view
+   - Test day view
+   - Verify all sessions in range display
+
+4. Test Schedule Filtering:
+   - Filter by instructor
+   - Filter by activity type
+   - Filter by centre
+   - Filter by trainee (shows trainee's schedule)
+
+5. Test Session Details:
+   - Click on session
+   - Verify popup with full details
+   - Check enrolled trainees list
+   - Test attendance marking option
+   - Verify session notes display
+
+6. Test Schedule Navigation:
+   - Navigate to previous week/month
+   - Navigate to next week/month
+   - Test "Today" button
+   - Verify date picker functionality
+
+7. Test Schedule Export:
+   - Export to PDF
+   - Export to Calendar (iCal)
+   - Verify exported schedule accurate
+
+---
+
+### ACT009 - Weekly Schedule View
+1. Navigate to Weekly View
+   - Select week view option
+   - Verify week layout displays
+
+2. Test Week Layout:
+   - Check Monday through Sunday columns
+   - Verify time slots displayed (8 AM - 6 PM)
+   - Test session blocks positioned correctly
+   - Check overlapping sessions handled
+
+3. Test Week Navigation:
+   - Move to previous week
+   - Move to next week
+   - Jump to specific week
+   - Test current week highlighting
+
+4. Test Session Display:
+   - Verify session titles visible
+   - Check time displayed
+   - Test instructor name shown
+   - Verify enrolled count displays
+
+5. Test Interactive Features:
+   - Click session for details
+   - Drag and drop to reschedule (if supported)
+   - Test quick actions (mark attendance, cancel)
+
+---
+
+### ACT010 - Teacher Personal Schedule
+1. Login as Teacher
+   - Use teacher credentials
+   - Navigate to "My Schedule"
+
+2. Test Personal Schedule Display:
+   - Verify only assigned sessions displayed
+   - Check current day highlighted
+   - Test upcoming sessions listed
+   - Verify past sessions accessible
+
+3. Test Session Preparation:
+   - View session details
+   - Check enrolled trainee list
+   - Access trainee profiles
+   - View lesson plans (if applicable)
+   - Test material checklist
+
+4. Test Quick Actions:
+   - Mark attendance from schedule
+   - Add session notes
+   - Report issues
+   - Request schedule changes
+
+5. Test Schedule Notifications:
+   - Verify upcoming session reminders
+   - Check schedule change alerts
+   - Test cancellation notifications
+
+---
+
+## ATTENDANCE MODULE
+
+### ATT001 - Mark Attendance for Session
+1. Navigate to Attendance Page
+   - Select activity session
+   - Click "Mark Attendance"
+
+2. Test Attendance Interface:
+   - Verify enrolled trainee list displays
+   - Check default status (Not Marked)
+   - Test quick mark all options
+
+3. Test Attendance Marking:
+   - Mark trainee as "Present"
+   - Mark trainee as "Absent"
+   - Mark trainee as "Late"
+   - Mark trainee as "Excused"
+   - Add notes for absent/late trainees
+
+4. Test Bulk Actions:
+   - "Mark All Present" button
+   - "Mark All Absent" button
+   - Test undo functionality
+
+5. Test Attendance Validation:
+   - Cannot mark future sessions
+   - Warning for marking very old sessions
+   - Verify cannot mark twice without override
+
+6. Test Attendance Submission:
+   - Click "Submit Attendance"
+   - Verify success confirmation
+   - Check attendance reflected in reports
+   - Test notification to guardians (for absences)
+
+7. Test Late Attendance:
+   - Mark attendance after session ended
+   - Verify warning displays
+   - Test requires explanation note
+
+---
+
+### ATT002 - View Attendance Reports
+1. Navigate to Attendance Reports (/reports/attendance)
+   - Access reporting section
+   - Verify report options display
+
+2. Test Individual Trainee Report:
+   - Select trainee
+   - Choose date range
+   - Generate report
+   - Verify attendance summary:
+     * Total sessions
+     * Present count
+     * Absent count
+     * Late count
+     * Attendance percentage
+
+3. Test Activity Attendance Report:
+   - Select activity
+   - Choose date range
+   - Generate report
+   - Verify session-by-session breakdown
+   - Check average attendance rate
+
+4. Test Centre-Wide Report:
+   - Select centre
+   - Generate overall attendance report
+   - Verify aggregated statistics
+   - Test comparison across activities
+
+5. Test Report Visualization:
+   - View attendance charts (line, bar, pie)
+   - Check trend analysis
+   - Test date range filtering
+   - Verify data accuracy
+
+6. Test Report Export:
+   - Export to PDF
+   - Export to Excel/CSV
+   - Verify formatting preserved
+   - Check all data included
+
+---
+
+### ATT003 - Attendance History and Trends
+1. Navigate to Trainee Profile
+   - Select trainee
+   - Access attendance history tab
+
+2. Test History Display:
+   - Verify chronological listing
+   - Check filter by activity
+   - Test date range selection
+   - View attendance patterns
+
+3. Test Trend Analysis:
+   - View attendance rate over time
+   - Check monthly comparisons
+   - Test visualization graphs
+   - Identify attendance issues
+
+4. Test Alerts:
+   - Verify low attendance warning (below 75%)
+   - Check consecutive absence alerts
+   - Test pattern recognition
+   - Generate intervention recommendations
+
+---
+
+### ATT004 - Excuse Management
+1. Navigate to Attendance Record
+   - Select absent record
+   - Click "Add Excuse"
+
+2. Test Excuse Entry:
+   - Enter excuse reason: Illness, Family, Appointment
+   - Upload supporting document (medical cert)
+   - Set excuse date
+   - Submit excuse
+
+3. Test Excuse Approval:
+   - Verify admin/supervisor notification
+   - Test approval workflow
+   - Check excuse status updates
+   - Test rejection with reason
+
+4. Test Excused Absence Handling:
+   - Verify excused absences marked differently
+   - Check attendance percentage calculation
+   - Test reporting of excused vs unexcused
+
+---
+
+## CENTRES MODULE
+
+### CENT001 - Centre Listing
+1. Navigate to Centres Page (/centres)
+   - Access centre management
+   - Verify centre list displays
+
+2. Test Centre Display:
+   - Verify all centres listed
+   - Check centre details: Name, Location, Capacity, Status
+   - Test centre statistics:
+     * Total staff count
+     * Total trainees
+     * Active activities
+   - Verify contact information
+
+3. Test Centre Filtering:
+   - Filter by Status: Active, Inactive
+   - Filter by Region/District
+   - Test search by name
+
+4. Test Centre Actions:
+   - View details
+   - Edit centre
+   - View centre dashboard
+   - Access centre reports
+
+---
+
+### CENT002 - Create New Centre
+1. Navigate to Create Centre Page
+   - Click "Add New Centre"
+   - Verify form displays
+
+2. Test Centre Information Entry:
+   - Enter Centre Name: "Test Rehabilitation Centre"
+   - Enter Registration Number
+   - Enter Address
+   - Enter City/District
+   - Enter State
+   - Enter Postal Code
+   - Enter Contact Phone
+   - Enter Contact Email
+
+3. Test Facility Information:
+   - Enter Total Capacity
+   - Enter Number of Rooms
+   - Set Operating Hours
+   - List Available Facilities
+
+4. Test Form Validation:
+   - Required field validation
+   - Email format check
+   - Phone number validation
+   - Unique centre name check
+
+5. Test Centre Creation:
+   - Submit form
+   - Verify success message
+   - Check centre appears in list
+   - Test immediate accessibility
+
+---
+
+### CENT003 - Edit Centre Information
+1. Navigate to Centre Edit Page
+   - Select centre
+   - Click "Edit"
+
+2. Test Information Updates:
+   - Update contact information
+   - Modify capacity
+   - Change operating hours
+   - Update facilities list
+
+3. Test Update Validation:
+   - Cannot reduce capacity below current usage
+   - Verify contact info validation
+   - Test change notifications
+
+4. Test Update Success:
+   - Save changes
+   - Verify updates reflected
+   - Check audit trail
+
+---
+
+### CENT004 - Centre Dashboard View
+1. Navigate to Specific Centre Dashboard
+   - Select centre
+   - View centre-specific dashboard
+
+2. Test Centre Statistics:
+   - Total staff assigned
+   - Total trainees enrolled
+   - Active activities count
+   - Capacity utilization
+   - Attendance rate
+
+3. Test Centre Calendar:
+   - View centre schedule
+   - Check room utilization
+   - Test conflict detection
+
+4. Test Centre Reports:
+   - Generate centre performance report
+   - View attendance trends
+   - Check enrollment statistics
+   - Test financial reports (if applicable)
+
+---
+
+## ASSETS MODULE
+
+### ASSET001 - Asset Inventory Listing
+1. Navigate to Assets Page (/assets)
+   - Access asset management
+   - Verify inventory displays
+
+2. Test Asset Display:
+   - Verify all assets listed
+   - Check details: Product Name, Code, Category, Brand, Quantity, Status
+   - Test asset images display
+   - Verify location information
+
+3. Test Asset Search:
+   - Search by asset name
+   - Search by asset code
+   - Search by category
+   - Test barcode search
+
+4. Test Asset Filtering:
+   - Filter by Category: Books, Furniture, Equipment, Electronics, Toys, Educational
+   - Filter by Status: Available, In Use, Maintenance, Damaged, Lost
+   - Filter by Location/Centre
+   - Test combined filters
+
+5. Test Sorting Options:
+   - Sort by Name
+   - Sort by Quantity (low to high)
+   - Sort by Date Added
+   - Sort by Last Used
+
+6. Test Asset Status Indicators:
+   - Available - green badge
+   - In Use - blue badge
+   - Maintenance - yellow badge
+   - Damaged - red badge
+   - Verify status colors clear
+
+---
+
+### ASSET002 - Add New Asset
+1. Navigate to Add Asset Page
+   - Click "Add Asset"
+   - Verify form displays
+
+2. Test Asset Information Entry:
+   - Enter Product Name: "Wooden Chair"
+   - Enter Asset Code: "C1" (or auto-generate)
+   - Select Category: "Furniture"
+   - Enter Brand Name: "Karu"
+   - Enter Price: 50
+   - Enter Quantity: 13
+   - Enter Description/Notes
+
+3. Test Asset Location:
+   - Select Centre
+   - Enter Room/Area
+   - Set Default Location
+
+4. Test Asset Documentation:
+   - Upload asset image
+   - Attach purchase receipt
+   - Add warranty information
+   - Enter purchase date
+
+5. Test Form Validation:
+   - Required fields check
+   - Unique code validation
+   - Quantity must be positive
+   - Price format validation
+
+6. Test Asset Creation:
+   - Submit form
+   - Verify success message
+   - Check asset appears in inventory
+   - Test barcode generation (if applicable)
+
+---
+
+### ASSET003 - Edit Asset Details
+1. Navigate to Asset Edit Page
+   - Select asset
+   - Click "Edit" button
+
+2. Test Editable Information:
+   - Update quantity
+   - Modify price
+   - Change category
+   - Update location
+   - Modify notes
+
+3. Test Quantity Adjustments:
+   - Increase quantity (new purchase)
+   - Decrease quantity (damaged/lost)
+   - Verify quantity history logged
+
+4. Test Status Change:
+   - Change from Available to Maintenance
+   - Update status to Damaged
+   - Test status change notifications
+
+5. Test Update Validation:
+   - Cannot set negative quantity
+   - Verify unique code maintained
+   - Test change approval (for certain fields)
+
+---
+
+### ASSET004 - Delete Asset
+1. Navigate to Asset Details
+   - Select asset to delete
+   - Click "Delete"
+
+2. Test Deletion Warning:
+   - Check warning for assets in use
+   - Verify usage history warning
+   - Test cancellation option
+
+3. Test Deletion Restrictions:
+   - Cannot delete asset currently in use
+   - Verify must return/resolve before deletion
+   - Test admin approval required
+
+4. Test Deletion Success:
+   - Confirm deletion
+   - Verify asset removed
+   - Check usage history preserved
+
+---
+
+### ASSET005 - Asset Assignment to Activity
+1. Navigate to Asset Page
+   - Select asset
+   - Click "Assign to Activity"
+
+2. Test Assignment:
+   - Select activity
+   - Enter quantity to assign
+   - Set assignment date
+   - Enter expected return date
+
+3. Test Assignment Validation:
+   - Verify sufficient quantity available
+   - Check activity exists and is active
+   - Test date validation
+
+4. Test Assignment Tracking:
+   - Verify asset status updates to "In Use"
+   - Check available quantity reduced
+   - Test assignment appears in activity details
+
+5. Test Asset Return:
+   - Mark asset as returned
+   - Verify quantity updated
+   - Check status returns to Available
+   - Test damage reporting during return
+
+---
+
+### ASSET006 - Asset Maintenance Tracking
+1. Navigate to Asset Details
+   - Select asset
+   - Access maintenance section
+
+2. Test Maintenance Schedule:
+   - Set maintenance date
+   - Enter maintenance type: Routine, Repair, Inspection
+   - Add maintenance notes
+   - Set next maintenance date
+
+3. Test Maintenance Recording:
+   - Record maintenance performed
+   - Upload maintenance receipts
+   - Enter cost
+   - Update asset condition
+
+4. Test Maintenance Alerts:
+   - Verify due maintenance notifications
+   - Check overdue maintenance warnings
+   - Test maintenance history display
+
+---
+
+## LETTERS MODULE
+
+### LETT001 - Letter Template Management
+1. Navigate to Letters Page (/letters)
+   - Access letter management
+   - Verify template list displays
+
+2. Test Template Listing:
+   - View all available templates
+   - Check template categories:
+     * Welcome Letter
+     * Enrollment Confirmation
+     * Progress Report
+     * Activity Certificate
+     * Attendance Warning
+   - Test template preview
+
+3. Test Template Creation:
+   - Click "Create Template"
+   - Enter template name
+   - Select template type
+   - Design letter content
+   - Add placeholders: {{trainee_name}}, {{activity_name}}, {{date}}
+   - Save template
+
+4. Test Template Editing:
+   - Select template
+   - Modify content
+   - Update placeholders
+   - Save changes
+   - Test version history
+
+---
+
+### LETT002 - Generate Letter from Template
+1. Navigate to Trainee Profile or Activity
+   - Click "Generate Letter"
+   - Select template
+
+2. Test Letter Generation:
+   - Verify template loads
+   - Check placeholders auto-filled:
+     * Trainee name
+     * Guardian name
+     * Activity details
+     * Dates
+     * Centre information
+   - Preview generated letter
+
+3. Test Letter Customization:
+   - Edit auto-filled content if needed
+   - Add custom notes
+   - Modify formatting
+   - Add signature
+
+4. Test Letter Actions:
+   - Print letter
+   - Download as PDF
+   - Email to guardian
+   - Save to trainee documents
+
+5. Test Bulk Generation:
+   - Select multiple trainees
+   - Generate letters for all
+   - Verify accurate personalization
+   - Test batch download/email
+
+---
+
+### LETT003 - Letter History and Tracking
+1. Navigate to Letter History
+   - View sent letters
+   - Filter by type/date/recipient
+
+2. Test Letter Tracking:
+   - View delivery status
+   - Check opened/read status (if email)
+   - Verify sent date and time
+   - Test resend functionality
+
+3. Test Letter Archive:
+   - Search historical letters
+   - Filter by trainee
+   - Export letter history
+   - Access archived letters
+
+---
+
+## MESSAGING MODULE
+
+### MSG001 - Send Message to Guardian
+1. Navigate to Trainee Profile
+   - Click "Send Message" or "Contact Guardian"
+   - Verify message form displays
+
+2. Test Message Composition:
+   - Auto-fill guardian contact
+   - Select message type: SMS, Email, Both
+   - Enter subject (for email)
+   - Enter message content
+   - Attach files (for email, max 5MB)
+
+3. Test Message Templates:
+   - Select from pre-defined templates
+   - Customize template content
+   - Save as new template option
+
+4. Test Message Validation:
+   - Required field checks
+   - Character limit for SMS (160 chars)
+   - Email format validation
+   - Attachment size/type validation
+
+5. Test Message Sending:
+   - Click "Send"
+   - Verify sending confirmation
+   - Check delivery status
+   - Test message logged in history
+
+6. Test Bulk Messaging:
+   - Select multiple guardians
+   - Compose group message
+   - Verify personalization works
+   - Test delivery to all recipients
+
+---
+
+### MSG002 - View Message History
+1. Navigate to Messages Page (/messages)
+   - Access messaging center
+   - Verify message threads display
+
+2. Test Message Inbox:
+   - View received messages (if reply enabled)
+   - Check sent messages
+   - Filter by status: Sent, Delivered, Read, Failed
+   - Search messages
+
+3. Test Message Thread:
+   - Click on conversation
+   - View full message history with guardian
+   - Check chronological order
+   - Test attachments download
+
+4. Test Message Actions:
+   - Reply to message
+   - Forward message
+   - Delete message
+   - Archive conversation
+
+---
+
+### MSG003 - Notification Settings
+1. Navigate to Notification Settings
+   - Access user settings
+   - Locate notification preferences
+
+2. Test Notification Types:
+   - Email notifications
+   - SMS notifications
+   - In-app notifications
+   - Push notifications (if mobile)
+
+3. Test Notification Preferences:
+   - New enrollment
+   - Attendance alerts
+   - Schedule changes
+   - Low attendance warnings
+   - System updates
+
+4. Test Notification Customization:
+   - Enable/disable per type
+   - Set frequency: Immediate, Daily Digest, Weekly Summary
+   - Test quiet hours setting
+   - Verify preferences save
+
+---
+
+## SYSTEM MODULE
+
+### SYS001 - User Role Management
+1. Navigate to System Settings (/settings)
+   - Access role management
+   - Verify roles listed
+
+2. Test Role Display:
+   - View all system roles:
+     * Administrator
+     * Supervisor
+     * Teacher
+     * Trainee (read-only)
+   - Check permissions per role
+
+3. Test Role Permissions:
+   - View admin permissions (full access)
+   - Check supervisor permissions (centre-level)
+   - View teacher permissions (activity-level)
+   - Test permission inheritance
+
+4. Test Permission Modification:
+   - Select role
+   - Modify permissions
+   - Test permission conflicts
+   - Save changes
+   - Verify changes reflected
+
+---
+
+### SYS002 - System Backup and Restore
+1. Navigate to Backup Settings
+   - Access system maintenance
+   - Verify backup options
+
+2. Test Manual Backup:
+   - Click "Create Backup Now"
+   - Select backup scope: Full, Database Only, Files Only
+   - Verify backup progress indicator
+   - Check backup completion message
+   - Test backup download
+
+3. Test Automatic Backup:
+   - Configure backup schedule
+   - Set backup frequency: Daily, Weekly
+   - Set backup retention: 7 days, 30 days
+   - Verify schedule saves
+
+4. Test Backup List:
+   - View all backups
+   - Check backup size and date
+   - Test backup download
+   - Verify backup integrity check
+
+5. Test Restore Process:
+   - Select backup to restore
+   - Verify warning message
+   - Confirm restore
+   - Test system recovery
+   - Verify data integrity post-restore
+
+---
+
+### SYS003 - Audit Log Review
+1. Navigate to Audit Logs (/logs)
+   - Access system logs
+   - Verify log display
+
+2. Test Log Entries:
+   - View all system activities
+   - Check user actions logged
+   - Verify timestamps accurate
+   - Test log detail view
+
+3. Test Log Filtering:
+   - Filter by User
+   - Filter by Action: Create, Update, Delete, Login, Logout
+   - Filter by Module: Staff, Trainees, Activities, etc.
+   - Filter by Date Range
+
+4. Test Log Search:
+   - Search by user name
+   - Search by action type
+   - Search by record ID
+   - Test keyword search
+
+5. Test Log Export:
+   - Export filtered logs
+   - Download as CSV
+   - Verify all data included
+   - Test date range export
+
+6. Test Critical Actions:
+   - Verify sensitive actions flagged:
+     * User deletion
+     * Permission changes
+     * Data exports
+     * System settings modified
+
+---
+
+### SYS004 - System Performance Monitoring
+1. Navigate to System Dashboard
+   - Access performance monitoring
+   - Verify metrics display
+
+2. Test Performance Metrics:
+   - View server uptime
+   - Check database size
+   - Monitor active users
+   - Test response time graphs
+
+3. Test Resource Monitoring:
+   - CPU usage
+   - Memory usage
+   - Storage capacity
+   - Network bandwidth
+
+4. Test Performance Alerts:
+   - Verify slow query alerts
+   - Check high resource usage warnings
+   - Test downtime notifications
+
+---
+
+### SYS005 - System Configuration
+1. Navigate to System Settings
+   - Access general settings
+   - Verify configuration options
+
+2. Test General Settings:
+   - Organization name
+   - System logo upload
+   - Contact information
+   - Operating hours
+   - Fiscal year settings
+
+3. Test Email Configuration:
+   - SMTP settings
+   - From email address
+   - Test email functionality
+   - Verify email templates
+
+4. Test Security Settings:
+   - Session timeout duration
+   - Password policy:
+     * Minimum length
+     * Complexity requirements
+     * Expiration period
+     * History check
+   - Login attempt limits
+   - IP whitelist (if applicable)
+
+5. Test Integration Settings:
+   - SMS gateway configuration
+   - Payment gateway (if applicable)
+   - Calendar integration
+   - External APIs
+
+6. Test Settings Validation:
+   - Required field checks
+   - Format validation
+   - Test connectivity
+   - Verify settings save
+
+---
+
+## CROSS-FUNCTIONAL TESTS
+
+### CROSS001 - Complete User Journey - New Trainee Enrollment
+1. Start at Homepage
+   - Access public website
+
+2. Administrator Login:
+   - Navigate to login
+   - Enter admin credentials
+   - Access dashboard
+
+3. Register New Trainee:
+   - Navigate to trainee registration
+   - Complete all required information
+   - Upload documents
+   - Submit registration
+
+4. Enroll in Activity:
+   - Search for suitable activity
+   - Enroll trainee
+   - Verify enrollment confirmation
+
+5. View Schedule:
+   - Check trainee's schedule
+   - Verify activity appears
+   - Confirm dates and times
+
+6. Generate Welcome Letter:
+   - Create welcome letter
+   - Email to guardian
+   - Save to trainee documents
+
+7. Verify Complete Flow:
+   - Check trainee profile complete
+   - Verify all data accurate
+   - Test guardian notification received
+
+---
+
+### CROSS002 - Data Consistency Across Modules
+1. Create Test Scenario:
+   - Add new trainee
+   - Enroll in multiple activities
+   - Mark attendance
+   - Generate reports
+
+2. Test Data Synchronization:
+   - Verify trainee count updates in dashboard
+   - Check enrollment count in activity details
+   - Verify attendance reflected in reports
+   - Test real-time updates
+
+3. Test Data Modification Impact:
+   - Edit trainee information
+   - Verify updates across all modules
+   - Check report accuracy
+   - Test historical data preserved
+
+---
+
+### CROSS003 - Role-Based Access Control (RBAC)
+1. Test Administrator Access:
+   - Login as admin
+   - Verify full system access
+   - Check all CRUD operations available
+   - Test system settings access
+
+2. Test Teacher Access:
+   - Login as teacher
+   - Verify limited to assigned activities
+   - Check cannot access user management
+   - Test cannot modify system settings
+
+3. Test Supervisor Access:
+   - Login as supervisor
+   - Verify centre-level access
+   - Check teacher management available
+   - Test report access for assigned centre
+
+4. Test Access Violations:
+   - Attempt unauthorized direct URL access
+   - Verify redirect or error message
+   - Test API endpoint protection
+   - Check audit log records attempts
+
+---
+
+### CROSS004 - System Integration Testing
+1. Test Module Interactions:
+   - Create activity → affects schedule
+   - Mark attendance → updates reports
+   - Modify trainee status → affects enrollments
+   - Delete activity → impacts trainees
+
+2. Test Notification Flow:
+   - Activity created → instructor notified
+   - Trainee enrolled → guardian notified
+   - Attendance marked → updates sent
+   - Schedule changed → all parties notified
+
+3. Test Report Generation:
+   - Activity report pulls attendance data
+   - Trainee report includes all modules
+   - Centre report aggregates all activities
+   - System report includes audit logs
+
+---
+
+### CROSS005 - Performance and Load Testing
+1. Test with Multiple Concurrent Users:
+   - Simulate 50 concurrent logins
+   - Test simultaneous form submissions
+   - Check database query performance
+   - Verify no data corruption
+
+2. Test Large Dataset Performance:
+   - Load 500+ trainees
+   - Create 100+ activities
+   - Generate reports with full dataset
+   - Test search and filter performance
+
+3. Test Peak Usage Scenarios:
+   - Attendance marking during class hours
+   - Report generation end of month
+   - Bulk enrollment at term start
+   - Verify system remains responsive
+
+---
+
+## TEST EXECUTION SUMMARY
+
+**Total Test Cases:** 69
+**Estimated Total Testing Time:** 520+ minutes (8+ hours)
+**Priority Breakdown:**
+- High Priority: 42 tests
+- Medium Priority: 20 tests
+- Low Priority: 7 tests
+
+**Testing Phases:**
+- Phase 1: Public Access & Authentication (15 tests)
+- Phase 2: Core Modules - Profile, Staff, Trainees (25 tests)
+- Phase 3: Operational Modules - Activities, Attendance (18 tests)
+- Phase 4: Support Modules - Centres, Assets, Letters (11 tests)
+- Phase 5: Cross-Functional & System Tests (10 tests)
+
+**Recommended Testing Sequence:**
+1. Public Access and Authentication (Foundation)
+2. User Management (Staff, Profiles)
+3. Trainee Management
+4. Activities and Scheduling
+5. Attendance Tracking
+6. Supporting Features
+7. Integration and Cross-Functional Tests
+
+---
+
+## NOTES FOR TESTERS
+
+**Prerequisites:**
+- Test environment with clean database
+- Sample data populated (users, centres, categories)
+- Multiple user accounts with different roles
+- Test email/SMS accounts for notifications
+- Document management system accessible
+- Backup of production data (if testing on production)
+
+**Best Practices:**
+- Clear browser cache between major test sections
+- Use different browsers (Chrome, Firefox, Safari, Edge)
+- Test on multiple devices (desktop, tablet, mobile)
+- Document any bugs with screenshots
+- Note performance issues with timestamps
+- Keep track of test data used
+- Reset test environment after each phase
+
+**Critical Areas Requiring Extra Attention:**
+- Authentication and session management
+- Role-based access control
+- Data validation across all forms
+- Notification delivery
+- Report accuracy
+- Data consistency across modules
+- Performance with large datasets
+
+---
+
+*Document Version: 1.0*
+*Last Updated: [Current Date]*
+*Prepared for: CREAMS UAT Testing*

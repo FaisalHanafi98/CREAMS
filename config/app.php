@@ -163,7 +163,7 @@ return [
         /*
          * Application Service Providers...
          */
-        App\Providers\CustomAuthServiceProvider::class,
+        // App\Providers\CustomAuthServiceProvider::class,  // Temporarily disabled due to session binding issue
         App\Providers\AppServiceProvider::class,
         App\Providers\AuthServiceProvider::class,
         App\Providers\AssetServiceProvider::class,
