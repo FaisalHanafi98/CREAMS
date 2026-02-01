@@ -13,6 +13,8 @@ class User extends Authenticatable
 {
     use Notifiable, HasFactory, HandlesPhoneNumbers;
 
+    protected $table = 'staffs'; // Migrated from users to staffs table
+
     /**
      * The attributes that are mass assignable.
      *
@@ -46,7 +48,7 @@ class User extends Authenticatable
         'role',                // Role changes require admin approval
         'centre_id',           // Centre assignment requires admin approval
         'centre_location',     // Auto-derived from centre_id
-        'user_last_accessed_at', // System-managed field
+        'last_accessed_at', // System-managed field
         'encrypted_id',        // System-generated field
         'email_verified_at',   // System-managed field
         'remember_token',      // System-managed field
@@ -72,7 +74,7 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
-        'user_last_accessed_at' => 'datetime',
+        'last_accessed_at' => 'datetime',
         'date_of_birth' => 'date',
     ];
 
@@ -542,7 +544,7 @@ class User extends Authenticatable
      */
     public function updateLastLogin()
     {
-        $this->user_last_accessed_at = now();
+        $this->last_accessed_at = now();
         $this->save();
     }
     

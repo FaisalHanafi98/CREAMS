@@ -240,7 +240,7 @@ class CREAMSSeederAssetManagement extends Seeder
     private function seedAssetMaintenance(): void
     {
         $assets = DB::table('assets')->get();
-        $staff = DB::table('users')->get();
+        $staff = DB::table('staffs')->get();
         $totalMaintenanceRecords = 0;
 
         foreach ($assets as $asset) {

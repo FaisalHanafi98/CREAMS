@@ -43,8 +43,8 @@ abstract class BaseDashboardService
 
             try {
                 // Safe user count
-                if (Schema::hasTable('users')) {
-                    $stats['total_users'] = DB::table('users')->count();
+                if (Schema::hasTable('staffs')) {
+                    $stats['total_users'] = DB::table('staffs')->count();
                 }
             } catch (Exception $e) {
                 Log::error('Error counting users', ['error' => $e->getMessage()]);
@@ -88,8 +88,8 @@ abstract class BaseDashboardService
 
             try {
                 // Safe session count - only if table exists
-                if (Schema::hasTable('activity_sessions')) {
-                    $stats['active_sessions'] = DB::table('activity_sessions')->count();
+                if (Schema::hasTable('activity_occurrences')) {
+                    $stats['active_sessions'] = DB::table('activity_occurrences')->count();
                 }
             } catch (Exception $e) {
                 Log::error('Error counting sessions', ['error' => $e->getMessage()]);
@@ -114,7 +114,7 @@ abstract class BaseDashboardService
                 // Test database connection
                 try {
                     DB::connection()->getPdo();
-                    DB::table('users')->limit(1)->count(); // Test actual query
+                    DB::table('staffs')->limit(1)->count(); // Test actual query
                 } catch (Exception $e) {
                     $dbStatus = 'unhealthy';
                     Log::error('Database health check failed', ['error' => $e->getMessage()]);
@@ -237,8 +237,8 @@ abstract class BaseDashboardService
                 switch ($role) {
                     case 'admin':
                         try {
-                            if (Schema::hasTable('users')) {
-                                $userCount = DB::table('users')->count();
+                            if (Schema::hasTable('staffs')) {
+                                $userCount = DB::table('staffs')->count();
                                 $notifications[] = [
                                     'type' => 'info',
                                     'message' => "System has {$userCount} total users",

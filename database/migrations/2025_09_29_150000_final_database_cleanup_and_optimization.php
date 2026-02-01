@@ -38,14 +38,14 @@ return new class extends Migration
     {
         $indexes = [
             ['table' => 'activity_enrollments', 'name' => 'idx_activity_enrollments_status_date', 'columns' => 'enrollment_status, enrollment_date'],
-            ['table' => 'activity_sessions', 'name' => 'idx_activity_sessions_date_status', 'columns' => 'session_date, session_status'],
+            ['table' => 'activity_occurrences', 'name' => 'idx_activity_occurrences_date_status', 'columns' => 'session_date, session_status'],
             ['table' => 'session_attendance', 'name' => 'idx_session_attendance_status_date', 'columns' => 'attendance_status, created_at'],
             ['table' => 'trainee_attendances', 'name' => 'idx_trainee_attendance_search', 'columns' => 'trainee_id, attendance_date, status'],
             ['table' => 'assets', 'name' => 'idx_assets_search', 'columns' => 'status, `condition`, is_active'],
             ['table' => 'asset_maintenance', 'name' => 'idx_asset_maintenance_search', 'columns' => 'status, scheduled_date, priority'],
             ['table' => 'attendance_alerts', 'name' => 'idx_attendance_alerts_unread', 'columns' => 'is_read, severity, created_at'],
             ['table' => 'contact_messages', 'name' => 'idx_contact_messages_status', 'columns' => 'status, created_at'],
-            ['table' => 'users', 'name' => 'idx_users_active_role', 'columns' => 'status, role, centre_id'],
+            ['table' => 'staffs', 'name' => 'idx_staffs_active_role', 'columns' => 'status, role, centre_id'],
             ['table' => 'trainees', 'name' => 'idx_trainees_active_centre', 'columns' => 'status, centre_id'],
         ];
 
@@ -71,13 +71,13 @@ return new class extends Migration
     private function addDatabaseComments(): void
     {
         // Core tables
-        DB::statement("ALTER TABLE users COMMENT = 'Staff users including admin, supervisors, teachers, and AJK personnel'");
+        DB::statement("ALTER TABLE staffs COMMENT = 'Staff users including admin, supervisors, teachers, and AJK personnel'");
         DB::statement("ALTER TABLE trainees COMMENT = 'Trainee/client records with guardian information and consent tracking'");
         DB::statement("ALTER TABLE centres COMMENT = 'Rehabilitation centers with location and contact information'");
 
         // Activity management
         DB::statement("ALTER TABLE activities COMMENT = 'Rehabilitation programs and services offered'");
-        DB::statement("ALTER TABLE activity_sessions COMMENT = 'Individual sessions within activities with scheduling information'");
+        DB::statement("ALTER TABLE activity_occurrences COMMENT = 'Individual sessions within activities with scheduling information'");
         DB::statement("ALTER TABLE activity_enrollments COMMENT = 'Trainee enrollments in activities with progress tracking'");
 
         // Attendance tracking
@@ -135,7 +135,7 @@ return new class extends Migration
                 ROUND(AVG(ae.progress_percentage), 2) as avg_progress
             FROM activities a
             LEFT JOIN activity_enrollments ae ON a.id = ae.activity_id
-            LEFT JOIN activity_sessions asess ON a.id = asess.activity_id
+            LEFT JOIN activity_occurrences asess ON a.id = asess.activity_id
             WHERE a.is_active = 1
             GROUP BY a.id, a.activity_name, a.centre_id
         ");
@@ -155,7 +155,7 @@ return new class extends Migration
                 ) as attendance_rate
             FROM trainees t
             JOIN activity_enrollments ae ON t.id = ae.trainee_id
-            JOIN activity_sessions asess ON ae.activity_id = asess.activity_id
+            JOIN activity_occurrences asess ON ae.activity_id = asess.activity_id
             JOIN session_attendance sa ON asess.id = sa.session_id AND sa.trainee_id = t.id
             WHERE asess.session_date >= DATE_SUB(NOW(), INTERVAL 30 DAY)
             GROUP BY t.id, t.trainee_first_name, t.trainee_last_name, t.centre_id
@@ -192,8 +192,8 @@ return new class extends Migration
             SELECT
                 'Future Sessions Overdue',
                 COUNT(*),
-                'activity_sessions marked as completed but in future'
-            FROM activity_sessions
+                'activity_occurrences marked as completed but in future'
+            FROM activity_occurrences
             WHERE session_status = 'completed' AND session_date > CURDATE()
 
             UNION ALL
@@ -208,11 +208,11 @@ return new class extends Migration
             UNION ALL
 
             SELECT
-                'Inactive Users With Active Sessions',
+                'Inactive Staff With Active Sessions',
                 COUNT(*),
-                'inactive users assigned to upcoming sessions'
-            FROM activity_sessions asess
-            JOIN users u ON asess.instructor_id = u.id
+                'inactive staff assigned to upcoming sessions'
+            FROM activity_occurrences asess
+            JOIN staffs u ON asess.instructor_id = u.id
             WHERE u.status != 'active' AND asess.session_date >= CURDATE()
         ");
     }
@@ -224,11 +224,11 @@ return new class extends Migration
     {
         // Update current_participants counts one final time
         DB::statement("
-            UPDATE activity_sessions
+            UPDATE activity_occurrences
             SET current_participants = (
                 SELECT COUNT(DISTINCT ae.trainee_id)
                 FROM activity_enrollments ae
-                WHERE ae.activity_id = activity_sessions.activity_id
+                WHERE ae.activity_id = activity_occurrences.activity_id
                 AND ae.enrollment_status IN ('enrolled', 'pending')
             )
         ");
@@ -242,7 +242,7 @@ return new class extends Migration
             SET attendance_count = (
                 SELECT COUNT(*)
                 FROM session_attendance sa
-                JOIN activity_sessions asess ON sa.session_id = asess.id
+                JOIN activity_occurrences asess ON sa.session_id = asess.id
                 WHERE sa.trainee_id = ae.trainee_id
                 AND asess.activity_id = ae.activity_id
                 AND sa.attendance_status IN ('present', 'late')
@@ -263,14 +263,14 @@ return new class extends Migration
 
         // Drop performance indexes
         DB::statement("DROP INDEX IF EXISTS idx_activity_enrollments_status_date ON activity_enrollments");
-        DB::statement("DROP INDEX IF EXISTS idx_activity_sessions_date_status ON activity_sessions");
+        DB::statement("DROP INDEX IF EXISTS idx_activity_occurrences_date_status ON activity_occurrences");
         DB::statement("DROP INDEX IF EXISTS idx_session_attendance_status_date ON session_attendance");
         DB::statement("DROP INDEX IF EXISTS idx_trainee_attendance_search ON trainee_attendances");
         DB::statement("DROP INDEX IF EXISTS idx_assets_search ON assets");
         DB::statement("DROP INDEX IF EXISTS idx_asset_maintenance_search ON asset_maintenance");
         DB::statement("DROP INDEX IF EXISTS idx_attendance_alerts_unread ON attendance_alerts");
         DB::statement("DROP INDEX IF EXISTS idx_contact_messages_status ON contact_messages");
-        DB::statement("DROP INDEX IF EXISTS idx_users_active_role ON users");
+        DB::statement("DROP INDEX IF EXISTS idx_staffs_active_role ON staffs");
         DB::statement("DROP INDEX IF EXISTS idx_trainees_active_centre ON trainees");
     }
 };

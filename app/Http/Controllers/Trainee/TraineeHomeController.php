@@ -555,15 +555,14 @@ class TraineeHomeController extends Controller
             // Get current activities from database
             $currentActivities = \DB::table('activities')
                 ->join('activity_enrollments', 'activities.id', '=', 'activity_enrollments.activity_id')
-                ->leftJoin('activity_categories', 'activities.category_id', '=', 'activity_categories.id')
                 ->where('activity_enrollments.trainee_id', $id)
                 ->where('activity_enrollments.enrollment_status', 'enrolled')
                 ->select(
                     'activities.id',
-                    'activities.activity_name', 
+                    'activities.activity_name',
                     'activities.activity_description',
-                    'activity_categories.category_name as category',
-                    'activity_enrollments.enrollment_date', 
+                    'activities.category as category',
+                    'activity_enrollments.enrollment_date',
                     'activity_enrollments.enrollment_status',
                     'activity_enrollments.trainee_id'
                 )
@@ -658,24 +657,24 @@ class TraineeHomeController extends Controller
             $endOfWeek = now()->endOfWeek();
             $today = now()->toDateString();
             
-            $thisWeekSessions = \DB::table('activity_sessions')
-                ->join('activities', 'activity_sessions.activity_id', '=', 'activities.id')
+            $thisWeekSessions = \DB::table('activity_occurrences')
+                ->join('activities', 'activity_occurrences.activity_id', '=', 'activities.id')
                 ->join('activity_enrollments', function($join) use ($id) {
                     $join->on('activities.id', '=', 'activity_enrollments.activity_id')
                          ->where('activity_enrollments.trainee_id', '=', $id)
                          ->where('activity_enrollments.enrollment_status', '=', 'enrolled');
                 })
-                ->whereBetween('activity_sessions.session_date', [$startOfWeek, $endOfWeek])
+                ->whereBetween('activity_occurrences.session_date', [$startOfWeek, $endOfWeek])
                 ->select(
-                    'activity_sessions.session_date',
-                    'activity_sessions.start_time',
-                    'activity_sessions.end_time', 
-                    'activity_sessions.location',
+                    'activity_occurrences.session_date',
+                    'activity_occurrences.start_time',
+                    'activity_occurrences.end_time', 
+                    'activity_occurrences.location',
                     'activities.activity_name'
                 )
                 ->distinct()
-                ->orderBy('activity_sessions.session_date')
-                ->orderBy('activity_sessions.start_time')
+                ->orderBy('activity_occurrences.session_date')
+                ->orderBy('activity_occurrences.start_time')
                 ->get();
 
             // Organize sessions by day of week
@@ -692,24 +691,24 @@ class TraineeHomeController extends Controller
             }
 
             // Get upcoming activities (next 7 days beyond current week)
-            $upcomingActivities = \DB::table('activity_sessions')
-                ->join('activities', 'activity_sessions.activity_id', '=', 'activities.id')
+            $upcomingActivities = \DB::table('activity_occurrences')
+                ->join('activities', 'activity_occurrences.activity_id', '=', 'activities.id')
                 ->join('activity_enrollments', function($join) use ($id) {
                     $join->on('activities.id', '=', 'activity_enrollments.activity_id')
                          ->where('activity_enrollments.trainee_id', '=', $id)
                          ->where('activity_enrollments.enrollment_status', '=', 'enrolled');
                 })
-                ->whereBetween('activity_sessions.session_date', [now()->addWeek()->startOfWeek(), now()->addWeek()->endOfWeek()])
+                ->whereBetween('activity_occurrences.session_date', [now()->addWeek()->startOfWeek(), now()->addWeek()->endOfWeek()])
                 ->select(
-                    'activity_sessions.session_date',
-                    'activity_sessions.start_time',
-                    'activity_sessions.end_time', 
-                    'activity_sessions.location',
+                    'activity_occurrences.session_date',
+                    'activity_occurrences.start_time',
+                    'activity_occurrences.end_time', 
+                    'activity_occurrences.location',
                     'activities.activity_name'
                 )
                 ->distinct()
-                ->orderBy('activity_sessions.session_date')
-                ->orderBy('activity_sessions.start_time')
+                ->orderBy('activity_occurrences.session_date')
+                ->orderBy('activity_occurrences.start_time')
                 ->limit(6)
                 ->get();
 

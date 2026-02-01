@@ -261,7 +261,7 @@ class DashboardController extends Controller
             // If centre_id is not in session, get it from the user's record
             if (!$centreId) {
                 $userId = session('id');
-                $user = DB::table('users')->where('id', $userId)->first();
+                $user = DB::table('staffs')->where('id', $userId)->first();
                 $centreId = $user->centre_id ?? '01';
 
                 // Update session with centre_id for future use
@@ -269,12 +269,12 @@ class DashboardController extends Controller
             }
 
             // Calculate growth rates dynamically - CENTRE SPECIFIC
-            $currentMonthUsers = DB::table('users')
+            $currentMonthUsers = DB::table('staffs')
                 ->where('centre_id', $centreId)
                 ->where('status', 'active')
                 ->whereMonth('created_at', now()->month)
                 ->count();
-            $lastMonthUsers = DB::table('users')
+            $lastMonthUsers = DB::table('staffs')
                 ->where('centre_id', $centreId)
                 ->where('status', 'active')
                 ->whereMonth('created_at', now()->subMonth()->month)
@@ -306,7 +306,7 @@ class DashboardController extends Controller
             $activityGrowthRate = $lastMonthActivities > 0 ? round((($currentMonthActivities - $lastMonthActivities) / $lastMonthActivities) * 100, 1) : 0;
 
             // CENTRE-SPECIFIC COUNTS - Active staff in this centre
-            $totalUsers = DB::table('users')
+            $totalUsers = DB::table('staffs')
                 ->where('centre_id', $centreId)
                 ->where('status', 'active')
                 ->count();
@@ -326,10 +326,10 @@ class DashboardController extends Controller
             // Sessions this week in this centre
             $startOfWeek = now()->startOfWeek();
             $endOfWeek = now()->endOfWeek();
-            $sessionsThisWeek = DB::table('activity_sessions')
-                ->join('activities', 'activity_sessions.activity_id', '=', 'activities.id')
+            $sessionsThisWeek = DB::table('activity_occurrences')
+                ->join('activities', 'activity_occurrences.activity_id', '=', 'activities.id')
                 ->where('activities.centre_id', $centreId)
-                ->whereBetween('activity_sessions.session_date', [$startOfWeek->format('Y-m-d'), $endOfWeek->format('Y-m-d')])
+                ->whereBetween('activity_occurrences.session_date', [$startOfWeek->format('Y-m-d'), $endOfWeek->format('Y-m-d')])
                 ->count();
 
             return [
@@ -348,12 +348,12 @@ class DashboardController extends Controller
                         'color' => 'primary',
                         'trend' => $userGrowthRate > 0 ? "+{$userGrowthRate}%" : ($userGrowthRate < 0 ? "{$userGrowthRate}%" : "stable"),
                         'details' => [
-                            'admins' => DB::table('users')->where('role', 'admin')->count(),
-                            'supervisors' => DB::table('users')->where('role', 'supervisor')->count(), 
-                            'teachers' => DB::table('users')->where('role', 'teacher')->count(),
-                            'ajk' => DB::table('users')->where('role', 'ajk')->count(),
-                            'active_today' => DB::table('users')->whereDate('user_last_accessed_at', today())->count(),
-                            'inactive_30_days' => DB::table('users')->where('user_last_accessed_at', '<', now()->subDays(30))->count()
+                            'admins' => DB::table('staffs')->where('role', 'admin')->count(),
+                            'supervisors' => DB::table('staffs')->where('role', 'supervisor')->count(), 
+                            'teachers' => DB::table('staffs')->where('role', 'teacher')->count(),
+                            'ajk' => DB::table('staffs')->where('role', 'ajk')->count(),
+                            'active_today' => DB::table('staffs')->whereDate('last_accessed_at', today())->count(),
+                            'inactive_30_days' => DB::table('staffs')->where('last_accessed_at', '<', now()->subDays(30))->count()
                         ]
                     ],
                     [
@@ -383,8 +383,8 @@ class DashboardController extends Controller
                         'scheduled' => DB::table('activities')->where('is_active', true)->count(),
                         'completed' => DB::table('activities')->where('is_active', false)->count(),
                         'cancelled' => 0,
-                        'today_sessions' => DB::table('activity_sessions')->whereDate('session_date', today())->count(),
-                        'total_sessions' => DB::table('activity_sessions')->count()
+                        'today_sessions' => DB::table('activity_occurrences')->whereDate('session_date', today())->count(),
+                        'total_sessions' => DB::table('activity_occurrences')->count()
                         // Removed 'by_type' query - activity_categories table doesn't exist
                     ]
                 ],
@@ -395,22 +395,22 @@ class DashboardController extends Controller
                     'color' => 'warning',
                     'trend' => $sessionsThisWeek > 0 ? 'active' : 'none',
                     'details' => [
-                        'today_sessions' => DB::table('activity_sessions')
-                            ->join('activities', 'activity_sessions.activity_id', '=', 'activities.id')
+                        'today_sessions' => DB::table('activity_occurrences')
+                            ->join('activities', 'activity_occurrences.activity_id', '=', 'activities.id')
                             ->where('activities.centre_id', $centreId)
-                            ->whereDate('activity_sessions.session_date', today())
+                            ->whereDate('activity_occurrences.session_date', today())
                             ->count(),
-                        'completed_this_week' => DB::table('activity_sessions')
-                            ->join('activities', 'activity_sessions.activity_id', '=', 'activities.id')
+                        'completed_this_week' => DB::table('activity_occurrences')
+                            ->join('activities', 'activity_occurrences.activity_id', '=', 'activities.id')
                             ->where('activities.centre_id', $centreId)
-                            ->whereBetween('activity_sessions.session_date', [$startOfWeek->format('Y-m-d'), now()->format('Y-m-d')])
-                            ->where('activity_sessions.session_status', 'completed')
+                            ->whereBetween('activity_occurrences.session_date', [$startOfWeek->format('Y-m-d'), now()->format('Y-m-d')])
+                            ->where('activity_occurrences.session_status', 'completed')
                             ->count(),
-                        'upcoming_this_week' => DB::table('activity_sessions')
-                            ->join('activities', 'activity_sessions.activity_id', '=', 'activities.id')
+                        'upcoming_this_week' => DB::table('activity_occurrences')
+                            ->join('activities', 'activity_occurrences.activity_id', '=', 'activities.id')
                             ->where('activities.centre_id', $centreId)
-                            ->whereBetween('activity_sessions.session_date', [now()->format('Y-m-d'), $endOfWeek->format('Y-m-d')])
-                            ->where('activity_sessions.session_status', 'scheduled')
+                            ->whereBetween('activity_occurrences.session_date', [now()->format('Y-m-d'), $endOfWeek->format('Y-m-d')])
+                            ->where('activity_occurrences.session_status', 'scheduled')
                             ->count()
                     ]
                 ],
@@ -489,7 +489,7 @@ class DashboardController extends Controller
     {
         try {
             // Calculate actual numbers for the centre
-            $staffCount = DB::table('users')->where('centre_id', $centreId)->where('status', 'active')->count();
+            $staffCount = DB::table('staffs')->where('centre_id', $centreId)->where('status', 'active')->count();
             $traineeCount = DB::table('trainees')->where('centre_id', $centreId)->where('status', 'active')->count();
             $activityCount = DB::table('activities')->where('centre_id', $centreId)->where('is_active', true)->count();
             $assetCount = DB::table('assets')->where('centre_id', $centreId)->count();
@@ -578,12 +578,12 @@ class DashboardController extends Controller
         try {
             // Calculate actual values for the teacher
             $myActivities = DB::table('activities')->where('instructor_id', $userId)->count();
-            $assignedSessions = DB::table('activity_sessions')->where('instructor_id', $userId)->where('session_status', 'scheduled')->count();
+            $assignedSessions = DB::table('activity_occurrences')->where('instructor_id', $userId)->where('session_status', 'scheduled')->count();
             $centreTrainees = DB::table('trainees')->where('centre_id', $centreId)->where('status', 'active')->count();
-            $completedSessions = DB::table('activity_sessions')->where('instructor_id', $userId)->where('session_status', 'completed')->count();
+            $completedSessions = DB::table('activity_occurrences')->where('instructor_id', $userId)->where('session_status', 'completed')->count();
             
             // Calculate completion rate
-            $totalSessions = DB::table('activity_sessions')->where('instructor_id', $userId)->count();
+            $totalSessions = DB::table('activity_occurrences')->where('instructor_id', $userId)->count();
             $completionRate = $totalSessions > 0 ? round(($completedSessions / $totalSessions) * 100, 1) : 0;
             
             return [
@@ -660,10 +660,10 @@ class DashboardController extends Controller
             // Calculate actual values for AJK role
             $centreTrainees = DB::table('trainees')->where('centre_id', $centreId)->where('status', 'active')->count();
             $activeActivities = DB::table('activities')->where('centre_id', $centreId)->where('is_active', true)->count();
-            $todaySessions = DB::table('activity_sessions')
-                ->join('activities', 'activity_sessions.activity_id', '=', 'activities.id')
+            $todaySessions = DB::table('activity_occurrences')
+                ->join('activities', 'activity_occurrences.activity_id', '=', 'activities.id')
                 ->where('activities.centre_id', $centreId)
-                ->whereDate('activity_sessions.session_date', today())
+                ->whereDate('activity_occurrences.session_date', today())
                 ->count();
             
             // Calculate maintenance alerts
@@ -747,9 +747,8 @@ class DashboardController extends Controller
     {
         try {
             $query = DB::table('activities')
-                ->leftJoin('activity_categories', 'activities.category_id', '=', 'activity_categories.id')
-                ->select('activities.id', 'activities.activity_name', 'activities.created_at', 'activities.is_active', 
-                        'activity_categories.category_name', 'activity_categories.category_type')
+                ->select('activities.id', 'activities.activity_name', 'activities.created_at', 'activities.is_active',
+                        'activities.category as category_name')
                 ->orderBy('activities.created_at', 'desc');
 
             // Add timestamp filtering if provided
@@ -829,13 +828,13 @@ class DashboardController extends Controller
     private function getUpcomingSessions($role = null, $userId = null, $centreId = null)
     {
         try {
-            $query = DB::table('activity_sessions')
-                ->join('activities', 'activity_sessions.activity_id', '=', 'activities.id')
-                ->select('activities.activity_name', 'activity_sessions.session_date', 'activity_sessions.start_time', 'activity_sessions.location')
-                ->where('activity_sessions.session_status', 'scheduled')
-                ->where('activity_sessions.session_date', '>=', today())
-                ->orderBy('activity_sessions.session_date')
-                ->orderBy('activity_sessions.start_time')
+            $query = DB::table('activity_occurrences')
+                ->join('activities', 'activity_occurrences.activity_id', '=', 'activities.id')
+                ->select('activities.activity_name', 'activity_occurrences.session_date', 'activity_occurrences.start_time', 'activity_occurrences.location')
+                ->where('activity_occurrences.session_status', 'scheduled')
+                ->where('activity_occurrences.session_date', '>=', today())
+                ->orderBy('activity_occurrences.session_date')
+                ->orderBy('activity_occurrences.start_time')
                 ->limit(5);
 
             // Role-based filtering
@@ -845,7 +844,7 @@ class DashboardController extends Controller
             } else if ($userId) {
                 // For non-admin users, show only sessions where they are assigned
                 $query->where(function($q) use ($userId) {
-                    $q->where('activity_sessions.instructor_id', $userId)
+                    $q->where('activity_occurrences.instructor_id', $userId)
                       ->orWhere('activities.instructor_id', $userId);
                 });
             }
@@ -927,7 +926,7 @@ class DashboardController extends Controller
         }
 
         try {
-            $query = DB::table('users')
+            $query = DB::table('staffs')
                 ->select('id', 'name', 'role', 'last_login', 'is_online', 'created_at')
                 ->orderBy('last_login', 'desc')
                 ->limit(8);
@@ -957,28 +956,28 @@ class DashboardController extends Controller
     private function getCurrentSessions($role, $userId, $centreId)
     {
         try {
-            $query = DB::table('activity_sessions')
-                ->join('activities', 'activity_sessions.activity_id', '=', 'activities.id')
-                ->join('users', 'activity_sessions.instructor_id', '=', 'users.id')
+            $query = DB::table('activity_occurrences')
+                ->join('activities', 'activity_occurrences.activity_id', '=', 'activities.id')
+                ->join('staffs', 'activity_occurrences.instructor_id', '=', 'staffs.id')
                 ->select(
                     'activities.activity_name',
-                    'activity_sessions.start_time',
-                    'activity_sessions.end_time',
-                    'activity_sessions.location',
-                    'users.name as teacher_name',
-                    'activity_sessions.session_status',
-                    'activity_sessions.id as session_id'
+                    'activity_occurrences.start_time',
+                    'activity_occurrences.end_time',
+                    'activity_occurrences.location',
+                    'staffs.name as teacher_name',
+                    'activity_occurrences.session_status',
+                    'activity_occurrences.id as session_id'
                 )
-                ->where('activity_sessions.session_status', 'ongoing')
-                ->whereDate('activity_sessions.session_date', today());
+                ->where('activity_occurrences.session_status', 'ongoing')
+                ->whereDate('activity_occurrences.session_date', today());
 
             if ($role === 'admin') {
                 // Admins see all ongoing sessions
             } else if ($userId) {
                 // Non-admin users see only their assigned sessions
                 $query->where(function($q) use ($userId) {
-                    $q->where('activity_sessions.instructor_id', $userId)
-                      ->orWhere('activity_sessions.instructor_id', $userId)
+                    $q->where('activity_occurrences.instructor_id', $userId)
+                      ->orWhere('activity_occurrences.instructor_id', $userId)
                       ->orWhere('activities.instructor_id', $userId)
                       ->orWhere('activities.instructor_id', $userId);
                 });
@@ -1013,17 +1012,17 @@ class DashboardController extends Controller
             $weekStart = now()->startOfWeek()->addWeeks($weekOffset);
             $weekEnd = $weekStart->copy()->endOfWeek();
 
-            $query = DB::table('activity_sessions')
-                ->leftJoin('activities', 'activity_sessions.activity_id', '=', 'activities.id')
+            $query = DB::table('activity_occurrences')
+                ->leftJoin('activities', 'activity_occurrences.activity_id', '=', 'activities.id')
                 ->select([
-                    'activity_sessions.id',
-                    'activity_sessions.activity_id',
-                    'activity_sessions.session_date',
-                    'activity_sessions.start_time',
-                    'activity_sessions.end_time',
-                    'activity_sessions.session_status',
-                    'activity_sessions.location',
-                    'activity_sessions.max_participants',
+                    'activity_occurrences.id',
+                    'activity_occurrences.activity_id',
+                    'activity_occurrences.session_date',
+                    'activity_occurrences.start_time',
+                    'activity_occurrences.end_time',
+                    'activity_occurrences.session_status',
+                    'activity_occurrences.location',
+                    'activity_occurrences.max_participants',
                     'activities.activity_name'
                 ])
                 ->whereBetween('session_date', [$weekStart->format('Y-m-d'), $weekEnd->format('Y-m-d')])
@@ -1034,14 +1033,14 @@ class DashboardController extends Controller
                 $query->whereExists(function($q) use ($userId) {
                     $q->select(DB::raw(1))
                       ->from('activity_enrollments')
-                      ->whereColumn('activity_enrollments.activity_id', 'activity_sessions.activity_id')
+                      ->whereColumn('activity_enrollments.activity_id', 'activity_occurrences.activity_id')
                       ->where('activity_enrollments.trainee_id', $userId);
                 });
             } else {
                 // All staff (including admin) see their assigned sessions - FIXED: Added instructor_id condition
                 $query->where(function($q) use ($userId) {
-                    $q->where('activity_sessions.instructor_id', $userId)
-                      ->orWhere('activity_sessions.instructor_id', $userId)
+                    $q->where('activity_occurrences.instructor_id', $userId)
+                      ->orWhere('activity_occurrences.instructor_id', $userId)
                       ->orWhere('activities.instructor_id', $userId);
                 });
             }
@@ -1050,8 +1049,8 @@ class DashboardController extends Controller
                 $query->where('activities.centre_id', $centreId);
             }
 
-            $results = $query->orderBy('activity_sessions.session_date', 'asc')
-                ->orderBy('activity_sessions.start_time', 'asc')
+            $results = $query->orderBy('activity_occurrences.session_date', 'asc')
+                ->orderBy('activity_occurrences.start_time', 'asc')
                 ->get()
                 ->map(function ($session) {
                     try {
@@ -1146,7 +1145,7 @@ class DashboardController extends Controller
                 }
 
                 // Check for overdue sessions
-                $overdueSessions = DB::table('activity_sessions')
+                $overdueSessions = DB::table('activity_occurrences')
                     ->where('status', 'scheduled')
                     ->where('session_date', '<', today())
                     ->count();
@@ -1193,8 +1192,8 @@ class DashboardController extends Controller
     {
         try {
             if ($role === 'teacher') {
-                $totalSessions = DB::table('activity_sessions')->where('instructor_id', $userId)->count();
-                $completedSessions = DB::table('activity_sessions')->where('instructor_id', $userId)->where('session_status', 'completed')->count();
+                $totalSessions = DB::table('activity_occurrences')->where('instructor_id', $userId)->count();
+                $completedSessions = DB::table('activity_occurrences')->where('instructor_id', $userId)->where('session_status', 'completed')->count();
                 $progress = $totalSessions > 0 ? round(($completedSessions / $totalSessions) * 100) : 0;
 
                 return [
@@ -1205,15 +1204,15 @@ class DashboardController extends Controller
                     'description' => 'Sessions completed this month'
                 ];
             } elseif (in_array($role, ['admin', 'supervisor'])) {
-                $query = DB::table('activity_sessions')
-                    ->join('activities', 'activity_sessions.activity_id', '=', 'activities.id');
+                $query = DB::table('activity_occurrences')
+                    ->join('activities', 'activity_occurrences.activity_id', '=', 'activities.id');
 
                 if ($role === 'supervisor' && $centreId) {
                     $query->where('activities.centre_id', $centreId);
                 }
 
                 $totalSessions = $query->count();
-                $completedSessions = $query->where('activity_sessions.session_status', 'completed')->count();
+                $completedSessions = $query->where('activity_occurrences.session_status', 'completed')->count();
                 $progress = $totalSessions > 0 ? round(($completedSessions / $totalSessions) * 100) : 0;
 
                 return [
@@ -1459,8 +1458,8 @@ class DashboardController extends Controller
             return DB::table('sessions')->count();
         } catch (\Exception $e) {
             try {
-                // Fallback to activity_sessions table if sessions table doesn't exist
-                return DB::table('activity_sessions')
+                // Fallback to activity_occurrences table if sessions table doesn't exist
+                return DB::table('activity_occurrences')
                     ->where('session_status', 'ongoing')
                     ->whereDate('session_date', today())
                     ->count();
@@ -1759,27 +1758,27 @@ class DashboardController extends Controller
             // Get nearest workday from current time
             $targetDate = $this->getNearestWorkday();
             
-            $query = DB::table('activity_sessions')
-                ->join('activities', 'activity_sessions.activity_id', '=', 'activities.id')
-                ->leftJoin('users as teachers', 'activity_sessions.instructor_id', '=', 'teachers.id')
+            $query = DB::table('activity_occurrences')
+                ->join('activities', 'activity_occurrences.activity_id', '=', 'activities.id')
+                ->leftJoin('staffs as teachers', 'activity_occurrences.instructor_id', '=', 'teachers.id')
                 ->select([
-                    'activity_sessions.id',
+                    'activity_occurrences.id',
                     'activities.activity_name as title',
-                    'activity_sessions.session_date',
-                    'activity_sessions.start_time as time',
-                    'activity_sessions.end_time',
-                    'activity_sessions.session_status',
-                    'activity_sessions.location as location',
+                    'activity_occurrences.session_date',
+                    'activity_occurrences.start_time as time',
+                    'activity_occurrences.end_time',
+                    'activity_occurrences.session_status',
+                    'activity_occurrences.location as location',
                     'teachers.name as teacher_name',
-                    'activity_sessions.max_participants'
+                    'activity_occurrences.max_participants'
                 ])
-                ->whereDate('activity_sessions.session_date', $targetDate)
-                ->where('activity_sessions.session_status', '!=', 'cancelled')
-                ->orderBy('activity_sessions.start_time');
+                ->whereDate('activity_occurrences.session_date', $targetDate)
+                ->where('activity_occurrences.session_status', '!=', 'cancelled')
+                ->orderBy('activity_occurrences.start_time');
 
             // Filter to show only user's assigned activities
             $query->where(function($q) use ($userId) {
-                $q->where('activity_sessions.instructor_id', $userId)
+                $q->where('activity_occurrences.instructor_id', $userId)
                   ->orWhere('activities.instructor_id', $userId);
             });
 
@@ -1821,23 +1820,23 @@ class DashboardController extends Controller
             // Get nearest workday from current time
             $targetDate = $this->getNearestWorkday();
             
-            $query = DB::table('activity_sessions')
-                ->join('activities', 'activity_sessions.activity_id', '=', 'activities.id')
-                ->leftJoin('users as teachers', 'activity_sessions.instructor_id', '=', 'teachers.id')
+            $query = DB::table('activity_occurrences')
+                ->join('activities', 'activity_occurrences.activity_id', '=', 'activities.id')
+                ->leftJoin('staffs as teachers', 'activity_occurrences.instructor_id', '=', 'teachers.id')
                 ->select([
-                    'activity_sessions.id',
+                    'activity_occurrences.id',
                     'activities.activity_name as title',
-                    'activity_sessions.session_date',
-                    'activity_sessions.start_time as time',
-                    'activity_sessions.end_time',
-                    'activity_sessions.session_status',
-                    'activity_sessions.location as location',
+                    'activity_occurrences.session_date',
+                    'activity_occurrences.start_time as time',
+                    'activity_occurrences.end_time',
+                    'activity_occurrences.session_status',
+                    'activity_occurrences.location as location',
                     'teachers.name as teacher_name',
-                    'activity_sessions.max_participants'
+                    'activity_occurrences.max_participants'
                 ])
-                ->whereDate('activity_sessions.session_date', $targetDate)
-                ->where('activity_sessions.session_status', '!=', 'cancelled')
-                ->orderBy('activity_sessions.start_time');
+                ->whereDate('activity_occurrences.session_date', $targetDate)
+                ->where('activity_occurrences.session_status', '!=', 'cancelled')
+                ->orderBy('activity_occurrences.start_time');
 
             if ($centreId && $centreId !== 'admin') {
                 $query->where('activities.centre_id', $centreId);
@@ -1967,48 +1966,48 @@ class DashboardController extends Controller
                 $startOfWeek = now()->startOfWeek();
                 $endOfWeek = now()->endOfWeek();
                 
-                $weeklySessions = DB::table('activity_sessions')
-                    ->join('activities', 'activity_sessions.activity_id', '=', 'activities.id')
+                $weeklySessions = DB::table('activity_occurrences')
+                    ->join('activities', 'activity_occurrences.activity_id', '=', 'activities.id')
                     ->where('activities.centre_id', $centreId)
                     ->where(function($query) use ($userId) {
-                        $query->where('activity_sessions.instructor_id', $userId)
+                        $query->where('activity_occurrences.instructor_id', $userId)
                               ->orWhere('activities.instructor_id', $userId);
                     })
-                    ->whereBetween('activity_sessions.session_date', [$startOfWeek->format('Y-m-d'), $endOfWeek->format('Y-m-d')])
+                    ->whereBetween('activity_occurrences.session_date', [$startOfWeek->format('Y-m-d'), $endOfWeek->format('Y-m-d')])
                     ->count();
 
                 // Calculate completion rate (sessions that have been conducted vs scheduled past sessions)
-                $pastSessions = DB::table('activity_sessions')
-                    ->join('activities', 'activity_sessions.activity_id', '=', 'activities.id')
+                $pastSessions = DB::table('activity_occurrences')
+                    ->join('activities', 'activity_occurrences.activity_id', '=', 'activities.id')
                     ->where('activities.centre_id', $centreId)
                     ->where(function($query) use ($userId) {
-                        $query->where('activity_sessions.instructor_id', $userId)
+                        $query->where('activity_occurrences.instructor_id', $userId)
                               ->orWhere('activities.instructor_id', $userId);
                     })
-                    ->where('activity_sessions.session_date', '<=', now()->format('Y-m-d'))
+                    ->where('activity_occurrences.session_date', '<=', now()->format('Y-m-d'))
                     ->count();
 
-                $completedSessions = DB::table('activity_sessions')
-                    ->join('activities', 'activity_sessions.activity_id', '=', 'activities.id')
+                $completedSessions = DB::table('activity_occurrences')
+                    ->join('activities', 'activity_occurrences.activity_id', '=', 'activities.id')
                     ->where('activities.centre_id', $centreId)
                     ->where(function($query) use ($userId) {
-                        $query->where('activity_sessions.instructor_id', $userId)
+                        $query->where('activity_occurrences.instructor_id', $userId)
                               ->orWhere('activities.instructor_id', $userId);
                     })
-                    ->where('activity_sessions.session_status', 'completed')
+                    ->where('activity_occurrences.session_status', 'completed')
                     ->count();
 
                 $completionRate = $pastSessions > 0 ? round(($completedSessions / $pastSessions) * 100) : 0;
 
                 // Calculate average attendance from sessions taught by this user
-                $userSessionIds = DB::table('activity_sessions')
-                    ->join('activities', 'activity_sessions.activity_id', '=', 'activities.id')
+                $userSessionIds = DB::table('activity_occurrences')
+                    ->join('activities', 'activity_occurrences.activity_id', '=', 'activities.id')
                     ->where('activities.centre_id', $centreId)
                     ->where(function($query) use ($userId) {
-                        $query->where('activity_sessions.instructor_id', $userId)
+                        $query->where('activity_occurrences.instructor_id', $userId)
                               ->orWhere('activities.instructor_id', $userId);
                     })
-                    ->pluck('activity_sessions.id');
+                    ->pluck('activity_occurrences.id');
 
                 $totalAttendanceRecords = DB::table('session_attendance')
                     ->whereIn('session_id', $userSessionIds)
@@ -2048,16 +2047,16 @@ class DashboardController extends Controller
 
                 // Get attendance records for this trainee
                 $attendedSessions = DB::table('trainee_attendances')
-                    ->join('activity_sessions', 'trainee_attendances.session_id', '=', 'activity_sessions.id')
-                    ->join('activities', 'activity_sessions.activity_id', '=', 'activities.id')
+                    ->join('activity_occurrences', 'trainee_attendances.session_id', '=', 'activity_occurrences.id')
+                    ->join('activities', 'activity_occurrences.activity_id', '=', 'activities.id')
                     ->where('trainee_attendances.trainee_id', $userId)
                     ->where('activities.centre_id', $centreId)
                     ->where('trainee_attendances.status', 'present')
                     ->count();
 
                 $totalSessionsAttended = DB::table('trainee_attendances')
-                    ->join('activity_sessions', 'trainee_attendances.session_id', '=', 'activity_sessions.id')
-                    ->join('activities', 'activity_sessions.activity_id', '=', 'activities.id')
+                    ->join('activity_occurrences', 'trainee_attendances.session_id', '=', 'activity_occurrences.id')
+                    ->join('activities', 'activity_occurrences.activity_id', '=', 'activities.id')
                     ->where('trainee_attendances.trainee_id', $userId)
                     ->where('activities.centre_id', $centreId)
                     ->count();
@@ -2065,13 +2064,13 @@ class DashboardController extends Controller
                 $attendanceRate = $totalSessionsAttended > 0 ? round(($attendedSessions / $totalSessionsAttended) * 100) : 0;
 
                 // Get this week's sessions for enrolled activities
-                $thisWeekSessions = DB::table('activity_sessions')
-                    ->join('activity_enrollments', 'activity_sessions.activity_id', '=', 'activity_enrollments.activity_id')
-                    ->join('activities', 'activity_sessions.activity_id', '=', 'activities.id')
+                $thisWeekSessions = DB::table('activity_occurrences')
+                    ->join('activity_enrollments', 'activity_occurrences.activity_id', '=', 'activity_enrollments.activity_id')
+                    ->join('activities', 'activity_occurrences.activity_id', '=', 'activities.id')
                     ->where('activity_enrollments.trainee_id', $userId)
                     ->where('activities.centre_id', $centreId)
                     ->where('activity_enrollments.enrollment_status', '!=', 'dropped')
-                    ->whereBetween('activity_sessions.session_date', [
+                    ->whereBetween('activity_occurrences.session_date', [
                         now()->startOfWeek()->format('Y-m-d'), 
                         now()->endOfWeek()->format('Y-m-d')
                     ])

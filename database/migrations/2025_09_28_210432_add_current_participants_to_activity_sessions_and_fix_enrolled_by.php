@@ -12,9 +12,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // Add current_participants field to activity_sessions table
-        Schema::table('activity_sessions', function (Blueprint $table) {
-            if (!Schema::hasColumn('activity_sessions', 'current_participants')) {
+        // Add current_participants field to activity_occurrences table
+        Schema::table('activity_occurrences', function (Blueprint $table) {
+            if (!Schema::hasColumn('activity_occurrences', 'current_participants')) {
                 $table->integer('current_participants')->default(0)->after('max_participants');
             }
         });
@@ -25,16 +25,16 @@ return new class extends Migration
             $table->unsignedBigInteger('enrolled_by')->nullable()->change();
 
             // Add foreign key constraint to enrolled_by field
-            $table->foreign('enrolled_by')->references('id')->on('users')->onDelete('set null');
+            $table->foreign('enrolled_by')->references('id')->on('staffs')->onDelete('set null');
         });
 
         // Update current_participants for existing sessions based on actual enrollments
         DB::statement("
-            UPDATE activity_sessions
+            UPDATE activity_occurrences
             SET current_participants = (
                 SELECT COUNT(*)
                 FROM activity_enrollments
-                WHERE activity_enrollments.activity_id = activity_sessions.activity_id
+                WHERE activity_enrollments.activity_id = activity_occurrences.activity_id
                 AND activity_enrollments.enrollment_status = 'enrolled'
             )
         ");
@@ -45,7 +45,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('activity_sessions', function (Blueprint $table) {
+        Schema::table('activity_occurrences', function (Blueprint $table) {
             $table->dropColumn('current_participants');
         });
 

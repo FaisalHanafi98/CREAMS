@@ -17,7 +17,7 @@ class GombakDataExtractor extends Seeder
         try {
             $realData = [
                 'centres' => DB::table('centres')->where('centre_id', '01')->get()->toArray(),
-                'users' => DB::table('users')->where('centre_id', '01')->get()->toArray(),
+                'users' => DB::table('staffs')->where('centre_id', '01')->get()->toArray(),
                 'assets' => DB::table('assets')->where('centre_id', '01')->get()->toArray(),
                 'staff_attendances' => DB::table('staff_attendances')
                     ->whereIn('user_id', function($query) {

@@ -272,11 +272,11 @@ class ActivityEnrollment extends Model
     protected static function updateActivitySessionsParticipantCount($activityId)
     {
         \DB::statement("
-            UPDATE activity_sessions
+            UPDATE activity_occurrences
             SET current_participants = (
                 SELECT COUNT(DISTINCT ae.trainee_id)
                 FROM activity_enrollments ae
-                WHERE ae.activity_id = activity_sessions.activity_id
+                WHERE ae.activity_id = activity_occurrences.activity_id
                 AND ae.enrollment_status IN ('enrolled', 'pending')
             )
             WHERE activity_id = ?

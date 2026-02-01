@@ -187,11 +187,11 @@ class CentreService
      */
     private function getTodayActiveSessions($centreId)
     {
-        return DB::table('activity_sessions')
-            ->join('activities', 'activity_sessions.activity_id', '=', 'activities.id')
+        return DB::table('activity_occurrences')
+            ->join('activities', 'activity_occurrences.activity_id', '=', 'activities.id')
             ->where('activities.centre_id', $centreId)
-            ->where('activity_sessions.session_date', now()->toDateString())
-            ->where('activity_sessions.session_status', 'scheduled')
+            ->where('activity_occurrences.session_date', now()->toDateString())
+            ->where('activity_occurrences.session_status', 'scheduled')
             ->count();
     }
     
@@ -200,11 +200,11 @@ class CentreService
      */
     private function getTodayCompletedSessions($centreId)
     {
-        return DB::table('activity_sessions')
-            ->join('activities', 'activity_sessions.activity_id', '=', 'activities.id')
+        return DB::table('activity_occurrences')
+            ->join('activities', 'activity_occurrences.activity_id', '=', 'activities.id')
             ->where('activities.centre_id', $centreId)
-            ->where('activity_sessions.session_date', now()->toDateString())
-            ->where('activity_sessions.session_status', 'completed')
+            ->where('activity_occurrences.session_date', now()->toDateString())
+            ->where('activity_occurrences.session_status', 'completed')
             ->count();
     }
     
@@ -215,12 +215,12 @@ class CentreService
     {
         $endDate = now()->addDays($days)->toDateString();
         
-        return DB::table('activity_sessions')
-            ->join('activities', 'activity_sessions.activity_id', '=', 'activities.id')
+        return DB::table('activity_occurrences')
+            ->join('activities', 'activity_occurrences.activity_id', '=', 'activities.id')
             ->where('activities.centre_id', $centreId)
-            ->where('activity_sessions.session_date', '>', now()->toDateString())
-            ->where('activity_sessions.session_date', '<=', $endDate)
-            ->where('activity_sessions.session_status', 'scheduled')
+            ->where('activity_occurrences.session_date', '>', now()->toDateString())
+            ->where('activity_occurrences.session_date', '<=', $endDate)
+            ->where('activity_occurrences.session_status', 'scheduled')
             ->count();
     }
     
@@ -232,10 +232,10 @@ class CentreService
         $startDate = Carbon::now()->subDays($days);
         
         $attendanceData = DB::table('session_attendance')
-            ->join('activity_sessions', 'session_attendance.session_id', '=', 'activity_sessions.id')
-            ->join('activities', 'activity_sessions.activity_id', '=', 'activities.id')
+            ->join('activity_occurrences', 'session_attendance.session_id', '=', 'activity_occurrences.id')
+            ->join('activities', 'activity_occurrences.activity_id', '=', 'activities.id')
             ->where('activities.centre_id', $centreId)
-            ->where('activity_sessions.session_date', '>=', $startDate)
+            ->where('activity_occurrences.session_date', '>=', $startDate)
             ->selectRaw('
                 COUNT(*) as total_enrollments,
                 SUM(CASE WHEN session_attendance.attendance_status IN ("present", "late") THEN 1 ELSE 0 END) as present_count

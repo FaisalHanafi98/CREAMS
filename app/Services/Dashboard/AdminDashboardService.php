@@ -113,10 +113,10 @@ class AdminDashboardService extends BaseDashboardService
                 'recent_growth' => $recentGrowth,
                 
                 // Add analytics data for User Access Analytics section
-                'active_today' => User::whereDate('user_last_accessed_at', Carbon::today())->count(),
-                'active_week' => User::where('user_last_accessed_at', '>=', Carbon::now()->startOfWeek())->count(),
+                'active_today' => User::whereDate('last_accessed_at', Carbon::today())->count(),
+                'active_week' => User::where('last_accessed_at', '>=', Carbon::now()->startOfWeek())->count(),
                 'fellow_teachers' => User::where('role', 'teacher')->count(),
-                'teachers_online' => User::where('role', 'teacher')->where('user_last_accessed_at', '>=', Carbon::now()->subMinutes(15))->count(),
+                'teachers_online' => User::where('role', 'teacher')->where('last_accessed_at', '>=', Carbon::now()->subMinutes(15))->count(),
             ]);
 
         } catch (Exception $e) {
@@ -201,8 +201,8 @@ class AdminDashboardService extends BaseDashboardService
     private function getActiveTodayCount(): int
     {
         // Mock realistic data for UAT - users who were active today
-        // Using user_last_accessed_at column instead of last_login
-        $actualCount = User::whereDate('user_last_accessed_at', Carbon::today())->count();
+        // Using last_accessed_at column instead of last_login
+        $actualCount = User::whereDate('last_accessed_at', Carbon::today())->count();
         return min(max($actualCount, 15), 25); // Between 15-25 active today
     }
 
@@ -212,8 +212,8 @@ class AdminDashboardService extends BaseDashboardService
     private function getActiveWeekCount(): int
     {
         // Mock realistic data for UAT - users who were active this week
-        // Using user_last_accessed_at column instead of last_login
-        $actualCount = User::where('user_last_accessed_at', '>=', Carbon::now()->startOfWeek())->count();
+        // Using last_accessed_at column instead of last_login
+        $actualCount = User::where('last_accessed_at', '>=', Carbon::now()->startOfWeek())->count();
         return min(max($actualCount, 35), 45); // Between 35-45 active this week
     }
 

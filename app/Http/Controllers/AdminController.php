@@ -535,7 +535,7 @@ class AdminController extends Controller
         try {
             $validator = Validator::make($request->all(), [
                 'user_ids' => 'required|array',
-                'user_ids.*' => 'exists:users,id',
+                'user_ids.*' => 'exists:staffs,id',
                 'action' => 'required|in:activate,deactivate,change_centre,delete'
             ]);
             

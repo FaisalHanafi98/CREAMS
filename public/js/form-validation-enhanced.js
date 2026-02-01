@@ -681,14 +681,14 @@ class EnhancedFormValidator {
     
     goToStep(stepNumber) {
         if (stepNumber < 1 || stepNumber > this.totalSteps) return;
-        
+
         // Hide current step
         document.querySelectorAll('.form-step').forEach(step => {
             step.classList.remove('active');
         });
-        
-        // Show target step
-        const targetStep = document.querySelector(`[data-step="${stepNumber}"]`);
+
+        // Show target step - must specifically target .form-step to avoid matching tab indicators
+        const targetStep = document.querySelector(`.form-step[data-step="${stepNumber}"]`);
         if (targetStep) {
             targetStep.classList.add('active');
         }

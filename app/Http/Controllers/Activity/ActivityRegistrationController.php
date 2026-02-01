@@ -121,7 +121,7 @@ class ActivityRegistrationController extends Controller
             $validatedData = $request->validate([
                 'course_id' => 'required|string',
                 'course_type' => ['required', Rule::in($this->courseTypes)],
-                'teacher_id' => 'required|exists:users,id',
+                'teacher_id' => 'required|exists:staffs,id',
                 'participant_id' => 'required|exists:trainees,id',
                 'course_day' => 'required|string',
                 'start_time' => 'required|date_format:H:i',

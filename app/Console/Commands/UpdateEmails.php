@@ -13,7 +13,7 @@ class UpdateEmails extends Command
     public function handle()
     {
         try {
-            $users = DB::table('users')->get();
+            $users = DB::table('staffs')->get();
             $emailCounts = [];
             
             foreach ($users as $user) {
@@ -35,7 +35,7 @@ class UpdateEmails extends Command
                 }
                 
                 // Update user
-                DB::table('users')
+                DB::table('staffs')
                     ->where('id', $user->id)
                     ->update(['email' => $finalEmail]);
                     

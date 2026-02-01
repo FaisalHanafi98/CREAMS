@@ -128,7 +128,7 @@ class ApiController extends Controller
             \DB::connection()->getPdo();
             
             // Check critical tables exist
-            $tables = ['users', 'activities', 'trainees', 'centres'];
+            $tables = ['staffs', 'activities', 'trainees', 'centres'];
             $missingTables = [];
             
             foreach ($tables as $table) {
@@ -198,7 +198,7 @@ class ApiController extends Controller
                         'my_activities' => Activity::whereHas('sessions', function($q) use ($userId) {
                             $q->where('teacher_id', $userId);
                         })->count(),
-                        'my_sessions_today' => 0, // This would need activity_sessions with proper date filtering
+                        'my_sessions_today' => 0, // This would need activity_occurrences with proper date filtering
                         'assigned_trainees' => 0 // This would need proper relationship
                     ];
                     break;

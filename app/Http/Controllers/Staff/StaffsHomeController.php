@@ -32,57 +32,57 @@ class StaffsHomeController extends Controller
             
             // Fix N+1 query: Use Eloquent relationships instead of manual joins
             $query = User::with(['centre'])->select(
-                'users.id', 
-                'users.name as user_name', 
-                'users.role', 
-                'users.education_level', 
-                'users.education_specialization', 
-                'users.teaching_specialization',
-                'users.position',
-                'users.avatar',
-                'users.centre_id',
-                'users.email',
-                'users.status',
-                'users.created_at'
+                'staffs.id', 
+                'staffs.name as user_name', 
+                'staffs.role', 
+                'staffs.education_level', 
+                'staffs.education_specialization', 
+                'staffs.teaching_specialization',
+                'staffs.position',
+                'staffs.avatar',
+                'staffs.centre_id',
+                'staffs.email',
+                'staffs.status',
+                'staffs.created_at'
             );
             
             // Apply filters if provided
             if ($roleFilter) {
-                $query->where('users.role', $roleFilter);
+                $query->where('staffs.role', $roleFilter);
             }
             
             if ($educationLevelFilter) {
-                $query->where('users.education_level', $educationLevelFilter);
+                $query->where('staffs.education_level', $educationLevelFilter);
             }
             
             if ($specialisationFilter) {
                 $query->where(function($q) use ($specialisationFilter) {
-                    $q->where('users.education_specialization', 'like', "%{$specialisationFilter}%")
-                      ->orWhere('users.teaching_specialization', 'like', "%{$specialisationFilter}%");
+                    $q->where('staffs.education_specialization', 'like', "%{$specialisationFilter}%")
+                      ->orWhere('staffs.teaching_specialization', 'like', "%{$specialisationFilter}%");
                 });
             }
             
             if ($centreFilter) {
-                $query->where('users.centre_id', $centreFilter);
+                $query->where('staffs.centre_id', $centreFilter);
             }
             
             if ($searchTerm) {
                 $query->where(function($q) use ($searchTerm) {
-                    $q->where('users.name', 'like', "%{$searchTerm}%")
-                      ->orWhere('users.email', 'like', "%{$searchTerm}%")
-                      ->orWhere('users.education_level', 'like', "%{$searchTerm}%")
-                      ->orWhere('users.education_specialization', 'like', "%{$searchTerm}%")
-                      ->orWhere('users.teaching_specialization', 'like', "%{$searchTerm}%")
-                      ->orWhere('users.position', 'like', "%{$searchTerm}%");
+                    $q->where('staffs.name', 'like', "%{$searchTerm}%")
+                      ->orWhere('staffs.email', 'like', "%{$searchTerm}%")
+                      ->orWhere('staffs.education_level', 'like', "%{$searchTerm}%")
+                      ->orWhere('staffs.education_specialization', 'like', "%{$searchTerm}%")
+                      ->orWhere('staffs.teaching_specialization', 'like', "%{$searchTerm}%")
+                      ->orWhere('staffs.position', 'like', "%{$searchTerm}%");
                 });
             }
             
             // Only get active users
-            $query->where('users.status', 'active');
+            $query->where('staffs.status', 'active');
             
             // Order by role, then education level
-            $query->orderBy('users.role', 'asc')
-                  ->orderBy('users.education_level', 'asc');
+            $query->orderBy('staffs.role', 'asc')
+                  ->orderBy('staffs.education_level', 'asc');
             
             // Get the data with pagination
             $users = $query->paginate(8);
@@ -344,56 +344,56 @@ class StaffsHomeController extends Controller
             
             // Start with base query and include centre information
             $query = User::select(
-                'users.id', 
-                'users.name as user_name', 
-                'users.role', 
-                'users.education_level', 
-                'users.education_specialization', 
-                'users.teaching_specialization',
-                'users.position',
-                'users.avatar',
-                'users.centre_id',
-                'users.status',
+                'staffs.id', 
+                'staffs.name as user_name', 
+                'staffs.role', 
+                'staffs.education_level', 
+                'staffs.education_specialization', 
+                'staffs.teaching_specialization',
+                'staffs.position',
+                'staffs.avatar',
+                'staffs.centre_id',
+                'staffs.status',
                 'centres.centre_name'
-            )->leftJoin('centres', 'users.centre_id', '=', 'centres.centre_id');
+            )->leftJoin('centres', 'staffs.centre_id', '=', 'centres.centre_id');
             
             // Apply filters if provided
             if ($roleFilter) {
-                $query->where('users.role', $roleFilter);
+                $query->where('staffs.role', $roleFilter);
             }
             
             if ($educationLevelFilter) {
-                $query->where('users.education_level', $educationLevelFilter);
+                $query->where('staffs.education_level', $educationLevelFilter);
             }
             
             if ($specialisationFilter) {
                 $query->where(function($q) use ($specialisationFilter) {
-                    $q->where('users.education_specialization', 'like', "%{$specialisationFilter}%")
-                      ->orWhere('users.teaching_specialization', 'like', "%{$specialisationFilter}%");
+                    $q->where('staffs.education_specialization', 'like', "%{$specialisationFilter}%")
+                      ->orWhere('staffs.teaching_specialization', 'like', "%{$specialisationFilter}%");
                 });
             }
             
             if ($centreFilter) {
-                $query->where('users.centre_id', $centreFilter);
+                $query->where('staffs.centre_id', $centreFilter);
             }
             
             if ($searchTerm) {
                 $query->where(function($q) use ($searchTerm) {
-                    $q->where('users.name', 'like', "%{$searchTerm}%")
-                      ->orWhere('users.email', 'like', "%{$searchTerm}%")
-                      ->orWhere('users.education_level', 'like', "%{$searchTerm}%")
-                      ->orWhere('users.education_specialization', 'like', "%{$searchTerm}%")
-                      ->orWhere('users.teaching_specialization', 'like', "%{$searchTerm}%")
-                      ->orWhere('users.position', 'like', "%{$searchTerm}%");
+                    $q->where('staffs.name', 'like', "%{$searchTerm}%")
+                      ->orWhere('staffs.email', 'like', "%{$searchTerm}%")
+                      ->orWhere('staffs.education_level', 'like', "%{$searchTerm}%")
+                      ->orWhere('staffs.education_specialization', 'like', "%{$searchTerm}%")
+                      ->orWhere('staffs.teaching_specialization', 'like', "%{$searchTerm}%")
+                      ->orWhere('staffs.position', 'like', "%{$searchTerm}%");
                 });
             }
             
             // Only get active users
-            $query->where('users.status', 'active');
+            $query->where('staffs.status', 'active');
             
             // Order by role, then education level
-            $query->orderBy('users.role', 'asc')
-                  ->orderBy('users.education_level', 'asc');
+            $query->orderBy('staffs.role', 'asc')
+                  ->orderBy('staffs.education_level', 'asc');
             
             // Get the data
             $users = $query->get();

@@ -235,8 +235,8 @@ class DashboardService
                     ->whereBetween('session_date', [$startOfWeek, $endOfWeek])
                     ->count(),
                 'total_trainees' => DB::table('activity_enrollments')
-                    ->join('activity_sessions', 'activity_enrollments.activity_id', '=', 'activity_sessions.activity_id')
-                    ->where('activity_sessions.instructor_id', $userId)
+                    ->join('activity_occurrences', 'activity_enrollments.activity_id', '=', 'activity_occurrences.activity_id')
+                    ->where('activity_occurrences.instructor_id', $userId)
                     ->where('activity_enrollments.enrollment_status', 'enrolled')
                     ->distinct('activity_enrollments.trainee_id')
                     ->count('activity_enrollments.trainee_id'),
@@ -303,13 +303,13 @@ class DashboardService
         return Cache::remember('centre_performance', 300, function() {
             return DB::table('centres')
                 ->leftJoin('trainees', 'centres.id', '=', 'trainees.centre_id')
-                ->leftJoin('users', function($join) {
-                    $join->on('centres.id', '=', 'users.centre_id')
-                         ->where('users.role', '=', 'teacher');
+                ->leftJoin('staffs', function($join) {
+                    $join->on('centres.id', '=', 'staffs.centre_id')
+                         ->where('staffs.role', '=', 'teacher');
                 })
                 ->selectRaw('centres.centre_name, 
                            COUNT(DISTINCT trainees.id) as trainee_count,
-                           COUNT(DISTINCT users.id) as teacher_count')
+                           COUNT(DISTINCT staffs.id) as teacher_count')
                 ->where('centres.is_active', true)
                 ->groupBy('centres.id', 'centres.centre_name')
                 ->get()
@@ -392,7 +392,7 @@ class DashboardService
 
         // Check for inactive teachers
         $inactiveTeachers = User::where('role', 'teacher')
-            ->where('user_last_accessed_at', '<', Carbon::now()->subDays(7))
+            ->where('last_accessed_at', '<', Carbon::now()->subDays(7))
             ->count();
         
         if ($inactiveTeachers > 0) {
@@ -517,8 +517,8 @@ class DashboardService
     {
         $totalCapacity = ActivitySession::whereDate('session_date', Carbon::today())->sum('max_participants');
         $totalEnrolled = DB::table('activity_enrollments')
-            ->join('activity_sessions', 'activity_enrollments.activity_id', '=', 'activity_sessions.activity_id')
-            ->whereDate('activity_sessions.session_date', Carbon::today())
+            ->join('activity_occurrences', 'activity_enrollments.activity_id', '=', 'activity_occurrences.activity_id')
+            ->whereDate('activity_occurrences.session_date', Carbon::today())
             ->where('activity_enrollments.enrollment_status', 'enrolled')
             ->count();
 

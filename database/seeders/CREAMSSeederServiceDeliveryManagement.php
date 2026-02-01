@@ -60,7 +60,7 @@ class CREAMSSeederServiceDeliveryManagement extends Seeder
             'Learning Support',
             'Speech Therapy'
         ];
-        $instructors = DB::table('users')->get();
+        $instructors = DB::table('staffs')->get();
 
         $totalActivities = 0;
 
@@ -151,7 +151,7 @@ class CREAMSSeederServiceDeliveryManagement extends Seeder
                     // Generate realistic time slots (1.5-2 hour sessions)
                     $timeSlot = $this->getAvailableTimeSlot();
                     
-                    DB::table('activity_sessions')->insert([
+                    DB::table('activity_occurrences')->insert([
                         'activity_id' => $activity->id,
                         'session_name' => $activity->activity_name . ' - Week ' . ($week + 1),
                         'session_description' => 'Week ' . ($week + 1) . ' session for ' . $activity->activity_name,
@@ -355,7 +355,7 @@ class CREAMSSeederServiceDeliveryManagement extends Seeder
     private function calculateEnrollmentDetails($activity, $trainee): array
     {
         // Get all sessions for this activity
-        $totalSessions = DB::table('activity_sessions')
+        $totalSessions = DB::table('activity_occurrences')
             ->where('activity_id', $activity->id)
             ->count();
 
@@ -372,12 +372,12 @@ class CREAMSSeederServiceDeliveryManagement extends Seeder
         }
 
         // Check if activity has any future sessions
-        $futureSessions = DB::table('activity_sessions')
+        $futureSessions = DB::table('activity_occurrences')
             ->where('activity_id', $activity->id)
             ->where('session_date', '>', now()->toDateString())
             ->count();
 
-        $completedSessions = DB::table('activity_sessions')
+        $completedSessions = DB::table('activity_occurrences')
             ->where('activity_id', $activity->id)
             ->where('session_status', 'completed')
             ->count();
@@ -390,7 +390,7 @@ class CREAMSSeederServiceDeliveryManagement extends Seeder
 
         if ($futureSessions === 0 && $completedSessions > 0) {
             // Activity is completed - no more future sessions
-            $lastSessionDate = DB::table('activity_sessions')
+            $lastSessionDate = DB::table('activity_occurrences')
                 ->where('activity_id', $activity->id)
                 ->where('session_status', 'completed')
                 ->orderBy('session_date', 'desc')

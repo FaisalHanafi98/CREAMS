@@ -14,29 +14,19 @@ class CreateCreamsServiceDeliveryManagementTables extends Migration
     public function up(): void
     {
         // Skip if tables already exist (preserves current logic)
-        if (Schema::hasTable('activity_categories')) {
+        if (Schema::hasTable('activities')) {
             return;
         }
 
-        // 1. ACTIVITY CATEGORIES - Service classification (preserves current structure)
-        Schema::create('activity_categories', function (Blueprint $table) {
-            $table->id();
-            $table->string('category_name');
-            $table->text('category_description')->nullable();
-            $table->string('category_type', 50)->nullable();
-            // Removed category_color and category_icon - will be managed via frontend/config
-            $table->boolean('is_active')->default(true);
-            $table->timestamps();
-            
-            $table->index(['category_type', 'is_active']);
-        });
-
-        // 2. ACTIVITIES - Service programs (preserves current structure)
+        // 1. ACTIVITIES - Service programs (UPDATED: category as enum string, no FK)
         Schema::create('activities', function (Blueprint $table) {
             $table->id();
             $table->string('activity_name');
             $table->text('activity_description')->nullable();
-            $table->unsignedBigInteger('category_id');
+
+            // Category as string enum (no foreign key to activity_categories table)
+            $table->string('category', 100)->nullable()->comment('Enum: Autism Spectrum Support, Hearing Impairment, Visual Impairment, Physical Disabilities, Learning Support, Speech Therapy');
+
             $table->string('centre_id', 10);
             $table->integer('duration_weeks')->default(12);
             $table->integer('sessions_per_week')->default(2);
@@ -48,13 +38,13 @@ class CreateCreamsServiceDeliveryManagementTables extends Migration
             $table->boolean('is_active')->default(true);
             $table->integer('times_conducted')->default(0);
             $table->timestamps();
-            
-            $table->index(['category_id', 'centre_id', 'is_active']);
+
+            $table->index(['category', 'centre_id', 'is_active']);
             $table->index('instructor_id');
         });
 
-        // 3. ACTIVITY SESSIONS - Individual service instances (preserves current structure)
-        Schema::create('activity_sessions', function (Blueprint $table) {
+        // 2. ACTIVITY OCCURRENCES - Individual scheduled instances (RENAMED from activity_sessions)
+        Schema::create('activity_occurrences', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('activity_id');
             $table->string('session_name');
@@ -68,12 +58,12 @@ class CreateCreamsServiceDeliveryManagementTables extends Migration
             $table->text('session_notes')->nullable();
             $table->integer('max_participants')->nullable();
             $table->timestamps();
-            
-            $table->index(['activity_id', 'session_date', 'session_status']);
+
+            $table->index(['activity_id', 'session_date', 'session_status'], 'idx_occurrences_activity_date_status');
             $table->index('instructor_id');
         });
 
-        // 4. ACTIVITY ENROLLMENTS - Service assignments (preserves current structure)
+        // 3. ACTIVITY ENROLLMENTS - Service assignments (preserves current structure)
         Schema::create('activity_enrollments', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('activity_id');
@@ -87,7 +77,7 @@ class CreateCreamsServiceDeliveryManagementTables extends Migration
             $table->text('completion_notes')->nullable();
             $table->integer('enrolled_by')->nullable();
             $table->timestamps();
-            
+
             $table->index(['activity_id', 'trainee_id', 'enrollment_status'], 'activity_enrollments_composite_idx');
             $table->index('enrollment_date');
         });
@@ -99,8 +89,8 @@ class CreateCreamsServiceDeliveryManagementTables extends Migration
     public function down(): void
     {
         Schema::dropIfExists('activity_enrollments');
-        Schema::dropIfExists('activity_sessions');
+        Schema::dropIfExists('activity_occurrences');  // Updated from activity_sessions
         Schema::dropIfExists('activities');
-        Schema::dropIfExists('activity_categories');
+        // activity_categories table removed - no longer exists
     }
 }

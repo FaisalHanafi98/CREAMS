@@ -88,7 +88,7 @@ class CREAMSSeederCommunicationManagement extends Seeder
     
     private function seedMessages(): void
     {
-        $staff = DB::table('users')->get();
+        $staff = DB::table('staffs')->get();
         $trainees = DB::table('trainees')->get();
         $totalMessages = 0;
         
@@ -170,7 +170,7 @@ class CREAMSSeederCommunicationManagement extends Seeder
     
     private function seedNotifications(): void
     {
-        $users = DB::table('users')->get();
+        $users = DB::table('staffs')->get();
         $totalNotifications = 0;
         
         $notificationTypes = [
@@ -245,7 +245,7 @@ class CREAMSSeederCommunicationManagement extends Seeder
     {
         $templates = DB::table('letter_templates')->get();
         $trainees = DB::table('trainees')->get();
-        $staff = DB::table('users')->get();
+        $staff = DB::table('staffs')->get();
         $totalLetters = 0;
         
         foreach ($trainees->take(75) as $trainee) {

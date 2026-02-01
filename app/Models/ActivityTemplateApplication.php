@@ -69,7 +69,7 @@ class ActivityTemplateApplication extends Model
         );
 
         if (!empty($sessions)) {
-            \DB::table('activity_sessions')->insert($sessions);
+            \DB::table('activity_occurrences')->insert($sessions);
             $this->update(['sessions_generated' => count($sessions)]);
             return count($sessions);
         }

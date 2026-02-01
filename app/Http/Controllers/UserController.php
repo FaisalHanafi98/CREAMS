@@ -169,7 +169,7 @@ class UserController extends Controller
                 'string',
                 'size:8',
                 'regex:/^[A-Z]{4}\d{4}$/',
-                Rule::unique('users', 'iium_id'),
+                Rule::unique('staffs', 'iium_id'),
             ],
             'role' => [
                 'required',
@@ -181,7 +181,7 @@ class UserController extends Controller
             'email' => [
                 'required',
                 'email',
-                Rule::unique('users', 'email'),
+                Rule::unique('staffs', 'email'),
             ],
             'password' => [
                 'required',
@@ -354,13 +354,13 @@ class UserController extends Controller
                 'string',
                 'size:8',
                 'regex:/^[A-Z]{4}\d{4}$/',
-                Rule::unique('users', 'iium_id')->ignore($id),
+                Rule::unique('staffs', 'iium_id')->ignore($id),
             ],
             'name' => 'required',
             'email' => [
                 'required',
                 'email',
-                Rule::unique('users', 'email')->ignore($id),
+                Rule::unique('staffs', 'email')->ignore($id),
             ],
             'centre_id' => 'required|exists:centres,id',
             'phone' => 'nullable|string|max:20',

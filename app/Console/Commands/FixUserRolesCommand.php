@@ -49,7 +49,7 @@ class FixUserRolesCommand extends Command
         // Step 1: Check if the users table exists
         $this->info('Step 1: Checking database tables...');
         
-        if (!Schema::hasTable('users')) {
+        if (!Schema::hasTable('staffs')) {
             $this->error('The users table does not exist in the database. Please run migrations first.');
             return 1;
         }

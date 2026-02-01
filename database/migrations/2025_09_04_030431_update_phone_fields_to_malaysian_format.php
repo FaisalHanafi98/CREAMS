@@ -13,8 +13,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // Update Users table phone field
-        Schema::table('users', function (Blueprint $table) {
+        // Update Staffs table phone field
+        Schema::table('staffs', function (Blueprint $table) {
             $table->string('phone', 20)->change();
         });
 
@@ -35,7 +35,7 @@ return new class extends Migration
     public function down(): void
     {
         // Revert field lengths (optional - depends on original schema)
-        Schema::table('users', function (Blueprint $table) {
+        Schema::table('staffs', function (Blueprint $table) {
             $table->string('phone', 255)->change();
         });
 
@@ -51,13 +51,13 @@ return new class extends Migration
      */
     private function normalizeExistingPhoneData()
     {
-        // Update Users table
-        $users = DB::table('users')->whereNotNull('phone')->get();
+        // Update Staffs table
+        $users = DB::table('staffs')->whereNotNull('phone')->get();
         foreach ($users as $user) {
             if (!empty($user->phone)) {
                 $normalized = MalaysianPhoneRule::normalize($user->phone);
                 if ($normalized !== $user->phone) {
-                    DB::table('users')
+                    DB::table('staffs')
                         ->where('id', $user->id)
                         ->update(['phone' => $normalized]);
                 }

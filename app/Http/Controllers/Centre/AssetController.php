@@ -478,7 +478,7 @@ class AssetController extends Controller
                 'status' => 'required|in:available,in_use,maintenance,disposed',
                 'location_id' => 'nullable|exists:asset_locations,id',
                 'type_id' => 'nullable|exists:asset_parents,id',
-                'assigned_to_user' => 'nullable|exists:users,id',
+                'assigned_to_user' => 'nullable|exists:staffs,id',
                 'images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
                 'notes' => 'nullable|string'
             ]);

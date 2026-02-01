@@ -73,7 +73,7 @@ class DatabaseSeeder extends Seeder
             // Activity System
             $this->command->info("\n🎯 ACTIVITY MANAGEMENT:");
             $this->command->info("   🎯 Activities: " . $stats['activities']);
-            $this->command->info("   📅 Activity Sessions: " . $stats['activity_sessions']);
+            $this->command->info("   📅 Activity Sessions: " . $stats['activity_occurrences']);
             $this->command->info("   📝 Activity Enrollments: " . $stats['activity_enrollments']);
 
             // Attendance System
@@ -135,7 +135,7 @@ class DatabaseSeeder extends Seeder
         return [
             // Foundation & User Management (4 tables)
             'centres' => DB::table('centres')->count(),
-            'users' => DB::table('users')->count(),
+            'users' => DB::table('staffs')->count(),
             'password_resets' => DB::table('password_resets')->count(),
             'sessions' => DB::table('sessions')->count(),
 
@@ -145,7 +145,7 @@ class DatabaseSeeder extends Seeder
 
             // Activity Management (3 tables - categories now ENUM in activities table)
             'activities' => DB::table('activities')->count(),
-            'activity_sessions' => DB::table('activity_sessions')->count(),
+            'activity_occurrences' => DB::table('activity_occurrences')->count(),
             'activity_enrollments' => DB::table('activity_enrollments')->count(),
 
             // Attendance & Progress (3 tables)

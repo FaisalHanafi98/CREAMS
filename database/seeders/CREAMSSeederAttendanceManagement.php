@@ -34,7 +34,7 @@ class CREAMSSeederAttendanceManagement extends Seeder
     
     private function seedStaffAttendances(): void
     {
-        $staff = DB::table('users')->get();
+        $staff = DB::table('staffs')->get();
         $totalAttendances = 0;
         
         // Generate attendance for the last 3 months (June, July, August)
@@ -97,10 +97,10 @@ class CREAMSSeederAttendanceManagement extends Seeder
     
     private function seedSessionAttendance(): void
     {
-        $sessions = DB::table('activity_sessions')
-            ->join('activities', 'activity_sessions.activity_id', '=', 'activities.id')
+        $sessions = DB::table('activity_occurrences')
+            ->join('activities', 'activity_occurrences.activity_id', '=', 'activities.id')
             ->join('activity_enrollments', 'activities.id', '=', 'activity_enrollments.activity_id')
-            ->select('activity_sessions.*', 'activity_enrollments.trainee_id', 'activities.centre_id')
+            ->select('activity_occurrences.*', 'activity_enrollments.trainee_id', 'activities.centre_id')
             ->get();
             
         $totalAttendances = 0;

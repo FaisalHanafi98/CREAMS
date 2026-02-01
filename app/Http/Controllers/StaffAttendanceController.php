@@ -114,7 +114,7 @@ class StaffAttendanceController extends Controller
         try {
             
             $validated = $request->validate([
-                'user_id' => 'required|integer|exists:users,id',
+                'user_id' => 'required|integer|exists:staffs,id',
                 'status' => 'required|in:present,absent,late,sick_leave,emergency_leave,authorized_leave',
                 'remarks' => 'nullable|string|max:500'
             ]);

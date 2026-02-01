@@ -412,7 +412,7 @@ public function updateStatus(Request $request, $id)
         $validator = Validator::make($request->all(), [
             'status' => 'required|in:new,read,in_progress,resolved,closed',
             'notes' => 'nullable|string|max:1000',
-            'assigned_to' => 'nullable|exists:users,id'
+            'assigned_to' => 'nullable|exists:staffs,id'
         ]);
 
         if ($validator->fails()) {

@@ -60,7 +60,7 @@ class SyncCentres extends Command
             $this->info('Found ' . count($centreMap) . ' centres');
             
             // Get all users
-            $users = DB::table('users')->get(['id', 'centre_id', 'centre_location']);
+            $users = DB::table('staffs')->get(['id', 'centre_id', 'centre_location']);
             
             $this->info('Processing ' . count($users) . ' users...');
             
@@ -93,7 +93,7 @@ class SyncCentres extends Command
                 
                 // Update user if needed
                 if ($needsUpdate) {
-                    DB::table('users')
+                    DB::table('staffs')
                         ->where('id', $user->id)
                         ->update($updateData);
                     

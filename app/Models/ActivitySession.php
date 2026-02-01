@@ -8,7 +8,8 @@ use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
 /**
- * ActivitySession Model
+ * ActivitySession Model (maps to activity_occurrences table)
+ * Represents individual scheduled instances/occurrences of activities
  *
  * @property int $id
  * @property int $activity_id
@@ -41,7 +42,7 @@ class ActivitySession extends Model
 {
     use HasFactory;
 
-    protected $table = 'activity_sessions';
+    protected $table = 'activity_occurrences'; // Renamed from activity_sessions
 
     protected $fillable = [
         'activity_id',

@@ -21,7 +21,7 @@ return new class extends Migration
             $table->timestamp('reviewed_at')->nullable();
 
             // Add foreign key for reviewed_by
-            $table->foreign('reviewed_by')->references('id')->on('users')->onDelete('set null');
+            $table->foreign('reviewed_by')->references('id')->on('staffs')->onDelete('set null');
         });
     }
 

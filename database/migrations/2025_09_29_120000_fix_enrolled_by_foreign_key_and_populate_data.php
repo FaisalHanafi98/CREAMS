@@ -16,14 +16,14 @@ return new class extends Migration
     public function up(): void
     {
         // First, get the admin user ID for populating existing records
-        $adminUser = DB::table('users')
+        $adminUser = DB::table('staffs')
             ->where('role', 'admin')
             ->where('status', 'active')
             ->first();
 
         if (!$adminUser) {
             // Create a system admin if none exists
-            $adminUserId = DB::table('users')->insertGetId([
+            $adminUserId = DB::table('staffs')->insertGetId([
                 'name' => 'System Administrator',
                 'email' => 'admin@creams.system',
                 'password' => bcrypt('admin123'),
@@ -51,7 +51,7 @@ return new class extends Migration
         Schema::table('activity_enrollments', function (Blueprint $table) {
             $table->foreign('enrolled_by')
                   ->references('id')
-                  ->on('users')
+                  ->on('staffs')
                   ->onDelete('set null')
                   ->name('fk_activity_enrollments_enrolled_by');
 
@@ -60,7 +60,7 @@ return new class extends Migration
         });
 
         // Add comment to document the change
-        DB::statement("ALTER TABLE activity_enrollments MODIFY COLUMN enrolled_by BIGINT UNSIGNED NULL COMMENT 'Foreign key to users table - tracks which staff member enrolled the trainee'");
+        DB::statement("ALTER TABLE activity_enrollments MODIFY COLUMN enrolled_by BIGINT UNSIGNED NULL COMMENT 'Foreign key to staffs table - tracks which staff member enrolled the trainee'");
     }
 
     /**

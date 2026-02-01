@@ -113,14 +113,14 @@ class MainController extends Controller
                     'string',
                     'size:8',
                     'regex:/^[A-Z]{4}\d{4}$/',
-                    Rule::unique('users', 'iium_id'),
+                    Rule::unique('staffs', 'iium_id'),
                 ],
                 'role' => 'required|in:admin,supervisor,teacher,ajk',
                 'name' => 'required',
                 'email' => [
                     'required',
                     'email',
-                    Rule::unique('users', 'email'),
+                    Rule::unique('staffs', 'email'),
                 ],
                 'password' => [
                     'required',

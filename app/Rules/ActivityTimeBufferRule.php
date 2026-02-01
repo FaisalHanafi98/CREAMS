@@ -39,7 +39,7 @@ class ActivityTimeBufferRule implements Rule
             $bufferStart = $startTime->copy()->subMinutes($this->bufferMinutes);
             $bufferEnd = $endTime->copy()->addMinutes($this->bufferMinutes);
 
-            // Check for conflicts in activity_sessions table
+            // Check for conflicts in activity_occurrences table
             $sessionConflicts = ActivitySession::where('location', $this->location)
                 ->where('session_date', $date->format('Y-m-d'))
                 ->when($this->excludeActivityId, function($query) {

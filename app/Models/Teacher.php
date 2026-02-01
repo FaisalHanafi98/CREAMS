@@ -49,7 +49,7 @@ class Teacher extends Authenticatable
         'centre_id',
         'avatar',
         'about',
-        'user_last_accessed_at',
+        'last_accessed_at',
         'status'
     ];
 

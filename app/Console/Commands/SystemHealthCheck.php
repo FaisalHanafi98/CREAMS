@@ -33,7 +33,7 @@ class SystemHealthCheck extends Command
 
         // Check critical tables exist
         $this->info('🗃️  Checking critical tables...');
-        $criticalTables = ['users', 'trainees', 'activities', 'centres', 'assets'];
+        $criticalTables = ['staffs', 'trainees', 'activities', 'centres', 'assets'];
         foreach ($criticalTables as $table) {
             if (Schema::hasTable($table)) {
                 $this->info("✅ Table '{$table}': EXISTS");
@@ -115,7 +115,7 @@ class SystemHealthCheck extends Command
         // Check avatar standardization
         $this->info('🖼️  Checking avatar standardization...');
         try {
-            $avatarTables = ['users', 'trainees'];
+            $avatarTables = ['staffs', 'trainees'];
             foreach ($avatarTables as $table) {
                 if (Schema::hasColumn($table, 'avatar')) {
                     $this->info("✅ {$table}.avatar: EXISTS");

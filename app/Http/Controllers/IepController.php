@@ -366,7 +366,7 @@ class IepController extends Controller
             'success_criteria.*' => 'string|max:500',
             'accommodation_strategies' => 'nullable|array',
             'accommodation_strategies.*' => 'string|max:500',
-            'assigned_user_id' => 'nullable|exists:users,id',
+            'assigned_user_id' => 'nullable|exists:staffs,id',
             'notes' => 'nullable|string'
         ]);
 

@@ -49,7 +49,7 @@ class Admin extends Authenticatable
         'centre_id',
         'avatar',
         'about',
-        'user_last_accessed_at',
+        'last_accessed_at',
         'status'
     ];
 
@@ -71,7 +71,7 @@ class Admin extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
-        'user_last_accessed_at' => 'datetime'
+        'last_accessed_at' => 'datetime'
     ];
 
     /**

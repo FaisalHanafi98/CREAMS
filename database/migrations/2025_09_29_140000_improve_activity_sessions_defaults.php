@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\DB;
 return new class extends Migration
 {
     /**
-     * Improve activity_sessions table:
+     * Improve activity_occurrences table:
      * 1. Set proper default values for max_participants
      * 2. Add default placeholder for session_notes
      * 3. Fix overbooked sessions
@@ -20,7 +20,7 @@ return new class extends Migration
         $this->fixOverbookedSessions();
 
         // 2. IMPROVE SESSION_NOTES HANDLING
-        Schema::table('activity_sessions', function (Blueprint $table) {
+        Schema::table('activity_occurrences', function (Blueprint $table) {
             // Change session_notes to have a default empty string instead of NULL
             $table->text('session_notes')->default('')->change();
 
@@ -32,12 +32,12 @@ return new class extends Migration
         });
 
         // 3. UPDATE EXISTING NULL VALUES
-        DB::table('activity_sessions')
+        DB::table('activity_occurrences')
             ->whereNull('session_notes')
             ->update(['session_notes' => '']);
 
         // 4. SET DEFAULT MAX_PARTICIPANTS FOR NULL VALUES
-        DB::table('activity_sessions')
+        DB::table('activity_occurrences')
             ->whereNull('max_participants')
             ->update(['max_participants' => 10]);
 
@@ -58,7 +58,7 @@ return new class extends Migration
                 a_s.max_participants,
                 a_s.current_participants,
                 (a_s.current_participants - a_s.max_participants) as excess
-            FROM activity_sessions a_s
+            FROM activity_occurrences a_s
             WHERE a_s.current_participants > a_s.max_participants
         ");
 
@@ -66,14 +66,14 @@ return new class extends Migration
             // Set max_participants to current_participants + 2 buffer spots
             $newMax = $session->current_participants + 2;
 
-            DB::table('activity_sessions')
+            DB::table('activity_occurrences')
                 ->where('id', $session->id)
                 ->update(['max_participants' => $newMax]);
 
             // Log the change
             DB::table('audit_logs')->insert([
                 'action' => 'update',
-                'table' => 'activity_sessions',
+                'table' => 'activity_occurrences',
                 'record_id' => $session->id,
                 'description' => "Fixed overbooked session: increased max_participants from {$session->max_participants} to {$newMax}",
                 'old_values' => json_encode(['max_participants' => $session->max_participants]),
@@ -91,8 +91,8 @@ return new class extends Migration
     {
         // Add trigger to validate max_participants is positive
         DB::unprepared("
-            CREATE TRIGGER validate_activity_sessions_before_insert
-            BEFORE INSERT ON activity_sessions
+            CREATE TRIGGER validate_activity_occurrences_before_insert
+            BEFORE INSERT ON activity_occurrences
             FOR EACH ROW
             BEGIN
                 IF NEW.max_participants <= 0 THEN
@@ -106,8 +106,8 @@ return new class extends Migration
         ");
 
         DB::unprepared("
-            CREATE TRIGGER validate_activity_sessions_before_update
-            BEFORE UPDATE ON activity_sessions
+            CREATE TRIGGER validate_activity_occurrences_before_update
+            BEFORE UPDATE ON activity_occurrences
             FOR EACH ROW
             BEGIN
                 IF NEW.max_participants <= 0 THEN
@@ -127,11 +127,11 @@ return new class extends Migration
     public function down(): void
     {
         // Remove validation triggers
-        DB::unprepared("DROP TRIGGER IF EXISTS validate_activity_sessions_before_insert");
-        DB::unprepared("DROP TRIGGER IF EXISTS validate_activity_sessions_before_update");
+        DB::unprepared("DROP TRIGGER IF EXISTS validate_activity_occurrences_before_insert");
+        DB::unprepared("DROP TRIGGER IF EXISTS validate_activity_occurrences_before_update");
 
         // Revert field changes
-        Schema::table('activity_sessions', function (Blueprint $table) {
+        Schema::table('activity_occurrences', function (Blueprint $table) {
             $table->text('session_notes')->nullable()->change();
             $table->integer('max_participants')->nullable()->change();
         });

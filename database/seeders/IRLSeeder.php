@@ -56,7 +56,7 @@ class IRLSeeder extends Seeder
 
         // Delete in reverse dependency order
         $activityIds = Activity::where('centre_id', $centreId)->pluck('id');
-        DB::table('activity_sessions')->whereIn('activity_id', $activityIds)->delete();
+        DB::table('activity_occurrences')->whereIn('activity_id', $activityIds)->delete();
 
         Activity::where('centre_id', $centreId)->delete();
         Asset::where('centre_id', $centreId)->delete();

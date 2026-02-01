@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Activity;
 use App\Models\Category;
-use App\Models\ActivityCategory;
 use App\Models\ActivitySession;
 use App\Models\ActivitySchedule;
 use App\Models\ActivityEnrollment;
@@ -254,7 +253,7 @@ class ActivityController extends Controller
                 $q->with(['enrollments', 'teacher'])
                     ->orderBy('session_date', 'asc')
                     ->orderBy('start_time', 'asc');
-            }, 'category', 'categoryModel', 'centre', 'instructor'])
+            }, 'centre', 'instructor'])
                 ->withCount(['sessions', 'enrollments']);
 
             // Role-based filtering
@@ -275,35 +274,36 @@ class ActivityController extends Controller
             $stats = [
                 'total_activities' => Activity::count(),
                 'active_activities' => Activity::where('is_active', true)->count(),
-                'total_sessions' => DB::table('activity_sessions')->count(),
+                'total_sessions' => DB::table('activity_occurrences')->count(),
                 'total_enrollments' => DB::table('activity_enrollments')->count(),
-                'upcoming_sessions' => DB::table('activity_sessions')->where('session_date', '>=', Carbon::now())->count(),
-                'completed_sessions' => DB::table('activity_sessions')->where('session_date', '<', Carbon::now())->count(),
+                'upcoming_sessions' => DB::table('activity_occurrences')->where('session_date', '>=', Carbon::now())->count(),
+                'completed_sessions' => DB::table('activity_occurrences')->where('session_date', '<', Carbon::now())->count(),
                 'total_trainees' => \App\Models\Trainee::count(),
                 'active_trainees' => DB::table('activity_enrollments')->distinct()->count('trainee_id')
             ];
 
-            // Get categories with counts for sidebar
-            $categories = ActivityCategory::withCount('activities')->get();
+            // Get categories from enum with counts (category is now enum, not relation)
+            $categories = Activity::select('category', DB::raw('count(*) as activities_count'))
+                ->whereNotNull('category')
+                ->groupBy('category')
+                ->get()
+                ->map(function($item) {
+                    return (object)[
+                        'category_name' => $item->category,
+                        'activities_count' => $item->activities_count
+                    ];
+                });
 
-            // Calculate category-based statistics
+            // Calculate category-based statistics (category is now a column, not relation)
             $categoryCounts = [
                 'total' => $stats['total_activities'],
                 'active' => $stats['active_activities'],
-                'rehabilitation' => Activity::whereHas('category', function ($q) {
-                    $q->where('category_name', 'like', '%rehabilitation%');
-                })->count(),
-                'academic' => Activity::whereHas('category', function ($q) {
-                    $q->where('category_name', 'like', '%academic%');
-                })->count(),
-                'creative_social' => Activity::whereHas('category', function ($q) {
-                    $q->where('category_name', 'like', '%creative%')
-                        ->orWhere('category_name', 'like', '%social%');
-                })->count(),
-                'faith' => Activity::whereHas('category', function ($q) {
-                    $q->where('category_name', 'like', '%faith%')
-                        ->orWhere('category_name', 'like', '%spiritual%');
-                })->count()
+                'autism' => Activity::where('category', 'Autism Spectrum Support')->count(),
+                'hearing' => Activity::where('category', 'Hearing Impairment')->count(),
+                'visual' => Activity::where('category', 'Visual Impairment')->count(),
+                'physical' => Activity::where('category', 'Physical Disabilities')->count(),
+                'learning' => Activity::where('category', 'Learning Support')->count(),
+                'speech' => Activity::where('category', 'Speech Therapy')->count()
             ];
 
             // Get additional data for filters and modals
@@ -326,7 +326,7 @@ class ActivityController extends Controller
                     'is_active' => $activity->is_active,
                     'sessions_count' => $activity->sessions_count,
                     'enrollments_count' => $activity->enrollments_count,
-                    'category_name' => $activity->category->category_name ?? 'Uncategorized',
+                    'category_name' => $activity->category ?? 'Uncategorized',
                     'centre_name' => $activity->centre->centre_name ?? 'Unknown Centre'
                 ];
             });
@@ -626,9 +626,22 @@ class ActivityController extends Controller
 
         // Get centres and categories for the form
         $centres = Centre::active()->get();
-        $categories = ActivityCategory::where('is_active', true)
-            ->orderBy('category_name', 'asc')
-            ->get();
+
+        // Use enum-based categories instead of ActivityCategory model
+        $categories = collect([
+            'Autism Spectrum Support',
+            'Hearing Impairment',
+            'Visual Impairment',
+            'Physical Disabilities',
+            'Learning Support',
+            'Speech Therapy'
+        ])->map(function($name) {
+            return (object)[
+                'id' => $name,
+                'category_name' => $name,
+                'is_active' => true
+            ];
+        });
 
         return view('activities.create-enhanced', compact('centres', 'categories'));
     }
@@ -650,7 +663,7 @@ class ActivityController extends Controller
             // Basic Information
             'activity_name' => 'required|string|max:255',
             'activity_description' => 'required|string|max:2000',
-            'category_id' => 'required|exists:activity_categories,id',
+            'category_id' => 'required|in:Autism Spectrum Support,Hearing Impairment,Visual Impairment,Physical Disabilities,Learning Support,Speech Therapy',
             'learning_outcomes' => 'nullable|string|max:2000',
 
             // Location & Centre
@@ -660,7 +673,7 @@ class ActivityController extends Controller
             // Instructor with qualification validation
             'instructor_id' => [
                 'required',
-                'exists:users,id',
+                'exists:staffs,id',
                 new InstructorQualificationRule($request->input('category_id'))
             ],
 
@@ -1105,7 +1118,7 @@ class ActivityController extends Controller
             $activity = Activity::findOrFail($id);
 
             $validated = $request->validate([
-                'teacher_id' => 'required|exists:users,id',
+                'teacher_id' => 'required|exists:staffs,id',
                 'date' => 'required|date|after_or_equal:today',
                 'start_time' => 'required|date_format:H:i',
                 'duration' => 'required|integer|min:15|max:240',
@@ -1538,16 +1551,18 @@ class ActivityController extends Controller
     }
 
     /**
-     * Get activity categories
+     * Get activity categories (enum-based)
      */
     private function getActivityCategories()
     {
-        return Cache::remember('activity_categories', 3600, function () {
-            return ActivityCategory::where('is_active', true)
-                ->orderBy('category_name')
-                ->pluck('category_name')
-                ->toArray();
-        });
+        return [
+            'Autism Spectrum Support',
+            'Hearing Impairment',
+            'Visual Impairment',
+            'Physical Disabilities',
+            'Learning Support',
+            'Speech Therapy'
+        ];
     }
 
     /**
@@ -1565,16 +1580,16 @@ class ActivityController extends Controller
             }
 
             // Get total sessions and enrollments
-            $totalSessions = DB::table('activity_sessions')->count();
+            $totalSessions = DB::table('activity_occurrences')->count();
             $totalEnrollments = DB::table('activity_enrollments')->count();
 
             // If teacher role, filter sessions by teacher
             if ($role === 'teacher') {
-                $totalSessions = DB::table('activity_sessions')->where('instructor_id', $userId)->count();
+                $totalSessions = DB::table('activity_occurrences')->where('instructor_id', $userId)->count();
                 $totalEnrollments = DB::table('activity_enrollments')
                     ->whereIn('activity_id', function ($subQuery) use ($userId) {
                         $subQuery->select('activity_id')
-                            ->from('activity_sessions')
+                            ->from('activity_occurrences')
                             ->where('instructor_id', $userId);
                     })->count();
             }
@@ -2024,7 +2039,7 @@ class ActivityController extends Controller
     {
         try {
             $validated = $request->validate([
-                'teacher_id' => 'required|exists:users,id',
+                'teacher_id' => 'required|exists:staffs,id',
                 'scheduled_date' => 'required|date',
                 'start_time' => 'required|date_format:H:i',
                 'end_time' => 'required|date_format:H:i|after:start_time',
@@ -2260,7 +2275,7 @@ class ActivityController extends Controller
                 'start_date' => 'nullable|date',
                 'end_date' => 'nullable|date|after_or_equal:start_date',
                 'max_capacity' => 'nullable|integer|min:3|max:10',
-                'teacher_id' => 'nullable|exists:users,id'
+                'teacher_id' => 'nullable|exists:staffs,id'
             ]);
 
             // Check for recurring schedule conflicts if teacher is specified
@@ -2847,7 +2862,7 @@ class ActivityController extends Controller
     {
         try {
             $validated = $request->validate([
-                'instructor_id' => 'required|exists:users,id',
+                'instructor_id' => 'required|exists:staffs,id',
                 'schedule_days' => 'required|array',
                 'start_time' => 'required|date_format:H:i',
                 'duration_hours' => 'required|numeric|min:0.5|max:8',

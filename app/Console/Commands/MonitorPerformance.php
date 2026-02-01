@@ -81,7 +81,7 @@ class MonitorPerformance extends Command
         $tables = [
             'activities',
             'rehabilitation_activities',
-            'activity_sessions',
+            'activity_occurrences',
             'activity_attendances',
             'rehabilitation_objectives'
         ];
@@ -124,7 +124,7 @@ class MonitorPerformance extends Command
                     AND t.table_name = p.object_name 
                     AND t.index_name = p.index_name
                 WHERE t.table_schema = DATABASE()
-                    AND t.table_name IN ('activities', 'rehabilitation_activities', 'activity_sessions')
+                    AND t.table_name IN ('activities', 'rehabilitation_activities', 'activity_occurrences')
                     AND p.index_name IS NULL
                     AND t.index_name != 'PRIMARY'
             ");

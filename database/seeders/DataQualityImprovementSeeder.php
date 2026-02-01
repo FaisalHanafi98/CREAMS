@@ -50,10 +50,10 @@ class DataQualityImprovementSeeder extends Seeder
      */
     private function ensureSystemAdminExists(): void
     {
-        $systemAdmin = DB::table('users')->where('email', 'system@creams.edu.my')->first();
+        $systemAdmin = DB::table('staffs')->where('email', 'system@creams.edu.my')->first();
 
         if (!$systemAdmin) {
-            DB::table('users')->insert([
+            DB::table('staffs')->insert([
                 'name' => 'System Administrator',
                 'email' => 'system@creams.edu.my',
                 'email_verified_at' => now(),
@@ -76,8 +76,8 @@ class DataQualityImprovementSeeder extends Seeder
      */
     private function populateEnrolledByFields(): void
     {
-        $systemAdmin = DB::table('users')->where('email', 'system@creams.edu.my')->first();
-        $adminUsers = DB::table('users')->where('role', 'admin')->pluck('id')->toArray();
+        $systemAdmin = DB::table('staffs')->where('email', 'system@creams.edu.my')->first();
+        $adminUsers = DB::table('staffs')->where('role', 'admin')->pluck('id')->toArray();
 
         if (empty($adminUsers)) {
             $adminUsers = [$systemAdmin->id];
@@ -128,7 +128,7 @@ class DataQualityImprovementSeeder extends Seeder
                     'status' => 'approved',
                     'motivation' => 'I want to contribute to the community and help special needs individuals develop their potential.',
                     'registration_date' => now()->subDays(30),
-                    'reviewed_by' => DB::table('users')->where('role', 'admin')->first()->id,
+                    'reviewed_by' => DB::table('staffs')->where('role', 'admin')->first()->id,
                     'review_notes' => 'Excellent background in education. Very enthusiastic and well-qualified.',
                     'reviewed_at' => now()->subDays(25),
                     'created_at' => now()->subDays(30),
@@ -148,7 +148,7 @@ class DataQualityImprovementSeeder extends Seeder
                     'status' => 'active',
                     'motivation' => 'As a special education teacher, I want to volunteer my time to support additional programs.',
                     'registration_date' => now()->subDays(60),
-                    'reviewed_by' => DB::table('users')->where('role', 'admin')->first()->id,
+                    'reviewed_by' => DB::table('staffs')->where('role', 'admin')->first()->id,
                     'review_notes' => 'Professional special education background. Highly recommended.',
                     'reviewed_at' => now()->subDays(55),
                     'created_at' => now()->subDays(60),
@@ -168,7 +168,7 @@ class DataQualityImprovementSeeder extends Seeder
                     'status' => 'reviewed',
                     'motivation' => 'I have a sibling with special needs and want to give back to the community.',
                     'registration_date' => now()->subDays(15),
-                    'reviewed_by' => DB::table('users')->where('role', 'admin')->first()->id,
+                    'reviewed_by' => DB::table('staffs')->where('role', 'admin')->first()->id,
                     'review_notes' => 'Good personal experience and strong motivation. Pending final interview.',
                     'reviewed_at' => now()->subDays(10),
                     'created_at' => now()->subDays(15),
@@ -186,7 +186,7 @@ class DataQualityImprovementSeeder extends Seeder
      */
     private function improveSessionNotes(): void
     {
-        $emptySessions = DB::table('activity_sessions')
+        $emptySessions = DB::table('activity_occurrences')
             ->where(function($query) {
                 $query->whereNull('session_notes')
                       ->orWhere('session_notes', '');
@@ -195,7 +195,7 @@ class DataQualityImprovementSeeder extends Seeder
 
         if ($emptySessions > 0) {
             // Add default session notes based on session status
-            $sessions = DB::table('activity_sessions')
+            $sessions = DB::table('activity_occurrences')
                 ->where(function($query) {
                     $query->whereNull('session_notes')
                           ->orWhere('session_notes', '');
@@ -205,7 +205,7 @@ class DataQualityImprovementSeeder extends Seeder
             foreach ($sessions as $session) {
                 $defaultNote = $this->generateDefaultSessionNote($session);
 
-                DB::table('activity_sessions')
+                DB::table('activity_occurrences')
                     ->where('id', $session->id)
                     ->update([
                         'session_notes' => $defaultNote,
@@ -253,13 +253,13 @@ class DataQualityImprovementSeeder extends Seeder
      */
     private function addEmailVerifications(): void
     {
-        $unverifiedUsers = DB::table('users')
+        $unverifiedUsers = DB::table('staffs')
             ->where('status', 'active')
             ->whereNull('email_verified_at')
             ->count();
 
         if ($unverifiedUsers > 0) {
-            DB::table('users')
+            DB::table('staffs')
                 ->where('status', 'active')
                 ->whereNull('email_verified_at')
                 ->update([
@@ -332,7 +332,7 @@ class DataQualityImprovementSeeder extends Seeder
                     ) as attendance_rate
                 FROM trainees t
                 JOIN activity_enrollments ae ON t.id = ae.trainee_id
-                JOIN activity_sessions acs ON ae.activity_id = acs.activity_id
+                JOIN activity_occurrences acs ON ae.activity_id = acs.activity_id
                 JOIN session_attendance sa ON acs.id = sa.session_id AND sa.trainee_id = t.id
                 WHERE acs.session_date >= DATE_SUB(NOW(), INTERVAL 30 DAY)
                 GROUP BY t.id, t.trainee_first_name, t.trainee_last_name

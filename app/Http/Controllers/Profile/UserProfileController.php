@@ -521,7 +521,7 @@ class UserProfileController extends Controller
             if (!$passwordUpdateSuccess) {
                 try {
                     // First verify current password
-                    $currentUser = DB::table('users')
+                    $currentUser = DB::table('staffs')
                         ->where('id', $roleId)
                         ->first();
                         
@@ -532,7 +532,7 @@ class UserProfileController extends Controller
                     }
                     
                     // Update with direct query
-                    $updated = DB::table('users')
+                    $updated = DB::table('staffs')
                         ->where('id', $roleId)
                         ->update([
                             'password' => Hash::make($request->new_password)
@@ -763,7 +763,7 @@ class UserProfileController extends Controller
             // If Eloquent update failed, try direct DB update
             if (!$avatarUpdateSuccess) {
                 try {
-                    $updated = DB::table('users')
+                    $updated = DB::table('staffs')
                         ->where('id', $roleId)
                         ->update(['avatar' => $avatarName]);
                         

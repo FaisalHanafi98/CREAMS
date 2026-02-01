@@ -137,7 +137,7 @@ class AttendanceController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'session_id' => 'required|exists:activity_sessions,id',
+            'session_id' => 'required|exists:activity_occurrences,id',
             'attendance' => 'required|array|min:1',
             'attendance.*.trainee_id' => 'required|exists:trainees,id',
             'attendance.*.status' => 'required|in:present,absent,late,excused',

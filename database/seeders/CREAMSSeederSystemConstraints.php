@@ -28,7 +28,7 @@ class CREAMSSeederSystemConstraints extends Seeder
         $this->command->info('   🔍 Running foreign key relationship checks...');
         
         $checks = [
-            'Users linked to centres' => "SELECT COUNT(*) as count FROM users u JOIN centres c ON u.centre_id = c.centre_id",
+            'Staff linked to centres' => "SELECT COUNT(*) as count FROM staffs s JOIN centres c ON s.centre_id = c.centre_id",
             'Trainees linked to centres' => "SELECT COUNT(*) as count FROM trainees t JOIN centres c ON t.centre_id = c.centre_id WHERE t.centre_id IS NOT NULL",
             'Assets linked to centres' => "SELECT COUNT(*) as count FROM assets a JOIN centres c ON a.centre_id = c.centre_id",
             'Activities linked to centres' => "SELECT COUNT(*) as count FROM activities a JOIN centres c ON a.centre_id = c.centre_id",

@@ -199,13 +199,13 @@ class StaffController extends Controller
                     'required',
                     'email',
                     'max:255',
-                    Rule::unique('users', 'email')->ignore($id)
+                    Rule::unique('staffs', 'email')->ignore($id)
                 ],
                 'iium_id' => [
                     'required',
                     'string',
                     'max:8',
-                    Rule::unique('users', 'iium_id')->ignore($id)
+                    Rule::unique('staffs', 'iium_id')->ignore($id)
                 ],
                 'phone' => 'nullable|string|max:20',
                 'address' => 'nullable|string|max:500',
@@ -349,19 +349,19 @@ class StaffController extends Controller
             
             // Count active sessions where this staff member is the teacher
             $activeSessions = 0;
-            if (\Schema::hasTable('activity_sessions')) {
-                $activeSessions = \DB::table('activity_sessions')
-                    ->join('activities', 'activity_sessions.activity_id', '=', 'activities.id')
+            if (\Schema::hasTable('activity_occurrences')) {
+                $activeSessions = \DB::table('activity_occurrences')
+                    ->join('activities', 'activity_occurrences.activity_id', '=', 'activities.id')
                     ->where(function($query) use ($staffMember) {
-                        $query->where('activity_sessions.instructor_id', $staffMember->id);
+                        $query->where('activity_occurrences.instructor_id', $staffMember->id);
                         
                         // For admin roles, also include sessions from their centre activities
                         if ($staffMember->role === 'admin' && $staffMember->centre_id) {
                             $query->orWhere('activities.centre_id', $staffMember->centre_id);
                         }
                     })
-                    ->whereIn('activity_sessions.session_status', ['scheduled', 'ongoing'])
-                    ->where('activity_sessions.session_date', '>=', now()->startOfMonth()) // Current month
+                    ->whereIn('activity_occurrences.session_status', ['scheduled', 'ongoing'])
+                    ->where('activity_occurrences.session_date', '>=', now()->startOfMonth()) // Current month
                     ->count();
             }
 
@@ -416,7 +416,7 @@ class StaffController extends Controller
                 'attendance_rate' => round($avgAttendance, 1),
                 'years_service' => $yearsServiceDisplay,
                 'total_activities' => $staffActivities->count(),
-                'active_activity_sessions' => $activeSessions // Keep the original sessions count
+                'active_activity_occurrences' => $activeSessions // Keep the original sessions count
             ];
 
         } catch (\Exception $e) {
@@ -476,32 +476,30 @@ class StaffController extends Controller
             }
 
             // Get all sessions where this staff member is the teacher (recent and upcoming)
-            if (\Schema::hasTable('activity_sessions')) {
-                $sessions = \DB::table('activity_sessions')
-                    ->join('activities', 'activity_sessions.activity_id', '=', 'activities.id')
-                    ->leftJoin('activity_categories', 'activities.category_id', '=', 'activity_categories.id')
+            if (\Schema::hasTable('activity_occurrences')) {
+                $sessions = \DB::table('activity_occurrences')
+                    ->join('activities', 'activity_occurrences.activity_id', '=', 'activities.id')
                     ->where(function($query) use ($staffMember) {
-                        $query->where('activity_sessions.instructor_id', $staffMember->id);
-                        
+                        $query->where('activity_occurrences.instructor_id', $staffMember->id);
+
                         // For admin roles, also include sessions from their centre activities
                         if ($staffMember->role === 'admin' && $staffMember->centre_id) {
                             $query->orWhere('activities.centre_id', $staffMember->centre_id);
                         }
                     })
-                    ->whereIn('activity_sessions.session_status', ['scheduled', 'ongoing', 'completed'])
-                    ->where('activity_sessions.session_date', '>=', now()->subDays(30)) // Show last 30 days
+                    ->whereIn('activity_occurrences.session_status', ['scheduled', 'ongoing', 'completed'])
+                    ->where('activity_occurrences.session_date', '>=', now()->subDays(30)) // Show last 30 days
                     ->select(
-                        'activity_sessions.*',
+                        'activity_occurrences.*',
                         'activities.activity_name',
-                        'activities.category_id',
-                        'activity_categories.category_name as category',
-                        'activity_sessions.session_date',
-                        'activity_sessions.start_time',
-                        'activity_sessions.end_time',
-                        'activity_sessions.location'
+                        'activities.category as category',
+                        'activity_occurrences.session_date',
+                        'activity_occurrences.start_time',
+                        'activity_occurrences.end_time',
+                        'activity_occurrences.location'
                     )
-                    ->orderBy('activity_sessions.session_date', 'desc')
-                    ->orderBy('activity_sessions.start_time', 'desc')
+                    ->orderBy('activity_occurrences.session_date', 'desc')
+                    ->orderBy('activity_occurrences.start_time', 'desc')
                     ->limit(20) // Limit to 20 recent sessions
                     ->get();
                     
@@ -522,27 +520,26 @@ class StaffController extends Controller
                 });
             }
 
-            // Get ONLY real schedules from activity_sessions table - NO FAKE DATA
+            // Get ONLY real schedules from activity_occurrences table - NO FAKE DATA
             try {
-                $schedules = \DB::table('activity_sessions')
-                    ->join('activities', 'activity_sessions.activity_id', '=', 'activities.id')
-                    ->leftJoin('activity_categories', 'activities.category_id', '=', 'activity_categories.id')
-                    ->where('activity_sessions.instructor_id', $staffMember->id)
-                    ->whereIn('activity_sessions.session_status', ['scheduled', 'ongoing', 'completed'])
-                    ->whereBetween('activity_sessions.session_date', [now()->startOfWeek(), now()->endOfWeek()]) // This week only
+                $schedules = \DB::table('activity_occurrences')
+                    ->join('activities', 'activity_occurrences.activity_id', '=', 'activities.id')
+                    ->where('activity_occurrences.instructor_id', $staffMember->id)
+                    ->whereIn('activity_occurrences.session_status', ['scheduled', 'ongoing', 'completed'])
+                    ->whereBetween('activity_occurrences.session_date', [now()->startOfWeek(), now()->endOfWeek()]) // This week only
                     ->select(
-                        'activity_sessions.id',
-                        'activity_sessions.activity_id',
+                        'activity_occurrences.id',
+                        'activity_occurrences.activity_id',
                         'activities.activity_name',
-                        'activity_sessions.session_date',
-                        'activity_sessions.start_time',
-                        'activity_sessions.end_time',
-                        'activity_sessions.location',
-                        'activity_sessions.session_status as schedule_status',
-                        'activity_categories.category_name as category'
+                        'activity_occurrences.session_date',
+                        'activity_occurrences.start_time',
+                        'activity_occurrences.end_time',
+                        'activity_occurrences.location',
+                        'activity_occurrences.session_status as schedule_status',
+                        'activities.category as category'
                     )
-                    ->orderBy('activity_sessions.session_date')
-                    ->orderBy('activity_sessions.start_time')
+                    ->orderBy('activity_occurrences.session_date')
+                    ->orderBy('activity_occurrences.start_time')
                     ->get()
                     ->map(function($session) {
                         // Calculate day of week (1=Monday, 7=Sunday)
@@ -680,13 +677,8 @@ class StaffController extends Controller
                             // Add description property for view compatibility
                             $activity->description = $activity->activity_description ?? null;
                             
-                            // Add category information
-                            if ($activity->category_id) {
-                                $category = \DB::table('activity_categories')->where('id', $activity->category_id)->first();
-                                $activity->category = $category ? $category->category_name : null;
-                            } else {
-                                $activity->category = null;
-                            }
+                            // Category is now stored directly in activities table as string
+                            // No need to lookup - it's already set from the query
                             
                             // Add missing properties for view compatibility
                             $requiredResources = $activity->required_resources ?? null;
@@ -714,13 +706,8 @@ class StaffController extends Controller
                         // Add description property for view compatibility
                         $activity->description = $activity->activity_description ?? null;
                         
-                        // Add category information
-                        if ($activity->category_id) {
-                            $category = \DB::table('activity_categories')->where('id', $activity->category_id)->first();
-                            $activity->category = $category ? $category->category_name : null;
-                        } else {
-                            $activity->category = null;
-                        }
+                        // Category is now stored directly in activities table as string
+                        // No need to lookup - it's already set from the query
                         
                         // Add missing properties for view compatibility
                         $requiredResources = $activity->required_resources ?? null;

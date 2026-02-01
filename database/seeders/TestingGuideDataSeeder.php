@@ -35,9 +35,6 @@ class TestingGuideDataSeeder extends Seeder
         // Seed existing contact messages
         $this->seedExistingContactMessages();
 
-        // Seed activity categories
-        $this->seedActivityCategories();
-
         // Seed realistic activities for comprehensive testing
         $this->seedRealisticActivities();
 
@@ -83,11 +80,11 @@ class TestingGuideDataSeeder extends Seeder
     }
 
     /**
-     * Seed users referenced in testing guide
+     * Seed staff referenced in testing guide
      */
     private function seedTestingUsers(): void
     {
-        $this->command->info('   👥 Seeding testing guide users...');
+        $this->command->info('   👥 Seeding testing guide staff...');
 
         $users = [
             // Admin user from testing guide
@@ -183,14 +180,14 @@ class TestingGuideDataSeeder extends Seeder
         $userCount = 0;
         foreach ($users as $user) {
             try {
-                DB::table('users')->insertOrIgnore($user);
+                DB::table('staffs')->insertOrIgnore($user);
                 $userCount++;
             } catch (\Exception $e) {
                 // Skip if already exists
             }
         }
 
-        $this->command->line("   ✓ Seeded {$userCount} testing guide users");
+        $this->command->line("   ✓ Seeded {$userCount} testing guide staff");
     }
 
     /**
@@ -365,64 +362,6 @@ class TestingGuideDataSeeder extends Seeder
     }
 
     /**
-     * Seed activity categories for testing
-     */
-    private function seedActivityCategories(): void
-    {
-        $this->command->info('   🎯 Seeding activity categories...');
-
-        // Realistic activity categories aligned with database schema
-        $categories = [
-            [
-                'id' => 1,
-                'category_name' => 'Speech Therapy',
-                'category_name_bm' => 'Terapi Pertuturan',
-                'category_type' => 'rehabilitation',
-                'category_color' => '#FF6B6B',
-                'category_icon' => 'fas fa-comments',
-                'category_description' => 'Speech and communication therapy programs',
-                'is_active' => true,
-                'created_at' => now(),
-                'updated_at' => now()
-            ],
-            [
-                'id' => 2,
-                'category_name' => 'Occupational Therapy',
-                'category_name_bm' => 'Terapi Okupasi',
-                'category_type' => 'rehabilitation',
-                'category_color' => '#4ECDC4',
-                'category_icon' => 'fas fa-hands-helping',
-                'category_description' => 'Occupational and life skills therapy',
-                'is_active' => true,
-                'created_at' => now(),
-                'updated_at' => now()
-            ],
-            [
-                'id' => 3,
-                'category_name' => 'Physical Therapy',
-                'category_name_bm' => 'Fisioterapi',
-                'category_type' => 'rehabilitation',
-                'category_color' => '#45B7D1',
-                'category_icon' => 'fas fa-running',
-                'category_description' => 'Physical rehabilitation and motor skills',
-                'is_active' => true,
-                'created_at' => now(),
-                'updated_at' => now()
-            ]
-        ];
-
-        // Only seed if the table exists
-        try {
-            foreach ($categories as $category) {
-                DB::table('activity_categories')->insertOrIgnore($category);
-            }
-            $this->command->line('   ✓ Activity categories seeded');
-        } catch (\Exception $e) {
-            $this->command->line('   ⚠️ Activity categories table may not exist - skipping');
-        }
-    }
-
-    /**
      * Seed realistic activities for testing comprehensive scenarios
      */
     private function seedRealisticActivities(): void
@@ -434,7 +373,7 @@ class TestingGuideDataSeeder extends Seeder
                 'id' => 1,
                 'activity_name' => 'Program Terapi Pertuturan untuk Kanak-kanak Autisme - Sesi Pagi',
                 'activity_description' => 'Program terapi pertuturan yang direka khas untuk kanak-kanak dengan spektrum autisme. Fokus kepada peningkatan kemahiran komunikasi verbal, interaksi sosial, dan perkembangan bahasa menggunakan pendekatan terapeutik berasaskan bukti.',
-                'category_id' => 1,
+                'category' => 'Speech Therapy',
                 'centre_id' => '01',
                 'duration_weeks' => 12,
                 'sessions_per_week' => 2,
@@ -457,7 +396,7 @@ class TestingGuideDataSeeder extends Seeder
                 'id' => 2,
                 'activity_name' => 'Program Terapi Pertuturan untuk Kanak-kanak Autisme - Sesi Petang',
                 'activity_description' => 'Program terapi pertuturan sesi petang dengan pendekatan yang sama tetapi direka untuk kanak-kanak yang lebih sesuai dengan waktu petang. Menggunakan kaedah terapi play-based dan structured learning.',
-                'category_id' => 1,
+                'category' => 'Speech Therapy',
                 'centre_id' => '01',
                 'duration_weeks' => 12,
                 'sessions_per_week' => 2,
@@ -480,7 +419,7 @@ class TestingGuideDataSeeder extends Seeder
                 'id' => 3,
                 'activity_name' => 'Program Terapi Okupasi untuk Down Syndrome',
                 'activity_description' => 'Program terapi okupasi komprehensif untuk kanak-kanak dengan Down Syndrome, memfokuskan kepada kemahiran motor halus, kemandirian harian, dan kemahiran kognitif praktikal.',
-                'category_id' => 2,
+                'category' => 'Learning Support',
                 'centre_id' => '01',
                 'duration_weeks' => 16,
                 'sessions_per_week' => 2,
@@ -512,11 +451,11 @@ class TestingGuideDataSeeder extends Seeder
     }
 
     /**
-     * Seed activity sessions for testing time conflicts
+     * Seed activity occurrences for testing time conflicts
      */
     private function seedActivitySessions(): void
     {
-        $this->command->info('   📅 Seeding activity sessions for conflict testing...');
+        $this->command->info('   📅 Seeding activity occurrences for conflict testing...');
 
         $sessions = [
             [
@@ -574,11 +513,11 @@ class TestingGuideDataSeeder extends Seeder
 
         try {
             foreach ($sessions as $session) {
-                DB::table('activity_sessions')->insertOrIgnore($session);
+                DB::table('activity_occurrences')->insertOrIgnore($session);
             }
-            $this->command->line('   ✓ Activity sessions seeded');
+            $this->command->line('   ✓ Activity occurrences seeded');
         } catch (\Exception $e) {
-            $this->command->line('   ⚠️ Activity sessions table may not exist - skipping');
+            $this->command->line('   ⚠️ Activity occurrences table may not exist - skipping');
         }
     }
 

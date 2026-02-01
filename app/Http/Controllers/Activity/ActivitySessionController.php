@@ -88,7 +88,7 @@ class ActivitySessionController extends Controller
         }
         
         $validated = $request->validate([
-            'teacher_id' => 'required|exists:users,id',
+            'teacher_id' => 'required|exists:staffs,id',
             'class_name' => 'required|string|max:50',
             'semester' => 'required|string|max:10',
             'day_of_week' => 'required|in:Monday,Tuesday,Wednesday,Thursday,Friday',
@@ -222,7 +222,7 @@ class ActivitySessionController extends Controller
         }
         
         $validated = $request->validate([
-            'teacher_id' => 'required|exists:users,id',
+            'teacher_id' => 'required|exists:staffs,id',
             'class_name' => 'required|string|max:50',
             'day_of_week' => 'required|in:Monday,Tuesday,Wednesday,Thursday,Friday,Saturday,Sunday',
             'start_time' => 'required|date_format:H:i',

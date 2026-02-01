@@ -38,7 +38,7 @@ return new class extends Migration
             $table->foreign('category_id')->references('id')->on('asset_categories')->onDelete('restrict');
             $table->foreign('type_id')->references('id')->on('asset_parents')->onDelete('set null');
             $table->foreign('location_id')->references('id')->on('asset_locations')->onDelete('set null');
-            $table->foreign('assigned_to_user')->references('id')->on('users')->onDelete('set null');
+            $table->foreign('assigned_to_user')->references('id')->on('staffs')->onDelete('set null');
 
             // Add better indexes
             $table->index(['status', 'condition'], 'idx_assets_status_condition');

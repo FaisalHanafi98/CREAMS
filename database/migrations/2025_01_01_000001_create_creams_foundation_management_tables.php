@@ -8,7 +8,7 @@ class CreateCreamsFoundationManagementTables extends Migration
 {
     /**
      * CREAMS Foundation Management Migration
-     * Tables: centres, users, failed_jobs, sessions
+     * Tables: centres, staffs, failed_jobs, sessions
      * Note: personal_access_tokens handled by Laravel Sanctum migration
      * Dependencies: None (runs first)
      */
@@ -41,8 +41,8 @@ class CreateCreamsFoundationManagementTables extends Migration
             $table->index('is_active');
         });
 
-        // 2. USERS TABLE - Staff management (preserves current structure)
-        Schema::create('users', function (Blueprint $table) {
+        // 2. STAFFS TABLE - Staff management (migrated from users)
+        Schema::create('staffs', function (Blueprint $table) {
             $table->id();
             $table->string('iium_id', 50)->nullable()->unique();
             $table->string('name');
@@ -64,7 +64,7 @@ class CreateCreamsFoundationManagementTables extends Migration
             $table->text('about')->nullable();
             $table->string('centre_location')->nullable();
             // Removed bio field - old implementation, about field is sufficient
-            $table->timestamp('user_last_accessed_at')->nullable();
+            $table->timestamp('last_accessed_at')->nullable();
             $table->rememberToken();
             $table->timestamps();
             
@@ -100,7 +100,7 @@ class CreateCreamsFoundationManagementTables extends Migration
     {
         Schema::dropIfExists('sessions');
         Schema::dropIfExists('failed_jobs');
-        Schema::dropIfExists('users');
+        Schema::dropIfExists('staffs');
         Schema::dropIfExists('centres');
     }
 }

@@ -132,16 +132,23 @@ class CREAMSSeederFoundationManagement extends Seeder
     private function seedRealGombakUsers(): void
     {
         $this->command->info('   👤 Restoring real Gombak centre staff...');
-        
+
         $realData = json_decode(file_get_contents(database_path('real_data_backup.json')), true);
-        
+
         if (isset($realData['users']) && !empty($realData['users'])) {
             foreach ($realData['users'] as $user) {
                 // Convert array to proper format and preserve all fields
                 $userData = (array) $user;
-                DB::table('users')->insertOrIgnore($userData);
+
+                // Map old column name to new column name (users table migration to staffs table)
+                if (isset($userData['user_last_accessed_at'])) {
+                    $userData['last_accessed_at'] = $userData['user_last_accessed_at'];
+                    unset($userData['user_last_accessed_at']);
+                }
+
+                DB::table('staffs')->insertOrIgnore($userData);
             }
-            
+
             $this->command->line('      ✓ Restored ' . count($realData['users']) . ' real Gombak staff members');
         } else {
             $this->command->line('      ⚠ No real user data found in backup');
@@ -194,7 +201,7 @@ class CREAMSSeederFoundationManagement extends Seeder
                 $email = str_replace(' ', '.', $email) . rand(1, 999) . '@' . collect($realDomains)->random();
                 
                 try {
-                    DB::table('users')->insertOrIgnore([
+                    DB::table('staffs')->insertOrIgnore([
                         'iium_id' => 'DEMO' . $centre->centre_id . sprintf('%03d', rand(100, 999)),
                         'name' => $staff['name'],
                         'email' => $email,
@@ -252,7 +259,7 @@ class CREAMSSeederFoundationManagement extends Seeder
             $centreId = $centres->random();
             
             try {
-                DB::table('users')->insertOrIgnore([
+                DB::table('staffs')->insertOrIgnore([
                     'iium_id' => 'ADD' . $centreId . sprintf('%03d', rand(100, 999)),
                     'name' => $user['name'],
                     'email' => $email,

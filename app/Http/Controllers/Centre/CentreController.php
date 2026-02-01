@@ -361,11 +361,11 @@ class CentreController extends Controller
      */
     private function getActiveSessions($centreId)
     {
-        return DB::table('activity_sessions')
-            ->join('activities', 'activity_sessions.activity_id', '=', 'activities.id')
+        return DB::table('activity_occurrences')
+            ->join('activities', 'activity_occurrences.activity_id', '=', 'activities.id')
             ->where('activities.centre_id', $centreId)
-            ->where('activity_sessions.session_status', 'scheduled')
-            ->where('activity_sessions.session_date', '>=', now())
+            ->where('activity_occurrences.session_status', 'scheduled')
+            ->where('activity_occurrences.session_date', '>=', now())
             ->count();
     }
 

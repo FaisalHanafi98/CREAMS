@@ -574,7 +574,7 @@ class SessionTemplateController extends Controller
 
         $validator = Validator::make($request->all(), [
             'session_ids' => 'required|array|min:1',
-            'session_ids.*' => 'exists:activity_sessions,id',
+            'session_ids.*' => 'exists:activity_occurrences,id',
             'new_date' => [
                 'required',
                 'date',
@@ -705,7 +705,7 @@ class SessionTemplateController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'session_ids' => 'required|array|min:1',
-            'session_ids.*' => 'exists:activity_sessions,id',
+            'session_ids.*' => 'exists:activity_occurrences,id',
             'new_venue' => 'required|string|max:255',
             'new_room_number' => 'nullable|string|max:50',
             'preserve_enrollments' => 'boolean',
@@ -806,13 +806,13 @@ class SessionTemplateController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'session_ids' => 'required|array|min:1',
-            'session_ids.*' => 'exists:activity_sessions,id',
+            'session_ids.*' => 'exists:activity_occurrences,id',
             'cancellation_reason' => 'required|string|max:500',
             'preserve_enrollments' => 'boolean',
             'preserve_learning_outcomes' => 'boolean',
             'notify_participants' => 'boolean',
             'offer_alternative' => 'boolean',
-            'alternative_session_id' => 'nullable|exists:activity_sessions,id'
+            'alternative_session_id' => 'nullable|exists:activity_occurrences,id'
         ]);
 
         if ($validator->fails()) {

@@ -33,7 +33,7 @@ return new class extends Migration
             $table->index('centre_id');
             
             // Foreign key constraint
-            $table->foreign('user_id')->references('id')->on('users')->onDelete('set null');
+            $table->foreign('user_id')->references('id')->on('staffs')->onDelete('set null');
         });
     }
 

@@ -94,7 +94,7 @@ class RememberMe
                 ]);
                 
                 // Update last login
-                $user-> user_last_accessed_at = now();
+                $user-> last_accessed_at = now();
                 $user->save();
             } else {
                 Log::warning('Remember token not found or invalid', [
