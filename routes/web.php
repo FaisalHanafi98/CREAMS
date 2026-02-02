@@ -8,7 +8,6 @@ use Illuminate\Support\Facades\Mail;
 use App\Http\Controllers\MainController;
 use App\Http\Controllers\Dashboard\DashboardController;
 use App\Http\Controllers\Profile\UserProfileController;
-use App\Http\Controllers\LetterController;
 use App\Http\Controllers\Staff\StaffsHomeController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ContactController;
@@ -47,7 +46,6 @@ use App\Http\Controllers\SettingController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\SearchController;
-use App\Http\Controllers\Profile\LetterController as ProfileLetterController;
 use App\Http\Controllers\Letters\ModernLetterGeneratorController;
 use App\Http\Controllers\Profile\LetterTemplateController;
 use App\Http\Controllers\Letters\ModernLetterController;
@@ -180,7 +178,7 @@ Route::middleware(['auth', 'validate.params'])->group(function () {
         Route::get('/week-calendar', [App\Http\Controllers\Dashboard\DashboardController::class, 'getWeekCalendar'])->name('week-calendar');
         Route::post('/refresh-stats', [App\Http\Controllers\Dashboard\DashboardController::class, 'refreshStats'])->name('refresh-stats');
         Route::post('/refresh-widget', [App\Http\Controllers\Dashboard\DashboardController::class, 'refreshWidget'])->name('refresh-widget');
-        Route::get('/widget/{widget}', [App\Http\Controllers\Dashboard\DashboardController::class, 'getWidget'])->name('widget');
+        // Route removed: getWidget method does not exist in DashboardController
     });
 
     // Profile management
@@ -209,7 +207,7 @@ Route::middleware(['auth', 'validate.params'])->group(function () {
     });
 
     // Profile Letter Generation Routes (All authenticated users)
-    Route::post('/letters/generate', [LetterController::class, 'generate'])->name('letters.generate');
+    // POST /letters/generate is handled by ModernLetterController in the letters prefix group below
     Route::post('/profile/letters/generate', [LetterTemplateController::class, 'generate'])->name('profile.letters.generate');
     Route::get('/profile/letters/{letter}/preview', [LetterTemplateController::class, 'viewLetter'])->name('profile.letters.preview');
     Route::get('/profile/letters/{letter}/download', [LetterTemplateController::class, 'downloadLetter'])->name('profile.letters.download');
@@ -319,8 +317,8 @@ Route::middleware(['auth', 'validate.params'])->group(function () {
 
         // Teacher routes
         Route::middleware(['role:teacher,admin,supervisor'])->group(function () {
-            Route::get('/{activityId}/sessions/{sessionId}/attendance', [ActivityController::class, 'markAttendance'])->name('activities.attendance');
-            Route::post('/{activityId}/sessions/{sessionId}/attendance', [ActivityController::class, 'storeAttendance'])->name('activities.attendance.store');
+            Route::get('/{activityId}/sessions/{sessionId}/attendance', [ActivityController::class, 'markAttendance'])->name('attendance');
+            Route::post('/{activityId}/sessions/{sessionId}/attendance', [ActivityController::class, 'storeAttendance'])->name('attendance.store');
             Route::get('/{activityId}/sessions/{sessionId}/enrollments', [ActivityController::class, 'manageEnrollments'])->name('enrollments');
             Route::post('/{activityId}/sessions/{sessionId}/enroll', [ActivityController::class, 'enrollTrainees'])->name('enroll.legacy');
             Route::post('/{activityId}/sessions/{sessionId}/enrollments/add', [ActivityController::class, 'addEnrollment'])->name('enrollments.add');
@@ -328,7 +326,6 @@ Route::middleware(['auth', 'validate.params'])->group(function () {
         });
 
         // Enhanced Schedule routes
-        Route::get('/schedule', [ActivityController::class, 'scheduleIndex'])->name('schedule');
         Route::get('/schedule/personal', [ActivityController::class, 'personalSchedule'])->name('schedule.personal');
         Route::get('/schedule/staff/{encryptedId}', [ActivityController::class, 'staffSchedule'])->name('schedule.staff');
         Route::get('/schedule/trainee/{encryptedId}', [ActivityController::class, 'traineeSchedule'])->name('schedule.trainee');
@@ -509,12 +506,13 @@ Route::middleware(['auth', 'validate.params'])->group(function () {
         // View and operational routes - accessible to all authenticated users
         Route::get('/', [AssetController::class, 'index'])->name('index');
         Route::get('/reports', [AssetController::class, 'reports'])->name('reports');
-        Route::get('/reports/data', [AssetController::class, 'getReportData'])->name('reports.data');
-        Route::get('/reports/export', [AssetController::class, 'exportReports'])->name('reports.export');
+        // Route removed: getReportData method does not exist
+        // Route deferred: exportReports - TODO: implement when needed
+        // Route::get('/reports/export', [AssetController::class, 'exportReports'])->name('reports.export');
         Route::get('/maintenance', [AssetController::class, 'maintenance'])->name('maintenance');
-        Route::get('/maintenance/filter', [AssetController::class, 'filterMaintenance'])->name('maintenance.filter');
+        // Route removed: filterMaintenance method does not exist
         Route::get('/movements', [AssetController::class, 'movements'])->name('movements');
-        Route::get('/movements/filter', [AssetController::class, 'filterMovements'])->name('movements.filter');
+        // Route removed: filterMovements method does not exist
         Route::get('/{id}', [AssetController::class, 'show'])->name('show');
 
         // Asset rental/usage routes (operational - supervisors and teachers can manage)
@@ -522,9 +520,11 @@ Route::middleware(['auth', 'validate.params'])->group(function () {
             Route::post('/{id}/rent', [AssetController::class, 'rentAsset'])->name('rent');
             Route::post('/{id}/return', [AssetController::class, 'returnAsset'])->name('return');
             Route::post('/maintenance/schedule', [AssetController::class, 'scheduleMaintenance'])->name('maintenance.schedule');
-            Route::post('/maintenance/{id}/complete', [AssetController::class, 'completeMaintenance'])->name('maintenance.complete');
-            Route::post('/maintenance/{id}/reschedule', [AssetController::class, 'rescheduleMaintenance'])->name('maintenance.reschedule');
-            Route::post('/movements/record', [AssetController::class, 'recordMovement'])->name('movements.record');
+            // Route deferred: completeMaintenance - TODO: implement when needed
+            // Route::post('/maintenance/{id}/complete', [AssetController::class, 'completeMaintenance'])->name('maintenance.complete');
+            // Route removed: rescheduleMaintenance method does not exist
+            // Route deferred: recordMovement - TODO: implement when needed
+            // Route::post('/movements/record', [AssetController::class, 'recordMovement'])->name('movements.record');
         });
 
         // CRUD operations - restricted to admin users only
@@ -534,7 +534,7 @@ Route::middleware(['auth', 'validate.params'])->group(function () {
             Route::get('/{id}/edit', [AssetController::class, 'edit'])->name('edit');
             Route::put('/{id}', [AssetController::class, 'update'])->name('update');
             Route::delete('/{id}', [AssetController::class, 'destroy'])->name('destroy');
-            Route::post('/movements/{id}/approve', [AssetController::class, 'approveMovement'])->name('movements.approve');
+            // Route removed: approveMovement method does not exist
         });
     });
 
@@ -598,11 +598,11 @@ Route::middleware(['auth', 'validate.params'])->group(function () {
         Route::get('/', [ModernLetterGeneratorController::class, 'index'])->name('index');
         Route::get('/create', [ModernLetterGeneratorController::class, 'create'])->name('create');
         Route::post('/generate', [ModernLetterGeneratorController::class, 'generate'])->name('generate');
+        Route::get('/search', [ModernLetterGeneratorController::class, 'search'])->name('search');
+        Route::get('/template-preview/{id}', [ModernLetterGeneratorController::class, 'getTemplatePreview'])->name('template.preview');
         Route::get('/{id}', [ModernLetterGeneratorController::class, 'show'])->name('show');
         Route::get('/{id}/download', [ModernLetterGeneratorController::class, 'downloadPDF'])->name('download');
-        Route::get('/template-preview/{id}', [ModernLetterGeneratorController::class, 'getTemplatePreview'])->name('template.preview');
         Route::post('/{id}/archive', [ModernLetterGeneratorController::class, 'archive'])->name('archive');
-        Route::get('/search', [ModernLetterGeneratorController::class, 'search'])->name('search');
     });
 
     // New Letter Management System - Complete Rewrite with Modern Architecture
@@ -612,11 +612,18 @@ Route::middleware(['auth', 'validate.params'])->group(function () {
         Route::post('/generate', [ModernLetterController::class, 'generate'])->name('generate');
         Route::get('/{id}/show', [ModernLetterController::class, 'show'])->name('show');
         Route::get('/{id}/download', [ModernLetterController::class, 'download'])->name('download');
+        Route::get('/{id}/edit', [LetterTemplateController::class, 'edit'])->name('edit');
+        Route::put('/{id}/update', [LetterTemplateController::class, 'update'])->name('update');
+        Route::delete('/{id}/destroy', [LetterTemplateController::class, 'destroy'])->name('destroy');
     });
 
-    // Legacy Letter Routes (for backward compatibility)
-    Route::get('/letters-old', [LetterController::class, 'index'])->name('letters.old.index');
-    Route::get('/letters-old/create', [LetterController::class, 'create'])->name('letters.old.create');
+    // Legacy Letter Routes — redirect to modern system
+    Route::get('/letters-old', function () {
+        return redirect()->route('letters.modern.index');
+    })->name('letters.old.index');
+    Route::get('/letters-old/create', function () {
+        return redirect()->route('letters.modern.create');
+    })->name('letters.old.create');
 
     // Letter Archive with inline HTML (Direct Fix)
     Route::get('/letters-archive', function () {
@@ -666,7 +673,7 @@ Route::middleware(['auth', 'validate.params'])->group(function () {
             collect($letters)->map(function ($letter) {
                 $letterData = is_array($letter->letter_data) ? $letter->letter_data : json_decode($letter->letter_data, true);
                 return '<tr>
-                                <td><code>' . $letter->letter_reference . '</code></td>
+                                <td><code>' . $letter->letter_id . '</code></td>
                                 <td>' . \Carbon\Carbon::parse($letter->letter_date)->format('d M Y') . '</td>
                                 <td>' . ($letterData['recipient_name'] ?? 'Unknown') . '</td>
                                 <td>' . \Str::limit($letter->letter_subject, 50) . '</td>
@@ -795,47 +802,20 @@ Route::prefix('admin')->middleware(['auth', 'role:admin'])->group(function () {
         Route::get('/{id}/asset-parents', [CentreController::class, 'assets'])->name('asset-parents');
     });
 
-    // Asset management
-    Route::prefix('asset-parents')->name('admin.asset-parents.')->middleware(['centre.access:asset'])->group(function () {
-        Route::get('/', [AssetController::class, 'index'])->name('index');
-        Route::get('/create', [AssetController::class, 'create'])->name('create');
-        Route::post('/', [AssetController::class, 'store'])->name('store');
-        Route::get('/reports', [AssetController::class, 'reports'])->name('reports');
-        Route::get('/reports/data', [AssetController::class, 'getReportData'])->name('reports.data');
-        Route::get('/reports/export', [AssetController::class, 'exportReports'])->name('reports.export');
-        Route::get('/maintenance', [AssetController::class, 'maintenance'])->name('maintenance');
-        Route::get('/maintenance/filter', [AssetController::class, 'filterMaintenance'])->name('maintenance.filter');
-        Route::post('/maintenance/schedule', [AssetController::class, 'scheduleMaintenance'])->name('maintenance.schedule');
-        Route::post('/maintenance/{id}/complete', [AssetController::class, 'completeMaintenance'])->name('maintenance.complete');
-        Route::post('/maintenance/{id}/reschedule', [AssetController::class, 'rescheduleMaintenance'])->name('maintenance.reschedule');
-        Route::get('/movements', [AssetController::class, 'movements'])->name('movements');
-        Route::get('/movements/filter', [AssetController::class, 'filterMovements'])->name('movements.filter');
-        Route::post('/movements/record', [AssetController::class, 'recordMovement'])->name('movements.record');
-        Route::post('/movements/{id}/approve', [AssetController::class, 'approveMovement'])->name('movements.approve');
-        Route::get('/{id}', [AssetController::class, 'show'])->name('show');
-        Route::get('/{id}/edit', [AssetController::class, 'edit'])->name('edit');
-        Route::put('/{id}', [AssetController::class, 'update'])->name('update');
-        Route::delete('/{id}', [AssetController::class, 'destroy'])->name('destroy');
-    });
+    // Legacy admin.asset-parents block removed - shadowed by asset-parents block at line ~505
+    // All routes in this block were unreachable due to route shadowing
 
     // Letter Management Routes (Admin Only)
     // Letter template management routes (admin only)
-    Route::prefix('admin/letter-templates')->name('admin.letter-templates.')->group(function () {
+    Route::prefix('letter-templates')->name('admin.letter-templates.')->group(function () {
         Route::get('/', [LetterTemplateController::class, 'index'])->name('index');
         Route::post('/update', [LetterTemplateController::class, 'store'])->name('update');
     });
 
-    // Legacy letter routes for backward compatibility
-    Route::prefix('admin/letters')->name('admin.letters.')->group(function () {
-        Route::get('/', [LetterController::class, 'index'])->name('index');
-        Route::post('/template', [LetterController::class, 'updateTemplate'])->name('template');
-        Route::post('/generate', [LetterController::class, 'generateLetter'])->name('generate');
-        Route::post('/preview', [LetterController::class, 'preview'])->name('preview');
-        Route::get('/history', [LetterController::class, 'history'])->name('history');
-        Route::get('/download/{id}', [LetterController::class, 'download'])->name('download');
-        Route::get('/new-reference', [LetterController::class, 'newReference'])->name('newReference');
-        Route::delete('/{id}', [LetterController::class, 'destroy'])->name('destroy');
-    });
+    // Legacy admin letter routes — redirected to modern system
+    Route::get('/letters', function () {
+        return redirect()->route('letters.modern.index');
+    })->name('admin.letters.index');
 
     // Redirect routes to common routes
     Route::get('/centres', function () {
@@ -932,7 +912,7 @@ Route::middleware(['auth'])->prefix('api')->name('api.')->group(function () {
     Route::get('/activities', [ActivityController::class, 'apiIndex'])->name('activities');
     Route::get('/activities/categories', [ActivityController::class, 'getCategories'])->name('activities.categories');
     Route::post('/activities/check-conflicts', [ActivityController::class, 'checkScheduleConflicts'])->name('activities.check-conflicts');
-    Route::get('/asset-parents', [AssetController::class, 'getAssetsJson'])->name('asset-parents');
+    // Route removed: getAssetsJson method does not exist
 
     // Centre-based API endpoints for activity creation
     Route::get('/centres/{centreId}/instructors', [ActivityController::class, 'getInstructors'])->name('centres.instructors');
