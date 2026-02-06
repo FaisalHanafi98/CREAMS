@@ -115,6 +115,90 @@ php artisan optimize:clear
 3. **Testing**: Write tests for new features (target: 60%+ coverage, current: 13%)
 4. **Security**: Validate all inputs, use prepared statements
 
+### Commit Message Standards
+
+Write commit messages as a real human developer would. Sound natural, clear, and conversational.
+
+**Core Rules:**
+- Use simple developer language
+- Write in imperative mood (fix, add, update, refactor, remove)
+- Explain WHAT changed and WHY it matters
+- Be concise but meaningful
+- Sound like you are explaining to a colleague
+
+**Message Structure:**
+```
+type(scope): short, clear title (≤50 characters)
+
+- What changed
+- Why the change was made
+- Any important context or side effects
+```
+
+**Style Guidelines:**
+
+MUST:
+- Use active voice
+- Use bullet points
+- Address the reader directly (you, your)
+- Support claims with data and examples
+- Focus on practical, actionable insights
+- Be spartan and informative
+
+AVOID:
+- Passive voice
+- Marketing tone or hype
+- AI-sounding phrases (utilize, unlock, revolutionize, dive deep, harness, leverage)
+- Metaphors and cliches
+- Rhetorical questions
+- Generalizations
+- Setup language (in conclusion, in closing)
+- Unnecessary adjectives and adverbs
+- Constructions like "not just this, but also this"
+- Em dashes (use commas or periods)
+- Semicolons (use periods)
+- Common filler words (can, may, just, that, very, really, literally, actually, certainly, probably, basically)
+
+**Example Commit (Good):**
+```
+feat(security): Phase 1 Security Hardening Complete (16/16 tasks)
+
+Implemented comprehensive security improvements addressing all CRITICAL
+and HIGH priority vulnerabilities. OWASP compliance increased from 68%
+to 85%+.
+
+WEEK 1: Critical Fixes
+- Removed 4 debug routes exposing session data
+- Configured production environment with APP_DEBUG=false
+- Implemented rate limiting (3-5 attempts/min for login)
+- Removed IC numbers from API responses
+- Added 7 security headers (X-Frame-Options, CSP, HSTS)
+- Fixed session fixation vulnerability
+
+WEEK 2: Authorization & Access Control
+- Added role-based middleware to 4 sensitive route groups
+- Verified centre isolation in all controllers
+- Confirmed audit logging operational
+- Restricted attendance marking to staff only
+- Restricted letter generation to admin/supervisor
+
+WEEK 3: Input Validation & Encryption
+- Fixed 5 XSS vulnerabilities with escapeHtml() function
+- Implemented strong password policy (12+ chars with complexity)
+- Verified CSRF protection operational (93 @csrf directives)
+
+Security Impact:
+Before: 68% OWASP compliance, 3 CRITICAL vulnerabilities
+After: 85%+ OWASP compliance, 0 CRITICAL vulnerabilities
+
+Defense-in-Depth Layers:
+1. Network: Rate limiting on auth endpoints
+2. Application: RBAC, centre isolation, security headers
+3. Input: Validation, XSS escaping, CSRF protection
+4. Data: API PII hiding, audit logging
+5. Authentication: Strong passwords, session regeneration
+```
+
 ### Anti-Hallucination Protocol
 
 1. **Database schema**: Read actual migrations, don't assume tables
@@ -195,5 +279,5 @@ Full registry: [`.claude/skills/SKILLS_REGISTRY.md`](.claude/skills/SKILLS_REGIS
 - Test coverage improvement before major changes
 
 ---
-*Last Updated: 2026-02-02*
+*Last Updated: 2026-02-07*
 *Gold Medal FYP - Evolved for Production*
