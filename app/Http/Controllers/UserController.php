@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\Password;
 use App\Models\User;
 use App\Models\AuditLog;
 
@@ -500,12 +501,7 @@ class UserController extends Controller
         
         // Validate input
         $request->validate([
-            'password' => [
-                'required',
-                'min:5',
-                'regex:/^(?=.*[a-zA-Z])(?=.*\d)(?=.*[\W_]).{5,}$/',
-                'confirmed'
-            ]
+            'password' => ['required', 'confirmed', Password::defaults()]
         ]);
         
         // Get user from users table filtered by role

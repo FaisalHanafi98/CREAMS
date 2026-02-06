@@ -76,19 +76,8 @@ Route::post('/contact/submit', [ContactController::class, 'submit'])->name('cont
 Route::get('/volunteer', [VolunteerController::class, 'index'])->name('volunteer');
 Route::post('/volunteer/submit', [VolunteerController::class, 'submit'])->name('volunteer.submit');
 
-// Debug route for testing authentication
-Route::get('/debug/session', function () {
-    return response()->json([
-        'session_data' => session()->all(),
-        'is_authenticated' => \App\Services\SessionManager::check(),
-        'user_role' => session('role'),
-        'user_id' => session('id'),
-        'user_name' => session('name')
-    ]);
-});
-
-// Admin routes for volunteer management
-Route::middleware(['enhanced.auth'])->group(function () {
+// Admin routes for volunteer management (admin only - approval/rejection authority)
+Route::middleware(['enhanced.auth', 'role:admin'])->group(function () {
     Route::get('/admin/volunteers', [VolunteerController::class, 'adminIndex'])->name('admin.volunteers.index');
     Route::get('/volunteer/applications', [VolunteerController::class, 'getApplications'])->name('volunteer.applications');
     Route::get('/volunteer/applications/{id}', [VolunteerController::class, 'show'])->name('volunteer.applications.show');
@@ -111,11 +100,14 @@ Route::middleware('guest')->group(function () {
     // Standard login routes
     Route::get('/auth/login', [MainController::class, 'login'])->name('auth.loginpage');
     Route::get('/login', [MainController::class, 'login'])->name('login');
-    Route::post('/auth/check', [MainController::class, 'check'])->name('auth.check');
+    Route::post('/auth/check', [MainController::class, 'check'])
+        ->name('auth.check')
+        ->middleware('throttle:login');
 
     // Enhanced login routes
     Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
-    Route::post('/login', [LoginController::class, 'login']);
+    Route::post('/login', [LoginController::class, 'login'])
+        ->middleware('throttle:login');
 
     // Registration routes - legacy auth/register now redirects to staffs/register
     Route::get('/auth/register', function () {
@@ -123,14 +115,20 @@ Route::middleware('guest')->group(function () {
     });
     Route::get('/registration', [MainController::class, 'registration'])->name('registration');
     Route::get('/staffs/register', [MainController::class, 'registration'])->name('staffs.register');
-    Route::post('/auth/save', [MainController::class, 'save'])->name('auth.save');
+    Route::post('/auth/save', [MainController::class, 'save'])
+        ->name('auth.save')
+        ->middleware('throttle:registration');
 });
 
 // Password reset routes - accessible to both guests and authenticated users
 Route::get('/forgot-password', [ForgotPasswordController::class, 'showForgotPasswordForm'])->name('password.request');
-Route::post('/forgot-password', [ForgotPasswordController::class, 'submitForgotPasswordForm'])->name('password.email');
+Route::post('/forgot-password', [ForgotPasswordController::class, 'submitForgotPasswordForm'])
+    ->name('password.email')
+    ->middleware('throttle:password-reset');
 Route::get('/reset-password/{token}', [ForgotPasswordController::class, 'showResetPasswordForm'])->name('password.reset');
-Route::post('/reset-password', [ForgotPasswordController::class, 'submitResetPasswordForm'])->name('password.update');
+Route::post('/reset-password', [ForgotPasswordController::class, 'submitResetPasswordForm'])
+    ->name('password.update')
+    ->middleware('throttle:password-reset');
 
 // Logout routes
 Route::middleware(['auth'])->group(function () {
@@ -142,7 +140,7 @@ Route::middleware(['auth'])->group(function () {
 });
 
 // Enhanced authentication API routes
-Route::middleware(['web'])->group(function () {
+Route::middleware(['web', 'throttle:60,1'])->group(function () {
     Route::get('/auth/check-status', [LoginController::class, 'checkAuth'])->name('auth.check-status');
     Route::post('/auth/extend-session', [LoginController::class, 'extendSession'])->name('auth.extend');
     Route::post('/auth/refresh-session', [LoginController::class, 'refreshSession'])->name('auth.refresh');
@@ -206,15 +204,16 @@ Route::middleware(['auth', 'validate.params'])->group(function () {
         Route::get('/profile/letter-download/{id}', [LetterTemplateController::class, 'downloadLetter'])->name('profile.letter.download');
     });
 
-    // Profile Letter Generation Routes (All authenticated users)
-    // POST /letters/generate is handled by ModernLetterController in the letters prefix group below
-    Route::post('/profile/letters/generate', [LetterTemplateController::class, 'generate'])->name('profile.letters.generate');
-    Route::get('/profile/letters/{letter}/preview', [LetterTemplateController::class, 'viewLetter'])->name('profile.letters.preview');
-    Route::get('/profile/letters/{letter}/download', [LetterTemplateController::class, 'downloadLetter'])->name('profile.letters.download');
+    // Profile Letter Generation Routes (Admin/Supervisor only - official document authority)
+    Route::middleware(['role:admin,supervisor'])->group(function () {
+        Route::post('/profile/letters/generate', [LetterTemplateController::class, 'generate'])->name('profile.letters.generate');
+        Route::get('/profile/letters/{letter}/preview', [LetterTemplateController::class, 'viewLetter'])->name('profile.letters.preview');
+        Route::get('/profile/letters/{letter}/download', [LetterTemplateController::class, 'downloadLetter'])->name('profile.letters.download');
+    });
 
 
-    // Activity Management
-    Route::prefix('activities')->name('activities.')->group(function () {
+    // Activity Management (centre-isolated)
+    Route::prefix('activities')->name('activities.')->middleware(['centre.access:activity'])->group(function () {
         Route::get('/', function () {
             return redirect()->route('activities.home');
         }); // Legacy redirect
@@ -418,8 +417,12 @@ Route::middleware(['auth', 'validate.params'])->group(function () {
     Route::get('/teachershome', function () {
         return redirect()->route('staffs.home');
     })->name('teachershome');
-    Route::get('/updateuser/{id}', [StaffsHomeController::class, 'updateuserpage'])->name('updateuser');
-    Route::post('/updateuser/{id}', [StaffsHomeController::class, 'updateuser'])->name('updateuser.post');
+
+    // User update routes (admin only - manages staff accounts)
+    Route::middleware(['role:admin'])->group(function () {
+        Route::get('/updateuser/{id}', [StaffsHomeController::class, 'updateuserpage'])->name('updateuser');
+        Route::post('/updateuser/{id}', [StaffsHomeController::class, 'updateuser'])->name('updateuser.post');
+    });
 
     // Legacy staff routes (redirect to new encrypted structure)
     Route::prefix('staff')->name('staff.')->group(function () {
@@ -469,12 +472,15 @@ Route::middleware(['auth', 'validate.params'])->group(function () {
         return redirect()->route('centres.index');
     })->middleware(['centre.access:centre']);
 
-    // General centre assets route
+    // General centre assets route (view accessible to all, create admin only)
     Route::get('/centre/asset-parents', [AssetController::class, 'index'])->name('centre.asset-parents');
-    Route::post('/centre/asset-parents', [AssetController::class, 'store'])->name('centre.asset-parents.store');
+    Route::post('/centre/asset-parents', [AssetController::class, 'store'])
+        ->middleware('role:admin')
+        ->name('centre.asset-parents.store');
 
-    // Staff Daily Attendance Management (must be BEFORE generic {id} routes)
-    Route::prefix('centres/attendance')->name('centres.attendance.')->middleware(['enhanced.auth'])->group(function () {
+    // Staff Daily Attendance Management (admin/supervisor/teacher only - attendance authority)
+    Route::prefix('centres/attendance')->name('centres.attendance.')
+        ->middleware(['enhanced.auth', 'role:admin,supervisor,teacher'])->group(function () {
         Route::get('/', [StaffAttendanceController::class, 'index'])->name('index');
         Route::post('/mark', [StaffAttendanceController::class, 'markAttendance'])->name('mark');
         Route::post('/mark-trainee', [StaffAttendanceController::class, 'markTraineeAttendance'])->name('mark-trainee');
@@ -558,8 +564,8 @@ Route::middleware(['auth', 'validate.params'])->group(function () {
         Route::delete('/{id}', [NotificationController::class, 'destroy'])->name('destroy');
     });
 
-    // Attendance Management
-    Route::prefix('attendance')->name('attendance.')->group(function () {
+    // Attendance Management (admin/supervisor/teacher only - attendance marking authority)
+    Route::prefix('attendance')->name('attendance.')->middleware(['role:admin,supervisor,teacher'])->group(function () {
         Route::get('/', [App\Http\Controllers\Activity\AttendanceController::class, 'index'])->name('index');
         Route::post('/', [App\Http\Controllers\Activity\AttendanceController::class, 'store'])->name('store');
         Route::get('/report', [App\Http\Controllers\Activity\AttendanceController::class, 'report'])->name('report');
@@ -568,8 +574,8 @@ Route::middleware(['auth', 'validate.params'])->group(function () {
         })->name('trainee');
     });
 
-    // Activity Attendance Management
-    Route::prefix('activity-attendance')->name('activity-attendance.')->group(function () {
+    // Activity Attendance Management (admin/supervisor/teacher only - attendance marking authority)
+    Route::prefix('activity-attendance')->name('activity-attendance.')->middleware(['role:admin,supervisor,teacher'])->group(function () {
         Route::get('/', [App\Http\Controllers\Activity\AttendanceController::class, 'index'])->name('index');
         Route::post('/', [App\Http\Controllers\Activity\AttendanceController::class, 'store'])->name('store');
         Route::get('/stats/today', [App\Http\Controllers\Activity\AttendanceController::class, 'getTodayStats'])->name('stats.today');
@@ -593,8 +599,8 @@ Route::middleware(['auth', 'validate.params'])->group(function () {
     });
 
 
-    // Modern Letter Generator System - Latest Implementation
-    Route::prefix('letters/modern')->name('letters.modern.')->group(function () {
+    // Modern Letter Generator System - Latest Implementation (Admin/Supervisor only - official document authority)
+    Route::prefix('letters/modern')->name('letters.modern.')->middleware(['role:admin,supervisor'])->group(function () {
         Route::get('/', [ModernLetterGeneratorController::class, 'index'])->name('index');
         Route::get('/create', [ModernLetterGeneratorController::class, 'create'])->name('create');
         Route::post('/generate', [ModernLetterGeneratorController::class, 'generate'])->name('generate');
@@ -605,8 +611,8 @@ Route::middleware(['auth', 'validate.params'])->group(function () {
         Route::post('/{id}/archive', [ModernLetterGeneratorController::class, 'archive'])->name('archive');
     });
 
-    // New Letter Management System - Complete Rewrite with Modern Architecture
-    Route::prefix('letters')->name('letters.')->group(function () {
+    // New Letter Management System - Complete Rewrite with Modern Architecture (Admin/Supervisor only - official document authority)
+    Route::prefix('letters')->name('letters.')->middleware(['role:admin,supervisor'])->group(function () {
         Route::get('/', [ModernLetterController::class, 'dashboard'])->name('dashboard');
         Route::get('/index', [LetterTemplateController::class, 'index'])->name('index');
         Route::post('/generate', [ModernLetterController::class, 'generate'])->name('generate');
@@ -817,6 +823,14 @@ Route::prefix('admin')->middleware(['auth', 'role:admin'])->group(function () {
         return redirect()->route('letters.modern.index');
     })->name('admin.letters.index');
 
+    Route::get('/letters/history', function () {
+        return redirect()->route('letters.modern.index');
+    })->name('admin.letters.history');
+
+    Route::get('/letters/{id}/download', function ($id) {
+        return redirect()->route('letters.modern.download', $id);
+    })->name('admin.letters.download');
+
     // Redirect routes to common routes
     Route::get('/centres', function () {
         return redirect()->route('centres.index');
@@ -946,55 +960,6 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/search', [App\Http\Controllers\SearchController::class, 'search'])->name('search.post');
 });
 
-// Test route for debugging dashboard issues
-Route::get('/test-dashboard', function () {
-    session([
-        'id' => 1,
-        'role' => 'admin',
-        'centre_id' => '01',
-        'name' => 'Muhammad Syafiq bin Moh'
-    ]);
-
-    $dashboardController = new App\Http\Controllers\Dashboard\DashboardController();
-    $request = new Illuminate\Http\Request();
-
-    try {
-        $response = $dashboardController->index($request);
-
-        if ($response instanceof Illuminate\View\View) {
-            $data = $response->getData();
-
-            return response()->json([
-                'status' => 'success',
-                'what_you_should_see' => [
-                    'General Tab' => [
-                        'Total Users' => ($data['stats_flat']['total_users'] ?? 0),
-                        'Active Trainees' => ($data['stats_flat']['total_trainees'] ?? 0),
-                        'Active Programs' => ($data['stats_flat']['total_activities'] ?? 0),
-                        'Active Centres' => ($data['stats_flat']['active_centres'] ?? 0)
-                    ],
-                    'Personal Tab' => [
-                        'My Activities' => ($data['personal_stats']['user_activities'] ?? 0),
-                        'Weekly Sessions' => ($data['personal_stats']['weekly_sessions'] ?? 0),
-                        'Completion Rate' => ($data['personal_stats']['completion_rate'] ?? 0) . '%',
-                        'Average Attendance' => ($data['personal_stats']['avg_attendance'] ?? 0) . '%'
-                    ],
-                    'My Schedule' => [
-                        'Calendar Events' => count($data['calendar_events'] ?? []) . ' upcoming sessions'
-                    ]
-                ],
-                'css_check' => [
-                    'dashboard_widgets_css_exists' => file_exists(public_path('css/dashboard-widgets.css'))
-                ]
-            ], JSON_PRETTY_PRINT);
-        } else {
-            return response()->json(['status' => 'error', 'message' => 'Dashboard not returning view']);
-        }
-    } catch (Exception $e) {
-        return response()->json(['status' => 'error', 'message' => $e->getMessage()]);
-    }
-});
-
 /*
 |--------------------------------------------------------------------------
 | CSRF TOKEN REFRESH ROUTE
@@ -1004,33 +969,6 @@ Route::get('/test-dashboard', function () {
 // CSRF Token refresh route for AJAX calls
 Route::middleware(['auth'])->get('/csrf-token', function () {
     return response()->json(['token' => csrf_token()]);
-});
-
-// Debug route for attendance marking
-Route::middleware(['enhanced.auth'])->get('/debug-attendance', function () {
-    $trainee = \App\Models\Trainee::first();
-
-    return response()->json([
-        'debug_info' => [
-            'session_user_id' => session('id'),
-            'session_role' => session('role'),
-            'session_centre_id' => session('centre_id'),
-            'session_centre_id_type' => gettype(session('centre_id')),
-            'session_email' => session('email'),
-            'all_session_data' => session()->all(),
-        ],
-        'sample_trainee' => [
-            'id' => $trainee->id ?? null,
-            'name' => ($trainee->trainee_first_name ?? '') . ' ' . ($trainee->trainee_last_name ?? ''),
-            'centre_id' => $trainee->centre_id ?? null,
-            'centre_id_type' => gettype($trainee->centre_id ?? null),
-        ],
-        'current_user_from_db' => \App\Models\User::find(session('id')),
-        'routes_info' => [
-            'mark_trainee_route' => route('centres.attendance.mark-trainee'),
-            'mark_staff_route' => route('centres.attendance.mark'),
-        ]
-    ]);
 });
 
 /*
@@ -1047,7 +985,4 @@ Route::fallback(function () {
     }
     return redirect()->route('home')
         ->with('warning', 'The page you were looking for could not be found.');
-});
-Route::get('/test-schedule-view', function () {
-    return view('activities.schedule.index', ['sessions' => collect([]), 'centres' => collect([]), 'categories' => collect([]), 'role' => 'admin']);
 });

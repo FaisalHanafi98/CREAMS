@@ -31,6 +31,41 @@ class RouteServiceProvider extends ServiceProvider
             return Limit::perMinute(60)->by($request->user()?->id ?: $request->ip());
         });
 
+        // Authentication rate limiters (CRITICAL SECURITY)
+        RateLimiter::for('login', function (Request $request) {
+            $key = $request->input('email') ?: $request->ip();
+            return [
+                Limit::perMinute(env('RATE_LIMIT_LOGIN', 5))->by($key)->response(function () {
+                    return redirect()->back()->withErrors([
+                        'email' => 'Too many login attempts. Please try again in 1 minute.'
+                    ]);
+                }),
+            ];
+        });
+
+        RateLimiter::for('password-reset', function (Request $request) {
+            $key = $request->input('email') ?: $request->ip();
+            return [
+                Limit::perMinute(3)->by($key)->response(function () {
+                    return redirect()->back()->withErrors([
+                        'email' => 'Too many password reset requests. Please try again in 1 minute.'
+                    ]);
+                }),
+                Limit::perHour(10)->by($key),
+            ];
+        });
+
+        RateLimiter::for('registration', function (Request $request) {
+            return [
+                Limit::perMinute(3)->by($request->ip())->response(function () {
+                    return redirect()->back()->withErrors([
+                        'email' => 'Too many registration attempts. Please try again in 1 minute.'
+                    ]);
+                }),
+                Limit::perHour(5)->by($request->ip()),
+            ];
+        });
+
         // Dashboard-specific rate limiters for optimized performance
         RateLimiter::for('dashboard', function (Request $request) {
             $userId = session('id') ?: $request->ip();

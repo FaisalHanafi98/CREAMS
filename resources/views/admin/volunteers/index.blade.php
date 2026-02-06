@@ -673,7 +673,8 @@ window.viewApplication = function(applicationId) {
                 errorMessage = 'Server error. Please try again later.';
             }
             
-            $('#applicationModalBody').html(`<div class="alert alert-danger">${errorMessage}<br><small>Status: ${xhr.status} ${error}</small></div>`);
+            // SECURITY: Escape error messages to prevent XSS
+            $('#applicationModalBody').html(`<div class="alert alert-danger">${escapeHtml(errorMessage)}<br><small>Status: ${xhr.status} ${escapeHtml(error)}</small></div>`);
         }
     });
 }

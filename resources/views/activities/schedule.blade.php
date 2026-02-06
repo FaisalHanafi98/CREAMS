@@ -579,18 +579,20 @@
             sessionModal.addEventListener('show.bs.modal', function (event) {
                 const button = event.relatedTarget;
                 const sessionData = JSON.parse(button.dataset.session || '{}');
-                
+
                 // Update modal content
                 document.getElementById('modal-activity-name').textContent = sessionData.activity?.activity_name || 'N/A';
-                document.getElementById('modal-category').innerHTML = `<span class="badge bg-primary">${sessionData.activity?.category || 'N/A'}</span>`;
+                // SECURITY: Escape category to prevent XSS
+                document.getElementById('modal-category').innerHTML = `<span class="badge bg-primary">${escapeHtml(sessionData.activity?.category || 'N/A')}</span>`;
                 document.getElementById('modal-centre').textContent = sessionData.activity?.centre?.centre_name || 'N/A';
-                
+
                 const date = sessionData.scheduled_date ? new Date(sessionData.scheduled_date).toLocaleDateString() : 'Not set';
                 const time = sessionData.start_time ? new Date(`1970-01-01 ${sessionData.start_time}`).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 'Not set';
                 document.getElementById('modal-datetime').textContent = `${date} at ${time}`;
-                
+
                 document.getElementById('modal-teacher').textContent = sessionData.teacher?.name || 'Not assigned';
-                document.getElementById('modal-enrollment').innerHTML = `<span class="fw-bold">${sessionData.enrollments?.length || 0}</span> / ${sessionData.max_capacity || 'N/A'} enrolled`;
+                // SECURITY: Escape max_capacity to prevent XSS
+                document.getElementById('modal-enrollment').innerHTML = `<span class="fw-bold">${sessionData.enrollments?.length || 0}</span> / ${escapeHtml(sessionData.max_capacity || 'N/A')} enrolled`;
                 
                 // Update view button link
                 const viewBtn = document.getElementById('modal-view-btn');

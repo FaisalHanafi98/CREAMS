@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rules\Password;
 use App\Models\User;
 use App\Models\LetterTemplate;
 use App\Models\Letter;
@@ -479,16 +480,13 @@ class UserProfileController extends Controller
             // Only after current password is verified, validate new password format
             $passwordValidator = Validator::make($request->all(), [
                 'new_password' => [
-                    'min:8',
                     'confirmed',
                     'different:current_password',
-                    'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/'
+                    Password::defaults()
                 ]
             ], [
-                'new_password.min' => 'Your password must be at least 8 characters long.',
                 'new_password.confirmed' => 'The password confirmation does not match.',
-                'new_password.different' => 'Your new password cannot be the same as your current password.',
-                'new_password.regex' => 'Your password must include at least one uppercase letter, one lowercase letter, one number, and one special character.'
+                'new_password.different' => 'Your new password cannot be the same as your current password.'
             ]);
             
             if ($passwordValidator->fails()) {

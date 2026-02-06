@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Password;
+use Illuminate\Validation\Rules\Password as PasswordRule;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
@@ -182,7 +183,7 @@ class ForgotPasswordController extends Controller
         
         $request->validate([
             'email' => 'required|email',
-            'password' => 'required|min:5|confirmed|regex:/^(?=.*[a-zA-Z])(?=.*\d)(?=.*[\W_]).{5,}$/',
+            'password' => ['required', 'confirmed', PasswordRule::defaults()],
             'password_confirmation' => 'required',
             'token' => 'required'
         ]);

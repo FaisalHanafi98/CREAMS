@@ -5,6 +5,7 @@ namespace App\Providers;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\Rules\Password;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -25,6 +26,17 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
+        // Configure strong password policy (SECURITY REQUIREMENT)
+        // Minimum 12 characters with mixed case, numbers, and special characters
+        Password::defaults(function () {
+            return Password::min(env('PASSWORD_MIN_LENGTH', 12))
+                ->mixedCase()      // Requires both upper and lowercase
+                ->letters()         // Requires at least one letter
+                ->numbers()         // Requires at least one number
+                ->symbols()         // Requires at least one special character
+                ->uncompromised();  // Checks against data breach database
+        });
+
         // Load Malaysian date helper functions
         require_once app_path('Helpers/DateHelper.php');
         // Share user data with all views

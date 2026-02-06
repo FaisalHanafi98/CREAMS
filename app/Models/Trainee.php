@@ -115,6 +115,19 @@ class Trainee extends Model
     ];
 
     /**
+     * The attributes that should be hidden for serialization (JSON/Array).
+     * Sensitive PII fields that should not be exposed in API responses.
+     *
+     * @var array<int, string>
+     */
+    protected $hidden = [
+        'ic_number',              // Malaysian IC - PII, should not be exposed in APIs
+        'trainee_ic',             // Legacy IC field - PII
+        'medical_history',        // Sensitive medical information
+        'medical_info',           // Sensitive medical information
+    ];
+
+    /**
      * The attributes that should be cast.
      *
      * @var array<string, string>

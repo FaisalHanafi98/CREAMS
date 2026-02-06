@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Validation\Rules\Password;
 use App\Models\User;
 use App\Models\Admin;
 use App\Models\Supervisor;
@@ -360,7 +361,7 @@ class AdminController extends Controller
                 'phone' => 'nullable|string|max:20',
                 'role' => 'required|in:admin,supervisor,teacher,ajk',
                 'centre_id' => 'required|exists:centres,id',
-                'password' => 'required|string|min:8|confirmed',
+                'password' => ['required', 'confirmed', Password::defaults()],
                 'is_active' => 'boolean'
             ]);
             

@@ -1699,7 +1699,8 @@ $(document).ready(function() {
             const reader = new FileReader();
             reader.onload = function(e) {
                 const maxHeight = previewSelector.includes('header') ? '80px' : '60px';
-                $(previewSelector).html(`<img src="${e.target.result}" alt="Preview" style="max-width: 20%; height: auto; max-height: ${maxHeight}; border: 2px solid #ddd; border-radius: 8px;">`);
+                // SECURITY: Escape data URL to prevent XSS (though data URLs are typically safe)
+                $(previewSelector).html(`<img src="${escapeHtml(e.target.result)}" alt="Preview" style="max-width: 20%; height: auto; max-height: ${escapeHtml(maxHeight)}; border: 2px solid #ddd; border-radius: 8px;">`);
             };
             reader.readAsDataURL(file);
         }
@@ -2329,12 +2330,14 @@ $(document).ready(function() {
                     
                     // Handle header image
                     if (template.header_image_path) {
-                        $('#header-preview').html(`<img src="${template.header_image_path}" alt="Header Image" style="max-width: 20%; height: auto; max-height: 80px; border: 2px solid #ddd; border-radius: 8px;">`);
+                        // SECURITY: Escape image path to prevent XSS
+                        $('#header-preview').html(`<img src="${escapeHtml(template.header_image_path)}" alt="Header Image" style="max-width: 20%; height: auto; max-height: 80px; border: 2px solid #ddd; border-radius: 8px;">`);
                     }
-                    
+
                     // Handle footer image
                     if (template.footer_image_path) {
-                        $('#footer-preview').html(`<img src="${template.footer_image_path}" alt="Footer Image" style="max-width: 20%; height: auto; max-height: 60px; border: 2px solid #ddd; border-radius: 8px;">`);
+                        // SECURITY: Escape image path to prevent XSS
+                        $('#footer-preview').html(`<img src="${escapeHtml(template.footer_image_path)}" alt="Footer Image" style="max-width: 20%; height: auto; max-height: 60px; border: 2px solid #ddd; border-radius: 8px;">`);
                     }
                     
                     // Close modal
@@ -2383,12 +2386,14 @@ $(document).ready(function() {
                 
                 // Handle header image
                 if (templateData.headerImage) {
-                    $('#header-preview').html(`<img src="${templateData.headerImage}" alt="Header Image" style="max-width: 20%; height: auto; max-height: 80px; border: 2px solid #ddd; border-radius: 8px;">`);
+                    // SECURITY: Escape image path to prevent XSS
+                    $('#header-preview').html(`<img src="${escapeHtml(templateData.headerImage)}" alt="Header Image" style="max-width: 20%; height: auto; max-height: 80px; border: 2px solid #ddd; border-radius: 8px;">`);
                 }
-                
+
                 // Handle footer image
                 if (templateData.footerImage) {
-                    $('#footer-preview').html(`<img src="${templateData.footerImage}" alt="Footer Image" style="max-width: 20%; height: auto; max-height: 60px; border: 2px solid #ddd; border-radius: 8px;">`);
+                    // SECURITY: Escape image path to prevent XSS
+                    $('#footer-preview').html(`<img src="${escapeHtml(templateData.footerImage)}" alt="Footer Image" style="max-width: 20%; height: auto; max-height: 60px; border: 2px solid #ddd; border-radius: 8px;">`);
                 }
                 
                 // Clear localStorage
@@ -2462,7 +2467,7 @@ $(document).ready(function() {
                 const letterData = letter.letter_data || {};
                 archiveHtml += `
                     <tr>
-                        <td><code>${letter.letter_reference}</code><br><small class="text-muted">${letter.letter_name || 'Untitled Letter'}</small></td>
+                        <td><code>${letter.letter_id}</code><br><small class="text-muted">${letter.letter_name || 'Untitled Letter'}</small></td>
                         <td>${new Date(letter.letter_date).toLocaleDateString()}</td>
                         <td>${letter.letter_name || letter.letter_subject || 'Untitled Letter'}</td>
                         <td>${letterData.recipient_name || 'Unknown'}</td>

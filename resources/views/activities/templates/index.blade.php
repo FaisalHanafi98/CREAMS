@@ -251,9 +251,10 @@ function loadActivities() {
         .then(data => {
             const select = document.getElementById('activity_id');
             select.innerHTML = '<option value="">Choose activity...</option>';
-            
+
             data.forEach(activity => {
-                select.innerHTML += `<option value="${activity.id}">${activity.activity_name}</option>`;
+                // SECURITY: Escape activity name to prevent XSS
+                select.innerHTML += `<option value="${escapeHtml(activity.id)}">${escapeHtml(activity.activity_name)}</option>`;
             });
         })
         .catch(error => console.error('Error loading activities:', error));

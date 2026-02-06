@@ -1003,6 +1003,7 @@
     {{-- <link rel="stylesheet" href="{{ asset('css/malaysian-phone-input.css') }}"> --}}
 
     @yield('styles')
+    @stack('styles')
 </head>
 
 <body>
@@ -2154,10 +2155,50 @@
         });
     </script>
 
+    <!-- XSS Protection: Global HTML Escaping Function (SECURITY) -->
+    <script>
+    /**
+     * Escapes HTML special characters to prevent XSS attacks
+     * Use this function whenever inserting user/database content into innerHTML
+     *
+     * @param {string} text - The text to escape
+     * @returns {string} - The escaped text safe for HTML insertion
+     *
+     * Example: element.innerHTML = `<div>${escapeHtml(userInput)}</div>`;
+     */
+    function escapeHtml(text) {
+        if (text === null || text === undefined) {
+            return '';
+        }
+
+        const div = document.createElement('div');
+        div.textContent = String(text);
+        return div.innerHTML;
+    }
+
+    /**
+     * Alternative method using string replacement
+     * More performant for simple text escaping
+     */
+    function escapeHtmlFast(text) {
+        if (text === null || text === undefined) {
+            return '';
+        }
+
+        return String(text)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+    </script>
+
     <!-- Malaysian Phone Input Handler -->
     <script src="{{ asset('js/malaysian-phone-input.js') }}"></script>
 
     @yield('scripts')
+    @stack('scripts')
 </body>
 
 </html>

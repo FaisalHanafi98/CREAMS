@@ -39,12 +39,14 @@ class Kernel extends HttpKernel
                     \App\Http\Middleware\RememberMe::class,
                     \App\Http\Middleware\HandleSessionExpiration::class,
                     \App\Http\Middleware\SessionEnhancer::class,
+                    \App\Http\Middleware\SecurityHeadersMiddleware::class, // Security headers for all web requests
                 ],
 
         'api' => [
             // \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
             \Illuminate\Routing\Middleware\ThrottleRequests::class.':api',
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
+            \App\Http\Middleware\SecurityHeadersMiddleware::class, // Security headers for all API requests
         ],
     ];
 

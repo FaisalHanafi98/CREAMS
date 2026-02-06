@@ -22,7 +22,7 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 });
 
 // Dashboard API endpoints
-Route::middleware(['web', 'auth'])->group(function () {
+Route::middleware(['web', 'auth', 'throttle:60,1'])->group(function () {
     // Global search endpoint
     Route::get('/search', function (Request $request) {
         $query = $request->get('q', '');
@@ -39,20 +39,20 @@ Route::middleware(['web', 'auth'])->group(function () {
         
         try {
             $traineesQuery = DB::table('trainees')
-                ->select('id', 'trainee_name as name', 'trainee_ic as identifier')
+                ->select('id', 'trainee_name as name', 'centre_id')
                 ->where('trainee_name', 'like', "%{$query}%")
                 ->limit(5);
-                
+
             if ($role !== 'admin' && $centreId) {
                 $traineesQuery->where('centre_id', $centreId);
             }
-            
+
             $trainees = $traineesQuery->get();
             foreach ($trainees as $trainee) {
                 $results[] = [
                     'type' => 'trainee',
                     'name' => $trainee->name,
-                    'identifier' => $trainee->identifier,
+                    'identifier' => 'ID: ' . $trainee->id,
                     'id' => $trainee->id,
                     'url' => "/trainees/{$trainee->id}"
                 ];
@@ -167,19 +167,23 @@ Route::middleware(['web', 'auth'])->group(function () {
     });
 });
 
-Route::post('/forgot-password', [ForgotPasswordController::class, 'forgot'])->name('auth.forgotpassword');
+Route::post('/forgot-password', [ForgotPasswordController::class, 'forgot'])
+    ->name('auth.forgotpassword')
+    ->middleware('throttle:password-reset');
 
 // API Controller for system endpoints
 use App\Http\Controllers\Api\ApiController;
 use App\Http\Controllers\Api\InstructorCompatibilityController;
 
-// Public API endpoints
-Route::get('/health', [ApiController::class, 'healthCheck']);
-Route::get('/stats', [ApiController::class, 'getStats']);
-Route::get('/search', [ApiController::class, 'search']);
+// Public API endpoints (rate limited to prevent abuse)
+Route::middleware('throttle:api')->group(function () {
+    Route::get('/health', [ApiController::class, 'healthCheck']);
+    Route::get('/stats', [ApiController::class, 'getStats']);
+    Route::get('/search', [ApiController::class, 'search']);
+});
 
 // Protected API endpoints (require session authentication)
-Route::middleware(['web'])->group(function () {
+Route::middleware(['web', 'throttle:api'])->group(function () {
     Route::get('/dashboard-data', [ApiController::class, 'getDashboardData']);
     Route::get('/instructors/{instructorId}/compatibility', [InstructorCompatibilityController::class, 'checkCompatibility']);
 });
