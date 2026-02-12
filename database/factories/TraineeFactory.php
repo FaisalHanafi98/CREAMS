@@ -31,34 +31,41 @@ class TraineeFactory extends Factory
         );
 
         return [
-            'trainee_name' => fake()->name(),
-            'trainee_ic' => fake()->numerify('############'), // Malaysian IC format
+            'trainee_first_name' => fake()->firstName(),
+            'trainee_last_name' => fake()->lastName(),
             'trainee_email' => fake()->unique()->safeEmail(),
-            'trainee_phone' => '+60' . fake()->numerify('##########'),
-            'trainee_dob' => fake()->dateTimeBetween('-17 years', '-6 years'), // 6-17 years old
-            'trainee_gender' => fake()->randomElement(['male', 'female']),
-            'trainee_address' => fake()->address(),
-            'trainee_postcode' => fake()->numerify('#####'),
-            'trainee_city' => fake()->city(),
-            'trainee_state' => fake()->randomElement([
-                'Johor', 'Kedah', 'Kelantan', 'Melaka', 'Negeri Sembilan',
-                'Pahang', 'Penang', 'Perak', 'Perlis', 'Sabah',
-                'Sarawak', 'Selangor', 'Terengganu', 'Kuala Lumpur'
-            ]),
-            'disability_type' => fake()->randomElement([
+            'ic_number' => fake()->numerify('############'), // Malaysian IC format
+            'trainee_date_of_birth' => fake()->dateTimeBetween('-17 years', '-6 years'), // 6-17 years old
+            'gender' => fake()->randomElement(['male', 'female']),
+            'trainee_phone_number' => '+60' . fake()->numerify('##########'),
+            'trainee_address' => fake()->address() . ', ' .
+                               fake()->numerify('#####') . ' ' .
+                               fake()->city() . ', ' .
+                               fake()->randomElement([
+                                   'Johor', 'Kedah', 'Kelantan', 'Melaka', 'Negeri Sembilan',
+                                   'Pahang', 'Penang', 'Perak', 'Perlis', 'Sabah',
+                                   'Sarawak', 'Selangor', 'Terengganu', 'Kuala Lumpur'
+                               ]),
+            'trainee_condition' => fake()->randomElement([
                 'Autism Spectrum Disorder', 'Down Syndrome',
                 'Cerebral Palsy', 'Intellectual Disability',
                 'Physical Disability', 'Learning Disability'
             ]),
-            'disability_severity' => fake()->randomElement(['Mild', 'Moderate', 'Severe']),
-            'medical_history' => fake()->optional()->sentence(),
+            'centre_id' => $centre->centre_id,
+            'centre_name' => $centre->centre_name,
+            'status' => 'active',
             'guardian_name' => fake()->name(),
             'guardian_relationship' => fake()->randomElement(['Father', 'Mother', 'Grandfather', 'Grandmother', 'Uncle', 'Aunt', 'Guardian']),
             'guardian_phone' => '+60' . fake()->numerify('##########'),
             'guardian_email' => fake()->optional()->safeEmail(),
-            'centre_id' => $centre->centre_id,
-            'trainee_status' => 'active',
-            'enrollment_date' => fake()->dateTimeBetween('-2 years', 'now'),
+            'guardian_address' => fake()->optional()->address(),
+            'emergency_contact_name' => fake()->name(),
+            'emergency_contact_phone' => '+60' . fake()->numerify('##########'),
+            'emergency_contact_relationship' => fake()->randomElement(['Father', 'Mother', 'Sibling', 'Relative', 'Family Friend']),
+            'photo_consent' => fake()->boolean(80),
+            'services_consent' => true,
+            'data_consent' => true,
+            'registration_date' => fake()->dateTimeBetween('-2 years', 'now'),
         ];
     }
 
@@ -68,7 +75,7 @@ class TraineeFactory extends Factory
     public function autism(): static
     {
         return $this->state(fn (array $attributes) => [
-            'disability_type' => 'Autism Spectrum Disorder',
+            'trainee_condition' => 'Autism Spectrum Disorder',
         ]);
     }
 
@@ -78,7 +85,7 @@ class TraineeFactory extends Factory
     public function downSyndrome(): static
     {
         return $this->state(fn (array $attributes) => [
-            'disability_type' => 'Down Syndrome',
+            'trainee_condition' => 'Down Syndrome',
         ]);
     }
 
@@ -88,7 +95,7 @@ class TraineeFactory extends Factory
     public function inactive(): static
     {
         return $this->state(fn (array $attributes) => [
-            'trainee_status' => 'inactive',
+            'status' => 'inactive',
         ]);
     }
 }

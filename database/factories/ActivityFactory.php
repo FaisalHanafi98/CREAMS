@@ -48,17 +48,15 @@ class ActivityFactory extends Factory
                 'Educational Support',
                 'Recreational Activities'
             ]),
-            'activity_type' => fake()->randomElement(['therapy', 'education', 'recreation', 'training']),
-            'difficulty_level' => fake()->randomElement(['Beginner', 'Intermediate', 'Advanced']),
-            'age_group' => fake()->randomElement(['6-10', '11-14', '15-17', '6-17']),
-            'duration_minutes' => fake()->randomElement([30, 45, 60, 90, 120]),
-            'max_participants' => fake()->numberBetween(5, 20),
-            'materials_required' => fake()->optional()->sentence(),
-            'instructor_id' => $teacher->id,
             'centre_id' => $centre->centre_id,
-            'status' => 'active',
-            'start_date' => fake()->dateTimeBetween('-1 month', '+1 week'),
-            'end_date' => fake()->dateTimeBetween('+1 month', '+6 months'),
+            'duration_weeks' => fake()->numberBetween(4, 16),
+            'sessions_per_week' => fake()->numberBetween(1, 5),
+            'session_duration_minutes' => fake()->randomElement([30, 45, 60, 90, 120]),
+            'max_participants' => fake()->numberBetween(5, 20),
+            'learning_outcomes' => fake()->optional()->paragraph(),
+            'activity_location' => fake()->optional()->randomElement(['Therapy Room 1', 'Therapy Room 2', 'Activity Hall', 'Classroom A', 'Classroom B', 'Outdoor Area']),
+            'instructor_id' => $teacher->id,
+            'is_active' => true,
         ];
     }
 
@@ -69,7 +67,6 @@ class ActivityFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'category' => 'Autism Support',
-            'activity_type' => 'therapy',
         ]);
     }
 
@@ -79,8 +76,7 @@ class ActivityFactory extends Factory
     public function recreational(): static
     {
         return $this->state(fn (array $attributes) => [
-            'activity_type' => 'recreation',
-            'difficulty_level' => 'Beginner',
+            'category' => 'Recreational Activities',
         ]);
     }
 
@@ -90,18 +86,17 @@ class ActivityFactory extends Factory
     public function inactive(): static
     {
         return $this->state(fn (array $attributes) => [
-            'status' => 'inactive',
+            'is_active' => false,
         ]);
     }
 
     /**
-     * Indicate that the activity is completed
+     * Indicate that the activity is for therapy
      */
-    public function completed(): static
+    public function therapy(): static
     {
         return $this->state(fn (array $attributes) => [
-            'status' => 'completed',
-            'end_date' => fake()->dateTimeBetween('-1 month', 'now'),
+            'category' => fake()->randomElement(['Occupational Therapy', 'Physiotherapy', 'Speech Therapy', 'Behavioral Therapy']),
         ]);
     }
 }

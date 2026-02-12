@@ -218,6 +218,7 @@ Route::middleware(['auth', 'validate.params'])->group(function () {
             return redirect()->route('activities.home');
         }); // Legacy redirect
         Route::get('/home', [ActivityController::class, 'index'])->name('home'); // New structure
+        Route::get('/index', [ActivityController::class, 'index'])->name('index'); // Alias for home
         Route::get('/test', function () {
             return 'Test route works - User: ' . session('name') . ' Role: ' . session('role');
         })->name('test');
@@ -399,6 +400,8 @@ Route::middleware(['auth', 'validate.params'])->group(function () {
     // Staffs Management Routes (updated structure)
     Route::prefix('staffs')->name('staffs.')->group(function () {
         Route::get('/home', [StaffsHomeController::class, 'index'])->name('home');
+        Route::get('/index', [StaffsHomeController::class, 'index'])->name('index'); // Alias for home
+        Route::get('/create', [StaffsHomeController::class, 'create'])->name('create')->middleware(['role:admin']); // Create new staff
         Route::get('/profile/{encrypted_id}', [StaffController::class, 'viewProfile'])->name('profile');
         Route::get('/profile/edit/{encrypted_id}', [StaffController::class, 'editProfile'])->name('edit');
         Route::put('/profile/update/{encrypted_id}', [StaffController::class, 'updateProfile'])->name('update');
@@ -766,6 +769,7 @@ Route::middleware(['auth', 'centre.access:trainee'])->prefix('trainees')->name('
 
     Route::get('/profile/edit/{encrypted_id}', [TraineeProfileController::class, 'edit'])->name('edit'); // Edit route with encrypted ID
     Route::put('/{encrypted_id}', [TraineeProfileController::class, 'update'])->name('update'); // Update route with encrypted ID
+    Route::delete('/{encrypted_id}', [TraineeProfileController::class, 'destroy'])->name('destroy')->middleware(['role:admin']); // Delete trainee
     Route::get('/profile/{encrypted_id}', [TraineeHomeController::class, 'show'])->name('show'); // Show route with encrypted ID
     // Note: Legacy profile routes use /traineeprofile/{id} for backward compatibility
 });
