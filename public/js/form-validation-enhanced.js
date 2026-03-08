@@ -1024,8 +1024,8 @@ class EnhancedFormValidator {
         setTimeout(() => {
             this.hideLoadingState();
             
-            // Mock conflict detection
-            const hasConflicts = Math.random() < 0.3; // 30% chance of conflicts for demo
+            // Conflict detection disabled — real implementation should use API call
+            const hasConflicts = false;
             
             if (hasConflicts) {
                 this.showScheduleConflicts();

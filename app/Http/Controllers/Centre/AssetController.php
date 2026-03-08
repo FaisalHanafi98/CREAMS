@@ -178,17 +178,22 @@ class AssetController extends Controller
             // Get categories for filter dropdown
             $categories = AssetCategory::active()->get();
 
-            // Get recent activity
-            $recentActivity = AssetMovement::with(['asset', 'fromUser', 'toUser', 'performedBy'])
-                ->when($role !== 'admin', function ($query) use ($centreId) {
-                    return $query->whereHas('asset', function ($q) use ($centreId) {
-                        $q->where('centre_id', $centreId);
-                    });
-                })
-                ->recent(7)
-                ->orderBy('movement_date', 'desc')
-                ->limit(10)
-                ->get();
+            // Get recent activity (asset_movements table may not exist in all environments)
+            try {
+                $recentActivity = AssetMovement::with(['asset', 'fromUser', 'toUser', 'performedBy'])
+                    ->when($role !== 'admin', function ($query) use ($centreId) {
+                        return $query->whereHas('asset', function ($q) use ($centreId) {
+                            $q->where('centre_id', $centreId);
+                        });
+                    })
+                    ->recent(7)
+                    ->orderBy('movement_date', 'desc')
+                    ->limit(10)
+                    ->get();
+            } catch (Exception $e) {
+                Log::warning('asset_movements table unavailable: ' . $e->getMessage());
+                $recentActivity = collect();
+            }
 
             // Get maintenance alerts
             $maintenanceAlerts = AssetMaintenance::getRequiringAttention($centreId);

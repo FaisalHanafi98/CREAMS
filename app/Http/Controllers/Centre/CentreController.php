@@ -75,7 +75,7 @@ class CentreController extends Controller
                 ->with('error', 'Only administrators can create centres.');
         }
 
-        return view('centres.create');
+        return view('centres.create-enhanced');
     }
 
     /**

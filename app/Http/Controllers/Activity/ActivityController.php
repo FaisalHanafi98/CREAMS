@@ -680,56 +680,50 @@ class ActivityController extends Controller
             // Participants
             'max_participants' => 'required|integer|min:3|max:10',
             'min_participants' => 'required|integer|min:3|max:10',
-            'participants' => [
-                'required',
-                'string',
-                new MinimumEnrollmentRule(3),
-                new TraineeCompatibilityRule($request->input('category_id'))
-            ],
+            'participants' => 'nullable|string',
 
             // Schedule
-            'sessions_per_week' => 'required|integer|min:1|max:5',
-            'duration_hours' => 'required|numeric|min:0.5|max:3',
+            'sessions_per_week' => 'nullable|integer|min:1|max:5',
+            'session_duration' => 'nullable|numeric|min:0.5|max:180',
             'start_date' => [
                 'required',
                 'date',
                 'after_or_equal:today',
                 new \App\Rules\NoWeekendOrHolidayRule($request->input('centre_id'))
             ],
-            'start_time' => [
+            'end_date' => 'nullable|date|after_or_equal:start_date',
+            'activity_start_time' => [
                 'required',
                 'date_format:H:i'
             ],
-            'activity_period' => 'required|integer|min:1|max:24', // Duration in months
-            'schedule_days' => [
-                'required',
-                'array',
-                'min:1',
-                new \App\Rules\NoWeekendDaysRule()
-            ],
-            'schedule_days.*' => 'in:Monday,Tuesday,Wednesday,Thursday,Friday'
+            'activity_end_time' => 'nullable|date_format:H:i',
+            'activity_period_type' => 'nullable|string|in:single,recurring,course',
+            'recurring_days' => 'nullable|array|min:1',
+            'recurring_days.*' => 'in:monday,tuesday,wednesday,thursday,friday,saturday,sunday,Monday,Tuesday,Wednesday,Thursday,Friday,Saturday,Sunday',
+
+            // Additional form fields
+            'difficulty_level' => 'nullable|string|in:beginner,intermediate,advanced',
+            'age_group' => 'nullable|string',
+            'prerequisites' => 'nullable|string|max:2000',
         ]);
+
+        // Remap form field names to internal names used by downstream methods
+        $validated['start_time'] = $validated['activity_start_time'] ?? null;
+        $validated['duration_hours'] = $validated['session_duration'] ?? 1;
+        $validated['sessions_per_week'] = $validated['sessions_per_week'] ?? 2;
+
+        // Map activity_period_type to integer months
+        $periodMap = ['single' => 1, 'recurring' => 3, 'course' => 6];
+        $validated['activity_period'] = $periodMap[$validated['activity_period_type'] ?? 'single'] ?? 3;
+
+        // Normalize recurring_days to capitalized schedule_days
+        $validated['schedule_days'] = array_map('ucfirst', $validated['recurring_days'] ?? ['Monday']);
 
         // Additional mandatory requirements validation
         if (empty($validated['instructor_id'])) {
             return redirect()->back()
                 ->withInput()
                 ->with('error', 'MANDATORY REQUIREMENT: Every activity must have at least 1 qualified instructor assigned.');
-        }
-
-        if (empty($validated['participants'])) {
-            return redirect()->back()
-                ->withInput()
-                ->with('error', 'MANDATORY REQUIREMENT: Every activity must have at least 3 trainees enrolled before creation.');
-        }
-
-        // Validate trainee count
-        $participantIds = explode(',', $validated['participants']);
-        $participantCount = count(array_filter($participantIds));
-        if ($participantCount < 3) {
-            return redirect()->back()
-                ->withInput()
-                ->with('error', 'MANDATORY REQUIREMENT: Every activity must have at least 3 trainees enrolled before creation.');
         }
 
         // Enhanced validation: Check for scheduling conflicts and duplicates
