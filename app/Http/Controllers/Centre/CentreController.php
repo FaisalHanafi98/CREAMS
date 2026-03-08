@@ -463,7 +463,7 @@ class CentreController extends Controller
             return response()->json([
                 'success' => true,
                 'centre' => [
-                    'id' => $centre->id,
+                    'id' => $centre->centre_id,
                     'name' => $centre->centre_name,
                     'status' => $centre->centre_status
                 ],
@@ -485,26 +485,33 @@ class CentreController extends Controller
     }
 
     /**
-     * Get historical statistics for trends
+     * Get historical statistics for trends.
+     * Derives daily session counts from activity_occurrences for the past 30 days.
      */
     private function getHistoricalStats($centreId)
     {
         $thirtyDaysAgo = Carbon::now()->subDays(30);
 
-        return CentreStatistics::where('centre_id', $centreId)
-            ->where('last_calculated', '>=', $thirtyDaysAgo)
-            ->orderBy('last_calculated')
-            ->get()
-            ->map(function ($record) {
-                return [
-                    'date' => $record->last_calculated->toDateString(),
-                    'utilization_rate' => $record->utilization_rate,
-                    'attendance_rate' => $record->attendance_rate,
-                    'total_users' => $record->total_users,
-                    'total_trainees' => $record->total_trainees,
-                    'total_activities' => $record->total_activities
-                ];
-            });
+        $dailyCounts = DB::table('activity_occurrences as ao')
+            ->join('activities as a', 'ao.activity_id', '=', 'a.id')
+            ->where('a.centre_id', $centreId)
+            ->where('ao.session_date', '>=', $thirtyDaysAgo->format('Y-m-d'))
+            ->select(
+                DB::raw('DATE(ao.session_date) as date'),
+                DB::raw('COUNT(*) as total_sessions'),
+                DB::raw('SUM(ao.current_participants) as total_participants')
+            )
+            ->groupBy('date')
+            ->orderBy('date')
+            ->get();
+
+        return $dailyCounts->map(function ($row) {
+            return [
+                'date' => $row->date,
+                'total_sessions' => $row->total_sessions,
+                'total_participants' => (int) $row->total_participants
+            ];
+        });
     }
 
     /**

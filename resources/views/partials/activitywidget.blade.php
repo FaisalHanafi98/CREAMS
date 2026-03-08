@@ -44,7 +44,7 @@
                         {{ $session->activity->activity_name }} 
                         ({{ $session->class_name }})
                     </span>
-                    <a href="{{ route('activities.attendance', $session->id) }}" 
+                    <a href="{{ route('activities.attendance', [$session->activity_id, $session->id]) }}" 
                        class="btn btn-sm btn-outline-primary float-right">
                         Mark Attendance
                     </a>

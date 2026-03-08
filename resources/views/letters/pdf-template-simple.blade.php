@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Letter - {{ $letter->letter_reference ?? 'N/A' }}</title>
+    <title>Letter - {{ $letter->letter_id ?? 'N/A' }}</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -64,7 +64,7 @@
 
         <!-- Reference -->
         <div class="letter-reference">
-            Ref: {{ $letter->letter_reference ?? 'N/A' }}
+            Ref: {{ $letter->letter_id ?? 'N/A' }}
         </div>
 
         <!-- Recipient -->

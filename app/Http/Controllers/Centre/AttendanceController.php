@@ -212,11 +212,9 @@ class AttendanceController extends Controller
                 ]);
             }
 
-            // Update session status
+            // Update session status to completed
             $session->update([
-                'status' => 'completed',
-                'attendance_marked' => true,
-                'completed_at' => now()
+                'session_status' => 'completed'
             ]);
 
             DB::commit();
@@ -346,7 +344,7 @@ class AttendanceController extends Controller
                                         $q->where('centre_id', $centreId);
                                     })
                                     ->whereDate('session_date', $date)
-                                    ->where('attendance_marked', true)
+                                    ->where('session_status', 'completed')
                                     ->count()
         ];
     }

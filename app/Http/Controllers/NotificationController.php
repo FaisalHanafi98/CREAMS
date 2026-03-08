@@ -34,17 +34,15 @@ class NotificationController extends Controller
                 'role' => $role
             ]);
             
-            $notifications = Notification::where('user_id', $id)
-                ->where('user_type', $role)
+            $notifications = Notification::forUser($id)
                 ->orderBy('created_at', 'desc')
                 ->paginate(15);
-                
-            $unreadCount = Notification::where('user_id', $id)
-                ->where('user_type', $role)
-                ->where('is_read', false)
+
+            $unreadCount = Notification::forUser($id)
+                ->unread()
                 ->count();
-                
-            return view('notifications.index', compact('notifications', 'unreadCount'));
+
+            return view('notifications.list', compact('notifications', 'unreadCount'));
         } catch (\Exception $e) {
             Log::error('Error loading notifications index', [
                 'error' => $e->getMessage(),
@@ -76,20 +74,19 @@ class NotificationController extends Controller
             ]);
             
             // Check if the user is authorized to view this notification
-            if ($notification->user_id != $userId || $notification->user_type != $role) {
+            if ($notification->notifiable_id != $userId) {
                 Log::warning('Unauthorized notification access attempt', [
                     'notification_id' => $id,
                     'user_id' => $userId,
                     'role' => $role
                 ]);
-                
+
                 return redirect()->route('notifications.index')
                     ->with('error', 'You are not authorized to view this notification');
             }
-            
+
             // Mark as read if not already
-            if (!$notification->is_read) {
-                $notification->is_read = true;
+            if (!$notification->read) {
                 $notification->read_at = now();
                 $notification->save();
                 
@@ -132,18 +129,17 @@ class NotificationController extends Controller
             ]);
             
             // Check if the user is authorized to mark this notification as read
-            if ($notification->user_id != $userId || $notification->user_type != $role) {
+            if ($notification->notifiable_id != $userId) {
                 Log::warning('Unauthorized attempt to mark notification as read', [
                     'notification_id' => $id,
                     'user_id' => $userId,
                     'role' => $role
                 ]);
-                
+
                 return redirect()->route('notifications.index')
                     ->with('error', 'You are not authorized to mark this notification as read');
             }
-            
-            $notification->is_read = true;
+
             $notification->read_at = now();
             $notification->save();
             
@@ -184,13 +180,9 @@ class NotificationController extends Controller
                 'is_ajax' => $request->ajax()
             ]);
             
-            $count = Notification::where('user_id', $userId)
-                ->where('user_type', $role)
-                ->where('is_read', false)
-                ->update([
-                    'is_read' => true,
-                    'read_at' => now()
-                ]);
+            $count = Notification::forUser($userId)
+                ->unread()
+                ->update(['read_at' => now()]);
                 
             Log::info('Marked all notifications as read', [
                 'count' => $count,
@@ -247,13 +239,13 @@ class NotificationController extends Controller
             ]);
             
             // Check if the user is authorized to delete this notification
-            if ($notification->user_id != $userId || $notification->user_type != $role) {
+            if ($notification->notifiable_id != $userId) {
                 Log::warning('Unauthorized notification delete attempt', [
                     'notification_id' => $id,
                     'user_id' => $userId,
                     'role' => $role
                 ]);
-                
+
                 return redirect()->route('notifications.index')
                     ->with('error', 'You are not authorized to delete this notification');
             }
@@ -295,8 +287,8 @@ class NotificationController extends Controller
                 'role' => $role
             ]);
             
-            $count = Notification::where('user_id', $userId)
-                                ->where('is_read', true)
+            $count = Notification::forUser($userId)
+                ->whereNotNull('read_at')
                 ->delete();
                 
             Log::info('Read notifications cleared', [
@@ -333,29 +325,26 @@ class NotificationController extends Controller
                 'role' => $role
             ]);
             
-            $notifications = Notification::where('user_id', $userId)
-                ->where('user_type', $role)
-                ->where('is_read', false)
+            $notifications = Notification::forUser($userId)
+                ->unread()
                 ->orderBy('created_at', 'desc')
                 ->take(5)
                 ->get();
-                
+
             $count = $notifications->count();
-            
-            // Format notifications for display
-            $formattedNotifications = [];
-            foreach ($notifications as $notification) {
-                $formattedNotifications[] = [
+
+            $formattedNotifications = $notifications->map(function ($notification) {
+                return [
                     'id' => $notification->id,
-                    'title' => $notification->notification_title,
-                    'message' => $notification->notification_message,
-                    'icon' => $notification->type_icon,
-                    'priority_color' => $notification->priority_color ?? 'text-info',
-                    'time_ago' => $notification->time_ago,
-                    'action_url' => $notification->action_url,
-                    'read' => $notification->is_read
+                    'title' => $notification->title,
+                    'message' => $notification->content,
+                    'icon' => $notification->icon,
+                    'priority_color' => 'text-' . $notification->color,
+                    'time_ago' => $notification->created_at->diffForHumans(),
+                    'action_url' => route('notifications.show', $notification->id),
+                    'read' => $notification->read
                 ];
-            }
+            })->all();
             
             Log::debug('Returning unread notifications', [
                 'count' => $count,

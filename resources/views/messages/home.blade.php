@@ -1,4 +1,4 @@
-@extends('layouts.dashboard')
+@extends('layouts.app')
 
 @section('title', 'Message')
 
@@ -27,7 +27,7 @@
                                     <span class="sender-role">{{ $message['sender_role'] }}</span>
                                 </div>
                                 <div class="message-content">
-                                    <a href="{{ route('messages.conversation', $message['id']) }}" class="message-subject">
+                                    <a href="{{ route('messages.show', $message['id']) }}" class="message-subject">
                                         {{ $message['subject'] }}
                                     </a>
                                     <p class="message-preview">{{ Str::limit($message['message'], 100) }}</p>
@@ -70,16 +70,16 @@
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
-            <form action="{{ route('messages.send') }}" method="POST">
+            <form action="{{ route('messages.store') }}" method="POST">
                 @csrf
                 <div class="modal-body">
                     <div class="form-group">
                         <label for="recipient_id">Recipient</label>
                         <select class="form-control" id="recipient_id" name="recipient_id" required>
                             <option value="" disabled selected>Select recipient</option>
-                            <option value="1">Ahmad Razif (Admin)</option>
-                            <option value="2">Dr. Nurul Hafizah (Teacher)</option>
-                            <option value="3">Mr. Ismail Rahman (Teacher)</option>
+                            @foreach($recipients as $user)
+                                <option value="{{ $user->id }}">{{ $user->name }}</option>
+                            @endforeach
                         </select>
                     </div>
                     <div class="form-group">

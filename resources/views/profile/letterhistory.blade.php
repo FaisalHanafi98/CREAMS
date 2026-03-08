@@ -172,8 +172,8 @@
                                             @endif
                                             <button type="button" class="btn btn-sm btn-info view-letter" 
                                                     data-letter-id="{{ $letter->id }}" 
-                                                    data-bs-toggle="modal" 
-                                                    data-bs-target="#letterModal"
+                                                    data-toggle="modal"
+                                                    data-target="#letterModal"
                                                     title="View Details">
                                                 <i class="fas fa-eye"></i>
                                             </button>

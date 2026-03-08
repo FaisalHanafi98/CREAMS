@@ -416,6 +416,9 @@ class MainController extends Controller
                 Log::warning('Could not update last login time: ' . $e->getMessage());
             }
 
+            // SECURITY: Regenerate session ID to prevent session fixation attacks
+            $request->session()->regenerate();
+
             // Set session data
             session([
                 'id' => $user->id,

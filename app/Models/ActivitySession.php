@@ -60,7 +60,6 @@ class ActivitySession extends Model
         'room_number',
         'max_participants',
         'current_participants',
-        'attendance_marked',
         'instructor_id',
         'supervisor_id',
         'session_status',

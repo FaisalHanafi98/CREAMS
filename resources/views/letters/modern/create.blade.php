@@ -13,7 +13,7 @@
                     <strong>Success!</strong> {{ session('success') }}
                 </div>
             </div>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
         </div>
     @endif
 
@@ -25,7 +25,7 @@
                     <strong>Error!</strong> {{ session('error') }}
                 </div>
             </div>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
         </div>
     @endif
 
@@ -37,7 +37,7 @@
                     <strong>Warning!</strong> {{ session('warning') }}
                 </div>
             </div>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
         </div>
     @endif
 
@@ -54,7 +54,7 @@
                     </ul>
                 </div>
             </div>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
         </div>
     @endif
 
@@ -375,7 +375,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">Template Preview</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
             </div>
             <div class="modal-body">
                 <div id="templatePreviewContent">
@@ -383,7 +383,7 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
                 <button type="button" class="btn btn-primary" onclick="selectCurrentTemplate()">Use This Template</button>
             </div>
         </div>
@@ -870,7 +870,7 @@ function loadRecipientOptions(type) {
     if (type === 'trainee') {
         recipientSelect.innerHTML = '<option value="">Choose trainee...</option>';
         @foreach($trainees as $trainee)
-        recipientSelect.innerHTML += '<option value="{{ $trainee->id }}" data-name="{{ $trainee->trainee_name }}" data-address="{{ $trainee->trainee_address }}">{{ $trainee->trainee_name }}</option>';
+        recipientSelect.innerHTML += '<option value="{{ $trainee->id }}" data-name="{{ $trainee->trainee_first_name }} {{ $trainee->trainee_last_name }}" data-address="{{ $trainee->trainee_address }}">{{ $trainee->trainee_first_name }} {{ $trainee->trainee_last_name }}</option>';
         @endforeach
     }
     @endif

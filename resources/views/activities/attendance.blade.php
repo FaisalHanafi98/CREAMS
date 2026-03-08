@@ -25,7 +25,7 @@
         </div>
     @endif
 
-    <form action="{{ route('activities.activities.attendance.store', [$session->activity_id, $session->id]) }}" method="POST">
+    <form action="{{ route('activities.attendance.store', [$session->activity_id, $session->id]) }}" method="POST">
         @csrf
         
         <div class="attendance-card">

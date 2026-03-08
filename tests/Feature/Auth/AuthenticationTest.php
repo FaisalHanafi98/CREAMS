@@ -3,53 +3,181 @@
 namespace Tests\Feature\Auth;
 
 use App\Models\User;
-use App\Providers\RouteServiceProvider;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class AuthenticationTest extends TestCase
 {
-    use RefreshDatabase;
+    private const AUTH_CHECK = '/auth/check';
 
-    public function test_login_screen_can_be_rendered(): void
+    public function test_login_page_renders(): void
     {
         $response = $this->get('/login');
-
         $response->assertStatus(200);
     }
 
-    public function test_users_can_authenticate_using_the_login_screen(): void
+    public function test_auth_login_page_renders(): void
     {
-        $user = User::factory()->create();
+        $response = $this->get('/auth/login');
+        $response->assertStatus(200);
+    }
 
-        $response = $this->post('/login', [
-            'email' => $user->email,
+    public function test_admin_can_login_via_email(): void
+    {
+        $user = User::factory()->admin()->create([
+            'password' => bcrypt('password'),
+        ]);
+
+        $response = $this->post(self::AUTH_CHECK, [
+            'identifier' => $user->email,
             'password' => 'password',
         ]);
 
-        $this->assertAuthenticated();
-        $response->assertRedirect(RouteServiceProvider::HOME);
+        $response->assertRedirect(route('admin.dashboard'));
+        $this->assertEquals($user->id, session('id'));
+        $this->assertEquals('admin', session('role'));
+        $this->assertEquals($user->centre_id, session('centre_id'));
     }
 
-    public function test_users_can_not_authenticate_with_invalid_password(): void
+    public function test_supervisor_can_login_via_email(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->supervisor()->create([
+            'password' => bcrypt('password'),
+        ]);
 
-        $this->post('/login', [
-            'email' => $user->email,
+        $response = $this->post(self::AUTH_CHECK, [
+            'identifier' => $user->email,
+            'password' => 'password',
+        ]);
+
+        $response->assertRedirect(route('supervisor.dashboard'));
+        $this->assertEquals('supervisor', session('role'));
+    }
+
+    public function test_teacher_can_login_via_email(): void
+    {
+        $user = User::factory()->teacher()->create([
+            'password' => bcrypt('password'),
+        ]);
+
+        $response = $this->post(self::AUTH_CHECK, [
+            'identifier' => $user->email,
+            'password' => 'password',
+        ]);
+
+        $response->assertRedirect(route('teacher.dashboard'));
+        $this->assertEquals('teacher', session('role'));
+    }
+
+    public function test_ajk_can_login_via_email(): void
+    {
+        $user = User::factory()->ajk()->create([
+            'password' => bcrypt('password'),
+        ]);
+
+        $response = $this->post(self::AUTH_CHECK, [
+            'identifier' => $user->email,
+            'password' => 'password',
+        ]);
+
+        $response->assertRedirect(route('ajk.dashboard'));
+        $this->assertEquals('ajk', session('role'));
+    }
+
+    public function test_can_login_via_iium_id(): void
+    {
+        $user = User::factory()->teacher()->create([
+            'iium_id' => 'TEST9999',
+            'password' => bcrypt('password'),
+        ]);
+
+        $response = $this->post(self::AUTH_CHECK, [
+            'identifier' => 'TEST9999',
+            'password' => 'password',
+        ]);
+
+        $response->assertRedirect(route('teacher.dashboard'));
+        $this->assertEquals($user->id, session('id'));
+    }
+
+    public function test_invalid_password_rejected(): void
+    {
+        $user = User::factory()->create([
+            'password' => bcrypt('password'),
+        ]);
+
+        $response = $this->post(self::AUTH_CHECK, [
+            'identifier' => $user->email,
             'password' => 'wrong-password',
         ]);
 
-        $this->assertGuest();
+        $response->assertRedirect(route('auth.loginpage'));
+        $this->assertNull(session('id'));
     }
 
-    public function test_users_can_logout(): void
+    public function test_nonexistent_user_rejected(): void
     {
-        $user = User::factory()->create();
+        $response = $this->post(self::AUTH_CHECK, [
+            'identifier' => 'nobody@example.com',
+            'password' => 'password',
+        ]);
 
-        $response = $this->actingAs($user)->post('/logout');
+        $response->assertRedirect(route('auth.loginpage'));
+        $this->assertNull(session('id'));
+    }
 
-        $this->assertGuest();
-        $response->assertRedirect('/');
+    public function test_inactive_user_cannot_login(): void
+    {
+        $user = User::factory()->create([
+            'status' => 'inactive',
+            'password' => bcrypt('password'),
+        ]);
+
+        $response = $this->post(self::AUTH_CHECK, [
+            'identifier' => $user->email,
+            'password' => 'password',
+        ]);
+
+        $response->assertRedirect(route('auth.loginpage'));
+        $this->assertNull(session('id'));
+    }
+
+    public function test_session_data_set_correctly_after_login(): void
+    {
+        $user = User::factory()->admin()->create([
+            'password' => bcrypt('password'),
+        ]);
+
+        $this->post(self::AUTH_CHECK, [
+            'identifier' => $user->email,
+            'password' => 'password',
+        ]);
+
+        $this->assertEquals($user->id, session('id'));
+        $this->assertEquals($user->iium_id, session('iium_id'));
+        $this->assertEquals($user->name, session('name'));
+        $this->assertEquals($user->role, session('role'));
+        $this->assertEquals($user->email, session('email'));
+        $this->assertEquals($user->centre_id, session('centre_id'));
+        $this->assertTrue(session('logged_in'));
+    }
+
+    public function test_empty_identifier_rejected(): void
+    {
+        $response = $this->post(self::AUTH_CHECK, [
+            'identifier' => '',
+            'password' => 'password',
+        ]);
+
+        $response->assertSessionHasErrors('identifier');
+    }
+
+    public function test_empty_password_rejected(): void
+    {
+        $response = $this->post(self::AUTH_CHECK, [
+            'identifier' => 'test@example.com',
+            'password' => '',
+        ]);
+
+        $response->assertSessionHasErrors('password');
     }
 }

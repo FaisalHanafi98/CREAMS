@@ -89,7 +89,7 @@
                                             <i class="fas fa-users"></i>
                                         </a>
                                         @if($session->session_date >= now() && in_array($role, ['admin', 'supervisor', 'teacher']))
-                                            <a href="{{ route('activities.activities.attendance', [$activity->id, $session->id]) }}" 
+                                            <a href="{{ route('activities.attendance', [$activity->id, $session->id]) }}" 
                                                class="btn btn-sm btn-outline-success" 
                                                title="Mark Attendance">
                                                 <i class="fas fa-clipboard-check"></i>

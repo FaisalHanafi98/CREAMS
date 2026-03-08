@@ -62,7 +62,7 @@ class TraineeEducationPlan extends Model
 
         static::updating(function ($plan) {
             if ($plan->isDirty(['overall_goals', 'strengths', 'challenges', 'support_services', 'notes'])) {
-                $plan->last_updated_by = session('user_id');
+                $plan->last_updated_by = session('id');
             }
         });
     }
@@ -342,7 +342,7 @@ class TraineeEducationPlan extends Model
             'end_date' => $newEndDate,
             'notes' => $this->notes . "\n\nPlan extended from {$oldEndDate->format('Y-m-d')} to {$newEndDate->format('Y-m-d')}." . 
                       ($reason ? " Reason: {$reason}" : ''),
-            'last_updated_by' => session('user_id')
+            'last_updated_by' => session('id')
         ]);
 
         return $this;

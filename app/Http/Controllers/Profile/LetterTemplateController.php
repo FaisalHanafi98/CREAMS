@@ -271,7 +271,7 @@ class LetterTemplateController extends Controller
 
             Log::info('Letter generated successfully with PDF', [
                 'letter_id' => $letter->id,
-                'reference' => $letter->letter_reference,
+                'reference' => $letter->letter_id,
                 'letter_file_path' => $pdfPath
             ]);
 
@@ -287,7 +287,7 @@ class LetterTemplateController extends Controller
                 $publicPdfPath = public_path('letters/' . basename($pdfPath));
                 if (file_exists($publicPdfPath)) {
                     // Use letter name for filename, fallback to reference if no name
-                    $filename = $letter->letter_name ?: str_replace(['/', '\\'], '_', $letter->letter_reference);
+                    $filename = $letter->letter_name ?: str_replace(['/', '\\'], '_', $letter->letter_id);
                     $cleanFilename = str_replace(['/', '\\', ':', '*', '?', '"', '<', '>', '|'], '_', $filename) . '.pdf';
                     return response()->download($publicPdfPath, $cleanFilename, [
                         'Content-Type' => 'application/pdf'
@@ -305,7 +305,7 @@ class LetterTemplateController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Letter generated successfully with PDF',
-                'reference_number' => $letter->letter_reference,
+                'reference_number' => $letter->letter_id,
                 'letter_id' => $letter->id,
                 'pdf_url' => $publicPdfUrl,
                 'download_url' => $downloadUrl,
@@ -406,15 +406,15 @@ class LetterTemplateController extends Controller
                 'recipient_address' => $letter->recipient_address ?? $letterData['recipient_address'] ?? '',
                 'generated_by_name' => $letterData['generated_by_name'] ?? 'Unknown',
                 'generated_by_position' => $letterData['generated_by_position'] ?? 'Unknown',
-                'letter_reference' => $letter->letter_reference,
+                'letter_id' => $letter->letter_id,
                 'letter_name' => $letter->letter_name
             ])->render();
             
             return response()->json([
                 'success' => true,
                 'html' => $html,
-                'letter_id' => $letter->id,
-                'letter_reference' => $letter->letter_reference
+                'letter_db_id' => $letter->id,
+                'letter_id' => $letter->letter_id
             ]);
             
         } catch (\Exception $e) {
@@ -460,7 +460,7 @@ class LetterTemplateController extends Controller
                 'recipient_address' => 'Sample Recipient Address',
                 'generated_by_name' => session('name') ?? 'Your Name',
                 'generated_by_position' => ucfirst(session('role')) ?? 'Your Position',
-                'letter_reference' => 'SAMPLE/2024/001',
+                'letter_id' => 'SAMPLE/2024/001',
                 'letter_name' => 'Sample Letter'
             ];
             
@@ -655,7 +655,7 @@ class LetterTemplateController extends Controller
             
             // Create filename with requested format: LTR_YYYY_MM_<reference>_<timestamp>.pdf
             $date = Carbon::parse($letter->letter_date);
-            $cleanReference = str_replace(['/', ' ', '-'], '_', $letter->letter_reference);
+            $cleanReference = str_replace(['/', ' ', '-'], '_', $letter->letter_id);
             $timestamp = time();
             $filename = "LTR_{$date->format('Y')}_{$date->format('m')}_{$cleanReference}_{$timestamp}.pdf";
             
@@ -710,7 +710,7 @@ class LetterTemplateController extends Controller
     {
         try {
             $date = Carbon::parse($letter->letter_date);
-            $cleanReference = str_replace(['/', ' ', '-'], '_', $letter->letter_reference);
+            $cleanReference = str_replace(['/', ' ', '-'], '_', $letter->letter_id);
             $timestamp = time();
             $filename = "LTR_{$date->format('Y')}_{$date->format('m')}_{$cleanReference}_{$timestamp}.html";
             
@@ -749,7 +749,7 @@ class LetterTemplateController extends Controller
 <html>
 <head>
     <meta charset='UTF-8'>
-    <title>Letter - {$letter->letter_reference}</title>
+    <title>Letter - {$letter->letter_id}</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 20px; }
         .letter-container { max-width: 800px; margin: 0 auto; }
@@ -854,12 +854,12 @@ class LetterTemplateController extends Controller
             // Log the download
             Log::info('Letter PDF downloaded', [
                 'letter_id' => $letter->id,
-                'reference' => $letter->letter_reference,
+                'reference' => $letter->letter_id,
                 'downloaded_by' => session('id')
             ]);
             
             // Use letter name for filename, fallback to reference if no name
-            $filename = $letter->letter_name ?: str_replace(['/', '\\'], '_', $letter->letter_reference);
+            $filename = $letter->letter_name ?: str_replace(['/', '\\'], '_', $letter->letter_id);
             $cleanFilename = str_replace(['/', '\\', ':', '*', '?', '"', '<', '>', '|'], '_', $filename) . '.pdf';
             return response()->download($publicPdfPath, $cleanFilename, [
                 'Content-Type' => 'application/pdf'
@@ -1001,7 +1001,7 @@ class LetterTemplateController extends Controller
             // Log the deletion
             Log::info('Letter deleted', [
                 'letter_id' => $letter->id,
-                'reference' => $letter->letter_reference,
+                'reference' => $letter->letter_id,
                 'deleted_by' => session('id')
             ]);
             
@@ -1057,7 +1057,7 @@ class LetterTemplateController extends Controller
             
             Log::info('Letter viewed', [
                 'letter_id' => $letter->id,
-                'reference' => $letter->letter_reference,
+                'reference' => $letter->letter_id,
                 'viewed_by' => session('id')
             ]);
             
@@ -1143,7 +1143,7 @@ class LetterTemplateController extends Controller
 
             Log::info('Letter updated', [
                 'letter_id' => $letter->id,
-                'reference' => $letter->letter_reference,
+                'reference' => $letter->letter_id,
                 'updated_by' => session('id')
             ]);
 

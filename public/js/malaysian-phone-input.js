@@ -264,6 +264,7 @@ class MalaysianPhoneInput {
 
     /**
      * Check if phone number is valid Malaysian format
+     * Accepts both international (+60XXXXXXXXX) and local (0XXXXXXXXX) formats
      */
     isValidMalaysianPhone(phone) {
         // Disable validation in E2E test mode (server handles validation)
@@ -271,25 +272,44 @@ class MalaysianPhoneInput {
             return true;
         }
 
-        // Remove formatting
+        // Remove formatting (keep + for international format)
         const cleaned = phone.replace(/[^\d+]/g, '');
 
-        if (!cleaned.startsWith('+60')) {
+        // Handle international format (+60XXXXXXXXX)
+        if (cleaned.startsWith('+60')) {
+            const number = cleaned.replace('+60', '');
+
+            // Mobile numbers: 9-10 digits starting with 1
+            if (number.length >= 9 && number.length <= 10 && number.startsWith('1')) {
+                return /^1[0-9]{8,9}$/.test(number);
+            }
+
+            // Landline numbers: 8-9 digits starting with 2-9
+            if (number.length >= 8 && number.length <= 9) {
+                return /^[2-9][0-9]{7,8}$/.test(number);
+            }
+
             return false;
         }
 
-        const number = cleaned.replace('+60', '');
-        
-        // Mobile numbers: 10-11 digits starting with 1
-        if (number.length >= 9 && number.length <= 10 && number.startsWith('1')) {
-            return /^1[0-9]{8,9}$/.test(number);
+        // Handle local format (0XXXXXXXXX) - produced by removePrefix()
+        if (cleaned.startsWith('0')) {
+            const number = cleaned.substring(1); // Remove leading 0
+
+            // Mobile numbers: 9-10 digits starting with 1
+            if (number.length >= 9 && number.length <= 10 && number.startsWith('1')) {
+                return /^1[0-9]{8,9}$/.test(number);
+            }
+
+            // Landline numbers: 8-9 digits starting with 2-9
+            if (number.length >= 8 && number.length <= 9) {
+                return /^[2-9][0-9]{7,8}$/.test(number);
+            }
+
+            return false;
         }
-        
-        // Landline numbers: 8-9 digits starting with 2-9
-        if (number.length >= 8 && number.length <= 9) {
-            return /^[2-9][0-9]{7,8}$/.test(number);
-        }
-        
+
+        // Invalid format (doesn't start with +60 or 0)
         return false;
     }
 
@@ -325,24 +345,35 @@ class MalaysianPhoneInput {
 
     /**
      * Get normalized phone number for form submission
+     * Converts any valid format to international format (+60XXXXXXXXX)
      */
     static normalize(phone) {
         if (!phone) return phone;
-        
+
         // Remove all non-digit and non-plus characters
         let cleaned = phone.replace(/[^\d+]/g, '');
-        
-        // Handle different input formats
+
+        // Already in international format
         if (cleaned.startsWith('+60')) {
             return cleaned;
-        } else if (cleaned.startsWith('60')) {
+        }
+
+        // Remove country code without + (60XXXXXXXXX → +60XXXXXXXXX)
+        if (cleaned.startsWith('60') && cleaned.length >= 10) {
             return '+' + cleaned;
-        } else if (cleaned.startsWith('0')) {
-            return '+6' + cleaned;
-        } else if (cleaned.match(/^[1-9]/) && cleaned.length >= 8) {
+        }
+
+        // Local format with leading 0 (0XXXXXXXXX → +60XXXXXXXXX)
+        if (cleaned.startsWith('0') && cleaned.length >= 9) {
+            return '+6' + cleaned; // +6 + 0XXXXXXXXX = +60XXXXXXXXX
+        }
+
+        // No prefix, just digits (1XXXXXXXX → +601XXXXXXXX)
+        if (cleaned.match(/^[1-9]/) && cleaned.length >= 8) {
             return '+60' + cleaned;
         }
-        
+
+        // Return original if can't normalize
         return phone;
     }
 }

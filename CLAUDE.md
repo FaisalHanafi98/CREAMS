@@ -1,3 +1,7 @@
+> **GOVERNANCE NOTICE**: This project-level CLAUDE.md operates under the authority of the root CLAUDE.md. In case of conflict, root CLAUDE.md (Section 0.2 Override Hierarchy) prevails. This file may define project-specific constraints but may not override root governance.
+
+---
+
 # CREAMS - Community-based Rehabilitation Management System
 
 ## Project Overview

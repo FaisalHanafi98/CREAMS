@@ -105,7 +105,13 @@ class Activity extends Model
         return $this->belongsTo(User::class, 'instructor_id');
     }
 
-    // Category is now a direct enum field, no relationship needed
+    /**
+     * Get the category for this activity (links via category name string)
+     */
+    public function category()
+    {
+        return $this->belongsTo(Category::class, 'category', 'category_name');
+    }
 
     /**
      * Get all sessions for this activity

@@ -151,7 +151,7 @@
         @endif
       </div>
       <div class="admin-info">
-        <div class="admin-name">{{ Auth::user()->name }}</div>
+        <div class="admin-name">{{ session('name', 'Admin') }}</div>
         <div class="admin-role">{{ ucfirst(session('role')) }}</div>
       </div>
     </div>
@@ -182,13 +182,13 @@
         </a>
       </li>
       <li>
-        <a href="{{ route('admin.assets') }}">
+        <a href="{{ route('centre.asset-parents') }}">
           <i class="fas fa-boxes"></i>
           <span>Asset</span>
         </a>
       </li>
       <li class="active">
-        <a href="{{ route('admin.settings') }}">
+        <a href="{{ route('settings') }}">
           <i class="fas fa-cog"></i>
           <span>Settings</span>
         </a>
@@ -236,14 +236,14 @@
               @else
                 <img src="{{ asset('images/admin-avatar.jpg') }}" alt="User">
               @endif
-              <span>{{ Auth::user()->name }}</span>
+              <span>{{ session('name', 'Admin') }}</span>
               <i class="fas fa-chevron-down"></i>
             </div>
             <div class="admin-dropdown-menu">
               <a href="{{ route('profile') }}">
                 <i class="fas fa-user"></i> My Profile
               </a>
-              <a href="{{ route('admin.settings') }}">
+              <a href="{{ route('settings') }}">
                 <i class="fas fa-cog"></i> Settings
               </a>
               <form method="POST" action="{{ route('logout') }}">
@@ -261,7 +261,7 @@
     <!-- Content -->
     <div class="content-section">
       <!-- Settings Form -->
-      <form action="{{ route('admin.settings.update') }}" method="POST">
+      <form action="{{ route('settings.update') }}" method="POST">
         @csrf
         <div class="row">
           <!-- General Settings -->

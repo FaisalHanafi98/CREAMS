@@ -18,8 +18,8 @@ class IepController extends Controller
     {
         // Ensure user is authenticated and has appropriate role
         $this->middleware(function ($request, $next) {
-            if (!session('user_id') || !in_array(session('role'), ['admin', 'supervisor', 'teacher'])) {
-                return redirect()->route('login.form')
+            if (!session('id') || !in_array(session('role'), ['admin', 'supervisor', 'teacher'])) {
+                return redirect()->route('auth.loginpage')
                     ->with('error', 'Unauthorized access. Please login with appropriate permissions.');
             }
             return $next($request);
@@ -121,7 +121,7 @@ class IepController extends Controller
                     }
                 }
             ],
-            'plan_name' => 'nullable|string|max:200',
+            'plan_name' => 'required|string|max:200',
             'plan_description' => 'nullable|string',
             'start_date' => 'required|date',
             'end_date' => 'required|date|after:start_date',
@@ -139,7 +139,7 @@ class IepController extends Controller
         ]);
 
         // Set default values
-        $validated['created_by'] = session('user_id');
+        $validated['created_by'] = session('id');
         $validated['status'] = 'Active';
         
         // Filter out empty array values
@@ -461,12 +461,12 @@ class IepController extends Controller
         }
 
         $totalIeps = $query->count();
-        $activeIeps = $query->where('status', 'Active')->count();
-        $completedIeps = $query->where('status', 'Completed')->count();
-        $dueForReview = $query->dueForReview()->count();
-        $overdue = $query->overdue()->count();
-        
-        $typeBreakdown = $query->select('plan_type', DB::raw('count(*) as count'))
+        $activeIeps = (clone $query)->where('status', 'Active')->count();
+        $completedIeps = (clone $query)->where('status', 'Completed')->count();
+        $dueForReview = (clone $query)->dueForReview()->count();
+        $overdue = (clone $query)->overdue()->count();
+
+        $typeBreakdown = (clone $query)->select('plan_type', DB::raw('count(*) as count'))
             ->groupBy('plan_type')
             ->pluck('count', 'plan_type')
             ->toArray();
@@ -475,7 +475,7 @@ class IepController extends Controller
             'total' => $totalIeps,
             'active' => $activeIeps,
             'completed' => $completedIeps,
-            'suspended' => $query->where('status', 'Suspended')->count(),
+            'suspended' => (clone $query)->where('status', 'Suspended')->count(),
             'due_for_review' => $dueForReview,
             'overdue' => $overdue,
             'by_type' => [

@@ -44,7 +44,7 @@ class ModernLetterGeneratorController extends Controller
                     ->count(),
                 'templates_available' => $templates->count(),
                 'pending_letters' => Letter::where('created_by', session('id'))
-                    ->where('status', 'draft')
+                    ->where('letter_status', 'draft')
                     ->count()
             ];
 
@@ -76,8 +76,8 @@ class ModernLetterGeneratorController extends Controller
             // Get trainees for recipient selection
             $trainees = Trainee::with(['guardian'])
                 ->where('centre_id', session('centre_id'))
-                ->where('trainee_status', 'active')
-                ->orderBy('trainee_name')
+                ->where('status', 'active')
+                ->orderBy('trainee_first_name')
                 ->get();
 
             // Get centres
@@ -151,7 +151,7 @@ class ModernLetterGeneratorController extends Controller
                 'created_by' => session('id'),
                 'generated_by' => session('id'),
                 'centre_id' => session('centre_id'),
-                'status' => 'generated',
+                'letter_status' => 'generated',
                 'generated_at' => now()
             ]);
 
@@ -283,7 +283,7 @@ class ModernLetterGeneratorController extends Controller
                 return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
             }
 
-            $letter->update(['status' => 'archived']);
+            $letter->update(['letter_status' => 'archived']);
             
             return response()->json(['success' => true, 'message' => 'Letter archived successfully']);
         } catch (Exception $e) {

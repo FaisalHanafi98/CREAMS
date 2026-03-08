@@ -15,140 +15,78 @@ class Notification extends Model
      * @var array<int, string>
      */
     protected $fillable = [
-        'user_id',
-        'user_type',
         'type',
-        'title',
-        'content',
+        'notifiable_type',
+        'notifiable_id',
         'data',
-        'read',
         'read_at',
     ];
 
-    /**
-     * The attributes that should be cast.
-     *
-     * @var array<string, string>
-     */
     protected $casts = [
         'data' => 'array',
-        'read' => 'boolean',
         'read_at' => 'datetime',
     ];
 
-    /**
-     * Get the user.
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\MorphTo
-     */
-    public function user()
+    public function notifiable()
     {
-        return $this->morphTo('user', 'user_type', 'user_id');
+        return $this->morphTo();
     }
 
-    /**
-     * Scope a query to only include unread notifications.
-     *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @return \Illuminate\Database\Eloquent\Builder
-     */
     public function scopeUnread($query)
     {
-        return $query->where('read', false);
+        return $query->whereNull('read_at');
     }
 
-    /**
-     * Mark the notification as read.
-     *
-     * @return void
-     */
-    public function markAsRead()
+    public function scopeForUser($query, $userId)
     {
-        $this->read = true;
-        $this->read_at = now();
-        $this->save();
+        return $query->where('notifiable_type', 'App\\Models\\User')
+                     ->where('notifiable_id', $userId);
     }
 
-    /**
-     * Determine if the notification is read.
-     *
-     * @return bool
-     */
-    public function isRead()
+    public function getReadAttribute(): bool
     {
-        return $this->read;
+        return $this->read_at !== null;
     }
 
-    /**
-     * Get the user's name.
-     *
-     * @return string
-     */
-    public function getUserNameAttribute()
+    public function getTitleAttribute(): string
     {
-        switch ($this->user_type) {
-            case 'admin':
-                $user = Admin::find($this->user_id);
-                break;
-            case 'supervisor':
-                $user = Supervisor::find($this->user_id);
-                break;
-            case 'teacher':
-                $user = Teacher::find($this->user_id);
-                break;
-            case 'ajk':
-                $user = AJK::find($this->user_id);
-                break;
-            default:
-                return 'Unknown User';
-        }
-
-        return $user ? $user->name : 'Unknown User';
+        return $this->data['title'] ?? 'Notification';
     }
 
-    /**
-     * Get the notification icon.
-     *
-     * @return string
-     */
-    public function getIconAttribute()
+    public function getContentAttribute(): string
     {
-        switch ($this->type) {
-            case 'message':
-                return 'fas fa-envelope';
-            case 'activity':
-                return 'fas fa-calendar-alt';
-            case 'trainee':
-                return 'fas fa-user-graduate';
-            case 'asset':
-                return 'fas fa-boxes';
-            case 'system':
-                return 'fas fa-cog';
-            default:
-                return 'fas fa-bell';
-        }
+        return $this->data['message'] ?? $this->data['content'] ?? '';
     }
 
-    /**
-     * Get the notification color.
-     *
-     * @return string
-     */
-    public function getColorAttribute()
+    private function getShortType(): string
     {
-        switch ($this->type) {
-            case 'message':
-                return 'primary'; // Blue
-            case 'activity':
-                return 'success'; // Green
-            case 'trainee':
-                return 'info'; // Light blue
-            case 'asset':
-                return 'warning'; // Yellow
-            case 'system':
-                return 'danger'; // Red
-            default:
-                return 'secondary'; // Gray
-        }
+        $parts = explode('\\', $this->getAttribute('type') ?? '');
+        return strtolower(end($parts));
+    }
+
+    public function getIconAttribute(): string
+    {
+        $t = $this->getShortType();
+
+        if (str_contains($t, 'message')) return 'fas fa-envelope';
+        if (str_contains($t, 'activit')) return 'fas fa-calendar-alt';
+        if (str_contains($t, 'trainee')) return 'fas fa-user-graduate';
+        if (str_contains($t, 'asset')) return 'fas fa-boxes';
+        if (str_contains($t, 'system')) return 'fas fa-cog';
+
+        return 'fas fa-bell';
+    }
+
+    public function getColorAttribute(): string
+    {
+        $t = $this->getShortType();
+
+        if (str_contains($t, 'message')) return 'primary';
+        if (str_contains($t, 'activit')) return 'success';
+        if (str_contains($t, 'trainee')) return 'info';
+        if (str_contains($t, 'asset')) return 'warning';
+        if (str_contains($t, 'system')) return 'danger';
+
+        return 'secondary';
     }
 }

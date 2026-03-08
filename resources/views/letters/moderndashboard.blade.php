@@ -90,7 +90,7 @@
                                 <div class="letter-details">
                                     <h6 class="letter-title">{{ $letter->letter_subject }}</h6>
                                     <p class="letter-meta">
-                                        <span class="letter-ref">{{ $letter->letter_reference }}</span>
+                                        <span class="letter-ref">{{ $letter->letter_id }}</span>
                                         <span class="letter-date">{{ $letter->created_at->format('M j, Y') }}</span>
                                     </p>
                                 </div>
@@ -185,7 +185,7 @@
                 <h5 class="modal-title">
                     <i class="fas fa-file-alt me-2"></i>Generate New Letter
                 </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
             </div>
             <form id="letterForm">
                 @csrf
@@ -239,7 +239,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-primary">
                         <i class="fas fa-file-pdf me-2"></i>Generate Letter
                     </button>
@@ -250,7 +250,7 @@
 </div>
 
 <!-- Loading Modal -->
-<div class="modal fade" id="loadingModal" tabindex="-1" data-bs-backdrop="static">
+<div class="modal fade" id="loadingModal" tabindex="-1" data-backdrop="static">
     <div class="modal-dialog modal-sm">
         <div class="modal-content">
             <div class="modal-body text-center">

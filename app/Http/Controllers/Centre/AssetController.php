@@ -12,6 +12,7 @@ use App\Models\Centre;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use Exception;
 
@@ -359,12 +360,14 @@ class AssetController extends Controller
     /**
      * Display the specified asset
      */
-    public function show(Asset $asset)
+    public function show($id)
     {
         try {
             if (!session()->has('id')) {
                 return redirect()->route('login');
             }
+
+            $asset = Asset::findOrFail($id);
 
             // Check centre access
             if (session('role') !== 'admin' && $asset->centre_id != session('centre_id')) {
@@ -376,15 +379,17 @@ class AssetController extends Controller
                 'category',
                 'centre',
                 'assignedTo',
-                'creator',
                 'maintenance' => function ($query) {
                     $query->orderBy('scheduled_date', 'desc');
                 },
                 'movements' => function ($query) {
-                    $query->with(['fromUser', 'toUser', 'performedBy'])
-                        ->orderBy('movement_date', 'desc');
+                    $query->orderBy('movement_date', 'desc');
                 }
             ]);
+
+            // Resolve moved_by user names for movement history
+            $movedByIds = $asset->movements->pluck('moved_by_user_id')->filter()->unique();
+            $movedByUsers = User::whereIn('id', $movedByIds)->pluck('name', 'id');
 
             // Get maintenance statistics
             $maintenanceStats = [
@@ -406,16 +411,17 @@ class AssetController extends Controller
             return view('assets.show', compact(
                 'asset',
                 'maintenanceStats',
-                'upcomingMaintenance'
+                'upcomingMaintenance',
+                'movedByUsers'
             ));
         } catch (Exception $e) {
             Log::error('Error showing asset', [
-                'asset_id' => $asset->id ?? 'unknown',
+                'asset_id' => $id ?? 'unknown',
                 'user_id' => session('id'),
                 'error' => $e->getMessage()
             ]);
 
-            return back()->with('error', 'Error loading asset details');
+            return redirect()->route('asset-parents.index')->with('error', 'Error loading asset details');
         }
     }
 
@@ -628,6 +634,85 @@ class AssetController extends Controller
 
             return back()->with('error', 'Error deleting asset');
         }
+    }
+
+    /**
+     * Display all maintenance records
+     */
+    public function maintenance(Request $request)
+    {
+        $centreId = session('centre_id');
+        $role = session('role');
+
+        $query = \App\Models\AssetMaintenance::with('asset');
+
+        if ($role !== 'admin') {
+            $query->whereHas('asset', fn($q) => $q->where('centre_id', $centreId));
+        }
+
+        $records = $query->orderByDesc('scheduled_date')->get();
+
+        return view('assets.maintenance', compact('records'));
+    }
+
+    /**
+     * Display all movement records
+     */
+    public function movements(Request $request)
+    {
+        $centreId = session('centre_id');
+        $role = session('role');
+
+        $query = \App\Models\AssetMovement::with('asset');
+
+        if ($role !== 'admin') {
+            $query->whereHas('asset', fn($q) => $q->where('centre_id', $centreId));
+        }
+
+        $records = $query->orderByDesc('movement_date')->get();
+
+        return view('assets.movements', compact('records'));
+    }
+
+    /**
+     * Display asset reports
+     */
+    public function reports(Request $request)
+    {
+        $centreId = session('centre_id');
+        $role = session('role');
+
+        $baseQuery = Asset::query();
+        if ($role !== 'admin') {
+            $baseQuery->where('centre_id', $centreId);
+        }
+
+        $summary = [
+            'total_assets' => $baseQuery->count(),
+            'available' => $baseQuery->where('status', 'available')->count(),
+            'in_use' => $baseQuery->where('status', 'in_use')->count(),
+            'total_value' => $baseQuery->sum('purchase_price'),
+        ];
+
+        $byCategory = DB::table('assets')
+            ->when($role !== 'admin', fn($q) => $q->where('centre_id', $centreId))
+            ->select(
+                'category_name',
+                DB::raw('COUNT(*) as count'),
+                DB::raw('SUM(purchase_price) as total_value')
+            )
+            ->groupBy('category_name')
+            ->orderByDesc('count')
+            ->get();
+
+        $byStatus = DB::table('assets')
+            ->when($role !== 'admin', fn($q) => $q->where('centre_id', $centreId))
+            ->select('status', DB::raw('COUNT(*) as count'))
+            ->groupBy('status')
+            ->orderByDesc('count')
+            ->get();
+
+        return view('assets.reports', compact('summary', 'byCategory', 'byStatus'));
     }
 
     /**

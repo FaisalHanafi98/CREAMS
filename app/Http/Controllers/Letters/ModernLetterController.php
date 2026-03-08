@@ -150,17 +150,18 @@ class ModernLetterController extends Controller
             ];
 
             // Generate HTML content
-            $html = view('letters.modern-pdf-template', $pdfData)->render();
+            $pdfData['headerImage'] = $pdfData['header_image'];
+            $html = view('letters.pdf-template', $pdfData)->render();
 
             // Configure Dompdf with proper settings
             $options = new Options();
             $options->set('isHtml5ParserEnabled', true);
-            $options->set('isPhpEnabled', true);
+            $options->set('isPhpEnabled', false);
             $options->set('isRemoteEnabled', true);
             $options->set('defaultFont', 'DejaVu Sans');
             $options->set('dpi', 150);
-            $options->set('debugPng', true);
-            $options->set('debugKeepTemp', true);
+            $options->set('debugPng', false);
+            $options->set('debugKeepTemp', false);
             $options->set('chroot', [public_path(), storage_path()]);
 
             // Create Dompdf instance
@@ -176,7 +177,7 @@ class ModernLetterController extends Controller
             $dompdf->render();
 
             // Generate filename
-            $filename = $letter->letter_reference . '_' . time() . '.pdf';
+            $filename = $letter->letter_id . '_' . time() . '.pdf';
             $filePath = 'letters/' . $filename;
             
             // Ensure letters directory exists
@@ -306,7 +307,7 @@ class ModernLetterController extends Controller
                 throw new Exception('Letter file not found');
             }
 
-            return response()->download($filePath, $letter->letter_reference . '.pdf');
+            return response()->download($filePath, $letter->letter_id . '.pdf');
 
         } catch (Exception $e) {
             Log::error('Letter download error', [

@@ -1,4 +1,4 @@
-@extends('layouts.dashboard')
+@extends('layouts.app')
 
 @section('title', 'View Conversation')
 
@@ -8,7 +8,7 @@
         <div class="card-header">
             <h5 class="card-title">Conversation with {{ $conversation['with'] }}</h5>
             <div class="card-options">
-                <a href="{{ route('messages') }}" class="btn btn-sm btn-secondary">
+                <a href="{{ route('messages.index') }}" class="btn btn-sm btn-secondary">
                     <i class="fas fa-arrow-left"></i> Back to Message
                 </a>
                 <button class="btn btn-sm btn-primary ml-2" data-toggle="modal" data-target="#replyModal">
@@ -70,7 +70,7 @@
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
-            <form action="{{ route('messages.send') }}" method="POST">
+            <form action="{{ route('messages.store') }}" method="POST">
                 @csrf
                 <input type="hidden" name="recipient_id" value="2">
                 <input type="hidden" name="subject" value="RE: Weekly Progress Report">

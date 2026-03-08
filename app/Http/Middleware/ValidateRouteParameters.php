@@ -171,8 +171,7 @@ class ValidateRouteParameters
             return false;
         }
         
-        // [ClaudeFix: 2025-07-07] Asset model uses asset_id as primary key, not id
-        return Asset::where('asset_id', $value)->exists();
+        return Asset::where('id', $value)->exists();
     }
     
     /**

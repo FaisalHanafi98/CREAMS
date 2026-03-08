@@ -1306,10 +1306,9 @@ class ActivityController extends Controller
             DB::beginTransaction();
 
             // Update session status if needed
-            if ($session->status === 'scheduled') {
+            if ($session->session_status === 'scheduled') {
                 $session->update([
-                    'status' => 'ongoing',
-                    'actual_start' => now()
+                    'session_status' => 'ongoing'
                 ]);
             }
 
@@ -1320,11 +1319,14 @@ class ActivityController extends Controller
                     ->first();
 
                 if ($enrollment) {
-                    // Update enrollment record
-                    $enrollment->update([
-                        'attendance_marked' => true,
-                        'progress_notes' => $validated['notes'][$traineeId] ?? null
-                    ]);
+                    // Update enrollment: increment attendance_count for present/late
+                    $enrollmentUpdate = [
+                        'enrollment_notes' => $validated['notes'][$traineeId] ?? null
+                    ];
+                    if (in_array($status, ['present', 'late'])) {
+                        $enrollmentUpdate['attendance_count'] = $enrollment->attendance_count + 1;
+                    }
+                    $enrollment->update($enrollmentUpdate);
 
                     // Create or update attendance record
                     Attendance::updateOrCreate([
@@ -1340,7 +1342,8 @@ class ActivityController extends Controller
                 }
             }
 
-            $session->update(['attendance_marked' => true]);
+            // Mark session as completed after attendance processing
+            $session->update(['session_status' => 'completed']);
 
             DB::commit();
 
@@ -2080,12 +2083,12 @@ class ActivityController extends Controller
 
 
     /**
-     * Display activity schedule management
+     * Display activity schedule management (per-activity sessions in weekly view)
      */
     public function schedule($id)
     {
         try {
-            $activity = Activity::with(['schedules', 'activeEnrollments.trainee'])->findOrFail($id);
+            $activity = Activity::with(['sessions', 'activeEnrollments.trainee'])->findOrFail($id);
 
             // Check permissions
             $role = session('role');
@@ -2096,7 +2099,20 @@ class ActivityController extends Controller
                     ->with('error', 'You do not have permission to manage this activity schedule.');
             }
 
-            return view('activities.schedule', compact('activity'));
+            // Get this activity's sessions for the current week to populate the weekly calendar
+            $sessions = ActivitySession::with(['activity.centre', 'enrollments'])
+                ->where('activity_id', $activity->id)
+                ->whereBetween('session_date', [
+                    Carbon::now()->startOfWeek(),
+                    Carbon::now()->endOfWeek()
+                ])
+                ->orderBy('session_date')
+                ->orderBy('start_time')
+                ->get();
+
+            $centres = Centre::active()->orderBy('centre_name')->get();
+
+            return view('activities.schedule', compact('activity', 'sessions', 'centres'));
         } catch (Exception $e) {
             Log::error('Error loading activity schedule: ' . $e->getMessage());
             return redirect()->route('activities.home')
@@ -2105,20 +2121,26 @@ class ActivityController extends Controller
     }
 
     /**
-     * Display weekly schedule overview
+     * Display weekly schedule overview across all activities
      */
     public function weeklySchedule()
     {
         try {
-            $schedules = ActivitySchedule::with(['activity.teacher', 'activity.centre'])
-                ->active()
-                ->forWeek()
-                ->get()
-                ->groupBy('day_of_week');
+            // Determine the target week from the date query parameter (supports week navigation)
+            $targetDate = request('date') ? Carbon::parse(request('date')) : Carbon::now();
+            $weekStart = $targetDate->copy()->startOfWeek();
+            $weekEnd = $targetDate->copy()->endOfWeek();
 
-            $days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+            // Query activity_occurrences for the target week
+            $sessions = ActivitySession::with(['activity', 'activity.centre', 'enrollments'])
+                ->whereBetween('session_date', [$weekStart->format('Y-m-d'), $weekEnd->format('Y-m-d')])
+                ->orderBy('session_date')
+                ->orderBy('start_time')
+                ->get();
 
-            return view('activities.weekly-schedule', compact('schedules', 'days'));
+            $centres = Centre::active()->orderBy('centre_name')->get();
+
+            return view('activities.schedule', compact('sessions', 'centres'));
         } catch (Exception $e) {
             Log::error('Error loading weekly schedule: ' . $e->getMessage());
             return redirect()->route('activities.home')
@@ -2170,7 +2192,7 @@ class ActivityController extends Controller
     public function enrollmentForm($id)
     {
         try {
-            $activity = Activity::with(['activeEnrollments.trainee', 'schedules'])->findOrFail($id);
+            $activity = Activity::with(['activeEnrollments.trainee', 'sessions'])->findOrFail($id);
 
             // Get available trainees (not already enrolled in this activity)
             $enrolledTraineeIds = $activity->activeEnrollments->pluck('trainee_id');

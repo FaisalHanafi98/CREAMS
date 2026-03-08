@@ -18,7 +18,7 @@
                 <div class="letter-meta">
                     <span class="meta-item">
                         <i class="fas fa-file-alt"></i>
-                        {{ $letter->letter_reference }}
+                        {{ $letter->letter_id }}
                     </span>
                     <span class="meta-item">
                         <i class="fas fa-calendar"></i>
@@ -41,7 +41,7 @@
                         Print
                     </button>
                     <div class="dropdown">
-                        <button class="btn btn-outline-light dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        <button class="btn btn-outline-light dropdown-toggle" type="button" data-toggle="dropdown">
                             <i class="fas fa-ellipsis-v"></i>
                         </button>
                         <ul class="dropdown-menu">
@@ -114,8 +114,8 @@
                         </div>
                         <div class="detail-item">
                             <label>Status:</label>
-                            <span class="status-badge status-{{ $letter->status }}">
-                                {{ ucfirst($letter->status) }}
+                            <span class="status-badge status-{{ $letter->letter_status }}">
+                                {{ ucfirst($letter->letter_status) }}
                             </span>
                         </div>
                         <div class="detail-item">
@@ -169,7 +169,7 @@
                                 <p>{{ session('centre_address', 'Centre Address') }}</p>
                             </div>
                             <div class="letter-ref">
-                                <strong>Ref: {{ $letter->letter_reference }}</strong>
+                                <strong>Ref: {{ $letter->letter_id }}</strong>
                             </div>
                         </div>
                         
@@ -227,7 +227,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">Share Letter</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
             </div>
             <div class="modal-body">
                 <div class="form-group">
@@ -240,7 +240,7 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
                 <button type="button" class="btn btn-primary" onclick="sendShare()">
                     <i class="fas fa-share"></i>
                     Share Letter

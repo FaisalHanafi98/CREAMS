@@ -188,7 +188,7 @@
                     @forelse(isset($recentLetters) ? $recentLetters : [] as $letter)
                         <tr>
                             <td>
-                                <code>{{ $letter->letter_reference }}</code>
+                                <code>{{ $letter->letter_id }}</code>
                             </td>
                             <td>{{ $letter->letter_date->format('d M Y') }}</td>
                             <td>{{ $letter->letter_data['recipient_name'] ?? 'N/A' }}</td>

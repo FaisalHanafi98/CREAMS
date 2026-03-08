@@ -8,7 +8,12 @@
       "Bash(awk:*)",
       "Bash(/dev/null)",
       "Bash(python:*)",
-      "Bash(pip install:*)"
+      "Bash(pip install:*)",
+      "Bash(curl:*)",
+      "Bash(done)",
+      "Bash(fi)",
+      "Bash(ls:*)",
+      "Bash(npm test:*)"
     ],
     "deny": [],
     "ask": []

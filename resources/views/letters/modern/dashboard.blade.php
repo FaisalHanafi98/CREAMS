@@ -15,7 +15,7 @@
                 <p class="page-subtitle">Create, manage, and send professional letters with ease</p>
             </div>
             <div class="header-actions">
-                <button class="btn btn-primary btn-lg create-letter-btn" data-bs-toggle="modal" data-bs-target="#quickCreateModal">
+                <button class="btn btn-primary btn-lg create-letter-btn" data-toggle="modal" data-target="#quickCreateModal">
                     <i class="fas fa-plus"></i>
                     Create New Letter
                 </button>
@@ -126,7 +126,7 @@
                     <div class="letter-content">
                         <div class="letter-title">{{ $letter->letter_subject }}</div>
                         <div class="letter-meta">
-                            <span class="letter-ref">{{ $letter->letter_reference }}</span>
+                            <span class="letter-ref">{{ $letter->letter_id }}</span>
                             <span class="letter-date">{{ $letter->created_at->format('M j, Y') }}</span>
                         </div>
                         <div class="letter-recipient">
@@ -135,7 +135,7 @@
                     </div>
                     <div class="letter-actions">
                         <div class="dropdown">
-                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-toggle="dropdown">
                                 <i class="fas fa-ellipsis-v"></i>
                             </button>
                             <ul class="dropdown-menu">
@@ -235,7 +235,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">Quick Letter Creation</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
             </div>
             <div class="modal-body">
                 <div class="template-selection">
@@ -254,7 +254,7 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
                 <a href="{{ route('letters.modern.create') }}" class="btn btn-outline-primary">
                     Create Custom Letter
                 </a>
@@ -667,7 +667,7 @@ function displaySearchResults(letters) {
                     <div class="letter-content">
                         <div class="letter-title">${letter.letter_subject}</div>
                         <div class="letter-meta">
-                            <span class="letter-ref">${letter.letter_reference}</span>
+                            <span class="letter-ref">${letter.letter_id}</span>
                             <span class="letter-date">${new Date(letter.created_at).toLocaleDateString()}</span>
                         </div>
                         <div class="letter-recipient">To: ${letterData.recipient_name || 'Unknown'}</div>

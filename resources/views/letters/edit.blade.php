@@ -7,7 +7,7 @@
     <div class="page-header">
         <div>
             <h1 class="page-title">Edit Letter</h1>
-            <p class="subtitle">{{ $letter->reference_number }}</p>
+            <p class="subtitle">{{ $letter->letter_id }}</p>
         </div>
         <div class="page-actions">
             <a href="{{ route('letters.show', $letter->id) }}" class="btn btn-outline-secondary">
@@ -98,7 +98,7 @@
                                 <label for="subject">Subject <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control @error('subject') is-invalid @enderror" 
                                        id="subject" name="subject" 
-                                       value="{{ old('subject', $letter->subject) }}" 
+                                       value="{{ old('subject', $letter->letter_subject) }}" 
                                        placeholder="Enter letter subject" required>
                                 @error('subject')
                                     <div class="invalid-feedback">{{ $message }}</div>
@@ -165,11 +165,11 @@
                         <div class="form-card-body">
                             <div class="info-item">
                                 <label>Reference Number:</label>
-                                <span>{{ $letter->reference_number }}</span>
+                                <span>{{ $letter->letter_id }}</span>
                             </div>
                             <div class="info-item">
                                 <label>Status:</label>
-                                <span class="badge badge-primary">{{ ucfirst($letter->status) }}</span>
+                                <span class="badge badge-primary">{{ ucfirst($letter->letter_status) }}</span>
                             </div>
                             <div class="info-item">
                                 <label>Created:</label>
@@ -193,7 +193,7 @@
                             <div class="letter-preview" id="letterPreview">
                                 <div class="preview-content">
                                     <div class="preview-header">
-                                        <div class="preview-subject">{{ $letter->subject }}</div>
+                                        <div class="preview-subject">{{ $letter->letter_subject }}</div>
                                         <div class="preview-date">{{ $letter->letter_date ? Carbon\Carbon::parse($letter->letter_date)->format('F j, Y') : 'Date not set' }}</div>
                                     </div>
                                     <div class="preview-recipient">
@@ -252,8 +252,8 @@
                     Warning: This action cannot be undone.
                 </p>
                 <p>Are you sure you want to delete this letter?</p>
-                <p><strong>Reference:</strong> {{ $letter->reference_number }}</p>
-                <p><strong>Subject:</strong> {{ $letter->subject }}</p>
+                <p><strong>Reference:</strong> {{ $letter->letter_id }}</p>
+                <p><strong>Subject:</strong> {{ $letter->letter_subject }}</p>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>

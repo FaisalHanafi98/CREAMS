@@ -3,11 +3,11 @@
 namespace Tests;
 
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 
 abstract class TestCase extends BaseTestCase
 {
-    use CreatesApplication, RefreshDatabase;
+    use CreatesApplication, DatabaseTransactions;
 
     /**
      * Indicates whether the default seeder should run before each test.
@@ -17,17 +17,27 @@ abstract class TestCase extends BaseTestCase
     protected $seed = false;
 
     /**
-     * Setup the test environment.
+     * Override actingAs to set session data for custom auth middleware
      *
-     * @return void
+     * @param  \Illuminate\Contracts\Auth\Authenticatable  $user
+     * @param  string|null  $guard
+     * @return $this
      */
-    protected function setUp(): void
+    public function actingAs($user, $guard = null)
     {
-        parent::setUp();
+        $sessionData = [
+            'id' => $user->id,
+            'role' => $user->role ?? 'teacher',
+            'centre_id' => $user->centre_id ?? '01',
+            'name' => $user->name ?? 'Test User',
+            'email' => $user->email ?? 'test@example.com',
+            'iium_id' => $user->iium_id ?? null,
+            'logged_in' => true,
+        ];
 
-        // Set test database connection
-        if (app()->environment('testing')) {
-            config(['database.default' => 'mysql_test']);
-        }
+        // Set session directly AND via withSession for CREAMS custom auth
+        session($sessionData);
+
+        return $this->withSession($sessionData);
     }
 }

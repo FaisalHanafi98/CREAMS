@@ -15,8 +15,8 @@ class LearningOutcomeController extends Controller
     {
         // Ensure user is authenticated and has appropriate role
         $this->middleware(function ($request, $next) {
-            if (!session('user_id') || !in_array(session('role'), ['admin', 'supervisor', 'teacher'])) {
-                return redirect()->route('login.form')
+            if (!session('id') || !in_array(session('role'), ['admin', 'supervisor', 'teacher'])) {
+                return redirect()->route('auth.loginpage')
                     ->with('error', 'Unauthorized access. Please login with appropriate permissions.');
             }
             return $next($request);
@@ -128,7 +128,7 @@ class LearningOutcomeController extends Controller
 
         // Set default values
         $validated['is_active'] = $request->boolean('is_active', true);
-        $validated['created_by'] = session('user_id');
+        $validated['created_by'] = session('id');
         
         // Set display order if not provided
         if (!isset($validated['display_order'])) {

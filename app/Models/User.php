@@ -249,10 +249,9 @@ class User extends Authenticatable
     public function updateStatus($status, $adminId)
     {
         $this->status = $status;
-        $this->updated_by = $adminId;
         return $this->save();
     }
-    
+
     /**
      * Securely update user role (admin only).
      *
@@ -263,16 +262,15 @@ class User extends Authenticatable
     public function updateRole($role, $adminId)
     {
         $validRoles = ['admin', 'supervisor', 'teacher', 'ajk'];
-        
+
         if (!in_array($role, $validRoles)) {
             return false;
         }
-        
+
         $this->role = $role;
-        $this->updated_by = $adminId;
         return $this->save();
     }
-    
+
     /**
      * Securely assign user to centre (admin only).
      *
@@ -283,7 +281,6 @@ class User extends Authenticatable
     public function assignToCentre($centreId, $adminId)
     {
         $this->centre_id = $centreId;
-        $this->updated_by = $adminId;
         return $this->save();
     }
 

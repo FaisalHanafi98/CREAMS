@@ -1,0 +1,60 @@
+name: CREAMS CI — Tests & Lint
+
+on:
+  push:
+    branches: [Fixers]
+  pull_request:
+    branches: [main, Fixers]
+
+jobs:
+  test:
+    name: PHPUnit Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP 8.1
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+          extensions: mbstring, pdo_sqlite, xml, dom, curl, zip, gd, bcmath
+          coverage: xdebug
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: composer-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-
+
+      - name: Install Composer dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Copy environment file
+        run: cp .env.example .env
+
+      - name: Generate application key
+        run: php artisan key:generate
+
+      - name: Run migrations on SQLite
+        run: php artisan migrate --force
+        env:
+          DB_CONNECTION: sqlite
+          DB_DATABASE: ":memory:"
+
+      - name: Run Laravel Pint (lint check)
+        run: ./vendor/bin/pint --test
+        continue-on-error: true
+
+      - name: Run PHPUnit
+        run: php artisan test --configuration=phpunit-ci.xml
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: storage/logs/laravel.log
+          retention-days: 7

@@ -104,10 +104,8 @@ Route::middleware('guest')->group(function () {
         ->name('auth.check')
         ->middleware('throttle:login');
 
-    // Enhanced login routes
-    Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
-    Route::post('/login', [LoginController::class, 'login'])
-        ->middleware('throttle:login');
+    // Enhanced login routes removed — duplicate of /login above
+    // LoginController kept available for future use if needed
 
     // Registration routes - legacy auth/register now redirects to staffs/register
     Route::get('/auth/register', function () {
@@ -234,15 +232,18 @@ Route::middleware(['auth', 'validate.params'])->group(function () {
         Route::prefix('templates')->name('templates.')->group(function () {
             Route::get('/', [ScheduleTemplateController::class, 'index'])->name('index');
             Route::get('/get-templates', [ScheduleTemplateController::class, 'getTemplates'])->name('get');
-            Route::get('/{id}', [ScheduleTemplateController::class, 'show'])->name('show');
 
             // Admin and Supervisor can create/manage templates
+            // NOTE: Static routes (/create) must be registered BEFORE wildcard routes (/{id})
             Route::middleware(['role:admin,supervisor'])->group(function () {
                 Route::get('/create', [ScheduleTemplateController::class, 'create'])->name('create');
                 Route::post('/', [ScheduleTemplateController::class, 'store'])->name('store');
                 Route::post('/apply', [ScheduleTemplateController::class, 'applyTemplate'])->name('apply');
                 Route::delete('/{id}', [ScheduleTemplateController::class, 'destroy'])->name('destroy');
             });
+
+            // Wildcard route AFTER static routes to prevent shadowing
+            Route::get('/{id}', [ScheduleTemplateController::class, 'show'])->name('show');
         });
 
 
@@ -495,11 +496,9 @@ Route::middleware(['auth', 'validate.params'])->group(function () {
     Route::prefix('centres')->name('centres.')->middleware(['centre.access:centre'])->group(function () {
         // View operations - accessible to all authenticated users
         Route::get('/home', [CentreController::class, 'index'])->name('index');
-        Route::get('/{id}', [CentreController::class, 'show'])->name('show');
-        Route::get('/{id}/asset-parents', [CentreController::class, 'assetParents'])->name('asset-parents');
-        Route::get('/{id}/metrics', [CentreController::class, 'getMetrics'])->name('metrics');
 
         // CRUD operations - restricted to admin users only
+        // NOTE: Static routes (/create) must be registered BEFORE wildcard routes (/{id})
         Route::middleware(['role:admin'])->group(function () {
             Route::get('/create', [CentreController::class, 'create'])->name('create');
             Route::post('/', [CentreController::class, 'store'])->name('store');
@@ -508,6 +507,11 @@ Route::middleware(['auth', 'validate.params'])->group(function () {
             Route::delete('/{id}', [CentreController::class, 'destroy'])->name('destroy');
             Route::post('/{id}/statistics/refresh', [CentreController::class, 'refreshStatistics'])->name('statistics.refresh');
         });
+
+        // Wildcard routes AFTER static routes to prevent shadowing
+        Route::get('/{id}', [CentreController::class, 'show'])->name('show');
+        Route::get('/{id}/asset-parents', [CentreController::class, 'assetParents'])->name('asset-parents');
+        Route::get('/{id}/metrics', [CentreController::class, 'getMetrics'])->name('metrics');
     });
 
     // Asset - READ and operational access for all, CRUD restricted to admin
@@ -515,36 +519,30 @@ Route::middleware(['auth', 'validate.params'])->group(function () {
         // View and operational routes - accessible to all authenticated users
         Route::get('/', [AssetController::class, 'index'])->name('index');
         Route::get('/reports', [AssetController::class, 'reports'])->name('reports');
-        // Route removed: getReportData method does not exist
         // Route deferred: exportReports - TODO: implement when needed
         // Route::get('/reports/export', [AssetController::class, 'exportReports'])->name('reports.export');
         Route::get('/maintenance', [AssetController::class, 'maintenance'])->name('maintenance');
-        // Route removed: filterMaintenance method does not exist
         Route::get('/movements', [AssetController::class, 'movements'])->name('movements');
-        // Route removed: filterMovements method does not exist
-        Route::get('/{id}', [AssetController::class, 'show'])->name('show');
-
-        // Asset rental/usage routes (operational - supervisors and teachers can manage)
-        Route::middleware(['role:admin,supervisor,teacher'])->group(function () {
-            Route::post('/{id}/rent', [AssetController::class, 'rentAsset'])->name('rent');
-            Route::post('/{id}/return', [AssetController::class, 'returnAsset'])->name('return');
-            Route::post('/maintenance/schedule', [AssetController::class, 'scheduleMaintenance'])->name('maintenance.schedule');
-            // Route deferred: completeMaintenance - TODO: implement when needed
-            // Route::post('/maintenance/{id}/complete', [AssetController::class, 'completeMaintenance'])->name('maintenance.complete');
-            // Route removed: rescheduleMaintenance method does not exist
-            // Route deferred: recordMovement - TODO: implement when needed
-            // Route::post('/movements/record', [AssetController::class, 'recordMovement'])->name('movements.record');
-        });
 
         // CRUD operations - restricted to admin users only
+        // NOTE: Static routes (/create) must be registered BEFORE wildcard routes (/{id})
         Route::middleware(['role:admin'])->group(function () {
             Route::get('/create', [AssetController::class, 'create'])->name('create');
             Route::post('/', [AssetController::class, 'store'])->name('store');
             Route::get('/{id}/edit', [AssetController::class, 'edit'])->name('edit');
             Route::put('/{id}', [AssetController::class, 'update'])->name('update');
             Route::delete('/{id}', [AssetController::class, 'destroy'])->name('destroy');
-            // Route removed: approveMovement method does not exist
         });
+
+        // Asset rental/usage routes (operational - supervisors and teachers can manage)
+        Route::middleware(['role:admin,supervisor,teacher'])->group(function () {
+            Route::post('/{id}/rent', [AssetController::class, 'rentAsset'])->name('rent');
+            Route::post('/{id}/return', [AssetController::class, 'returnAsset'])->name('return');
+            Route::post('/maintenance/schedule', [AssetController::class, 'scheduleMaintenance'])->name('maintenance.schedule');
+        });
+
+        // Wildcard routes AFTER static routes to prevent shadowing
+        Route::get('/{id}', [AssetController::class, 'show'])->name('show');
     });
 
     // Message
@@ -785,6 +783,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/aboutus', function () {
         return view('aboutus');
     })->name('aboutus');
+    Route::get('/settings', [SettingController::class, 'index'])->name('settings');
+    Route::post('/settings', [SettingController::class, 'update'])->name('settings.update');
 });
 
 /*

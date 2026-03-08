@@ -33,7 +33,9 @@ class RouteServiceProvider extends ServiceProvider
 
         // Authentication rate limiters (CRITICAL SECURITY)
         RateLimiter::for('login', function (Request $request) {
-            $key = $request->input('email') ?: $request->ip();
+            // Use 'email' first (set by global-setup), then 'identifier' (browser form field),
+            // then fall back to IP — ensures per-user buckets for all login paths.
+            $key = $request->input('email') ?: $request->input('identifier') ?: $request->ip();
             return [
                 Limit::perMinute(env('RATE_LIMIT_LOGIN', 5))->by($key)->response(function () {
                     return redirect()->back()->withErrors([
@@ -121,7 +123,7 @@ class RouteServiceProvider extends ServiceProvider
 
             // Also keep direct access for local development
             // Comment out this block in production if you only want /creams/{demo_id}/ URLs
-            if (app()->environment('local')) {
+            if (app()->environment('local', 'testing')) {
                 Route::middleware('web')
                     ->group(base_path('routes/web.php'));
             }

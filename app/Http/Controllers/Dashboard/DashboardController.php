@@ -130,15 +130,15 @@ class DashboardController extends Controller
             // Get enhanced dashboard data with additional UX features
             $dashboardData = $this->getEnhancedDashboardData($role, $userId, $centreId);
             
-            return view('dashboard.enhanced', $dashboardData);
-            
+            return view('dashboard.modern', $dashboardData);
+
         } catch (\Exception $e) {
             Log::error('Enhanced dashboard error', [
                 'user_id' => $userId ?? 'unknown',
                 'error' => $e->getMessage()
             ]);
-            
-            return view('dashboard.enhanced', [
+
+            return view('dashboard.modern', [
                 'error' => 'Unable to load enhanced dashboard data',
                 'role' => $role ?? 'unknown',
                 'user_name' => session('name', 'User'),
@@ -332,10 +332,16 @@ class DashboardController extends Controller
                 ->whereBetween('activity_occurrences.session_date', [$startOfWeek->format('Y-m-d'), $endOfWeek->format('Y-m-d')])
                 ->count();
 
+            // Count active centres (for admin dashboard display)
+            $activeCentres = DB::table('centres')
+                ->where('centre_status', 'active')
+                ->count();
+
             return [
                 'total_users' => $totalUsers,
                 'total_trainees' => $activeTrainees,
                 'total_activities' => $totalActivities,
+                'active_centres' => $activeCentres,
                 'sessions_this_week' => $sessionsThisWeek,
                 'user_growth_rate' => $userGrowthRate,
                 'trainee_growth_rate' => $traineeGrowthRate,

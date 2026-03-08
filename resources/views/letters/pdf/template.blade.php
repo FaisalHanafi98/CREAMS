@@ -176,7 +176,7 @@
 </head>
 <body>
     <!-- Watermark for draft letters -->
-    @if($letter->status === 'draft')
+    @if($letter->letter_status === 'draft')
         <div class="watermark">DRAFT</div>
     @endif
     
@@ -193,7 +193,7 @@
     <!-- Letter Reference and Date -->
     <div class="letter-header">
         <div class="letter-reference">
-            <strong>Ref: {{ $letter->letter_reference }}</strong>
+            <strong>Ref: {{ $letter->letter_id }}</strong>
         </div>
         <div class="letter-date">
             {{ $letter->created_at->format('F j, Y') }}
@@ -282,7 +282,7 @@
     <div class="footer">
         {{ session('centre_name', 'CREAMS Centre') }} | 
         Generated on {{ now()->format('F j, Y \a\t g:i A') }} | 
-        Reference: {{ $letter->letter_reference }}
+        Reference: {{ $letter->letter_id }}
         
         @if(isset($letterData['page_numbering']) && $letterData['page_numbering'])
             <script type="text/php">

@@ -201,6 +201,30 @@ class StaffsHomeController extends Controller
     }
 
     /**
+     * Display the staff creation/registration page
+     *
+     * @return \Illuminate\View\View
+     */
+    public function create()
+    {
+        try {
+            // Get active centres for dropdown
+            $centres = Centre::where('centre_status', 'active')
+                ->get(['centre_id', 'centre_name']);
+
+            return view('auth.register', compact('centres'));
+        } catch (\Exception $e) {
+            Log::error('Error loading staff creation page', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return redirect()->route('staffs.home')
+                ->with('error', 'Unable to load staff creation page');
+        }
+    }
+
+    /**
      * Display the user profile update page
      *
      * @param Request $request

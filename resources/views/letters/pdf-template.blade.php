@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Letter - {{ $letter->letter_reference }}</title>
+    <title>Letter - {{ $letter->letter_id }}</title>
     <style>
         @page {
             margin: 20mm;
@@ -90,7 +90,7 @@
 
         <!-- Reference Number -->
         <div class="letter-reference">
-            Ref: {{ $letter->letter_reference }}
+            Ref: {{ $letter->letter_id }}
         </div>
 
         <!-- Recipient -->

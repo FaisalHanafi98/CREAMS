@@ -561,7 +561,7 @@ class DashboardService
 
     private function getRecentLetters($limit): \Illuminate\Database\Eloquent\Collection
     {
-        return Letter::select(['id', 'letter_reference', 'letter_type', 'recipient_id', 'recipient_type', 'created_at'])
+        return Letter::select(['id', 'letter_id', 'letter_type', 'recipient_id', 'recipient_type', 'created_at'])
             ->latest()
             ->limit($limit)
             ->get();

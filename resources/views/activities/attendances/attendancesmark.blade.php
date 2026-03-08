@@ -18,7 +18,7 @@
                     </p>
                 </div>
                 <div class="card-body">
-                    <form action="{{ route('activities.attendance.store', $session->id) }}" 
+                    <form action="{{ route('activities.attendance.store', [$session->activity_id, $session->id]) }}" 
                           method="POST" id="attendanceForm">
                         @csrf
                         

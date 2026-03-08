@@ -463,10 +463,10 @@
                                                     Actions
                                                 </button>
                                                 <div class="dropdown-menu">
-                                                    <a class="dropdown-item" href="{{ route('traineeprofile', ['id' => $trainee->id]) }}">
+                                                    <a class="dropdown-item" href="{{ route('traineeprofile', ['encrypted_id' => $trainee->id]) }}">
                                                         <i class="fas fa-eye text-primary"></i> View
                                                     </a>
-                                                    <a class="dropdown-item" href="{{ route('updatetraineeprofile', ['id' => $trainee->id]) }}">
+                                                    <a class="dropdown-item" href="{{ route('traineeprofile.edit', ['encrypted_id' => $trainee->id]) }}">
                                                         <i class="fas fa-edit text-info"></i> Edit
                                                     </a>
                                                     <a class="dropdown-item delete-trainee" href="#" data-id="{{ $trainee->id }}">
@@ -546,10 +546,10 @@
                                 </div>
                             </div>
                             <div class="trainee-card-footer">
-                                <a href="{{ route('traineeprofile', ['id' => $trainee->id]) }}" class="btn btn-sm btn-outline-primary">
+                                <a href="{{ route('traineeprofile', ['encrypted_id' => $trainee->id]) }}" class="btn btn-sm btn-outline-primary">
                                     <i class="fas fa-eye"></i> View
                                 </a>
-                                <a href="{{ route('updatetraineeprofile', ['id' => $trainee->id]) }}" class="btn btn-sm btn-outline-info">
+                                <a href="{{ route('traineeprofile.edit', ['encrypted_id' => $trainee->id]) }}" class="btn btn-sm btn-outline-info">
                                     <i class="fas fa-edit"></i> Edit
                                 </a>
                                 <button class="btn btn-sm btn-outline-danger delete-trainee" data-id="{{ $trainee->id }}">

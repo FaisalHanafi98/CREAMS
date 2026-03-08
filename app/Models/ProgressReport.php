@@ -66,7 +66,7 @@ class ProgressReport extends Model
                 $report->report_title = $report->generateDefaultTitle();
             }
             
-            $report->generated_by = session('user_id');
+            $report->generated_by = session('id');
         });
 
         static::updating(function ($report) {

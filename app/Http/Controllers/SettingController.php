@@ -52,7 +52,7 @@ class SettingController extends Controller
             ]
         ];
         
-        return view('settings.index', [
+        return view('settings.home', [
             'settings' => $settings
         ]);
     }

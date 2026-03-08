@@ -25,30 +25,17 @@ class ActivityEnrollmentFactory extends Factory
         $trainee = Trainee::factory()->create(['centre_id' => $activity->centre_id]);
         $teacher = User::factory()->teacher()->create(['centre_id' => $activity->centre_id]);
 
-        // Get or create a session for this activity
-        $session = ActivitySession::factory()->create([
-            'activity_id' => $activity->id,
-            'instructor_id' => $teacher->id,
-        ]);
-
         return [
-            'trainee_id' => $trainee->id,
             'activity_id' => $activity->id,
-            'session_id' => $session->id,
-            'enrollment_status' => 'enrolled',
+            'trainee_id' => $trainee->id,
             'enrollment_date' => fake()->dateTimeBetween('-1 month', 'now'),
+            'enrollment_status' => 'enrolled',
             'enrollment_notes' => fake()->optional()->sentence(),
             'progress_percentage' => fake()->randomFloat(2, 0, 100),
             'attendance_count' => fake()->numberBetween(0, 10),
             'completion_date' => null,
             'completion_notes' => null,
-            'start_date' => fake()->dateTimeBetween('-1 month', 'now'),
-            'status' => 'enrolled',
             'enrolled_by' => $teacher->id,
-            'attendance_marked' => false,
-            'participation_score' => null,
-            'progress_notes' => fake()->optional()->sentence(),
-            'assessment_data' => null,
         ];
     }
 
@@ -59,8 +46,6 @@ class ActivityEnrollmentFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'enrollment_status' => 'enrolled',
-            'status' => 'enrolled',
-            'attendance_marked' => false,
             'completion_date' => null,
         ]);
     }
@@ -72,12 +57,10 @@ class ActivityEnrollmentFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'enrollment_status' => 'completed',
-            'status' => 'completed',
-            'attendance_marked' => true,
             'completion_date' => fake()->dateTimeBetween('-1 week', 'now'),
             'completion_notes' => fake()->sentence(),
-            'participation_score' => fake()->numberBetween(5, 10),
             'progress_percentage' => 100,
+            'attendance_count' => fake()->numberBetween(10, 20),
         ]);
     }
 
@@ -88,21 +71,19 @@ class ActivityEnrollmentFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'enrollment_status' => 'dropped',
-            'status' => 'dropped',
             'completion_date' => fake()->dateTimeBetween('-1 week', 'now'),
-            'completion_notes' => fake()->sentence(),
+            'completion_notes' => 'Trainee dropped from program',
         ]);
     }
 
     /**
-     * Indicate that the enrollment is absent
+     * Indicate that the enrollment is pending
      */
-    public function absent(): static
+    public function pending(): static
     {
         return $this->state(fn (array $attributes) => [
-            'enrollment_status' => 'absent',
-            'status' => 'absent',
-            'attendance_marked' => true,
+            'enrollment_status' => 'pending',
+            'attendance_count' => 0,
         ]);
     }
 }

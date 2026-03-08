@@ -34,7 +34,7 @@ class LetterController extends Controller
             if ($request->has('search') && !empty($request->search)) {
                 $search = $request->search;
                 $query->where(function($q) use ($search) {
-                    $q->where('letter_reference', 'LIKE', "%{$search}%")
+                    $q->where('letter_id', 'LIKE', "%{$search}%")
                       ->orWhere('letter_subject', 'LIKE', "%{$search}%")
                       ->orWhere('letter_data', 'LIKE', "%{$search}%");
                 });
@@ -93,7 +93,7 @@ class LetterController extends Controller
 
             // Create letter record
             $letter = Letter::create([
-                'letter_reference' => $reference,
+                'letter_id' => $reference,
                 'letter_date' => $validated['letter_date'],
                 'letter_subject' => $validated['letter_subject'],
                 'letter_content' => $validated['letter_content'],
@@ -164,7 +164,7 @@ class LetterController extends Controller
 
             $previewData = [
                 'letter_date' => $validated['letter_date'],
-                'letter_reference' => 'PREVIEW-' . date('Ymd'),
+                'letter_id' => 'PREVIEW-' . date('Ymd'),
                 'letter_subject' => $validated['letter_subject'],
                 'letter_content' => $validated['letter_content'],
                 'recipient_name' => $validated['recipient_name'],
@@ -235,7 +235,7 @@ class LetterController extends Controller
             }
 
             $filePath = storage_path('app/public/' . $letter->letter_file_path);
-            $filename = 'letter_' . $letter->letter_reference . '.pdf';
+            $filename = 'letter_' . $letter->letter_id . '.pdf';
 
             return response()->download($filePath, $filename);
 
@@ -269,7 +269,7 @@ class LetterController extends Controller
             $letter->delete();
 
             Log::info('Letter deleted', [
-                'reference' => $letter->letter_reference,
+                'reference' => $letter->letter_id,
                 'deleted_by' => session('id')
             ]);
 
@@ -343,7 +343,7 @@ class LetterController extends Controller
         ]);
 
         // Create filename
-        $filename = 'letter_' . str_replace(['/', ' '], ['_', '_'], $letter->letter_reference) . '_' . date('Ymd') . '.pdf';
+        $filename = 'letter_' . str_replace(['/', ' '], ['_', '_'], $letter->letter_id) . '_' . date('Ymd') . '.pdf';
         $path = 'letters/' . date('Y/m') . '/' . $filename;
 
         // Ensure directory exists
@@ -411,13 +411,13 @@ class LetterController extends Controller
         
         for ($attempt = 1; $attempt <= $maxAttempts; $attempt++) {
             // Get last sequence number for this month with database lock
-            $lastLetter = Letter::where('letter_reference', 'LIKE', "{$prefix}/{$year}/{$month}/%")
-                ->orderBy('letter_reference', 'desc')
+            $lastLetter = Letter::where('letter_id', 'LIKE', "{$prefix}/{$year}/{$month}/%")
+                ->orderBy('letter_id', 'desc')
                 ->lockForUpdate()
                 ->first();
 
             if ($lastLetter) {
-                $parts = explode('/', $lastLetter->letter_reference);
+                $parts = explode('/', $lastLetter->letter_id);
                 $sequence = intval(end($parts)) + 1;
             } else {
                 $sequence = 1;
@@ -426,7 +426,7 @@ class LetterController extends Controller
             $reference = sprintf("{$prefix}/{$year}/{$month}/%05d", $sequence);
             
             // Check if this reference already exists
-            if (!Letter::where('letter_reference', $reference)->exists()) {
+            if (!Letter::where('letter_id', $reference)->exists()) {
                 return $reference;
             }
             
@@ -434,7 +434,7 @@ class LetterController extends Controller
             $microtime = substr(microtime(), 2, 6);
             $reference = sprintf("{$prefix}/{$year}/{$month}/%05d-%s", $sequence, $microtime);
             
-            if (!Letter::where('letter_reference', $reference)->exists()) {
+            if (!Letter::where('letter_id', $reference)->exists()) {
                 return $reference;
             }
         }
