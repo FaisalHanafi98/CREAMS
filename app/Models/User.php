@@ -5,13 +5,15 @@ namespace App\Models;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Log;
 use App\Traits\HandlesPhoneNumbers;
 use App\Rules\MalaysianPhoneRule;
+use App\Models\Scopes\CentreScope;
 
 class User extends Authenticatable
 {
-    use Notifiable, HasFactory, HandlesPhoneNumbers;
+    use Notifiable, HasFactory, SoftDeletes, HandlesPhoneNumbers;
 
     protected $table = 'staffs'; // Migrated from users to staffs table
 
@@ -553,7 +555,9 @@ class User extends Authenticatable
     protected static function boot()
     {
         parent::boot();
-        
+
+        static::addGlobalScope(new CentreScope);
+
         // Convert IIUM ID to uppercase before saving
         static::saving(function ($model) {
             if (isset($model->iium_id)) {

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Scopes\CentreScope;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -17,6 +18,11 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class AssetLocation extends Model
 {
     use HasFactory, SoftDeletes;
+
+    protected static function booted(): void
+    {
+        static::addGlobalScope(new CentreScope);
+    }
 
     protected $fillable = [
         'name',

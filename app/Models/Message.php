@@ -6,6 +6,10 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 
+// NOTE: Message table does NOT have a centre_id column.
+// Centre filtering is handled via scopeForCentre() local scope
+// and through the sender's centre relationship.
+
 class Message extends Model
 {
     use HasFactory;

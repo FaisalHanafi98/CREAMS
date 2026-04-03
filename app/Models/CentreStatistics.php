@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Scopes\CentreScope;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Carbon\Carbon;
@@ -9,6 +10,11 @@ use Carbon\Carbon;
 class CentreStatistics extends Model
 {
     use HasFactory;
+
+    protected static function booted(): void
+    {
+        static::addGlobalScope(new CentreScope);
+    }
 
     protected $table = 'centre_statistics';
 

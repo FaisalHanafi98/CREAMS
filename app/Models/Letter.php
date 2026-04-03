@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Scopes\CentreScope;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
@@ -66,7 +67,9 @@ class Letter extends Model
     protected static function boot()
     {
         parent::boot();
-        
+
+        static::addGlobalScope(new CentreScope);
+
         static::creating(function ($letter) {
             // Generate letter ID if not provided
             if (empty($letter->letter_id)) {

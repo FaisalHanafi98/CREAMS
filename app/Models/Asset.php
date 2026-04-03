@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Models\Scopes\CentreScope;
 use Carbon\Carbon;
 
 /**
@@ -53,6 +54,11 @@ class Asset extends Model
         'depreciation_percentage',
         'primary_image_url'
     ];
+
+    protected static function booted(): void
+    {
+        static::addGlobalScope(new CentreScope);
+    }
 
     /**
      * Get the centre that owns the asset

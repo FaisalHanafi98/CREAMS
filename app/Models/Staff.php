@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Scopes\CentreScope;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -14,6 +15,11 @@ class Staff extends Authenticatable
     use Notifiable, HasFactory, HandlesPhoneNumbers;
 
     protected $table = 'staffs'; // Uses staffs table
+
+    protected static function booted(): void
+    {
+        static::addGlobalScope(new CentreScope);
+    }
 
     /**
      * The attributes that are mass assignable.

@@ -2,12 +2,18 @@
 
 namespace App\Models;
 
+use App\Models\Scopes\CentreScope;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class MessageTemplate extends Model
 {
     use HasFactory;
+
+    protected static function booted(): void
+    {
+        static::addGlobalScope(new CentreScope);
+    }
 
     protected $table = 'message_templates';
 

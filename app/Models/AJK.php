@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Scopes\CentreScope;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -10,6 +11,11 @@ use Illuminate\Support\Facades\Log;
 
 class AJK extends Authenticatable
 {
+    protected static function booted(): void
+    {
+        static::addGlobalScope(new CentreScope);
+    }
+
     use Notifiable, HasFactory, AuthenticationTrait;
 
     /**

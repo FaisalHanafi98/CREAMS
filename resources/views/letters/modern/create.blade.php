@@ -231,16 +231,16 @@
                             <div class="form-group">
                                 <label for="letterContent">Letter Content <span class="required">*</span></label>
                                 <div class="editor-toolbar">
-                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="insertVariable('{{recipient_name}}')">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="insertVariable('@{{recipient_name}}')">
                                         <i class="fas fa-user"></i> Recipient Name
                                     </button>
-                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="insertVariable('{{current_date}}')">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="insertVariable('@{{current_date}}')">
                                         <i class="fas fa-calendar"></i> Current Date
                                     </button>
-                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="insertVariable('{{centre_name}}')">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="insertVariable('@{{centre_name}}')">
                                         <i class="fas fa-building"></i> Centre Name
                                     </button>
-                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="insertVariable('{{sender_name}}')">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="insertVariable('@{{sender_name}}')">
                                         <i class="fas fa-signature"></i> Your Name
                                     </button>
                                 </div>
@@ -259,24 +259,24 @@
                             <div class="variable-helper">
                                 <h6><i class="fas fa-code"></i> Available Variables</h6>
                                 <div class="variable-list">
-                                    <div class="variable-item" onclick="insertVariable('{{recipient_name}}')">
-                                        <code>{{recipient_name}}</code>
+                                    <div class="variable-item" onclick="insertVariable('@{{recipient_name}}')">
+                                        <code>@{{recipient_name}}</code>
                                         <span>Recipient's full name</span>
                                     </div>
-                                    <div class="variable-item" onclick="insertVariable('{{recipient_address}}')">
-                                        <code>{{recipient_address}}</code>
+                                    <div class="variable-item" onclick="insertVariable('@{{recipient_address}}')">
+                                        <code>@{{recipient_address}}</code>
                                         <span>Recipient's address</span>
                                     </div>
-                                    <div class="variable-item" onclick="insertVariable('{{current_date}}')">
-                                        <code>{{current_date}}</code>
+                                    <div class="variable-item" onclick="insertVariable('@{{current_date}}')">
+                                        <code>@{{current_date}}</code>
                                         <span>Today's date</span>
                                     </div>
-                                    <div class="variable-item" onclick="insertVariable('{{centre_name}}')">
-                                        <code>{{centre_name}}</code>
+                                    <div class="variable-item" onclick="insertVariable('@{{centre_name}}')">
+                                        <code>@{{centre_name}}</code>
                                         <span>Centre name</span>
                                     </div>
-                                    <div class="variable-item" onclick="insertVariable('{{sender_name}}')">
-                                        <code>{{sender_name}}</code>
+                                    <div class="variable-item" onclick="insertVariable('@{{sender_name}}')">
+                                        <code>@{{sender_name}}</code>
                                         <span>Your name</span>
                                     </div>
                                 </div>
