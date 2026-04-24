@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
@@ -40,37 +41,23 @@ use Carbon\Carbon;
  */
 class ActivitySession extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $table = 'activity_occurrences'; // Renamed from activity_sessions
 
     protected $fillable = [
         'activity_id',
-        'session_id',
-        // 'session_code', // Column doesn't exist in table
         'session_name',
         'session_description',
         'session_date',
-        // 'scheduled_date', // Column doesn't exist, using session_date instead
         'start_time',
-        'session_start_time',
         'end_time',
-        'session_end_time',
-        'venue',
-        'room_number',
+        'location',
+        'instructor_id',
+        'session_status',
+        'session_notes',
         'max_participants',
         'current_participants',
-        'instructor_id',
-        'supervisor_id',
-        'session_status',
-        'priority',
-        'session_objectives',
-        'notes',
-        'session_notes',
-        'session_materials',
-        'recurring_pattern',
-        // 'color_code', // Column doesn't exist in table
-        // 'encrypted_id' // Column doesn't exist in table
     ];
 
     protected $casts = [

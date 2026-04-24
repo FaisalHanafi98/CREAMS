@@ -4,7 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
+use App\Models\Scopes\CentreScope;
 use App\Traits\HandlesPhoneNumbers;
 use App\Rules\MalaysianPhoneRule;
 
@@ -39,7 +41,7 @@ use App\Rules\MalaysianPhoneRule;
  */
 class Trainee extends Model
 {
-    use HasFactory, HandlesPhoneNumbers;
+    use HasFactory, SoftDeletes, HandlesPhoneNumbers;
 
     /**
      * The attributes that are mass assignable.
@@ -945,6 +947,8 @@ class Trainee extends Model
     protected static function boot()
     {
         parent::boot();
+
+        static::addGlobalScope(new CentreScope);
 
         // Auto-generate unique identifier and trainee_id on creation
         static::creating(function ($trainee) {
