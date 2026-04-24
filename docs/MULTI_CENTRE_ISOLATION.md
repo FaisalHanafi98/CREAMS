@@ -1,23 +1,27 @@
 # Multi-Centre Data Isolation
 
 **Document Type**: Security Architecture Reference
-**Last Updated**: 2026-04-17
+**Last Updated**: 2026-04-25
 **Scope**: All Eloquent models in `app/Models/`
 
 ---
 
 ## Strategy
 
-CREAMS enforces multi-centre data isolation using a Laravel `GlobalScope` (`App\Models\Scopes\CentreScope`) that automatically appends `WHERE centre_id = :session_centre_id` to every Eloquent query for a scoped model.
+CREAMS enforces multi-centre data isolation via two complementary mechanisms:
 
-The scope reads `session('role')` and `session('centre_id')` at query time:
+**Mechanism 1 — CentreScope class** (`App\Models\Scopes\CentreScope`): applied to models that have a direct `centre_id` column. Automatically appends `WHERE centre_id = :session_centre_id` to every Eloquent query.
+
+**Mechanism 2 — `centre_isolation` closure scope**: applied to models that have **no** `centre_id` column but belong to an asset. Filters via `whereHas('asset', fn($q) => $q->where('assets.centre_id', $centreId))` — DB-level subquery, not application-layer filtering.
+
+Both mechanisms read `session('role')` and `session('centre_id')` at query time:
 - No session data: no filter (console commands, queue workers, unauthenticated requests)
 - Role is `admin`: no filter (admins see all centres)
 - All other roles: filter by `centre_id` from session
 
 ---
 
-## Scoped Models (26 of 28 centre_id-bearing models)
+## Scoped Models — Mechanism 1: CentreScope (23 models with direct `centre_id` column)
 
 The following models have `static::addGlobalScope(new CentreScope)` in their `booted()` method:
 
@@ -43,16 +47,28 @@ The following models have `static::addGlobalScope(new CentreScope)` in their `bo
 | AssetParent | asset_parents | Asset categories |
 | AssetEnhanced | assets_enhanced | Extended asset data |
 | AssetLocation | asset_locations | Asset locations |
-| AssetMaintenance | asset_maintenances | Maintenance records |
-| AssetMovement | asset_movements | Movement history |
 | Event | events | Centre events |
 | ClassModel | classes | Class records |
 | MessageTemplate | message_templates | Message templates |
-| ActivityScheduleTemplate | activity_schedule_templates | Schedule templates |
 
 ---
 
-## Documented Exceptions (2 models)
+## Scoped Models — Mechanism 2: `centre_isolation` closure scope (2 models without `centre_id`)
+
+These models have no `centre_id` column. Isolation routes through their `asset` relationship — the query subjoins `assets` and filters on `assets.centre_id`. Named scope `'centre_isolation'` is registered in each model's `booted()` method.
+
+Bypass with `::withoutGlobalScope('centre_isolation')` when cross-centre access is needed (e.g. admin reports, queue workers).
+
+| Model | Table | Isolation route | Test file |
+|-------|-------|----------------|-----------|
+| AssetMaintenance | asset_maintenance | `asset_id → assets.centre_id` | `tests/Feature/Security/AssetMaintenanceCentreIsolationTest.php` |
+| AssetMovement | asset_movements | `asset_id → assets.centre_id` | `tests/Feature/Security/AssetMovementCentreIsolationTest.php` |
+
+**Why these two differ**: The `asset_maintenance` and `asset_movements` tables were created without a `centre_id` column. Adding one would require a schema migration, backfill, and index on a table with potentially large row counts. The closure scope achieves the same security boundary at query time without a schema change.
+
+---
+
+## Documented Exceptions (2 models — no isolation applied)
 
 ### 1. `Message` (`messages` table)
 
@@ -85,9 +101,22 @@ The following models have `static::addGlobalScope(new CentreScope)` in their `bo
 
 ---
 
+## Coverage Summary
+
+| Mechanism | Models | Tables |
+|-----------|--------|--------|
+| CentreScope (direct `centre_id`) | 23 | trainees, activities, assets, users, staffs, supervisors, teachers, ajks, volunteers, admins, letters, letter_templates, activity_logs, activity_schedule_templates, staff_attendances, centre_statistics, centre_audit_logs, asset_parents, assets_enhanced, asset_locations, events, classes, message_templates |
+| `centre_isolation` closure (via asset join) | 2 | asset_maintenance, asset_movements |
+| Controller-level isolation (no DB scope) | 1 | messages |
+| Intentional no-scope (root tenant entity) | 1 | centres |
+| **Total covered** | **27** | |
+
+---
+
 ## Audit Trail
 
 | Date | Action | Author |
 |------|--------|--------|
-| 2026-04-01 | Applied CentreScope to 26 models | Security hardening session |
+| 2026-04-01 | Applied CentreScope to 23 models with direct centre_id column | Security hardening session |
 | 2026-04-17 | Documented Message and Centre exceptions | Security residuals session |
+| 2026-04-25 | Added centre_isolation closure scope to AssetMaintenance and AssetMovement (no centre_id column — isolation via asset join). Restored asset_movements table in test DB. Coverage now 25 scoped models across two mechanisms. | CentreScope gap closure session |
