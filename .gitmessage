@@ -1,0 +1,35 @@
+# Type(Scope): Short description in sentence case.
+
+Project: CREAMS
+Date: DD Month YYYY
+Task:
+
+[Short human title]
+
+[What changed and why. Write to a teammate reading this in six months.]
+
+Verified that:
+
+1. [specific check]
+2. [specific check]
+3. [specific check]
+
+[Why this matters — what risk it reduces or what it unblocks.]
+
+[Assisted by AI, reviewed manually by Faisal]
+
+# -----------------------------------------------------------------------
+# CREAMS Commit Message SOP — docs/COMMIT_MESSAGE_SOP.md
+#
+# Title line:
+#   Type(Scope): Description.   ← sentence case, ends with full stop, ≤72 chars
+#   Types: Feat | Fix | Refactor | Docs | Test | Chore | Security
+#   Scopes: Auth | Models | Ci | Seeder | Routes | Views | Middleware | Governance
+#
+# "Verified that" — number each item, name the real check you ran
+#   Good: "php artisan test --filter=X passes (N tests, 0 failures)."
+#   Bad:  "tests pass"
+#
+# Avoid: vague claims, em dashes, title-case headings, AI polish
+# Use: UK English, direct wording, honest if incomplete
+# -----------------------------------------------------------------------
