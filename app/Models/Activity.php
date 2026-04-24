@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Models\Scopes\CentreScope;
 
 /**
  * Activity Model
@@ -79,6 +80,11 @@ class Activity extends Model
         'max_participants' => 'integer'
     ];
 
+    protected static function booted(): void
+    {
+        static::addGlobalScope(new CentreScope);
+    }
+
     protected $appends = ['category_icon', 'category_color', 'formatted_duration'];
 
     /**
@@ -106,11 +112,11 @@ class Activity extends Model
     }
 
     /**
-     * Get the category for this activity (links via category name string)
+     * Get the category name (stored as enum string in the category column)
      */
-    public function category()
+    public function getCategoryNameAttribute(): ?string
     {
-        return $this->belongsTo(Category::class, 'category', 'category_name');
+        return $this->attributes['category'] ?? null;
     }
 
     /**
