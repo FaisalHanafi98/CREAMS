@@ -246,7 +246,7 @@ class TestingGuideDataSeeder extends Seeder
                 'trainee_first_name' => 'Muhammad Irfan',
                 'trainee_last_name' => 'bin Zainal',
                 'trainee_email' => 'existing.trainee@gmail.com',
-                'ic_number' => '100815-03-1234',
+                'ic_number' => sprintf('%02d%02d%02d-%02d-%04d', rand(90,10), rand(1,12), rand(1,28), rand(1,14), rand(1000,9999)),
                 'trainee_date_of_birth' => '2010-08-15',
                 'gender' => 'Male',
                 'trainee_phone_number' => '+60123456789',

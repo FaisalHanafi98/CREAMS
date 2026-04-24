@@ -18,15 +18,11 @@ class Authenticate
      */
     public function handle($request, Closure $next)
     {
-        // Add detailed debug logging
-        Log::info('Authenticate middleware check', [
-            'session_id' => session()->getId(),
-            'has_session_id' => session()->has('id'),
-            'session_id_value' => session('id'),
-            'has_role' => session()->has('role'),
-            'role_value' => session('role'),
-            'url' => $request->fullUrl(),
-            'all_session' => session()->all()
+        // Minimal auth check logging — no PII or full session dumps (PDPA)
+        Log::debug('Authenticate middleware', [
+            'has_session' => session()->has('id'),
+            'role' => session('role'),
+            'url' => $request->path(),
         ]);
         
         // Simple check for session ID

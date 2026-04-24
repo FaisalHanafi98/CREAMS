@@ -124,8 +124,8 @@ class MainController extends Controller
                 ],
                 'password' => [
                     'required',
-                    'min:8',
-                    'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/',
+                    'min:12',
+                    'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{12,}$/',
                 ],
                 'password_confirmation' => 'required|same:password',
                 'centre_id' => 'required|exists:centres,centre_id',

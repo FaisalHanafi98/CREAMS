@@ -293,7 +293,14 @@ class ApiErrorHandlingMiddleware
         $sensitiveFields = [
             'password', 'password_confirmation', 'current_password',
             'token', 'api_key', 'api_secret', 'authorization',
-            'x-api-key', 'x-auth-token', 'bearer', '_token'
+            'x-api-key', 'x-auth-token', 'bearer', '_token',
+            // PDPA-sensitive fields
+            'ic_number', 'trainee_ic_number', 'guardian_ic_number',
+            'phone', 'trainee_phone_number', 'guardian_phone', 'guardian_phone_number',
+            'email', 'guardian_email', 'trainee_email',
+            'trainee_name', 'trainee_first_name', 'trainee_last_name',
+            'guardian_name', 'guardian_address', 'trainee_address',
+            'date_of_birth', 'trainee_date_of_birth',
         ];
         
         foreach ($sensitiveFields as $field) {
