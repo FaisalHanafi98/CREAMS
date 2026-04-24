@@ -44,17 +44,38 @@ jobs:
           DB_CONNECTION: sqlite
           DB_DATABASE: ":memory:"
 
+      - name: Audit dependencies for vulnerabilities
+        run: composer audit
+
       - name: Run Laravel Pint (lint check)
         run: ./vendor/bin/pint --test
-        continue-on-error: true
 
-      - name: Run PHPUnit
-        run: php artisan test --configuration=phpunit-ci.xml
+      - name: Run PHPUnit with coverage
+        run: php artisan test --configuration=phpunit-ci.xml --coverage-clover=coverage.xml
+
+      - name: Check coverage threshold
+        run: |
+          if [ -f coverage.xml ]; then
+            COVERAGE=$(php -r "
+              \$xml = simplexml_load_file('coverage.xml');
+              \$metrics = \$xml->project->metrics;
+              \$total = (int)\$metrics['statements'];
+              \$covered = (int)\$metrics['coveredstatements'];
+              echo \$total > 0 ? round((\$covered / \$total) * 100, 1) : 0;
+            ")
+            echo "Code coverage: ${COVERAGE}%"
+            # Fail if coverage drops below 10% (will increment over time)
+            php -r "exit((float)'${COVERAGE}' < 10 ? 1 : 0);"
+          else
+            echo "No coverage report generated — skipping threshold check"
+          fi
 
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: test-results
-          path: storage/logs/laravel.log
+          path: |
+            storage/logs/laravel.log
+            coverage.xml
           retention-days: 7

@@ -176,13 +176,14 @@ class TraineeTest extends TestCase
 
     public function test_scope_active_returns_only_active_trainees(): void
     {
-        Trainee::factory()->create(['status' => 'active']);
-        Trainee::factory()->create(['status' => 'inactive']);
+        $active = Trainee::factory()->create(['status' => 'active']);
+        $inactive = Trainee::factory()->create(['status' => 'inactive']);
 
         $activeTrainees = Trainee::active()->get();
 
-        $this->assertCount(1, $activeTrainees);
-        $this->assertEquals('active', $activeTrainees->first()->status);
+        $this->assertTrue($activeTrainees->contains('id', $active->id));
+        $this->assertFalse($activeTrainees->contains('id', $inactive->id));
+        $activeTrainees->each(fn ($t) => $this->assertEquals('active', $t->status));
     }
 
     public function test_scope_by_centre_filters_correctly(): void
@@ -211,19 +212,20 @@ class TraineeTest extends TestCase
 
         $centreTrainees = Trainee::byCentre('Test Centre')->get();
 
-        $this->assertCount(1, $centreTrainees);
-        $this->assertEquals('Test Centre', $centreTrainees->first()->centre_name);
+        $this->assertGreaterThanOrEqual(1, $centreTrainees->count());
+        $centreTrainees->each(fn ($t) => $this->assertEquals('Test Centre', $t->centre_name));
     }
 
     public function test_scope_by_condition_filters_correctly(): void
     {
-        Trainee::factory()->create(['trainee_condition' => 'Autism Spectrum Disorder']);
-        Trainee::factory()->create(['trainee_condition' => 'Down Syndrome']);
+        $autism = Trainee::factory()->create(['trainee_condition' => 'Autism Spectrum Disorder']);
+        $down = Trainee::factory()->create(['trainee_condition' => 'Down Syndrome']);
 
         $autismTrainees = Trainee::byCondition('Autism Spectrum Disorder')->get();
 
-        $this->assertCount(1, $autismTrainees);
-        $this->assertEquals('Autism Spectrum Disorder', $autismTrainees->first()->trainee_condition);
+        $this->assertTrue($autismTrainees->contains('id', $autism->id));
+        $this->assertFalse($autismTrainees->contains('id', $down->id));
+        $autismTrainees->each(fn ($t) => $this->assertEquals('Autism Spectrum Disorder', $t->trainee_condition));
     }
 
     // ========================================

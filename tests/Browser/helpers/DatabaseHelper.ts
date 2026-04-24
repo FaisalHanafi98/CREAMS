@@ -67,19 +67,22 @@ export class DatabaseHelper {
       // Try to find trainee by name or IC in the list
       const searchTerm = trainee.firstName || trainee.icNumber || trainee.email;
 
-      // Look for search input and search
-      const searchInput = this.page.locator('input[type="search"], input[placeholder*="Search"], #search');
-      if (await searchInput.isVisible()) {
+      // Look for search input and search (server-side filter)
+      const searchInput = this.page.locator('#search');
+      if (await searchInput.isVisible({ timeout: 3000 }).catch(() => false)) {
         await searchInput.fill(searchTerm || '');
-        await this.page.waitForTimeout(500); // Wait for search filter
+        const filterBtn = this.page.locator('button:has-text("Filter")');
+        if (await filterBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
+          await filterBtn.click();
+        } else {
+          await searchInput.press('Enter');
+        }
+        await this.page.waitForLoadState('networkidle');
       }
 
-      // Check if trainee appears in the table
-      const nameLocator = this.page.locator(`td:has-text("${trainee.firstName}")`);
-      const emailLocator = this.page.locator(`td:has-text("${trainee.email}")`);
-
-      const foundByName = await nameLocator.isVisible().catch(() => false);
-      const foundByEmail = await emailLocator.isVisible().catch(() => false);
+      // Check if trainee appears in cards or table
+      const foundByName = await this.page.locator(`.trainee-card:has-text("${trainee.firstName}")`).first().isVisible().catch(() => false);
+      const foundByEmail = trainee.email ? (await this.page.content()).includes(trainee.email) : false;
 
       if (foundByName || foundByEmail) {
         return {
@@ -130,35 +133,22 @@ export class DatabaseHelper {
       await this.page.goto(`${BASE_URL}/activities/home`);
       await this.page.waitForLoadState('networkidle');
 
-      // Look for activity by name
-      const activityCard = this.page.locator(`text="${activity.name}"`);
-      const activityInTable = this.page.locator(`td:has-text("${activity.name}")`);
+      // Use client-side search via #searchInput
+      const searchInput = this.page.locator('#searchInput');
+      if (await searchInput.isVisible({ timeout: 3000 }).catch(() => false)) {
+        await searchInput.fill(activity.name || '');
+        await this.page.waitForTimeout(500);
+      }
 
-      const foundInCard = await activityCard.isVisible().catch(() => false);
-      const foundInTable = await activityInTable.isVisible().catch(() => false);
+      // Check for activity card with the name
+      const foundInCard = await this.page.locator(`.activity-card:has-text("${activity.name}")`).first().isVisible().catch(() => false);
 
-      if (foundInCard || foundInTable) {
+      if (foundInCard) {
         return {
           found: true,
           message: `Activity found: ${activity.name}`,
           data: activity as Record<string, any>,
         };
-      }
-
-      // Try searching if search is available
-      const searchInput = this.page.locator('input[type="search"], input[placeholder*="Search"]');
-      if (await searchInput.isVisible()) {
-        await searchInput.fill(activity.name || '');
-        await this.page.waitForTimeout(500);
-
-        const foundAfterSearch = await this.page.locator(`text="${activity.name}"`).isVisible();
-        if (foundAfterSearch) {
-          return {
-            found: true,
-            message: `Activity found after search: ${activity.name}`,
-            data: activity as Record<string, any>,
-          };
-        }
       }
 
       return {

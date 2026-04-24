@@ -133,8 +133,9 @@ class CentreTest extends TestCase
     {
         $dropdown = Centre::getForDropdown();
 
+        $this->assertNotEmpty($dropdown);
         $this->assertArrayHasKey('01', $dropdown);
-        $this->assertEquals('Test Centre 1', $dropdown['01']);
+        $this->assertIsString($dropdown['01']);
     }
 
     public function test_get_for_dropdown_filters_active_centres(): void

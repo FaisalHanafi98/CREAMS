@@ -80,7 +80,19 @@ export class TraineePage extends BasePage {
    * Note: Uses JavaScript to set phone values directly to bypass buggy client-side validation
    */
   async fillForm(data: Partial<TraineeFormData>): Promise<void> {
-    // First, disable the problematic phone input handlers to prevent validation conflicts
+    // Dismiss any error alerts/toasts that may block interactions
+    await this.page.evaluate(() => {
+      document.querySelectorAll('.alert-dismissible .close, .alert-dismissible button[data-dismiss="alert"], .toast-notification .toast-close').forEach(btn => (btn as HTMLElement).click());
+      document.querySelectorAll('.alert-dismissible, .toast-notification').forEach(el => el.remove());
+    });
+
+    // Set novalidate early to prevent HTML5 validation from blocking form fill
+    await this.page.evaluate(() => {
+      const form = document.querySelector('form.trainee-form') as HTMLFormElement;
+      if (form) form.setAttribute('novalidate', 'true');
+    });
+
+    // Disable the problematic phone input handlers to prevent validation conflicts
     await this.page.evaluate(() => {
       // Remove all event listeners from phone inputs by cloning and replacing
       const phoneInputs = document.querySelectorAll('#trainee_phone_number, #guardian_phone, #emergency_contact_phone');
@@ -238,18 +250,27 @@ export class TraineePage extends BasePage {
       await this.page.fill('#additional_notes, [name="additional_notes"]', data.additionalNotes);
     }
 
-    // Consent checkboxes (required)
-    if (data.photoConsent !== false) {
-      await this.page.check('#photo_consent, [name="photo_consent"]');
-    }
-
-    if (data.servicesConsent !== false) {
-      await this.page.check('#services_consent, [name="services_consent"]');
-    }
-
-    if (data.dataConsent !== false) {
-      await this.page.check('#data_consent, [name="data_consent"], #consent, [name="consent"]');
-    }
+    // Consent checkboxes (required) - use evaluate to bypass any overlay blocking
+    await this.page.evaluate((consent) => {
+      const checkboxes = [
+        { id: 'photo_consent', check: consent.photo },
+        { id: 'services_consent', check: consent.services },
+        { id: 'data_consent', check: consent.data },
+      ];
+      for (const cb of checkboxes) {
+        if (cb.check) {
+          const el = document.getElementById(cb.id) as HTMLInputElement;
+          if (el && !el.checked) {
+            el.checked = true;
+            el.dispatchEvent(new Event('change', { bubbles: true }));
+          }
+        }
+      }
+    }, {
+      photo: data.photoConsent !== false,
+      services: data.servicesConsent !== false,
+      data: data.dataConsent !== false,
+    });
 
     // Final cleanup: remove any validation errors that might block submission
     await this.page.evaluate(() => {
@@ -265,20 +286,23 @@ export class TraineePage extends BasePage {
   async submitForm(): Promise<void> {
     // Prepare the form for submission: clear errors and disable HTML5 validation
     await this.page.evaluate(() => {
-      const form = document.querySelector('form.trainee-form') as HTMLFormElement;
-      if (form) {
-        // Disable HTML5 validation which might block submission
-        form.setAttribute('novalidate', 'true');
+      // Set novalidate on ALL forms (works for both create and edit pages)
+      document.querySelectorAll('form').forEach(f => f.setAttribute('novalidate', 'true'));
 
-        // Clear all validation error classes and messages
-        form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
-        document.querySelectorAll('.phone-error, .invalid-feedback').forEach(el => el.remove());
-      }
+      // Clear all validation error classes and messages
+      document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+      document.querySelectorAll('.phone-error, .invalid-feedback').forEach(el => el.remove());
     });
 
-    // Click the actual submit button instead of JS form.submit()
-    // This triggers proper form events and ensures all input values are included
-    await this.page.locator('form.trainee-form button[type="submit"]').click();
+    // Click the actual submit button — works on both create (form.trainee-form) and edit pages
+    const createBtn = this.page.locator('form.trainee-form button[type="submit"]');
+    if (await createBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await createBtn.click();
+    } else {
+      // Edit page: find the main content form's submit button (not logout/delete forms)
+      const editBtn = this.page.locator('.container form button[type="submit"]:not(.btn-danger)').first();
+      await editBtn.click();
+    }
 
     // Wait for navigation (success redirect) or page reload (validation errors)
     await this.page.waitForLoadState('domcontentloaded', { timeout: 30000 });
@@ -299,12 +323,22 @@ export class TraineePage extends BasePage {
    * Search for a trainee in the list
    */
   async searchTrainee(searchTerm: string): Promise<void> {
-    await this.gotoList();
+    // Navigate to list if not already there
+    if (!this.page.url().includes('trainees/home')) {
+      await this.gotoList();
+    }
 
-    const searchInput = this.page.locator('input[type="search"], #search, [placeholder*="Search"]');
+    const searchInput = this.page.locator('#search');
     if (await searchInput.isVisible({ timeout: 3000 })) {
       await searchInput.fill(searchTerm);
-      await this.page.waitForTimeout(500); // Wait for filter
+      // Server-side search: submit the filter form
+      const filterBtn = this.page.locator('button:has-text("Filter")');
+      if (await filterBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
+        await filterBtn.click();
+      } else {
+        await searchInput.press('Enter');
+      }
+      await this.waitForPageLoad();
     }
   }
 
@@ -313,14 +347,18 @@ export class TraineePage extends BasePage {
    */
   async isTraineeInList(firstName: string, email?: string): Promise<boolean> {
     await this.gotoList();
+
+    // Use server-side search to handle pagination (8 per page)
+    await this.searchTrainee(firstName);
     await this.page.waitForTimeout(500);
 
-    // Check for name in table or cards
-    const byName = await this.page.locator(`text="${firstName}"`).isVisible().catch(() => false);
+    // Check for name in trainee cards (home page uses .trainee-card)
+    const byName = await this.page.locator(`.trainee-card:has-text("${firstName}")`).first().isVisible().catch(() => false);
     if (byName) return true;
 
+    // Check for email in trainee cards if provided
     if (email) {
-      const byEmail = await this.page.locator(`text="${email}"`).isVisible().catch(() => false);
+      const byEmail = await this.page.locator(`.trainee-card:has-text("${email}")`).first().isVisible().catch(() => false);
       if (byEmail) return true;
     }
 
@@ -333,13 +371,15 @@ export class TraineePage extends BasePage {
   async viewTrainee(firstName: string): Promise<void> {
     await this.gotoList();
 
-    // Find the row containing the trainee
-    const row = this.page.locator(`tr:has-text("${firstName}")`).first();
-    if (await row.isVisible()) {
-      const viewBtn = row.locator('a:has-text("View"), a[href*="profile"]').first();
-      await viewBtn.click();
-      await this.waitForPageLoad();
-    }
+    // Search for the trainee first to narrow results
+    await this.searchTrainee(firstName);
+
+    // Trainee home uses .trainee-card cards, not table rows
+    const card = this.page.locator(`.trainee-card:has-text("${firstName}")`).first();
+    await card.waitFor({ state: 'visible', timeout: 10000 });
+    const viewBtn = card.locator('a:has-text("Profile"), a[href*="profile"]').first();
+    await viewBtn.click();
+    await this.waitForPageLoad();
   }
 
   /**
@@ -348,12 +388,15 @@ export class TraineePage extends BasePage {
   async editTrainee(firstName: string): Promise<void> {
     await this.gotoList();
 
-    const row = this.page.locator(`tr:has-text("${firstName}")`).first();
-    if (await row.isVisible()) {
-      const editBtn = row.locator('a:has-text("Edit"), a[href*="edit"]').first();
-      await editBtn.click();
-      await this.waitForPageLoad();
-    }
+    // Search for the trainee first to narrow results
+    await this.searchTrainee(firstName);
+
+    // Trainee home uses .trainee-card cards, not table rows
+    const card = this.page.locator(`.trainee-card:has-text("${firstName}")`).first();
+    await card.waitFor({ state: 'visible', timeout: 10000 });
+    const editBtn = card.locator('a:has-text("Edit"), a[href*="edit"]').first();
+    await editBtn.click();
+    await this.waitForPageLoad();
   }
 
   /**
@@ -370,20 +413,30 @@ export class TraineePage extends BasePage {
    * Delete a trainee
    */
   async deleteTrainee(firstName: string): Promise<void> {
-    await this.gotoList();
+    // Navigate to the edit page which has the delete button
+    await this.editTrainee(firstName);
 
-    const row = this.page.locator(`tr:has-text("${firstName}")`).first();
-    if (await row.isVisible()) {
-      const deleteBtn = row.locator('button:has-text("Delete"), a:has-text("Delete")').first();
+    // Handle the confirm() dialog that fires on the modal form submit
+    this.page.on('dialog', async dialog => {
+      await dialog.accept();
+    });
 
-      // Handle confirmation dialog if present
-      this.page.on('dialog', async dialog => {
-        await dialog.accept();
-      });
+    // Step 1: Click "Delete Trainee" button to open the Bootstrap modal
+    const openModalBtn = this.page.locator('button[data-target="#deleteTraineeModal"]');
+    await openModalBtn.scrollIntoViewIfNeeded();
+    await openModalBtn.click();
 
-      await deleteBtn.click();
-      await this.waitForPageLoad();
-    }
+    // Step 2: Wait for the modal to be visible
+    const modal = this.page.locator('#deleteTraineeModal');
+    await modal.waitFor({ state: 'visible', timeout: 5000 });
+
+    // Step 3: Click "Confirm Delete" button inside the modal form
+    const confirmBtn = modal.locator('button[type="submit"].btn-danger');
+    await confirmBtn.click();
+
+    // Wait for navigation after delete (redirects to trainees.home)
+    await this.page.waitForLoadState('domcontentloaded', { timeout: 30000 });
+    await this.waitForPageLoad();
   }
 
   /**
@@ -437,7 +490,22 @@ export class TraineePage extends BasePage {
    * Check for form validation errors
    */
   async hasValidationErrors(): Promise<boolean> {
-    return await this.page.locator('.is-invalid, .invalid-feedback').isVisible().catch(() => false);
+    // Check multiple indicators of validation errors
+    const hasInvalid = await this.page.locator('.is-invalid').first().isVisible().catch(() => false);
+    if (hasInvalid) return true;
+
+    const hasFeedback = await this.page.locator('.invalid-feedback').first().isVisible().catch(() => false);
+    if (hasFeedback) return true;
+
+    const hasAlertDanger = await this.page.locator('.alert-danger, .alert-error').first().isVisible().catch(() => false);
+    if (hasAlertDanger) return true;
+
+    const hasToastError = await this.page.locator('.toast-error, .toast-notification.toast-error').first().isVisible().catch(() => false);
+    if (hasToastError) return true;
+
+    // Check page content for common validation error text
+    const content = await this.page.content();
+    return content.includes('is required') || content.includes('is-invalid');
   }
 
   /**

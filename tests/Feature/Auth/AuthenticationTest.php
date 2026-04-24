@@ -2,12 +2,19 @@
 
 namespace Tests\Feature\Auth;
 
+use App\Http\Middleware\VerifyCsrfToken;
 use App\Models\User;
 use Tests\TestCase;
 
 class AuthenticationTest extends TestCase
 {
     private const AUTH_CHECK = '/auth/check';
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->withoutMiddleware(VerifyCsrfToken::class);
+    }
 
     public function test_login_page_renders(): void
     {

@@ -97,7 +97,8 @@ jobs:
             composer install --no-dev --optimize-autoloader
             npm ci && npm run build
 
-            # Run migrations
+            # Preview migrations before applying
+            php artisan migrate --pretend || true
             php artisan migrate --force
 
             # Clear and rebuild caches
@@ -141,7 +142,8 @@ jobs:
             composer install --no-dev --optimize-autoloader
             npm ci && npm run build
 
-            # Run migrations
+            # Preview migrations before applying
+            php artisan migrate --pretend || true
             php artisan migrate --force
 
             # Clear and rebuild caches
@@ -188,7 +190,10 @@ jobs:
             composer install --no-dev --optimize-autoloader
             npm ci && npm run build
 
-            # Run migrations
+            # Preview migrations before applying
+            echo "=== Migration preview ==="
+            php artisan migrate --pretend || true
+            echo "=== Applying migrations ==="
             php artisan migrate --force
 
             # Clear and rebuild caches

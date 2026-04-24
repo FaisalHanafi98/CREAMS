@@ -217,12 +217,6 @@ Route::middleware(['auth', 'validate.params'])->group(function () {
         }); // Legacy redirect
         Route::get('/home', [ActivityController::class, 'index'])->name('home'); // New structure
         Route::get('/index', [ActivityController::class, 'index'])->name('index'); // Alias for home
-        Route::get('/test', function () {
-            return 'Test route works - User: ' . session('name') . ' Role: ' . session('role');
-        })->name('test');
-        Route::get('/test-sessions/{id}', function ($id) {
-            return 'Test sessions route works for activity ' . $id . ' - User: ' . session('name') . ' Role: ' . session('role');
-        })->name('test-sessions');
         Route::get('/modern-home', [ActivityController::class, 'modernHome'])->name('modern-home'); // Modern activities homepage
         Route::get('/categories', [ActivityController::class, 'categories'])->name('categories');
         Route::get('/categories/{categorySlug}', [ActivityController::class, 'categoryShow'])->name('categories.show');
@@ -680,11 +674,11 @@ Route::middleware(['auth', 'validate.params'])->group(function () {
             collect($letters)->map(function ($letter) {
                 $letterData = is_array($letter->letter_data) ? $letter->letter_data : json_decode($letter->letter_data, true);
                 return '<tr>
-                                <td><code>' . $letter->letter_id . '</code></td>
-                                <td>' . \Carbon\Carbon::parse($letter->letter_date)->format('d M Y') . '</td>
-                                <td>' . ($letterData['recipient_name'] ?? 'Unknown') . '</td>
-                                <td>' . \Str::limit($letter->letter_subject, 50) . '</td>
-                                <td>' . ($letterData['generated_by_name'] ?? 'Unknown') . '</td>
+                                <td><code>' . e($letter->letter_id) . '</code></td>
+                                <td>' . e(\Carbon\Carbon::parse($letter->letter_date)->format('d M Y')) . '</td>
+                                <td>' . e($letterData['recipient_name'] ?? 'Unknown') . '</td>
+                                <td>' . e(\Str::limit($letter->letter_subject, 50)) . '</td>
+                                <td>' . e($letterData['generated_by_name'] ?? 'Unknown') . '</td>
                                 <td>
                                     <div class="btn-group" role="group">
                                         <a href="' . route('profile.letter.download', $letter->id) . '"
@@ -705,8 +699,8 @@ Route::middleware(['auth', 'validate.params'])->group(function () {
                     <div class="alert alert-info">
                         <i class="fas fa-info-circle"></i>
                         <strong>Total Letter:</strong> ' . count($letters) . '
-                        | <strong>User::</strong> ' . session('name') . '
-                        | <strong>Role:</strong> ' . ucfirst(session('role')) . '
+                        | <strong>User:</strong> ' . e(session('name')) . '
+                        | <strong>Role:</strong> ' . e(ucfirst(session('role'))) . '
                     </div>
                 </div>
             </div>

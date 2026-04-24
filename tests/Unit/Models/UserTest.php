@@ -391,13 +391,14 @@ class UserTest extends TestCase
 
     public function test_find_by_role_returns_active_users_only(): void
     {
-        User::factory()->teacher()->create(['status' => 'active']);
-        User::factory()->teacher()->create(['status' => 'inactive']);
+        $active = User::factory()->teacher()->create(['status' => 'active']);
+        $inactive = User::factory()->teacher()->create(['status' => 'inactive']);
 
         $teachers = User::findByRole('teacher');
 
-        $this->assertCount(1, $teachers);
-        $this->assertEquals('active', $teachers->first()->status);
+        $this->assertTrue($teachers->contains('id', $active->id));
+        $this->assertFalse($teachers->contains('id', $inactive->id));
+        $teachers->each(fn ($u) => $this->assertEquals('active', $u->status));
     }
 
     // ========================================
@@ -449,7 +450,7 @@ class UserTest extends TestCase
     {
         $user = User::factory()->teacher()->create(['centre_id' => '01']);
 
-        Trainee::factory()->create([
+        $sameCentre = Trainee::factory()->create([
             'centre_id' => '01',
             'trainee_condition' => 'Autism',
         ]);
@@ -466,15 +467,16 @@ class UserTest extends TestCase
             ]
         );
 
-        Trainee::factory()->create([
+        $otherCentre = Trainee::factory()->create([
             'centre_id' => '02',
             'trainee_condition' => 'Autism',
         ]);
 
         $trainees = $user->getSuitableTrainees();
 
-        $this->assertCount(1, $trainees);
-        $this->assertEquals('01', $trainees->first()->centre_id);
+        $this->assertTrue($trainees->contains('id', $sameCentre->id));
+        $this->assertFalse($trainees->contains('id', $otherCentre->id));
+        $trainees->each(fn ($t) => $this->assertEquals('01', $t->centre_id));
     }
 
     public function test_get_suitable_trainees_matches_specialization(): void
