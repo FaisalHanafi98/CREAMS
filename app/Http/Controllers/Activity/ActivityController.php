@@ -709,7 +709,7 @@ class ActivityController extends Controller
 
         // Remap form field names to internal names used by downstream methods
         $validated['start_time'] = $validated['activity_start_time'] ?? null;
-        $validated['duration_hours'] = $validated['session_duration'] ?? 1;
+        $validated['duration_hours'] = ($validated['session_duration'] ?? 60) / 60;
         $validated['sessions_per_week'] = $validated['sessions_per_week'] ?? 2;
 
         // Map activity_period_type to integer months
@@ -767,8 +767,8 @@ class ActivityController extends Controller
             $activity = Activity::create([
                 'activity_name' => $validated['activity_name'],
                 'activity_description' => $validated['activity_description'],
-                'learning_outcomes' => $validated['learning_outcomes'],
-                'category_id' => $validated['category_id'],
+                'learning_outcomes' => $validated['learning_outcomes'] ?? null,
+                'category' => $validated['category_id'],
                 'centre_id' => $validated['centre_id'],
                 'instructor_id' => $validated['instructor_id'],
                 'activity_location' => $validated['activity_location'],
@@ -777,7 +777,6 @@ class ActivityController extends Controller
                 'sessions_per_week' => $validated['sessions_per_week'] ?? 2,
                 'session_duration_minutes' => $validated['session_duration'] ?? 60,
                 'is_active' => true,
-                'times_conducted' => 0
             ]);
 
             // Create activity sessions based on schedule
@@ -830,7 +829,7 @@ class ActivityController extends Controller
         try {
             Log::info('Loading activity details', ['activity_id' => $id, 'user_id' => session('id')]);
 
-            $activity = Activity::with(['sessions.teacher', 'enrollments.trainee', 'category', 'instructor', 'centre'])
+            $activity = Activity::with(['sessions.teacher', 'enrollments.trainee', 'instructor', 'centre'])
                 ->findOrFail($id);
 
             $role = session('role');
@@ -914,7 +913,25 @@ class ActivityController extends Controller
             Log::info('Loading activity for edit', ['activity_id' => $id, 'user_id' => session('id')]);
 
             $activity = Activity::findOrFail($id);
-            $categories = Category::active()->ordered()->get();
+
+            // Try to load categories from the activity_categories table,
+            // fall back to building from the activities.category enum column
+            try {
+                $categories = Category::active()->ordered()->get();
+            } catch (\Exception $catException) {
+                Log::info('Category table not available, using enum-based categories');
+                $categoryNames = Activity::pluck('category')->filter()->unique()->values();
+                $categories = $categoryNames->map(function ($name, $index) {
+                    return (object) [
+                        'id' => $index + 1,
+                        'name' => $name,
+                        'type' => 'general',
+                        'icon_class' => 'fas fa-puzzle-piece',
+                        'color_code' => '#007bff',
+                        'category_status' => 'active',
+                    ];
+                });
+            }
 
             Log::info('Successfully loaded activity for edit', [
                 'activity_id' => $id,
@@ -950,33 +967,54 @@ class ActivityController extends Controller
 
             $validated = $request->validate([
                 'activity_name' => 'required|string|max:255',
-                'activity_id' => 'required|string|max:20|unique:activities,activity_id,' . $id,
+                'activity_id' => 'nullable|string|max:20',
                 'activity_description' => 'required|string',
-                'category_id' => 'nullable|exists:categories,id',
-                'activity_date' => 'required|date|after_or_equal:today',
-                'activity_start_time' => 'required|date_format:H:i',
-                'activity_end_time' => 'required|date_format:H:i|after:activity_start_time',
+                'category_id' => 'nullable',
+                'difficulty_level' => 'nullable|string',
+                'age_group' => 'nullable|string',
                 'activity_location' => 'required|string|max:255',
-                'max_participants' => 'required|integer|min:3|max:10',
+                'max_participants' => 'nullable|integer|min:1|max:50',
+                'session_duration' => 'nullable|integer|min:1|max:480',
+                'activity_period' => 'nullable|integer|min:1|max:52',
                 'activity_goals' => 'nullable|string',
-                'activity_outcomes' => 'nullable|string',
-                'required_resources' => 'nullable|string',
-                'activity_image' => 'nullable|string'
+                'materials_needed' => 'nullable|string',
+                'preparation_notes' => 'nullable|string',
+                'is_active' => 'nullable',
             ]);
 
             // Check if location or max_participants changed for session sync
             $locationChanged = $activity->activity_location !== $validated['activity_location'];
             $capacityChanged = $activity->max_participants !== $validated['max_participants'];
 
-            $activity->update([
+            // Map form fields to actual database columns
+            // Table columns: activity_name, activity_description, category, centre_id,
+            //   duration_weeks, sessions_per_week, session_duration_minutes,
+            //   max_participants, learning_outcomes, activity_location, instructor_id, is_active
+            $updateData = [
                 'activity_name' => $validated['activity_name'],
                 'activity_description' => $validated['activity_description'],
-                'category_id' => $validated['category_id'],
                 'activity_location' => $validated['activity_location'],
-                'max_participants' => $validated['max_participants'],
-                'learning_outcomes' => $validated['activity_outcomes'] ?? $validated['learning_outcomes'] ?? null,
-                'instructor_id' => $validated['instructor_id'] ?? $activity->instructor_id
-            ]);
+                'is_active' => $request->has('is_active') ? 1 : 0,
+            ];
+
+            // Map form field names to actual column names
+            if (isset($validated['category_id'])) {
+                $updateData['category'] = $validated['category_id'];
+            }
+            if (isset($validated['max_participants'])) {
+                $updateData['max_participants'] = $validated['max_participants'];
+            }
+            if (isset($validated['session_duration'])) {
+                $updateData['session_duration_minutes'] = $validated['session_duration'];
+            }
+            if (isset($validated['activity_period'])) {
+                $updateData['duration_weeks'] = $validated['activity_period'];
+            }
+            if (isset($validated['activity_goals'])) {
+                $updateData['learning_outcomes'] = $validated['activity_goals'];
+            }
+
+            $activity->update($updateData);
 
             // Sync changes to all future sessions
             if ($locationChanged || $capacityChanged) {
@@ -1024,11 +1062,9 @@ class ActivityController extends Controller
         try {
             $activity = Activity::findOrFail($id);
 
-            // Check if activity has upcoming sessions
-            if ($activity->upcomingSessions->count() > 0) {
-                return redirect()->back()
-                    ->with('error', 'Cannot delete activity with upcoming sessions.');
-            }
+            // Delete all associated sessions before deleting the activity
+            // The confirm dialog tells users "All associated sessions will also be deleted"
+            $activity->sessions()->delete();
 
             $activity->delete();
 
@@ -1640,8 +1676,6 @@ class ActivityController extends Controller
                     'session_date' => $currentDate->format('Y-m-d'),
                     'start_time' => $startTime,
                     'end_time' => $sessionEnd->format('H:i:s'),
-                    'session_start_time' => $startTime,
-                    'session_end_time' => $sessionEnd->format('H:i:s'),
                     'location' => $activity->activity_location,
                     'max_participants' => $activity->max_participants,
                     'session_status' => 'scheduled',
@@ -2630,8 +2664,7 @@ class ActivityController extends Controller
                         break;
                     case 'room':
                         $query->where(function ($q) use ($searchValue) {
-                            $q->where('venue', 'LIKE', "%{$searchValue}%")
-                                ->orWhere('room_number', 'LIKE', "%{$searchValue}%");
+                            $q->where('location', 'LIKE', "%{$searchValue}%");
                         });
                         break;
                 }
@@ -2644,10 +2677,10 @@ class ActivityController extends Controller
                 });
             }
 
-            // Apply category filter
+            // Apply category filter (category is a string column on activities table, not a relationship)
             if ($categoryFilter) {
-                $query->whereHas('activity.category', function ($q) use ($categoryFilter) {
-                    $q->where('category_name', $categoryFilter);
+                $query->whereHas('activity', function ($q) use ($categoryFilter) {
+                    $q->where('category', $categoryFilter);
                 });
             }
 
@@ -2707,9 +2740,10 @@ class ActivityController extends Controller
             // Get filter options
             $centres = Centre::active()->orderBy('centre_name')->get();
 
-            // Get categories from existing activities
-            $categories = \App\Models\Category::active()
-                ->pluck('category_name')
+            // Get categories from existing activities (category is an enum string, not a separate table)
+            $categories = Activity::whereNotNull('category')
+                ->pluck('category')
+                ->unique()
                 ->filter()
                 ->sort()
                 ->values();
@@ -3276,7 +3310,7 @@ class ActivityController extends Controller
         // Check for similar activity descriptions (potential duplicates)
         $similarActivities = Activity::where('centre_id', $validated['centre_id'])
             ->where('is_active', true)
-            ->where('category_id', $validated['category_id'])
+            ->where('category', $validated['category_id'])
             ->get();
 
         foreach ($similarActivities as $activity) {
@@ -3287,35 +3321,13 @@ class ActivityController extends Controller
             }
         }
 
-        // Check for maximum activities per instructor
+        // Check for maximum activities per instructor (activities table has no end_date column, check active only)
         $instructorActivityCount = Activity::where('instructor_id', $validated['instructor_id'])
             ->where('is_active', true)
-            ->whereDate('end_date', '>=', now())
             ->count();
 
-        if ($instructorActivityCount >= 10) { // Maximum 10 active activities per instructor
+        if ($instructorActivityCount >= 10) {
             $errors['instructor_id'] = 'This instructor already has the maximum number of active activities (10). Please choose another instructor.';
-        }
-
-        // Check for overlapping activity periods
-        $startDate = Carbon::parse($validated['start_date']);
-        $endDate = $startDate->copy()->addMonths($validated['activity_period']);
-
-        $overlappingActivities = Activity::where('instructor_id', $validated['instructor_id'])
-            ->where('is_active', true)
-            ->where(function ($query) use ($startDate, $endDate) {
-                $query->whereBetween('start_date', [$startDate, $endDate])
-                    ->orWhereBetween('end_date', [$startDate, $endDate])
-                    ->orWhere(function ($q) use ($startDate, $endDate) {
-                        $q->where('start_date', '<=', $startDate)
-                            ->where('end_date', '>=', $endDate);
-                    });
-            })
-            ->get();
-
-        if ($overlappingActivities->count() > 0) {
-            $conflictingActivities = $overlappingActivities->pluck('activity_name')->take(3)->implode(', ');
-            $errors['activity_period'] = "Activity period overlaps with existing activities: {$conflictingActivities}. Please adjust the dates.";
         }
 
         return $errors;
@@ -3336,7 +3348,7 @@ class ActivityController extends Controller
             $query->where('instructor_id', $validated['instructor_id'])
                 ->where('is_active', true);
         })
-            ->where('status', '!=', 'cancelled')
+            ->where('session_status', '!=', 'cancelled')
             ->get();
 
         foreach ($existingSessions as $session) {
@@ -3387,7 +3399,7 @@ class ActivityController extends Controller
                 ->where('is_active', true);
         })
             ->where('location', $location)
-            ->where('status', '!=', 'cancelled')
+            ->where('session_status', '!=', 'cancelled')
             ->get();
 
         foreach ($conflictingSessions as $session) {
@@ -3443,7 +3455,7 @@ class ActivityController extends Controller
             $query->where('instructor_id', $instructorId)
                 ->where('is_active', true);
         })
-            ->where('status', '!=', 'cancelled')
+            ->where('session_status', '!=', 'cancelled')
             ->get()
             ->filter(function ($session) use ($day) {
                 return Carbon::parse($session->session_date)->format('l') === $day;
@@ -3465,15 +3477,18 @@ class ActivityController extends Controller
     private function getRoomCapacity(string $location, string $centreId): ?int
     {
         // Try to get from assets table if room data exists
-        $room = DB::table('assets')
-            ->where('asset_name', 'LIKE', "%{$location}%")
-            ->where('centre_id', $centreId)
-            ->where('asset_parent', 'Room')
-            ->first();
+        try {
+            $room = DB::table('assets')
+                ->where('asset_name', 'LIKE', "%{$location}%")
+                ->where('centre_id', $centreId)
+                ->first();
 
-        if ($room && isset($room->specifications)) {
-            $specs = json_decode($room->specifications, true);
-            return $specs['capacity'] ?? null;
+            if ($room && isset($room->specifications)) {
+                $specs = json_decode($room->specifications, true);
+                return $specs['capacity'] ?? null;
+            }
+        } catch (\Exception $e) {
+            // Assets table schema may not match expected columns
         }
 
         // Default room capacities based on common room types

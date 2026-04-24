@@ -69,7 +69,7 @@
                     <div class="detail-meta">
                         <div class="meta-item">
                             <i class="fas fa-folder"></i>
-                            <span>Category: {{ $activity->category->category_name ?? 'Uncategorized' }}</span>
+                            <span>Category: {{ $activity->category ?? 'Uncategorized' }}</span>
                         </div>
                         <div class="meta-item">
                             <i class="fas fa-users"></i>
