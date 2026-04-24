@@ -1,0 +1,425 @@
+
+Deprecated: Method ReflectionMethod::setAccessible() is deprecated since 8.5, as it has no effect since PHP 8.1 in C:\Users\User1\Desktop\Career\Development\CREAMS\vendor\nunomaduro\collision\src\Adapters\Phpunit\ConfigureIO.php on line 37
+PHP Deprecated:  Method ReflectionMethod::setAccessible() is deprecated since 8.5, as it has no effect since PHP 8.1 in C:\Users\User1\Desktop\Career\Development\CREAMS\vendor\nunomaduro\collision\src\Adapters\Phpunit\ConfigureIO.php on line 37
+
+   PASS  Tests\Unit\ExampleTest
+  ✓ that true is true                                                                                            0.01s  
+
+   PASS  Tests\Unit\Models\ActivityTest
+  ✓ centre relationship returns belongs to                                                                       0.49s  
+  ✓ centre relationship retrieves correct centre                                                                 0.07s  
+  ✓ instructor relationship returns belongs to                                                                   0.04s  
+  ✓ sessions relationship returns has many                                                                       0.04s  
+  ✓ enrollments relationship returns has many                                                                    0.04s  
+  ✓ participants relationship returns belongs to many                                                            0.05s  
+  ✓ scope active returns only active activities                                                                  0.05s  
+  ✓ scope by category filters correctly                                                                          0.04s  
+  ✓ scope by centre filters correctly                                                                            0.04s  
+  ✓ has capacity returns true when below max                                                                     0.12s  
+  ✓ has capacity returns false when at max                                                                       0.10s  
+  ✓ should be completed returns false when no sessions                                                           0.06s  
+  ✓ should be completed returns false when sessions pending                                                      0.06s  
+  ✓ should be completed returns true when all sessions completed                                                 0.07s  
+  ✓ update completion status marks activity inactive                                                             0.05s  
+  ✓ is rehabilitation returns true for autism support                                                            0.03s  
+  ✓ is academic returns true for learning support                                                                0.05s  
+  ✓ overarching type attribute returns correct type                                                              0.05s  
+  ✓ category icon attribute returns correct icon                                                                 0.05s  
+  ✓ category color attribute returns correct color                                                               0.04s  
+  ✓ formatted duration attribute returns hours and minutes                                                       0.05s  
+  ✓ formatted duration attribute returns only minutes                                                            0.03s  
+  ✓ active enrollments count returns correct count                                                               0.09s  
+  ✓ total sessions count returns correct count                                                                   0.06s  
+  ✓ completion rate calculates correctly                                                                         0.08s  
+  ✓ completion rate returns zero when no sessions                                                                0.05s  
+  ✓ is active casts to boolean                                                                                   0.05s  
+  ✓ numeric fields cast to integer                                                                               0.05s  
+
+   PASS  Tests\Unit\Models\CentreTest
+  ✓ users relationship returns has many                                                                          0.03s  
+  ✓ trainees relationship returns has many                                                                       0.02s  
+  ✓ activities relationship returns has many                                                                     0.05s  
+  ✓ users relationship retrieves correct users                                                                   0.05s  
+  ✓ trainees relationship retrieves correct trainees                                                             0.04s  
+  ✓ scope active returns only active centres                                                                     0.05s  
+  ✓ get for dropdown returns array                                                                               0.02s  
+  ✓ get for dropdown returns key value pairs                                                                     0.03s  
+  ✓ get for dropdown filters active centres                                                                      0.04s  
+  ✓ get default returns centre 01                                                                                0.02s  
+  ✓ get name attribute returns centre name                                                                       0.02s  
+  ✓ get default attendance policies returns array                                                                0.05s  
+  ✓ get attendance policies merges with defaults                                                                 0.05s  
+  ✓ is late check in detects late arrival                                                                        0.05s  
+  ✓ is late check in allows on time arrival                                                                      0.02s  
+  ✓ is early check out detects early departure                                                                   0.02s  
+  ✓ is early check out allows normal departure                                                                   0.02s  
+  ✓ is work day returns true for weekdays                                                                        0.04s  
+  ✓ is work day returns false for weekends                                                                       0.05s  
+  ✓ is active casts to boolean                                                                                   0.05s  
+  ✓ centre facilities stores and retrieves                                                                       0.04s  
+  ✓ primary key is centre id                                                                                     0.04s  
+  ✓ primary key is string type                                                                                   0.03s  
+  ✓ primary key is not auto incrementing                                                                         0.02s  
+
+   PASS  Tests\Unit\Models\SoftDeleteTest
+  ✓ trainee soft delete sets deleted at                                                                          0.15s  
+  ✓ trainee can be restored after soft delete                                                                    0.05s  
+  ✓ user staff soft delete preserves record                                                                      0.04s  
+  ✓ activity soft delete preserves record                                                                        0.03s  
+  ✓ only trashed scope returns deleted records                                                                   0.05s  
+
+   PASS  Tests\Unit\Models\TraineeTest
+  ✓ get full name attribute combines first and last name                                                         0.03s  
+  ✓ get age attribute calculates from date of birth                                                              0.02s  
+  ✓ get condition badge class attribute returns correct class                                                    0.03s  
+  ✓ get condition badge class attribute returns default for unknown                                              0.05s  
+  ✓ set trainee phone number normalizes phone                                                                    0.02s  
+  ✓ set guardian phone normalizes phone                                                                          0.04s  
+  ✓ get trainee phone formatted attribute formats phone                                                          0.05s  
+  ✓ centre relationship returns belongs to                                                                       0.03s  
+  ✓ centre relationship retrieves correct centre                                                                 0.03s  
+  ✓ activities relationship returns belongs to many                                                              0.04s  
+  ✓ enrollments relationship returns has many                                                                    0.05s  
+  ✓ attendances relationship returns has many                                                                    0.03s  
+  ✓ education plans relationship returns has many                                                                0.03s  
+  ✓ scope active returns only active trainees                                                                    0.03s  
+  ✓ scope by centre filters correctly                                                                            0.03s  
+  ✓ scope by condition filters correctly                                                                         0.03s  
+  ✓ calculate activity progress returns zero when no sessions                                                    0.05s  
+  ✓ calculate activity progress calculates correctly                                                             0.11s  
+  ✓ calculate activity progress includes late as attended                                                        0.10s  
+  ✓ calculate average progress returns zero when no activities                                                   0.05s  
+  ✓ calculate average progress calculates correctly                                                              0.18s  
+  ✓ trainee date of birth casts to date                                                                          0.04s  
+  ✓ boolean consent fields cast correctly                                                                        0.05s  
+  ✓ ic number is hidden from array                                                                               0.03s  
+
+   PASS  Tests\Unit\Models\UserTest
+  ✓ is admin returns true for admin role                                                                         0.06s  
+  ✓ is admin returns false for non admin role                                                                    0.05s  
+  ✓ is supervisor returns true for supervisor role                                                               0.05s  
+  ✓ is supervisor returns false for non supervisor role                                                          0.03s  
+  ✓ is teacher returns true for teacher role                                                                     0.04s  
+  ✓ is teacher returns false for non teacher role                                                                0.05s  
+  ✓ is ajk returns true for ajk role                                                                             0.05s  
+  ✓ is ajk returns false for non ajk role                                                                        0.05s  
+  ✓ has role returns true for matching role                                                                      0.06s  
+  ✓ has role returns false for non matching role                                                                 0.05s  
+  ✓ get role returns correct role                                                                                0.05s  
+  ✓ update role successfully updates valid role                                                                  0.05s  
+  ✓ update role rejects invalid role                                                                             0.04s  
+  ✓ update role accepts all valid roles                                                                          0.05s  
+  ✓ update status successfully changes status                                                                    0.06s  
+  ✓ assign to centre successfully changes centre                                                                 0.04s  
+  ✓ set phone attribute normalizes malaysian phone                                                               0.04s  
+  ✓ get phone formatted attribute formats phone                                                                  0.05s  
+  ✓ get education info attribute returns formatted string                                                        0.05s  
+  ✓ get education info attribute returns not specified when empty                                                0.03s  
+  ✓ get specialization attribute returns teaching specialization                                                 0.05s  
+  ✓ get specialization attribute falls back to education                                                         0.03s  
+  ✓ get specialization attribute returns not specified when empty                                                0.04s  
+  ✓ get avatar url attribute returns default when no avatar                                                      0.04s  
+  ✓ can teach returns true for teacher with specialization                                                       0.04s  
+  ✓ can teach returns true for supervisor with specialization                                                    0.05s  
+  ✓ can teach returns false for teacher without specialization                                                   0.04s  
+  ✓ can teach returns false for non teaching role                                                                0.02s  
+  ✓ activities relationship returns has many                                                                     0.05s  
+  ✓ trainees relationship returns has many                                                                       0.05s  
+  ✓ centre relationship returns belongs to                                                                       0.05s  
+  ✓ centre relationship retrieves correct centre                                                                 0.03s  
+  ✓ find by email returns user when exists                                                                       0.05s  
+  ✓ find by email returns null when not exists                                                                   0.03s  
+  ✓ find by iium id returns user when exists                                                                     0.05s  
+  ✓ find by iium id returns null when not exists                                                                 0.04s  
+  ✓ find by role returns active users only                                                                       0.05s  
+  ✓ update last login sets timestamp                                                                             0.03s  
+  ✓ iium id converted to uppercase on create                                                                     0.03s  
+  ✓ iium id converted to uppercase on update                                                                     0.04s  
+  ✓ get suitable trainees filters by centre                                                                      0.05s  
+  ✓ get suitable trainees matches specialization                                                                 0.04s  
+
+   PASS  Tests\Unit\Scopes\CentreScopeTest
+  ✓ admin role bypasses centre scope                                                                             0.06s  
+  ✓ non admin role applies centre scope                                                                          0.03s  
+  ✓ centre scope applies to activity model                                                                       0.02s  
+  ✓ centre scope applies to asset model                                                                          0.04s  
+  ✓ scope uses table prefix to avoid ambiguous columns                                                           0.02s  
+  ✓ scope skipped when no centre id in session                                                                   0.02s  
+  ✓ scope can be removed with without global scope                                                               0.02s  
+
+   PASS  Tests\Unit\Services\DashboardServiceTest
+  ✓ get dashboard data returns array                                                                             0.21s  
+  ✓ get dashboard data returns admin dashboard for admin role                                                    0.04s  
+  ✓ get dashboard data returns supervisor dashboard for supervisor role                                          0.04s  
+  ✓ get dashboard data returns teacher dashboard for teacher role                                                0.05s  
+  ✓ get dashboard data returns ajk dashboard for ajk role                                                        0.05s  
+  ✓ get dashboard data returns default dashboard for unknown role                                                0.05s  
+  ✓ get dashboard data caches results                                                                            0.06s  
+  ✓ get dashboard data uses correct cache key                                                                    0.04s  
+  ✓ different roles use different cache keys                                                                     0.06s  
+  ✓ admin dashboard has stats section                                                                            0.04s  
+  ✓ admin dashboard has charts section                                                                           0.03s  
+  ✓ admin dashboard has recent section                                                                           0.04s  
+  ✓ admin dashboard has alerts section                                                                           0.05s  
+  ✓ admin dashboard structure is valid                                                                           0.05s  
+  ✓ supervisor dashboard has stats section                                                                       0.03s  
+  ✓ supervisor dashboard has charts section                                                                      0.04s  
+  ✓ supervisor dashboard structure is valid                                                                      0.05s  
+  ✓ get dashboard data handles exceptions gracefully                                                             0.05s  
+  ✓ get dashboard data with null centre id                                                                       0.05s  
+  ✓ admin dashboard includes stats section                                                                       0.08s  
+  ✓ supervisor dashboard filters by centre                                                                       0.06s  
+  ✓ teacher dashboard includes personal activities                                                               0.05s  
+  ✓ dashboard cache expires after timeout                                                                        0.06s  
+  ✓ dashboard data retrieval completes quickly                                                                   0.05s  
+SESSIONS METHOD DEBUG: ID=1866, User=Delia Russel, Role=admin
+
+   PASS  Tests\Feature\Activity\ActivityManagementTest
+  ✓ can view activities list                                                                                     1.19s  
+  ✓ can view modern activities home                                                                              0.34s  
+  ✓ admin can view create activity page                                                                          0.19s  
+  ✓ can view activity categories                                                                                 0.08s  
+  ✓ can view schedule                                                                                            0.23s  
+  ✓ can view activity detail                                                                                     0.16s  
+  ✓ can view activity sessions                                                                                   0.23s  
+
+   PASS  Tests\Feature\Api\ApiEndpointTest
+  ✓ health endpoint responds                                                                                     0.23s  
+  ✓ session check endpoint                                                                                       0.07s  
+  ✓ dashboard data endpoint                                                                                     11.59s  
+  ✓ notification check endpoint                                                                                  0.05s  
+  ✓ stats endpoint                                                                                               0.03s  
+  ✓ search endpoint                                                                                              0.03s  
+  ✓ activities api endpoint                                                                                      0.05s  
+  ✓ activities categories api endpoint                                                                           0.03s  
+
+   PASS  Tests\Feature\Asset\AssetManagementTest
+  ✓ admin can view asset list                                                                                    0.48s  
+  ✓ admin can view create asset page                                                                             1.02s  
+  ✓ admin can view asset reports                                                                                 0.10s  
+  ✓ admin can view asset maintenance                                                                             0.04s  
+  ✓ admin can view asset movements                                                                               0.04s  
+  ✓ supervisor can view asset list                                                                               0.06s  
+
+   PASS  Tests\Feature\Attendance\AttendanceTest
+  ✓ admin can view activity attendance                                                                           0.07s  
+  ✓ admin can view activity attendance today stats                                                               0.05s  
+  ✓ admin can view staff attendance dashboard                                                                    0.10s  
+  ✓ admin can view centre attendance                                                                             0.07s  
+  ✓ admin can view centres attendance                                                                            0.29s  
+  ✓ admin can view attendance page                                                                               0.09s  
+  ✓ admin can view attendance report                                                                             0.46s  
+  ✓ unauthenticated cannot view attendance                                                                       0.05s  
+
+   PASS  Tests\Feature\Auth\AuthenticationTest
+  ✓ login page renders                                                                                           0.07s  
+  ✓ auth login page renders                                                                                      0.04s  
+  ✓ admin can login via email                                                                                    0.08s  
+  ✓ supervisor can login via email                                                                               0.05s  
+  ✓ teacher can login via email                                                                                  0.07s  
+  ✓ ajk can login via email                                                                                      0.09s  
+  ✓ can login via iium id                                                                                        0.05s  
+  ✓ invalid password rejected                                                                                    0.06s  
+  ✓ nonexistent user rejected                                                                                    0.04s  
+  ✓ inactive user cannot login                                                                                   0.05s  
+  ✓ session data set correctly after login                                                                       0.06s  
+  ✓ empty identifier rejected                                                                                    0.03s  
+  ✓ empty password rejected                                                                                      0.04s  
+
+   PASS  Tests\Feature\Auth\MiddlewareTest
+  ✓ unauthenticated user redirected to login                                                                     0.11s  
+  ✓ authenticated user can access dashboard                                                                      1.84s  
+  ✓ session without id is rejected                                                                               0.06s  
+  ✓ session without role is rejected                                                                             0.06s  
+  ✓ public routes accessible without auth                                                                        0.07s  
+
+   PASS  Tests\Feature\Auth\RBACTest
+  ✓ admin can access admin routes                                                                                0.08s  
+  ✓ admin can access centre management                                                                           0.08s  
+  ✓ teacher cannot access admin routes                                                                           0.17s  
+  ✓ ajk cannot access admin routes                                                                               0.09s  
+  ✓ supervisor can access letter generator                                                                       0.21s  
+  ✓ teacher can access activities                                                                                0.08s  
+  ✓ each role can access dashboard                                                                               0.19s  
+  ✓ each role can access profile                                                                                 1.01s  
+  ✓ supervisor cannot access admin users                                                                         0.10s  
+  ✓ each role can access trainee list                                                                            0.70s  
+  ✓ each role can access activities                                                                              0.17s  
+  ✓ each role can access notifications                                                                           0.37s  
+  ✓ each role can access messages                                                                                0.24s  
+  ✓ each role accesses own dashboard route                                                                       0.17s  
+  ✓ teacher blocked from admin centres                                                                           0.08s  
+  ✓ ajk blocked from admin centres                                                                               0.09s  
+
+   PASS  Tests\Feature\Auth\RateLimitTest
+  ✓ login allows up to limit                                                                                     0.08s  
+  ✓ login blocks after exceeding limit                                                                           0.09s  
+  ✓ throttle middleware is applied to login route                                                                0.05s  
+  ✓ rate limiter definition exists                                                                               0.05s  
+
+   PASS  Tests\Feature\BrokenPageTest
+  ✓ aboutus page loads                                                                                           0.07s  
+  ✓ schedulehomepage loads                                                                                       0.09s  
+  ✓ settings page loads for admin                                                                                0.64s  
+  ✓ settings redirects for non admin                                                                             0.07s  
+  ✓ login page loads without duplicate                                                                           0.07s  
+  ✓ contact page loads                                                                                           0.37s  
+
+   PASS  Tests\Feature\CentreIsolation\CentreIsolationTest
+  ✓ teacher only sees trainees from own centre                                                                   0.06s  
+  ✓ admin sees trainees from all centres                                                                         0.06s  
+  ✓ supervisor only sees activities from own centre                                                              0.07s  
+  ✓ admin sees activities from all centres                                                                       0.11s  
+  ✓ without global scope bypasses centre filtering                                                               0.31s  
+  ✓ unauthenticated queries return all records                                                                   0.08s  
+
+   PASS  Tests\Feature\Centre\CentreManagementTest
+  ✓ admin can view centre list                                                                                   0.12s  
+  ✓ admin can view centres index                                                                                 0.08s  
+  ✓ admin can view centre detail                                                                                 0.22s  
+  ✓ admin can view centre edit                                                                                   0.41s  
+  ✓ admin can view centre create page                                                                            0.77s  
+  ✓ admin can view centre metrics                                                                                0.08s  
+  ✓ admin can access admin centres                                                                               0.09s  
+  ✓ admin can access admin centre detail                                                                         0.09s  
+  ✓ teacher cannot create centre                                                                                 0.07s  
+  ✓ supervisor can view centres                                                                                  0.08s  
+
+   PASS  Tests\Feature\CsrfProtectionTest
+  ✓ post request without csrf token is rejected                                                                  0.09s  
+  ✓ get request does not require csrf token                                                                      0.05s  
+  ✓ csrf meta tag is present in html                                                                             0.09s  
+  ✓ forms include csrf token field                                                                               0.07s  
+
+   PASS  Tests\Feature\Dashboard\DashboardTest
+  ✓ admin can view dashboard                                                                                     0.12s  
+  ✓ supervisor can view dashboard                                                                                0.07s  
+  ✓ teacher can view dashboard                                                                                   0.09s  
+  ✓ ajk can view dashboard                                                                                       0.09s  
+  ✓ admin can view modern dashboard                                                                              0.48s  
+  ✓ admin can view main dashboard                                                                                0.09s  
+  ✓ admin dashboard route                                                                                        0.09s  
+  ✓ supervisor dashboard route                                                                                   0.11s  
+  ✓ teacher dashboard route                                                                                      0.09s  
+  ✓ ajk dashboard route                                                                                          0.08s  
+  ✓ unauthenticated redirected from dashboard                                                                    0.08s  
+
+   PASS  Tests\Feature\ExampleTest
+  ✓ the application returns a successful response                                                                0.25s  
+
+   PASS  Tests\Feature\IEP\IepManagementTest
+  ✓ admin can view iep list                                                                                      0.44s  
+  ✓ supervisor can view iep list                                                                                 0.10s  
+  ✓ teacher can view iep list                                                                                    0.15s  
+  ✓ admin can view iep create page                                                                               0.60s  
+
+   PASS  Tests\Feature\Letter\LetterGenerationTest
+  ✓ admin can view letter generator                                                                              0.11s  
+  ✓ supervisor can view letter generator                                                                         0.09s  
+  ✓ admin can view letter create page                                                                            0.35s  
+  ✓ admin can view letter dashboard                                                                              0.29s  
+  ✓ admin can view letter templates                                                                              0.34s  
+
+   PASS  Tests\Feature\Message\MessageManagementTest
+  ✓ admin can view message list                                                                                  0.09s  
+  ✓ supervisor can view message list                                                                             0.10s  
+  ✓ teacher can view message list                                                                                0.09s  
+  ✓ admin can view message create                                                                                0.08s  
+  ✓ unauthenticated cannot view messages                                                                         0.07s  
+
+   PASS  Tests\Feature\Notification\NotificationTest
+  ✓ admin can view notifications                                                                                 0.09s  
+  ✓ supervisor can view notifications                                                                            0.09s  
+  ✓ admin can view unread notifications                                                                          0.05s  
+  ✓ unauthenticated cannot view notifications                                                                    0.06s  
+
+   PASS  Tests\Feature\Profile\ProfileTest
+  ✓ admin can view profile                                                                                       0.11s  
+  ✓ admin can view profile home                                                                                  0.11s  
+  ✓ teacher can view profile                                                                                     0.09s  
+  ✓ unauthenticated cannot view profile                                                                          0.07s  
+
+   PASS  Tests\Feature\RBAC\AdminAccessTest
+  ✓ admin can access dashboard                                                                                   0.14s  
+  ✓ admin can access all centres trainees                                                                        0.19s  
+  ✓ admin can view trainee from other centre                                                                     0.13s  
+  ✓ admin can access all centres activities                                                                      0.14s  
+  ✓ admin can view activity from other centre                                                                    0.13s  
+  ✓ admin can access staff list                                                                                  0.56s  
+  ✓ admin can create new staff                                                                                   0.75s  
+  ✓ admin can edit staff from any centre                                                                         0.49s  
+  ✓ admin can access centres management                                                                          0.10s  
+  ✓ admin can access reports                                                                                     0.08s  
+  ✓ admin can update trainee from any centre                                                                     0.70s  
+  ✓ admin can delete trainee from any centre                                                                     0.09s  
+  ✓ admin can access settings                                                                                    0.08s  
+  ✓ admin can view all staff members                                                                             0.09s  
+
+   PASS  Tests\Feature\RBAC\CentreScopeIsolationTest
+  ✓ user scoped to centre                                                                                        0.09s  
+  ✓ staff attendance scoped to centre                                                                            0.07s  
+  ✓ letter scoped to centre                                                                                      0.09s  
+  ✓ letter template scoped to centre                                                                             0.07s  
+  ✓ activity log scoped to centre                                                                                0.05s  
+  ✓ activity schedule template scoped to centre                                                                  0.07s  
+  ✓ volunteer scoped to centre                                                                                   0.11s  
+  ✓ admin sees all centres                                                                                       0.08s  
+  ✓ no session returns all data                                                                                  0.08s  
+
+   PASS  Tests\Feature\RBAC\RoleAccessTest
+  ✓ supervisor can access dashboard                                                                              0.10s  
+  ✓ supervisor can access trainee list                                                                           0.08s  
+  ✓ supervisor can access activities                                                                             0.08s  
+  ✓ supervisor blocked from admin centres                                                                        0.11s  
+  ✓ teacher can access dashboard                                                                                 0.11s  
+  ✓ teacher can access activities                                                                                0.07s  
+  ✓ teacher blocked from admin users                                                                             0.09s  
+  ✓ teacher blocked from admin centres                                                                           0.07s  
+  ✓ ajk can access dashboard                                                                                     0.13s  
+  ✓ ajk blocked from admin users                                                                                 0.09s  
+  ✓ unauthenticated user redirected from dashboard                                                               0.05s  
+  ✓ unauthenticated user redirected from trainees                                                                0.08s  
+
+   PASS  Tests\Feature\RouteOrderingTest
+  ✓ centres create not shadowed by wildcard                                                                      0.08s  
+  ✓ asset parents create not shadowed by wildcard                                                                0.40s  
+  ✓ centres show still works with numeric id                                                                     0.09s  
+  ✓ asset parents show still works with numeric id                                                               0.15s  
+
+   PASS  Tests\Feature\Security\MessageCentreIsolationTest
+  ✓ centre a user cannot view message sent by centre b user                                                      0.09s  
+  ✓ centre a user cannot delete message sent by centre b user                                                    0.08s  
+  ✓ message index only shows messages sent by current user                                                       0.12s  
+  ✓ user can view their own sent message                                                                         0.20s  
+
+   PASS  Tests\Feature\Staff\StaffManagementTest
+  ✓ admin can view staff list                                                                                    0.10s  
+  ✓ admin can view staff index                                                                                   0.09s  
+  ✓ supervisor can view staff list                                                                               0.09s  
+  ✓ teacher can view staff list                                                                                  0.10s  
+  ✓ admin can view staff register page                                                                           0.12s  
+  ✓ admin can view staff create page                                                                             0.08s  
+  ✓ admin can view staff profile                                                                                 0.08s  
+  ✓ admin can view staff edit page                                                                               0.11s  
+  ✓ admin can view staff schedule                                                                                0.07s  
+  ✓ admin can view staff activities                                                                              0.13s  
+  ✓ admin can view staff trainees                                                                                0.18s  
+  ✓ admin can view staff attendance                                                                              0.11s  
+  ✓ admin can view staff from other centre                                                                       0.09s  
+
+   PASS  Tests\Feature\Trainee\TraineeManagementTest
+  ✓ admin can view trainee list                                                                                  0.11s  
+  ✓ admin can view trainee registration page                                                                     2.15s  
+  ✓ supervisor can view trainee list                                                                             0.10s  
+  ✓ teacher can view trainee list                                                                                0.09s  
+  ✓ trainee profile page loads                                                                                   0.06s  
+
+   PASS  Tests\Feature\Volunteer\VolunteerTest
+  ✓ admin can view volunteer page                                                                                1.83s  
+  ✓ admin can view volunteer applications                                                                        0.07s  
+  ✓ admin can view admin volunteers                                                                              0.38s  
+  ✓ volunteer centres endpoint                                                                                   0.09s  
+
+  Tests:    347 passed (502 assertions)
+  Duration: 55.05s
+
