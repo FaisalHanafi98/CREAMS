@@ -1,22 +1,22 @@
 # Test Suite Baseline
 
 **Document Type**: Quality Gate Reference
-**Last Updated**: 2026-04-17
+**Last Updated**: 2026-04-25
 **Rule**: The numbers in this document are a FLOOR. No session may leave the test suite below these counts. Regressions must be investigated before committing.
 
 ---
 
-## Baseline as of 2026-04-17
+## Baseline as of 2026-04-25
 
 | Metric | Count |
 |--------|-------|
-| **Tests passed** | **347** |
-| **Assertions** | **502** |
+| **Tests passed** | **359** |
+| **Assertions** | **520** |
 | **Failures** | **0** |
 | **Errors** | **0** |
 | **Skipped** | **0** |
-| **Test files** | **35** |
-| **Duration (approx)** | ~20-70s (varies by machine / DB state) |
+| **Test files** | **37** |
+| **Duration (approx)** | ~28-70s (varies by machine / DB state) |
 
 Command used to capture:
 
@@ -41,7 +41,9 @@ tests/Feature/
 │                     CentreScopeIsolationTest.php
 │                     RoleAccessTest.php
 ├── Report/           ReportTest.php
-├── Security/         MessageCentreIsolationTest.php    ← Added 2026-04-17
+├── Security/         MessageCentreIsolationTest.php          ← Added 2026-04-17
+│                     AssetMaintenanceCentreIsolationTest.php ← Added 2026-04-25
+│                     AssetMovementCentreIsolationTest.php    ← Added 2026-04-25
 ├── SoftDelete/       SoftDeleteTest.php
 ├── Staff/            StaffManagementTest.php
 ├── Trainee/          TraineeManagementTest.php
@@ -62,7 +64,8 @@ tests/Unit/
 | Date | Tests | Assertions | Notes |
 |------|-------|------------|-------|
 | 2026-02-07 | ~329 | n/a | Prior baseline (from CLAUDE.md — approximate, pre-security hardening) |
-| 2026-04-17 | **347** | **502** | Post-security hardening. Added `MessageCentreIsolationTest` (4 tests, 8 assertions) this session. |
+| 2026-04-17 | **347** | **502** | Post-security hardening. Added `MessageCentreIsolationTest` (4 tests, 8 assertions). |
+| 2026-04-25 | **359** | **520** | CentreScope gap closure. Added `AssetMaintenanceCentreIsolationTest` (6 tests) and `AssetMovementCentreIsolationTest` (6 tests). Restored `asset_movements` table in test DB via new migration. |
 
 ---
 
