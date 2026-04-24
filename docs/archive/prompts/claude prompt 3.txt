@@ -1,0 +1,4573 @@
+1. Letter Module - Complete Resolution {#letter-module}
+Current Issues Summary
+
+Generate Letter button non-functional
+Letters archive page returns 404
+Missing header/footer templates in PDFs
+Empty data fields (reference, subject, recipient)
+Preview/download buttons greyed out
+Slow preview loading
+
+Solution 1: Complete Module Rewrite (Recommended)
+Step 1: Create New Letter Management System
+First, let's create a completely new letter system that bypasses all existing issues:
+php// app/Http/Controllers/NewLetterController.php
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Letter;
+use App\Models\LetterTemplate;
+use App\Models\Users;
+use App\Models\Trainee;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
+
+class NewLetterController extends Controller
+{
+    /**
+     * Main letter dashboard - combines archive and generation
+     */
+    public function dashboard()
+    {
+        $letters = Letter::with(['template'])
+            ->when(session('role') !== 'admin', function($query) {
+                $query->where('created_by', session('id'));
+            })
+            ->orderBy('created_at', 'desc')
+            ->paginate(20);
+
+        // Process letter data for display
+        foreach ($letters as $letter) {
+            $this->processLetterData($letter);
+        }
+
+        $templates = LetterTemplate::where('is_active', 1)->get();
+        $trainees = Trainee::where('centre_id', session('centre_id'))
+            ->select('id', 'name', 'email')
+            ->orderBy('name')
+            ->get();
+
+        return view('letters.new-dashboard', compact('letters', 'templates', 'trainees'));
+    }
+
+    /**
+     * Generate letter via AJAX
+     */
+    public function generate(Request $request)
+    {
+        DB::beginTransaction();
+        try {
+            // Validate input
+            $validated = $request->validate([
+                'recipient_name' => 'required|string|max:255',
+                'recipient_address' => 'nullable|string',
+                'letter_subject' => 'required|string|max:255',
+                'letter_content' => 'required|string',
+                'letter_date' => 'required|date',
+                'template_id' => 'nullable|exists:letter_templates,id'
+            ]);
+
+            // Get template
+            $template = $request->template_id 
+                ? LetterTemplate::find($request->template_id)
+                : LetterTemplate::where('is_active', 1)->first();
+
+            if (!$template) {
+                // Create default template if none exists
+                $template = $this->createDefaultTemplate();
+            }
+
+            // Generate reference number
+            $reference = $this->generateUniqueReference();
+
+            // Create letter record
+            $letter = Letter::create([
+                'letter_reference' => $reference,
+                'letter_date' => $validated['letter_date'],
+                'letter_subject' => $validated['letter_subject'],
+                'letter_content' => $validated['letter_content'],
+                'letter_type' => 'official',
+                'recipient_type' => $request->recipient_type ?? 'external',
+                'recipient_id' => $request->recipient_id ?? 0,
+                'template_id' => $template->id,
+                'letter_status' => 'final',
+                'created_by' => session('id'),
+                'letter_data' => json_encode([
+                    'recipient_name' => $validated['recipient_name'],
+                    'recipient_address' => $validated['recipient_address'] ?? '',
+                    'generated_by_name' => session('name'),
+                    'generated_by_position' => session('role'),
+                    'centre_name' => $this->getCentreName()
+                ])
+            ]);
+
+            // Generate PDF
+            $pdfPath = $this->generateEnhancedPDF($letter, $template);
+            $letter->update(['letter_file_path' => $pdfPath]);
+
+            DB::commit();
+
+            // Return success with download URL
+            return response()->json([
+                'success' => true,
+                'message' => 'Letter generated successfully',
+                'reference_number' => $reference,
+                'letter_id' => $letter->id,
+                'download_url' => route('letters.download', $letter->id),
+                'preview_url' => route('letters.preview', $letter->id)
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error('Letter generation failed: ' . $e->getMessage());
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to generate letter: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Enhanced PDF generation with proper template handling
+     */
+    private function generateEnhancedPDF($letter, $template)
+    {
+        // Prepare template images
+        $headerImage = null;
+        $footerImage = null;
+
+        if ($template->template_variables) {
+            $variables = is_string($template->template_variables) 
+                ? json_decode($template->template_variables, true) 
+                : $template->template_variables;
+
+            // Process header image
+            if (!empty($variables['header_image'])) {
+                $headerPath = storage_path('app/public/template_images/' . $variables['header_image']);
+                if (file_exists($headerPath)) {
+                    $type = pathinfo($headerPath, PATHINFO_EXTENSION);
+                    $data = file_get_contents($headerPath);
+                    $headerImage = 'data:image/' . $type . ';base64,' . base64_encode($data);
+                }
+            }
+
+            // Process footer image
+            if (!empty($variables['footer_image'])) {
+                $footerPath = storage_path('app/public/template_images/' . $variables['footer_image']);
+                if (file_exists($footerPath)) {
+                    $type = pathinfo($footerPath, PATHINFO_EXTENSION);
+                    $data = file_get_contents($footerPath);
+                    $footerImage = 'data:image/' . $type . ';base64,' . base64_encode($data);
+                }
+            }
+        }
+
+        // Prepare data for PDF
+        $data = [
+            'letter' => $letter,
+            'template' => $template,
+            'headerImage' => $headerImage,
+            'footerImage' => $footerImage,
+            'letterData' => json_decode($letter->letter_data, true)
+        ];
+
+        // Generate PDF with custom settings
+        $pdf = Pdf::loadView('letters.enhanced-pdf-template', $data);
+        $pdf->setPaper('A4', 'portrait');
+        $pdf->setOptions([
+            'isHtml5ParserEnabled' => true,
+            'isPhpEnabled' => true,
+            'defaultFont' => 'sans-serif',
+            'isFontSubsettingEnabled' => true
+        ]);
+
+        // Create filename
+        $filename = 'letter_' . $letter->letter_reference . '_' . date('Ymd') . '.pdf';
+        $path = 'letters/' . date('Y/m') . '/' . $filename;
+
+        // Ensure directory exists
+        Storage::makeDirectory('public/letters/' . date('Y/m'));
+        
+        // Save PDF
+        $fullPath = storage_path('app/public/' . $path);
+        $pdf->save($fullPath);
+
+        // Also save to public directory for direct access
+        $publicPath = public_path('letters/' . $filename);
+        if (!file_exists(dirname($publicPath))) {
+            mkdir(dirname($publicPath), 0755, true);
+        }
+        copy($fullPath, $publicPath);
+
+        return $path;
+    }
+
+    /**
+     * Process letter data for consistent display
+     */
+    private function processLetterData(&$letter)
+    {
+        if (is_string($letter->letter_data)) {
+            $letter->letter_data = json_decode($letter->letter_data, true);
+        }
+
+        if (!is_array($letter->letter_data)) {
+            $letter->letter_data = [];
+        }
+
+        // Ensure all required fields exist
+        $letter->letter_data = array_merge([
+            'recipient_name' => 'Unknown',
+            'recipient_address' => '',
+            'generated_by_name' => 'System',
+            'generated_by_position' => 'Admin'
+        ], $letter->letter_data);
+    }
+
+    /**
+     * Create default template if none exists
+     */
+    private function createDefaultTemplate()
+    {
+        return LetterTemplate::create([
+            'template_name' => 'Default Template',
+            'template_content' => 'Standard letter template',
+            'template_type' => 'official',
+            'is_active' => 1,
+            'created_by' => session('id'),
+            'template_variables' => json_encode([
+                'header_image' => null,
+                'footer_image' => null,
+                'margin_top' => 20,
+                'margin_bottom' => 20
+            ])
+        ]);
+    }
+
+    /**
+     * Generate unique reference number
+     */
+    private function generateUniqueReference()
+    {
+        $prefix = 'LTR';
+        $year = date('Y');
+        $month = date('m');
+        
+        // Get last sequence number for this month
+        $lastLetter = Letter::where('letter_reference', 'LIKE', "{$prefix}/{$year}/{$month}/%")
+            ->orderBy('id', 'desc')
+            ->first();
+
+        if ($lastLetter) {
+            $parts = explode('/', $lastLetter->letter_reference);
+            $sequence = intval(end($parts)) + 1;
+        } else {
+            $sequence = 1;
+        }
+
+        return sprintf("{$prefix}/{$year}/{$month}/%05d", $sequence);
+    }
+
+    /**
+     * Get centre name for letter
+     */
+    private function getCentreName()
+    {
+        // You can fetch this from database or config
+        $centres = [
+            '01' => 'Main Rehabilitation Centre',
+            '02' => 'North Branch Centre',
+            '03' => 'South Branch Centre'
+        ];
+
+        return $centres[session('centre_id')] ?? 'CREAMS Centre';
+    }
+}
+Step 2: Create New Unified View
+blade{{-- resources/views/letters/new-dashboard.blade.php --}}
+@extends('layouts.app')
+
+@section('title', 'Letter Management')
+
+@push('styles')
+<style>
+    .letter-dashboard {
+        background: #f8f9fa;
+        min-height: 100vh;
+        padding: 20px 0;
+    }
+    
+    .generation-panel {
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        padding: 25px;
+        margin-bottom: 30px;
+    }
+    
+    .letter-form .form-group {
+        margin-bottom: 20px;
+    }
+    
+    .letter-form label {
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 8px;
+    }
+    
+    .letter-form .form-control {
+        border-radius: 6px;
+        border: 1px solid #ced4da;
+        padding: 10px 15px;
+    }
+    
+    .letter-form .form-control:focus {
+        border-color: #80bdff;
+        box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+    }
+    
+    .archive-panel {
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        padding: 25px;
+    }
+    
+    .letter-table {
+        margin-top: 20px;
+    }
+    
+    .letter-table th {
+        background: #f8f9fa;
+        font-weight: 600;
+        border-bottom: 2px solid #dee2e6;
+        padding: 12px;
+    }
+    
+    .letter-table td {
+        padding: 12px;
+        vertical-align: middle;
+    }
+    
+    .status-badge {
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+    
+    .status-badge.ready {
+        background: #d4edda;
+        color: #155724;
+    }
+    
+    .status-badge.pending {
+        background: #fff3cd;
+        color: #856404;
+    }
+    
+    .action-buttons .btn {
+        padding: 4px 12px;
+        margin: 0 2px;
+    }
+    
+    .stats-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+    
+    .stat-card {
+        background: white;
+        border-radius: 10px;
+        padding: 20px;
+        text-align: center;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    
+    .stat-number {
+        font-size: 2.5rem;
+        font-weight: bold;
+        color: #007bff;
+    }
+    
+    .stat-label {
+        color: #6c757d;
+        font-size: 0.9rem;
+        margin-top: 5px;
+    }
+</style>
+@endpush
+
+@section('content')
+<div class="letter-dashboard">
+    <div class="container-fluid">
+        <!-- Page Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <h1 class="page-title">
+                    <i class="fas fa-file-alt mr-3"></i>Letter Management System
+                </h1>
+                <p class="text-muted">Generate official letters and manage your correspondence</p>
+            </div>
+        </div>
+
+        <!-- Statistics Cards -->
+        <div class="stats-cards">
+            <div class="stat-card">
+                <div class="stat-number">{{ $letters->total() }}</div>
+                <div class="stat-label">Total Letters</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">{{ $letters->where('letter_file_path', '!=', null)->count() }}</div>
+                <div class="stat-label">With PDF</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">{{ $letters->where('created_at', '>=', now()->startOfMonth())->count() }}</div>
+                <div class="stat-label">This Month</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">{{ $letters->where('created_at', '>=', now()->startOfWeek())->count() }}</div>
+                <div class="stat-label">This Week</div>
+            </div>
+        </div>
+
+        <!-- Letter Generation Panel -->
+        <div class="generation-panel">
+            <h3 class="mb-4">Generate New Letter</h3>
+            
+            <form id="letterGenerationForm" class="letter-form">
+                @csrf
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="letter_date">Letter Date</label>
+                            <input type="date" 
+                                   class="form-control" 
+                                   id="letter_date" 
+                                   name="letter_date" 
+                                   value="{{ date('Y-m-d') }}" 
+                                   required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="recipient_type">Recipient Type</label>
+                            <select class="form-control" id="recipient_type" name="recipient_type">
+                                <option value="external">External</option>
+                                <option value="trainee">Trainee</option>
+                                <option value="staff">Staff</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group" id="traineeSelect" style="display: none;">
+                            <label for="trainee_id">Select Trainee</label>
+                            <select class="form-control" id="trainee_id" name="recipient_id">
+                                <option value="">-- Select Trainee --</option>
+                                @foreach($trainees as $trainee)
+                                    <option value="{{ $trainee->id }}" data-name="{{ $trainee->name }}">
+                                        {{ $trainee->name }} ({{ $trainee->email }})
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="recipient_name">Recipient Name</label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="recipient_name" 
+                                   name="recipient_name" 
+                                   placeholder="Enter recipient name" 
+                                   required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="recipient_address">Recipient Address</label>
+                            <textarea class="form-control" 
+                                      id="recipient_address" 
+                                      name="recipient_address" 
+                                      rows="3" 
+                                      placeholder="Enter address (optional)"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="letter_subject">Subject</label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="letter_subject" 
+                                   name="letter_subject" 
+                                   placeholder="Enter letter subject" 
+                                   required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="letter_content">Letter Content</label>
+                            <textarea class="form-control" 
+                                      id="letter_content" 
+                                      name="letter_content" 
+                                      rows="8" 
+                                      placeholder="Enter letter content" 
+                                      required></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="template_id">Template (Optional)</label>
+                            <select class="form-control" id="template_id" name="template_id">
+                                <option value="">-- Use Default Template --</option>
+                                @foreach($templates as $template)
+                                    <option value="{{ $template->id }}">{{ $template->template_name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-center mt-4">
+                    <button type="button" class="btn btn-secondary btn-lg mr-2" onclick="previewLetter()">
+                        <i class="fas fa-eye mr-2"></i>Preview
+                    </button>
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="fas fa-file-pdf mr-2"></i>Generate Letter
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Letters Archive Panel -->
+        <div class="archive-panel">
+            <h3 class="mb-4">Letters Archive</h3>
+            
+            <!-- Search Bar -->
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <div class="input-group">
+                        <input type="text" 
+                               class="form-control" 
+                               id="searchInput" 
+                               placeholder="Search by reference, subject, or recipient...">
+                        <div class="input-group-append">
+                            <button class="btn btn-outline-secondary" type="button" onclick="searchLetters()">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Letters Table -->
+            <div class="table-responsive letter-table">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Reference</th>
+                            <th>Date</th>
+                            <th>Subject</th>
+                            <th>Recipient</th>
+                            <th>Generated By</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($letters as $letter)
+                            <tr>
+                                <td><strong>{{ $letter->letter_reference }}</strong></td>
+                                <td>{{ Carbon\Carbon::parse($letter->letter_date)->format('d M Y') }}</td>
+                                <td>{{ Str::limit($letter->letter_subject, 40) }}</td>
+                                <td>{{ $letter->letter_data['recipient_name'] ?? 'Unknown' }}</td>
+                                <td>
+                                    {{ $letter->letter_data['generated_by_name'] ?? 'System' }}
+                                    <br>
+                                    <small class="text-muted">
+                                        {{ $letter->created_at->format('d M Y, h:i A') }}
+                                    </small>
+                                </td>
+                                <td>
+                                    @if($letter->letter_file_path)
+                                        <span class="status-badge ready">
+                                            <i class="fas fa-check-circle mr-1"></i>Ready
+                                        </span>
+                                    @else
+                                        <span class="status-badge pending">
+                                            <i class="fas fa-clock mr-1"></i>Processing
+                                        </span>
+                                    @endif
+                                </td>
+                                <td>
+                                    <div class="action-buttons">
+                                        @if($letter->letter_file_path)
+                                            <button class="btn btn-info btn-sm" 
+                                                    onclick="viewLetter({{ $letter->id }})" 
+                                                    title="View">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <a href="{{ route('letters.download', $letter->id) }}" 
+                                               class="btn btn-primary btn-sm" 
+                                               title="Download">
+                                                <i class="fas fa-download"></i>
+                                            </a>
+                                        @endif
+                                        
+                                        @if(session('role') === 'admin' || $letter->created_by === session('id'))
+                                            <button class="btn btn-danger btn-sm" 
+                                                    onclick="deleteLetter({{ $letter->id }}, '{{ $letter->letter_reference }}')" 
+                                                    title="Delete">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        @endif
+                                    </div>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="7" class="text-center py-4">
+                                    <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                                    <p class="text-muted">No letters found. Generate your first letter above!</p>
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            @if($letters->hasPages())
+                <div class="d-flex justify-content-center mt-4">
+                    {{ $letters->links() }}
+                </div>
+            @endif
+        </div>
+    </div>
+</div>
+
+<!-- Preview Modal -->
+<div class="modal fade" id="previewModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Letter Preview</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="previewContent">
+                <div class="text-center">
+                    <i class="fas fa-spinner fa-spin fa-3x"></i>
+                    <p>Loading preview...</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="confirmGenerate()">
+                    <i class="fas fa-file-pdf mr-2"></i>Generate Letter
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- View Modal -->
+<div class="modal fade" id="viewModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">View Letter</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="viewContent">
+                <!-- PDF viewer will be loaded here -->
+            </div>
+        </div>
+    </div>
+</div>
+@endsection
+
+@push('scripts')
+<script>
+$(document).ready(function() {
+    // Handle recipient type change
+    $('#recipient_type').on('change', function() {
+        if ($(this).val() === 'trainee') {
+            $('#traineeSelect').show();
+            $('#recipient_name').prop('readonly', true);
+        } else {
+            $('#traineeSelect').hide();
+            $('#trainee_id').val('');
+            $('#recipient_name').prop('readonly', false).val('');
+        }
+    });
+
+    // Handle trainee selection
+    $('#trainee_id').on('change', function() {
+        var selectedOption = $(this).find('option:selected');
+        if (selectedOption.val()) {
+            $('#recipient_name').val(selectedOption.data('name'));
+        }
+    });
+
+    // Handle form submission
+    $('#letterGenerationForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        var formData = $(this).serialize();
+        var submitBtn = $(this).find('button[type="submit"]');
+        var originalText = submitBtn.html();
+        
+        // Show loading state
+        submitBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-2"></i>Generating...');
+        
+        $.ajax({
+            url: '{{ route("letters.generate") }}',
+            type: 'POST',
+            data: formData,
+            success: function(response) {
+                if (response.success) {
+                    // Show success message
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Letter Generated!',
+                        text: 'Reference: ' + response.reference_number,
+                        showCancelButton: true,
+                        confirmButtonText: 'Download Now',
+                        cancelButtonText: 'Continue'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            window.location.href = response.download_url;
+                        }
+                        // Reload page to show new letter
+                        location.reload();
+                    });
+                    
+                    // Reset form
+                    $('#letterGenerationForm')[0].reset();
+                    $('#letter_date').val(new Date().toISOString().split('T')[0]);
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Generation Failed',
+                        text: response.message || 'An error occurred'
+                    });
+                }
+            },
+            error: function(xhr) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: xhr.responseJSON?.message || 'Failed to generate letter'
+                });
+            },
+            complete: function() {
+                submitBtn.prop('disabled', false).html(originalText);
+            }
+        });
+    });
+});
+
+// Preview letter
+function previewLetter() {
+    var formData = $('#letterGenerationForm').serialize();
+    
+    $('#previewContent').html('<div class="text-center"><i class="fas fa-spinner fa-spin fa-3x"></i><p>Loading preview...</p></div>');
+    $('#previewModal').modal('show');
+    
+    $.post('{{ route("letters.preview") }}', formData)
+        .done(function(response) {
+            if (response.success) {
+                $('#previewContent').html(response.html);
+            } else {
+                $('#previewContent').html('<div class="alert alert-danger">Failed to generate preview</div>');
+            }
+        })
+        .fail(function() {
+            $('#previewContent').html('<div class="alert alert-danger">Error loading preview</div>');
+        });
+}
+
+// Confirm generate from preview
+function confirmGenerate() {
+    $('#previewModal').modal('hide');
+    $('#letterGenerationForm').submit();
+}
+
+// View letter
+function viewLetter(id) {
+    $('#viewContent').html('<iframe src="/letters/' + id + '/view" style="width: 100%; height: 600px; border: none;"></iframe>');
+    $('#viewModal').modal('show');
+}
+
+// Delete letter
+function deleteLetter(id, reference) {
+    Swal.fire({
+        title: 'Delete Letter?',
+        text: 'Reference: ' + reference,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Yes, delete it!'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $.ajax({
+                url: '/letters/' + id,
+                type: 'DELETE',
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                success: function(response) {
+                    if (response.success) {
+                        Swal.fire('Deleted!', 'Letter has been deleted.', 'success');
+                        location.reload();
+                    } else {
+                        Swal.fire('Error!', 'Failed to delete letter.', 'error');
+                    }
+                },
+                error: function() {
+                    Swal.fire('Error!', 'Failed to delete letter.', 'error');
+                }
+            });
+        }
+    });
+}
+
+// Search letters
+function searchLetters() {
+    var searchTerm = $('#searchInput').val();
+    if (searchTerm) {
+        window.location.href = '{{ route("letters.dashboard") }}?search=' + encodeURIComponent(searchTerm);
+    } else {
+        window.location.href = '{{ route("letters.dashboard") }}';
+    }
+}
+
+// Handle enter key in search
+$('#searchInput').on('keypress', function(e) {
+    if (e.which === 13) {
+        searchLetters();
+    }
+});
+</script>
+@endpush
+Step 3: Create Enhanced PDF Template
+blade{{-- resources/views/letters/enhanced-pdf-template.blade.php --}}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>{{ $letter->letter_reference }}</title>
+    <style>
+        @page {
+            margin: 2cm;
+            size: A4 portrait;
+        }
+        
+        body {
+            font-family: 'Times New Roman', Times, serif;
+            font-size: 12pt;
+            line-height: 1.6;
+            color: #000;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .header img {
+            max-height: 120px;
+            width: auto;
+        }
+        
+        .letter-meta {
+            margin-bottom: 30px;
+        }
+        
+        .letter-date {
+            text-align: right;
+            margin-bottom: 20px;
+        }
+        
+        .letter-reference {
+            margin-bottom: 20px;
+        }
+        
+        .recipient {
+            margin-bottom: 30px;
+        }
+        
+        .subject {
+            font-weight: bold;
+            margin: 30px 0;
+            text-decoration: underline;
+        }
+        
+        .content {
+            text-align: justify;
+            margin-bottom: 50px;
+            white-space: pre-wrap;
+        }
+        
+        .signature {
+            margin-top: 80px;
+        }
+        
+        .signature-block {
+            margin-top: 60px;
+        }
+        
+        .footer {
+            position: fixed;
+            bottom: 2cm;
+            left: 2cm;
+            right: 2cm;
+            text-align: center;
+        }
+        
+        .footer img {
+            max-height: 80px;
+            width: auto;
+        }
+        
+        .page-break {
+            page-break-after: always;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header Image -->
+    @if($headerImage)
+        <div class="header">
+            <img src="{{ $headerImage }}" alt="Header">
+        </div>
+    @endif
+
+    <!-- Letter Content -->
+    <div class="letter-body">
+        <!-- Date -->
+        <div class="letter-date">
+            <strong>Date:</strong> {{ Carbon\Carbon::parse($letter->letter_date)->format('d F Y') }}
+        </div>
+
+        <!-- Reference -->
+        <div class="letter-reference">
+            <strong>Ref:</strong> {{ $letter->letter_reference }}
+        </div>
+
+        <!-- Recipient -->
+        <div class="recipient">
+            <strong>{{ $letterData['recipient_name'] }}</strong><br>
+            @if(!empty($letterData['recipient_address']))
+                {!! nl2br(e($letterData['recipient_address'])) !!}
+            @endif
+        </div>
+
+        <!-- Subject -->
+        <div class="subject">
+            RE: {{ strtoupper($letter->letter_subject) }}
+        </div>
+
+        <!-- Content -->
+        <div class="content">
+            {!! nl2br(e($letter->letter_content)) !!}
+        </div>
+
+        <!-- Signature -->
+        <div class="signature">
+            <p>Thank you.</p>
+            
+            <div class="signature-block">
+                <p>
+                    <strong>{{ $letterData['generated_by_name'] }}</strong><br>
+                    {{ ucfirst($letterData['generated_by_position']) }}<br>
+                    {{ $letterData['centre_name'] ?? 'CREAMS System' }}
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer Image -->
+    @if($footerImage)
+        <div class="footer">
+            <img src="{{ $footerImage }}" alt="Footer">
+        </div>
+    @endif
+</body>
+</html>
+Step 4: Update Routes
+php// Add to routes/web.php within authenticated middleware group
+
+// New Letter Management System
+Route::prefix('letters')->name('letters.')->group(function () {
+    Route::get('/', [NewLetterController::class, 'dashboard'])->name('dashboard');
+    Route::post('/generate', [NewLetterController::class, 'generate'])->name('generate');
+    Route::post('/preview', [NewLetterController::class, 'preview'])->name('preview');
+    Route::get('/{id}/view', [NewLetterController::class, 'view'])->name('view');
+    Route::get('/{id}/download', [NewLetterController::class, 'download'])->name('download');
+    Route::delete('/{id}', [NewLetterController::class, 'destroy'])->name('destroy');
+});
+
+
+
+
+
+----------------------------------------------------------------------------------------------------
+2. Authentication Module - Session Management Fix {#authentication-module}
+Current Issues Summary
+
+Session persistence problems
+Role-based access failures
+Remember me functionality issues
+Middleware conflicts
+
+Solution 1: Complete Session Management Overhaul
+Step 1: Create New Session Manager
+php// app/Services/SessionManager.php
+<?php
+
+namespace App\Services;
+
+use App\Models\Users;
+use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Cookie;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
+
+class SessionManager
+{
+    /**
+     * Enhanced login with better session handling
+     */
+    public static function login($user, $remember = false)
+    {
+        // Clear any existing session
+        Session::flush();
+        Session::regenerate();
+        
+        // Set core session data
+        $sessionData = [
+            'id' => $user->id,
+            'iium_id' => $user->iium_id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'role' => $user->role,
+            'centre_id' => $user->centre_id,
+            'logged_in' => true,
+            'login_time' => now()->toDateTimeString(),
+            'last_activity' => now()->timestamp
+        ];
+        
+        // Add enhanced user data
+        $enhancedData = self::getEnhancedUserData($user);
+        $sessionData = array_merge($sessionData, $enhancedData);
+        
+        // Store in session
+        foreach ($sessionData as $key => $value) {
+            Session::put($key, $value);
+        }
+        
+        // Handle remember me
+        if ($remember) {
+            $token = Str::random(60);
+            $user->update(['remember_token' => $token]);
+            
+            Cookie::queue('remember_token', $token, 60 * 24 * 30); // 30 days
+            Cookie::queue('user_id', $user->id, 60 * 24 * 30);
+        }
+        
+        // Log successful login
+        Log::info('User logged in successfully', [
+            'user_id' => $user->id,
+            'role' => $user->role,
+            'ip' => request()->ip()
+        ]);
+        
+        Session::save();
+        
+        return true;
+    }
+    
+    /**
+     * Enhanced logout with proper cleanup
+     */
+    public static function logout()
+    {
+        $userId = session('id');
+        
+        // Clear remember token
+        if ($userId) {
+            Users::where('id', $userId)->update(['remember_token' => null]);
+        }
+        
+        // Clear cookies
+        Cookie::queue(Cookie::forget('remember_token'));
+        Cookie::queue(Cookie::forget('user_id'));
+        
+        // Clear session
+        Session::flush();
+        Session::regenerate();
+        
+        Log::info('User logged out', ['user_id' => $userId]);
+        
+        return true;
+    }
+    
+    /**
+     * Check if user is authenticated
+     */
+    public static function check()
+    {
+        // Check session
+        if (Session::has('id') && Session::get('logged_in') === true) {
+            // Update last activity
+            Session::put('last_activity', now()->timestamp);
+            return true;
+        }
+        
+        // Check remember token
+        if (Cookie::get('remember_token') && Cookie::get('user_id')) {
+            $user = Users::where('id', Cookie::get('user_id'))
+                ->where('remember_token', Cookie::get('remember_token'))
+                ->first();
+            
+            if ($user) {
+                self::login($user, true);
+                return true;
+            }
+        }
+        
+        return false;
+    }
+    
+    /**
+     * Get enhanced user data
+     */
+    private static function getEnhancedUserData($user)
+    {
+        $data = [
+            'avatar' => $user->avatar,
+            'phone' => $user->phone,
+            'address' => $user->address,
+            'position' => $user->position,
+            'department' => $user->department,
+            'permissions' => []
+        ];
+        
+        // Add role-specific permissions
+        switch ($user->role) {
+            case 'admin':
+                $data['permissions'] = ['all'];
+                break;
+            case 'supervisor':
+                $data['permissions'] = ['view_all', 'edit_centre', 'manage_staff'];
+                break;
+            case 'teacher':
+                $data['permissions'] = ['view_assigned', 'manage_activities'];
+                break;
+            case 'ajk':
+                $data['permissions'] = ['view_only'];
+                break;
+        }
+        
+        return $data;
+    }
+    
+    /**
+     * Refresh session data
+     */
+    public static function refresh()
+    {
+        $userId = session('id');
+        if (!$userId) {
+            return false;
+        }
+        
+        $user = Users::find($userId);
+        if (!$user) {
+            self::logout();
+            return false;
+        }
+        
+        // Update session with fresh data
+        $sessionData = [
+            'name' => $user->name,
+            'email' => $user->email,
+            'role' => $user->role,
+            'centre_id' => $user->centre_id,
+            'last_activity' => now()->timestamp
+        ];
+        
+        $enhancedData = self::getEnhancedUserData($user);
+        $sessionData = array_merge($sessionData, $enhancedData);
+        
+        foreach ($sessionData as $key => $value) {
+            Session::put($key, $value);
+        }
+        
+        Session::save();
+        
+        return true;
+    }
+}
+Step 2: Create Enhanced Authentication Middleware
+php// app/Http/Middleware/EnhancedAuthenticate.php
+<?php
+
+namespace App\Http\Middleware;
+
+use Closure;
+use App\Services\SessionManager;
+
+class EnhancedAuthenticate
+{
+    public function handle($request, Closure $next)
+    {
+        // Check authentication
+        if (!SessionManager::check()) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['error' => 'Unauthorized'], 401);
+            }
+            
+            return redirect()->route('login')
+                ->with('error', 'Please login to continue');
+        }
+        
+        // Check session timeout (30 minutes)
+        $lastActivity = session('last_activity', 0);
+        if (time() - $lastActivity > 1800) {
+            SessionManager::logout();
+            
+            return redirect()->route('login')
+                ->with('error', 'Session expired. Please login again');
+        }
+        
+        // Refresh session activity
+        session(['last_activity' => time()]);
+        
+        // Check if user still exists and is active
+        if (session('id')) {
+            $user = \App\Models\Users::find(session('id'));
+            if (!$user || $user->status !== 'active') {
+                SessionManager::logout();
+                
+                return redirect()->route('login')
+                    ->with('error', 'Account not found or inactive');
+            }
+        }
+        
+        return $next($request);
+    }
+}
+Step 3: Update Login Controller
+php// app/Http/Controllers/Auth/LoginController.php
+
+use App\Services\SessionManager;
+
+public function login(Request $request)
+{
+    $validator = Validator::make($request->all(), [
+        'email' => 'required|email',
+        'password' => 'required|min:6'
+    ]);
+
+    if ($validator->fails()) {
+        return back()->withErrors($validator)->withInput();
+    }
+
+    try {
+        // Find user
+        $user = Users::where('email', $request->email)->first();
+        
+        if (!$user) {
+            return back()->with('error', 'Email not found')->withInput();
+        }
+        
+        // Verify password
+        if (!Hash::check($request->password, $user->password)) {
+            return back()->with('error', 'Invalid password')->withInput();
+        }
+        
+        // Check if active
+        if ($user->status !== 'active') {
+            return back()->with('error', 'Account is inactive')->withInput();
+        }
+        
+        // Login user
+        SessionManager::login($user, $request->has('remember'));
+        
+        // Redirect based on role
+        return redirect()->route($this->getRedirectRoute($user->role))
+            ->with('success', 'Welcome back, ' . $user->name);
+            
+    } catch (\Exception $e) {
+        Log::error('Login error: ' . $e->getMessage());
+        return back()->with('error', 'Login failed. Please try again')->withInput();
+    }
+}
+
+public function logout()
+{
+    SessionManager::logout();
+    return redirect()->route('login')->with('success', 'Logged out successfully');
+}
+
+private function getRedirectRoute($role)
+{
+    $routes = [
+        'admin' => 'admin.dashboard',
+        'supervisor' => 'supervisor.dashboard',
+        'teacher' => 'teacher.dashboard',
+        'ajk' => 'ajk.dashboard'
+    ];
+    
+    return $routes[$role] ?? 'dashboard';
+}
+
+
+-------------------------------------------------------------------------------------------------------
+
+3. Activity Module - Full Reconstruction {#activity-module}
+Current Issues Summary
+
+Complex database structure with redundant tables
+Session scheduling conflicts
+Enrollment management problems
+Performance issues with large datasets
+UI/UX inconsistencies
+
+Solution 1: Complete Module Restructure
+Step 1: Create Optimized Database Structure
+sql-- Migration for consolidated activity system
+-- Create this migration file: database/migrations/2025_01_20_000000_restructure_activity_module.php
+
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+class RestructureActivityModule extends Migration
+{
+    public function up()
+    {
+        // Drop redundant tables if they exist
+        Schema::dropIfExists('trainee_activities');
+        Schema::dropIfExists('rehabilitation_activities');
+        
+        // Create optimized activities table
+        Schema::create('activities_new', function (Blueprint $table) {
+            $table->id();
+            $table->string('activity_code')->unique();
+            $table->string('name');
+            $table->text('description')->nullable();
+            $table->enum('category', [
+                'Physical Therapy',
+                'Occupational Therapy',
+                'Speech Therapy',
+                'Behavioral Therapy',
+                'Sensory Integration',
+                'Mathematics',
+                'Literacy',
+                'Science',
+                'Computer Skills',
+                'Art & Creativity',
+                'Music Therapy',
+                'Social Skills',
+                'Life Skills',
+                'Vocational Training'
+            ]);
+            $table->enum('difficulty_level', ['Beginner', 'Intermediate', 'Advanced']);
+            $table->integer('max_participants')->default(20);
+            $table->integer('min_participants')->default(1);
+            $table->integer('duration_minutes')->default(60);
+            $table->json('required_materials')->nullable();
+            $table->json('learning_objectives')->nullable();
+            $table->boolean('is_active')->default(true);
+            $table->unsignedBigInteger('centre_id');
+            $table->unsignedBigInteger('created_by');
+            $table->timestamps();
+            
+            $table->index(['category', 'is_active']);
+            $table->index('centre_id');
+            $table->index('created_by');
+        });
+        
+        // Create optimized sessions table
+        Schema::create('activity_sessions_new', function (Blueprint $table) {
+            $table->id();
+            $table->string('session_code')->unique();
+            $table->unsignedBigInteger('activity_id');
+            $table->unsignedBigInteger('teacher_id');
+            $table->date('session_date');
+            $table->time('start_time');
+            $table->time('end_time');
+            $table->string('venue');
+            $table->integer('capacity');
+            $table->enum('status', ['scheduled', 'ongoing', 'completed', 'cancelled'])
+                  ->default('scheduled');
+            $table->text('notes')->nullable();
+            $table->json('session_data')->nullable();
+            $table->timestamps();
+            
+            $table->foreign('activity_id')->references('id')->on('activities_new')->onDelete('cascade');
+            $table->foreign('teacher_id')->references('id')->on('users');
+            
+            $table->index(['session_date', 'status']);
+            $table->index(['teacher_id', 'session_date']);
+            $table->unique(['teacher_id', 'session_date', 'start_time'], 'no_double_booking');
+        });
+        
+        // Create optimized enrollments table
+        Schema::create('activity_enrollments_new', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('trainee_id');
+            $table->unsignedBigInteger('activity_id');
+            $table->unsignedBigInteger('session_id');
+            $table->enum('enrollment_status', ['enrolled', 'completed', 'dropped', 'absent'])
+                  ->default('enrolled');
+            $table->date('enrollment_date');
+            $table->boolean('attendance_marked')->default(false);
+            $table->integer('participation_score')->nullable();
+            $table->text('progress_notes')->nullable();
+            $table->json('assessment_data')->nullable();
+            $table->timestamps();
+            
+            $table->foreign('trainee_id')->references('id')->on('trainees');
+            $table->foreign('activity_id')->references('id')->on('activities_new');
+            $table->foreign('session_id')->references('id')->on('activity_sessions_new');
+            
+            $table->unique(['trainee_id', 'session_id'], 'unique_enrollment');
+            $table->index(['session_id', 'enrollment_status']);
+            $table->index(['trainee_id', 'enrollment_status']);
+        });
+        
+        // Migrate existing data
+        $this->migrateExistingData();
+    }
+    
+    public function down()
+    {
+        Schema::dropIfExists('activity_enrollments_new');
+        Schema::dropIfExists('activity_sessions_new');
+        Schema::dropIfExists('activities_new');
+    }
+    
+    private function migrateExistingData()
+    {
+        // Migrate activities
+        if (Schema::hasTable('activities')) {
+            DB::statement('INSERT INTO activities_new SELECT * FROM activities');
+        }
+        
+        // Migrate sessions
+        if (Schema::hasTable('activity_sessions')) {
+            DB::statement('
+                INSERT INTO activity_sessions_new 
+                (id, session_code, activity_id, teacher_id, session_date, 
+                 start_time, end_time, venue, capacity, status, notes, created_at, updated_at)
+                SELECT 
+                    id,
+                    CONCAT("SES-", id, "-", DATE_FORMAT(created_at, "%Y%m")),
+                    activity_id,
+                    teacher_id,
+                    date,
+                    start_time,
+                    end_time,
+                    IFNULL(venue, "Room 1"),
+                    IFNULL(capacity, 20),
+                    IFNULL(status, "scheduled"),
+                    notes,
+                    created_at,
+                    updated_at
+                FROM activity_sessions
+            ');
+        }
+    }
+}
+Step 2: Create New Activity Controller
+php// app/Http/Controllers/NewActivityController.php
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Activity;
+use App\Models\ActivitySession;
+use App\Models\ActivityEnrollment;
+use App\Models\Trainee;
+use App\Models\Users;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
+use Carbon\Carbon;
+
+class NewActivityController extends Controller
+{
+    /**
+     * Main activity dashboard with role-based views
+     */
+    public function index(Request $request)
+    {
+        $role = session('role');
+        $viewData = [];
+        
+        switch ($role) {
+            case 'admin':
+            case 'supervisor':
+                $viewData = $this->getAdminDashboardData($request);
+                break;
+                
+            case 'teacher':
+                $viewData = $this->getTeacherDashboardData($request);
+                break;
+                
+            case 'ajk':
+                $viewData = $this->getAjkDashboardData($request);
+                break;
+                
+            default:
+                return redirect()->route('dashboard')
+                    ->with('error', 'Unauthorized access');
+        }
+        
+        return view('activities.unified-dashboard', $viewData);
+    }
+    
+    /**
+     * Get admin/supervisor dashboard data
+     */
+    private function getAdminDashboardData($request)
+    {
+        // Get statistics with caching
+        $stats = Cache::remember('activity_stats_' . session('centre_id'), 300, function() {
+            return [
+                'total_activities' => Activity::where('centre_id', session('centre_id'))->count(),
+                'active_activities' => Activity::where('centre_id', session('centre_id'))
+                    ->where('is_active', true)->count(),
+                'total_sessions' => ActivitySession::whereHas('activity', function($q) {
+                    $q->where('centre_id', session('centre_id'));
+                })->count(),
+                'today_sessions' => ActivitySession::whereHas('activity', function($q) {
+                    $q->where('centre_id', session('centre_id'));
+                })->whereDate('session_date', today())->count(),
+                'total_enrollments' => ActivityEnrollment::whereHas('activity', function($q) {
+                    $q->where('centre_id', session('centre_id'));
+                })->count(),
+                'active_trainees' => ActivityEnrollment::whereHas('activity', function($q) {
+                    $q->where('centre_id', session('centre_id'));
+                })->where('enrollment_status', 'enrolled')
+                  ->distinct('trainee_id')->count('trainee_id')
+            ];
+        });
+        
+        // Get activities with filters
+        $query = Activity::with(['sessions' => function($q) {
+            $q->orderBy('session_date', 'desc')->limit(5);
+        }])->where('centre_id', session('centre_id'));
+        
+        // Apply filters
+        if ($request->filled('category')) {
+            $query->where('category', $request->category);
+        }
+        
+        if ($request->filled('search')) {
+            $query->where(function($q) use ($request) {
+                $q->where('name', 'LIKE', '%' . $request->search . '%')
+                  ->orWhere('activity_code', 'LIKE', '%' . $request->search . '%');
+            });
+        }
+        
+        $activities = $query->orderBy('created_at', 'desc')->paginate(20);
+        
+        // Get categories for filter
+        $categories = $this->getActivityCategories();
+        
+        // Get upcoming sessions
+        $upcomingSessions = ActivitySession::with(['activity', 'teacher'])
+            ->whereHas('activity', function($q) {
+                $q->where('centre_id', session('centre_id'));
+            })
+            ->where('session_date', '>=', today())
+            ->where('status', 'scheduled')
+            ->orderBy('session_date')
+            ->orderBy('start_time')
+            ->limit(10)
+            ->get();
+        
+        return compact('stats', 'activities', 'categories', 'upcomingSessions');
+    }
+    
+    /**
+     * Create new activity
+     */
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'category' => 'required|string',
+            'difficulty_level' => 'required|in:Beginner,Intermediate,Advanced',
+            'max_participants' => 'required|integer|min:1',
+            'duration_minutes' => 'required|integer|min:15',
+            'required_materials' => 'nullable|array',
+            'learning_objectives' => 'nullable|array'
+        ]);
+        
+        DB::beginTransaction();
+        try {
+            // Generate activity code
+            $code = $this->generateActivityCode($validated['category']);
+            
+            $activity = Activity::create([
+                'activity_code' => $code,
+                'name' => $validated['name'],
+                'description' => $validated['description'],
+                'category' => $validated['category'],
+                'difficulty_level' => $validated['difficulty_level'],
+                'max_participants' => $validated['max_participants'],
+                'min_participants' => $request->min_participants ?? 1,
+                'duration_minutes' => $validated['duration_minutes'],
+                'required_materials' => $validated['required_materials'] ?? [],
+                'learning_objectives' => $validated['learning_objectives'] ?? [],
+                'centre_id' => session('centre_id'),
+                'created_by' => session('id'),
+                'is_active' => true
+            ]);
+            
+            DB::commit();
+            
+            // Clear cache
+            Cache::forget('activity_stats_' . session('centre_id'));
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Activity created successfully',
+                'activity' => $activity
+            ]);
+            
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error('Activity creation failed: ' . $e->getMessage());
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to create activity'
+            ], 500);
+        }
+    }
+    
+    /**
+     * Schedule new session
+     */
+    public function scheduleSession(Request $request, $activityId)
+    {
+        $validated = $request->validate([
+            'teacher_id' => 'required|exists:users,id',
+            'session_date' => 'required|date|after_or_equal:today',
+            'start_time' => 'required|date_format:H:i',
+            'end_time' => 'required|date_format:H:i|after:start_time',
+            'venue' => 'required|string|max:255',
+            'capacity' => 'required|integer|min:1'
+        ]);
+        
+        // Check for double booking
+        $conflict = ActivitySession::where('teacher_id', $validated['teacher_id'])
+            ->where('session_date', $validated['session_date'])
+            ->where(function($q) use ($validated) {
+                $q->whereBetween('start_time', [$validated['start_time'], $validated['end_time']])
+                  ->orWhereBetween('end_time', [$validated['start_time'], $validated['end_time']])
+                  ->orWhere(function($q2) use ($validated) {
+                      $q2->where('start_time', '<=', $validated['start_time'])
+                         ->where('end_time', '>=', $validated['end_time']);
+                  });
+            })
+            ->exists();
+        
+        if ($conflict) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Teacher already has a session scheduled at this time'
+            ], 422);
+        }
+        
+        DB::beginTransaction();
+        try {
+            $activity = Activity::findOrFail($activityId);
+            
+            // Generate session code
+            $sessionCode = $this->generateSessionCode($activity);
+            
+            $session = ActivitySession::create([
+                'session_code' => $sessionCode,
+                'activity_id' => $activityId,
+                'teacher_id' => $validated['teacher_id'],
+                'session_date' => $validated['session_date'],
+                'start_time' => $validated['start_time'],
+                'end_time' => $validated['end_time'],
+                'venue' => $validated['venue'],
+                'capacity' => $validated['capacity'],
+                'status' => 'scheduled'
+            ]);
+            
+            DB::commit();
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Session scheduled successfully',
+                'session' => $session->load('teacher')
+            ]);
+            
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error('Session scheduling failed: ' . $e->getMessage());
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to schedule session'
+            ], 500);
+        }
+    }
+    
+    /**
+     * Enroll trainee in activity
+     */
+    public function enrollTrainee(Request $request, $activityId)
+    {
+        $validated = $request->validate([
+            'trainee_id' => 'required|exists:trainees,id',
+            'session_ids' => 'required|array',
+            'session_ids.*' => 'exists:activity_sessions_new,id'
+        ]);
+        
+        DB::beginTransaction();
+        try {
+            $activity = Activity::findOrFail($activityId);
+            $trainee = Trainee::findOrFail($validated['trainee_id']);
+            
+            $enrollments = [];
+            
+            foreach ($validated['session_ids'] as $sessionId) {
+                $session = ActivitySession::findOrFail($sessionId);
+                
+                // Check capacity
+                $currentEnrollments = ActivityEnrollment::where('session_id', $sessionId)
+                    ->where('enrollment_status', 'enrolled')
+                    ->count();
+                
+                if ($currentEnrollments >= $session->capacity) {
+                    DB::rollback();
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Session ' . $session->session_code . ' is full'
+                    ], 422);
+                }
+                
+                // Check for existing enrollment
+                $existing = ActivityEnrollment::where('trainee_id', $trainee->id)
+                    ->where('session_id', $sessionId)
+                    ->first();
+                
+                if (!$existing) {
+                    $enrollment = ActivityEnrollment::create([
+                        'trainee_id' => $trainee->id,
+                        'activity_id' => $activityId,
+                        'session_id' => $sessionId,
+                        'enrollment_date' => now(),
+                        'enrollment_status' => 'enrolled'
+                    ]);
+                    
+                    $enrollments[] = $enrollment;
+                }
+            }
+            
+            DB::commit();
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Trainee enrolled successfully',
+                'enrollments' => $enrollments
+            ]);
+            
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error('Enrollment failed: ' . $e->getMessage());
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to enroll trainee'
+            ], 500);
+        }
+    }
+    
+    /**
+     * Mark attendance for session
+     */
+    public function markAttendance(Request $request, $sessionId)
+    {
+        $validated = $request->validate([
+            'attendance' => 'required|array',
+            'attendance.*.trainee_id' => 'required|exists:trainees,id',
+            'attendance.*.present' => 'required|boolean',
+            'attendance.*.participation_score' => 'nullable|integer|min:0|max:10',
+            'attendance.*.notes' => 'nullable|string'
+        ]);
+        
+        DB::beginTransaction();
+        try {
+            $session = ActivitySession::findOrFail($sessionId);
+            
+            // Update session status
+            if ($session->status === 'scheduled') {
+                $session->update(['status' => 'ongoing']);
+            }
+            
+            foreach ($validated['attendance'] as $record) {
+                $enrollment = ActivityEnrollment::where('session_id', $sessionId)
+                    ->where('trainee_id', $record['trainee_id'])
+                    ->first();
+                
+                if ($enrollment) {
+                    $enrollment->update([
+                        'attendance_marked' => true,
+                        'enrollment_status' => $record['present'] ? 'completed' : 'absent',
+                        'participation_score' => $record['participation_score'] ?? null,
+                        'progress_notes' => $record['notes'] ?? null
+                    ]);
+                }
+            }
+            
+            // Check if all attendance marked
+            $totalEnrollments = ActivityEnrollment::where('session_id', $sessionId)->count();
+            $markedEnrollments = ActivityEnrollment::where('session_id', $sessionId)
+                ->where('attendance_marked', true)
+                ->count();
+            
+            if ($totalEnrollments === $markedEnrollments) {
+                $session->update(['status' => 'completed']);
+            }
+            
+            DB::commit();
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Attendance marked successfully'
+            ]);
+            
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error('Attendance marking failed: ' . $e->getMessage());
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to mark attendance'
+            ], 500);
+        }
+    }
+    
+    /**
+     * Get activity categories
+     */
+    private function getActivityCategories()
+    {
+        return [
+            'Rehabilitation' => [
+                'Physical Therapy' => ['icon' => 'fas fa-running', 'color' => '#4CAF50'],
+                'Occupational Therapy' => ['icon' => 'fas fa-hands-helping', 'color' => '#2196F3'],
+                'Speech Therapy' => ['icon' => 'fas fa-comments', 'color' => '#FF9800'],
+                'Behavioral Therapy' => ['icon' => 'fas fa-brain', 'color' => '#9C27B0'],
+                'Sensory Integration' => ['icon' => 'fas fa-hand-paper', 'color' => '#00BCD4']
+            ],
+            'Academic' => [
+                'Mathematics' => ['icon' => 'fas fa-calculator', 'color' => '#F44336'],
+                'Literacy' => ['icon' => 'fas fa-book', 'color' => '#3F51B5'],
+                'Science' => ['icon' => 'fas fa-flask', 'color' => '#009688'],
+                'Computer Skills' => ['icon' => 'fas fa-laptop', 'color' => '#607D8B'],
+                'Art & Creativity' => ['icon' => 'fas fa-palette', 'color' => '#E91E63'],
+                'Music Therapy' => ['icon' => 'fas fa-music', 'color' => '#673AB7'],
+                'Social Skills' => ['icon' => 'fas fa-users', 'color' => '#795548'],
+                'Life Skills' => ['icon' => 'fas fa-home', 'color' => '#FF5722'],
+                'Vocational Training' => ['icon' => 'fas fa-briefcase', 'color' => '#FFC107']
+            ]
+        ];
+    }
+    
+    /**
+     * Generate unique activity code
+     */
+    private function generateActivityCode($category)
+    {
+        $prefix = substr(strtoupper(str_replace(' ', '', $category)), 0, 3);
+        $year = date('y');
+        $month = date('m');
+        
+        $lastActivity = Activity::where('activity_code', 'LIKE', "{$prefix}-{$year}{$month}-%")
+            ->orderBy('id', 'desc')
+            ->first();
+        
+        if ($lastActivity) {
+            $lastNumber = intval(substr($lastActivity->activity_code, -4));
+            $newNumber = $lastNumber + 1;
+        } else {
+            $newNumber = 1;
+        }
+        
+        return sprintf("{$prefix}-{$year}{$month}-%04d", $newNumber);
+    }
+    
+    /**
+     * Generate unique session code
+     */
+    private function generateSessionCode($activity)
+    {
+        $activityPrefix = substr($activity->activity_code, 0, 3);
+        $date = Carbon::now()->format('ymd');
+        
+        $lastSession = ActivitySession::where('session_code', 'LIKE', "SES-{$activityPrefix}-{$date}-%")
+            ->orderBy('id', 'desc')
+            ->first();
+        
+        if ($lastSession) {
+            $lastNumber = intval(substr($lastSession->session_code, -3));
+            $newNumber = $lastNumber + 1;
+        } else {
+            $newNumber = 1;
+        }
+        
+        return sprintf("SES-{$activityPrefix}-{$date}-%03d", $newNumber);
+    }
+}
+Step 3: Create Unified Dashboard View
+blade{{-- resources/views/activities/unified-dashboard.blade.php --}}
+@extends('layouts.app')
+
+@section('title', 'Activity Management')
+
+@push('styles')
+<style>
+    .activity-dashboard {
+        background: #f5f6fa;
+        min-height: 100vh;
+        padding: 20px 0;
+    }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+    
+    .stat-card {
+        background: white;
+        border-radius: 12px;
+        padding: 25px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    }
+    
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    .stat-icon {
+        width: 50px;
+        height: 50px;
+        background: #f0f3ff;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 15px;
+        font-size: 24px;
+        color: #667eea;
+    }
+    
+    .stat-value {
+        font-size: 32px;
+        font-weight: bold;
+        color: #2d3748;
+        margin-bottom: 5px;
+    }
+    
+    .stat-label {
+        color: #718096;
+        font-size: 14px;
+    }
+    
+    .activity-filters {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        margin-bottom: 30px;
+    }
+    
+    .filter-group {
+        display: flex;
+        gap: 15px;
+        flex-wrap: wrap;
+        align-items: end;
+    }
+    
+    .filter-group .form-group {
+        flex: 1;
+        min-width: 200px;
+        margin-bottom: 0;
+    }
+    
+    .activity-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 25px;
+    }
+    
+    .activity-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        transition: all 0.3s ease;
+        overflow: hidden;
+    }
+    
+    .activity-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    }
+    
+    .activity-header {
+        padding: 20px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+    
+    .activity-code {
+        font-size: 12px;
+        opacity: 0.8;
+        margin-bottom: 5px;
+    }
+    
+    .activity-name {
+        font-size: 18px;
+        font-weight: bold;
+        margin-bottom: 10px;
+    }
+    
+    .activity-category {
+        display: inline-block;
+        padding: 4px 12px;
+        background: rgba(255,255,255,0.2);
+        border-radius: 20px;
+        font-size: 12px;
+    }
+    
+    .activity-body {
+        padding: 20px;
+    }
+    
+    .activity-info {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 15px;
+        font-size: 14px;
+        color: #718096;
+    }
+    
+    .activity-sessions {
+        border-top: 1px solid #e2e8f0;
+        padding-top: 15px;
+        margin-top: 15px;
+    }
+    
+    .session-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 0;
+        font-size: 13px;
+    }
+    
+    .session-date {
+        color: #4a5568;
+        font-weight: 500;
+    }
+    
+    .session-status {
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 500;
+    }
+    
+    .session-status.scheduled {
+        background: #e6fffa;
+        color: #047857;
+    }
+    
+    .session-status.ongoing {
+        background: #fef3c7;
+        color: #92400e;
+    }
+    
+    .session-status.completed {
+        background: #e0e7ff;
+        color: #3730a3;
+    }
+    
+    .activity-actions {
+        padding: 15px 20px;
+        background: #f7fafc;
+        display: flex;
+        gap: 10px;
+    }
+    
+    .btn-activity {
+        flex: 1;
+        padding: 8px 16px;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 500;
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    
+    .btn-view {
+        background: #4299e1;
+        color: white;
+    }
+    
+    .btn-view:hover {
+        background: #3182ce;
+    }
+    
+    .btn-schedule {
+        background: #48bb78;
+        color: white;
+    }
+    
+    .btn-schedule:hover {
+        background: #38a169;
+    }
+    
+    .upcoming-sessions {
+        background: white;
+        border-radius: 12px;
+        padding: 25px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        margin-top: 30px;
+    }
+    
+    .sessions-timeline {
+        margin-top: 20px;
+    }
+    
+    .timeline-item {
+        display: flex;
+        gap: 20px;
+        padding: 15px 0;
+        border-bottom: 1px solid #e2e8f0;
+    }
+    
+    .timeline-item:last-child {
+        border-bottom: none;
+    }
+    
+    .timeline-date {
+        min-width: 100px;
+        text-align: right;
+        color: #718096;
+        font-size: 14px;
+    }
+    
+    .timeline-content {
+        flex: 1;
+    }
+    
+    .timeline-activity {
+        font-weight: 600;
+        color: #2d3748;
+        margin-bottom: 5px;
+    }
+    
+    .timeline-details {
+        font-size: 13px;
+        color: #718096;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+    }
+    
+    .empty-icon {
+        font-size: 64px;
+        color: #cbd5e0;
+        margin-bottom: 20px;
+    }
+    
+    .empty-title {
+        font-size: 20px;
+        font-weight: 600;
+        color: #4a5568;
+        margin-bottom: 10px;
+    }
+    
+    .empty-text {
+        color: #718096;
+        margin-bottom: 20px;
+    }
+</style>
+@endpush
+
+@section('content')
+<div class="activity-dashboard">
+    <div class="container-fluid">
+        <!-- Page Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1 class="page-title mb-1">Activity Management</h1>
+                <p class="text-muted">Manage rehabilitation and academic activities</p>
+            </div>
+            @if(in_array(session('role'), ['admin', 'supervisor']))
+                <button class="btn btn-primary" onclick="createActivity()">
+                    <i class="fas fa-plus mr-2"></i>Create Activity
+                </button>
+            @endif
+        </div>
+
+        <!-- Statistics Cards -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-clipboard-list"></i>
+                </div>
+                <div class="stat-value">{{ $stats['total_activities'] ?? 0 }}</div>
+                <div class="stat-label">Total Activities</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="stat-value">{{ $stats['active_activities'] ?? 0 }}</div>
+                <div class="stat-label">Active Activities</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-calendar-alt"></i>
+                </div>
+                <div class="stat-value">{{ $stats['today_sessions'] ?? 0 }}</div>
+                <div class="stat-label">Today's Sessions</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="stat-value">{{ $stats['active_trainees'] ?? 0 }}</div>
+                <div class="stat-label">Active Trainees</div>
+            </div>
+        </div>
+
+        <!-- Filters Section -->
+        <div class="activity-filters">
+            <form method="GET" action="{{ route('activities.index') }}" class="filter-group">
+                <div class="form-group">
+                    <label>Category</label>
+                    <select name="category" class="form-control" onchange="this.form.submit()">
+                        <option value="">All Categories</option>
+                        @foreach($categories as $groupName => $group)
+                            <optgroup label="{{ $groupName }}">
+                                @foreach($group as $category => $meta)
+                                    <option value="{{ $category }}" {{ request('category') == $category ? 'selected' : '' }}>
+                                        {{ $category }}
+                                    </option>
+                                @endforeach
+                            </optgroup>
+                        @endforeach
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Search</label>
+                    <input type="text" 
+                           name="search" 
+                           class="form-control" 
+                           placeholder="Activity name or code..." 
+                           value="{{ request('search') }}">
+                </div>
+                
+                <div class="form-group">
+                    <label>&nbsp;</label>
+                    <button type="submit" class="btn btn-primary btn-block">
+                        <i class="fas fa-search mr-2"></i>Search
+                    </button>
+                </div>
+                
+                @if(request()->hasAny(['category', 'search']))
+                    <div class="form-group">
+                        <label>&nbsp;</label>
+                        <a href="{{ route('activities.index') }}" class="btn btn-secondary btn-block">
+                            <i class="fas fa-times mr-2"></i>Clear
+                        </a>
+                    </div>
+                @endif
+            </form>
+        </div>
+
+        <!-- Activities Grid -->
+        @if($activities->count() > 0)
+            <div class="activity-grid">
+                @foreach($activities as $activity)
+                    <div class="activity-card">
+                        <div class="activity-header">
+                            <div class="activity-code">{{ $activity->activity_code }}</div>
+                            <div class="activity-name">{{ $activity->name }}</div>
+                            <span class="activity-category">{{ $activity->category }}</span>
+                        </div>
+                        
+                        <div class="activity-body">
+                            <div class="activity-info">
+                                <span><i class="fas fa-layer-group mr-1"></i> {{ $activity->difficulty_level }}</span>
+                                <span><i class="fas fa-users mr-1"></i> Max: {{ $activity->max_participants }}</span>
+                                <span><i class="fas fa-clock mr-1"></i> {{ $activity->duration_minutes }}min</span>
+                            </div>
+                            
+                            @if($activity->description)
+                                <p class="text-muted small mb-3">{{ Str::limit($activity->description, 100) }}</p>
+                            @endif
+                            
+                            @if($activity->sessions->count() > 0)
+                                <div class="activity-sessions">
+                                    <h6 class="mb-2">Recent Sessions</h6>
+                                    @foreach($activity->sessions->take(3) as $session)
+                                        <div class="session-item">
+                                            <span class="session-date">
+                                                {{ Carbon\Carbon::parse($session->session_date)->format('d M') }}
+                                            </span>
+                                            <span class="session-status {{ $session->status }}">
+                                                {{ ucfirst($session->status) }}
+                                            </span>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @endif
+                        </div>
+                        
+                        <div class="activity-actions">
+                            <button class="btn-activity btn-view" onclick="viewActivity({{ $activity->id }})">
+                                <i class="fas fa-eye mr-1"></i> View
+                            </button>
+                            @if(in_array(session('role'), ['admin', 'supervisor']))
+                                <button class="btn-activity btn-schedule" onclick="scheduleSession({{ $activity->id }})">
+                                    <i class="fas fa-calendar-plus mr-1"></i> Schedule
+                                </button>
+                            @endif
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+            
+            <!-- Pagination -->
+            <div class="d-flex justify-content-center mt-4">
+                {{ $activities->appends(request()->query())->links() }}
+            </div>
+        @else
+            <div class="empty-state">
+                <div class="empty-icon">
+                    <i class="fas fa-clipboard-list"></i>
+                </div>
+                <div class="empty-title">No Activities Found</div>
+                <div class="empty-text">
+                    @if(request()->hasAny(['category', 'search']))
+                        No activities match your search criteria.
+                    @else
+                        Start by creating your first activity.
+                    @endif
+                </div>
+                @if(in_array(session('role'), ['admin', 'supervisor']))
+                    <button class="btn btn-primary" onclick="createActivity()">
+                        <i class="fas fa-plus mr-2"></i>Create First Activity
+                    </button>
+                @endif
+            </div>
+        @endif
+
+        <!-- Upcoming Sessions -->
+        @if(isset($upcomingSessions) && $upcomingSessions->count() > 0)
+            <div class="upcoming-sessions">
+                <h3 class="mb-3">Upcoming Sessions</h3>
+                <div class="sessions-timeline">
+                    @foreach($upcomingSessions as $session)
+                        <div class="timeline-item">
+                            <div class="timeline-date">
+                                {{ Carbon\Carbon::parse($session->session_date)->format('d M Y') }}<br>
+                                <small>{{ Carbon\Carbon::parse($session->start_time)->format('h:i A') }}</small>
+                            </div>
+                            <div class="timeline-content">
+                                <div class="timeline-activity">{{ $session->activity->name }}</div>
+                                <div class="timeline-details">
+                                    <i class="fas fa-user mr-1"></i> {{ $session->teacher->name }} • 
+                                    <i class="fas fa-map-marker-alt mr-1"></i> {{ $session->venue }} • 
+                                    <i class="fas fa-users mr-1"></i> {{ $session->enrollments->count() }}/{{ $session->capacity }}
+                                </div>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        @endif
+    </div>
+</div>
+
+<!-- Modals will be added here -->
+@endsection
+
+@push('scripts')
+<script>
+// Activity management functions
+function createActivity() {
+    // Open create activity modal
+    $('#createActivityModal').modal('show');
+}
+
+function viewActivity(id) {
+    window.location.href = '/activities/' + id;
+}
+
+function scheduleSession(id) {
+    // Open schedule session modal
+    $('#scheduleSessionModal').modal('show');
+    $('#schedule_activity_id').val(id);
+}
+</script>
+@endpush
+
+--------------------------------------------------------------------------------------------------------------
+
+4. Asset Management Module - Stability Fixes {#asset-module}
+Current Issues Summary
+
+Asset tracking inconsistencies
+Missing maintenance schedules
+Poor categorization system
+No depreciation tracking
+Bulk operations missing
+
+Solution 1: Complete Asset Management System
+Step 1: Enhanced Database Structure
+php// database/migrations/2025_01_20_000001_enhance_asset_management.php
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+class EnhanceAssetManagement extends Migration
+{
+    public function up()
+    {
+        // Enhanced assets table
+        Schema::create('assets_enhanced', function (Blueprint $table) {
+            $table->id();
+            $table->string('asset_code')->unique();
+            $table->string('name');
+            $table->text('description')->nullable();
+            $table->unsignedBigInteger('category_id');
+            $table->unsignedBigInteger('centre_id');
+            $table->string('brand')->nullable();
+            $table->string('model')->nullable();
+            $table->string('serial_number')->nullable();
+            $table->decimal('purchase_price', 10, 2)->nullable();
+            $table->date('purchase_date')->nullable();
+            $table->integer('warranty_months')->default(12);
+            $table->date('warranty_expiry')->nullable();
+            $table->enum('condition', ['new', 'good', 'fair', 'poor', 'broken'])->default('new');
+            $table->enum('status', ['available', 'in_use', 'maintenance', 'disposed'])->default('available');
+            $table->string('location')->nullable();
+            $table->unsignedBigInteger('assigned_to')->nullable();
+            $table->date('assigned_date')->nullable();
+            $table->decimal('depreciation_rate', 5, 2)->default(20.00);
+            $table->decimal('current_value', 10, 2)->nullable();
+            $table->json('specifications')->nullable();
+            $table->json('images')->nullable();
+            $table->text('notes')->nullable();
+            $table->unsignedBigInteger('created_by');
+            $table->timestamps();
+            
+            $table->foreign('category_id')->references('id')->on('asset_categories');
+            $table->foreign('centre_id')->references('id')->on('centres');
+            $table->foreign('assigned_to')->references('id')->on('users')->nullOnDelete();
+            $table->foreign('created_by')->references('id')->on('users');
+            
+            $table->index(['status', 'condition']);
+            $table->index(['centre_id', 'category_id']);
+            $table->index('warranty_expiry');
+        });
+        
+        // Asset categories with hierarchy
+        Schema::create('asset_categories', function (Blueprint $table) {
+            $table->id();
+            $table->string('name');
+            $table->string('code')->unique();
+            $table->unsignedBigInteger('parent_id')->nullable();
+            $table->text('description')->nullable();
+            $table->string('icon')->nullable();
+            $table->string('color')->nullable();
+            $table->boolean('is_active')->default(true);
+            $table->integer('depreciation_rate')->default(20);
+            $table->timestamps();
+            
+            $table->foreign('parent_id')->references('id')->on('asset_categories')->nullOnDelete();
+            $table->index('parent_id');
+        });
+        
+        // Asset maintenance records
+        Schema::create('asset_maintenance', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('asset_id');
+            $table->enum('type', ['preventive', 'corrective', 'inspection']);
+            $table->date('scheduled_date');
+            $table->date('completed_date')->nullable();
+            $table->enum('status', ['scheduled', 'in_progress', 'completed', 'cancelled'])
+                  ->default('scheduled');
+            $table->string('performed_by')->nullable();
+            $table->decimal('cost', 10, 2)->nullable();
+            $table->text('description');
+            $table->text('notes')->nullable();
+            $table->unsignedBigInteger('created_by');
+            $table->timestamps();
+            
+            $table->foreign('asset_id')->references('id')->on('assets_enhanced')->onDelete('cascade');
+            $table->foreign('created_by')->references('id')->on('users');
+            
+            $table->index(['asset_id', 'status']);
+            $table->index('scheduled_date');
+        });
+        
+        // Asset movements/history
+        Schema::create('asset_movements', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('asset_id');
+            $table->enum('type', ['assignment', 'return', 'transfer', 'maintenance', 'disposal']);
+            $table->unsignedBigInteger('from_user')->nullable();
+            $table->unsignedBigInteger('to_user')->nullable();
+            $table->string('from_location')->nullable();
+            $table->string('to_location')->nullable();
+            $table->text('reason')->nullable();
+            $table->unsignedBigInteger('performed_by');
+            $table->timestamp('movement_date');
+            $table->timestamps();
+            
+            $table->foreign('asset_id')->references('id')->on('assets_enhanced')->onDelete('cascade');
+            $table->foreign('from_user')->references('id')->on('users')->nullOnDelete();
+            $table->foreign('to_user')->references('id')->on('users')->nullOnDelete();
+            $table->foreign('performed_by')->references('id')->on('users');
+            
+            $table->index(['asset_id', 'movement_date']);
+        });
+    }
+    
+    public function down()
+    {
+        Schema::dropIfExists('asset_movements');
+        Schema::dropIfExists('asset_maintenance');
+        Schema::dropIfExists('assets_enhanced');
+        Schema::dropIfExists('asset_categories');
+    }
+}
+Step 2: Enhanced Asset Controller
+php// app/Http/Controllers/EnhancedAssetController.php
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Asset;
+use App\Models\AssetCategory;
+use App\Models\AssetMaintenance;
+use App\Models\AssetMovement;
+use App\Services\AssetService;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Carbon\Carbon;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\AssetsExport;
+
+class EnhancedAssetController extends Controller
+{
+    protected $assetService;
+    
+    public function __construct(AssetService $assetService)
+    {
+        $this->assetService = $assetService;
+    }
+    
+    /**
+     * Asset dashboard with comprehensive view
+     */
+    public function dashboard(Request $request)
+    {
+        // Get statistics
+        $stats = $this->assetService->getDashboardStats(session('centre_id'));
+        
+        // Get assets with filters
+        $query = Asset::with(['category', 'assignedTo', 'latestMaintenance'])
+            ->where('centre_id', session('centre_id'));
+        
+        // Apply filters
+        if ($request->filled('category')) {
+            $query->where('category_id', $request->category);
+        }
+        
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+        
+        if ($request->filled('condition')) {
+            $query->where('condition', $request->condition);
+        }
+        
+        if ($request->filled('search')) {
+            $query->where(function($q) use ($request) {
+                $q->where('name', 'LIKE', '%' . $request->search . '%')
+                  ->orWhere('asset_code', 'LIKE', '%' . $request->search . '%')
+                  ->orWhere('serial_number', 'LIKE', '%' . $request->search . '%');
+            });
+        }
+        
+        $assets = $query->orderBy('created_at', 'desc')->paginate(20);
+        
+        // Get categories for filter
+        $categories = AssetCategory::where('is_active', true)
+            ->orderBy('name')
+            ->get();
+        
+        // Get maintenance alerts
+        $maintenanceAlerts = AssetMaintenance::with('asset')
+            ->whereHas('asset', function($q) {
+                $q->where('centre_id', session('centre_id'));
+            })
+            ->where('status', 'scheduled')
+            ->where('scheduled_date', '<=', Carbon::now()->addDays(7))
+            ->orderBy('scheduled_date')
+            ->limit(10)
+            ->get();
+        
+        // Get warranty expiries
+        $warrantyExpiries = Asset::where('centre_id', session('centre_id'))
+            ->whereNotNull('warranty_expiry')
+            ->where('warranty_expiry', '<=', Carbon::now()->addMonths(1))
+            ->where('warranty_expiry', '>', Carbon::now())
+            ->orderBy('warranty_expiry')
+            ->limit(10)
+            ->get();
+        
+        return view('assets.enhanced-dashboard', compact(
+            'stats', 'assets', 'categories', 'maintenanceAlerts', 'warrantyExpiries'
+        ));
+    }
+    
+    /**
+     * Store new asset with complete data
+     */
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'category_id' => 'required|exists:asset_categories,id',
+            'description' => 'nullable|string',
+            'brand' => 'nullable|string|max:100',
+            'model' => 'nullable|string|max:100',
+            'serial_number' => 'nullable|string|max:100|unique:assets_enhanced',
+            'purchase_price' => 'nullable|numeric|min:0',
+            'purchase_date' => 'nullable|date',
+            'warranty_months' => 'nullable|integer|min:0',
+            'condition' => 'required|in:new,good,fair,poor,broken',
+            'location' => 'nullable|string|max:255',
+            'notes' => 'nullable|string',
+            'images' => 'nullable|array',
+            'images.*' => 'image|max:2048'
+        ]);
+        
+        DB::beginTransaction();
+        try {
+            // Generate asset code
+            $assetCode = $this->assetService->generateAssetCode($validated['category_id']);
+            
+            // Calculate warranty expiry
+            $warrantyExpiry = null;
+            if ($request->purchase_date && $request->warranty_months) {
+                $warrantyExpiry = Carbon::parse($request->purchase_date)
+                    ->addMonths($request->warranty_months);
+            }
+            
+            // Handle image uploads
+            $imagePaths = [];
+            if ($request->hasFile('images')) {
+                foreach ($request->file('images') as $image) {
+                    $path = $image->store('assets/' . date('Y/m'), 'public');
+                    $imagePaths[] = $path;
+                }
+            }
+            
+            // Create asset
+            $asset = Asset::create([
+                'asset_code' => $assetCode,
+                'name' => $validated['name'],
+                'description' => $validated['description'],
+                'category_id' => $validated['category_id'],
+                'centre_id' => session('centre_id'),
+                'brand' => $validated['brand'],
+                'model' => $validated['model'],
+                'serial_number' => $validated['serial_number'],
+                'purchase_price' => $validated['purchase_price'],
+                'purchase_date' => $validated['purchase_date'],
+                'warranty_months' => $validated['warranty_months'] ?? 12,
+                'warranty_expiry' => $warrantyExpiry,
+                'condition' => $validated['condition'],
+                'status' => 'available',
+                'location' => $validated['location'],
+                'current_value' => $validated['purchase_price'],
+                'images' => $imagePaths,
+                'notes' => $validated['notes'],
+                'created_by' => session('id')
+            ]);
+            
+            // Create initial movement record
+            AssetMovement::create([
+                'asset_id' => $asset->id,
+                'type' => 'assignment',
+                'to_location' => $validated['location'],
+                'reason' => 'Initial asset registration',
+                'performed_by' => session('id'),
+                'movement_date' => now()
+            ]);
+            
+            DB::commit();
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Asset created successfully',
+                'asset' => $asset->load('category')
+            ]);
+            
+        } catch (\Exception $e) {
+            DB::rollback();
+            
+            // Clean up uploaded images
+            foreach ($imagePaths as $path) {
+                Storage::disk('public')->delete($path);
+            }
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to create asset: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+    
+    /**
+     * Assign asset to user
+     */
+    public function assign(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'user_id' => 'required|exists:users,id',
+            'reason' => 'nullable|string'
+        ]);
+        
+        DB::beginTransaction();
+        try {
+            $asset = Asset::findOrFail($id);
+            
+            // Check if asset is available
+            if ($asset->status !== 'available') {
+                throw new \Exception('Asset is not available for assignment');
+            }
+            
+            $previousUser = $asset->assigned_to;
+            
+            // Update asset
+            $asset->update([
+                'assigned_to' => $validated['user_id'],
+                'assigned_date' => now(),
+                'status' => 'in_use'
+            ]);
+            
+            // Create movement record
+            AssetMovement::create([
+                'asset_id' => $asset->id,
+                'type' => 'assignment',
+                'from_user' => $previousUser,
+                'to_user' => $validated['user_id'],
+                'reason' => $validated['reason'] ?? 'Asset assigned to user',
+                'performed_by' => session('id'),
+                'movement_date' => now()
+            ]);
+            
+            DB::commit();
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Asset assigned successfully'
+            ]);
+            
+        } catch (\Exception $e) {
+            DB::rollback();
+            
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+    
+    /**
+     * Schedule maintenance
+     */
+    public function scheduleMaintenance(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'type' => 'required|in:preventive,corrective,inspection',
+            'scheduled_date' => 'required|date|after_or_equal:today',
+            'description' => 'required|string',
+            'estimated_cost' => 'nullable|numeric|min:0'
+        ]);
+        
+        try {
+            $asset = Asset::findOrFail($id);
+            
+            $maintenance = AssetMaintenance::create([
+                'asset_id' => $asset->id,
+                'type' => $validated['type'],
+                'scheduled_date' => $validated['scheduled_date'],
+                'description' => $validated['description'],
+                'cost' => $validated['estimated_cost'],
+                'status' => 'scheduled',
+                'created_by' => session('id')
+            ]);
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Maintenance scheduled successfully',
+                'maintenance' => $maintenance
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to schedule maintenance'
+            ], 500);
+        }
+    }
+    
+    /**
+     * Bulk operations
+     */
+    public function bulkOperation(Request $request)
+    {
+        $validated = $request->validate([
+            'asset_ids' => 'required|array',
+            'asset_ids.*' => 'exists:assets_enhanced,id',
+            'operation' => 'required|in:update_status,update_location,export,dispose',
+            'value' => 'required_if:operation,update_status,update_location'
+        ]);
+        
+        DB::beginTransaction();
+        try {
+            $assets = Asset::whereIn('id', $validated['asset_ids'])
+                ->where('centre_id', session('centre_id'))
+                ->get();
+            
+            switch ($validated['operation']) {
+                case 'update_status':
+                    foreach ($assets as $asset) {
+                        $asset->update(['status' => $validated['value']]);
+                    }
+                    $message = 'Status updated for ' . count($assets) . ' assets';
+                    break;
+                    
+                case 'update_location':
+                    foreach ($assets as $asset) {
+                        $previousLocation = $asset->location;
+                        $asset->update(['location' => $validated['value']]);
+                        
+                        AssetMovement::create([
+                            'asset_id' => $asset->id,
+                            'type' => 'transfer',
+                            'from_location' => $previousLocation,
+                            'to_location' => $validated['value'],
+                            'reason' => 'Bulk location update',
+                            'performed_by' => session('id'),
+                            'movement_date' => now()
+                        ]);
+                    }
+                    $message = 'Location updated for ' . count($assets) . ' assets';
+                    break;
+                    
+                case 'export':
+                    DB::commit();
+                    return Excel::download(new AssetsExport($assets), 'assets_export_' . date('Y-m-d') . '.xlsx');
+                    
+                case 'dispose':
+                    foreach ($assets as $asset) {
+                        $asset->update(['status' => 'disposed']);
+                        
+                        AssetMovement::create([
+                            'asset_id' => $asset->id,
+                            'type' => 'disposal',
+                            'reason' => 'Bulk disposal',
+                            'performed_by' => session('id'),
+                            'movement_date' => now()
+                        ]);
+                    }
+                    $message = count($assets) . ' assets marked as disposed';
+                    break;
+            }
+            
+            DB::commit();
+            
+            return response()->json([
+                'success' => true,
+                'message' => $message
+            ]);
+            
+        } catch (\Exception $e) {
+            DB::rollback();
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Bulk operation failed'
+            ], 500);
+        }
+    }
+}
+Step 3: Asset Service Class
+php// app/Services/AssetService.php
+<?php
+
+namespace App\Services;
+
+use App\Models\Asset;
+use App\Models\AssetCategory;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Cache;
+
+class AssetService
+{
+    /**
+     * Get dashboard statistics
+     */
+    public function getDashboardStats($centreId)
+    {
+        return Cache::remember("asset_stats_{$centreId}", 300, function() use ($centreId) {
+            $assets = Asset::where('centre_id', $centreId);
+            
+            return [
+                'total_assets' => $assets->count(),
+                'total_value' => $assets->sum('current_value'),
+                'available_assets' => $assets->where('status', 'available')->count(),
+                'in_use_assets' => $assets->where('status', 'in_use')->count(),
+                'maintenance_assets' => $assets->where('status', 'maintenance')->count(),
+                'disposed_assets' => $assets->where('status', 'disposed')->count(),
+                'warranty_expiring' => $assets->whereNotNull('warranty_expiry')
+                    ->where('warranty_expiry', '<=', Carbon::now()->addMonth())
+                    ->where('warranty_expiry', '>', Carbon::now())
+                    ->count(),
+                'maintenance_due' => $this->getMaintenanceDueCount($centreId),
+                'depreciation_total' => $this->calculateTotalDepreciation($centreId)
+            ];
+        });
+    }
+    
+    /**
+     * Generate unique asset code
+     */
+    public function generateAssetCode($categoryId)
+    {
+        $category = AssetCategory::find($categoryId);
+        $prefix = strtoupper(substr($category->code, 0, 3));
+        $year = date('y');
+        $centreCode = str_pad(session('centre_id'), 2, '0', STR_PAD_LEFT);
+        
+        $lastAsset = Asset::where('asset_code', 'LIKE', "{$prefix}-{$centreCode}-{$year}-%")
+            ->orderBy('id', 'desc')
+            ->first();
+        
+        if ($lastAsset) {
+            $lastNumber = intval(substr($lastAsset->asset_code, -5));
+            $newNumber = $lastNumber + 1;
+        } else {
+            $newNumber = 1;
+        }
+        
+        return sprintf("{$prefix}-{$centreCode}-{$year}-%05d", $newNumber);
+    }
+    
+    /**
+     * Calculate asset depreciation
+     */
+    public function calculateDepreciation($asset)
+    {
+        if (!$asset->purchase_price || !$asset->purchase_date) {
+            return $asset->purchase_price ?? 0;
+        }
+        
+        $monthsOwned = Carbon::parse($asset->purchase_date)->diffInMonths(Carbon::now());
+        $yearlyDepreciation = $asset->purchase_price * ($asset->depreciation_rate / 100);
+        $totalDepreciation = ($yearlyDepreciation / 12) * $monthsOwned;
+        
+        $currentValue = $asset->purchase_price - $totalDepreciation;
+        
+        // Minimum value is 10% of purchase price
+        $minimumValue = $asset->purchase_price * 0.1;
+        
+        return max($currentValue, $minimumValue);
+    }
+    
+    /**
+     * Get maintenance due count
+     */
+    private function getMaintenanceDueCount($centreId)
+    {
+        return \App\Models\AssetMaintenance::whereHas('asset', function($q) use ($centreId) {
+            $q->where('centre_id', $centreId);
+        })
+        ->where('status', 'scheduled')
+        ->where('scheduled_date', '<=', Carbon::now()->addDays(7))
+        ->count();
+    }
+    
+    /**
+     * Calculate total depreciation
+     */
+    private function calculateTotalDepreciation($centreId)
+    {
+        $assets = Asset::where('centre_id', $centreId)
+            ->whereNotNull('purchase_price')
+            ->whereNotNull('purchase_date')
+            ->get();
+        
+        $totalOriginalValue = $assets->sum('purchase_price');
+        $totalCurrentValue = 0;
+        
+        foreach ($assets as $asset) {
+            $totalCurrentValue += $this->calculateDepreciation($asset);
+        }
+        
+        return $totalOriginalValue - $totalCurrentValue;
+    }
+    
+    /**
+     * Generate QR code for asset
+     */
+    public function generateQRCode($asset)
+    {
+        $data = [
+            'code' => $asset->asset_code,
+            'name' => $asset->name,
+            'url' => route('assets.show', $asset->id)
+        ];
+        
+        // Use a QR code library to generate QR code
+        // Return QR code image or URL
+    }
+}
+
+
+--------------------------------------------------------------------------------------------------------------
+
+5. Dashboard Module - Performance Optimization {#dashboard-module}
+Current Issues Summary
+
+Slow loading times
+Too many database queries
+Missing role-specific views
+Poor mobile responsiveness
+No real-time updates
+
+Solution 1: Optimized Dashboard System
+Step 1: Create Dashboard Service
+php// app/Services/DashboardService.php
+<?php
+
+namespace App\Services;
+
+use App\Models\Users;
+use App\Models\Trainee;
+use App\Models\Activity;
+use App\Models\ActivitySession;
+use App\Models\Letter;
+use App\Models\Asset;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
+
+class DashboardService
+{
+    /**
+     * Get role-specific dashboard data with caching
+     */
+    public function getDashboardData($userId, $role, $centreId)
+    {
+        $cacheKey = "dashboard_{$role}_{$userId}_{$centreId}";
+        
+        return Cache::remember($cacheKey, 300, function() use ($userId, $role, $centreId) {
+            switch ($role) {
+                case 'admin':
+                    return $this->getAdminDashboard($centreId);
+                case 'supervisor':
+                    return $this->getSupervisorDashboard($centreId);
+                case 'teacher':
+                    return $this->getTeacherDashboard($userId, $centreId);
+                case 'ajk':
+                    return $this->getAjkDashboard($centreId);
+                default:
+                    return $this->getDefaultDashboard($centreId);
+            }
+        });
+    }
+    
+    /**
+     * Admin dashboard data
+     */
+    private function getAdminDashboard($centreId)
+    {
+        return [
+            'stats' => [
+                'total_users' => Users::count(),
+                'total_trainees' => Trainee::count(),
+                'total_activities' => Activity::count(),
+                'total_sessions' => ActivitySession::count(),
+                'active_centres' => DB::table('centres')->where('is_active', true)->count(),
+                'total_letters' => Letter::count(),
+                'total_assets' => Asset::count(),
+                'system_health' => $this->getSystemHealth()
+            ],
+            'charts' => [
+                'user_growth' => $this->getUserGrowthData(),
+                'activity_distribution' => $this->getActivityDistribution(),
+                'centre_performance' => $this->getCentrePerformance(),
+                'monthly_statistics' => $this->getMonthlyStatistics()
+            ],
+            'recent' => [
+                'users' => Users::latest()->limit(5)->get(),
+                'trainees' => Trainee::latest()->limit(5)->get(),
+                'activities' => Activity::with('sessions')->latest()->limit(5)->get(),
+                'letters' => Letter::latest()->limit(5)->get()
+            ],
+            'alerts' => $this->getSystemAlerts()
+        ];
+    }
+    
+    /**
+     * Teacher dashboard data
+     */
+    private function getTeacherDashboard($userId, $centreId)
+    {
+        $today = Carbon::today();
+        
+        return [
+            'stats' => [
+                'today_sessions' => ActivitySession::where('teacher_id', $userId)
+                    ->whereDate('session_date', $today)
+                    ->count(),
+                'week_sessions' => ActivitySession::where('teacher_id', $userId)
+                    ->whereBetween('session_date', [$today->startOfWeek(), $today->endOfWeek()])
+                    ->count(),
+                'total_trainees' => DB::table('activity_enrollments')
+                    ->join('activity_sessions', 'activity_enrollments.session_id', '=', 'activity_sessions.id')
+                    ->where('activity_sessions.teacher_id', $userId)
+                    ->distinct('activity_enrollments.trainee_id')
+                    ->count('activity_enrollments.trainee_id'),
+                'pending_attendance' => ActivitySession::where('teacher_id', $userId)
+                    ->where('status', 'scheduled')
+                    ->where('session_date', '<', $today)
+                    ->count()
+            ],
+            'schedule' => [
+                'today' => $this->getTeacherSchedule($userId, $today),
+                'week' => $this->getTeacherWeekSchedule($userId),
+                'upcoming' => ActivitySession::with(['activity', 'enrollments'])
+                    ->where('teacher_id', $userId)
+                    ->where('session_date', '>=', $today)
+                    ->orderBy('session_date')
+                    ->orderBy('start_time')
+                    ->limit(10)
+                    ->get()
+            ],
+            'performance' => [
+                'attendance_rate' => $this->calculateTeacherAttendanceRate($userId),
+                'completion_rate' => $this->calculateTeacherCompletionRate($userId),
+                'trainee_progress' => $this->getTraineeProgress($userId)
+            ]
+        ];
+    }
+    
+    /**
+     * Get system health metrics
+     */
+    private function getSystemHealth()
+    {
+        return [
+            'database' => $this->checkDatabaseHealth(),
+            'storage' => $this->checkStorageHealth(),
+            'cache' => Cache::has('health_check'),
+            'queue' => $this->checkQueueHealth(),
+            'last_backup' => $this->getLastBackupTime()
+        ];
+    }
+    
+    /**
+     * Get user growth data for charts
+     */
+    private function getUserGrowthData()
+    {
+        $data = Users::selectRaw('DATE(created_at) as date, COUNT(*) as count')
+            ->where('created_at', '>=', Carbon::now()->subMonths(6))
+            ->groupBy('date')
+            ->orderBy('date')
+            ->get();
+        
+        return [
+            'labels' => $data->pluck('date')->map(function($date) {
+                return Carbon::parse($date)->format('M d');
+            }),
+            'data' => $data->pluck('count')
+        ];
+    }
+    
+    /**
+     * Get activity distribution by category
+     */
+    private function getActivityDistribution()
+    {
+        return Activity::selectRaw('category, COUNT(*) as count')
+            ->groupBy('category')
+            ->pluck('count', 'category');
+    }
+    
+    /**
+     * Check database health
+     */
+    private function checkDatabaseHealth()
+    {
+        try {
+            DB::select('SELECT 1');
+            return 'healthy';
+        } catch (\Exception $e) {
+            return 'unhealthy';
+        }
+    }
+    
+    /**
+     * Check storage health
+     */
+    private function checkStorageHealth()
+    {
+        $freeSpace = disk_free_space(storage_path());
+        $totalSpace = disk_total_space(storage_path());
+        $usedPercentage = (($totalSpace - $freeSpace) / $totalSpace) * 100;
+        
+        if ($usedPercentage > 90) {
+            return 'critical';
+        } elseif ($usedPercentage > 70) {
+            return 'warning';
+        }
+        
+        return 'healthy';
+    }
+}
+Step 2: Optimized Dashboard Controller
+php// app/Http/Controllers/OptimizedDashboardController.php
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Services\DashboardService;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
+
+class OptimizedDashboardController extends Controller
+{
+    protected $dashboardService;
+    
+    public function __construct(DashboardService $dashboardService)
+    {
+        $this->dashboardService = $dashboardService;
+    }
+    
+    /**
+     * Display role-specific dashboard
+     */
+    public function index(Request $request)
+    {
+        $userId = session('id');
+        $role = session('role');
+        $centreId = session('centre_id');
+        
+        // Get dashboard data
+        $dashboardData = $this->dashboardService->getDashboardData($userId, $role, $centreId);
+        
+        // Determine view based on role
+        $view = 'dashboard.' . $role;
+        
+        // Check if role-specific view exists
+        if (!view()->exists($view)) {
+            $view = 'dashboard.default';
+        }
+        
+        return view($view, $dashboardData);
+    }
+    
+    /**
+     * Get real-time updates via AJAX
+     */
+    public function getUpdates(Request $request)
+    {
+        $lastUpdate = $request->get('last_update', 0);
+        $role = session('role');
+        
+        // Get updates since last check
+        $updates = $this->getRecentUpdates($lastUpdate, $role);
+        
+        return response()->json([
+            'updates' => $updates,
+            'timestamp' => time()
+        ]);
+    }
+    
+    /**
+     * Refresh dashboard statistics
+     */
+    public function refreshStats()
+    {
+        $userId = session('id');
+        $role = session('role');
+        $centreId = session('centre_id');
+        
+        // Clear cache for this user
+        $cacheKey = "dashboard_{$role}_{$userId}_{$centreId}";
+        Cache::forget($cacheKey);
+        
+        // Get fresh data
+        $dashboardData = $this->dashboardService->getDashboardData($userId, $role, $centreId);
+        
+        return response()->json([
+            'success' => true,
+            'stats' => $dashboardData['stats'] ?? []
+        ]);
+    }
+    
+    /**
+     * Get recent updates based on role
+     */
+    private function getRecentUpdates($lastUpdate, $role)
+    {
+        $updates = [];
+        
+        switch ($role) {
+            case 'admin':
+                // Check for new users
+                $newUsers = \App\Models\Users::where('created_at', '>', date('Y-m-d H:i:s', $lastUpdate))
+                    ->count();
+                if ($newUsers > 0) {
+                    $updates[] = [
+                        'type' => 'info',
+                        'message' => "{$newUsers} new user(s) registered"
+                    ];
+                }
+                break;
+                
+            case 'teacher':
+                // Check for new enrollments
+                $newEnrollments = \App\Models\ActivityEnrollment::whereHas('session', function($q) {
+                    $q->where('teacher_id', session('id'));
+                })->where('created_at', '>', date('Y-m-d H:i:s', $lastUpdate))
+                  ->count();
+                  
+                if ($newEnrollments > 0) {
+                    $updates[] = [
+                        'type' => 'info',
+                        'message' => "{$newEnrollments} new enrollment(s) in your sessions"
+                    ];
+                }
+                break;
+        }
+        
+        return $updates;
+    }
+}
+Step 3: Role-Specific Dashboard Views
+blade{{-- resources/views/dashboard/admin.blade.php --}}
+@extends('layouts.app')
+
+@section('title', 'Admin Dashboard')
+
+@push('styles')
+<style>
+    .admin-dashboard {
+        background: #f8f9fa;
+        min-height: 100vh;
+    }
+    
+    .dashboard-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 30px 0;
+        margin-bottom: 30px;
+    }
+    
+    .stat-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+    
+    .stat-card {
+        background: white;
+        border-radius: 10px;
+        padding: 25px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        transition: all 0.3s ease;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    
+    .stat-icon {
+        width: 60px;
+        height: 60px;
+        background: #f0f3ff;
+        border-radius: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 28px;
+        margin-bottom: 15px;
+    }
+    
+    .stat-value {
+        font-size: 36px;
+        font-weight: bold;
+        color: #2d3748;
+        margin-bottom: 5px;
+    }
+    
+    .stat-label {
+        color: #718096;
+        font-size: 14px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .stat-change {
+        font-size: 13px;
+        margin-top: 10px;
+    }
+    
+    .stat-change.positive {
+        color: #48bb78;
+    }
+    
+    .stat-change.negative {
+        color: #f56565;
+    }
+    
+    .chart-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+        gap: 25px;
+        margin-bottom: 30px;
+    }
+    
+    .chart-card {
+        background: white;
+        border-radius: 10px;
+        padding: 25px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    
+    .chart-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+    
+    .chart-title {
+        font-size: 18px;
+        font-weight: 600;
+        color: #2d3748;
+    }
+    
+    .recent-section {
+        background: white;
+        border-radius: 10px;
+        padding: 25px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        margin-bottom: 25px;
+    }
+    
+    .recent-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+    
+    .recent-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    
+    .recent-item {
+        display: flex;
+        align-items: center;
+        padding: 12px 0;
+        border-bottom: 1px solid #e2e8f0;
+    }
+    
+    .recent-item:last-child {
+        border-bottom: none;
+    }
+    
+    .recent-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: #e2e8f0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 15px;
+        font-weight: bold;
+        color: #4a5568;
+    }
+    
+    .recent-info {
+        flex: 1;
+    }
+    
+    .recent-name {
+        font-weight: 600;
+        color: #2d3748;
+        margin-bottom: 2px;
+    }
+    
+    .recent-meta {
+        font-size: 13px;
+        color: #718096;
+    }
+    
+    .recent-time {
+        font-size: 13px;
+        color: #a0aec0;
+    }
+    
+    .alert-section {
+        margin-bottom: 30px;
+    }
+    
+    .alert-item {
+        background: white;
+        border-left: 4px solid;
+        border-radius: 4px;
+        padding: 15px 20px;
+        margin-bottom: 10px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    
+    .alert-item.info {
+        border-color: #4299e1;
+    }
+    
+    .alert-item.warning {
+        border-color: #f6ad55;
+    }
+    
+    .alert-item.danger {
+        border-color: #fc8181;
+    }
+    
+    .quick-actions {
+        background: white;
+        border-radius: 10px;
+        padding: 25px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    
+    .action-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 15px;
+        margin-top: 20px;
+    }
+    
+    .action-btn {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 20px;
+        border: 2px solid #e2e8f0;
+        border-radius: 10px;
+        text-decoration: none;
+        color: #4a5568;
+        transition: all 0.3s ease;
+    }
+    
+    .action-btn:hover {
+        border-color: #667eea;
+        color: #667eea;
+        transform: translateY(-2px);
+    }
+    
+    .action-icon {
+        font-size: 32px;
+        margin-bottom: 10px;
+    }
+    
+    .action-label {
+        font-size: 14px;
+        font-weight: 500;
+    }
+</style>
+@endpush
+
+@section('content')
+<div class="admin-dashboard">
+    <!-- Dashboard Header -->
+    <div class="dashboard-header">
+        <div class="container-fluid">
+            <h1 class="mb-2">Admin Dashboard</h1>
+            <p class="mb-0">Welcome back, {{ session('name') }}! Here's your system overview.</p>
+        </div>
+    </div>
+
+    <div class="container-fluid">
+        <!-- System Alerts -->
+        @if(isset($alerts) && count($alerts) > 0)
+            <div class="alert-section">
+                @foreach($alerts as $alert)
+                    <div class="alert-item {{ $alert->type }}">
+                        <strong>{{ ucfirst($alert->type) }}:</strong> {{ $alert->message }}
+                    </div>
+                @endforeach
+            </div>
+        @endif
+
+        <!-- Statistics Grid -->
+        <div class="stat-grid">
+            <div class="stat-card">
+                <div class="stat-icon" style="color: #4299e1;">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="stat-value">{{ number_format($stats['total_users'] ?? 0) }}</div>
+                <div class="stat-label">Total Users</div>
+                <div class="stat-change positive">
+                    <i class="fas fa-arrow-up"></i> 12% from last month
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon" style="color: #48bb78;">
+                    <i class="fas fa-user-graduate"></i>
+                </div>
+                <div class="stat-value">{{ number_format($stats['total_trainees'] ?? 0) }}</div>
+                <div class="stat-label">Total Trainees</div>
+                <div class="stat-change positive">
+                    <i class="fas fa-arrow-up"></i> 8% from last month
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon" style="color: #ed8936;">
+                    <i class="fas fa-clipboard-list"></i>
+                </div>
+                <div class="stat-value">{{ number_format($stats['total_activities'] ?? 0) }}</div>
+                <div class="stat-label">Total Activities</div>
+                <div class="stat-change positive">
+                    <i class="fas fa-arrow-up"></i> 5% from last month
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon" style="color: #9f7aea;">
+                    <i class="fas fa-calendar-check"></i>
+                </div>
+                <div class="stat-value">{{ number_format($stats['total_sessions'] ?? 0) }}</div>
+                <div class="stat-label">Total Sessions</div>
+                <div class="stat-change negative">
+                    <i class="fas fa-arrow-down"></i> 3% from last month
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Section -->
+        <div class="chart-grid">
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h3 class="chart-title">User Growth</h3>
+                    <select class="form-control form-control-sm" style="width: auto;">
+                        <option>Last 6 Months</option>
+                        <option>Last Year</option>
+                    </select>
+                </div>
+                <canvas id="userGrowthChart" height="200"></canvas>
+            </div>
+            
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h3 class="chart-title">Activity Distribution</h3>
+                    <button class="btn btn-sm btn-outline-primary">View All</button>
+                </div>
+                <canvas id="activityChart" height="200"></canvas>
+            </div>
+        </div>
+
+        <!-- Recent Activities -->
+        <div class="row">
+            <div class="col-md-6">
+                <div class="recent-section">
+                    <div class="recent-header">
+                        <h3 class="chart-title">Recent Users</h3>
+                        <a href="{{ route('users.index') }}" class="btn btn-sm btn-outline-primary">View All</a>
+                    </div>
+                    <ul class="recent-list">
+                        @foreach($recent['users'] ?? [] as $user)
+                            <li class="recent-item">
+                                <div class="recent-avatar">
+                                    {{ strtoupper(substr($user->name, 0, 1)) }}
+                                </div>
+                                <div class="recent-info">
+                                    <div class="recent-name">{{ $user->name }}</div>
+                                    <div class="recent-meta">{{ $user->email }} • {{ ucfirst($user->role) }}</div>
+                                </div>
+                                <div class="recent-time">
+                                    {{ $user->created_at->diffForHumans() }}
+                                </div>
+                            </li>
+                        @endforeach
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="recent-section">
+                    <div class="recent-header">
+                        <h3 class="chart-title">Recent Trainees</h3>
+                        <a href="{{ route('trainees.index') }}" class="btn btn-sm btn-outline-primary">View All</a>
+                    </div>
+                    <ul class="recent-list">
+                        @foreach($recent['trainees'] ?? [] as $trainee)
+                            <li class="recent-item">
+                                <div class="recent-avatar">
+                                    {{ strtoupper(substr($trainee->name, 0, 1)) }}
+                                </div>
+                                <div class="recent-info">
+                                    <div class="recent-name">{{ $trainee->name }}</div>
+                                    <div class="recent-meta">{{ $trainee->condition }} • Age {{ $trainee->age ?? 'N/A' }}</div>
+                                </div>
+                                <div class="recent-time">
+                                    {{ $trainee->created_at->diffForHumans() }}
+                                </div>
+                            </li>
+                        @endforeach
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="quick-actions">
+            <h3 class="chart-title">Quick Actions</h3>
+            <div class="action-grid">
+                <a href="{{ route('users.create') }}" class="action-btn">
+                    <div class="action-icon">
+                        <i class="fas fa-user-plus"></i>
+                    </div>
+                    <div class="action-label">Add User</div>
+                </a>
+                
+                <a href="{{ route('trainees.create') }}" class="action-btn">
+                    <div class="action-icon">
+                        <i class="fas fa-user-graduate"></i>
+                    </div>
+                    <div class="action-label">Add Trainee</div>
+                </a>
+                
+                <a href="{{ route('activities.create') }}" class="action-btn">
+                    <div class="action-icon">
+                        <i class="fas fa-plus-circle"></i>
+                    </div>
+                    <div class="action-label">Create Activity</div>
+                </a>
+                
+                <a href="{{ route('letters.create') }}" class="action-btn">
+                    <div class="action-icon">
+                        <i class="fas fa-file-alt"></i>
+                    </div>
+                    <div class="action-label">Generate Letter</div>
+                </a>
+                
+                <a href="{{ route('assets.create') }}" class="action-btn">
+                    <div class="action-icon">
+                        <i class="fas fa-box"></i>
+                    </div>
+                    <div class="action-label">Add Asset</div>
+                </a>
+                
+                <a href="{{ route('reports.index') }}" class="action-btn">
+                    <div class="action-icon">
+                        <i class="fas fa-chart-bar"></i>
+                    </div>
+                    <div class="action-label">View Reports</div>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+@endsection
+
+@push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Initialize charts
+document.addEventListener('DOMContentLoaded', function() {
+    // User Growth Chart
+    const userGrowthCtx = document.getElementById('userGrowthChart').getContext('2d');
+    new Chart(userGrowthCtx, {
+        type: 'line',
+        data: {
+            labels: {!! json_encode($charts['user_growth']['labels'] ?? []) !!},
+            datasets: [{
+                label: 'New Users',
+                data: {!! json_encode($charts['user_growth']['data'] ?? []) !!},
+                borderColor: '#667eea',
+                backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+    
+    // Activity Distribution Chart
+    const activityCtx = document.getElementById('activityChart').getContext('2d');
+    const activityData = {!! json_encode($charts['activity_distribution'] ?? []) !!};
+    
+    new Chart(activityCtx, {
+        type: 'doughnut',
+        data: {
+            labels: Object.keys(activityData),
+            datasets: [{
+                data: Object.values(activityData),
+                backgroundColor: [
+                    '#4299e1',
+                    '#48bb78',
+                    '#ed8936',
+                    '#9f7aea',
+                    '#f56565',
+                    '#38b2ac',
+                    '#ecc94b',
+                    '#ed64a6'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'right'
+                }
+            }
+        }
+    });
+    
+    // Auto-refresh stats every 5 minutes
+    setInterval(refreshDashboard, 300000);
+});
+
+// Refresh dashboard data
+function refreshDashboard() {
+    fetch('{{ route("dashboard.refresh-stats") }}')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Update stat values
+                updateStatValues(data.stats);
+            }
+        });
+}
+
+// Update stat values with animation
+function updateStatValues(stats) {
+    Object.keys(stats).forEach(key => {
+        const element = document.querySelector(`[data-stat="${key}"]`);
+        if (element) {
+            animateValue(element, parseInt(element.textContent), stats[key], 1000);
+        }
+    });
+}
+
+// Animate number changes
+function animateValue(element, start, end, duration) {
+    const range = end - start;
+    const increment = range / (duration / 16);
+    let current = start;
+    
+    const timer = setInterval(() => {
+        current += increment;
+        if ((increment > 0 && current >= end) || (increment < 0 && current <= end)) {
+            element.textContent = number_format(end);
+            clearInterval(timer);
+        } else {
+            element.textContent = number_format(Math.floor(current));
+        }
+    }, 16);
+}
+
+// Format numbers with commas
+function number_format(num) {
+    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+</script>
+@endpush
+
+--------------------------------------------------------------------------------------------------------------
+
+6. Trainee Management Module - Data Integrity {#trainee-module}
+Current Issues Summary
+
+Duplicate trainee records
+Missing validation on critical fields
+Poor search functionality
+No audit trail
+Bulk operations missing
+
+Solution 1: Enhanced Trainee Management System
+Step 1: Database Enhancement
+php// database/migrations/2025_01_20_000002_enhance_trainee_management.php
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+class EnhanceTraineeManagement extends Migration
+{
+    public function up()
+    {
+        // Add missing columns to trainees table
+        Schema::table('trainees', function (Blueprint $table) {
+            if (!Schema::hasColumn('trainees', 'unique_identifier')) {
+                $table->string('unique_identifier')->unique()->after('id');
+            }
+            
+            if (!Schema::hasColumn('trainees', 'status')) {
+                $table->enum('status', ['active', 'inactive', 'graduated', 'transferred'])
+                      ->default('active')->after('condition');
+            }
+            
+            if (!Schema::hasColumn('trainees', 'admission_date')) {
+                $table->date('admission_date')->nullable()->after('date_of_birth');
+            }
+            
+            if (!Schema::hasColumn('trainees', 'graduation_date')) {
+                $table->date('graduation_date')->nullable()->after('admission_date');
+            }
+            
+            if (!Schema::hasColumn('trainees', 'medical_info')) {
+                $table->json('medical_info')->nullable();
+            }
+            
+            if (!Schema::hasColumn('trainees', 'assessment_data')) {
+                $table->json('assessment_data')->nullable();
+            }
+            
+            if (!Schema::hasColumn('trainees', 'tags')) {
+                $table->json('tags')->nullable();
+            }
+            
+            // Add indexes for better search
+            $table->index('unique_identifier');
+            $table->index(['name', 'status']);
+            $table->index('admission_date');
+            $table->fullText(['name', 'email', 'phone']);
+        });
+        
+        // Create trainee audit log table
+        Schema::create('trainee_audit_logs', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('trainee_id');
+            $table->unsignedBigInteger('user_id');
+            $table->string('action');
+            $table->json('old_values')->nullable();
+            $table->json('new_values')->nullable();
+            $table->text('notes')->nullable();
+            $table->string('ip_address')->nullable();
+            $table->timestamp('created_at');
+            
+            $table->foreign('trainee_id')->references('id')->on('trainees')->onDelete('cascade');
+            $table->foreign('user_id')->references('id')->on('users');
+            
+            $table->index(['trainee_id', 'created_at']);
+            $table->index('action');
+        });
+        
+        // Create trainee documents table
+        Schema::create('trainee_documents', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('trainee_id');
+            $table->string('document_type');
+            $table->string('document_name');
+            $table->string('file_path');
+            $table->string('file_size');
+            $table->date('expiry_date')->nullable();
+            $table->unsignedBigInteger('uploaded_by');
+            $table->timestamps();
+            
+            $table->foreign('trainee_id')->references('id')->on('trainees')->onDelete('cascade');
+            $table->foreign('uploaded_by')->references('id')->on('users');
+            
+            $table->index('trainee_id');
+            $table->index('document_type');
+        });
+        
+        // Create trainee progress tracking table
+        Schema::create('trainee_progress', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('trainee_id');
+            $table->unsignedBigInteger('activity_id');
+            $table->date('assessment_date');
+            $table->string('skill_area');
+            $table->integer('baseline_score');
+            $table->integer('current_score');
+            $table->integer('target_score');
+            $table->text('notes')->nullable();
+            $table->unsignedBigInteger('assessed_by');
+            $table->timestamps();
+            
+            $table->foreign('trainee_id')->references('id')->on('trainees')->onDelete('cascade');
+            $table->foreign('activity_id')->references('id')->on('activities');
+            $table->foreign('assessed_by')->references('id')->on('users');
+            
+            $table->index(['trainee_id', 'assessment_date']);
+            $table->index('skill_area');
+        });
+    }
+    
+    public function down()
+    {
+        Schema::dropIfExists('trainee_progress');
+        Schema::dropIfExists('trainee_documents');
+        Schema::dropIfExists('trainee_audit_logs');
+        
+        Schema::table('trainees', function (Blueprint $table) {
+            $table->dropColumn([
+                'unique_identifier', 'status', 'admission_date', 
+                'graduation_date', 'medical_info', 'assessment_data', 'tags'
+            ]);
+        });
+    }
+}
+Step 2: Enhanced Trainee Controller
+php// app/Http/Controllers/EnhancedTraineeController.php
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Trainee;
+use App\Models\TraineeAuditLog;
+use App\Models\TraineeDocument;
+use App\Models\TraineeProgress;
+use App\Services\TraineeService;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\TraineesExport;
+use App\Imports\TraineesImport;
+
+class EnhancedTraineeController extends Controller
+{
+    protected $traineeService;
+    
+    public function __construct(TraineeService $traineeService)
+    {
+        $this->traineeService = $traineeService;
+    }
+    
+    /**
+     * Enhanced index with advanced filtering
+     */
+    public function index(Request $request)
+    {
+        $query = Trainee::with(['centre', 'enrollments.activity'])
+            ->where('centre_id', session('centre_id'));
+        
+        // Advanced search
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'LIKE', "%{$search}%")
+                  ->orWhere('unique_identifier', 'LIKE', "%{$search}%")
+                  ->orWhere('email', 'LIKE', "%{$search}%")
+                  ->orWhere('phone', 'LIKE', "%{$search}%")
+                  ->orWhereRaw("JSON_EXTRACT(guardian_info, '$.guardian_name') LIKE ?", ["%{$search}%"]);
+            });
+        }
+        
+        // Status filter
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+        
+        // Condition filter
+        if ($request->filled('condition')) {
+            $query->where('condition', $request->condition);
+        }
+        
+        // Age range filter
+        if ($request->filled('age_from')) {
+            $query->whereRaw('TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()) >= ?', [$request->age_from]);
+        }
+        
+        if ($request->filled('age_to')) {
+            $query->whereRaw('TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()) <= ?', [$request->age_to]);
+        }
+        
+        // Tag filter
+        if ($request->filled('tags')) {
+            $tags = explode(',', $request->tags);
+            foreach ($tags as $tag) {
+                $query->whereJsonContains('tags', trim($tag));
+            }
+        }
+        
+        // Sorting
+        $sortField = $request->get('sort', 'created_at');
+        $sortDirection = $request->get('direction', 'desc');
+        $query->orderBy($sortField, $sortDirection);
+        
+        $trainees = $query->paginate(20)->withQueryString();
+        
+        // Get filter options
+        $conditions = config('trainee.conditions', []);
+        $statuses = ['active', 'inactive', 'graduated', 'transferred'];
+        
+        // Get statistics
+        $stats = $this->traineeService->getStatistics(session('centre_id'));
+        
+        return view('trainees.enhanced-index', compact(
+            'trainees', 'conditions', 'statuses', 'stats'
+        ));
+    }
+    
+    /**
+     * Store new trainee with validation and audit
+     */
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'nullable|email|unique:trainees',
+            'phone' => 'nullable|string|max:20',
+            'date_of_birth' => 'required|date|before:today',
+            'gender' => 'required|in:male,female,other',
+            'address' => 'nullable|string',
+            'condition' => 'required|string',
+            'medical_history' => 'nullable|string',
+            'admission_date' => 'required|date',
+            'guardian_name' => 'required|string|max:255',
+            'guardian_relationship' => 'required|string',
+            'guardian_phone' => 'required|string|max:20',
+            'guardian_email' => 'nullable|email',
+            'guardian_address' => 'nullable|string',
+            'emergency_contact_name' => 'required|string|max:255',
+            'emergency_contact_phone' => 'required|string|max:20',
+            'emergency_contact_relationship' => 'required|string',
+            'photo_consent' => 'boolean',
+            'data_consent' => 'boolean',
+            'avatar' => 'nullable|image|max:2048',
+            'documents' => 'nullable|array',
+            'documents.*' => 'file|max:5120',
+            'tags' => 'nullable|array',
+            'medical_allergies' => 'nullable|string',
+            'medications' => 'nullable|string',
+            'dietary_restrictions' => 'nullable|string'
+        ]);
+        
+        DB::beginTransaction();
+        try {
+            // Generate unique identifier
+            $uniqueId = $this->traineeService->generateUniqueIdentifier();
+            
+            // Handle avatar upload
+            $avatarPath = null;
+            if ($request->hasFile('avatar')) {
+                $avatarPath = $request->file('avatar')->store('trainee_avatars/' . date('Y/m'), 'public');
+            }
+            
+            // Prepare data
+            $traineeData = array_merge($validated, [
+                'unique_identifier' => $uniqueId,
+                'centre_id' => session('centre_id'),
+                'status' => 'active',
+                'avatar' => $avatarPath,
+                'guardian_info' => [
+                    'guardian_name' => $validated['guardian_name'],
+                    'guardian_relationship' => $validated['guardian_relationship'],
+                    'guardian_phone' => $validated['guardian_phone'],
+                    'guardian_email' => $validated['guardian_email'] ?? null,
+                    'guardian_address' => $validated['guardian_address'] ?? null
+                ],
+                'emergency_contact' => [
+                    'name' => $validated['emergency_contact_name'],
+                    'phone' => $validated['emergency_contact_phone'],
+                    'relationship' => $validated['emergency_contact_relationship']
+                ],
+                'medical_info' => [
+                    'allergies' => $validated['medical_allergies'] ?? null,
+                    'medications' => $validated['medications'] ?? null,
+                    'dietary_restrictions' => $validated['dietary_restrictions'] ?? null
+                ],
+                'tags' => $validated['tags'] ?? []
+            ]);
+            
+            // Remove processed fields
+            unset($traineeData['guardian_name'], $traineeData['guardian_relationship'], 
+                  $traineeData['guardian_phone'], $traineeData['guardian_email'], 
+                  $traineeData['guardian_address'], $traineeData['emergency_contact_name'],
+                  $traineeData['emergency_contact_phone'], $traineeData['emergency_contact_relationship'],
+                  $traineeData['medical_allergies'], $traineeData['medications'], 
+                  $traineeData['dietary_restrictions'], $traineeData['documents']);
+            
+            // Create trainee
+            $trainee = Trainee::create($traineeData);
+            
+            // Handle document uploads
+            if ($request->hasFile('documents')) {
+                foreach ($request->file('documents') as $document) {
+                    $path = $document->store('trainee_documents/' . $trainee->id, 'public');
+                    
+                    TraineeDocument::create([
+                        'trainee_id' => $trainee->id,
+                        'document_type' => $document->getClientOriginalExtension(),
+                        'document_name' => $document->getClientOriginalName(),
+                        'file_path' => $path,
+                        'file_size' => $document->getSize(),
+                        'uploaded_by' => session('id')
+                    ]);
+                }
+            }
+            
+            // Create audit log
+            TraineeAuditLog::create([
+                'trainee_id' => $trainee->id,
+                'user_id' => session('id'),
+                'action' => 'created',
+                'new_values' => $trainee->toArray(),
+                'ip_address' => $request->ip()
+            ]);
+            
+            DB::commit();
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Trainee registered successfully',
+                'trainee' => $trainee
+            ]);
+            
+        } catch (\Exception $e) {
+            DB::rollback();
+            
+            // Clean up uploaded files
+            if ($avatarPath) {
+                Storage::disk('public')->delete($avatarPath);
+            }
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to register trainee: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+    
+    /**
+     * Bulk operations
+     */
+    public function bulkOperation(Request $request)
+    {
+        $validated = $request->validate([
+            'trainee_ids
+
+CREAMS Quick Fix Summary - Remaining Critical Fixes
+Trainee Module - Quick Fixes (Continued)
+Bulk Operations Fix
+php// Add to TraineeController.php
+public function bulkUpdate(Request $request)
+{
+    $ids = $request->trainee_ids;
+    $action = $request->action;
+    
+    switch($action) {
+        case 'activate':
+            Trainee::whereIn('id', $ids)->update(['status' => 'active']);
+            break;
+        case 'export':
+            return Excel::download(new TraineesExport($ids), 'trainees.xlsx');
+        case 'delete':
+            Trainee::whereIn('id', $ids)->delete();
+            break;
+    }
+    
+    return response()->json(['success' => true]);
+}
+Duplicate Prevention
+sql-- Add unique constraint
+ALTER TABLE trainees ADD UNIQUE KEY unique_trainee (name, date_of_birth, guardian_phone);
+Critical System-Wide Fixes
+1. Session Timeout Fix
+php// config/session.php
+'lifetime' => 120, // Change from 30 to 120 minutes
+'expire_on_close' => false,
+2. Memory Optimization
+php// Add to AppServiceProvider.php boot()
+public function boot()
+{
+    // Prevent memory leaks
+    DB::disableQueryLog();
+    
+    // Optimize queries
+    Model::preventLazyLoading(!app()->isProduction());
+}
+3. Universal Search Implementation
+php// app/Http/Controllers/SearchController.php
+public function globalSearch(Request $request)
+{
+    $query = $request->q;
+    
+    $results = [
+        'trainees' => Trainee::where('name', 'LIKE', "%{$query}%")->limit(5)->get(),
+        'activities' => Activity::where('name', 'LIKE', "%{$query}%")->limit(5)->get(),
+        'users' => Users::where('name', 'LIKE', "%{$query}%")->limit(5)->get()
+    ];
+    
+    return response()->json($results);
+}
+4. Error Handling Middleware
+php// app/Http/Middleware/HandleErrors.php
+public function handle($request, Closure $next)
+{
+    try {
+        return $next($request);
+    } catch (\Exception $e) {
+        Log::error('Request failed', [
+            'url' => $request->url(),
+            'user' => session('id'),
+            'error' => $e->getMessage()
+        ]);
+        
+        if ($request->ajax()) {
+            return response()->json(['error' => 'Something went wrong'], 500);
+        }
+        
+        return redirect()->back()->with('error', 'An error occurred. Please try again.');
+    }
+}
+Emergency Database Fixes
+Fix All Foreign Key Issues
+sql-- Disable checks temporarily
+SET FOREIGN_KEY_CHECKS=0;
+
+-- Fix orphaned records
+DELETE FROM activity_sessions WHERE activity_id NOT IN (SELECT id FROM activities);
+DELETE FROM session_enrollments WHERE session_id NOT IN (SELECT id FROM activity_sessions);
+DELETE FROM letters WHERE created_by NOT IN (SELECT id FROM users);
+
+-- Re-enable checks
+SET FOREIGN_KEY_CHECKS=1;
+Performance Indexes
+sql-- Critical indexes for speed
+ALTER TABLE activities ADD INDEX idx_centre_category (centre_id, category);
+ALTER TABLE activity_sessions ADD INDEX idx_date_teacher (session_date, teacher_id);
+ALTER TABLE trainees ADD FULLTEXT(name, email);
+ALTER TABLE letters ADD INDEX idx_created_ref (created_by, letter_reference);
+Quick UI/UX Fixes
+1. Loading States
+javascript// Add to all AJAX calls
+function showLoading() {
+    Swal.fire({
+        title: 'Processing...',
+        allowOutsideClick: false,
+        showConfirmButton: false,
+        willOpen: () => { Swal.showLoading(); }
+    });
+}
+
+// Usage
+$('form').on('submit', function(e) {
+    e.preventDefault();
+    showLoading();
+    // ... ajax call
+});
+2. Auto-save Forms
+javascript// Auto-save draft every 30 seconds
+let autoSaveTimer;
+$('input, textarea').on('input', function() {
+    clearTimeout(autoSaveTimer);
+    autoSaveTimer = setTimeout(() => {
+        localStorage.setItem('form_draft_' + $(this).closest('form').attr('id'), 
+                           $(this).closest('form').serialize());
+    }, 30000);
+});
+3. Responsive Tables
+css/* Add to app.css */
+@media (max-width: 768px) {
+    .table-responsive table {
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+    }
+}
+Critical Route Fixes
+php// Add ALL missing routes to web.php at once
+Route::middleware(['check.session'])->group(function() {
+    // Letters
+    Route::resource('letters', LetterController::class);
+    
+    // Activities
+    Route::get('/activities/schedule', [ActivityController::class, 'schedule'])->name('activities.schedule');
+    Route::post('/activities/{id}/enroll', [ActivityController::class, 'enroll'])->name('activities.enroll');
+    
+    // Trainees
+    Route::post('/trainees/bulk', [TraineeController::class, 'bulkUpdate'])->name('trainees.bulk');
+    Route::get('/trainees/export', [TraineeController::class, 'export'])->name('trainees.export');
+    
+    // Assets
+    Route::post('/assets/{id}/assign', [AssetController::class, 'assign'])->name('assets.assign');
+    Route::get('/assets/maintenance-due', [AssetController::class, 'maintenanceDue'])->name('assets.maintenance');
+    
+    // Global search
+    Route::get('/search', [SearchController::class, 'globalSearch'])->name('search');
+});
+One-Command Fix Script
+Create fix-all.sh:
+bash#!/bin/bash
+# Run all fixes at once
+
+echo "Starting CREAMS comprehensive fix..."
+
+# Clear all caches
+php artisan cache:clear
+php artisan config:clear
+php artisan route:clear
+php artisan view:clear
+
+# Run migrations
+php artisan migrate
+
+# Fix permissions
+chmod -R 755 storage
+chmod -R 755 bootstrap/cache
+chmod -R 755 public/letters
+chmod -R 755 public/trainee_avatars
+
+# Optimize
+php artisan optimize
+php artisan route:cache
+php artisan config:cache
+
+# Create required directories
+mkdir -p public/letters
+mkdir -p public/assets
+mkdir -p storage/app/public/template_images
+mkdir -p storage/app/public/trainee_documents
+
+# Generate storage link
+php artisan storage:link
+
+echo "Fix completed! Please test the system."
+Testing Checklist
+
+Letters Module
+
+✓ Can access /letters
+✓ Can generate letter from profile
+✓ PDF downloads work
+
+
+Activities Module
+
+✓ No scheduling conflicts
+✓ Enrollment works
+✓ Attendance marking works
+
+
+Authentication
+
+✓ Login persists
+✓ Remember me works
+✓ Role-based access works
+
+
+Performance
+
+✓ Dashboard loads < 3 seconds
+✓ No N+1 queries
+✓ Search is responsive
+
+
+
+Final Notes
+
+Backup First: Always backup database before fixes
+Test Incrementally: Test each module after fixing
+Monitor Logs: Watch storage/logs/laravel.log
+Use Transactions: Wrap data operations in DB transactions
+
+This condensed guide focuses on immediate, practical fixes. Implement these first, then consider the architectural improvements from the full guide later.

@@ -1,0 +1,78 @@
+
+
+
+2. **Trainee Profile Save Issue**
+- Confirm why fields like **guardian info**, **emergency contact**, and **additional notes** are not being saved to DB.
+- Trace from form submission → controller → validation → model → DB.
+- Fix only the broken link in this chain, do not rearchitect.
+
+3. **Activity Scheduling System**
+- Audit scheduling logic: must not allow **time conflicts** between sessions.
+- Trainee and teacher schedules must be **mutually exclusive**.
+- Dashboard must show a **"Mini Schedule"** with only the current session displayed, with simple details.
+- Ensure the activity system behaves like a **"Subject Assignment System"** (e.g. assigning class + teacher to trainee) with no overlap in time.
+- Do not break existing activity views or seeders.
+
+---
+
+
+
+
+
+📌 **CLAUDE CODE SYSTEM AUDIT INSTRUCTIONS – STRICT MODE**
+
+### 🧠 Step 1: Knowledge Bootstrapping
+- Start by reading `claude.md` in full.
+- Then, read `"CREAMS GENERAL OVERVIEW"` and treat this as the **primary source of truth**. If any information in other files contradicts it, treat that info as **irrelevant**.
+- After that, continue reading **all `.md` and `.txt` files in the root directory** to deeply understand the system’s modules, flows, and constraints.
+
+---
+
+### 🚨 STRICT AUDIT MODE – Laravel CREAMS System
+
+You are auditing a Laravel-based system (CREAMS). DO NOT generate or suggest **new** features, architectures, or unrelated optimizations. Your job is to:
+
+- 🔎 Focus **only on the three modules** and specific issues mentioned below.
+- 🛠️ Apply **minimal and surgical changes** to fix the issues.
+- ✅ **Preserve** all currently working functionality.
+- ❌ DO NOT rename any fields, restructure database tables, or override logic unless I explicitly allow it.
+
+You may check **migrations, models, controllers, blade views, and seeders**, but ONLY IF directly relevant to the listed bugs.
+
+TASK: Fix issues in the Letter Generator and Archive Letter modules of my Laravel-based CREAMS system.
+
+🧠 CONTEXT:
+- My system is a rehabilitation center management app built with Laravel and Blade.
+- Letter generation includes templates with header and footer.
+- Archive shows metadata like reference number, subject, recipient, and action buttons (preview/download/delete).
+
+🔧 CURRENT ISSUES:
+
+1. 🧾 Letter Generation:
+   - The preview section correctly renders all submitted form data with the full letter template.
+   - However, when clicking "Generate Letter", it generates a PDF **missing the form data and the header/footer template** — resulting in a mostly blank letter.
+   - PDF downloads but does not reflect the preview.
+
+2. 🗂 Archive Letters Page:
+   - The page previously worked but now shows:
+     `Not Found - The requested resource /letters was not found on this server.`
+   - When it did work:
+     - Metadata (subject, recipient, reference number) showed as empty despite being submitted.
+     - "Generated" column shows the correct date but name is `unknown`.
+     - "Eye" and "Download" icons were visible but clicking either downloaded the same broken letter (no preview pop-up).
+     - "Delete" button functions correctly and shows a confirmation modal.
+
+3. 🎨 UI Issue:
+   - The search bar at the top of the Archive Letters page looks ugly and does not match the rest of the system’s style/theme.
+
+💡 GOAL:
+Fix all the above. The generated PDF must **match exactly what is shown in the preview**, including header/footer and all form values. The archive page should display correct data (subject, recipient, reference, created by), and all icons should behave as expected (preview opens modal, download triggers correct file).
+
+📂 DIRECTORY STRUCTURE NOTES:
+- Letter generation likely uses a `LetterController`, views under `resources/views/letters/`, and maybe a model like `Letter.php`.
+- Blade templates may be using `@include('layouts.header')` or similar.
+- PDF generation might use `dompdf` or `snappy`.
+
+🧪 Please audit all relevant files and logic flow: form submission → preview → generate → archive display → PDF logic.
+
+Output fixes as updated code with clear file paths.

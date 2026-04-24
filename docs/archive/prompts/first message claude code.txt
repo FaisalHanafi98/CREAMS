@@ -1,0 +1,139 @@
+# CREAMS Development Context - Critical System Information
+
+## 🔴 MANDATORY: Read First
+**ALWAYS** start by reading **CREAMS_GENERAL_SUMMARY.txt** in the root directory. This comprehensive document contains:
+- Complete architecture overview with 100+ working code snippets
+- All resolved issues from August 2025 with proven solutions
+- Exact database relationships and field mappings
+- Authentication patterns (CUSTOM session-based, NOT Laravel default)
+- Debugging toolkit with real error resolution examples
+
+## 🏗️ System Architecture Foundation
+
+### Authentication & Session Management
+CUSTOM MultipleUserGuard implementation:
+
+Session keys: id, role, centre_id, name, email
+NOT using Laravel's default auth
+Session validation happens in middleware
+Role hierarchy: admin > supervisor > teacher > ajk
+
+
+### Multi-Tenant Data Isolation
+CRITICAL: All queries must filter by centre_id
+
+Exception: admin role sees all centres
+Every major table includes centre_id field
+Use: ->where('centre_id', session('centre_id'))
+NEVER expose data across centres
+
+
+## 📝 Strict Naming Conventions (FOLLOW EXACTLY)
+
+### Models & Database
+| Component | CORRECT ✅ | WRONG ❌ | Example Usage |
+|-----------|------------|----------|---------------|
+| Model | Trainee | Trainees | `Trainee::where()` |
+| Model | Activity | Activities | `Activity::find()` |
+| Staff Model | Users | Staff, Teacher | `Users::role('teacher')` |
+| Status Field | enrollment_status | progress_percentage, status | `->where('enrollment_status', 'active')` |
+| Categories | ENUM values | separate table | `config('trainee.activity_categories')` |
+
+### File Organization
+Controllers/
+├── Staff/          # NOT 'Teacher/' or 'Admin/'
+├── Trainee/        # Singular, not plural
+├── Activity/
+├── Centre/
+└── Profile/
+Views/
+├── staff/          # lowercase, NOT 'teacher/'
+│   └── *-form.blade.php  # Unified form partials
+├── trainee/
+└── activity/
+Routes: ALWAYS use encrypted IDs
+Example: route('trainee.show', encrypt($trainee->id))
+
+## 🎯 Common Operations Reference
+
+### Fetching Centre-Specific Data
+```php
+// CORRECT pattern for non-admin users
+$trainees = Trainee::where('centre_id', session('centre_id'))
+    ->where('enrollment_status', 'active')
+    ->get();
+
+// CORRECT pattern for admin users
+$trainees = session('role') === 'admin' 
+    ? Trainee::all() 
+    : Trainee::where('centre_id', session('centre_id'))->get();
+Form Handling Pattern
+php// Always validate centre_id in requests
+$validated = $request->validate([
+    'name' => 'required',
+    'centre_id' => ['required', 'exists:centres,id', 
+                    new BelongsToUserCentre()]
+]);
+Configuration-Driven Dropdowns
+php// Use config files, NOT database lookups
+$categories = config('trainee.activity_categories');
+$statuses = config('trainee.enrollment_statuses');
+⚠️ Critical Pitfalls to Avoid
+
+NEVER create new authentication logic - use existing MultipleUserGuard
+NEVER forget centre_id filtering (data leak risk)
+NEVER use plural model names (Trainee, not Trainees)
+NEVER create new files when existing ones can be modified
+NEVER hardcode dropdown values - use config files
+NEVER expose unencrypted IDs in URLs
+NEVER mix view directories (staff/ not teacher/)
+
+🔧 Development Patterns
+Error Handling
+phptry {
+    // Operation
+} catch (\Exception $e) {
+    Log::error('Context: ' . $e->getMessage());
+    return back()->with('error', 'User-friendly message');
+}
+Database Transactions
+phpDB::transaction(function () use ($data) {
+    // Multiple related operations
+    // Auto-rollback on exception
+});
+Validation Rules
+
+Use Form Request classes for complex validation
+Apply centre_id validation rules consistently
+Validate role permissions in middleware
+
+📊 Recent Fixes Reference (August 2025)
+
+Staff statistics calculation methods optimized
+Asset management module multi-centre isolation fixed
+Form submission validation enhanced
+Enrollment status field standardization completed
+
+🚀 Quick Start Checklist
+When working on any feature:
+
+ Check session variables are properly set
+ Verify centre_id filtering is applied
+ Use correct model naming (singular)
+ Follow existing file organization
+ Encrypt IDs in routes
+ Use config files for dropdowns
+ Test with different user roles
+ Validate multi-centre isolation
+
+📌 Priority Reminders
+
+Consistency First: Follow existing patterns even if you see a "better" way
+Security Always: Centre isolation is non-negotiable
+Edit Don't Create: Modify existing files rather than creating new ones
+Test Role Hierarchy: Admin > Supervisor > Teacher > AJK
+Reference the Summary: CREAMS_GENERAL_SUMMARY.txt has working examples for everything
+
+
+System Ready State: All major modules operational. Recent fixes documented. Following these patterns ensures system stability and consistency.
+Your Role: Assist with debugging, enhancements, and development while strictly maintaining established patterns and conventions.

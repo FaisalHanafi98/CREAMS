@@ -1,0 +1,349 @@
+Final Modules Testing:
+
+Welcome Module
+http://127.0.0.1:8000
+All works 
+
+
+
+
+
+Contact Module
+http://127.0.0.1:8000/contact
+
+Input:
+Faisal
+faisalhanafi.dsa@gmail.com
+601132416157
+Partnership Opportunity
+Support and Assistance Request
+High Priority
+Testing Contact Module 17 August
+
+Output:
+Failed
+[2025-08-17 14:30:48] local.INFO: Contact form submission started {"ip":"127.0.0.1","user_agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0","reason":"partnership"} 
+[2025-08-17 14:30:49] local.ERROR: Error processing contact form submission {"error":"SQLSTATE[42S22]: Column not found: 1054 Unknown column 'sender_name' in 'field list' (Connection: mysql, SQL: insert into `contact_messages` (`sender_name`, `sender_email`, `sender_phone`, `message_category`, `message_body`, `message_subject`, `message_status`, `updated_at`, `created_at`) values (Faisal, faisalhanafi.dsa@gmail.com, +601132416157, general, Testing Contact Module 17 August, Support and Assistance Request, new, 2025-08-17 14:30:49, 2025-08-17 14:30:49))","trace":"#0 C:\\laragon\\www\\CREAMS\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Connection.php(783): Illuminate\\Database\\Connection->runQueryCallback('insert into `co...', Array, Object(Closure))
+
+Update:
+Its now working as intended
+
+
+
+
+Volunteer Module
+http://127.0.0.1:8000/volunteer
+
+Input:
+Mohamad Syauqi
+Halim
+halim123@yahoo.com
++60199611474
+11/01/2008
+Male
+2585 Jalan Sultanah Zainab
+Kota Bharu
+15050
+Fatimah
++60199164433
+Skills Sharing
+Relevant Skills Testing 17 August
+Weekends
+Flexible/As needed
+Motivation Testing 17 August
+Experience Testing 17 August	
+IIUM PD-Care Website
+I consent
+
+Output:
+[2025-08-17 14:36:40] local.INFO: Volunteer form submission started {"email":"halim123@yahoo.com","name":"Mohamad Syauqi Halim"} 
+[2025-08-17 14:36:40] local.INFO: Volunteer application saved successfully {"id":1,"email":"halim123@yahoo.com"} 
+[2025-08-17 14:36:43] local.INFO: Volunteer confirmation email sent {"email":"halim123@yahoo.com"} 
+[2025-08-17 14:36:45] local.INFO: Admin notification sent  
+Admin received email notification of successful receive
+User received green message indicates successful application
+User received email notification of successful application
+Successful
+
+
+
+
+
+http://127.0.0.1:8000/auth/login
+
+input:
+ahmad.firdaus.kuantan@iium.edu.my
+password123
+
+output:
+[2025-08-17 14:43:54] local.INFO: Login attempt started {"data":{"_token":"vijrIPSYIYTNNjYNePVp2QESbjSjIyRwG5xTvxvL","identifier":"ahmad.firdaus.kuantan@iium.edu.my","remember":"1"},"ip":"127.0.0.1","user_agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0"} 
+[2025-08-17 14:43:54] local.INFO: Searching for user by email {"identifier":"ahmad.firdaus.kuantan@iium.edu.my"} 
+[2025-08-17 14:43:54] local.DEBUG: User search by email result {"email":"ahmad.firdaus.kuantan@iium.edu.my","found":"Yes"} 
+[2025-08-17 14:43:54] local.INFO: User found {"id":44,"iium_id":"KT254201","role":"admin","status":"active"} 
+[2025-08-17 14:43:54] local.INFO: Password verification successful {"id":44,"iium_id":"KT254201"} 
+[2025-08-17 14:43:54] local.INFO: User updated {"id":44,"iium_id":"KT254201","role":"admin"} 
+[2025-08-17 14:43:54] local.INFO: User last login time updated successfully  
+[2025-08-17 14:43:54] local.INFO: User logged in successfully {"id":44,"iium_id":"KT254201","role":"admin","remember_me":true,"session_id":"6RgjaDa2Fi4iZOpubSphFrUzRfeVkE0AvqRuJasJ"} 
+[2025-08-17 14:43:54] local.DEBUG: RememberMe middleware starting {"session_id":"6RgjaDa2Fi4iZOpubSphFrUzRfeVkE0AvqRuJasJ","has_session_id":true,"session_role":"admin","url":"http://127.0.0.1:8000/admin/dashboard"} 
+[2025-08-17 14:43:54] local.DEBUG: User already logged in, skipping remember token check {"user_id":44,"role":"admin"} 
+[2025-08-17 14:43:54] local.INFO: Enhancing session data for user {"user_id":44,"role":"admin","avatar_exists":false} 
+[2025-08-17 14:43:54] local.INFO: Session data enhanced {"user_id":44,"enhanced_fields":["avatar","user_avatar","address","bio","date_of_birth"]} 
+[2025-08-17 14:43:54] local.INFO: Authenticate middleware check {"session_id":"6RgjaDa2Fi4iZOpubSphFrUzRfeVkE0AvqRuJasJ","has_session_id":true,"session_id_value":44,"has_role":true,"role_value":"admin","url":"http://127.0.0.1:8000/admin/dashboard","all_session":{"_token":"vijrIPSYIYTNNjYNePVp2QESbjSjIyRwG5xTvxvL","_flash":{"old":[],"new":[]},"_previous":{"url":"http://127.0.0.1:8000"},"id":44,"iium_id":"KT254201","name":"Ahmad Firdaus bin Rahman","role":"admin","email":"ahmad.firdaus.kuantan@iium.edu.my","centre_id":"02","avatar":null,"user_avatar":null,"phone":"+6012-345-6789","address":null,"bio":null,"date_of_birth":null,"logged_in":true,"login_time":"2025-08-17 14:43:54"}} 
+[2025-08-17 14:43:54] local.INFO: Role-based access granted {"user_id":44,"user_role":"admin","route":"admin.dashboard","method":"GET"} 
+User can login per their role correctly
+Successful
+
+http://127.0.0.1:8000/profile
+personal account module
+
+input:
+
+output:
+[2025-08-17 14:59:16] local.INFO: Profile update attempted {"user_id":44,"role":"admin","request_data":{"_token":"vijrIPSYIYTNNjYNePVp2QESbjSjIyRwG5xTvxvL","education_level":"Bachelor's","education_specialization":"Psychology","position":"Centre Administrator","teaching_specialization":"Counseling"}} 
+[2025-08-17 14:59:16] local.INFO: About to save user {"user_id":44,"changes":{"name":"Ahmad Firdaus bin Rahman","email":"ahmad.firdaus.kuantan@iium.edu.my","phone":"+6012-345-6789","address":null,"about":null,"date_of_birth":null,"education_level":"Bachelor's","education_specialization":"Psychology","teaching_specialization":"Counseling","position":"Centre Administrator"}} 
+[2025-08-17 14:59:16] local.INFO: User updated {"id":44,"iium_id":"KT254201","role":"admin"} 
+[2025-08-17 14:59:16] local.INFO: User save result {"user_id":44,"saved":true,"changes":{"education_level":"Bachelor's","education_specialization":"Psychology","teaching_specialization":"Counseling","updated_at":"2025-08-17 14:59:16"}} 
+[2025-08-17 14:59:16] local.INFO: Profile updated successfully {"user_id":44,"role":"admin"} 
+
+
+Date of Birth
+Address
+Bio
+These 3 not updated
+Others Fields in both Personal Info and Professional Tab are updated except above
+Failed
+
+Update:
+Its now working as intended
+
+The change password module also works
+
+Letter Generator Module
+
+Input:
+Testing Letter Generator Template
+Template of Testing of Letter Generator Module on 18 August 2025 
+
+Output:
+When I saved the current template it does nothing
+[2025-08-17 16:41:33] local.ERROR: Error generating reference number {"message":"SQLSTATE[42S22]: Column not found: 1054 Unknown column 'letter_reference' in 'where clause' (Connection: mysql, SQL: select exists(select * from `letters` where `letter_reference` = LTR/2025/08/8893) as `exists`)","user_id":44} 
+[2025-08-17 16:43:34] local.ERROR: Error saving template {"error":"SQLSTATE[42S22]: Column not found: 1054 Unknown column 'header_image_path' in 'field list' (Connection: mysql, SQL: insert into `letter_templates` (`template_name`, `template_description`, `template_content`, `template_type`, `header_image_path`, `footer_image_path`, `header_text`, `footer_text`, `centre_id`, `created_by`, `is_active`, `usage_count`, `template_variables`, `updated_at`, `created_at`) values (Testing Letter Generator Template, Template of Testing of Letter Generator Module on 18 August 2025, <div class=\"main-content\">[CONTENT]</div>, letter, template_images/header_1755449014_68a206b6b9dfa.jpeg, template_images/footer_1755449014_68a206b6bc2da.jpeg, , , 02, 44, 1, 0, {\"header_image\":\"template_images\\/header_1755449014_68a206b6b9dfa.jpeg\",\"footer_image\":\"template_images\\/footer_1755449014_68a206b6bc2da.jpeg\"}, 2025-08-17 16:43:34, 2025-08-17 16:43:34))","user_id":44} 
+I cant go into the template letter archive page
+[2025-08-17 16:41:33] local.INFO: Letter index accessed {"user_id":44,"role":"admin","letters_count":0,"templates_count":1,"search_term":null,"date_filters":{"from":null,"to":null}} 
+[2025-08-17 16:41:33] local.ERROR: Error loading letters index {"error":"View [letters.home] not found.","user_id":44,"request_params":[]} 
+
+
+
+
+
+Volunteer Application Review Module
+http://127.0.0.1:8000/admin/volunteers
+
+Review Button
+The new display window of Application Details the close button does not work hence cant close the window the window the minimise button also does not work
+The same for the approve button window the cancel button does not work hence cant close the window the minimise button also does not work
+The same for the reject button window the cancel button does not work hence cant close the window the window the minimise button also does not work
+But both approve and reject button does work as when either approved or rejected both user and admin receive email of the outcvome of the application
+
+Update:
+Its now working as intended
+
+
+
+
+
+User/Staff Management Module
+http://127.0.0.1:8000/staffs/home
+
+For your information only higher level role can edit other user profile
+Everything works in the page
+
+Other Specific Staff Profile Page
+http://127.0.0.1:8000/staffs/profile/{userencryptedid}
+
+statistics i do not think it follows the data base for example the user fauziah.rahman.salleh.kuantan@iium.edu.my
+statistics in her page are 3 active activiity 0 total trainee 0 avg attenndace 8 months service period
+thats the only problem with the page
+but as i go through other profiles i noticed that only teacher level profile have the assigned trainee button this is wrong every user is also instructor hence each and every staff need to ahve this button
+and i think in the quick actions we can remove the edit profile button since at the top of the hero section already have the edit profile button do not make redundant element
+
+Specific Staff Profile Editing Page
+http://127.0.0.1:8000/staffs/edit/{userencryptedid}
+
+i think we need to change the address to http://127.0.0.1:8000/staffs/profile/edit/{userencryptedid} snce it makes more sense but make sure to make it align with the current logic
+the edit function works
+
+When I click the View Schedule button in the http://127.0.0.1:8000/staffs/profile/{userencryptedid} the following error occurred:
+[2025-08-17 20:21:28] local.ERROR: Error showing staff schedule: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'activity_schedules.schedule_status' in 'where clause' (Connection: mysql, SQL: select distinct `activity_schedules`.*, `activities`.`activity_name` from `activity_schedules` inner join `activities` on `activity_schedules`.`activity_id` = `activities`.`id` inner join `activity_sessions` on `activity_schedules`.`activity_id` = `activity_sessions`.`activity_id` where `activity_sessions`.`teacher_id` = 20 and `activity_schedules`.`schedule_status` = active order by `activity_schedules`.`start_date` asc, `activity_schedules`.`start_time` asc) {"encrypted_id":"eyJpdiI6ImJHc0dKOGEvbHRTQ0cvb0JoS0hyVmc9PSIsInZhbHVlIjoiOVF5VU1MTW43WWFnN2VCQmthMTh4MDhYMjJlNU5UZVVGbVBsUWs1Um1YbnUyL1IzWFZEbEI2VnhORm0xcTEzcDArVWppQjh2UXZYcUo5cGxscmN1OFhBZU9pYTZDY3FIakd5NW5HS3lmZzJrV2V4eDdIbjBXUGJCL1A0dy9ZSjljWjd0Wi80cXVpUlN0bnlUb2ljVGtnPT0iLCJtYWMiOiIxZTJhMjU3ODcwYjQwMGFkNGQ3NjcyMTEzMDJiNzllOTM4NWM5YjIwYWY2MzE1MWRmYjUyNDc1OGMwZmE4YjJlIiwidGFnIjoiIn0=","error":"#0 C:\\laragon\\www\\CREAMS\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Connection.php(783): Illuminate\\Database\\Connection->runQueryCallback('select distinct...', Array, Object(Closure))
+
+Specific Staff Profile Attendance Page
+http://127.0.0.1:8000/staffs/attendance/{userencryptedid}
+
+i checked few users attendance page they all share the same fate as fauziah.rahman.salleh@iium.edu.my's attendance page where the following displayed: "Attendance Overview - August 2025
+Working Days: 21
+0
+Present Days
+0
+Late Arrivals
+0
+Sick Leaves
+0%
+Attendance Rate
+Total Check-ins This Month
+0
+Total Check-outs This Month
+0
+Authorized Leaves
+0
+Emergency Leaves
+0
+Recent Attendance History
+This Month
+Date	Day	Time	Type	Status	Marked By	Remarks
+No attendance records found for the last 30 days"
+
+This is wrong please make sure it follow the database not hardcoded
+The mark attendance supposed to work as I currently am an admin which gave me the power to mark today's attendace for any trainee and users yet when i clicked the button it gave me the message that "Quick attendance marking functionality would be implemented here." this is wrong,
+the export report button works as intended
+when i clicked the view schedule
+[2025-08-17 20:26:51] local.ERROR: Error showing staff schedule: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'activity_schedules.schedule_status' in 'where clause' (Connection: mysql, SQL: select distinct `activity_schedules`.*, `activities`.`activity_name` from `activity_schedules` inner join `activities` on `activity_schedules`.`activity_id` = `activities`.`id` inner join `activity_sessions` on `activity_schedules`.`activity_id` = `activity_sessions`.`activity_id` where `activity_sessions`.`teacher_id` = 20 and `activity_schedules`.`schedule_status` = active order by `activity_schedules`.`start_date` asc, `activity_schedules`.`start_time` asc) {"encrypted_id":"eyJpdiI6Imo0TzNHSGR0TXpoa3hiMHpjL3RiM2c9PSIsInZhbHVlIjoieHJiYmVxK29BYWswWFlCejZyWDZSWkpWMnNPNlFuNWZWbnVtMGxTb0Q1WnpZb1VVUFhRRjJ0MXZ4NmJoa1JVNk43NzFDTWVVNUtIa3piOTY0QlE0akZoK3FIaWI4OW9XQmJnbHRDNlFySlNSTUh5MHdQc3lyM0djT1V0WkZCQ1lHOHFSQ3BPa0Jic040enRWR1crU1V3PT0iLCJtYWMiOiI0YjU4ZWQ2NmE4NGMzMmQ4MzAzMjEzOTgzOTE0YjU5MmYyODllOTNiNzE2ODRmYmQxMTNjNDE0OTY5ZTY5YmEzIiwidGFnIjoiIn0=","error":"#0 C:\\laragon\\www\\CREAMS\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Connection.php(783): Illuminate\\Database\\Connection->runQueryCallback('select distinct...', Array, Object(Closure))
+
+Specific Staff Activities Page
+http://127.0.0.1:8000/staffs/activities/{userencryptedid}
+
+can you check for user Fauziah Rahman binti Salleh is this statistics correct per database or is it only hardcoded, they are: Activity Statistics
+3
+Total Activity
+3
+Active Activity
+0
+Total Enrollments
+90m
+Avg Duration
+
+All Activity
+N/A
+Sensory Integration Therapy - Kuantan
+Multi-sensory approach to improve processing skills
+
+Duration: 90 minutes | Level: Intermediate | Activity Hall - Kuantan
+Behavioral Therapy
+0 Enrolled
+Active
+Objectives:
+"[\"Improve motor skills\",\"Enhance cognitive function\",\"Develop communication\"]"
+
+N/A
+Cognitive Rehabilitation - Kuantan
+Memory enhancement and cognitive function improvement
+
+Duration: 90 minutes | Level: Intermediate | Classroom A - Kuantan
+Music Therapy
+0 Enrolled
+Active
+Objectives:
+"[\"Improve motor skills\",\"Enhance cognitive function\",\"Develop communication\"]"
+
+N/A
+Sensory Integration Therapy - Kuantan
+Multi-sensory approach to improve processing skills
+
+Duration: 90 minutes | Level: Beginner | Activity Hall - Kuantan
+Rehabilitation Services
+0 Enrolled
+Active
+Objectives:
+"[\"Improve motor skills\",\"Enhance cognitive function\",\"Develop communication\"]"
+
+and then i would like to include a button at the hero section maybe below the back to profile with a "Create a new activity"
+for each and every cards in the all activity list section i can click then it will go to that specific activity so that i can check in more detiales
+and why is the color of the page in light blue background color when it supposed to follow the system's color scheme of: --primary-color: #32bdea;
+    --secondary-color: #c850c0;
+    --primary-gradient: linear-gradient(
+        -135deg,
+        var(--primary-color),
+        var(--secondary-color)
+    );
+    --secondary-gradient: linear-gradient(
+        -135deg,
+        var(--secondary-color),
+        var(--primary-color)
+    );
+    --dark-color: #1a2a3a;
+    --light-color: #ffffff;
+    --text-color: #444444;
+    --light-bg: #f8f9fa;
+    --border-color: #e0e0e0;
+}
+
+Specific Staff Assigned Trainee Page
+http://127.0.0.1:8000/staffs/trainees/{userencryptedid}
+The same also goes to the assigned trainee page since for the user Fauziah Rahman binti Salleh is this statistics correct per database or is it only hardcoded, they are Trainee Statistics
+0
+Total Trainee
+0
+Active Enrollments
+0
+Enrolled
+0
+Unique Activity
+All Assigned Trainee
+No Trainee Assigned
+This staff member has no trainees assigned to their activities yet. 
+and why is the color of the page in light blue background color when it supposed to follow the system's color scheme of: --primary-color: #32bdea;
+    --secondary-color: #c850c0;
+    --primary-gradient: linear-gradient(
+        -135deg,
+        var(--primary-color),
+        var(--secondary-color)
+    );
+    --secondary-gradient: linear-gradient(
+        -135deg,
+        var(--secondary-color),
+        var(--primary-color)
+    );
+    --dark-color: #1a2a3a;
+    --light-color: #ffffff;
+    --text-color: #444444;
+    --light-bg: #f8f9fa;
+    --border-color: #e0e0e0;
+}
+
+
+
+
+
+New User Registration
+http://127.0.0.1:8000/staffs/register
+
+I cant register new user per the error: [2025-08-17 20:44:26] local.ERROR: Database error during registration: {"message":"SQLSTATE[42S22]: Column not found: 1054 Unknown column 'user_type' in 'field list' (Connection: mysql, SQL: insert into `notifications` (`user_id`, `user_type`, `notification_type`, `notification_title`, `notification_message`, `notification_data`, `is_read`, `updated_at`, `created_at`) values (46, App\\Models\\User, success, Welcome to CREAMS, Welcome to the Community-based REhAbilitation Management System. Your account has been created successfully., {\"user_role\":\"admin\",\"registration_date\":\"2025-08-17 20:44:26\"}, 0, 2025-08-17 20:44:26, 2025-08-17 20:44:26))","code":"42S22"} 
+
+
+
+
+
+Trainee General Dashboard
+http://127.0.0.1:8000/trainees/home
+There are currently 0 trainee cards in the page, and the statistics also not working: 0
+Total Trainee
+0
+Active Trainee
+0
+Enrolled in Activity
+0%
+Average Progress
+0%
+Average Attendance
+0
+Below 50% Attendance
+
+
+
+
+
+Trainee Registration
+http://127.0.0.1:8000/trainees/create
+
+maybe can change to trainees/register
+when i tried to create a new trainee, the error occured: [2025-08-17 20:46:02] local.INFO: Accessing trainees home page {"user_id":44,"filters":[]} 
+[2025-08-17 20:46:02] local.ERROR: Error retrieving trainees {"error":"SQLSTATE[42S22]: Column not found: 1054 Unknown column 'activity_enrollments.progress_percentage' in 'field list' (Connection: mysql, SQL: select `activities`.*, `activity_enrollments`.`trainee_id` as `pivot_trainee_id`, `activity_enrollments`.`activity_id` as `pivot_activity_id`, `activity_enrollments`.`enrollment_date` as `pivot_enrollment_date`, `activity_enrollments`.`enrollment_status` as `pivot_enrollment_status`, `activity_enrollments`.`enrollment_notes` as `pivot_enrollment_notes`, `activity_enrollments`.`progress_percentage` as `pivot_progress_percentage`, `activity_enrollments`.`attendance_count` as `pivot_attendance_count`, `activity_enrollments`.`completion_date` as `pivot_completion_date`, `activity_enrollments`.`completion_notes` as `pivot_completion_notes`, `activity_enrollments`.`enrolled_by` as `pivot_enrolled_by`, `activity_enrollments`.`created_at` as `pivot_created_at`, `activity_enrollments`.`updated_at` as `pivot_updated_at` from `activities` inner join `activity_enrollments` on `activities`.`id` = `activity_enrollments`.`activity_id` where `activity_enrollments`.`trainee_id` in (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53))","trace":"#0 C:\\laragon\\www\\CREAMS\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Connection.php(783): Illuminate\\Database\\Connection->runQueryCallback('select `activit...', Array, Object(Closure))

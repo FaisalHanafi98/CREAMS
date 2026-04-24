@@ -1,0 +1,79 @@
+Hello Claude,
+
+I’ve attached all relevant project files, including a collection of detailed module documents named in the format:
+MODULE_SUMMARY_<MODULE>.md
+(e.g., MODULE_SUMMARY_ACTIVITIES.md, MODULE_SUMMARY_AUTHENTICATION.md, etc.).
+
+Each of these documents contains critical information for an individual module within a Laravel-based system, outlining:
+
+Module purpose and responsibilities
+
+Current issues or bugs
+
+Expected/desired behaviors and system goals
+
+🔧 What I need from you:
+Please act as a lead-level Laravel system analyst and solution architect and provide me with a comprehensive technical plan for resolving every issue described across all module summary files.
+
+For each module, I want the following structure in your reply:
+
+Primary Fix / Implementation Plan
+→ Solve the listed problems using Laravel best practices (auth, middleware, session handling, validation, Eloquent, etc.)
+
+Secondary and Tertiary Alternatives
+→ If applicable, provide backup strategies including refactoring, restructuring, or rearchitecting the module.
+→ Do not hesitate to suggest bold changes if they improve long-term maintainability or performance.
+
+Justification & Trade-Offs
+→ Explain the pros/cons of each solution or alternative clearly.
+
+Preserve What Works
+→ Mention any part of the module that seems stable or functioning properly, so I don’t waste time refixing working features.
+
+✅ Modules That Already Have Fix Guides:
+Please SKIP these modules:
+
+MODULE_SUMMARY_LETTER.md
+
+MODULE_SUMMARY_AUTHENTICATION.md
+
+MODULE_SUMMARY_ACTIVITIES.md
+
+MODULE_SUMMARY_ASSETS.md
+
+MODULE_SUMMARY_DASHBOARD.md
+
+MODULE_SUMMARY_TRAINEE.md
+
+📌 What I need you to do:
+Scan every remaining MODULE_SUMMARY_<MODULE>.md file.
+
+ONLY generate implementation/fix guides for the modules that are NOT in the list above.
+
+For each new module, provide a comprehensive, well-structured Laravel repair guide, including:
+
+Identification of the broken or missing functionality
+
+Laravel-specific solutions (routes, models, policies, validation, etc.)
+
+Suggestions for improving code organization or user experience
+
+Any frontend adjustments (Blade, Vue, AlpineJS) if applicable
+
+🔁 Important Conditions:
+Please DO NOT ask me any questions or request clarifications until after you've completed your full analysis and recommendation plan based on the attachments.
+
+Focus on giving me a ready-to-act roadmap that I can implement directly or adapt.
+
+Length is not a concern — I prefer an in-depth response with layered insight and edge-case considerations.
+
+⚠️ Final Instructions:
+DO NOT ask follow-up questions until the above task is fully completed.
+
+DO NOT generate any guides for modules already covered.
+
+Be as detailed and practical as possible — assume I’ll implement this in real code.
+
+Be bold with improvements. If the module’s logic is weak, propose better flows.
+
+Assume this system will serve real-world users at a CBR (Community-Based Rehabilitation) center.
