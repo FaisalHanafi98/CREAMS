@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -10,6 +11,21 @@ use Carbon\Carbon;
 class AssetMaintenance extends Model
 {
     use HasFactory;
+
+    protected static function booted(): void
+    {
+        static::addGlobalScope('centre_isolation', function (Builder $builder) {
+            $role = session('role');
+            $centreId = session('centre_id');
+
+            if (!$role || !$centreId) return;
+            if ($role === 'admin') return;
+
+            $builder->whereHas('asset', function ($q) use ($centreId) {
+                $q->where('assets.centre_id', $centreId);
+            });
+        });
+    }
 
     protected $table = 'asset_maintenance';
 
