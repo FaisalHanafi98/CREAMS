@@ -1,9 +1,11 @@
 # CREAMS - Module Functionality Inventory
 
 **Generated:** 2026-02-06
+**Last Updated:** 2026-03-24
 **Total Features:** 163
 **Total Modules:** 16
-**Test Coverage:** 13.4% (Playwright: 6.7%, PHPUnit: 6.7%)
+**PHPUnit Tests:** 306 tests, 829 assertions (100% pass rate as of 2026-03-24)
+**Test Coverage Note:** Feature coverage has expanded significantly since initial inventory. 27 PHPUnit test classes now cover auth, RBAC, models, letters, volunteers, and centre isolation. Playwright coverage unchanged.
 
 ---
 
@@ -44,7 +46,7 @@
 | Email Verification | VerifyEmailController::__invoke | GET /email/verify/{id}/{hash} | auth/verifyemail.blade.php | Guest | ❌ No | ❌ No | Medium | Post-registration |
 | Password Confirmation | ConfirmablePasswordController::show | GET /confirm-password | auth/confirmpassword.blade.php | Auth | ❌ No | ❌ No | Medium | Security gate |
 
-**Module Statistics:** 8 features, 2 with Playwright tests (25%), 4 with PHPUnit tests (50%)
+**Module Statistics:** 8 features, 2 with Playwright tests (25%), 4 with PHPUnit tests (50%). Auth tests fixed 2026-03-24 (CSRF bypass for test env).
 
 ---
 

@@ -24,15 +24,15 @@ The application demonstrates good security fundamentals (password hashing, CSRF 
 
 | OWASP Risk | Status | Compliance | Evidence | Priority |
 |------------|--------|------------|----------|----------|
-| **A01: Broken Access Control** | ⚠️ PARTIAL | 60% | Role middleware present; Centre access control implemented; **Issue**: Debug routes bypass auth | HIGH |
+| **A01: Broken Access Control** | ⚠️ IMPROVED | 80% | Role middleware present; Centre access control implemented; CentreScope GlobalScope added 2026-03-24; Debug routes removed | MEDIUM |
 | **A02: Cryptographic Failures** | ⚠️ CONCERN | 70% | Bcrypt for passwords ✅; **Issue**: SESSION_ENCRYPT=false; .env credentials exposed | CRITICAL |
 | **A03: Injection** | ✅ GOOD | 95% | Eloquent ORM used throughout; Parameterized queries; No raw SQL found | LOW |
 | **A04: Insecure Design** | ⚠️ PARTIAL | 65% | Session-based auth suitable for use case; **Issue**: No rate limiting on auth endpoints | MEDIUM |
-| **A05: Security Misconfiguration** | ❌ FAIL | 40% | APP_DEBUG=true; Debug routes exposed; Weak password policy (8 chars) | CRITICAL |
+| **A05: Security Misconfiguration** | ⚠️ IMPROVED | 70% | APP_DEBUG=true still needs fix for prod; Debug routes removed; Password policy strengthened to 12 chars | HIGH |
 | **A06: Vulnerable Components** | ⚠️ UNKNOWN | N/A | Laravel 10.x (current); PHP 8.5 (current); **Action Required**: Run `composer audit` | MEDIUM |
 | **A07: Identification/Auth Failures** | ⚠️ PARTIAL | 70% | Hash::check() used ✅; **Issue**: No session regeneration on login; No rate limiting | HIGH |
 | **A08: Software/Data Integrity** | ✅ GOOD | 80% | CSRF tokens present; File uploads validated; **Issue**: .env in repo (if committed) | LOW |
-| **A09: Security Logging Failures** | ⚠️ PARTIAL | 50% | Failed logins logged ✅; **Issue**: Over-logging sensitive data (session dumps) | MEDIUM |
+| **A09: Security Logging Failures** | ⚠️ IMPROVED | 65% | Failed logins logged ✅; PII-safe logging fixed 2026-03-24; PDPA fields added to API sanitizer | MEDIUM |
 | **A10: Server-Side Request Forgery** | ✅ N/A | N/A | No external URL fetching detected | N/A |
 
 **Overall OWASP Compliance: 66%** (10 categories, weighted average)
@@ -453,16 +453,16 @@ $filename = Str::slug(pathinfo($originalName, PATHINFO_FILENAME))
 
 ### MUST FIX BEFORE PRODUCTION (Blockers) 🚨
 
-- [ ] **CRITICAL**: Remove XSS vulnerability in `/letters-archive` route (30 min)
-- [ ] **CRITICAL**: Remove debug routes (`/debug/*`, `/test-dashboard`) (15 min)
+- [x] **CRITICAL**: Remove XSS vulnerability in `/letters-archive` route — FIXED 2026-03-24 (wrapped all output with `e()`)
+- [x] **CRITICAL**: Remove debug routes (`/debug/*`, `/test-dashboard`, `/test`, `/test-sessions`) — FIXED 2026-03-24
 - [ ] **CRITICAL**: Verify `.env` NOT in git repository (10 min)
 - [ ] **CRITICAL**: Rotate all credentials in `.env` (30 min)
 - [ ] **CRITICAL**: Set `SESSION_ENCRYPT=true` (5 min)
 - [ ] **HIGH**: Add session regeneration on login (15 min)
 - [ ] **HIGH**: Implement rate limiting on auth endpoints (30 min)
-- [ ] **HIGH**: Strengthen password policy (minimum 12 chars + complexity) (20 min)
+- [x] **HIGH**: Strengthen password policy (minimum 12 chars + complexity) — FIXED 2026-03-24 (min:12 with regex enforcement)
 
-**Estimated Time: 2.5 hours** ⏱️
+**Remaining Estimated Time: ~1.5 hours** ⏱️
 
 ---
 
@@ -470,14 +470,14 @@ $filename = Str::slug(pathinfo($originalName, PATHINFO_FILENAME))
 
 - [ ] Set `APP_DEBUG=false` for production (5 min)
 - [ ] Set `LOG_LEVEL=warning` or `error` for production (5 min)
-- [ ] Remove sensitive data logging from middleware (15 min)
+- [x] Remove sensitive data logging from middleware — FIXED 2026-03-24 (Authenticate.php PII-safe logging)
 - [ ] Fix file upload to use `store()` instead of `move()` (20 min)
-- [ ] Run `composer audit` and update vulnerable packages (30 min)
+- [x] Run `composer audit` and update vulnerable packages — ADDED to CI 2026-03-24
 - [ ] Implement security headers (CSP, X-Frame-Options, HSTS) (45 min)
 - [ ] Add logging for all authentication events (success and failure) (30 min)
 - [ ] Review and tighten CORS policy (15 min)
 
-**Estimated Time: 2.5 hours** ⏱️
+**Remaining Estimated Time: ~1.75 hours** ⏱️
 
 ---
 

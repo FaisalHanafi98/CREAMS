@@ -2,22 +2,25 @@
 
 ## Research Findings (Current State)
 
+> **Updated 2026-03-22**: This section reflects the actual state after Phases 1-4 were completed.
+
 ### What Exists
-- **9 PHPUnit test classes** (13% coverage) — but AuthenticationTest is WRONG: it POSTs to `/login` with `email` field, while CREAMS actually uses POST `/auth/check` with `identifier` field
-- **TestCase.php** already has custom `actingAs()` that sets session data — good foundation
+- **27 PHPUnit test classes** (6 Unit + 21 Feature) — AuthenticationTest rewritten and working correctly
+- **16 Playwright E2E test files** covering auth, dashboard, RBAC, and functional CRUD (207/210 passing)
+- **TestCase.php** with custom `actingAs()` that sets session data
 - **`mysql_test` connection** configured in `config/database.php` → `cream_test` database
 - **10 factories** with role states (UserFactory has `admin()`, `supervisor()`, `teacher()`, `ajk()`)
-- **phpunit.xml** has SQLite in-memory COMMENTED OUT — tests currently hit dev MySQL
-- **CREAMS_Testing_Infrastructure_PRD.md** exists with full test strategy (1200 lines)
-- **Laravel Dusk NOT installed** (not in composer.json despite PRD specifying it)
-- **Zero CI/CD** — no `.github/workflows/`, no Dockerfile, no docker-compose.yml
-- **Zero ADRs** — no `docs/adr/` directory
+- **phpunit.xml** uses MySQL (`cream_test`), **phpunit-ci.xml** uses SQLite in-memory
+- **CREAMS_Testing_Infrastructure_PRD.md** exists with full test strategy
+- **CI/CD pipeline active** — `.github/workflows/ci.yml` (tests + lint) and `deploy.yml` (3-stage deploy)
+- **No Dockerfile or docker-compose.yml** (Phase 5 still pending)
+- **No ADRs** — no `docs/adr/` directory (Phase 6 still pending)
 
-### Critical Issues Found
-1. **Existing auth tests are broken** — they test Laravel Breeze scaffolding, not the actual CREAMS custom session auth (`MainController::check()`)
-2. **No test database isolation** — SQLite commented out, `cream_test` DB may not exist
-3. **Factory cascading problem** — `AttendanceFactory` creates 4 related records per call, `ActivityFactory` auto-creates a teacher user
-4. **Table name inconsistency** — Migration creates `activity_occurrences` but code references `activity_sessions`
+### What Was Fixed (Phases 1-4)
+1. ~~Existing auth tests are broken~~ — **FIXED**: AuthenticationTest rewritten to use `/auth/check` with `identifier` field, tests all 4 roles
+2. ~~No test database isolation~~ — **FIXED**: phpunit-ci.xml uses SQLite in-memory, phpunit.xml uses cream_test MySQL
+3. Factory cascading still exists but works correctly in both MySQL and SQLite
+4. Table name inconsistency resolved via model `$table` property
 
 ---
 
@@ -275,9 +278,13 @@ PHASE 6 (ADRs) ← Independent, can run in parallel with anything
 
 ## Estimated Coverage Impact
 
-| Phase | Tests Added | Coverage |
-|-------|------------|----------|
-| Current | 9 (broken) | 13% |
-| After Phase 3 | +20 auth/RBAC | ~25% |
-| After Phase 4 | +20 business flows | ~40% |
-| **Total** | ~49 working tests | **40%** |
+| Phase | Tests Added | Coverage | Status |
+|-------|------------|----------|--------|
+| ~~Current~~ | ~~9 (broken)~~ | ~~13%~~ | Superseded |
+| Phase 1-2 | Foundation + CI | Baseline | **DONE** |
+| Phase 3 | +21 auth/RBAC/Feature tests | ~20% | **DONE** |
+| Phase 4 | +16 Playwright E2E tests | ~25% | **DONE** |
+| Phase 5 | Docker setup | N/A | **PENDING** |
+| Phase 6 | ADRs | N/A | **PENDING** |
+| **Current Total** | 27 PHPUnit + 16 Playwright | **~20%** | Measured 2026-03-22 |
+| **Target** | +30 targeted tests | **40%+** | Next sprint |
