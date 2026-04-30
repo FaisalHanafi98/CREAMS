@@ -1,0 +1,142 @@
+CREAMS SYSTEM AUDIT LOG
+========================
+Enhancement: Activity Model Malaysian Curriculum Integration
+Date: December 18, 2024
+File Modified: app/Models/Activity.php
+Status: COMPLETED - Ready for Database Migration
+
+OVERVIEW
+--------
+Enhanced the Activity model to support Malaysian special education curriculum standards
+and disability-specific accommodations for rehabilitation center management.
+
+CHANGES MADE
+------------
+
+1. FILLABLE ATTRIBUTES ADDED
+   - subject_category: Malaysian curriculum subject classification
+   - curriculum_level: Foundation standards alignment (pre_foundation, foundation, basic, adaptive)
+   - standard_duration_minutes: Default lesson duration (45 minutes)
+   - minimum_duration_minutes: Shortest acceptable duration (15 minutes)
+   - maximum_duration_minutes: Longest acceptable duration (90 minutes)
+   - learning_outcomes: JSON array of Malaysian curriculum learning outcomes
+   - assessment_criteria: JSON array of assessment methods
+   - requires_special_accommodation: Boolean flag for special needs requirements
+
+2. CASTS CONFIGURATION
+   - learning_outcomes: 'array' (JSON handling)
+   - assessment_criteria: 'array' (JSON handling)
+   - requires_special_accommodation: 'boolean'
+
+3. NEW QUERY SCOPES
+   a) scopeMalaysianCurriculum()
+      - Filters activities by Malaysian subject categories
+      - Subjects: Bahasa Malaysia, English, Arabic, Mathematics, Science, Life Skills
+   
+   b) scopeTherapy()
+      - Filters therapy-focused activities
+      - Categories: Physical, Occupational, Speech, Social Skills
+
+4. NEW ACCESSOR METHODS
+   a) getFormattedSubjectCategoryAttribute()
+      - Converts snake_case to readable format
+      - Maps: 'bahasa_malaysia' → 'Bahasa Malaysia'
+   
+   b) getFormattedCurriculumLevelAttribute()
+      - Converts curriculum codes to descriptions
+      - Maps: 'pre_foundation' → 'Pre-Foundation (Pre-school)'
+   
+   c) getSubjectBadgeClassAttribute()
+      - Returns Bootstrap CSS classes for UI badges
+      - Color coding by subject category
+
+5. DISABILITY ACCOMMODATION METHODS
+   a) getRecommendedDurationForTrainee($traineeId)
+      - Calculates personalized lesson duration
+      - Priority: Individual adaptations > Disability templates > Standard duration
+      - Integrates with trainee_subject_adaptations and disability_accommodations tables
+   
+   b) needsAccommodationForTrainee($traineeId)
+      - Determines if special accommodations are required
+      - Checks trainee condition against accommodation database
+      - Returns boolean for UI/scheduling decisions
+
+TECHNICAL IMPLEMENTATION
+------------------------
+
+Database Integration:
+- Uses DB facade for accommodation lookups
+- Implements fallback hierarchy for duration calculation
+- Maintains backwards compatibility with existing activities
+
+Performance Considerations:
+- Query optimization through specific table lookups
+- Caching-friendly accessor methods
+- Minimal database calls per method
+
+Security:
+- Input validation through Eloquent fillable properties
+- Safe JSON handling for array fields
+- Protected against mass assignment vulnerabilities
+
+BUSINESS IMPACT
+---------------
+
+Educational Benefits:
+- Aligns with Malaysian Ministry of Education standards
+- Supports individualized education programs (IEPs)
+- Enables curriculum-based activity planning
+
+Operational Benefits:
+- Automated duration recommendations
+- Disability-aware scheduling
+- Standardized assessment criteria
+- Teacher workload optimization
+
+Compliance Benefits:
+- Meets special education regulatory requirements
+- Supports audit trail for accommodation decisions
+- Enables data-driven educational outcomes
+
+DEPENDENCIES
+------------
+Requires the following database tables (created by migration):
+- disability_accommodations
+- trainee_subject_adaptations
+
+Related Models:
+- Trainee model (existing)
+- Users model (existing)
+- ActivitySession model (existing)
+
+TESTING RECOMMENDATIONS
+-----------------------
+1. Unit tests for accessor methods
+2. Integration tests for accommodation calculations
+3. Scope method functionality tests
+4. JSON field handling validation
+5. Database relationship integrity tests
+
+DEPLOYMENT NOTES
+----------------
+1. Run migration before using new features
+2. Seed disability_accommodations table
+3. Update existing activities with subject_category values
+4. Train staff on new curriculum alignment features
+
+ROLLBACK PLAN
+-------------
+If issues arise:
+1. Migration has down() method to reverse changes
+2. Fillable attributes are additive (won't break existing code)
+3. New methods have null-safe implementations
+4. Existing functionality remains unchanged
+
+AUDIT TRAIL
+-----------
+- Modified by: Claude Code Assistant
+- Reviewed by: [Pending]
+- Approved by: [Pending]
+- Deployed by: [Pending]
+
+END OF AUDIT LOG

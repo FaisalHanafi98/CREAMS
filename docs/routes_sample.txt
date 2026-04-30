@@ -1,0 +1,100 @@
+
+  [34mGET[39m[38;2;108;114;128m|[39m[38;2;108;114;128mHEAD[39m  [37m/[39m[38;2;108;114;128m ................................................................................................... home[39m
+  [33mPOST[39m      [37m_ignition/execute-solution[39m[38;2;108;114;128m . ignition.executeSolution › Spatie\LaravelIgnition › ExecuteSolutionController[39m
+  [34mGET[39m[38;2;108;114;128m|[39m[38;2;108;114;128mHEAD[39m  [37m_ignition/health-check[39m[38;2;108;114;128m ............. ignition.healthCheck › Spatie\LaravelIgnition › HealthCheckController[39m
+  [33mPOST[39m      [37m_ignition/update-config[39m[38;2;108;114;128m .......... ignition.updateConfig › Spatie\LaravelIgnition › UpdateConfigController[39m
+  [34mGET[39m[38;2;108;114;128m|[39m[38;2;108;114;128mHEAD[39m  [37maboutus[39m[38;2;108;114;128m .......................................................................................... aboutus[39m
+  [34mGET[39m[38;2;108;114;128m|[39m[38;2;108;114;128mHEAD[39m  [37mactivities[39m[38;2;108;114;128m ................................................................................... activities.[39m
+  [33mPOST[39m      [37mactivities[39m[38;2;108;114;128m .......................................... activities.store › Activity\ActivityController@store[39m
+  [33mPOST[39m      [37mactivities/bulk/cancel[39m[38;2;108;114;128m ............ activities.bulk-cancel › Activity\SessionTemplateController@bulkCancel[39m
+  [33mPOST[39m      [37mactivities/bulk/change-venue[39m[38;2;108;114;128m activities.bulk-change-venue › Activity\SessionTemplateController@bulkChange…[39m
+  [33mPOST[39m      [37mactivities/bulk/reschedule[39m[38;2;108;114;128m activities.bulk-reschedule › Activity\SessionTemplateController@bulkReschedule[39m
+  [34mGET[39m[38;2;108;114;128m|[39m[38;2;108;114;128mHEAD[39m  [37mactivities/categories[39m[38;2;108;114;128m ..................... activities.categories › Activity\ActivityController@categories[39m
+  [34mGET[39m[38;2;108;114;128m|[39m[38;2;108;114;128mHEAD[39m  [37mactivities/categories/[39m[33m{categorySlug}[39m[38;2;108;114;128m activities.categories.show › Activity\ActivityController@categoryShow[39m
+  [34mGET[39m[38;2;108;114;128m|[39m[38;2;108;114;128mHEAD[39m  [37mactivities/create[39m[38;2;108;114;128m ................................. activities.create › Activity\ActivityController@create[39m
+  [34mGET[39m[38;2;108;114;128m|[39m[38;2;108;114;128mHEAD[39m  [37mactivities/home[39m[38;2;108;114;128m ...................................... activities.home › Activity\ActivityController@index[39m
+  [34mGET[39m[38;2;108;114;128m|[39m[38;2;108;114;128mHEAD[39m  [37mactivities/learning-outcomes[39m[38;2;108;114;128m ........ activities.learning-outcomes.index › LearningOutcomeController@index[39m
+  [33mPOST[39m      [37mactivities/learning-outcomes[39m[38;2;108;114;128m ........ activities.learning-outcomes.store › LearningOutcomeController@store[39m
+  [34mGET[39m[38;2;108;114;128m|[39m[38;2;108;114;128mHEAD[39m  [37mactivities/learning-outcomes/create[39m[38;2;108;114;128m activities.learning-outcomes.create › LearningOutcomeController@create[39m
+  [33mPOST[39m      [37mactivities/learning-outcomes/update-order[39m[38;2;108;114;128m activities.learning-outcomes.update-order › LearningOutcomeCont…[39m
+  [34mGET[39m[38;2;108;114;128m|[39m[38;2;108;114;128mHEAD[39m  [37mactivities/learning-outcomes/[39m[33m{id}[39m[38;2;108;114;128m ..... activities.learning-outcomes.show › LearningOutcomeController@show[39m
+  [33mPUT[39m       [37mactivities/learning-outcomes/[39m[33m{id}[39m[38;2;108;114;128m . activities.learning-outcomes.update › LearningOutcomeController@update[39m
+  [31mDELETE[39m    [37mactivities/learning-outcomes/[39m[33m{id}[39m[38;2;108;114;128m activities.learning-outcomes.destroy › LearningOutcomeController@destroy[39m
+  [34mGET[39m[38;2;108;114;128m|[39m[38;2;108;114;128mHEAD[39m  [37mactivities/learning-outcomes/[39m[33m{id}[39m[37m/edit[39m[38;2;108;114;128m activities.learning-outcomes.edit › LearningOutcomeController@edit[39m
+  [34mGET[39m[38;2;108;114;128m|[39m[38;2;108;114;128mHEAD[39m  [37mactivities/modern-home[39m[38;2;108;114;128m ................... activities.modern-home › Activity\ActivityController@modernHome[39m
+  [34mGET[39m[38;2;108;114;128m|[39m[38;2;108;114;128mHEAD[39m  [37mactivities/schedule[39m[38;2;108;114;128m ...................... activities.schedule › Activity\ActivityController@scheduleIndex[39m
+  [34mGET[39m[38;2;108;114;128m|[39m[38;2;108;114;128mHEAD[39m  [37mactivities/schedule/calendar-data[39m[38;2;108;114;128m activities.schedule.calendar-data › Activity\ActivityController@getCale…[39m
+  [34mGET[39m[38;2;108;114;128m|[39m[38;2;108;114;128mHEAD[39m  [37mactivities/schedule/personal[39m[38;2;108;114;128m . activities.schedule.personal › Activity\ActivityController@personalSchedule[39m
+  [34mGET[39m[38;2;108;114;128m|[39m[38;2;108;114;128mHEAD[39m  [37mactivities/schedule/staff/[39m[33m{encryptedId}[39m[38;2;108;114;128m activities.schedule.staff › Activity\ActivityController@staffSche…[39m
+  [34mGET[39m[38;2;108;114;128m|[39m[38;2;108;114;128mHEAD[39m  [37mactivities/schedule/teacher/[39m[33m{teacherId}[39m[38;2;108;114;128m activities.schedule.teacher › Activity\ActivityController@teacher…[39m
+  [34mGET[39m[38;2;108;114;128m|[39m[38;2;108;114;128mHEAD[39m  [37mactivities/schedule/trainee/[39m[33m{encryptedId}[39m[38;2;108;114;128m activities.schedule.trainee › Activity\ActivityController@train…[39m
+  [34mGET[39m[38;2;108;114;128m|[39m[38;2;108;114;128mHEAD[39m  [37mactivities/schedule/weekly[39m[38;2;108;114;128m ....... activities.schedule.weekly › Activity\ActivityController@weeklySchedule[39m
+  [33mPOST[39m      [37mactivities/sessions/[39m[33m{sessionId}[39m[37m/create-template[39m[38;2;108;114;128m activities.sessions.create-template › Activity\SessionTem…[39m
+  [34mGET[39m[38;2;108;114;128m|[39m[38;2;108;114;128mHEAD[39m  [37mactivities/sessions/[39m[33m{sessionId}[39m[37m/learning-outcomes[39m[38;2;108;114;128m activities.sessions.learning-outcomes.index › Activity\…[39m
+  [33mPOST[39m      [37mactivities/sessions/[39m[33m{sessionId}[39m[37m/learning-outcomes[39m[38;2;108;114;128m activities.sessions.learning-outcomes.store › Activity\…[39m
+  [34mGET[39m[38;2;108;114;128m|[39m[38;2;108;114;128mHEAD[39m  [37mactivities/sessions/[39m[33m{sessionId}[39m[37m/learning-outcomes/analytics[39m[38;2;108;114;128m activities.sessions.learning-outcomes.analyti…[39m
+  [34mGET[39m[38;2;108;114;128m|[39m[38;2;108;114;128mHEAD[39m  [37mactivities/sessions/[39m[33m{sessionId}[39m[37m/learning-outcomes/available[39m[38;2;108;114;128m activities.sessions.learning-outcomes.availab…[39m
+  [33mPOST[39m      [37mactivities/sessions/[39m[33m{sessionId}[39m[37m/learning-outcomes/progress[39m[38;2;108;114;128m activities.sessions.learning-outcomes.update-p…[39m
+  [33mPOST[39m      [37mactivities/sessions/[39m[33m{sessionId}[39m[37m/notes[39m[38;2;108;114;128m activities.sessions.notes.update › Centre\AttendanceController@upda…[39m
+  [34mGET[39m[38;2;108;114;128m|[39m[38;2;108;114;128mHEAD[39m  [37mactivities/sessions/[39m[33m{sessionId}[39m[37m/template-data[39m[38;2;108;114;128m activities.sessions.template-data › Activity\SessionTemplat…[39m
+  [33mPOST[39m      [37mactivities/sessions/[39m[33m{sessionId}[39m[37m/template-modify[39m[38;2;108;114;128m activities.sessions.template-modify › Activity\SessionTem…[39m
+  [33mPOST[39m      [37mactivities/sessions/[39m[33m{sessionId}[39m[37m/template-preview[39m[38;2;108;114;128m activities.sessions.template-preview › Activity\SessionT…[39m
+  [34mGET[39m[38;2;108;114;128m|[39m[38;2;108;114;128mHEAD[39m  [37mactivities/templates[39m[38;2;108;114;128m .............. activities.templates.index › Activity\ScheduleTemplateController@index[39m
+  [33mPOST[39m      [37mactivities/templates[39m[38;2;108;114;128m .............. activities.templates.store › Activity\ScheduleTemplateController@store[39m
+  [33mPOST[39m      [37mactivities/templates/apply[39m[38;2;108;114;128m activities.templates.apply › Activity\ScheduleTemplateController@applyTemplate[39m
+  [34mGET[39m[38;2;108;114;128m|[39m[38;2;108;114;128mHEAD[39m  [37mactivities/templates/create[39m[38;2;108;114;128m ..... activities.templates.create › Activity\ScheduleTemplateController@create[39m
+  [34mGET[39m[38;2;108;114;128m|[39m[38;2;108;114;128mHEAD[39m  [37mactivities/templates/get-templates[39m[38;2;108;114;128m activities.templates.get › Activity\ScheduleTemplateController@getTemp…[39m
+  [34mGET[39m[38;2;108;114;128m|[39m[38;2;108;114;128mHEAD[39m  [37mactivities/templates/[39m[33m{id}[39m[38;2;108;114;128m ........... activities.templates.show › Activity\ScheduleTemplateController@show[39m
+  [31mDELETE[39m    [37mactivities/templates/[39m[33m{id}[39m[38;2;108;114;128m ..... activities.templates.destroy › Activity\ScheduleTemplateController@destroy[39m
+  [34mGET[39m[38;2;108;114;128m|[39m[38;2;108;114;128mHEAD[39m  [37mactivities/test[39m[38;2;108;114;128m .......................................................................... activities.test[39m
+  [34mGET[39m[38;2;108;114;128m|[39m[38;2;108;114;128mHEAD[39m  [37mactivities/test-sessions/[39m[33m{id}[39m[38;2;108;114;128m ................................................... activities.test-sessions[39m
+  [33mPOST[39m      [37mactivities/[39m[33m{activityId}[39m[37m/apply-template-similar[39m[38;2;108;114;128m activities.apply-template-similar › Activity\SessionTempla…[39m
+  [34mGET[39m[38;2;108;114;128m|[39m[38;2;108;114;128mHEAD[39m  [37mactivities/[39m[33m{activityId}[39m[37m/sessions/[39m[33m{sessionId}[39m[37m/attendance[39m[38;2;108;114;128m activities.attendance › Activity\ActivityControll…[39m
+  [33mPOST[39m      [37mactivities/[39m[33m{activityId}[39m[37m/sessions/[39m[33m{sessionId}[39m[37m/attendance[39m[38;2;108;114;128m activities.attendance.store › Activity\ActivityCo…[39m
+  [33mPOST[39m      [37mactivities/[39m[33m{activityId}[39m[37m/sessions/[39m[33m{sessionId}[39m[37m/enroll[39m[38;2;108;114;128m activities.enroll.legacy › Activity\ActivityControlle…[39m
+  [34mGET[39m[38;2;108;114;128m|[39m[38;2;108;114;128mHEAD[39m  [37mactivities/[39m[33m{activityId}[39m[37m/sessions/[39m[33m{sessionId}[39m[37m/enrollments[39m[38;2;108;114;128m activities.enrollments › Activity\ActivityContro…[39m
+  [33mPOST[39m      [37mactivities/[39m[33m{activityId}[39m[37m/sessions/[39m[33m{sessionId}[39m[37m/enrollments/add[39m[38;2;108;114;128m activities.enrollments.add › Activity\Activi…[39m
+  [31mDELETE[39m    [37mactivities/[39m[33m{activityId}[39m[37m/sessions/[39m[33m{sessionId}[39m[37m/enrollments/[39m[33m{traineeId}[39m[38;2;108;114;128m activities.enrollments.remove › Acti…[39m
+  [33mPUT[39m       [37mactivities/[39m[33m{id}[39m[38;2;108;114;128m ................................... activities.update › Activity\ActivityController@update[39m
+  [31mDELETE[39m    [37mactivities/[39m[33m{id}[39m[38;2;108;114;128m ................................. activities.destroy › Activity\ActivityController@destroy[39m
+  [34mGET[39m[38;2;108;114;128m|[39m[38;2;108;114;128mHEAD[39m  [37mactivities/[39m[33m{id}[39m[38;2;108;114;128m ....................................... activities.show › Activity\ActivityController@show[39m
+  [34mGET[39m[38;2;108;114;128m|[39m[38;2;108;114;128mHEAD[39m  [37mactivities/[39m[33m{id}[39m[37m/edit[39m[38;2;108;114;128m .................................. activities.edit › Activity\ActivityController@edit[39m
+  [34mGET[39m[38;2;108;114;128m|[39m[38;2;108;114;128mHEAD[39m  [37mactivities/[39m[33m{id}[39m[37m/enroll[39m[38;2;108;114;128m .................... activities.enroll › Activity\ActivityController@enrollmentForm[39m
+  [33mPOST[39m      [37mactivities/[39m[33m{id}[39m[37m/enroll[39m[38;2;108;114;128m ............. activities.enroll.submit › Activity\ActivityController@enrollTrainees[39m
+  [34mGET[39m[38;2;108;114;128m|[39m[38;2;108;114;128mHEAD[39m  [37mactivities/[39m[33m{id}[39m[37m/schedule[39m[38;2;108;114;128m ............. activities.activity.schedule › Activity\ActivityController@schedule[39m
+  [33mPOST[39m      [37mactivities/[39m[33m{id}[39m[37m/schedule[39m[38;2;108;114;128m ........... activities.schedule.store › Activity\ActivityController@storeSchedule[39m
+  [33mPOST[39m      [37mactivities/[39m[33m{id}[39m[37m/sessions[39m[38;2;108;114;128m .......... activities.sessions.create › Activity\ActivityController@createSession[39m
+  [34mGET[39m[38;2;108;114;128m|[39m[38;2;108;114;128mHEAD[39m  [37mactivities/[39m[33m{id}[39m[37m/sessions[39m[38;2;108;114;128m ...................... activities.sessions › Activity\ActivityController@sessions[39m
+  [34mGET[39m[38;2;108;114;128m|[39m[38;2;108;114;128mHEAD[39m  [37mactivity-attendance[39m[38;2;108;114;128m ...................... activity-attendance.index › Activity\AttendanceController@index[39m
+  [33mPOST[39m      [37mactivity-attendance[39m[38;2;108;114;128m ...................... activity-attendance.store › Activity\AttendanceController@store[39m
+  [33mPOST[39m      [37mactivity-attendance/export[39m[38;2;108;114;128m ............. activity-attendance.export › Activity\AttendanceController@export[39m
+  [34mGET[39m[38;2;108;114;128m|[39m[38;2;108;114;128mHEAD[39m  [37mactivity-attendance/session/[39m[33m{id}[39m[37m/form[39m[38;2;108;114;128m activity-attendance.session.form › Activity\AttendanceController@ge…[39m
+  [34mGET[39m[38;2;108;114;128m|[39m[38;2;108;114;128mHEAD[39m  [37mactivity-attendance/stats/today[39m[38;2;108;114;128m activity-attendance.stats.today › Activity\AttendanceController@getTodayS…[39m
+  [34mGET[39m[38;2;108;114;128m|[39m[38;2;108;114;128mHEAD[39m  [37madmin/activities[39m[38;2;108;114;128m ........................................................................ admin.activities[39m
+  [34mGET[39m[38;2;108;114;128m|[39m[38;2;108;114;128mHEAD[39m  [37madmin/asset-parents[39m[38;2;108;114;128m .................................................................. admin.asset-parents[39m
+  [34mGET[39m[38;2;108;114;128m|[39m[38;2;108;114;128mHEAD[39m  [37madmin/centres[39m[38;2;108;114;128m .............................................................................. admin.centres[39m
+  [33mPOST[39m      [37madmin/centres[39m[38;2;108;114;128m ........................................ admin.centres.store › Centre\CentreController@store[39m
+  [34mGET[39m[38;2;108;114;128m|[39m[38;2;108;114;128mHEAD[39m  [37madmin/centres/create[39m[38;2;108;114;128m ............................... admin.centres.create › Centre\CentreController@create[39m
+  [34mGET[39m[38;2;108;114;128m|[39m[38;2;108;114;128mHEAD[39m  [37madmin/centres/[39m[33m{id}[39m[38;2;108;114;128m ..................................... admin.centres.show › Centre\CentreController@show[39m
+  [33mPUT[39m       [37madmin/centres/[39m[33m{id}[39m[38;2;108;114;128m ................................. admin.centres.update › Centre\CentreController@update[39m
+  [31mDELETE[39m    [37madmin/centres/[39m[33m{id}[39m[38;2;108;114;128m ............................... admin.centres.destroy › Centre\CentreController@destroy[39m
+  [34mGET[39m[38;2;108;114;128m|[39m[38;2;108;114;128mHEAD[39m  [37madmin/centres/[39m[33m{id}[39m[37m/asset-parents[39m[38;2;108;114;128m ............ admin.centres.asset-parents › Centre\CentreController@assets[39m
+  [34mGET[39m[38;2;108;114;128m|[39m[38;2;108;114;128mHEAD[39m  [37madmin/centres/[39m[33m{id}[39m[37m/edit[39m[38;2;108;114;128m ................................ admin.centres.edit › Centre\CentreController@edit[39m
+  [34mGET[39m[38;2;108;114;128m|[39m[38;2;108;114;128mHEAD[39m  [37madmin/dashboard[39m[38;2;108;114;128m .................................... admin.dashboard › Dashboard\DashboardController@index[39m
+  [34mGET[39m[38;2;108;114;128m|[39m[38;2;108;114;128mHEAD[39m  [37madmin/letter-templates[39m[38;2;108;114;128m ............. admin.letter-templates.index › Profile\LetterTemplateController@index[39m
+  [33mPOST[39m      [37madmin/letter-templates/update[39m[38;2;108;114;128m ..... admin.letter-templates.update › Profile\LetterTemplateController@store[39m
+  [34mGET[39m[38;2;108;114;128m|[39m[38;2;108;114;128mHEAD[39m  [37madmin/letters[39m[38;2;108;114;128m ........................................................................ admin.letters.index[39m
+  [34mGET[39m[38;2;108;114;128m|[39m[38;2;108;114;128mHEAD[39m  [37madmin/letters/history[39m[38;2;108;114;128m .............................................................. admin.letters.history[39m
+  [34mGET[39m[38;2;108;114;128m|[39m[38;2;108;114;128mHEAD[39m  [37madmin/letters/[39m[33m{id}[39m[37m/download[39m[38;2;108;114;128m ....................................................... admin.letters.download[39m
+  [34mGET[39m[38;2;108;114;128m|[39m[38;2;108;114;128mHEAD[39m  [37madmin/notifications[39m[38;2;108;114;128m ................................... admin.notifications › NotificationController@index[39m
+  [34mGET[39m[38;2;108;114;128m|[39m[38;2;108;114;128mHEAD[39m  [37madmin/trainees[39m[38;2;108;114;128m ............................................................................ admin.trainees[39m
+  [34mGET[39m[38;2;108;114;128m|[39m[38;2;108;114;128mHEAD[39m  [37madmin/users[39m[38;2;108;114;128m .................................................................................. admin.users[39m
+  [34mGET[39m[38;2;108;114;128m|[39m[38;2;108;114;128mHEAD[39m  [37madmin/volunteers[39m[38;2;108;114;128m ................................. admin.volunteers.index › VolunteerController@adminIndex[39m
+  [34mGET[39m[38;2;108;114;128m|[39m[38;2;108;114;128mHEAD[39m  [37majk/activities[39m[38;2;108;114;128m ............................................................................ ajk.activities[39m
+  [34mGET[39m[38;2;108;114;128m|[39m[38;2;108;114;128mHEAD[39m  [37majk/centres[39m[38;2;108;114;128m .................................................................................. ajk.centres[39m
+  [34mGET[39m[38;2;108;114;128m|[39m[38;2;108;114;128mHEAD[39m  [37majk/dashboard[39m[38;2;108;114;128m ........................................ ajk.dashboard › Dashboard\DashboardController@index[39m
+  [34mGET[39m[38;2;108;114;128m|[39m[38;2;108;114;128mHEAD[39m  [37majk/notifications[39m[38;2;108;114;128m ....................................... ajk.notifications › NotificationController@index[39m
+  [34mGET[39m[38;2;108;114;128m|[39m[38;2;108;114;128mHEAD[39m  [37majk/trainees[39m[38;2;108;114;128m ................................................................................ ajk.trainees[39m
+  [34mGET[39m[38;2;108;114;128m|[39m[38;2;108;114;128mHEAD[39m  [37mapi/activities[39m[38;2;108;114;128m ..................................... api.activities › Activity\ActivityController@apiIndex[39m
+  [34mGET[39m[38;2;108;114;128m|[39m[38;2;108;114;128mHEAD[39m  [37mapi/activities/categories[39m[38;2;108;114;128m .......... api.activities.categories › Activity\ActivityController@getCategories[39m
+  [33mPOST[39m      [37mapi/activities/check-conflicts[39m[38;2;108;114;128m api.activities.check-conflicts › Activity\ActivityController@checkSchedule…[39m

@@ -1,0 +1,70 @@
+Test ID,Phase,Module,Priority,Est. Time (min),Test Case Title,Prerequisites,Test Steps Summary,Expected Result,Role Required,Notes
+HOME001,1,Public Access,High,5,Welcome/Landing Page Load,None,Navigate to homepage and verify all sections load correctly within 3 seconds,Page loads with all content visible within 3 seconds,Public,First touchpoint for all users
+HOME002,1,Public Access,Medium,5,Public Information Display,HOME001,Navigate About Us section and verify all information displays,All public information accessible and formatted correctly,Public,Marketing content verification
+CONTACT001,1,Public Access,High,10,Contact Us Form Submission,HOME001,Submit contact form with valid data and verify message saved,Form submission successful with confirmation message,Public,Lead generation functionality
+CONTACT002,1,Public Access,High,10,Contact Form Validation,CONTACT001,Test all validation rules and security (XSS/SQL injection),All validations enforced and security attacks blocked,Public,Security critical
+VOL001,1,Public Access,High,15,Volunteer Registration Form,HOME001,Complete volunteer application with all required fields,Application submitted and stored with pending status,Public,Volunteer pipeline entry point
+VOL002,1,Public Access,High,10,Volunteer Form Validation,VOL001,Test IC validation phone format and age requirements,All volunteer-specific validations enforced,Public,Data quality assurance
+AUTH001,2,Authentication,Critical,5,User Login with Email,None,Login with admin email and password,Successful authentication and redirect to dashboard,Public → Admin,Gateway to system
+AUTH002,2,Authentication,Critical,5,User Login with IIUM ID,AUTH001,Login using 10-digit IIUM ID instead of email,IIUM ID authentication works identically to email,Public → Teacher,Alternative login method
+AUTH003,2,Authentication,Critical,10,Invalid Login Credentials,AUTH001,Test 6 invalid login scenarios including security attacks,All invalid attempts rejected securely without user enumeration,Public,Security validation
+AUTH004,2,Authentication,High,10,Forgot Password Request,AUTH001,Request password reset via email,Reset link sent to email and token stored in database,Public,Password recovery initiation
+AUTH005,2,Authentication,High,5,Password Reset Email Verification,AUTH004,Access email and click reset link,Reset form loads with valid token,Public,Email delivery verification
+AUTH006,2,Authentication,High,10,Create New Password,AUTH005,Set new password meeting complexity requirements,Password updated successfully and old token invalidated,Public,Password recovery completion
+AUTH007,2,Authentication,High,5,Login After Password Reset,AUTH006,Login with newly created password,Authentication successful with new credentials,Public → Any Role,Verify password change effective
+AUTH008,2,Authentication,High,15,Session Management,AUTH001,Test idle timeout concurrent sessions and remember me,Session timeout works after 30min idle or 2hrs absolute,Any Role,Session security validation
+AUTH009,2,Authentication,High,10,Logout Functionality,AUTH001,Logout and verify session cleanup and back button security,Complete session termination and protected page access blocked,Any Role,Session cleanup verification
+DASH001,3,Dashboard,Critical,15,Admin Dashboard - Full Access,AUTH001,Login as admin and verify all statistics and navigation,Dashboard loads <3s with accurate stats and full menu access,Admin,Admin first experience
+DASH002,3,Dashboard,Critical,15,Supervisor Dashboard - Centre-Level,AUTH001,Login as supervisor and verify centre-filtered data,Dashboard shows only assigned centre data,Supervisor,Data isolation verification
+DASH003,3,Dashboard,Critical,15,Teacher Dashboard - Activity-Level,AUTH002,Login as teacher and verify activity-specific widgets,Dashboard shows only assigned activities and schedule,Teacher,Activity-based access
+DASH004,3,Dashboard,High,10,AJK Dashboard - Limited Access,AUTH001,Login as AJK and verify facility/asset focus,Dashboard shows asset management functions only,AJK,Limited operational role
+DASH005,3,Dashboard,Medium,10,Trainee Dashboard - Personal View,AUTH001,Login as trainee (if enabled) and verify personal data only,Dashboard shows only own activities and progress,Trainee (optional),Self-service portal
+PROF001,4,Profile,High,5,View Own Profile,AUTH001+,Navigate to profile and verify all information displays,Profile page shows complete user information,All Roles,Universal functionality
+PROF002,4,Profile,High,10,Edit Profile Information,PROF001,Update editable fields and verify sensitive fields protected,Changes saved successfully with validation enforced,All Roles,Self-service data management
+PROF003,4,Profile,High,10,Change Password,PROF001,Change password and verify old password no longer works,Password updated and requires new password on next login,All Roles,Security self-service
+PROF004,4,Profile,Medium,10,Upload Profile Picture,PROF001,Upload JPG image and verify display across system,Profile picture updates in navigation and profile page,All Roles,Personalization feature
+PROF005,4,Profile,High,5,Update Contact Information,PROF002,Update phone and emergency contact,Contact information updated with phone normalization,All Roles,Contact data maintenance
+USER001,5,Staff,Critical,20,Create New Staff Member,AUTH001 as Admin,Complete staff creation form with role assignment and validation,New staff created with correct permissions and centre assignment,Admin,Staff onboarding
+USER002,5,Staff,High,10,Edit Staff Details,USER001,Modify staff information and verify sensitive field protection,Staff updates saved with audit trail,Admin/Supervisor,Staff data maintenance
+USER003,5,Staff,High,10,View Staff List & Search,USER001,Search and filter staff by role centre and status,Staff list displays with accurate search and filter results,Admin/Supervisor,Staff directory access
+USER004,5,Staff,High,10,Staff Role Management,USER002,Change staff member's role and verify permission changes,Role updated and new permissions applied immediately,Admin,Permission management
+USER005,5,Staff,High,10,Deactivate Staff,USER001,Change staff status to inactive,Staff marked inactive and login disabled,Admin,Staff offboarding
+USER006,5,Staff,Medium,5,View Staff Profile Details,USER003,Click staff name and view full profile,Detailed staff profile displays,Admin/Supervisor,Staff information access
+TRAIN001,6,Trainees,Critical,20,Register New Trainee,AUTH001 as Staff,Complete trainee registration with guardian and medical info,New trainee created with unique ID and complete information,Admin/Supervisor/Teacher,Trainee onboarding
+TRAIN002,6,Trainees,High,10,Edit Trainee Profile,TRAIN001,Modify trainee information and verify validation,Trainee updates saved successfully,Admin/Supervisor/Teacher,Trainee data maintenance
+TRAIN003,6,Trainees,High,10,View Trainee List & Filters,TRAIN001,Search and filter trainees by centre and condition,Trainee list with accurate filtering,Admin/Supervisor/Teacher,Trainee directory
+TRAIN004,6,Trainees,High,15,Trainee Progress Tracking,TRAIN001+ACT007,View trainee's enrolled activities and progress,Progress report shows activity participation and outcomes,Admin/Supervisor/Teacher,Progress monitoring
+TRAIN005,6,Trainees,High,10,Guardian Information Management,TRAIN001,View and update guardian contact details,Guardian information updated and emergency contact verified,Admin/Supervisor,Guardian communication
+TRAIN006,6,Trainees,High,10,Trainee Status Management,TRAIN001,Change trainee status (active/inactive/graduated),Status updated and affects activity enrollment eligibility,Admin/Supervisor,Trainee lifecycle
+ACT001,7,Activities,Critical,20,Activity Listing & Filtering,AUTH001,Test activity list search sort and filters,Activity list displays with functional search and filters <2s,All Roles (filtered),Core functionality access
+ACT002,7,Activities,Critical,20,Create New Activity,AUTH001 as Admin,Create new activity with complete details and validation,New activity created and available for enrollment,Admin,Activity creation
+ACT003,7,Activities,Critical,15,Edit Activity Details,ACT002,Modify activity and verify impact on enrollments,Activity updated with warnings for affected enrollments,Admin,Activity maintenance
+ACT004,7,Activities,High,10,Delete Activity,ACT002,Delete activity and verify dependent data handling,Activity deleted or archived with enrollment handling,Admin,Data cleanup
+ACT005,7,Activities,Medium,5,Activity Categories View,ACT001,Filter by category and verify results,Category filtering shows correct activities,All Roles,Content organization
+ACT006,7,Activities,Critical,15,Create Activity Session,ACT002,Schedule new session with date time and instructor,Session created and appears in schedule,Admin/Supervisor,Session scheduling
+ACT007,7,Activities,Critical,15,Enroll Trainee in Activity,ACT006+TRAIN001,Enroll trainee and verify capacity limits,Trainee enrolled successfully with capacity validation,Admin/Supervisor/Teacher,Enrollment management
+ACT008,7,Activities,High,10,View Activity Schedule,ACT006,View calendar and schedule by date range,Schedule displays all sessions with correct dates,All Roles,Schedule viewing
+ACT009,7,Activities,Medium,10,Weekly Schedule View,ACT008,View week layout with all activities,Weekly calendar view shows all scheduled sessions,All Roles,Calendar interface
+ACT010,7,Activities,High,10,Teacher Personal Schedule,AUTH002+ACT007,Login as teacher and view only assigned sessions,Personal schedule shows only teacher's sessions,Teacher,Personalized view
+ATT001,8,Attendance,Critical,25,Mark Session Attendance,ACT006+ACT007,Mark attendance with all status types (Present/Absent/Late/Excused),Attendance marked and saved with validation,Teacher,Core daily operation
+ATT002,8,Attendance,High,10,View Attendance Records,ATT001,View historical attendance by date range,Attendance records display accurately,Teacher/Supervisor,Historical data access
+ATT003,8,Attendance,High,15,Attendance Statistics,ATT001,Generate attendance reports and verify calculations,Statistics calculated correctly with graphs,Supervisor/Admin,Analytics and reporting
+ATT004,8,Attendance,Medium,10,Bulk Attendance Import,ATT001,Upload CSV with attendance data,Bulk import processed with validation,Admin,Efficiency feature
+CENT001,9,Centres,High,15,Centre Configuration,AUTH001 as Admin,Modify centre settings and verify changes,Centre settings updated successfully,Admin,Centre management
+CENT002,9,Centres,High,10,Centre Statistics,CENT001,View centre-specific statistics,Centre statistics display accurately,Admin/Supervisor,Centre analytics
+CENT003,9,Centres,Critical,15,Multi-Centre Data Isolation,AUTH001+DASH002,Login as centre-specific user and verify data filtering,Users only see own centre's data,All Roles,Security critical
+ASSET001,10,Assets,High,15,Add New Asset,AUTH001 as AJK,Create new asset with type location and condition,New asset added to inventory,Admin/AJK,Asset tracking
+ASSET002,10,Assets,High,10,Asset Inventory View,ASSET001,View asset list with filters by centre and type,Asset inventory displays with filtering,Admin/AJK,Inventory management
+ASSET003,10,Assets,Medium,10,Asset Maintenance Log,ASSET001,Add maintenance record with date and notes,Maintenance log entry created,Admin/AJK,Maintenance tracking
+ASSET004,10,Assets,Medium,10,Asset Assignment,ASSET001+ACT002,Assign asset to activity,Asset assigned and shows in activity details,Admin/AJK,Resource allocation
+LETT001,11,Letters,High,15,Generate Letter from Template,TRAIN001,Select template fill data and generate PDF,Letter PDF generated with correct data,Admin/Supervisor,Document generation
+LETT002,11,Letters,Medium,10,Letter Templates Management,AUTH001 as Admin,Create/edit letter template,Template saved and available for use,Admin,Template customization
+LETT003,11,Letters,Medium,10,Letter Archive & Search,LETT001,Search generated letters by date and trainee,Letter archive displays with search results,Admin/Supervisor,Document management
+MSG001,12,Messaging,Medium,10,Send Notification,AUTH001,Compose and send notification to user groups,Notification sent to selected recipients,Admin/Supervisor,Communication tool
+MSG002,12,Messaging,Medium,5,View Notifications,AUTH001,Check notification area and read messages,Notifications display with unread count,All Roles,User engagement
+MSG003,12,Messaging,Low,5,Notification Settings,PROF001,Configure notification preferences,Preferences saved and respected,All Roles,Personalization
+SYS001,13,System,High,30,Data Backup & Recovery,AUTH001 as Admin,Create backup verify integrity and test restore,Backup created successfully and restorable,Admin,Data protection
+SYS002,13,System,High,40,Performance Testing Under Load,AUTH001,Simulate 50 concurrent users and monitor performance,System maintains <3s response time under load,Admin,Scalability validation
+SYS003,13,System,Medium,20,Error Handling,AUTH001,Trigger various error conditions,Errors handled gracefully with user-friendly messages,Admin,Reliability testing
+SYS004,13,System,High,20,Security & Access Control,AUTH001+,Test unauthorized access attempts across all modules,All unauthorized attempts blocked,Admin,Security audit
+SYS005,13,System,Medium,15,Mobile Responsiveness,AUTH001,Test system on mobile and tablet devices,All functions work on mobile with proper layout,All Roles,Mobile usability

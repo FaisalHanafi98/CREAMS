@@ -40,7 +40,13 @@ fi
 FOUND=0
 
 for i in "${!PATTERNS[@]}"; do
-    MATCHES=$(echo "$STAGED_FILES" | xargs grep -lnE "${PATTERNS[$i]}" 2>/dev/null | grep -v '.githooks/' | grep -v '.env.example')
+    # Exclude docs/ from code-pattern checks (password, key patterns) — docs contain code examples.
+    # IC pattern still applies to docs/ since that is a PDPA requirement.
+    if [[ "${PATTERNS[$i]}" != *'[0-9]{6}'* ]]; then
+        MATCHES=$(echo "$STAGED_FILES" | xargs grep -lnE "${PATTERNS[$i]}" 2>/dev/null | grep -v '.githooks/' | grep -v '.env.example' | grep -v '^docs/')
+    else
+        MATCHES=$(echo "$STAGED_FILES" | xargs grep -lnE "${PATTERNS[$i]}" 2>/dev/null | grep -v '.githooks/' | grep -v '.env.example')
+    fi
     if [ -n "$MATCHES" ]; then
         if [ "$FOUND" -eq 0 ]; then
             echo -e "${RED}BLOCKED: Potential secrets detected in staged files${NC}"

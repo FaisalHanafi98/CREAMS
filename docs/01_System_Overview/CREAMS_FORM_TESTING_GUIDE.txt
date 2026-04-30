@@ -1,0 +1,1820 @@
+================================================================================
+                    CREAMS SYSTEM - COMPREHENSIVE FORM TESTING GUIDE
+================================================================================
+
+This guide covers all forms in the CREAMS system with detailed test scenarios
+for both SUCCESS and FAILURE operations. Test each form systematically to 
+ensure proper functionality and validation.
+
+================================================================================
+                               SETUP INSTRUCTIONS
+================================================================================
+
+BEFORE TESTING - SEED THE TEST DATA:
+====================================
+All credentials and test data referenced in this guide must be seeded into 
+the database before testing. Choose ONE of these methods:
+
+Method 1: Full Database Seeding (Recommended for new setup)
+----------------------------------------------------------
+php artisan migrate:fresh --seed
+
+Method 2: Testing Data Only (Faster if database already exists)
+---------------------------------------------------------------
+php artisan db:seed --class=TestingGuideDataSeeder
+
+Method 3: Standalone Script (Alternative)
+-----------------------------------------
+php seed-testing-data.php
+
+TEST CREDENTIALS:
+=================
+After seeding, use these credentials for testing:
+
+👑 ADMIN LOGIN:
+- Email: lakshmi.krishnan@iium.edu.my
+- Password: Admin@2024!
+
+👨‍🏫 TEACHER LOGIN:
+- Email: ahmad.hassan@iium.edu.my (or IIUM ID: 1928471)
+- Password: Teacher@2024
+
+👨‍💼 SUPERVISOR LOGIN:
+- Email: supervisor.gombak@iium.edu.my  
+- Password: Supervise@2024
+
+👥 AJK LOGIN:
+- Email: fatimah.abdullah@iium.edu.my
+- Password: AJK@2024
+
+⚠️ IMPORTANT: All passwords are case-sensitive!
+
+For complete setup details, see: TESTING_CREDENTIALS.md
+
+================================================================================
+                                TABLE OF CONTENTS
+================================================================================
+
+1. AUTHENTICATION FORMS
+   1.1 Login Form
+   1.2 Registration Form  
+   1.3 Forgot Password Form
+   1.4 Reset Password Form
+
+2. PROFILE MANAGEMENT FORMS
+   2.1 Update Profile Information Form
+   2.2 Update Password Form
+
+3. ACTIVITY MANAGEMENT FORMS
+   3.1 Activity Creation Form
+   3.2 Activity Enrollment Form
+   3.3 Session Creation Form
+   3.4 Attendance Marking Form
+
+4. ASSET MANAGEMENT FORMS
+   4.1 Asset Creation Form
+   4.2 Asset Edit Form
+
+5. TRAINEE MANAGEMENT FORMS
+   5.1 Trainee Registration Form
+   5.2 Trainee Edit Form
+
+6. COMMUNICATION FORMS
+   6.1 Contact Us Form
+   6.2 Message Creation Form
+   6.3 Letter Generation Form
+
+7. VOLUNTEER FORMS
+   7.1 Volunteer Application Form
+
+8. ADMINISTRATIVE FORMS
+   8.1 User Management Form
+   8.2 Centre Management Form
+
+================================================================================
+                            1. AUTHENTICATION FORMS
+================================================================================
+
+1.1 LOGIN FORM
+==============
+Location: /login
+Route: POST /auth/check
+Controller: MainController::check()
+
+FIELDS:
+- identifier (email or IIUM ID)
+- password  
+- remember (checkbox)
+
+SUCCESS TEST SCENARIOS:
+-----------------------
+Test 1.1.1: Admin Email Login - Gombak Centre
+INPUT:
+- identifier: "lakshmi.krishnan@iium.edu.my"
+- password: "Admin@2024!"
+- remember: unchecked
+EXPECTED OUTPUT:
+- Status: 200 (Success)
+- Redirect: Admin dashboard with full system access
+- Session: User data stored with admin role
+- Message: "Selamat datang kembali, Dr. Lakshmi a/p Krishnan"
+
+Test 1.1.2: Teacher IIUM ID Login - Gombak Centre
+INPUT:
+- identifier: "1928471"
+- password: "Teacher@2024"  
+- remember: checked
+EXPECTED OUTPUT:
+- Status: 200 (Success)
+- Redirect: Teacher dashboard for Gombak Centre (01)
+- Session: User data + remember token stored
+- Message: Login successful with centre_id: 01
+
+Test 1.1.3: Supervisor Login with Remember Me
+INPUT:
+- identifier: "supervisor.gombak@iium.edu.my"
+- password: "Supervise@2024"
+- remember: checked
+EXPECTED OUTPUT:
+- Status: 200 (Success)
+- Cookie: remember_token set for 60 days
+- Session: Supervisor role, centre_id: 01
+- Redirect: Supervisor dashboard with management access
+
+FAILURE TEST SCENARIOS:
+-----------------------
+Test 1.1.4: Invalid Email Format
+INPUT:
+- identifier: "invalid-email"
+- password: "password123"
+EXPECTED OUTPUT:
+- Status: 422 (Validation Error)
+- Error: "Please enter a valid email or IIUM ID"
+- Stay on login page
+
+Test 1.1.5: Wrong Password
+INPUT:
+- identifier: "admin@creams.com"
+- password: "wrongpassword"
+EXPECTED OUTPUT:
+- Status: 401 (Unauthorized)
+- Error: "Invalid credentials"
+- Login attempts tracked
+
+Test 1.1.6: Empty Fields
+INPUT:
+- identifier: ""
+- password: ""
+EXPECTED OUTPUT:
+- Status: 422 (Validation Error)
+- Error: "Email/IIUM ID is required", "Password is required"
+
+Test 1.1.7: Account Suspended
+INPUT:
+- identifier: "suspended@creams.com"
+- password: "correctpassword"
+EXPECTED OUTPUT:
+- Status: 403 (Forbidden)
+- Error: "Account is suspended. Contact administrator."
+
+Test 1.1.8: Too Many Login Attempts (Rate Limiting)
+INPUT: 5+ failed attempts within timeframe
+EXPECTED OUTPUT:
+- Status: 429 (Too Many Requests)
+- Error: "Too many login attempts. Please try again in X minutes."
+
+1.2 REGISTRATION FORM
+=====================
+Location: /register
+Route: POST /auth/save
+Controller: MainController::save()
+
+FIELDS:
+- iium_id (8 chars, format: ABCD1234)
+- name
+- email
+- password
+- password_confirmation
+- role (admin/supervisor/teacher/ajk)
+- centre_id
+- avatar (optional file upload)
+
+SUCCESS TEST SCENARIOS:
+-----------------------
+Test 1.2.1: Valid Teacher Registration
+INPUT:
+- iium_id: "TECH0001"
+- name: "John Doe"
+- email: "john.doe@iium.edu.my"
+- password: "SecurePass123!"
+- password_confirmation: "SecurePass123!"
+- role: "teacher"
+- centre_id: "01"
+- avatar: valid_image.jpg (under 2MB)
+EXPECTED OUTPUT:
+- Status: 201 (Created)
+- User created in database
+- Email verification sent
+- Redirect: Email verification notice
+- Message: "Registration successful. Please verify your email."
+
+Test 1.2.2: Registration with Avatar
+INPUT: (same as above with avatar file)
+EXPECTED OUTPUT:
+- Status: 201 (Created)
+- Avatar uploaded to storage/avatars/
+- Database avatar field populated
+- File accessible via storage link
+
+FAILURE TEST SCENARIOS:
+-----------------------
+Test 1.2.3: Invalid IIUM ID Format
+INPUT:
+- iium_id: "123ABCD" (wrong format)
+- Other fields: valid
+EXPECTED OUTPUT:
+- Status: 422 (Validation Error)
+- Error: "IIUM ID must be in format: 4 letters + 4 digits (e.g., ABCD1234)"
+
+Test 1.2.4: Duplicate Email
+INPUT:
+- email: "existing@creams.com" (already in database)
+- Other fields: valid
+EXPECTED OUTPUT:
+- Status: 422 (Validation Error)
+- Error: "Email already registered"
+
+Test 1.2.5: Weak Password
+INPUT:
+- password: "123456" (doesn't meet complexity requirements)
+- Other fields: valid
+EXPECTED OUTPUT:
+- Status: 422 (Validation Error)
+- Error: "Password must be at least 8 characters with letters, numbers and symbols"
+
+Test 1.2.6: Password Mismatch
+INPUT:
+- password: "SecurePass123!"
+- password_confirmation: "DifferentPass123!"
+- Other fields: valid
+EXPECTED OUTPUT:
+- Status: 422 (Validation Error)
+- Error: "Password confirmation does not match"
+
+Test 1.2.7: Invalid File Upload
+INPUT:
+- avatar: large_file.jpg (over 2MB)
+- Other fields: valid
+EXPECTED OUTPUT:
+- Status: 422 (Validation Error)
+- Error: "Avatar must be an image under 2MB"
+
+Test 1.2.8: Non-existent Centre
+INPUT:
+- centre_id: "99" (doesn't exist)
+- Other fields: valid
+EXPECTED OUTPUT:
+- Status: 422 (Validation Error)
+- Error: "Selected centre is invalid"
+
+1.3 FORGOT PASSWORD FORM
+========================
+Location: /forgot-password
+Route: POST /password/email
+Controller: ForgotPasswordController::submitForgotPasswordForm()
+
+FIELDS:
+- email
+
+SUCCESS TEST SCENARIOS:
+-----------------------
+Test 1.3.1: Valid Email Reset Request
+INPUT:
+- email: "user@creams.com"
+EXPECTED OUTPUT:
+- Status: 200 (Success)
+- Password reset email sent
+- Reset token stored in database
+- Message: "Password reset link sent to your email"
+
+FAILURE TEST SCENARIOS:
+-----------------------
+Test 1.3.2: Non-existent Email
+INPUT:
+- email: "nonexistent@creams.com"
+EXPECTED OUTPUT:
+- Status: 200 (Success) - for security, don't reveal if email exists
+- Message: "If email exists, reset link has been sent"
+
+Test 1.3.3: Invalid Email Format
+INPUT:
+- email: "invalid-email-format"
+EXPECTED OUTPUT:
+- Status: 422 (Validation Error)
+- Error: "Please enter a valid email address"
+
+1.4 RESET PASSWORD FORM
+=======================
+Location: /reset-password/{token}
+Route: POST /password/reset
+Controller: ResetPasswordController::reset()
+
+FIELDS:
+- token (hidden)
+- email
+- password
+- password_confirmation
+
+SUCCESS TEST SCENARIOS:
+-----------------------
+Test 1.4.1: Valid Password Reset
+INPUT:
+- token: valid_reset_token
+- email: "user@creams.com"
+- password: "NewSecurePass123!"
+- password_confirmation: "NewSecurePass123!"
+EXPECTED OUTPUT:
+- Status: 200 (Success)
+- Password updated in database
+- Reset token invalidated
+- Auto-login user
+- Redirect: Dashboard
+- Message: "Password reset successfully"
+
+FAILURE TEST SCENARIOS:
+-----------------------
+Test 1.4.2: Expired Token
+INPUT:
+- token: expired_token
+- Other fields: valid
+EXPECTED OUTPUT:
+- Status: 400 (Bad Request)
+- Error: "Password reset token has expired"
+
+Test 1.4.3: Invalid Token
+INPUT:
+- token: "invalid_token_123"
+- Other fields: valid
+EXPECTED OUTPUT:
+- Status: 400 (Bad Request)
+- Error: "Invalid password reset token"
+
+================================================================================
+                         2. PROFILE MANAGEMENT FORMS
+================================================================================
+
+2.1 UPDATE PROFILE INFORMATION FORM
+===================================
+Location: /profile/edit
+Route: PATCH /profile/update
+Controller: UserProfileController::update()
+
+FIELDS:
+- name
+- email
+- phone
+- address
+- education_level
+- education_specialization
+- teaching_specialization
+- about
+
+SUCCESS TEST SCENARIOS:
+-----------------------
+Test 2.1.1: Update Basic Information
+INPUT:
+- name: "Updated Name"
+- email: "newemail@creams.com"
+- phone: "012-345-6789"
+EXPECTED OUTPUT:
+- Status: 200 (Success)
+- Database updated
+- Message: "Profile updated successfully"
+
+Test 2.1.2: Update All Fields
+INPUT: All fields with valid data
+EXPECTED OUTPUT:
+- Status: 200 (Success)
+- All fields updated in database
+- Profile changes logged
+
+FAILURE TEST SCENARIOS:
+-----------------------
+Test 2.1.3: Duplicate Email
+INPUT:
+- email: "existing@creams.com" (belongs to another user)
+EXPECTED OUTPUT:
+- Status: 422 (Validation Error)
+- Error: "Email already taken"
+
+Test 2.1.4: Invalid Phone Format
+INPUT:
+- phone: "123" (too short)
+EXPECTED OUTPUT:
+- Status: 422 (Validation Error)
+- Error: "Please enter a valid Malaysian phone number"
+
+2.2 UPDATE PASSWORD FORM
+========================
+Location: /profile/edit (password section)
+Route: PATCH /profile/password
+Controller: UserProfileController::updatePassword()
+
+FIELDS:
+- current_password
+- password
+- password_confirmation
+
+SUCCESS TEST SCENARIOS:
+-----------------------
+Test 2.2.1: Valid Password Update
+INPUT:
+- current_password: "OldPass123!"
+- password: "NewSecurePass123!"
+- password_confirmation: "NewSecurePass123!"
+EXPECTED OUTPUT:
+- Status: 200 (Success)
+- Password hash updated
+- Message: "Password updated successfully"
+
+FAILURE TEST SCENARIOS:
+-----------------------
+Test 2.2.2: Wrong Current Password
+INPUT:
+- current_password: "WrongPassword"
+- password: "NewSecurePass123!"
+- password_confirmation: "NewSecurePass123!"
+EXPECTED OUTPUT:
+- Status: 422 (Validation Error)
+- Error: "Current password is incorrect"
+
+Test 2.2.3: Weak New Password
+INPUT:
+- current_password: "OldPass123!"
+- password: "weak"
+- password_confirmation: "weak"
+EXPECTED OUTPUT:
+- Status: 422 (Validation Error)
+- Error: "Password must meet complexity requirements"
+
+================================================================================
+                        3. ACTIVITY MANAGEMENT FORMS
+================================================================================
+
+3.1 ACTIVITY CREATION FORM
+===========================
+Location: /activities/create
+Route: POST /activities
+Controller: ActivityController::store()
+
+FIELDS:
+- activity_name
+- activity_description
+- category_id
+- centre_id
+- instructor_id
+- max_participants
+- start_date
+- duration_weeks
+- sessions_per_week
+- session_duration_minutes
+
+SUCCESS TEST SCENARIOS:
+-----------------------
+Test 3.1.1: Create Speech Therapy Program - Gombak Centre
+INPUT:
+- activity_name: "Program Terapi Pertuturan untuk Kanak-kanak Autisme"
+- activity_description: "Comprehensive speech therapy program designed specifically for children with autism spectrum disorder. Focus on improving verbal communication, social interaction skills, and language development using evidence-based therapeutic approaches."
+- category_id: 1 (Therapy/Rehabilitation)
+- centre_id: "01"
+- instructor_id: 3 (qualified speech therapist - Dr. Lakshmi a/p Krishnan)
+- max_participants: 6
+- start_date: "2024-12-15"
+- duration_weeks: 16
+- sessions_per_week: 2
+- session_duration_minutes: 45
+- age_range: "4-12 years"
+- prerequisites: "Basic assessment completed, diagnosed with autism spectrum disorder"
+EXPECTED OUTPUT:
+- Status: 201 (Created)
+- Activity record created in activities table
+- Centre linked to Gombak (01)
+- Instructor qualification validated
+- Activity schedule created for 16 weeks
+- Max enrollment: 6 children
+- Status: "active"
+- Message: "Program terapi berjaya dicipta. Pendaftaran peserta dibuka."
+
+Test 3.1.2: Create Activity with Maximum Participants
+INPUT: (same as above with max_participants: 10)
+EXPECTED OUTPUT:
+- Status: 201 (Created)
+- Activity allows up to 10 participants
+
+FAILURE TEST SCENARIOS:
+-----------------------
+Test 3.1.3: Invalid Category
+INPUT:
+- category_id: 999 (non-existent)
+- Other fields: valid
+EXPECTED OUTPUT:
+- Status: 422 (Validation Error)
+- Error: "Selected category is invalid"
+
+Test 3.1.4: Unqualified Instructor
+INPUT:
+- instructor_id: 3 (user without proper qualifications)
+- Other fields: valid
+EXPECTED OUTPUT:
+- Status: 422 (Validation Error)
+- Error: "Selected instructor is not qualified for this activity type"
+
+Test 3.1.5: Past Start Date
+INPUT:
+- start_date: "2023-01-01" (past date)
+- Other fields: valid
+EXPECTED OUTPUT:
+- Status: 422 (Validation Error)
+- Error: "Start date must be today or in the future"
+
+Test 3.1.6: Exceeds Maximum Participants
+INPUT:
+- max_participants: 15 (exceeds limit of 10)
+- Other fields: valid
+EXPECTED OUTPUT:
+- Status: 422 (Validation Error)
+- Error: "Maximum participants cannot exceed 10"
+
+Test 3.1.7: Instructor Schedule Conflict
+INPUT:
+- instructor_id: 2 (already scheduled at same time)
+- start_date: "2024-12-01" (conflicts with existing activity)
+- Other fields: valid
+EXPECTED OUTPUT:
+- Status: 422 (Validation Error)
+- Error: "Instructor has a scheduling conflict"
+
+================================================================================
+                      ENHANCED ACTIVITY TESTING SCENARIOS
+================================================================================
+
+3.4 REDUNDANT PARTICIPANTS TESTING
+==================================
+Location: /activities/{id}/enroll
+Controller: ActivityController::enroll() / EnrollmentController::store()
+
+PURPOSE: Test comprehensive scenarios for handling duplicate enrollments, 
+capacity limits, and participant conflicts across multiple activities.
+
+REALISTIC ACTIVITY SETUP FOR TESTING:
+=====================================
+
+Activity A: "Program Terapi Pertuturan Autisme - Sesi Pagi"
+- ID: 1
+- Category: Speech Therapy (ID: 1)
+- Centre: Gombak (01)
+- Instructor: Dr. Lakshmi a/p Krishnan (ID: 1)
+- Max Participants: 4 (realistic for speech therapy)
+- Schedule: Mondays & Wednesdays, 9:30-10:30 AM
+- Duration: 12 weeks
+- Start Date: 2025-01-06
+
+Activity B: "Program Terapi Pertuturan Autisme - Sesi Petang"
+- ID: 2
+- Category: Speech Therapy (ID: 1)
+- Centre: Gombak (01)
+- Instructor: Ustaz Ahmad bin Hassan (ID: 2)
+- Max Participants: 4
+- Schedule: Mondays & Wednesdays, 2:00-3:00 PM
+- Duration: 12 weeks
+- Start Date: 2025-01-06
+
+Activity C: "Program Terapi Okupasi untuk Down Syndrome"
+- ID: 3
+- Category: Occupational Therapy (ID: 2)
+- Centre: Gombak (01)
+- Instructor: Dr. Aminah binti Mohd Said (ID: 3)
+- Max Participants: 6
+- Schedule: Tuesdays & Thursdays, 10:00-11:30 AM
+- Duration: 16 weeks
+- Start Date: 2025-01-07
+
+REALISTIC TRAINEES FOR TESTING:
+===============================
+
+Trainee 1: Ahmad Danial bin Mohd Azmi
+- ID: AU0002
+- Age: 8 years old
+- Condition: Autism Spectrum Disorder (Moderate)
+- Guardian: Siti Rahmah binti Abdullah (+60123456789)
+- Enrollment History: None (new trainee)
+- Suitable for: Speech Therapy activities
+
+Trainee 2: Nur Aisyah binti Hassan
+- ID: AU0003  
+- Age: 6 years old
+- Condition: Autism Spectrum Disorder (Mild)
+- Guardian: Fatimah binti Ismail (+60198765432)
+- Enrollment History: Previously completed basic program
+- Suitable for: Speech Therapy activities
+
+Trainee 3: Muhammad Haziq bin Abdul Rahman
+- ID: DS0002
+- Age: 10 years old
+- Condition: Down Syndrome
+- Guardian: Noraini binti Sulaiman (+60131234567)
+- Enrollment History: Currently in life skills program
+- Suitable for: Occupational Therapy activities
+
+SUCCESS TEST SCENARIOS:
+-----------------------
+
+Test 3.4.1: Valid First Enrollment - Morning Speech Therapy
+INPUT:
+- activity_id: 1 (Morning Speech Therapy)
+- trainee_id: "AU0002" (Ahmad Danial)
+- enrollment_date: "2025-01-02"
+- goals: "Improve verbal communication skills and social interaction"
+- special_requirements: "Requires visual aids and quiet environment"
+- guardian_consent: true
+- assessment_completed: true
+EXPECTED OUTPUT:
+- Status: 201 (Created)
+- ActivityEnrollment record created
+- enrollment_status: "enrolled"
+- Activity participants count: 1/4
+- Guardian notification sent
+- Assessment scheduled automatically
+- Message: "Ahmad Danial berjaya didaftarkan dalam Program Terapi Pertuturan Autisme - Sesi Pagi"
+
+Test 3.4.2: Valid Multiple Enrollments - Fill to Capacity
+INPUT (Sequential enrollments):
+1. trainee_id: "AU0003" (Nur Aisyah) → Activity 1
+2. trainee_id: "AU0004" (Iman Sofea) → Activity 1  
+3. trainee_id: "AU0005" (created for test) → Activity 1
+EXPECTED OUTPUT:
+- Status: 201 (Created) for all three
+- Activity participants count progresses: 2/4, 3/4, 4/4
+- Activity status remains "active" but "full" flag set
+- All guardian notifications sent
+- Waiting list automatically initialized for future enrollments
+
+FAILURE TEST SCENARIOS:
+-----------------------
+
+Test 3.4.3: Duplicate Enrollment - Same Activity
+INPUT:
+- trainee_id: "AU0002" (already enrolled in Activity 1)
+- activity_id: 1 (Morning Speech Therapy)
+- enrollment_date: "2025-01-03"
+EXPECTED OUTPUT:
+- Status: 422 (Validation Error)
+- Error: "Ahmad Danial sudah didaftarkan dalam aktiviti ini"
+- Database: No duplicate enrollment record created
+- Existing enrollment remains unchanged
+- Guardian notification: "Your child is already enrolled in this program"
+
+Test 3.4.4: Activity at Full Capacity
+INPUT:
+- trainee_id: "DS0002" (new trainee)
+- activity_id: 1 (Morning Speech Therapy - already at 4/4 capacity)
+- enrollment_date: "2025-01-05"
+EXPECTED OUTPUT:
+- Status: 422 (Validation Error)
+- Error: "Program Terapi Pertuturan telah mencapai kapasiti maksimum (4 peserta)"
+- Alternative suggestion: "Sila daftar dalam sesi petang atau sertai senarai menunggu"
+- Waiting list option presented
+- Guardian notified of alternative sessions
+
+Test 3.4.5: Time Conflict - Overlapping Sessions
+INPUT:
+- trainee_id: "AU0002" (enrolled in Activity 1: Mon/Wed 9:30-10:30)
+- activity_id: 4 (New activity: Mon/Wed 10:00-11:00 - 30min overlap)
+- enrollment_date: "2025-01-02"
+EXPECTED OUTPUT:
+- Status: 422 (Validation Error)
+- Error: "Ahmad Danial mempunyai konflik masa dengan aktiviti sedia ada"
+- Conflict details: "Aktiviti bertindih pada Isnin dan Rabu (30 minit pertindihan)"
+- Suggestion: "Pilih aktiviti pada hari atau waktu berbeza"
+- Alternative activities listed automatically
+
+3.2 ACTIVITY ENROLLMENT FORM
+============================
+Location: /activities/{id}/enroll
+Route: POST /activities/{id}/enroll
+Controller: EnrollmentController::store()
+
+FIELDS:
+- trainee_id
+- enrollment_date
+- goals
+- special_requirements
+
+SUCCESS TEST SCENARIOS:
+-----------------------
+Test 3.2.1: Valid Enrollment
+INPUT:
+- trainee_id: 10 (eligible trainee)
+- enrollment_date: "2024-12-01"
+- goals: "Improve communication skills"
+- special_requirements: "Wheelchair accessible"
+EXPECTED OUTPUT:
+- Status: 201 (Created)
+- Enrollment record created
+- Activity participant count updated
+- Message: "Trainee enrolled successfully"
+
+FAILURE TEST SCENARIOS:
+-----------------------
+Test 3.2.2: Activity at Capacity
+INPUT:
+- trainee_id: 11 (valid trainee)
+- Activity already has maximum participants
+EXPECTED OUTPUT:
+- Status: 422 (Validation Error)
+- Error: "Activity is at maximum capacity"
+
+Test 3.2.3: Duplicate Enrollment
+INPUT:
+- trainee_id: 10 (already enrolled in this activity)
+EXPECTED OUTPUT:
+- Status: 422 (Validation Error)
+- Error: "Trainee is already enrolled in this activity"
+
+Test 3.2.4: Inactive Trainee
+INPUT:
+- trainee_id: 15 (inactive status)
+EXPECTED OUTPUT:
+- Status: 422 (Validation Error)
+- Error: "Trainee is not active for enrollment"
+
+3.3 ATTENDANCE MARKING FORM
+===========================
+Location: /activities/{id}/attendance
+Route: POST /enhanced-attendance
+Controller: EnhancedAttendanceController::store()
+
+FIELDS:
+- attendance[trainee_id] (present/absent/late/excused)
+- notes[trainee_id]
+- attendance_date
+
+SUCCESS TEST SCENARIOS:
+-----------------------
+Test 3.3.1: Mark Full Session Attendance
+INPUT:
+- attendance[1]: "present"
+- attendance[2]: "absent"  
+- attendance[3]: "late"
+- notes[2]: "Called in sick"
+- attendance_date: "2024-11-15"
+EXPECTED OUTPUT:
+- Status: 200 (Success)
+- Attendance records created/updated
+- Message: "Attendance marked successfully"
+
+Test 3.3.2: Mark Attendance with Notes
+INPUT:
+- attendance[1]: "excused"
+- notes[1]: "Family emergency"
+- attendance_date: "2024-11-15"
+EXPECTED OUTPUT:
+- Status: 200 (Success)
+- Attendance with notes saved
+- Excused absence recorded
+
+FAILURE TEST SCENARIOS:
+-----------------------
+Test 3.3.3: Invalid Attendance Status
+INPUT:
+- attendance[1]: "maybe" (invalid status)
+EXPECTED OUTPUT:
+- Status: 422 (Validation Error)
+- Error: "Attendance status must be: present, absent, late, or excused"
+
+Test 3.3.4: Future Date
+INPUT:
+- attendance_date: "2025-01-01" (future date)
+EXPECTED OUTPUT:
+- Status: 422 (Validation Error)
+- Error: "Cannot mark attendance for future dates"
+
+3.5 SESSION TIME CONFLICT TESTING
+=================================
+Location: /activities/{id}/sessions/create
+Controller: ActivitySessionController::store()
+
+PURPOSE: Test comprehensive scenarios for session scheduling conflicts,
+business hours validation, and resource allocation.
+
+REALISTIC SESSION SCENARIOS:
+============================
+
+Base Session Configuration:
+- Centre Operating Hours: 9:00 AM - 4:00 PM (Monday-Friday)
+- Session Buffer Time: 15 minutes between sessions
+- Lunch Break: 12:00-1:00 PM (no sessions)
+- Prayer Times: Consider for Malaysian Muslim trainees
+- Room Capacity Limits: Therapy Room 1 (max 6), Assessment Room (max 2)
+
+SUCCESS TEST SCENARIOS:
+-----------------------
+
+Test 3.5.1: Valid Session Creation - Peak Hours
+INPUT:
+- activity_id: 1
+- session_date: "2025-01-06" (Monday)
+- start_time: "10:00:00"
+- end_time: "11:00:00"
+- venue: "Bilik Terapi 1"
+- instructor_id: 1 (Dr. Lakshmi)
+- max_participants: 4
+- session_objectives: "Introduction to verbal communication techniques"
+EXPECTED OUTPUT:
+- Status: 201 (Created)
+- ActivitySession record created
+- session_status: "scheduled"
+- Business hours validation passed
+- Room booking confirmed
+- Instructor availability confirmed
+- Calendar integration updated
+
+Test 3.5.2: Back-to-Back Sessions with Buffer
+INPUT (Sequential sessions):
+Session 1:
+- start_time: "09:30:00", end_time: "10:30:00"
+Session 2:
+- start_time: "10:45:00", end_time: "11:45:00" (15 min buffer)
+EXPECTED OUTPUT:
+- Status: 201 (Created) for both
+- Buffer time validation passed
+- Same instructor/room allowed with proper spacing
+- Cleanup time allocated between sessions
+
+FAILURE TEST SCENARIOS:
+-----------------------
+
+Test 3.5.3: Weekend Session Attempt
+INPUT:
+- session_date: "2025-01-04" (Saturday)
+- start_time: "10:00:00"
+- end_time: "11:00:00"
+EXPECTED OUTPUT:
+- Status: 422 (Validation Error)
+- Error: "Sesi tidak boleh dijadualkan pada hujung minggu. Pusat beroperasi Isnin-Jumaat sahaja"
+- Alternative weekday slots suggested
+- Business hours reminder displayed
+
+Test 3.5.4: After Hours Session
+INPUT:
+- session_date: "2025-01-06" (Monday)
+- start_time: "16:30:00" (4:30 PM - after closing)
+- end_time: "17:30:00"
+EXPECTED OUTPUT:
+- Status: 422 (Validation Error)
+- Error: "Sesi mesti berakhir sebelum 4:00 PM. Pusat beroperasi 9:00 AM - 4:00 PM"
+- Latest possible end time: "16:00:00"
+- Morning/afternoon alternatives provided
+
+Test 3.5.5: Lunch Time Conflict
+INPUT:
+- session_date: "2025-01-06"
+- start_time: "11:30:00"
+- end_time: "12:30:00" (overlaps with lunch 12:00-1:00 PM)
+EXPECTED OUTPUT:
+- Status: 422 (Validation Error)
+- Error: "Sesi bercanggah dengan waktu rehat tengah hari (12:00-1:00 PM)"
+- Suggested alternatives: "End by 12:00 PM or start after 1:00 PM"
+- Modified times suggested: "11:30-12:00" or "13:00-13:30"
+
+Test 3.5.6: Malaysian Public Holiday Conflict
+INPUT:
+- session_date: "2025-01-25" (Chinese New Year - public holiday)
+- start_time: "10:00:00"
+- end_time: "11:00:00"
+EXPECTED OUTPUT:
+- Status: 422 (Validation Error)
+- Error: "2025-01-25 adalah cuti umum (Tahun Baru Cina). Pusat ditutup"
+- Next available date suggested: "2025-01-27"
+- Holiday calendar reference provided
+
+3.6 PARTICIPANT CAPACITY STRESS TESTING
+=======================================
+Controller: ActivityController / EnrollmentController
+
+PURPOSE: Test system behavior under maximum capacity scenarios
+and edge cases with participant limits.
+
+STRESS TEST SCENARIOS:
+======================
+
+Test 3.6.1: Simultaneous Enrollment Race Condition
+SCENARIO: Multiple guardians try to enroll their children simultaneously
+for the last available slot in a popular program.
+
+SETUP:
+- Activity: "Program Terapi Pertuturan Premium" (max_participants: 3)
+- Current enrollment: 2/3 (1 slot remaining)
+- Simultaneous enrollment attempts: 5 trainees
+
+INPUT (Concurrent requests):
+1. trainee_id: "AU0006" at timestamp: 2025-01-02 09:00:00.100
+2. trainee_id: "AU0007" at timestamp: 2025-01-02 09:00:00.150
+3. trainee_id: "AU0008" at timestamp: 2025-01-02 09:00:00.200
+4. trainee_id: "DS0004" at timestamp: 2025-01-02 09:00:00.250
+5. trainee_id: "AU0009" at timestamp: 2025-01-02 09:00:00.300
+
+EXPECTED OUTPUT:
+- First request (AU0006): Status 201 - Successfully enrolled
+- Remaining 4 requests: Status 422 - "Program telah penuh"
+- Database consistency maintained
+- No over-enrollment (capacity remains 3/3)
+- Waiting list automatically populated with remaining 4 trainees
+- Guardian notifications sent appropriately
+
+================================================================================
+                         4. ASSET MANAGEMENT FORMS
+================================================================================
+
+4.1 ASSET CREATION FORM
+=======================
+Location: /assets/create
+Route: POST /assets
+Controller: AssetController::store()
+
+FIELDS:
+- asset_name
+- asset_description
+- category_id
+- type_id
+- centre_id
+- serial_number
+- model_number
+- manufacturer
+- purchase_price
+- purchase_date
+- warranty_expiry
+- condition
+- location_id
+- images[] (multiple files)
+
+SUCCESS TEST SCENARIOS:
+-----------------------
+Test 4.1.1: Create Therapy Equipment Asset - Gombak Centre
+INPUT:
+- asset_name: "Pediatric Parallel Bars"
+- asset_description: "Height-adjustable parallel bars for physical therapy training"
+- category_id: 1 (Medical Equipment)
+- type_id: 1 (Therapy Equipment)
+- centre_id: "01"
+- location_id: 1 (Therapy Room)
+- serial_number: "PPB-2024-001"
+- model_number: "TB-100"
+- manufacturer: "TherapyPro Malaysia"
+- purchase_price: 2800.50
+- purchase_date: "2024-01-15"
+- warranty_expiry: "2027-01-15"
+- condition: "excellent"
+EXPECTED OUTPUT:
+- Status: 201 (Created)
+- Asset record created in assets table
+- Unique asset tag: "01-ME-001" (centre_id + category + sequence)
+- Centre linked to Gombak (01)
+- Asset status: "available"
+- Message: "Asset registered successfully in inventory"
+
+Test 4.1.2: Create Asset with Images
+INPUT:
+- (basic fields as above)
+- images: [image1.jpg, image2.jpg] (valid images under 2MB each)
+EXPECTED OUTPUT:
+- Status: 201 (Created)
+- Asset created with images stored
+- Image paths saved in database
+
+FAILURE TEST SCENARIOS:
+-----------------------
+Test 4.1.3: Invalid Category
+INPUT:
+- category_id: 999 (non-existent)
+- Other fields: valid
+EXPECTED OUTPUT:
+- Status: 422 (Validation Error)
+- Error: "Selected asset category is invalid"
+
+Test 4.1.4: Negative Purchase Price
+INPUT:
+- purchase_price: -100.00
+- Other fields: valid
+EXPECTED OUTPUT:
+- Status: 422 (Validation Error)
+- Error: "Purchase price must be positive"
+
+Test 4.1.5: Large Image Upload
+INPUT:
+- images: [huge_image.jpg] (over 2MB)
+- Other fields: valid
+EXPECTED OUTPUT:
+- Status: 422 (Validation Error)
+- Error: "Each image must be under 2MB"
+
+Test 4.1.6: Invalid File Type
+INPUT:
+- images: [document.pdf] (not an image)
+- Other fields: valid
+EXPECTED OUTPUT:
+- Status: 422 (Validation Error)
+- Error: "Only image files (JPG, PNG, GIF) are allowed"
+
+================================================================================
+                        5. TRAINEE MANAGEMENT FORMS
+================================================================================
+
+5.1 TRAINEE REGISTRATION FORM
+=============================
+Location: /trainees/create
+Route: POST /trainees
+Controller: TraineeController::store()
+
+FIELDS:
+- trainee_first_name
+- trainee_last_name
+- trainee_email
+- ic_number
+- trainee_phone_number
+- trainee_date_of_birth
+- gender
+- trainee_address
+- trainee_condition
+- guardian_name
+- guardian_phone
+- guardian_email
+- guardian_relationship
+- emergency_contact_name
+- emergency_contact_phone
+- emergency_contact_relationship
+- photo_consent (required checkbox)
+- services_consent (required checkbox)
+- data_consent (required checkbox)
+
+SUCCESS TEST SCENARIOS:
+-----------------------
+Test 5.1.1: Complete Trainee Registration - Gombak Centre
+INPUT:
+- trainee_first_name: "Nur Aisyah"
+- trainee_last_name: "binti Abdullah"
+- trainee_email: "nuraisyah.abdullah@gmail.com"
+- ic_number: "YYMMDD-ST-NNNN"
+- trainee_phone_number: "+60123456789"
+- trainee_date_of_birth: "2005-06-12"
+- gender: "Female"
+- trainee_address: "No. 15, Jalan Gombak Utama 3/2, Taman Gombak Utama, 53100 Kuala Lumpur"
+- trainee_condition: "Down Syndrome"
+- centre_id: "01"
+- guardian_name: "Aminah binti Hassan"
+- guardian_phone: "+60198765432"
+- guardian_email: "aminah.hassan@yahoo.com"
+- guardian_relationship: "Mother"
+- guardian_address: "No. 15, Jalan Gombak Utama 3/2, Taman Gombak Utama, 53100 Kuala Lumpur"
+- emergency_contact_name: "Ahmad bin Hassan"
+- emergency_contact_phone: "+60131234567"
+- emergency_contact_relationship: "Father"
+- photo_consent: true (value=1)
+- services_consent: true (value=1)
+- data_consent: true (value=1)
+EXPECTED OUTPUT:
+- Status: 201 (Created)
+- Trainee record created with trainee_id: "DS0001" (Down Syndrome + 4 digits)
+- All three consents recorded as true
+- Centre assigned to Gombak (01)
+- Registration date: current date
+- Status: "active"
+- Message: "Trainee registered successfully"
+
+FAILURE TEST SCENARIOS:
+-----------------------
+Test 5.1.2: Invalid IC Number Format
+INPUT:
+- ic_number: "123456" (invalid format)
+- Other fields: valid
+EXPECTED OUTPUT:
+- Status: 422 (Validation Error)
+- Error: "IC number must be in format: YYMMDD-PB-NNNN"
+
+Test 5.1.3: Duplicate Email
+INPUT:
+- trainee_email: "existing@gmail.com" (already exists)
+- Other fields: valid
+EXPECTED OUTPUT:
+- Status: 422 (Validation Error)
+- Error: "Email already registered"
+
+Test 5.1.4: Missing Consent
+INPUT:
+- photo_consent: false (not checked)
+- Other fields: valid including other consents
+EXPECTED OUTPUT:
+- Status: 422 (Validation Error)
+- Error: "Photo consent is required for registration"
+
+Test 5.1.5: Future Birth Date
+INPUT:
+- trainee_date_of_birth: "2030-01-01" (future date)
+- Other fields: valid
+EXPECTED OUTPUT:
+- Status: 422 (Validation Error)
+- Error: "Date of birth cannot be in the future"
+
+Test 5.1.6: Invalid Phone Format
+INPUT:
+- trainee_phone_number: "123" (too short)
+- Other fields: valid
+EXPECTED OUTPUT:
+- Status: 422 (Validation Error)
+- Error: "Please enter a valid Malaysian phone number"
+
+Test 5.1.8: Valid Phone Format Variations
+INPUT (test each variation separately):
+- trainee_phone_number: "+60123456789" (full international format)
+- trainee_phone_number: "60123456789" (without plus)
+- trainee_phone_number: "0123456789" (local format with leading zero)
+- trainee_phone_number: "123456789" (local format without zero)
+- guardian_phone: "+60312345678" (landline format)
+- Other fields: valid
+EXPECTED OUTPUT:
+- Status: 201 (Created)
+- Phone numbers normalized to +60 format in database
+- All variations accepted and properly formatted
+
+Test 5.1.9: Phone Number Auto-formatting
+INPUT:
+- trainee_phone_number: "012 345 6789" (with spaces)
+- guardian_phone: "019-876-5432" (with dashes)
+- emergency_contact_phone: "(013) 111-2222" (with brackets)
+- Other fields: valid
+EXPECTED OUTPUT:
+- Status: 201 (Created) 
+- Phone numbers cleaned and normalized to +60123456789 format
+- Spaces, dashes, and brackets automatically removed
+
+Test 5.1.7: Invalid Email Domain
+INPUT:
+- trainee_email: "user@invalid-domain.xyz"
+- Other fields: valid
+EXPECTED OUTPUT:
+- Status: 422 (Validation Error)
+- Error: "Please use a valid email domain (gmail, outlook, yahoo, hotmail, etc.)"
+
+================================================================================
+                           6. COMMUNICATION FORMS
+================================================================================
+
+6.1 CONTACT US FORM
+===================
+Location: /contact
+Route: POST /contact/submit
+Controller: ContactController::submit()
+
+FIELDS:
+- name
+- email
+- phone (optional)
+- reason
+- message
+
+SUCCESS TEST SCENARIOS:
+-----------------------
+Test 6.1.1: General Inquiry - Parent from Gombak
+INPUT:
+- name: "Dr. Faridah binti Ibrahim"
+- email: "faridah.ibrahim@gmail.com"
+- phone: "+60123456789"
+- subject: "Inquiry about Special Education Services"
+- message: "Assalamualaikum. I am interested to know more about the rehabilitation services available at your Gombak centre for my daughter who has cerebral palsy. What are the age requirements and what documents do I need to bring for assessment?"
+- inquiry_type: "services"
+EXPECTED OUTPUT:
+- Status: 200 (Success)
+- ContactMessages record created with status: "new"
+- inquiry_type: "services", centre_id: null (general inquiry)
+- Email sent to CREAMS admin team
+- Confirmation email sent to Dr. Faridah
+- Message: "Terima kasih kerana menghubungi kami. Kami akan membalas dalam masa 24 jam."
+
+Test 6.1.2: Volunteer Interest Inquiry
+INPUT:
+- name: "Muhammad Hafiz bin Zakaria"
+- email: "hafiz.zakaria@hotmail.com"
+- phone: "+60198765432"
+- subject: "Volunteer Opportunities at IIUM CREAMS"
+- message: "Assalamualaikum. I am a final year psychology student at IIUM and would like to volunteer at your centre to gain experience working with special needs individuals. Are there any volunteer programs available during weekends?"
+- inquiry_type: "volunteer"
+EXPECTED OUTPUT:
+- Status: 200 (Success)
+- ContactMessages record created
+- inquiry_type: "volunteer"
+- Volunteer coordinator notified
+- Auto-response with volunteer application link sent
+
+Test 6.1.3: Service Feedback from Current Family
+INPUT:
+- name: "Siti Nurhaliza binti Ahmad"
+- email: "haliza.ahmad@yahoo.com"
+- phone: "+60131234567"
+- subject: "Feedback on Speech Therapy Sessions"
+- message: "Alhamdulillah, I want to express my gratitude for the excellent speech therapy services my son has received at the Gombak centre. The therapists are very patient and professional. My son has shown significant improvement in his communication skills over the past 6 months."
+- inquiry_type: "general"
+EXPECTED OUTPUT:
+- Status: 200 (Success)
+- ContactMessages record with positive feedback flag
+- Centre supervisor notified of positive feedback
+- Thank you response sent automatically
+
+FAILURE TEST SCENARIOS:
+-----------------------
+Test 6.1.4: Invalid Email
+INPUT:
+- email: "invalid-email"
+- Other fields: valid
+EXPECTED OUTPUT:
+- Status: 422 (Validation Error)
+- Error: "Please enter a valid email address"
+
+Test 6.1.5: Short Message
+INPUT:
+- message: "Hi" (under 10 characters)
+- Other fields: valid
+EXPECTED OUTPUT:
+- Status: 422 (Validation Error)
+- Error: "Message must be at least 10 characters long"
+
+Test 6.1.6: Long Message
+INPUT:
+- message: [2001+ characters]
+- Other fields: valid
+EXPECTED OUTPUT:
+- Status: 422 (Validation Error)
+- Error: "Message cannot exceed 2000 characters"
+
+Test 6.1.7: Invalid Name Characters
+INPUT:
+- name: "John123@#$" (contains invalid characters)
+- Other fields: valid
+EXPECTED OUTPUT:
+- Status: 422 (Validation Error)
+- Error: "Name can only contain letters, spaces, and basic punctuation"
+
+Test 6.1.8: Valid Phone Formats (Contact Form)
+INPUT (test each separately):
+- phone: "+60123456789" (international format)
+- phone: "012-345-6789" (local with dashes)  
+- phone: "012 345 6789" (local with spaces)
+- phone: "0123456789" (local without formatting)
+- Other fields: valid
+EXPECTED OUTPUT:
+- Status: 200 (Success)
+- Phone number normalized to +60 format
+- Contact message saved successfully
+
+Test 6.1.9: Invalid Phone Format (Contact Form)
+INPUT:
+- phone: "+1234567890" (non-Malaysian country code)
+- Other fields: valid
+EXPECTED OUTPUT:
+- Status: 422 (Validation Error)
+- Error: "Phone number must be a valid Malaysian number (+60)"
+
+Test 6.1.10: Optional Phone Field
+INPUT:
+- phone: "" (empty - optional field)
+- Other fields: valid
+EXPECTED OUTPUT:
+- Status: 200 (Success)
+- Contact message saved without phone number
+
+6.2 MESSAGE CREATION FORM
+=========================
+Location: /messages/create
+Route: POST /messages
+Controller: MessageController::store()
+
+FIELDS:
+- recipients (multiple select)
+- subject
+- message_body
+- priority
+- attachment (optional file)
+
+SUCCESS TEST SCENARIOS:
+-----------------------
+Test 6.2.1: Send Simple Message
+INPUT:
+- recipients: [2, 5, 8] (user IDs)
+- subject: "Training Schedule Update"
+- message_body: "Please note the schedule changes for next week."
+- priority: "normal"
+EXPECTED OUTPUT:
+- Status: 201 (Created)
+- Message sent to all recipients
+- Message stored in database
+- Recipients notified
+- Message: "Message sent successfully"
+
+Test 6.2.2: Send High Priority Message
+INPUT:
+- recipients: [1] (admin)
+- subject: "Urgent: Safety Concern"
+- message_body: "There's a safety issue that needs immediate attention."
+- priority: "high"
+EXPECTED OUTPUT:
+- Status: 201 (Created)
+- High priority notification sent
+- Email alert to recipient
+- Marked as urgent in system
+
+FAILURE TEST SCENARIOS:
+-----------------------
+Test 6.2.3: No Recipients Selected
+INPUT:
+- recipients: [] (empty)
+- Other fields: valid
+EXPECTED OUTPUT:
+- Status: 422 (Validation Error)
+- Error: "Please select at least one recipient"
+
+Test 6.2.4: Invalid Attachment
+INPUT:
+- attachment: malicious_file.exe
+- Other fields: valid
+EXPECTED OUTPUT:
+- Status: 422 (Validation Error)
+- Error: "File type not allowed"
+
+================================================================================
+                            7. VOLUNTEER FORMS
+================================================================================
+
+7.1 VOLUNTEER APPLICATION FORM
+==============================
+Location: /volunteer
+Route: POST /volunteer/submit
+Controller: VolunteerController::submit()
+
+FIELDS:
+- name
+- email
+- phone
+- address
+- date_of_birth
+- gender
+- occupation
+- skills
+- availability
+- motivation
+- centre_id
+
+SUCCESS TEST SCENARIOS:
+-----------------------
+Test 7.1.1: Complete Volunteer Application - IIUM Student
+INPUT:
+- name: "Nurul Iman binti Mohd Rashid"
+- email: "nurul.iman@live.iium.edu.my"
+- phone: "+60167891234"
+- address: "Mahallah Safiyyah, International Islamic University Malaysia, 53100 Kuala Lumpur"
+- date_of_birth: "1998-03-20"
+- gender: "Female"
+- occupation: "Education Student - Special Education (IIUM)"
+- skills: "Basic sign language (Bahasa Isyarat Malaysia), art therapy, reading Quran, basic counseling skills"
+- availability: "Weekends (Saturday & Sunday) 9 AM - 5 PM, School holidays"
+- motivation: "Assalamualaikum. As a future special education teacher, I want to gain hands-on experience working with children with special needs. I believe helping these children is both a professional development opportunity and a way to earn Allah's blessings through community service."
+- centre_id: "01"
+EXPECTED OUTPUT:
+- Status: 201 (Created)
+- Volunteer record created with unique volunteer_id: "VL0001"
+- Application status: "applied"
+- registration_date: current date
+- Admin notification sent to Gombak Centre
+- Confirmation email to applicant with application reference
+- Message: "Permohonan sukarelawan berjaya dihantar. Kami akan menghubungi anda dalam masa 3 hari bekerja."
+
+FAILURE TEST SCENARIOS:
+-----------------------
+Test 7.1.2: Underage Applicant
+INPUT:
+- date_of_birth: "2010-01-01" (under 18)
+- Other fields: valid
+EXPECTED OUTPUT:
+- Status: 422 (Validation Error)
+- Error: "Volunteers must be at least 18 years old"
+
+Test 7.1.3: Duplicate Application
+INPUT:
+- email: "existing.volunteer@gmail.com" (already applied)
+- Other fields: valid
+EXPECTED OUTPUT:
+- Status: 422 (Validation Error)
+- Error: "You have already submitted a volunteer application"
+
+Test 7.1.4: Valid Phone Formats (Volunteer Form)
+INPUT (test each separately):
+- phone: "+60167891234" (mobile international)
+- phone: "016-789-1234" (mobile with dashes)
+- phone: "016 789 1234" (mobile with spaces)
+- phone: "+60312345678" (landline)
+- phone: "03-1234-5678" (landline with dashes)
+- Other fields: valid
+EXPECTED OUTPUT:
+- Status: 201 (Created)
+- Phone normalized to +60 format in database
+- Application submitted successfully
+
+Test 7.1.5: Invalid Phone Format (Volunteer Form)
+INPUT:
+- phone: "999999999" (invalid Malaysian format)
+- Other fields: valid
+EXPECTED OUTPUT:
+- Status: 422 (Validation Error)
+- Error: "Phone number must be a valid Malaysian number"
+
+Test 7.1.6: Emergency Contact Phone Testing
+INPUT:
+- emergency_contact_phone: "+60191234567" (valid mobile)
+- Other fields: valid
+EXPECTED OUTPUT:
+- Status: 201 (Created)
+- Emergency contact phone normalized and saved
+
+================================================================================
+                         8. ADMINISTRATIVE FORMS
+================================================================================
+
+8.1 USER MANAGEMENT FORM
+========================
+Location: /admin/users/create
+Route: POST /admin/users
+Controller: AdminController::createUser()
+
+FIELDS:
+- name
+- email
+- iium_id
+- role
+- centre_id
+- status
+- phone
+- position
+
+SUCCESS TEST SCENARIOS:
+-----------------------
+Test 8.1.1: Create New Teacher
+INPUT:
+- name: "Dr. Aminah Hassan"
+- email: "aminah.hassan@iium.edu.my"
+- iium_id: "TCHR0025"
+- role: "teacher"
+- centre_id: "03"
+- status: "active"
+- phone: "019-567-8901"
+- position: "Senior Therapist"
+EXPECTED OUTPUT:
+- Status: 201 (Created)
+- User account created
+- Temporary password generated
+- Welcome email sent
+- Message: "User created successfully"
+
+FAILURE TEST SCENARIOS:
+-----------------------
+Test 8.1.2: Unauthorized Access
+INPUT: Non-admin user attempts to create user
+EXPECTED OUTPUT:
+- Status: 403 (Forbidden)
+- Error: "Unauthorized. Admin access required."
+
+Test 8.1.3: Invalid Role Assignment
+INPUT:
+- role: "superadmin" (invalid role)
+- Other fields: valid
+EXPECTED OUTPUT:
+- Status: 422 (Validation Error)
+- Error: "Role must be: admin, supervisor, teacher, or ajk"
+
+8.2 CENTRE MANAGEMENT FORM
+==========================
+Location: /admin/centres/create
+Route: POST /admin/centres
+Controller: AdminController::createCentre()
+
+FIELDS:
+- centre_name
+- centre_address
+- centre_phone
+- centre_email
+- centre_capacity
+- centre_manager
+- centre_manager_contact
+
+SUCCESS TEST SCENARIOS:
+-----------------------
+Test 8.2.1: Create New Centre
+INPUT:
+- centre_name: "CREAMS Johor Bahru"
+- centre_address: "123 Jalan Skudai, JB"
+- centre_phone: "07-123-4567"
+- centre_email: "jb@creams.org.my"
+- centre_capacity: "50"
+- centre_manager: "Encik Abdullah"
+- centre_manager_contact: "019-333-4444"
+EXPECTED OUTPUT:
+- Status: 201 (Created)
+- Centre created with unique ID
+- Manager assigned
+- Message: "Centre created successfully"
+
+FAILURE TEST SCENARIOS:
+-----------------------
+Test 8.2.2: Duplicate Centre Name
+INPUT:
+- centre_name: "CREAMS Kuala Lumpur" (already exists)
+- Other fields: valid
+EXPECTED OUTPUT:
+- Status: 422 (Validation Error)
+- Error: "Centre name already exists"
+
+================================================================================
+                      PHONE NUMBER FIELD TESTING GUIDE
+================================================================================
+
+IMPORTANT NOTE: All phone number fields in CREAMS have initial value "+60"
+
+FORMS WITH PHONE FIELDS:
+========================
+1. Contact Us Form - phone (optional)
+2. Volunteer Application - phone, emergency_contact_phone
+3. Trainee Registration - trainee_phone_number, guardian_phone, emergency_contact_phone
+4. Trainee Edit Form - trainee_phone_number, guardian_phone, emergency_contact_phone
+5. User Profile Form - phone
+
+INITIAL VALUE BEHAVIOR:
+======================
+- All phone input fields show "+60" when empty
+- Users can continue typing after "+60"
+- Example: User sees "+60" and types "123456789" to get "+60123456789"
+- Edit forms show existing number or "+60" if empty
+
+VALIDATION RULES:
+=================
+✅ VALID FORMATS (all normalize to +60xxxxxxxxx):
+- "+60123456789" (international format)
+- "60123456789" (without plus)
+- "0123456789" (local with leading zero)
+- "123456789" (local without zero)
+- "012-345-6789" (with dashes)
+- "012 345 6789" (with spaces)
+- "(012) 345-6789" (with brackets)
+- "+60312345678" (landline)
+- "03-1234-5678" (landline with dashes)
+
+❌ INVALID FORMATS:
+- "123" (too short)
+- "+1234567890" (non-Malaysian country code)
+- "999999999" (invalid Malaysian pattern)
+- "abc123456" (contains letters)
+- "+60000000000" (invalid mobile prefix)
+
+AUTOMATIC PROCESSING:
+====================
+1. Input Cleaning: Removes spaces, dashes, brackets automatically
+2. Normalization: Converts all valid formats to +60xxxxxxxxx
+3. Validation: Checks against Malaysian mobile/landline patterns
+4. Storage: Saves normalized format (+60xxxxxxxxx) to database
+5. Display: Shows formatted version (+60 12-345 6789) in views
+
+TESTING PHONE FIELDS CHECKLIST:
+===============================
+For each form with phone fields:
+
+BASIC FUNCTIONALITY:
+□ Check initial "+60" value appears
+□ Test typing after "+60" works correctly  
+□ Verify placeholder text shows format example
+□ Test copy/paste functionality
+
+VALIDATION TESTING:
+□ Test all valid format variations
+□ Test all invalid format scenarios
+□ Verify error messages are clear
+□ Check field highlighting on validation errors
+
+DATABASE TESTING:
+□ Verify phone numbers save in +60xxxxxxxxx format
+□ Check normalization works for all input formats
+□ Verify existing data displays correctly in edit forms
+□ Test null/empty values show "+60" in forms
+
+DISPLAY TESTING:
+□ Check formatted display in profile/view pages
+□ Verify phone numbers appear consistently across system
+□ Test phone number display in reports/exports
+□ Check email templates show formatted phone numbers
+
+INTERNATIONAL FORMAT EXAMPLES:
+==============================
+Mobile Numbers:
+- +60123456789 (11 digits total)
+- +60134567890 (11 digits total)
+- +60167891234 (11 digits total)
+
+Landline Numbers:
+- +60312345678 (Kuala Lumpur - 10 digits)
+- +60512345678 (Negeri Sembilan - 10 digits)
+- +60312345678 (Selangor - 10 digits)
+
+================================================================================
+                              TESTING CHECKLIST
+================================================================================
+
+BEFORE TESTING:
+================
+□ Clear browser cache and cookies
+□ Check database connection
+□ Ensure file upload directories are writable
+□ Verify email configuration for testing
+□ Set up test data (users, centres, categories)
+
+DURING TESTING:
+===============
+□ Test with different user roles (admin, supervisor, teacher, ajk)
+□ Check CSRF token functionality
+□ Verify file upload limits
+□ Test with different browsers
+□ Check mobile responsiveness
+□ Monitor database for data integrity
+□ Verify email notifications are sent
+□ Check session timeout behavior
+
+AFTER TESTING:
+==============
+□ Clean up test data
+□ Document any bugs found
+□ Verify fixes work correctly
+□ Update validation messages if needed
+□ Check system logs for errors
+
+SECURITY TESTING:
+=================
+□ Test SQL injection attempts
+□ Check for XSS vulnerabilities
+□ Verify file upload security
+□ Test authorization bypass attempts
+□ Check rate limiting on forms
+□ Verify password security requirements
+
+PERFORMANCE TESTING:
+====================
+□ Test with large file uploads
+□ Check form submission speed
+□ Test with multiple simultaneous users
+□ Verify database query performance
+□ Check memory usage during operations
+
+================================================================================
+                            COMMON ISSUES TO WATCH FOR
+================================================================================
+
+1. CSRF TOKEN ISSUES
+   - Symptoms: 419 errors on form submission
+   - Check: @csrf blade directive present
+   - Fix: Clear sessions, refresh page
+
+2. FILE UPLOAD PROBLEMS
+   - Symptoms: Files not uploading or showing errors
+   - Check: php.ini settings (upload_max_filesize, post_max_size)
+   - Check: Storage permissions
+   - Check: Symbolic links created (php artisan storage:link)
+
+3. VALIDATION NOT WORKING
+   - Symptoms: Invalid data gets saved
+   - Check: Validation rules in controllers/requests
+   - Check: Model fillable/guarded properties
+
+4. EMAIL NOT SENDING
+   - Symptoms: No email notifications
+   - Check: .env email configuration
+   - Check: Queue settings if using queued emails
+   - Check: Email service provider limits
+
+5. SESSION ISSUES
+   - Symptoms: Users getting logged out randomly
+   - Check: Session driver configuration
+   - Check: Session lifetime settings
+   - Check: Database session table if using database sessions
+
+6. PERMISSION ERRORS
+   - Symptoms: 403 errors on valid operations
+   - Check: Middleware configuration
+   - Check: Role assignments in database
+   - Check: Route protection
+
+7. DATABASE ERRORS
+   - Symptoms: 500 errors on form submission
+   - Check: Database connection
+   - Check: Table structure matches model
+   - Check: Foreign key constraints
+
+================================================================================
+                               REPORTING TEMPLATE
+================================================================================
+
+BUG REPORT FORMAT:
+==================
+
+Bug ID: BUG-YYYY-MM-DD-001
+Form: [Form Name]
+Test Case: [Test Case Number]
+Date: [Date of Testing]
+Tester: [Your Name]
+
+DESCRIPTION:
+Brief description of the issue
+
+STEPS TO REPRODUCE:
+1. Step 1
+2. Step 2
+3. Step 3
+
+EXPECTED RESULT:
+What should happen
+
+ACTUAL RESULT:
+What actually happened
+
+SEVERITY:
+□ Critical (System crash, data loss)
+□ High (Major functionality broken)
+□ Medium (Feature not working as expected)
+□ Low (Minor UI/UX issue)
+
+BROWSER/ENVIRONMENT:
+- Browser: [Browser name and version]
+- OS: [Operating system]
+- Screen Resolution: [If relevant]
+- User Role: [admin/supervisor/teacher/ajk]
+
+ADDITIONAL NOTES:
+Any other relevant information
+
+================================================================================
+                                END OF GUIDE
+================================================================================
+
+This testing guide covers all major forms in the CREAMS system with REALISTIC 
+Malaysian data that aligns with the actual database schema. Follow each test
+case systematically and document any issues found. Remember to test with different
+user roles and permissions to ensure proper access control.
+
+REALISTIC DATA UPDATES INCLUDE:
+===============================
+✅ Malaysian names with proper Islamic naming conventions (bin/binti)
+✅ Authentic Malaysian addresses (Gombak, Kuala Lumpur areas)
+✅ Proper Malaysian phone numbers (+60 format)
+✅ Valid Malaysian IC number formats (YYMMDD-PB-NNNN)
+✅ IIUM email addresses (@iium.edu.my, @live.iium.edu.my)
+✅ Realistic special needs conditions (autism, Down syndrome, cerebral palsy)
+✅ Islamic greetings and culturally appropriate language
+✅ Proper centre_id references (01 for Gombak Centre)
+✅ Authentic therapy equipment and medical devices
+✅ Real IIUM student accommodation references (Mahallah)
+✅ Valid Malaysian educational qualifications
+✅ Appropriate therapy program names in Bahasa Malaysia
+✅ Realistic volunteer motivations and Islamic service perspective
+✅ Proper database field mappings and constraints
+✅ Accurate enum values (gender: Male/Female, status: active/inactive/pending)
+✅ Correct consent requirements (photo_consent, services_consent, data_consent)
+✅ ENHANCED: Comprehensive activity conflict testing scenarios
+✅ ENHANCED: Realistic session time validation with Malaysian context
+✅ ENHANCED: Participant capacity and redundancy testing
+✅ ENHANCED: Database-compatible test data for activity module
+
+PHONE NUMBER TESTING:
+=====================
+All phone number fields now have comprehensive testing with:
+- International format: +60123456789
+- Local formats: 012-345-6789, 012 345 6789, 0123456789
+- Both mobile (01X) and landline (03) numbers
+- Proper validation error messages for Malaysian format requirements
+- Normalization to +60 international format in database
+
+DATABASE ALIGNMENT:
+===================
+Test data now matches actual database schema:
+- Centre IDs: "01" (Gombak Centre)
+- Trainee ID format: DS0001, AU0001 (condition code + sequence)
+- Asset categorization matches asset_categories table
+- User roles: admin, supervisor, teacher, ajk
+- Proper foreign key relationships and constraints
+- Realistic field lengths and validation rules
+
+For questions or issues with this testing guide, contact the development team.
+
+Last Updated: 2025-01-07 (Enhanced with comprehensive activity testing scenarios)
+Version: 3.0 - Activity Module Enhanced
