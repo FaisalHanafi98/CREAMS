@@ -25,3 +25,33 @@ bootstrap/cache/*.php
 !bootstrap/cache/.gitkeep
 !storage/logs/.gitkeep
 storage/phpstan/
+.memsearch/
+
+# Archive folder (old code, not app source)
+/archive/
+
+# Root-level artefacts (screenshots, mockups, one-time scripts)
+*.jpg
+*.png
+*.bat
+/routes_export.json
+
+# Generated docs logs and personal notes
+/docs/migration_test_output.log
+/docs/phpstan_output.txt
+/docs/*.txt
+!/docs/routes_inventory.txt
+!/docs/routes_sample.txt
+
+# Generated test reports
+tests/*.html
+tests/test-results/
+
+# Playwright artefacts
+tests/Browser/.auth/
+tests/Browser/node_modules/
+tests/Browser/nul
+tests/Browser/playwright-report/
+tests/Browser/test-results/
+tests/Browser/test-results.json/
+tests/Browser/dashboard-test-results.txt

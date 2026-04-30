@@ -13,9 +13,95 @@
       "Bash(done)",
       "Bash(fi)",
       "Bash(ls:*)",
-      "Bash(npm test:*)"
+      "Bash(npm test:*)",
+      "Bash(grep -v 'faker\\\\|fake\\(\\)\\\\|$ic\\\\|assert\\\\|null\\\\|empty\\\\|format\\\\|regex\\\\|rule')",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git -c user.name=Faisal -c user.email=faisalhanafi.dsa@gmail.com commit -m ' *)",
+      "Bash(xargs -I{} basename {})",
+      "Bash(git -c user.name='Faisal' -c user.email='faisalhanafi.dsa@gmail.com' commit --allow-empty --dry-run -m \"identity probe\")",
+      "Bash(git status *)",
+      "Bash(git diff *)",
+      "Bash(git ls-files *)",
+      "Read(//tmp/**)",
+      "Bash(tar -tzf ../creams-safety-20260424-1404.tar.gz)",
+      "Bash(git stash *)",
+      "Bash(xargs -r git add)",
+      "Bash(xargs -a /tmp/pair-roots.txt -d '\\\\n' git add -A --)",
+      "Bash(xargs -a /tmp/pair-docs.txt -d '\\\\n' git add --)",
+      "Bash(git push *)",
+      "Bash(ls .git/index.lock)",
+      "Bash(ls .git/HEAD.lock)",
+      "Bash(xargs grep *)",
+      "Bash(bash .githooks/pre-commit)",
+      "Bash(echo \"Exit code: $?\")",
+      "Bash(sed -i 's/\\\\r$//' scripts/pre_compaction_checkpoint.sh scripts/session_end_checkpoint.sh scripts/prompt_counter_checkpoint.sh)",
+      "Bash(chmod +x scripts/pre_compaction_checkpoint.sh scripts/session_end_checkpoint.sh scripts/prompt_counter_checkpoint.sh)",
+      "Bash(file scripts/*_checkpoint.sh)",
+      "Bash(bash scripts/pre_compaction_checkpoint.sh)",
+      "Bash(bash scripts/session_end_checkpoint.sh)",
+      "Bash(bash scripts/prompt_counter_checkpoint.sh)",
+      "Bash(rm -f .memsearch/.prompt_count)",
+      "Read(//c/Users/User1/.claude/plugins/**)",
+      "Bash(bash ~/.claude/plugins/cache/memsearch-plugins/memsearch/0.4.1/scripts/derive-collection.sh)",
+      "Bash(rm -f .memsearch/memory/2026-04-28.md)",
+      "Bash(ls -la .memsearch/memory/)",
+      "Bash(ls scripts/*checkpoint* .claude/commands/resume.md)",
+      "Bash(git tag *)",
+      "Bash(git branch *)",
+      "Bash(git checkout *)",
+      "Bash(git commit *)",
+      "Bash(git restore *)",
+      "Bash(git config *)",
+      "Bash(git rm *)"
     ],
     "deny": [],
     "ask": []
+  },
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash scripts/prompt_counter_checkpoint.sh"
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash scripts/pre_compaction_checkpoint.sh"
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash scripts/session_end_checkpoint.sh"
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "startup|resume",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo 'MEMSEARCH: run /resume before coding.'"
+          }
+        ]
+      }
+    ]
   }
 }
