@@ -1,0 +1,30 @@
+=== IC pattern scan in UATSeeder ===
+
+=== IC pattern scan across all seeders/factories ===
+database/seeders/IRLSeeder.php:296:                'ic' => 'XXXXXX-XX-XXXX',
+database/seeders/IRLSeeder.php:303:                'ic' => 'XXXXXX-XX-XXXX',
+database/seeders/IRLSeeder.php:310:                'ic' => 'XXXXXX-XX-XXXX',
+database/seeders/IRLSeeder.php:317:                'ic' => 'XXXXXX-XX-XXXX',
+database/seeders/IRLSeeder.php:324:                'ic' => 'XXXXXX-XX-XXXX',
+database/seeders/IRLSeeder.php:331:                'ic' => 'XXXXXX-XX-XXXX',
+database/seeders/IRLSeeder.php:338:                'ic' => 'XXXXXX-XX-XXXX',
+database/seeders/IRLSeeder.php:345:                'ic' => 'XXXXXX-XX-XXXX',
+database/seeders/IRLSeeder.php:352:                'ic' => 'XXXXXX-XX-XXXX',
+database/seeders/IRLSeeder.php:359:                'ic' => 'XXXXXX-XX-XXXX',
+database/seeders/IRLSeeder.php:366:                'ic' => 'XXXXXX-XX-XXXX',
+database/seeders/IRLSeeder.php:373:                'ic' => 'XXXXXX-XX-XXXX',
+database/seeders/IRLSeeder.php:380:                'ic' => 'XXXXXX-XX-XXXX',
+database/seeders/IRLSeeder.php:387:                'ic' => 'XXXXXX-XX-XXXX',
+database/seeders/TestingGuideDataSeeder.php:537:                'ic_number' => 'XXXXXX-XX-XXXX',
+database/seeders/TestingGuideDataSeeder.php:566:                'ic_number' => 'XXXXXX-XX-XXXX',
+database/seeders/TestingGuideDataSeeder.php:595:                'ic_number' => 'XXXXXX-XX-XXXX',
+
+=== Real Malaysian name pattern scan in UATSeeder ===
+
+=== Real domain pattern scan in UATSeeder ===
+
+=== UATSeeder IC generation logic check ===
+160:                        'ic_number' => $this->generateFakeIc(),
+247:    private function generateFakeIc(): string
+250:        $stateCode = '99';
+253:        return sprintf('%s-%s-%s', $yymmdd, $stateCode, $sequence);
