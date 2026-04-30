@@ -17,11 +17,33 @@ class IRLSeeder extends Seeder
 {
     /**
      * Run the database seeds.
-     * Seeds real-world data for Gombak Centre (Centre 01) exclusively
+     * Seeds real-world data for Gombak Centre (Centre 01) exclusively.
+     *
+     * SAFETY: This seeder contains real PDPA-protected production data.
+     * It is HARD-GATED to APP_ENV=local only. Staging, UAT, demo, and
+     * production environments must use UATSeeder (anonymised data) instead.
      */
     public function run(): void
     {
+        // PDPA hard guard — never seed real data outside local development.
+        if (app()->environment() !== 'local') {
+            $msg = 'IRLSeeder is HARD-GATED to APP_ENV=local. Current env: '
+                . app()->environment()
+                . '. Use --class=UATSeeder for staging/demo/UAT.';
+            $this->command->error($msg);
+            throw new \RuntimeException($msg);
+        }
+
+        // Belt-and-braces: refuse to run if APP_DEBUG is false (looks like production posture).
+        if (config('app.debug') === false) {
+            $msg = 'IRLSeeder refuses to run with APP_DEBUG=false (production posture detected). '
+                . 'Use --class=UATSeeder for non-development environments.';
+            $this->command->error($msg);
+            throw new \RuntimeException($msg);
+        }
+
         $this->command->info('🏥 Seeding IRL (In Real Life) data for Gombak Centre...');
+        $this->command->warn('⚠️  IRLSeeder contains real PDPA data — local development only.');
 
         $faker = Faker::create('ms_MY'); // Malaysian locale
 

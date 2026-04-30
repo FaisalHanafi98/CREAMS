@@ -1,0 +1,66 @@
+=== Git history secret/PII audit — Fri May  1 03:49:43 MPST 2026 ===
+Repo: 131 commits on current branch
+
+--- 1. Malaysian IC pattern (full history, all files, all branches) ---
++- **IC Number**: `XXXXXX-XX-XXXX`
++- **Format**: YYMMDD-PB-NNNN (e.g., XXXXXX-XX-XXXX)
++- ic_number: "XXXXXX-XX-XXXX"
++    "ic_number": "XXXXXX-XX-XXXX",
++IC Number: XXXXXX-XX-XXXX
++IC: XXXXXX-XX-XXXX
++        $trainee = Trainee::factory()->create(['ic_number' => 'XXXXXX-XX-XXXX']);
++        $this->assertNotEquals('XXXXXX-XX-XXXX', $rawValue);
++        $this->assertEquals('XXXXXX-XX-XXXX', $trainee->ic_number);
++            'ic_number' => 'XXXXXX-XX-XXXX',
++- **IC Number**: `XXXXXX-XX-XXXX`
++- **Format**: YYMMDD-PB-NNNN (e.g., XXXXXX-XX-XXXX)
++                - /placeholder: e.g., XXXXXX-XX-XXXX
++                - text: XXXXXX-XX-XXXX
++                - /placeholder: e.g., XXXXXX-XX-XXXX
++                - text: XXXXXX-XX-XXXX
++                - /placeholder: e.g., XXXXXX-XX-XXXX
++                - text: XXXXXX-XX-XXXX
++                - /placeholder: e.g., XXXXXX-XX-XXXX
++                - text: XXXXXX-XX-XXXX
++                - /placeholder: e.g., XXXXXX-XX-XXXX
++                - /placeholder: e.g., XXXXXX-XX-XXXX
++                - text: XXXXXX-XX-XXXX
++                - /placeholder: e.g., XXXXXX-XX-XXXX
++                - text: XXXXXX-XX-XXXX
++                - /placeholder: e.g., XXXXXX-XX-XXXX
++                - text: XXXXXX-XX-XXXX
++                - /placeholder: e.g., XXXXXX-XX-XXXX
++                - text: XXXXXX-XX-XXXX
++                - /placeholder: e.g., XXXXXX-XX-XXXX
+  (showing first 30 matches)
+  TOTAL added IC patterns across history: 72
+
+--- 2. Hardcoded password-like assignments (full history) ---
+  TOTAL added password literals across history: 1133
+
+--- 3. .env file ever committed? ---
+  .env file added to repo: 0 times
+
+--- 4. AWS / API keys (env var style) ---
++    'API_KEY=.+'
++    'API_SECRET=.+'
++    'AWS_SECRET_ACCESS_KEY=.+'
++    'API_KEY=.+'
++    'API_SECRET=.+'
++    'AWS_SECRET_ACCESS_KEY=.+'
++AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
++AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
++AWS_ACCESS_KEY_ID=your-aws-access-key
++AWS_SECRET_ACCESS_KEY=your-aws-secret-key
+
+--- 5. Private key markers ---
++    'BEGIN RSA PRIVATE'
++    'BEGIN DSA PRIVATE'
++    'BEGIN EC PRIVATE'
++    'BEGIN RSA PRIVATE'
++    'BEGIN DSA PRIVATE'
+
+--- 6. Files in archive/ that were ever tracked ---
+12168
+
+=== END ===
