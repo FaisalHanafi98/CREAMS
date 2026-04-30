@@ -1,0 +1,63 @@
+#!/bin/bash
+# Pre-commit hook: block commits containing secrets or PII patterns
+# Install: git config core.hooksPath .githooks
+
+RED='\033[0;31m'
+NC='\033[0m'
+
+PATTERNS=(
+    'DB_PASSWORD=.+'
+    'API_KEY=.+'
+    'API_SECRET=.+'
+    'AWS_SECRET_ACCESS_KEY=.+'
+    'PRIVATE_KEY'
+    'BEGIN RSA PRIVATE'
+    'BEGIN DSA PRIVATE'
+    'BEGIN EC PRIVATE'
+    'password.*=.*[A-Za-z0-9@#$%^&*]{8,}'
+    '[0-9]{6}-[0-9]{2}-[0-9]{4}'
+)
+
+PATTERN_NAMES=(
+    'Database password'
+    'API key'
+    'API secret'
+    'AWS secret key'
+    'Private key reference'
+    'RSA private key'
+    'DSA private key'
+    'EC private key'
+    'Hardcoded password'
+    'Malaysian IC number pattern'
+)
+
+STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACM)
+
+if [ -z "$STAGED_FILES" ]; then
+    exit 0
+fi
+
+FOUND=0
+
+for i in "${!PATTERNS[@]}"; do
+    MATCHES=$(echo "$STAGED_FILES" | xargs grep -lnE "${PATTERNS[$i]}" 2>/dev/null | grep -v '.githooks/' | grep -v '.env.example')
+    if [ -n "$MATCHES" ]; then
+        if [ "$FOUND" -eq 0 ]; then
+            echo -e "${RED}BLOCKED: Potential secrets detected in staged files${NC}"
+            echo ""
+        fi
+        echo -e "${RED}  [${PATTERN_NAMES[$i]}]${NC}"
+        echo "$MATCHES" | while read -r file; do
+            echo "    $file"
+        done
+        echo ""
+        FOUND=1
+    fi
+done
+
+if [ "$FOUND" -eq 1 ]; then
+    echo "Remove secrets before committing, or use: git commit --no-verify (with justification)"
+    exit 1
+fi
+
+exit 0
