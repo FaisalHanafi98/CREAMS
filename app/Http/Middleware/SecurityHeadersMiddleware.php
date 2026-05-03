@@ -52,15 +52,15 @@ class SecurityHeadersMiddleware
         $response->headers->set('Referrer-Policy', 'strict-origin-when-cross-origin');
 
         // Content-Security-Policy: Prevent XSS and data injection attacks
-        // This is a permissive policy for Laravel apps with inline scripts
-        // TODO: Tighten this policy as the application evolves (remove 'unsafe-inline' if possible)
+        // CDN domains allowlisted so Bootstrap, FontAwesome, jQuery, and Google Fonts load correctly.
+        // Phase 1B will replace CDN refs with self-hosted assets; at that point CDN domains can be removed.
         $csp = [
             "default-src 'self'",
-            "script-src 'self' 'unsafe-inline' 'unsafe-eval'", // Laravel Mix/Vite requires unsafe-inline
-            "style-src 'self' 'unsafe-inline'",                 // Tailwind requires unsafe-inline
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://code.jquery.com",
+            "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.googleapis.com",
             "img-src 'self' data: https:",
-            "font-src 'self' data:",
-            "connect-src 'self'",
+            "font-src 'self' data: https://fonts.gstatic.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net",
+            "connect-src 'self' https://wttr.in",
             "frame-ancestors 'self'",
             "base-uri 'self'",
             "form-action 'self'",

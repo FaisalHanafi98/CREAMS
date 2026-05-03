@@ -330,17 +330,19 @@
     }
 
     .btn-action {
-        padding: 8px 15px;
+        padding: 6px 8px;
         border-radius: 10px;
         border: none;
-        font-size: 0.85rem;
+        font-size: 0.75rem;
         font-weight: 600;
         transition: all 0.3s ease;
         cursor: pointer;
         text-decoration: none;
         display: inline-flex;
         align-items: center;
-        gap: 5px;
+        justify-content: center;
+        gap: 4px;
+        white-space: nowrap;
     }
 
     .btn-view {

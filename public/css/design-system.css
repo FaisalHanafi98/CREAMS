@@ -1,0 +1,140 @@
+/*
+ * CREAMS Design System — single source of truth for brand tokens.
+ * Included in layouts/app.blade.php before all view-specific styles.
+ * All page CSS should reference these variables instead of hardcoding values.
+ */
+
+:root {
+    /* Brand colours */
+    --brand-primary:    #32bdea;
+    --brand-secondary:  #c850c0;
+    --brand-gradient:   linear-gradient(135deg, #32bdea 0%, #c850c0 100%);
+    --brand-gradient-r: linear-gradient(135deg, #c850c0 0%, #32bdea 100%);
+
+    /* Semantic colours */
+    --color-success:  #2ed573;
+    --color-danger:   #ff4757;
+    --color-warning:  #ffa502;
+    --color-info:     #1e90ff;
+
+    /* Neutrals */
+    --color-dark:     #1a2a3a;
+    --color-light:    #f8f9fa;
+    --color-border:   #e9ecef;
+    --color-muted:    #6c757d;
+    --color-white:    #ffffff;
+
+    /* Typography */
+    --font-main:      'Poppins', system-ui, -apple-system, sans-serif;
+    --font-size-base: 14px;
+    --font-size-sm:   12px;
+    --font-size-lg:   16px;
+
+    /* Layout */
+    --sidebar-width:      240px;
+    --sidebar-width-coll: 60px;
+    --topbar-height:      60px;
+
+    /* Cards */
+    --card-radius:  12px;
+    --card-shadow:  0 4px 20px rgba(0, 0, 0, 0.08);
+    --card-shadow-hover: 0 8px 30px rgba(0, 0, 0, 0.15);
+    --card-padding: 1.25rem;
+
+    /* Transitions */
+    --transition-fast:   0.15s ease;
+    --transition-normal: 0.3s ease;
+}
+
+/* ── Utility helpers ─────────────────────────────────────────── */
+
+.brand-gradient      { background: var(--brand-gradient); }
+.brand-gradient-r    { background: var(--brand-gradient-r); }
+.brand-gradient-text {
+    background: var(--brand-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Page header banner — shared across all pages */
+.page-header-banner {
+    background: var(--brand-gradient);
+    border-radius: var(--card-radius);
+    padding: 2rem 2.5rem;
+    color: var(--color-white);
+    margin-bottom: 1.5rem;
+}
+.page-header-banner h1,
+.page-header-banner .page-title { color: var(--color-white); font-weight: 600; }
+.page-header-banner .page-subtitle { color: rgba(255,255,255,0.85); font-size: var(--font-size-base); }
+
+/* Stat card — shared widget */
+.stat-card {
+    background: var(--color-white);
+    border-radius: var(--card-radius);
+    box-shadow: var(--card-shadow);
+    padding: var(--card-padding);
+    transition: box-shadow var(--transition-normal);
+    border: 1px solid var(--color-border);
+}
+.stat-card:hover { box-shadow: var(--card-shadow-hover); }
+.stat-card .stat-value { font-size: 2rem; font-weight: 700; color: var(--color-dark); line-height: 1; }
+.stat-card .stat-label { font-size: var(--font-size-sm); color: var(--color-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-top: 0.25rem; }
+.stat-card .stat-icon {
+    width: 48px; height: 48px; border-radius: 10px;
+    background: var(--brand-gradient);
+    display: flex; align-items: center; justify-content: center;
+    color: white; font-size: 1.25rem; margin-bottom: 0.75rem;
+}
+
+/* Content card */
+.content-card {
+    background: var(--color-white);
+    border-radius: var(--card-radius);
+    box-shadow: var(--card-shadow);
+    border: 1px solid var(--color-border);
+    overflow: hidden;
+}
+.content-card .card-header-inner {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--color-border);
+    font-weight: 600;
+    color: var(--color-dark);
+}
+.content-card .card-body-inner { padding: 1.5rem; }
+
+/* Role badges */
+.role-badge {
+    display: inline-flex; align-items: center; gap: 0.35rem;
+    padding: 0.25rem 0.75rem; border-radius: 999px;
+    font-size: var(--font-size-sm); font-weight: 500;
+}
+.role-badge.admin       { background: rgba(50,189,234,0.15); color: var(--brand-primary); }
+.role-badge.supervisor  { background: rgba(200,80,192,0.15); color: var(--brand-secondary); }
+.role-badge.teacher     { background: rgba(46,213,115,0.15); color: var(--color-success); }
+.role-badge.ajk         { background: rgba(255,165,2,0.15);  color: var(--color-warning); }
+
+/* Status pills */
+.status-pill {
+    display: inline-block; padding: 0.2rem 0.6rem;
+    border-radius: 999px; font-size: 11px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.04em;
+}
+.status-pill.active   { background: rgba(46,213,115,0.15);  color: #1a8742; }
+.status-pill.inactive { background: rgba(255,71,87,0.15);   color: #c0392b; }
+.status-pill.pending  { background: rgba(255,165,2,0.15);   color: #b8770a; }
+
+/* Empty state */
+.empty-state {
+    text-align: center; padding: 3rem 1rem; color: var(--color-muted);
+}
+.empty-state i { font-size: 3rem; margin-bottom: 1rem; opacity: 0.4; }
+.empty-state p { margin: 0; font-size: var(--font-size-base); }
+
+/* Responsive grid helpers */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+}

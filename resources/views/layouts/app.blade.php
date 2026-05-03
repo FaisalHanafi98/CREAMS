@@ -25,11 +25,13 @@
 
     <title>@yield('title', ucfirst(session('role')) . ' Dashboard - CREAMS')</title>
 
-    <!-- External CSS -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css" />
+    <!-- Self-hosted assets (no CDN dependency on demo day) -->
+    <link rel="stylesheet" href="{{ asset('libs/fontawesome/css/all.min.css') }}" />
+    <link rel="stylesheet" href="{{ asset('libs/bootstrap/css/bootstrap.min.css') }}" />
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600;700&display=swap"
         rel="stylesheet">
+    <!-- CREAMS Design System — brand tokens and shared components -->
+    <link rel="stylesheet" href="{{ asset('css/design-system.css') }}" />
 
     <style>
         :root {
@@ -1389,10 +1391,9 @@
         @yield('content')
     </div>
 
-    <!-- JavaScript Dependencies -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.min.js"></script>
+    <!-- JavaScript Dependencies (self-hosted) -->
+    <script src="{{ asset('js/jquery-3.2.1.min.js') }}"></script>
+    <script src="{{ asset('libs/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
 
     <!-- Expiry Handler CSS and JS -->
     <link rel="stylesheet" href="{{ asset('css/expiry-handler.css') }}">

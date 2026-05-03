@@ -169,10 +169,10 @@ class TraineeHomeController extends Controller
                     $sessionProgress = $sessionAttendanceStats['attendance_rate'];
                     $allTraineesTotalProgress += $sessionProgress;
                     $allTraineesWithProgress++;
-                }
-                
-                if ($sessionProgress < 50) {
-                    $belowThresholdCount++;
+
+                    if ($sessionProgress < 50) {
+                        $belowThresholdCount++;
+                    }
                 }
             }
             
