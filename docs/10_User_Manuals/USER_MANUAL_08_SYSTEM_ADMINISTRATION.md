@@ -1,949 +1,243 @@
-# CREAMS User Manual: System Administration Module
+# CREAMS User Manual — System Administration
 
-## 📖 Table of Contents
-1. [System Administration Overview](#system-administration-overview)
-2. [System Configuration & Settings](#system-configuration--settings)
-3. [User Permission Management](#user-permission-management)
-4. [Data Backup & Recovery](#data-backup--recovery)
-5. [System Monitoring & Alerts](#system-monitoring--alerts)
-6. [Integration Management](#integration-management)
-7. [Security Administration](#security-administration)
-8. [Performance Management](#performance-management)
-9. [Maintenance & Updates](#maintenance--updates)
-10. [Multi-Centre Administration](#multi-centre-administration)
-11. [Troubleshooting & Support](#troubleshooting--support)
+**Version**: 2.0 (re-baselined 2 May 2026)
+**Audience**: Whoever is operating the CREAMS instance (developer, deployer, sysadmin)
+**Supersedes**: Version 1.0 (deprecated — invented multiple administrator role tiers, claimed Multi-Factor Authentication, IP address restrictions, real-time session monitoring, and other infrastructure features that are not implemented)
 
 ---
 
-## ⚙️ System Administration Overview
+## 1. Honest scope
 
-### What is System Administration?
-The System Administration module provides comprehensive tools for managing the CREAMS system infrastructure, user permissions, security, performance, and overall system health. This module is designed for system administrators and IT professionals responsible for maintaining the CREAMS environment.
+CREAMS is a single-application Laravel project. There is **no separate system-administration UI** in the app. "System administration" means operating the codebase, the database, the web server, and the scheduled tasks — not clicking buttons in a CREAMS admin panel.
 
-### Core Administrative Functions
-- **System Configuration**: Global settings and system parameters
-- **User & Permission Management**: Comprehensive user access control
-- **Data Management**: Backup, recovery, and data integrity
-- **Security Administration**: System security and compliance management
-- **Performance Monitoring**: System performance and optimization
-- **Integration Management**: External system integrations and APIs
+This manual documents what actually exists. For features that earlier docs claimed but do not exist, see the "Not implemented" section.
 
-*[MEDIA SPACE: Overview diagram of system administration architecture]*
-
-### Administrator Roles and Responsibilities
-- **System Administrator**: Full system access and configuration authority
-- **Security Administrator**: Security policies and compliance management
-- **Database Administrator**: Database management and optimization
-- **Integration Administrator**: API and integration management
-- **Support Administrator**: User support and troubleshooting
-
-*[MEDIA SPACE: Screenshot of administrator role hierarchy and permissions]*
-
-### Access Control and Security
-System administration functions require the highest level of security clearance:
-- **Multi-Factor Authentication**: Required for all administrative access
-- **IP Address Restrictions**: Limit access to authorized locations
-- **Session Monitoring**: Real-time monitoring of administrative sessions
-- **Audit Logging**: Comprehensive logging of all administrative actions
-
-*[MEDIA SPACE: Screenshot of administrative security controls]*
+The only in-app role with elevated authority is **Admin** (covered in Manual #5 — User & Staff Management). There are no "Security Administrator", "Database Administrator", "Integration Administrator", or "Support Administrator" roles. Those were aspirational labels in the v1.0 manual.
 
 ---
 
-## 🔧 System Configuration & Settings
+## 2. Authoritative sources of truth
 
-### Global System Settings
+When this manual conflicts with one of these, **trust the source, not the manual**:
 
-#### Basic System Configuration
-Fundamental system settings that affect the entire CREAMS environment:
-
-*[MEDIA SPACE: Screenshot of global system settings dashboard]*
-
-**System Information**
-- **System Name**: Organization and system identification
-- **Version Information**: Current system version and build information
-- **License Management**: System licensing and user capacity
-- **Timezone Configuration**: Global timezone settings and regional preferences
-
-*[MEDIA SPACE: Screenshot of basic system information settings]*
-
-**Operational Settings**
-- **Business Hours**: Define standard operational hours
-- **Holiday Calendar**: Configure organizational holidays and closures
-- **Session Timeout**: User session timeout and security settings
-- **Default Language**: System default language and localization
-
-*[MEDIA SPACE: Screenshot of operational settings configuration]*
-
-#### Application Configuration
-
-**Module Settings**
-Configure individual CREAMS modules:
-- **Authentication Module**: Login and security settings
-- **Dashboard Module**: Dashboard configuration and defaults
-- **Activities Module**: Activity management settings
-- **Attendance Module**: Attendance tracking configuration
-- **Letters Module**: Document generation settings
-
-*[MEDIA SPACE: Screenshot of module configuration interface]*
-
-**Feature Toggles**
-Enable or disable system features:
-- **Advanced Features**: Control access to advanced functionality
-- **Experimental Features**: Beta features and testing functionality
-- **Third-Party Integrations**: Enable/disable external integrations
-- **Mobile Features**: Mobile app and responsive features
-
-*[MEDIA SPACE: Screenshot of feature toggle management]*
-
-### Centre-Specific Configuration
-
-#### Multi-Centre Settings
-Configure settings for multiple rehabilitation centres:
-
-**Centre Management**
-- **Centre Registration**: Add and configure new centres
-- **Centre Profiles**: Detailed centre information and settings
-- **Centre Hierarchies**: Organizational structure and relationships
-- **Centre-Specific Settings**: Customized settings per centre
-
-*[MEDIA SPACE: Screenshot of centre management interface]*
-
-**Data Isolation**
-- **Centre Data Separation**: Ensure data isolation between centres
-- **Shared Resources**: Configure shared resources and information
-- **Cross-Centre Access**: Manage cross-centre user access
-- **Centre Reporting**: Centre-specific reporting and analytics
-
-*[MEDIA SPACE: Screenshot of data isolation configuration]*
-
-### Communication Settings
-
-#### Email Configuration
-Configure system email services:
-
-**SMTP Settings**
-- **Mail Server Configuration**: SMTP server setup and authentication
-- **Email Templates**: System email template management
-- **Delivery Settings**: Email delivery preferences and retry logic
-- **Bounce Management**: Handle bounced emails and failed deliveries
-
-*[MEDIA SPACE: Screenshot of email configuration interface]*
-
-**Notification Settings**
-- **System Notifications**: Configure automated system notifications
-- **User Notifications**: User notification preferences and defaults
-- **Emergency Notifications**: Critical alert notification settings
-- **Notification Channels**: Email, SMS, and in-app notification configuration
-
-*[MEDIA SPACE: Screenshot of notification configuration]*
-
-#### SMS and Mobile Configuration
-- **SMS Gateway**: Configure SMS service provider integration
-- **Mobile App Settings**: Mobile application configuration
-- **Push Notifications**: Mobile push notification settings
-- **Mobile Security**: Mobile device security and access controls
-
-*[MEDIA SPACE: Screenshot of mobile and SMS configuration]*
+| Topic | Source of truth |
+|---|---|
+| Project rules, governance, PDPA constraints | `CLAUDE.md` (repo root) |
+| Deployment / staging seed policy | `docs/04_Deployment_Guides/STAGING_SEED_POLICY.md` |
+| Multi-centre data isolation architecture | `docs/MULTI_CENTRE_ISOLATION.md` |
+| Session checkpoints and memory protocol | `CLAUDE.md` Memory Protocol section + `.memsearch/memory/` |
+| Routes inventory | `docs/audit/routes_2026-04-30.json` |
+| Test baseline | `docs/audit/test_baseline_2026-04-30.log` |
+| Commit message format | `docs/COMMIT_MESSAGE_SOP.md` and `.gitmessage` |
+| Pre-commit hook policy | `.githooks/pre-commit` |
+| AI agent governance | `CLAUDE.md` (for Claude Code), `AGENTS.md` (for Codex), `docs/CODEX_INIT_PROMPT.md` |
 
 ---
 
-## 👥 User Permission Management
+## 3. Operating CREAMS (the real list)
 
-### Comprehensive User Management
+### Daily operations
 
-#### User Account Administration
-Complete user lifecycle management:
+| Task | Command |
+|---|---|
+| Start local dev server | `php artisan serve` (binds to `127.0.0.1:8000` by default) |
+| Run the test suite | `php artisan test` (current baseline: 359 passing) |
+| Run pending migrations | `php artisan migrate` |
+| Reset DB and re-seed UAT data | `php artisan migrate:fresh --seeder=UATSeeder --force` |
+| Reset DB and re-seed real data (LOCAL ONLY) | `php artisan migrate:fresh --seeder=IRLSeeder --force` |
+| Inspect routes | `php artisan route:list` (629 routes in current build) |
+| Clear caches | `php artisan optimize:clear` |
+| Open tinker REPL | `php artisan tinker` |
+| Inspect a model | `App\Models\User::find(1)` (in tinker) |
 
-*[MEDIA SPACE: Screenshot of user management dashboard]*
+### Database
 
-**Account Creation and Setup**
-- **Bulk User Creation**: Import and create multiple users simultaneously
-- **Account Templates**: Standardized account setup templates
-- **Automated Provisioning**: Automatic account creation workflows
-- **Account Validation**: Verify user information and credentials
+CREAMS targets MySQL 8 / MariaDB 10.4+. No support for PostgreSQL or SQLite is currently committed (parts may work but are not tested).
 
-*[MEDIA SPACE: Screenshot of user account creation interface]*
+Connection config lives in `config/database.php` and reads from `.env`.
 
-**User Profile Management**
-- **Profile Information**: Manage comprehensive user profiles
-- **Contact Information**: Maintain current contact details
-- **Professional Information**: Track certifications and qualifications
-- **Account Status**: Active, inactive, suspended, and terminated accounts
+### Configuration
 
-*[MEDIA SPACE: Screenshot of user profile management]*
+Most behaviour is driven by `.env`. Key variables:
 
-#### Role-Based Access Control (RBAC)
+| Variable | Purpose |
+|---|---|
+| `APP_ENV` | `local` enables developer-only features (e.g., direct routes without `/creams/{demo_id}/` prefix; IRLSeeder allowed) |
+| `APP_DEBUG` | `true` shows full stack traces — set to `false` in any environment that is not your dev machine |
+| `APP_URL` | Base URL the framework uses for asset and route generation |
+| `SESSION_LIFETIME` | Session inactivity timeout in minutes (currently `480` = 8 hours) |
+| `RATE_LIMIT_LOGIN` | Login attempts allowed per minute per identifier+IP (default 5) |
+| `DB_*` | Database connection details |
+| `MAIL_*` | Email sending — letters are generated as PDFs and not auto-emailed today |
 
-**Role Definition and Management**
-- **Standard Roles**: Admin, Teacher, Supervisor, AJK, Trainee roles
-- **Custom Roles**: Create organization-specific roles
-- **Role Hierarchies**: Define role relationships and inheritance
-- **Role Templates**: Standardized role configuration templates
+### Logs
 
-*[MEDIA SPACE: Screenshot of role management interface]*
+| Log | Path |
+|---|---|
+| Laravel application log | `storage/logs/laravel.log` |
+| HTTP access logs | wherever your web server writes (Nginx default `/var/log/nginx/access.log`) |
+| Audit logs (in-DB) | `centre_audit_logs`, `trainee_audit_logs`, `activity_logs` tables |
 
-**Permission Management**
-- **Granular Permissions**: Detailed permission control for specific functions
-- **Module Permissions**: Access control for different system modules
-- **Data Permissions**: Control access to specific data types and records
-- **Functional Permissions**: Control access to specific system functions
-
-*[MEDIA SPACE: Screenshot of permission configuration interface]*
-
-### Advanced Access Control
-
-#### Attribute-Based Access Control (ABAC)
-Advanced access control based on user attributes:
-
-**Attribute Management**
-- **User Attributes**: Define and manage user-specific attributes
-- **Environmental Attributes**: Location, time, and context-based access
-- **Resource Attributes**: Data and system resource attributes
-- **Policy Attributes**: Dynamic policy-based access control
-
-*[MEDIA SPACE: Screenshot of attribute-based access control]*
-
-**Dynamic Permissions**
-- **Context-Aware Access**: Access based on current context and situation
-- **Time-Based Access**: Temporary and scheduled access permissions
-- **Location-Based Access**: Geographic and facility-based access control
-- **Conditional Access**: Access based on multiple conditions and criteria
-
-*[MEDIA SPACE: Screenshot of dynamic permission configuration]*
-
-#### Multi-Centre Access Management
-
-**Cross-Centre Permissions**
-- **Multi-Centre Users**: Users with access to multiple centres
-- **Centre-Specific Roles**: Roles limited to specific centres
-- **Shared Resources**: Access to shared centre resources
-- **Centre Transfer**: Transfer users between centres
-
-*[MEDIA SPACE: Screenshot of multi-centre access management]*
-
-**Delegation and Proxy Access**
-- **Administrative Delegation**: Delegate administrative functions
-- **Temporary Access**: Temporary access for specific purposes
-- **Proxy Users**: Users acting on behalf of others
-- **Emergency Access**: Emergency access procedures and protocols
-
-*[MEDIA SPACE: Screenshot of delegation and proxy access management]*
+The in-DB audit logs are the closest CREAMS has to "real-time session monitoring". They record actor, action, old/new values, IP, and timestamp.
 
 ---
 
-## 💾 Data Backup & Recovery
+## 4. Multi-centre administration
 
-### Comprehensive Backup System
+The Admin role can switch context across centres without re-logging in. Centre isolation is enforced at the model layer via `CentreScope` (23 models) and `centre_isolation` closure scope (2 models). See `docs/MULTI_CENTRE_ISOLATION.md`.
 
-#### Backup Configuration and Management
-Robust data protection and recovery capabilities:
+To add a new centre:
 
-*[MEDIA SPACE: Screenshot of backup management dashboard]*
+1. Log in as Admin.
+2. Navigate to `/centres` → **Add new centre**.
+3. Provide `centre_id` (string code, e.g. `05`), `centre_name`, address, contact details, capacity, status.
+4. Save.
 
-**Backup Types**
-- **Full Backups**: Complete system and database backups
-- **Incremental Backups**: Changes since last backup
-- **Differential Backups**: Changes since last full backup
-- **Snapshot Backups**: Point-in-time system snapshots
-
-*[MEDIA SPACE: Screenshot of backup type configuration]*
-
-**Backup Scheduling**
-- **Automated Schedules**: Daily, weekly, monthly backup schedules
-- **Custom Schedules**: Flexible scheduling based on organizational needs
-- **Real-Time Backups**: Continuous data protection
-- **Event-Triggered Backups**: Backups triggered by specific events
-
-*[MEDIA SPACE: Screenshot of backup scheduling interface]*
-
-#### Backup Storage and Management
-
-**Storage Options**
-- **Local Storage**: On-premises backup storage
-- **Cloud Storage**: Cloud-based backup solutions
-- **Hybrid Storage**: Combination of local and cloud storage
-- **Offsite Storage**: Remote backup storage for disaster recovery
-
-*[MEDIA SPACE: Screenshot of backup storage configuration]*
-
-**Backup Verification and Testing**
-- **Backup Validation**: Verify backup integrity and completeness
-- **Test Restores**: Regular restoration testing procedures
-- **Backup Monitoring**: Monitor backup success and failures
-- **Backup Reporting**: Comprehensive backup status reporting
-
-*[MEDIA SPACE: Screenshot of backup verification interface]*
-
-### Disaster Recovery
-
-#### Recovery Planning and Procedures
-Comprehensive disaster recovery capabilities:
-
-**Recovery Plans**
-- **Disaster Recovery Plans**: Detailed recovery procedures
-- **Business Continuity**: Maintain operations during disasters
-- **Recovery Time Objectives**: Target recovery timeframes
-- **Recovery Point Objectives**: Maximum acceptable data loss
-
-*[MEDIA SPACE: Screenshot of disaster recovery planning interface]*
-
-**Recovery Procedures**
-- **System Recovery**: Complete system restoration procedures
-- **Database Recovery**: Database-specific recovery procedures
-- **Application Recovery**: Application and service restoration
-- **Data Recovery**: Individual data and file recovery
-
-*[MEDIA SPACE: Screenshot of recovery procedure management]*
-
-#### Data Archival and Retention
-
-**Retention Policies**
-- **Data Retention Schedules**: Legal and regulatory retention requirements
-- **Automated Archival**: Automatic data archival based on age and usage
-- **Secure Deletion**: Secure deletion of expired data
-- **Compliance Tracking**: Track compliance with retention policies
-
-*[MEDIA SPACE: Screenshot of data retention policy management]*
-
-**Archive Management**
-- **Archive Storage**: Long-term archive storage management
-- **Archive Retrieval**: Retrieve data from archives
-- **Archive Security**: Protect archived data from unauthorized access
-- **Archive Migration**: Migrate archives to new storage systems
-
-*[MEDIA SPACE: Screenshot of archive management interface]*
+The new centre appears immediately. Assign staff and seed activities through the normal Admin workflows.
 
 ---
 
-## 📊 System Monitoring & Alerts
+## 5. Backup and recovery
 
-### Real-Time System Monitoring
+There is **no built-in backup UI**. Backups are an operations task done outside CREAMS:
 
-#### Performance Monitoring
-Comprehensive system performance tracking:
+- **Database backup**: standard MySQL/MariaDB dump.
+  ```
+  mysqldump -u <user> -p <database> > creams-backup-$(date +%F).sql
+  ```
+- **Storage backup**: copy `storage/app/` (contains uploaded files, generated PDFs, etc.).
+- **Code**: tracked in git — clone the repo to recover.
+- **Lightsail snapshots** (when deployed there): use the Lightsail console or `aws lightsail create-instance-snapshot`.
 
-*[MEDIA SPACE: Screenshot of system monitoring dashboard]*
+Recovery: restore the DB dump into a fresh DB, copy `storage/app/` back, run `composer install --no-dev`, run `php artisan migrate`, point `.env` to the restored DB, restart the web server.
 
-**System Metrics**
-- **CPU Usage**: Processor utilization and performance
-- **Memory Usage**: RAM utilization and memory management
-- **Storage Usage**: Disk space utilization and I/O performance
-- **Network Usage**: Network traffic and bandwidth utilization
-
-*[MEDIA SPACE: Screenshot of system performance metrics]*
-
-**Application Metrics**
-- **Response Times**: Application response time monitoring
-- **Error Rates**: Application error tracking and analysis
-- **User Sessions**: Active user session monitoring
-- **Database Performance**: Database query performance and optimization
-
-*[MEDIA SPACE: Screenshot of application performance monitoring]*
-
-#### Health Monitoring
-
-**System Health Indicators**
-- **Service Status**: Monitor all system services and components
-- **Database Health**: Database connectivity and performance
-- **Integration Health**: External system integration status
-- **Security Status**: Security system health and integrity
-
-*[MEDIA SPACE: Screenshot of system health dashboard]*
-
-**Availability Monitoring**
-- **Uptime Tracking**: System availability and uptime statistics
-- **Downtime Analysis**: Analyze and report system downtime
-- **Service Level Agreements**: Monitor SLA compliance
-- **Capacity Planning**: Predict and plan for capacity needs
-
-*[MEDIA SPACE: Screenshot of availability monitoring interface]*
-
-### Alert and Notification System
-
-#### Alert Configuration
-Comprehensive alerting for system issues:
-
-**Alert Types**
-- **Critical Alerts**: System-critical issues requiring immediate attention
-- **Warning Alerts**: Potential issues that need monitoring
-- **Information Alerts**: System status and informational updates
-- **Maintenance Alerts**: Scheduled maintenance and update notifications
-
-*[MEDIA SPACE: Screenshot of alert configuration interface]*
-
-**Alert Channels**
-- **Email Alerts**: Email notifications for system issues
-- **SMS Alerts**: Text message alerts for critical issues
-- **Dashboard Alerts**: In-system alert notifications
-- **Integration Alerts**: Send alerts to external monitoring systems
-
-*[MEDIA SPACE: Screenshot of alert channel configuration]*
-
-#### Incident Management
-
-**Incident Response**
-- **Incident Detection**: Automatic detection of system incidents
-- **Incident Classification**: Categorize incidents by severity and impact
-- **Incident Escalation**: Escalate incidents based on severity and response time
-- **Incident Resolution**: Track incident resolution and closure
-
-*[MEDIA SPACE: Screenshot of incident management dashboard]*
-
-**Incident Reporting**
-- **Incident Reports**: Detailed incident analysis and reporting
-- **Root Cause Analysis**: Identify and address underlying causes
-- **Trend Analysis**: Analyze incident trends and patterns
-- **Prevention Strategies**: Develop strategies to prevent recurring incidents
-
-*[MEDIA SPACE: Screenshot of incident reporting interface]*
+A recovery rehearsal has not been performed for the current build. Adding it to the post-UAT backlog.
 
 ---
 
-## 🔗 Integration Management
+## 6. Security posture
 
-### API Management
+What is in place:
 
-#### API Configuration and Security
-Comprehensive API management for system integrations:
+- **Custom session-based auth** (`POST /auth/check`) — not Breeze, not Sanctum, not JWT
+- **Password hashing**: Eloquent's `hashed` cast (bcrypt) on the `password` column
+- **CSRF protection** via Laravel's built-in middleware on all `POST/PUT/DELETE`
+- **Rate limiting**: login (5/min), forgot-password (3/min, 10/hr), registration (3/min, 5/hr), API (60/min)
+- **Session regeneration** on login (prevents session fixation)
+- **`SameSite=Lax`** session cookies
+- **Centre-scoped data isolation** (the primary PDPA boundary)
+- **Soft deletes** on critical tables (trainees, users, activities) so data is recoverable
+- **Audit logs** in `*_audit_logs` tables
+- **PDPA grep gate** in `.githooks/pre-commit` (blocks Malaysian IC patterns and password literals from entering committed code)
 
-*[MEDIA SPACE: Screenshot of API management dashboard]*
+What is NOT in place (despite the v1.0 manual claiming otherwise):
 
-**API Endpoints**
-- **RESTful APIs**: Standard REST API endpoints
-- **GraphQL APIs**: GraphQL query and mutation endpoints
-- **Webhook APIs**: Event-driven webhook integrations
-- **Custom APIs**: Organization-specific API implementations
-
-*[MEDIA SPACE: Screenshot of API endpoint configuration]*
-
-**API Security**
-- **Authentication**: API key, OAuth, and token-based authentication
-- **Authorization**: Role-based API access control
-- **Rate Limiting**: Prevent API abuse and ensure fair usage
-- **Encryption**: Secure API communication and data transfer
-
-*[MEDIA SPACE: Screenshot of API security configuration]*
-
-#### Integration Monitoring
-
-**Integration Health**
-- **Connection Status**: Monitor external system connections
-- **Data Synchronization**: Track data sync status and errors
-- **Performance Metrics**: API response times and throughput
-- **Error Tracking**: Monitor and analyze integration errors
-
-*[MEDIA SPACE: Screenshot of integration monitoring dashboard]*
-
-**Integration Management**
-- **Partner Management**: Manage external system partnerships
-- **Version Control**: Manage API versions and compatibility
-- **Documentation**: Maintain API documentation and specifications
-- **Testing**: API testing and validation tools
-
-*[MEDIA SPACE: Screenshot of integration management interface]*
-
-### External System Integrations
-
-#### Healthcare Integrations
-Integration with healthcare systems and standards:
-
-**Electronic Health Records (EHR)**
-- **HL7 FHIR**: Healthcare data exchange standards
-- **Medical Records**: Integration with medical record systems
-- **Laboratory Systems**: Laboratory result integration
-- **Imaging Systems**: Medical imaging system integration
-
-*[MEDIA SPACE: Screenshot of healthcare integration configuration]*
-
-**Insurance and Billing**
-- **Insurance Verification**: Real-time insurance verification
-- **Claims Processing**: Insurance claims integration
-- **Payment Processing**: Secure payment system integration
-- **Billing Systems**: Financial system integration
-
-*[MEDIA SPACE: Screenshot of insurance and billing integration]*
-
-#### Educational Integrations
-
-**Student Information Systems**
-- **Academic Records**: Student academic information integration
-- **Scheduling Systems**: Academic scheduling integration
-- **Assessment Systems**: Educational assessment integration
-- **Communication Systems**: Educational communication platform integration
-
-*[MEDIA SPACE: Screenshot of educational system integration]*
-
-**Government and Regulatory Systems**
-- **Reporting Systems**: Regulatory reporting integration
-- **Compliance Systems**: Compliance monitoring integration
-- **Certification Systems**: Professional certification integration
-- **Statistical Systems**: Government statistical reporting
-
-*[MEDIA SPACE: Screenshot of regulatory system integration]*
+- Multi-Factor Authentication (TOTP, SMS OTP, etc.)
+- IP address restrictions
+- Real-time session monitoring dashboard
+- Automated security alerts
+- Geofence access control
+- Browser fingerprinting
+- Web Application Firewall (WAF) — typically a deployment concern, not an app concern
 
 ---
 
-## 🔒 Security Administration
+## 7. Performance posture
 
-### Comprehensive Security Framework
+What is in place:
 
-#### Security Policy Management
-Comprehensive security policy implementation and enforcement:
+- Performance indexes on critical tables (migration `2026_01_30_165805_add_performance_indexes_to_critical_tables`)
+- Foreign key constraints (migration `2026_01_30_165801`)
+- Cached config in production (`php artisan config:cache`)
+- Query-builder code review for N+1 patterns where surfaced
 
-*[MEDIA SPACE: Screenshot of security administration dashboard]*
+What is NOT in place:
 
-**Authentication Policies**
-- **Password Policies**: Strong password requirements and enforcement
-- **Multi-Factor Authentication**: MFA configuration and enforcement
-- **Account Lockout**: Automatic account lockout for security violations
-- **Session Security**: Session timeout and security policies
+- Real-time performance dashboard inside the app
+- Automated slow-query alerting
+- APM integration (no New Relic, Datadog, etc.)
 
-*[MEDIA SPACE: Screenshot of authentication policy configuration]*
-
-**Authorization Policies**
-- **Access Control**: Detailed access control policies
-- **Privilege Management**: Least privilege access implementation
-- **Segregation of Duties**: Separation of critical functions
-- **Regular Access Reviews**: Periodic access review and certification
-
-*[MEDIA SPACE: Screenshot of authorization policy management]*
-
-#### Security Monitoring and Compliance
-
-**Security Event Monitoring**
-- **Real-Time Monitoring**: Continuous security event monitoring
-- **Threat Detection**: Automated threat detection and analysis
-- **Anomaly Detection**: Detect unusual user and system behavior
-- **Security Alerts**: Immediate alerts for security incidents
-
-*[MEDIA SPACE: Screenshot of security monitoring dashboard]*
-
-**Compliance Management**
-- **HIPAA Compliance**: Healthcare privacy protection compliance
-- **GDPR Compliance**: General Data Protection Regulation compliance
-- **Local Regulations**: Compliance with local data protection laws
-- **Industry Standards**: Adherence to industry security standards
-
-*[MEDIA SPACE: Screenshot of compliance monitoring interface]*
-
-### Data Protection and Privacy
-
-#### Data Encryption
-Comprehensive data protection through encryption:
-
-**Encryption at Rest**
-- **Database Encryption**: Encrypt stored database information
-- **File Encryption**: Encrypt stored files and documents
-- **Backup Encryption**: Encrypt backup data and archives
-- **Key Management**: Secure encryption key management
-
-*[MEDIA SPACE: Screenshot of encryption configuration]*
-
-**Encryption in Transit**
-- **SSL/TLS**: Secure communication protocols
-- **VPN**: Virtual private network configuration
-- **API Encryption**: Secure API communication
-- **Email Encryption**: Encrypted email communication
-
-*[MEDIA SPACE: Screenshot of transit encryption settings]*
-
-#### Privacy Controls
-
-**Personal Data Protection**
-- **Data Minimization**: Collect only necessary personal data
-- **Purpose Limitation**: Use data only for specified purposes
-- **Data Retention**: Implement data retention and deletion policies
-- **Consent Management**: Manage user consent and preferences
-
-*[MEDIA SPACE: Screenshot of privacy control configuration]*
-
-**Access Controls**
-- **Data Classification**: Classify data by sensitivity level
-- **Need-to-Know Access**: Limit access to necessary personnel
-- **Audit Logging**: Log all access to sensitive data
-- **Data Masking**: Mask sensitive data in non-production environments
-
-*[MEDIA SPACE: Screenshot of data access control interface]*
+For ad-hoc performance investigation: enable Laravel Telescope locally, or use `DB::listen` in tinker to dump every query.
 
 ---
 
-## 📈 Performance Management
+## 8. Pre-commit hook
 
-### System Performance Optimization
+`.githooks/pre-commit` blocks commits that contain:
 
-#### Performance Monitoring and Analysis
-Comprehensive performance monitoring and optimization:
+- `DB_PASSWORD=`, `API_KEY=`, `API_SECRET=`, `AWS_SECRET_ACCESS_KEY=`
+- `PRIVATE_KEY` literal mentions (RSA / DSA / EC / OpenSSH)
+- Password assignments matching `password.*=.*[A-Za-z0-9]{8,}`
+- Malaysian IC pattern `[0-9]{6}-[0-9]{2}-[0-9]{4}`
 
-*[MEDIA SPACE: Screenshot of performance management dashboard]*
+Exclusions:
+- `docs/` is exempt from password/key patterns (docs contain code examples)
+- `.env.example` is exempt (placeholder values only)
+- `.githooks/` is exempt (the patterns themselves appear in the hook source)
+- `database/seeders/IRLSeeder.php` is exempt from all patterns (acknowledged real-data seeder, hard-gated to local-only by code)
 
-**System Performance Metrics**
-- **Response Time Analysis**: Monitor and optimize system response times
-- **Throughput Analysis**: Measure and optimize system throughput
-- **Resource Utilization**: Monitor CPU, memory, and storage usage
-- **Bottleneck Identification**: Identify and resolve performance bottlenecks
+To enable the hook on a fresh clone: `git config core.hooksPath .githooks`.
 
-*[MEDIA SPACE: Screenshot of performance metrics dashboard]*
-
-**Database Performance**
-- **Query Performance**: Monitor and optimize database queries
-- **Index Optimization**: Optimize database indexes for performance
-- **Connection Pooling**: Manage database connection pools
-- **Cache Management**: Implement and manage database caching
-
-*[MEDIA SPACE: Screenshot of database performance monitoring]*
-
-#### Capacity Planning
-
-**Resource Planning**
-- **Growth Projections**: Predict future resource needs
-- **Capacity Modeling**: Model system capacity requirements
-- **Resource Allocation**: Optimize resource allocation and usage
-- **Scaling Strategies**: Plan for horizontal and vertical scaling
-
-*[MEDIA SPACE: Screenshot of capacity planning interface]*
-
-**Performance Optimization**
-- **Code Optimization**: Optimize application code for performance
-- **Configuration Tuning**: Tune system configuration for optimal performance
-- **Caching Strategies**: Implement effective caching strategies
-- **Load Balancing**: Distribute load across multiple servers
-
-*[MEDIA SPACE: Screenshot of performance optimization tools]*
-
-### User Experience Optimization
-
-#### User Performance Monitoring
-Monitor and optimize user experience:
-
-**User Metrics**
-- **Page Load Times**: Monitor page loading performance
-- **User Actions**: Track user interaction performance
-- **Error Rates**: Monitor user-facing errors and issues
-- **User Satisfaction**: Measure user satisfaction and feedback
-
-*[MEDIA SPACE: Screenshot of user experience monitoring]*
-
-**Mobile Performance**
-- **Mobile Response Times**: Monitor mobile application performance
-- **Mobile Connectivity**: Optimize for various network conditions
-- **Mobile Caching**: Implement mobile-specific caching strategies
-- **Offline Functionality**: Provide offline capabilities where appropriate
-
-*[MEDIA SPACE: Screenshot of mobile performance optimization]*
+Bypassing the hook with `--no-verify` requires explicit user approval per project SOP.
 
 ---
 
-## 🔄 Maintenance & Updates
+## 9. Scheduled tasks
 
-### System Maintenance
+`php artisan schedule:list` shows currently registered scheduled tasks. The scheduler must be triggered by a cron entry on the host:
 
-#### Scheduled Maintenance
-Regular system maintenance and optimization:
+```
+* * * * * cd /path/to/creams && php artisan schedule:run >> /dev/null 2>&1
+```
 
-*[MEDIA SPACE: Screenshot of maintenance management dashboard]*
-
-**Maintenance Scheduling**
-- **Regular Maintenance**: Schedule routine maintenance tasks
-- **Maintenance Windows**: Define maintenance windows and procedures
-- **User Notifications**: Notify users of scheduled maintenance
-- **Maintenance Tracking**: Track maintenance completion and results
-
-*[MEDIA SPACE: Screenshot of maintenance scheduling interface]*
-
-**Maintenance Tasks**
-- **Database Maintenance**: Regular database optimization and cleanup
-- **System Cleanup**: Remove temporary files and optimize storage
-- **Security Updates**: Apply security patches and updates
-- **Performance Tuning**: Regular performance optimization
-
-*[MEDIA SPACE: Screenshot of maintenance task management]*
-
-#### Update Management
-
-**System Updates**
-- **Update Planning**: Plan and schedule system updates
-- **Update Testing**: Test updates in staging environment
-- **Update Deployment**: Deploy updates to production systems
-- **Update Verification**: Verify successful update deployment
-
-*[MEDIA SPACE: Screenshot of update management interface]*
-
-**Rollback Procedures**
-- **Rollback Planning**: Plan for update rollback procedures
-- **Rollback Testing**: Test rollback procedures and scenarios
-- **Emergency Rollback**: Emergency rollback procedures for critical issues
-- **Rollback Verification**: Verify successful rollback completion
-
-*[MEDIA SPACE: Screenshot of rollback procedure management]*
-
-### Change Management
-
-#### Change Control Process
-Comprehensive change management procedures:
-
-**Change Requests**
-- **Change Proposal**: Submit and review change proposals
-- **Impact Analysis**: Analyze change impact and risks
-- **Change Approval**: Multi-level change approval process
-- **Change Implementation**: Controlled change implementation
-
-*[MEDIA SPACE: Screenshot of change management workflow]*
-
-**Change Documentation**
-- **Change Records**: Maintain detailed change records
-- **Change History**: Track all system changes over time
-- **Change Reporting**: Generate change management reports
-- **Change Auditing**: Audit change management processes
-
-*[MEDIA SPACE: Screenshot of change documentation interface]*
+Without this cron entry, no scheduled tasks fire.
 
 ---
 
-## 🏢 Multi-Centre Administration
+## 10. AI agent operations (Claude Code and Codex)
 
-### Centralized Multi-Centre Management
+CREAMS sessions can be driven by AI agents. Governance:
 
-#### Centre Hierarchy Management
-Manage multiple rehabilitation centres from central administration:
+| File | Loaded by |
+|---|---|
+| `CLAUDE.md` (repo root) | Claude Code (auto) |
+| `AGENTS.md` (repo root) | Codex CLI (auto) |
+| `docs/CODEX_INIT_PROMPT.md` | Manual paste at session start |
+| `.claude/commands/resume.md` | Claude Code via `/resume` |
+| `.memsearch/memory/YYYY-MM-DD.md` | Both Claude Code and Codex (read manually or via /resume) |
+| `scripts/*_checkpoint.sh` | Claude Code hooks |
 
-*[MEDIA SPACE: Screenshot of multi-centre administration dashboard]*
-
-**Organizational Structure**
-- **Centre Hierarchy**: Define organizational structure and relationships
-- **Regional Management**: Manage centres by geographic regions
-- **Centre Classification**: Classify centres by size, type, and services
-- **Centre Relationships**: Manage parent-child and peer relationships
-
-*[MEDIA SPACE: Screenshot of centre hierarchy management]*
-
-**Centralized Configuration**
-- **Global Settings**: Apply settings across all centres
-- **Centre-Specific Settings**: Customize settings for individual centres
-- **Policy Distribution**: Distribute policies and procedures to all centres
-- **Configuration Synchronization**: Synchronize configurations across centres
-
-*[MEDIA_space: Screenshot of centralized configuration management]*
-
-#### Resource Sharing and Coordination
-
-**Shared Resources**
-- **Staff Sharing**: Manage staff working across multiple centres
-- **Resource Pooling**: Share equipment and resources between centres
-- **Knowledge Sharing**: Share best practices and knowledge across centres
-- **Training Coordination**: Coordinate training across multiple centres
-
-*[MEDIA SPACE: Screenshot of resource sharing interface]*
-
-**Inter-Centre Communication**
-- **Centre Messaging**: Secure messaging between centres
-- **Collaboration Tools**: Tools for centre collaboration and coordination
-- **Document Sharing**: Share documents and resources between centres
-- **Video Conferencing**: Support for inter-centre meetings and training
-
-*[MEDIA SPACE: Screenshot of inter-centre communication tools]*
-
-### Data Consolidation and Reporting
-
-#### Centralized Reporting
-Comprehensive reporting across all centres:
-
-**Aggregate Reporting**
-- **System-Wide Reports**: Reports covering all centres
-- **Comparative Analysis**: Compare performance across centres
-- **Trend Analysis**: Analyze trends across the entire organization
-- **Benchmark Reporting**: Benchmark centres against standards
-
-*[MEDIA SPACE: Screenshot of centralized reporting dashboard]*
-
-**Data Consolidation**
-- **Data Aggregation**: Consolidate data from all centres
-- **Data Standardization**: Standardize data formats and definitions
-- **Data Quality**: Ensure data quality across all centres
-- **Data Governance**: Implement data governance policies
-
-*[MEDIA SPACE: Screenshot of data consolidation interface]*
+If you want to switch AI tools mid-project, the `.memsearch/memory/` files are the portable layer — both agents read and write the same 8-section checkpoint format.
 
 ---
 
-## 🛠️ Troubleshooting & Support
+## 11. Not implemented (despite v1.0 manual)
 
-### Administrative Troubleshooting
+- Web-based system configuration UI (settings live in `.env` only)
+- User permission management UI beyond role assignment (no fine-grained per-action permission grid)
+- Backup/recovery UI (operations are CLI/script)
+- System monitoring dashboard
+- Integration management (no built-in OAuth providers, no webhook infrastructure)
+- Compliance dashboard
+- Multi-tier administrator hierarchy
 
-#### Common Administrative Issues
-
-**System Configuration Problems**
-*Problem*: System settings not applying correctly across all users
-*Solutions*:
-1. **Verify Configuration**: Check configuration syntax and format
-2. **Cache Clearing**: Clear system cache and restart services
-3. **Permission Check**: Verify administrative permissions
-4. **Configuration Validation**: Validate configuration against schema
-
-*[MEDIA SPACE: Screenshot of configuration troubleshooting tools]*
-
-**User Access Issues**
-*Problem*: Users cannot access specific system functions
-*Solutions*:
-1. **Permission Audit**: Review user permissions and role assignments
-2. **Role Verification**: Verify role definitions and inheritance
-3. **System Status**: Check system service status and availability
-4. **Session Management**: Check user session status and validity
-
-**Integration Failures**
-*Problem*: External system integrations not working properly
-*Solutions*:
-1. **Connection Testing**: Test external system connectivity
-2. **Authentication Verification**: Verify API credentials and tokens
-3. **Data Format Validation**: Check data format compatibility
-4. **Error Log Analysis**: Analyze integration error logs
-
-*[MEDIA SPACE: Screenshot of integration troubleshooting interface]*
-
-#### Performance Issues
-
-**System Slowdowns**
-*Problem*: System performance degradation
-*Solutions*:
-1. **Resource Monitoring**: Check CPU, memory, and storage utilization
-2. **Database Optimization**: Optimize database queries and indexes
-3. **Cache Management**: Review and optimize caching strategies
-4. **Load Analysis**: Analyze system load and user activity patterns
-
-**Database Performance Issues**
-*Problem*: Database queries running slowly
-*Solutions*:
-1. **Query Analysis**: Identify slow-running queries
-2. **Index Optimization**: Add or optimize database indexes
-3. **Database Maintenance**: Perform database maintenance tasks
-4. **Connection Management**: Optimize database connection pooling
-
-*[MEDIA SPACE: Screenshot of performance troubleshooting dashboard]*
-
-### Support and Documentation
-
-#### Administrator Support Resources
-
-**Technical Documentation**
-- **System Architecture**: Detailed system architecture documentation
-- **Configuration Guides**: Step-by-step configuration procedures
-- **Troubleshooting Guides**: Comprehensive troubleshooting procedures
-- **Best Practices**: Administrative best practices and recommendations
-
-*[MEDIA SPACE: Screenshot of administrator documentation library]*
-
-**Training Resources**
-- **Administrator Training**: Comprehensive administrator training programs
-- **Certification Programs**: Professional certification for administrators
-- **Webinar Series**: Regular training webinars and updates
-- **Knowledge Base**: Searchable knowledge base and FAQ
-
-#### Emergency Support Procedures
-
-**Critical Issue Response**
-- **Emergency Contacts**: 24/7 emergency support contacts
-- **Escalation Procedures**: Issue escalation and response procedures
-- **Crisis Communication**: Emergency communication protocols
-- **Recovery Procedures**: Emergency recovery and restoration procedures
-
-**Business Continuity**
-- **Disaster Recovery**: Disaster recovery plans and procedures
-- **Backup Systems**: Emergency backup system activation
-- **Alternative Access**: Alternative access methods during outages
-- **Communication Plans**: Emergency communication with users and stakeholders
-
-*[MEDIA SPACE: Screenshot of emergency support interface]*
-
-### System Health and Diagnostics
-
-#### Diagnostic Tools
-
-**System Health Checks**
-- **Automated Diagnostics**: Automated system health diagnostics
-- **Component Testing**: Individual component health testing
-- **Connectivity Testing**: Network and integration connectivity testing
-- **Performance Benchmarking**: System performance benchmarking
-
-*[MEDIA SPACE: Screenshot of diagnostic tools interface]*
-
-**Log Analysis**
-- **System Logs**: Comprehensive system log analysis
-- **Error Logs**: Error log analysis and troubleshooting
-- **Audit Logs**: Security and access audit log analysis
-- **Performance Logs**: Performance monitoring log analysis
-
-#### Preventive Maintenance
-
-**Proactive Monitoring**
-- **Predictive Analytics**: Predict potential system issues
-- **Trend Analysis**: Analyze system trends and patterns
-- **Capacity Monitoring**: Monitor system capacity and growth
-- **Health Scoring**: System health scoring and alerting
-
-**Maintenance Planning**
-- **Maintenance Schedules**: Proactive maintenance scheduling
-- **Update Planning**: Plan system updates and patches
-- **Resource Planning**: Plan for resource upgrades and expansion
-- **Risk Assessment**: Assess and mitigate potential risks
-
-*[MEDIA SPACE: Screenshot of preventive maintenance dashboard]*
+These are valid future-feature requests, not current capabilities.
 
 ---
 
-## 📚 Additional Resources
+## 12. Troubleshooting
 
-### Advanced Administration
-
-#### Automation and Scripting
-- **Automation Tools**: System automation and orchestration tools
-- **Scripting Guides**: PowerShell, Bash, and Python scripting for CREAMS
-- **Workflow Automation**: Automated workflow and process management
-- **Custom Development**: Guidelines for custom system development
-
-#### Enterprise Features
-- **High Availability**: Configure high availability and redundancy
-- **Load Balancing**: Advanced load balancing configuration
-- **Clustering**: Database and application clustering
-- **Disaster Recovery**: Enterprise disaster recovery planning
-
-*[MEDIA SPACE: Screenshot of enterprise features configuration]*
-
-### Compliance and Governance
-
-#### Regulatory Compliance
-- **Healthcare Regulations**: HIPAA, HITECH, and healthcare compliance
-- **Data Protection**: GDPR, CCPA, and data protection compliance
-- **Accessibility**: ADA and accessibility compliance requirements
-- **Security Standards**: ISO 27001, SOX, and security compliance
-
-#### Governance Framework
-- **IT Governance**: IT governance policies and procedures
-- **Data Governance**: Data governance and stewardship
-- **Change Governance**: Change management governance
-- **Risk Management**: IT risk management and mitigation
-
-*[MEDIA SPACE: Screenshot of governance and compliance dashboard]*
-
-### Community and Support
-
-#### Professional Development
-- **Certification Programs**: Professional administrator certifications
-- **Training Courses**: Advanced administrator training courses
-- **Professional Networks**: Administrator professional networks and communities
-- **Industry Events**: Conferences and industry events
-
-#### Vendor Support
-- **Technical Support**: Vendor technical support and assistance
-- **Professional Services**: Professional services and consulting
-- **Product Updates**: Product update and enhancement information
-- **Community Forums**: User and administrator community forums
-
-*[MEDIA SPACE: Screenshot of professional development and support resources]*
+| Symptom | What to check |
+|---|---|
+| App throws 500 on every page | Check `storage/logs/laravel.log` for the latest exception. Common causes: missing migration, expired `.env` value, file permission on `storage/` |
+| Sessions not persisting between requests | `SESSION_DRIVER` in `.env` may be set to `file` but `storage/framework/sessions/` is not writable |
+| Admin cannot see other centres' data | Confirm the user's `role` is exactly `admin` (case-sensitive) and not `Admin` or `administrator` |
+| All POST requests fail with 419 | CSRF token missing — check that the form includes `@csrf` and that the session cookie is being sent |
+| Pre-commit hook blocks a legitimate commit | Verify the file is in an exempt path (`docs/`, `.githooks/`, `IRLSeeder.php`). If it is genuinely a false positive, propose an additional exclusion in the hook with a clear rationale |
+| Tests pass locally but a feature visibly fails in browser | Tests don't cover the UI rendering layer — feature tests use the HTTP layer. Open the page and check the browser console + `storage/logs/laravel.log` |
 
 ---
 
-*Last Updated: [Date]
-Version: 1.0
-Document Type: User Manual - System Administration Module*
-
-**Note**: This manual includes placeholder spaces marked as *[MEDIA SPACE: Description]* where screenshots, diagrams, videos, and other visual aids should be inserted. Each media placeholder is specifically designed to enhance user understanding with relevant visual content for that section.
+*Updated: 2 May 2026 — sprint Day 4*
+*Version: 2.0*
+*Source of truth: `CLAUDE.md`, `docs/MULTI_CENTRE_ISOLATION.md`, `docs/04_Deployment_Guides/STAGING_SEED_POLICY.md`, `app/Providers/RouteServiceProvider.php`, `.githooks/pre-commit`, `.env.example`*
