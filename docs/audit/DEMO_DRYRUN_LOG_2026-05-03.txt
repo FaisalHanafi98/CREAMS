@@ -1,0 +1,38 @@
+=== CREAMS demo dry-run log ===
+Date: Sun May  3 11:37:52 MPST 2026
+Base URL: http://localhost:8000
+
+
+--- Part A: Operational walkthrough ---
+    [LOGIN-OK] admin (super.admin@uat.creams.test) -> 302
+  [ERROR-IN-HTML] A1: admin login landed on dashboard                HTTP 200, 177737B, 0.59s
+  [ERROR-IN-HTML] A2: admin dashboard widgets load                   HTTP 200, 177737B, 0.52s
+  [ERROR-IN-HTML] A3.1: trainees list                                HTTP 200, 177829B, 0.78s
+  [ERROR-IN-HTML] A3.2: trainee detail (first one)                   HTTP 200, 177829B, 0.70s
+  [ERROR-IN-HTML] A4: activities list                                HTTP 200, 131119B, 0.70s
+  [ERROR-IN-HTML] A4.2: activity detail (first one)                  HTTP 200, 89979B, 0.45s
+  [ERROR-IN-HTML] A5.1: staff attendance page                        HTTP 200, 113751B, 0.74s
+  [ERROR-IN-HTML] A5.2: activity attendance index                    HTTP 200, 113987B, 0.63s
+
+--- Part B: Centre isolation ---
+    [LOGIN-OK] supervisor (supervisor.a1@uat.creams.test) -> 302
+  [ERROR-IN-HTML] B1.1: supervisor lands on dashboard                HTTP 200, 171391B, 0.54s
+  [ERROR-IN-HTML] B1.2: supervisor sees trainees (centre-scoped)     HTTP 200, 171483B, 0.65s
+  [ERROR-IN-HTML] B1.3: supervisor sees activities (centre-scoped)   HTTP 200, 113587B, 0.78s
+    [LOGIN-OK] teacher (teacher.a1@uat.creams.test) -> 302
+  [ERROR-IN-HTML] B1.4: teacher dashboard                            HTTP 200, 172402B, 0.45s
+  [ERROR-IN-HTML] B1.5: teacher trainees view                        HTTP 200, 172494B, 0.65s
+    [LOGIN-OK] ajk (ajk.a1@uat.creams.test) -> 302
+  [ERROR-IN-HTML] B1.6: ajk dashboard                                HTTP 200, 169954B, 0.51s
+
+--- Part B continued: governance pages ---
+  [ERROR-IN-HTML] B2: admin can view centres                         HTTP 200, 94666B, 0.73s
+  [ERROR-IN-HTML] B3: admin letters page                             HTTP 200, 100719B, 0.66s
+  [ERROR-IN-HTML] B3.2: admin letter templates                       HTTP 200, 93178B, 0.42s
+
+--- Part B negative tests: RBAC enforcement ---
+  [FAIL] RBAC: supervisor blocked from /admin/users         HTTP 403, 6629B, 0.44s
+  [FAIL] RBAC: teacher blocked from /admin/users            HTTP 403, 6629B, 0.38s
+  [FAIL] RBAC: ajk blocked from /admin/users                HTTP 403, 6629B, 0.40s
+
+Dry-run complete. Full log: docs/audit/DEMO_DRYRUN_LOG_2026-05-03.txt
