@@ -109,15 +109,23 @@ class ExpiryHandler {
             });
         }
 
-        // Fetch API error handling
+        // Fetch API error handling — only intercept same-origin requests
         const originalFetch = window.fetch;
+        const appOrigin = window.location.origin;
         window.fetch = async (...args) => {
             try {
                 const response = await originalFetch(...args);
-                if (response.status === 401 || response.status === 419) {
-                    this.handleSessionExpiry('Session expired during request');
-                } else if (response.status === 403) {
-                    this.handleAuthorizationError('Access denied during request');
+                // Only handle auth errors for same-origin requests.
+                // External APIs (weather widget, CDNs) can legitimately return 401/403
+                // and must not trigger session expiry.
+                const requestUrl = typeof args[0] === 'string' ? args[0] : (args[0]?.url ?? '');
+                const isSameOrigin = requestUrl.startsWith('/') || requestUrl.startsWith(appOrigin);
+                if (isSameOrigin) {
+                    if (response.status === 401 || response.status === 419) {
+                        this.handleSessionExpiry('Session expired during request');
+                    } else if (response.status === 403) {
+                        this.handleAuthorizationError('Access denied during request');
+                    }
                 }
                 return response;
             } catch (error) {
@@ -139,8 +147,14 @@ class ExpiryHandler {
     setupVisibilityChangeHandling() {
         document.addEventListener('visibilitychange', () => {
             if (!document.hidden) {
-                // Page became visible again, check session immediately
-                setTimeout(() => this.checkSessionStatus(), 1000);
+                // Only check session if we haven't checked in the last 60 seconds.
+                // Frequent visibility-change checks (e.g. switching tabs) caused repeated
+                // 401 detection and contributed to the re-auth redirect loop.
+                const lastCheck = parseInt(localStorage.getItem('creams_last_session_check') || '0');
+                if (Date.now() - lastCheck > 60000) {
+                    localStorage.setItem('creams_last_session_check', Date.now().toString());
+                    setTimeout(() => this.checkSessionStatus(), 1000);
+                }
             }
         });
     }
@@ -152,8 +166,21 @@ class ExpiryHandler {
     }
 
     handleSessionExpiry(message = 'Session expired') {
-        if (this.warningShown) return; // Prevent multiple redirects
+        if (this.warningShown) return; // Prevent multiple redirects within same page load
+
+        // Cross-page-load loop guard: if we redirected to login in the last 20 seconds,
+        // suppress this trigger — it means the redirect loop is firing and we must stop it.
+        const lastRedirect = parseInt(localStorage.getItem('creams_last_expiry_ts') || '0');
+        if (Date.now() - lastRedirect < 20000) {
+            console.warn('[ExpiryHandler] Suppressing duplicate redirect (cooldown active).');
+            return;
+        }
+
+        // Don't trigger if we are already on the login page
+        if (window.location.pathname === '/login' || window.location.pathname === '/auth/login') return;
+
         this.warningShown = true;
+        localStorage.setItem('creams_last_expiry_ts', Date.now().toString());
         
         console.log('Session expired, redirecting...', message);
         
@@ -316,9 +343,11 @@ class ExpiryHandler {
             try {
                 const info = JSON.parse(expiryInfo);
                 
-                // Clear expiry info
+                // Clear expiry info and cooldown keys so future expiry is detected normally
                 sessionStorage.removeItem('creams_expiry_info');
                 localStorage.removeItem('creams_expiry_info');
+                localStorage.removeItem('creams_last_expiry_ts');
+                localStorage.removeItem('creams_last_session_check');
                 
                 // Show success message
                 const notification = new ExpiryHandler().createNotification(
