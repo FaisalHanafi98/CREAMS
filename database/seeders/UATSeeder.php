@@ -58,6 +58,7 @@ class UATSeeder extends Seeder
             $this->seedStaffAttendance($centres);
             $this->seedSessionAttendance();
             $this->seedTraineeAttendances();
+            $this->seedVolunteerApplications();
         });
 
         $this->printSummary();
@@ -246,7 +247,7 @@ class UATSeeder extends Seeder
 
     private function seedSessions(array $centres): void
     {
-        $this->command->info('  activity sessions (3 past + 1 upcoming per activity)...');
+        $this->command->info('  activity sessions (3 past + 1 today + 1 upcoming per activity)...');
 
         $sessionTimes = [['09:00:00', '10:00:00'], ['10:30:00', '11:30:00'], ['14:00:00', '15:00:00']];
 
@@ -277,6 +278,24 @@ class UATSeeder extends Seeder
                         ]
                     );
                 }
+
+                // 1 session today so dashboard "Today's Schedule" is populated
+                $todayDate = now()->format('Y-m-d');
+                DB::table('activity_occurrences')->updateOrInsert(
+                    ['activity_id' => $activity->id, 'session_date' => $todayDate, 'start_time' => $times[0]],
+                    [
+                        'session_name'        => $activity->activity_name . ' — Today',
+                        'session_description' => 'UAT demo session for today — ' . $activity->activity_name,
+                        'end_time'            => $times[1],
+                        'location'            => 'UAT Centre ' . substr($centre->centre_name, -1) . ' Hall',
+                        'instructor_id'       => $instructorId,
+                        'session_status'      => 'scheduled',
+                        'max_participants'    => 10,
+                        'current_participants' => 5,
+                        'created_at'          => now(),
+                        'updated_at'          => now(),
+                    ]
+                );
 
                 // 1 upcoming scheduled session (next week)
                 $upcomingDate = now()->addWeek()->startOfWeek()->addDays(1)->format('Y-m-d');
@@ -427,6 +446,79 @@ class UATSeeder extends Seeder
         }
     }
 
+    private function seedVolunteerApplications(): void
+    {
+        $this->command->info('  volunteer applications (10 anonymised records)...');
+
+        $adminUser = DB::table('staffs')->where('role', 'admin')->first();
+        $centres   = DB::table('centres')->where('centre_id', 'like', 'UA%')->get();
+
+        $applications = [
+            ['status' => 'applied',   'days' => 2],
+            ['status' => 'applied',   'days' => 5],
+            ['status' => 'applied',   'days' => 8],
+            ['status' => 'approved',  'days' => 20],
+            ['status' => 'approved',  'days' => 35],
+            ['status' => 'approved',  'days' => 50],
+            ['status' => 'approved',  'days' => 60],
+            ['status' => 'rejected',  'days' => 45],
+            ['status' => 'rejected',  'days' => 70],
+            ['status' => 'active',    'days' => 90],
+        ];
+
+        $skills = [
+            'Teaching, communication, basic first aid',
+            'Special education, music therapy, Bahasa Malaysia',
+            'Physical therapy assistant, swimming instructor',
+            'Art and craft, occupational therapy aide',
+            'IT skills, report writing, data entry',
+        ];
+
+        $availability = ['Weekdays 9am–5pm', 'Weekends only', 'Flexible — 2 days per week', 'Full time'];
+
+        $motivations = [
+            'I have a sibling with Down Syndrome and want to contribute to the community.',
+            'As a psychology student I want to gain hands-on experience working with children.',
+            'I believe every individual deserves the opportunity to thrive.',
+        ];
+
+        foreach ($applications as $idx => $app) {
+            $centreObj  = $centres[$idx % count($centres)];
+            $createdAt  = now()->subDays($app['days']);
+            $reviewedAt = in_array($app['status'], ['approved', 'rejected', 'active'])
+                ? $createdAt->copy()->addDays(2)
+                : null;
+
+            $gender   = $this->faker->randomElement(['male', 'female']);
+            $lastName = $this->faker->lastName();
+            $firstName = $this->faker->firstName($gender);
+
+            DB::table('volunteers')->updateOrInsert(
+                ['email' => 'uat.vol.' . ($idx + 1) . '@' . self::UAT_EMAIL_DOMAIN],
+                [
+                    'volunteer_id'      => 'UAT-VOL-' . str_pad($idx + 1, 3, '0', STR_PAD_LEFT),
+                    'name'              => $firstName . ' ' . $lastName,
+                    'email'             => 'uat.vol.' . ($idx + 1) . '@' . self::UAT_EMAIL_DOMAIN,
+                    'phone'             => '+60-1' . $this->faker->numerify('#-####-####'),
+                    'address'           => $this->faker->streetAddress() . ', UAT District',
+                    'date_of_birth'     => $this->faker->dateTimeBetween('-40 years', '-20 years')->format('Y-m-d'),
+                    'gender'            => $gender,
+                    'skills'            => $skills[$idx % count($skills)],
+                    'availability'      => $availability[$idx % count($availability)],
+                    'motivation'        => $motivations[$idx % count($motivations)],
+                    'centre_id'         => in_array($app['status'], ['approved', 'active']) ? $centreObj->centre_id : null,
+                    'status'            => $app['status'],
+                    'registration_date' => $createdAt->format('Y-m-d'),
+                    'reviewed_by'       => $reviewedAt ? ($adminUser ? $adminUser->id : null) : null,
+                    'review_notes'      => $reviewedAt ? 'UAT review note — anonymised.' : null,
+                    'reviewed_at'       => $reviewedAt,
+                    'created_at'        => $createdAt,
+                    'updated_at'        => $reviewedAt ?? $createdAt,
+                ]
+            );
+        }
+    }
+
     /**
      * Generate a fake IC number that does not collide with any real Malaysian IC.
      * State codes 70-99 are unused by the real IC scheme, so prefixing with 99 keeps
@@ -449,11 +541,12 @@ class UATSeeder extends Seeder
         $this->command->info('  staff:       ' . User::where('email', 'like', '%@' . self::UAT_EMAIL_DOMAIN)->count());
         $this->command->info('  trainees:    ' . Trainee::where('trainee_id', 'like', 'UAT-%')->count());
         $this->command->info('  activities:  ' . Activity::where('activity_name', 'like', 'UAT %')->count());
-        $this->command->info('  sessions:    ' . DB::table('activity_occurrences')->count());
+        $this->command->info('  sessions:    ' . DB::table('activity_occurrences')->count() . ' (incl. ' . DB::table('activity_occurrences')->whereDate('session_date', now())->count() . ' today)');
         $this->command->info('  enrollments: ' . DB::table('activity_enrollments')->count());
         $this->command->info('  staff_att:   ' . DB::table('staff_attendances')->count());
         $this->command->info('  sess_att:    ' . DB::table('session_attendance')->count());
         $this->command->info('  trainee_att: ' . DB::table('trainee_attendances')->count());
+        $this->command->info('  volunteers:  ' . DB::table('volunteers')->where('email', 'like', '%@' . self::UAT_EMAIL_DOMAIN)->count());
         $this->command->info('');
         $this->command->info('UAT login: any seeded staff email + password ' . self::UAT_PASS);
         $this->command->info('Sample logins:');

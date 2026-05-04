@@ -101,7 +101,20 @@
         transition: all 0.3s ease;
         opacity: 0;
     }
-    
+
+    /* Locked state: show lock icon hint on hover when not in edit mode */
+    .avatar-overlay.locked { cursor: not-allowed; }
+    .avatar-overlay.locked::after {
+        content: '\f023';
+        font-family: 'Font Awesome 6 Free';
+        font-weight: 900;
+        font-size: 1.1rem;
+        color: rgba(255,255,255,0.6);
+        position: absolute;
+        top: 4px;
+        right: 6px;
+    }
+
     .profile-avatar:hover .avatar-overlay {
         opacity: 1;
     }
@@ -228,7 +241,6 @@
     .tab-content {
         background: #fff;
         padding: 40px;
-        min-height: 600px;
     }
     
     .tab-pane {
@@ -704,32 +716,32 @@
             <div class="profile-tabs">
                 <ul class="nav nav-tabs" id="profileTabs" role="tablist">
                     <li class="nav-item" role="presentation">
-                        <a class="nav-link active" id="personal-tab" data-toggle="tab" href="#personal" role="tab">
+                        <a class="nav-link active" id="personal-tab" data-bs-toggle="tab" href="#personal" role="tab">
                             <i class="fas fa-user"></i>
                             <span>Personal Info</span>
                         </a>
                     </li>
                     <li class="nav-item" role="presentation">
-                        <a class="nav-link" id="professional-tab" data-toggle="tab" href="#professional" role="tab">
+                        <a class="nav-link" id="professional-tab" data-bs-toggle="tab" href="#professional" role="tab">
                             <i class="fas fa-briefcase"></i>
                             <span>Professional</span>
                         </a>
                     </li>
                     <li class="nav-item" role="presentation">
-                        <a class="nav-link" id="system-tab" data-toggle="tab" href="#system" role="tab">
+                        <a class="nav-link" id="system-tab" data-bs-toggle="tab" href="#system" role="tab">
                             <i class="fas fa-cogs"></i>
                             <span>System Info</span>
                         </a>
                     </li>
                     <li class="nav-item" role="presentation">
-                        <a class="nav-link" id="security-tab" data-toggle="tab" href="#security" role="tab">
+                        <a class="nav-link" id="security-tab" data-bs-toggle="tab" href="#security" role="tab">
                             <i class="fas fa-shield-alt"></i>
                             <span>Security</span>
                         </a>
                     </li>
                     @if(session('role') === 'admin')
                     <li class="nav-item" role="presentation">
-                        <a class="nav-link" id="letters-tab" data-toggle="tab" href="#letters" role="tab">
+                        <a class="nav-link" id="letters-tab" data-bs-toggle="tab" href="#letters" role="tab">
                             <i class="fas fa-file-alt"></i>
                             <span>Letter Generator</span>
                         </a>
@@ -1173,8 +1185,9 @@ $(document).ready(function() {
     // Handle hash navigation on page load - support multiple hash variants
     const validLetterHashes = ['#letters', '#letter', '#lettergenerator', '#letter-generator', '#letters-tab'];
     if (validLetterHashes.includes(window.location.hash.toLowerCase())) {
-        // Activate the letters tab
-        $('#letters-tab').tab('show');
+        // Activate the letters tab (Bootstrap 5)
+        const lettersTabEl = document.getElementById('letters-tab');
+        if (lettersTabEl) { bootstrap.Tab.getOrCreateInstance(lettersTabEl).show(); }
         
         // Scroll to letters section after a short delay to allow tab to load
         setTimeout(function() {
@@ -1184,8 +1197,8 @@ $(document).ready(function() {
         }, 300);
     }
     
-    // Initially hide avatar upload overlay
-    $('.avatar-overlay').hide();
+    // Initially show avatar overlay in locked state so users know it exists
+    $('.avatar-overlay').show().addClass('locked');
     
     // Store original values for all forms
     const originalValues = {
@@ -1233,7 +1246,7 @@ $(document).ready(function() {
         $('#professional-actions').show();
         
         // Enable avatar upload
-        $('.avatar-overlay').show();
+        $('.avatar-overlay').show().removeClass('locked');
         
         // Update styling
         $('.editable-field').removeClass('readonly-field');
@@ -1250,8 +1263,8 @@ $(document).ready(function() {
         $('#education_specialization, #position, #teaching_specialization').prop('readonly', true);
         $('#professional-actions').hide();
         
-        // Disable avatar upload
-        $('.avatar-overlay').hide();
+        // Disable avatar upload — keep overlay visible but locked so UX is clear
+        $('.avatar-overlay').show().addClass('locked');
         
         // Update styling
         $('.editable-field').addClass('readonly-field');
@@ -1306,13 +1319,10 @@ $(document).ready(function() {
         $('#teaching_specialization').val(originalValues.professional.teaching_specialization);
     });
     
-    // Avatar upload functionality
+    // Avatar upload functionality — only opens file picker in edit mode
     $('#avatar-upload-btn').click(function(e) {
         e.preventDefault();
-        if (!editMode) {
-            alert('Please enable edit mode to change your profile photo.');
-            return;
-        }
+        if (!editMode) return;
         $('#avatarInput').click();
     });
     

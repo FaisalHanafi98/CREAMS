@@ -8,6 +8,7 @@ use App\Models\Trainee;
 use App\Models\Activity;
 use App\Models\Centre;
 use Illuminate\Support\Facades\Log;
+use App\Helpers\EncryptionHelper;
 
 class SearchController extends Controller
 {
@@ -75,8 +76,8 @@ class SearchController extends Controller
                     }
                 }
 
-                // Generate encrypted ID for the profile route
-                $encryptedId = encrypt($user->id);
+                // Generate encrypted ID using the app's standard EncryptionHelper
+                $encryptedId = EncryptionHelper::generateEncryptedId($user->id);
 
                 $results[] = [
                     'id' => $user->id,
@@ -122,8 +123,8 @@ class SearchController extends Controller
                     }
                 }
 
-                // Generate encrypted ID for the trainee profile route
-                $encryptedId = encrypt($trainee->id);
+                // Generate encrypted ID using the app's standard EncryptionHelper
+                $encryptedId = EncryptionHelper::generateEncryptedId($trainee->id);
 
                 $disability = $trainee->trainee_condition ?? 'No condition specified';
 

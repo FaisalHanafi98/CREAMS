@@ -30,8 +30,8 @@
     --font-size-sm:   12px;
     --font-size-lg:   16px;
 
-    /* Layout */
-    --sidebar-width:      240px;
+    /* Layout — keep in sync with .sidebar width in layouts/app.blade.php */
+    --sidebar-width:      250px;
     --sidebar-width-coll: 60px;
     --topbar-height:      60px;
 
@@ -41,9 +41,114 @@
     --card-shadow-hover: 0 8px 30px rgba(0, 0, 0, 0.15);
     --card-padding: 1.25rem;
 
+    /* Spacing scale */
+    --space-1: 0.25rem;
+    --space-2: 0.5rem;
+    --space-3: 0.75rem;
+    --space-4: 1rem;
+    --space-5: 1.25rem;
+    --space-6: 1.5rem;
+    --space-8: 2rem;
+    --space-10: 2.5rem;
+    --space-12: 3rem;
+
+    /* Table tokens */
+    --table-header-bg:    #f8f9fa;
+    --table-border:       #e9ecef;
+    --table-row-hover:    rgba(50, 189, 234, 0.05);
+    --table-head-color:   #495057;
+    --table-head-weight:  600;
+
+    /* Form tokens */
+    --input-focus-ring:   0 0 0 0.2rem rgba(50, 189, 234, 0.25);
+    --input-border-focus: #32bdea;
+
     /* Transitions */
     --transition-fast:   0.15s ease;
     --transition-normal: 0.3s ease;
+}
+
+/* ── Global table styles using design tokens ─────────────────── */
+.creams-table { width: 100%; border-collapse: collapse; }
+.creams-table thead th {
+    background: var(--table-header-bg);
+    color: var(--table-head-color);
+    font-weight: var(--table-head-weight);
+    font-size: var(--font-size-sm);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: var(--space-3) var(--space-4);
+    border-bottom: 2px solid var(--table-border);
+    white-space: nowrap;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+.creams-table tbody td {
+    padding: var(--space-3) var(--space-4);
+    border-bottom: 1px solid var(--table-border);
+    vertical-align: middle;
+    font-size: var(--font-size-base);
+}
+.creams-table tbody tr:hover { background: var(--table-row-hover); }
+.creams-table tbody tr:last-child td { border-bottom: none; }
+
+/* ── Form focus ring ─────────────────────────────────────────── */
+.form-control:focus, .form-select:focus {
+    border-color: var(--input-border-focus);
+    box-shadow: var(--input-focus-ring);
+}
+
+/* ── Filter bar ──────────────────────────────────────────────── */
+.filter-bar {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    flex-wrap: wrap;
+    padding: var(--space-4) var(--space-5);
+    background: var(--color-white);
+    border-radius: var(--card-radius);
+    border: 1px solid var(--color-border);
+    margin-bottom: var(--space-6);
+}
+.filter-bar .filter-label {
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    color: var(--color-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+}
+
+/* ── Action icon buttons ─────────────────────────────────────── */
+.btn-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: 1px solid var(--color-border);
+    background: var(--color-white);
+    color: var(--color-muted);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    font-size: var(--font-size-sm);
+    text-decoration: none;
+}
+.btn-icon:hover { background: var(--color-light); color: var(--color-dark); border-color: #ced4da; }
+.btn-icon.btn-icon-view:hover  { background: rgba(50,189,234,0.1); color: var(--brand-primary); border-color: var(--brand-primary); }
+.btn-icon.btn-icon-approve:hover { background: rgba(46,213,115,0.1); color: var(--color-success); border-color: var(--color-success); }
+.btn-icon.btn-icon-reject:hover  { background: rgba(255,71,87,0.1);  color: var(--color-danger);  border-color: var(--color-danger);  }
+
+/* ── Avatar initial circle ───────────────────────────────────── */
+.avatar-circle {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: var(--brand-gradient);
+    color: white; font-weight: 600;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: var(--font-size-sm);
+    flex-shrink: 0;
 }
 
 /* ── Utility helpers ─────────────────────────────────────────── */
