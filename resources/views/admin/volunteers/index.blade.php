@@ -168,7 +168,7 @@
                 Apply
             </button>
             @if(request()->hasAny(['status','centre_id','date_from','date_to']))
-            <a href="{{ route('volunteer.admin.index') }}" class="btn btn-sm btn-outline-secondary" style="border-radius:8px;">
+            <a href="{{ route('admin.volunteers.index') }}" class="btn btn-sm btn-outline-secondary" style="border-radius:8px;">
                 Clear
             </a>
             @endif
@@ -272,7 +272,7 @@
             <p>
                 @if(request()->hasAny(['status','centre_id','date_from','date_to']))
                     No applications match the current filters.
-                    <a href="{{ route('volunteer.admin.index') }}">Clear filters</a>
+                    <a href="{{ route('admin.volunteers.index') }}">Clear filters</a>
                 @else
                     When volunteers apply to join a PPDK centre, they will appear here for review.
                 @endif

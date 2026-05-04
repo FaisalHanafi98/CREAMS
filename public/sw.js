@@ -54,6 +54,10 @@ self.addEventListener('activate', event => {
 
 // Fetch Strategy: Cache First for assets, Network First for API calls
 self.addEventListener('fetch', event => {
+    // Only handle http/https requests — chrome-extension:// and other schemes
+    // cannot be cached and will throw "Request scheme unsupported" errors.
+    if (!event.request.url.startsWith('http')) return;
+
     const url = new URL(event.request.url);
     
     // Handle API calls (Network First)

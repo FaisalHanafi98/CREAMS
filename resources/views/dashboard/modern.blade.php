@@ -87,14 +87,14 @@
             <ul class="nav nav-pills dashboard-nav-pills justify-content-center" id="dashboardTabs" role="tablist">
                 @if($role === 'admin')
                 <li class="nav-item">
-                    <a class="nav-link active" id="general-tab" data-toggle="pill" href="#general" role="tab" aria-controls="general" aria-selected="true">
-                        <i class="fas fa-chart-line mr-2"></i>General
+                    <a class="nav-link active" id="general-tab" data-bs-toggle="pill" href="#general" role="tab" aria-controls="general" aria-selected="true">
+                        <i class="fas fa-chart-line me-2"></i>General
                     </a>
                 </li>
                 @endif
                 <li class="nav-item">
-                    <a class="nav-link {{ $role !== 'admin' ? 'active' : '' }}" id="personal-tab" data-toggle="pill" href="#personal" role="tab" aria-controls="personal" aria-selected="{{ $role !== 'admin' ? 'true' : 'false' }}">
-                        <i class="fas fa-user mr-2"></i>Personal
+                    <a class="nav-link {{ $role !== 'admin' ? 'active' : '' }}" id="personal-tab" data-bs-toggle="pill" href="#personal" role="tab" aria-controls="personal" aria-selected="{{ $role !== 'admin' ? 'true' : 'false' }}">
+                        <i class="fas fa-user me-2"></i>Personal
                     </a>
                 </li>
             </ul>

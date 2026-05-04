@@ -9,6 +9,7 @@ use App\Models\User;
 use Faker\Factory as FakerFactory;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 
 /**
  * UATSeeder
@@ -106,7 +107,7 @@ class UATSeeder extends Seeder
                 'name' => 'UAT Super Admin',
                 'role' => 'admin',
                 'centre_id' => 'UA1',
-                'password' => self::UAT_PASS,
+                'password' => Hash::make(self::UAT_PASS),
                 'status' => 'active',
                 'email_verified_at' => now(),
             ]
@@ -138,7 +139,7 @@ class UATSeeder extends Seeder
                             'name' => sprintf('UAT %s %s%d', ucfirst($role), strtoupper($centreLabel), $i),
                             'role' => $role,
                             'centre_id' => $centreId,
-                            'password' => self::UAT_PASS,
+                            'password' => Hash::make(self::UAT_PASS),
                             'status' => 'active',
                             'email_verified_at' => now(),
                             'phone' => '+60-1' . $this->faker->numerify('#-####-####'),
