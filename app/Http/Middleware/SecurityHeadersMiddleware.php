@@ -52,15 +52,17 @@ class SecurityHeadersMiddleware
         $response->headers->set('Referrer-Policy', 'strict-origin-when-cross-origin');
 
         // Content-Security-Policy: Prevent XSS and data injection attacks
-        // CDN domains allowlisted so Bootstrap, FontAwesome, jQuery, and Google Fonts load correctly.
-        // Phase 1B will replace CDN refs with self-hosted assets; at that point CDN domains can be removed.
+        // CDN domains allowlisted for Bootstrap, FontAwesome, jQuery, and Google Fonts.
+        // cdn.jsdelivr.net also needed in connect-src: self-hosted Bootstrap minified files
+        // contain sourceMappingURL comments that point back to the CDN; browsers with DevTools
+        // open will attempt to fetch those .map files via connect-src.
         $csp = [
             "default-src 'self'",
             "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://code.jquery.com",
             "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.googleapis.com",
             "img-src 'self' data: https:",
             "font-src 'self' data: https://fonts.gstatic.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net",
-            "connect-src 'self' https://wttr.in",
+            "connect-src 'self' https://wttr.in https://cdn.jsdelivr.net https://cdnjs.cloudflare.com",
             "frame-ancestors 'self'",
             "base-uri 'self'",
             "form-action 'self'",
