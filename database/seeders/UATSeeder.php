@@ -109,6 +109,7 @@ class UATSeeder extends Seeder
                 'centre_id' => 'UA1',
                 'password' => Hash::make(self::UAT_PASS),
                 'status' => 'active',
+                'phone' => '+60-3-0000-0000',
                 'email_verified_at' => now(),
             ]
         );

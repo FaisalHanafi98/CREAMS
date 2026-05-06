@@ -29,6 +29,8 @@ return new class extends Migration
                 'password' => bcrypt('admin123'),
                 'role' => 'admin',
                 'status' => 'active',
+                'phone' => '',
+                'centre_id' => null,
                 'created_at' => now(),
                 'updated_at' => now()
             ]);

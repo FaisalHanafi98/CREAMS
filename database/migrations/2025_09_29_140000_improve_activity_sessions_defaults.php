@@ -21,8 +21,8 @@ return new class extends Migration
 
         // 2. IMPROVE SESSION_NOTES HANDLING
         Schema::table('activity_occurrences', function (Blueprint $table) {
-            // Change session_notes to have a default empty string instead of NULL
-            $table->text('session_notes')->default('')->change();
+            // TEXT columns cannot have a default value in MySQL; use nullable instead.
+            $table->text('session_notes')->nullable()->change();
 
             // Ensure max_participants has a reasonable default
             $table->integer('max_participants')->default(10)->change();
