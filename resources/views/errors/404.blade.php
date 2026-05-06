@@ -21,7 +21,7 @@
                         <p class="lead">The page you are looking for might have been removed, had its name changed, or is temporarily unavailable.</p>
                         
                         <div class="mt-4">
-                            <a href="{{ route('home') }}" class="btn btn-primary">
+                            <a href="{{ url('/') }}" class="btn btn-primary">
                                 <i class="fas fa-home"></i> Return Home
                             </a>
                             @if(session('role'))

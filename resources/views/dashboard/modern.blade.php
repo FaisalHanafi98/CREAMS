@@ -3133,16 +3133,16 @@ function navigateToItem(element) {
     let url = '';
     switch (itemType) {
         case 'activity':
-            url = `{{ route('activities.show', '') }}/${itemId}`;
+            url = `{{ url('activities') }}/${itemId}`;
             break;
         case 'user':
-            url = `{{ route('staffs.profile', '') }}/${itemId}`;
+            url = `{{ url('staffs/profile') }}/${itemId}`;
             break;
         case 'trainee':
-            url = `{{ route('traineeprofile', '') }}/${itemId}`;
+            url = `{{ url('trainees') }}/${itemId}`;
             break;
         case 'session':
-            url = `{{ route('activities.sessions', '') }}/${itemId}`;
+            url = `{{ url('activities/sessions') }}/${itemId}`;
             break;
     }
     

@@ -35,7 +35,7 @@
                     <img src="{{ asset('images/logo/logo iium.png') }}" alt="IIUM Logo" class="header-logo">
                 </div>
                 <div class="col-md-8 text-centre" id="logo">
-                    <a href="{{ route('home') }}">
+                    <a href="{{ url('/') }}">
                         <h1 class="logo">CREAMS</h1>
                         <span class="small-text">Community-based REhAbilitation Management System</span>
                     </a>
@@ -52,8 +52,8 @@
     {{-- Mobile Navigation Menu --}}
     <div id="mobile-nav">
         <ul class="mobile-nav-menu">
-            <li><a href="{{ route('home') }}">HOME</a></li>
-            <li><a href="{{ route('home') }}#about">ABOUT</a></li>
+            <li><a href="{{ url('/') }}">HOME</a></li>
+            <li><a href="{{ url('/') }}#about">ABOUT</a></li>
             <li><a href="{{ route('contact') }}">CONTACT</a></li>
             <li><a href="{{ route('trademark') }}" class="active">TRADEMARKS</a></li>
             @guest
@@ -75,7 +75,7 @@
         <div class="container">
             <h1>Trademarks & Legal</h1>
             <div class="breadcrumbs">
-                <a href="{{ route('home') }}">Home</a>
+                <a href="{{ url('/') }}">Home</a>
                 <span>/</span>
                 <a href="{{ route('trademark') }}">Trademarks</a>
             </div>
@@ -181,8 +181,8 @@
                     <div class="footer-widget">
                         <h3>Quick Links</h3>
                         <ul class="list-unstyled">
-                            <li><a href="{{ route('home') }}">Home</a></li>
-                            <li><a href="{{ route('home') }}#about">About</a></li>
+                            <li><a href="{{ url('/') }}">Home</a></li>
+                            <li><a href="{{ url('/') }}#about">About</a></li>
                             <li><a href="{{ route('contact') }}">Contact Us</a></li>
                             <li><a href="{{ route('trademark') }}">Trademarks</a></li>
                             @guest

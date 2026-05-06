@@ -228,7 +228,7 @@
                     Refresh Dashboard
                 </button>
                 
-                <a href="{{ route('home') }}" class="btn-secondary">
+                <a href="{{ url('/') }}" class="btn-secondary">
                     <i class="fas fa-home mr-2"></i>
                     Return Home
                 </a>

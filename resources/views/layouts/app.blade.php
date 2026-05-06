@@ -1016,7 +1016,7 @@
         </div>
 
         <div class="topbar-logo">
-            <a href="{{ session('role') ? route(session('role') . '.dashboard') : route('home') }}">
+            <a href="{{ session('role') ? route(session('role') . '.dashboard') : url('/') }}">
                 <i class="fas fa-clinic-medical"></i>
                 <span>CREAMS</span>
             </a>
@@ -1153,7 +1153,7 @@
     <div class="sidebar">
         <ul class="sidebar-menu">
             <li class="sidebar-item">
-                <a href="{{ session('role') ? route(session('role') . '.dashboard') : route('home') }}"
+                <a href="{{ session('role') ? route(session('role') . '.dashboard') : url('/') }}"
                     class="sidebar-link {{ strpos(Route::currentRouteName(), 'dashboard') !== false ? 'active' : '' }}">
                     <span class="sidebar-icon"><i class="fas fa-home"></i></span>
                     <span class="sidebar-text">Dashboard</span>

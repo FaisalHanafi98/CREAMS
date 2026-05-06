@@ -115,18 +115,19 @@ class RouteServiceProvider extends ServiceProvider
                 ->prefix('api')
                 ->group(base_path('routes/api.php'));
 
-            // Demo instance routes: /creams/{demo_id}/*
-            // This allows multiple isolated demo instances
-            Route::middleware(['web', 'demo'])
-                ->prefix('creams/{demo_id}')
-                ->group(base_path('routes/web.php'));
-
-            // Also keep direct access for local development
-            // Comment out this block in production if you only want /creams/{demo_id}/ URLs
+            // Direct access routes registered FIRST so route() helper resolves to
+            // the param-free versions in local/testing (Laravel 12 picks first match
+            // when the same name is registered multiple times).
             if (app()->environment('local', 'testing')) {
                 Route::middleware('web')
                     ->group(base_path('routes/web.php'));
             }
+
+            // Demo instance routes: /creams/{demo_id}/*
+            // Registered AFTER direct routes so demo URLs don't shadow the primary names.
+            Route::middleware(['web', 'demo'])
+                ->prefix('creams/{demo_id}')
+                ->group(base_path('routes/web.php'));
         });
     }
 
@@ -179,6 +180,6 @@ class RouteServiceProvider extends ServiceProvider
         }
         
         // If not authenticated, return to home page
-        return route('home');
+        return url('/');
     }
 }
