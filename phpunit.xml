@@ -31,5 +31,8 @@
         <env name="QUEUE_CONNECTION" value="sync"/>
         <env name="SESSION_DRIVER" value="array"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
+        <!-- Suppress E_DEPRECATED during tests: PDO::MYSQL_ATTR_SSL_CA is deprecated
+             in PHP 8.5; the deprecation is in vendor/laravel/framework — not our code. -->
+        <ini name="error_reporting" value="24575"/>
     </php>
 </phpunit>
