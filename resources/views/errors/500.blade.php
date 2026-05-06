@@ -21,7 +21,7 @@
                         <p class="lead">{{ $message ?? 'An unexpected error occurred while processing your request.' }}</p>
                         
                         <div class="mt-4">
-                            <a href="{{ route('home') }}" class="btn btn-primary">
+                            <a href="{{ url('/') }}" class="btn btn-primary">
                                 <i class="fas fa-home"></i> Return Home
                             </a>
                             @if(session('role'))

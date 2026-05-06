@@ -36,8 +36,6 @@ class MalaysianLocaleServiceProvider extends ServiceProvider
             return $this->format('h:i A');
         });
 
-        // Set first day of week to Monday (common in Malaysia)
-        Carbon::setWeekStartsAt(Carbon::MONDAY);
-        Carbon::setWeekEndsAt(Carbon::SUNDAY);
+        // Carbon 3 defaults to ISO week (Monday start) — no explicit call needed.
     }
 }

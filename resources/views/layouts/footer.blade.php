@@ -26,7 +26,7 @@
                     <div class="footer-widget">
                         <h3>Quick Links</h3>
                         <ul class="footer-links">
-                            <li><a href="{{ route('home') }}"><i class="fas fa-home"></i> Home</a></li>
+                            <li><a href="{{ url('/') }}"><i class="fas fa-home"></i> Home</a></li>
                             <li><a href="{{ route('contact') }}"><i class="fas fa-envelope"></i> Contact</a></li>
                             <li><a href="{{ route('volunteer') }}"><i class="fas fa-hands-helping"></i> Volunteer</a></li>
                             <li><a href="{{ route('auth.loginpage') }}"><i class="fas fa-sign-in-alt"></i> Staff Portal</a></li>

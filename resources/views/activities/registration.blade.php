@@ -16,7 +16,7 @@
 
 <body>
     <div class="logo">
-        <a href="{{ route('home') }}">CREAMS</a>
+        <a href="{{ url('/') }}">CREAMS</a>
     </div>
     <div class="box">
         <div class="container">
