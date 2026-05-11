@@ -115,19 +115,16 @@ class RouteServiceProvider extends ServiceProvider
                 ->prefix('api')
                 ->group(base_path('routes/api.php'));
 
-            // Direct access routes registered FIRST so route() helper resolves to
-            // the param-free versions in local/testing (Laravel 12 picks first match
-            // when the same name is registered multiple times).
-            if (app()->environment('local', 'testing')) {
-                Route::middleware('web')
+            // Production must use clean direct routes as the primary public URL scheme.
+            Route::middleware('web')
+                ->group(base_path('routes/web.php'));
+
+            // Demo-prefixed routes remain available only for non-production environments.
+            if (! app()->environment('production')) {
+                Route::middleware(['web', 'demo'])
+                    ->prefix('creams/{demo_id}')
                     ->group(base_path('routes/web.php'));
             }
-
-            // Demo instance routes: /creams/{demo_id}/*
-            // Registered AFTER direct routes so demo URLs don't shadow the primary names.
-            Route::middleware(['web', 'demo'])
-                ->prefix('creams/{demo_id}')
-                ->group(base_path('routes/web.php'));
         });
     }
 
