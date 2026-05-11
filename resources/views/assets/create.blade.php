@@ -8,7 +8,7 @@
     <nav aria-label="breadcrumb">
         <ol class="breadcrumb">
             <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Dashboard</a></li>
-            <li class="breadcrumb-item"><a href="{{ route('assets.index') }}">Assets</a></li>
+            <li class="breadcrumb-item"><a href="{{ route('asset-parents.index') }}">Assets</a></li>
             <li class="breadcrumb-item active">Add New Asset</li>
         </ol>
     </nav>
@@ -18,7 +18,7 @@
         <h1 class="h3 mb-0 text-gray-800">
             <i class="fas fa-plus-circle text-primary me-2"></i>Add New Asset
         </h1>
-        <a href="{{ route('assets.index') }}" class="btn btn-secondary">
+        <a href="{{ route('asset-parents.index') }}" class="btn btn-secondary">
             <i class="fas fa-arrow-left me-1"></i>Back to Assets
         </a>
     </div>
@@ -45,7 +45,7 @@
                     <h6 class="m-0 font-weight-bold text-primary">Asset Information</h6>
                 </div>
                 <div class="card-body">
-                    <form action="{{ route('assets.store') }}" method="POST" enctype="multipart/form-data">
+                    <form action="{{ route('asset-parents.store') }}" method="POST" enctype="multipart/form-data">
                         @csrf
                         
                         <!-- Basic Information -->
@@ -192,7 +192,7 @@
 
                         <!-- Form Actions -->
                         <div class="d-flex justify-content-between">
-                            <a href="{{ route('assets.index') }}" class="btn btn-secondary">
+                            <a href="{{ route('asset-parents.index') }}" class="btn btn-secondary">
                                 <i class="fas fa-times me-1"></i>Cancel
                             </a>
                             <button type="submit" class="btn btn-primary">

@@ -74,8 +74,7 @@ class ModernLetterGeneratorController extends Controller
                 ->get();
 
             // Get trainees for recipient selection
-            $trainees = Trainee::with(['guardian'])
-                ->where('centre_id', session('centre_id'))
+            $trainees = Trainee::where('centre_id', session('centre_id'))
                 ->where('status', 'active')
                 ->orderBy('trainee_first_name')
                 ->get();
