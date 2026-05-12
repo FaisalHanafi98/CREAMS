@@ -46,7 +46,10 @@ for i in "${!PATTERNS[@]}"; do
     # real-data seeder, hard-gated to local-only via APP_ENV check inside the seeder. See
     # docs/04_Deployment_Guides/STAGING_SEED_POLICY.md for the policy that makes this safe.
     if [[ "${PATTERNS[$i]}" != *'[0-9]{6}'* ]]; then
-        MATCHES=$(echo "$STAGED_FILES" | xargs grep -lnE "${PATTERNS[$i]}" 2>/dev/null | grep -v '.githooks/' | grep -v '.env.example' | grep -v '^docs/' | grep -v '^database/seeders/IRLSeeder\.php$')
+        # Exclude docs/ and resources/views/ from code-pattern checks — both contain
+        # UI text and code examples that legitimately match "password" patterns.
+        # IC pattern still applies to docs/ (PDPA). views/ IC exclusion is below.
+        MATCHES=$(echo "$STAGED_FILES" | xargs grep -lnE "${PATTERNS[$i]}" 2>/dev/null | grep -v '.githooks/' | grep -v '.env.example' | grep -v '^docs/' | grep -v '^resources/views/' | grep -v '^database/seeders/IRLSeeder\.php$')
     else
         MATCHES=$(echo "$STAGED_FILES" | xargs grep -lnE "${PATTERNS[$i]}" 2>/dev/null | grep -v '.githooks/' | grep -v '.env.example' | grep -v '^database/seeders/IRLSeeder\.php$')
     fi

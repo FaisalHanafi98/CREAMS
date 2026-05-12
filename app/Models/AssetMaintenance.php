@@ -574,7 +574,7 @@ class AssetMaintenance extends Model
     /**
      * Get maintenance statistics
      */
-    public static function getStatistics(?int $centreId = null, ?Carbon $startDate = null, ?Carbon $endDate = null): array
+    public static function getStatistics(?string $centreId = null, ?Carbon $startDate = null, ?Carbon $endDate = null): array
     {
         $query = self::query();
 
@@ -614,7 +614,7 @@ class AssetMaintenance extends Model
     /**
      * Get maintenance requiring attention
      */
-    public static function getRequiringAttention(?int $centreId = null): array
+    public static function getRequiringAttention(?string $centreId = null): array
     {
         $baseQuery = self::query();
 

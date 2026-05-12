@@ -507,37 +507,48 @@ class ActivityController extends Controller
     public function categories()
     {
         try {
-            // Get all categories with their activity counts using the proper relationship
-            $allCategories = Category::active()
-                ->withCount(['activities as activities_count' => function ($query) {
-                    $query->where('is_active', true);
-                }])
-                ->ordered()
-                ->get();
+            $centreId = session('centre_id');
+            $baseQuery = Activity::where('is_active', true);
+            if ($centreId) {
+                $baseQuery->where('centre_id', $centreId);
+            }
 
-            // Group categories by their overarching type
-            $categoriesGrouped = [
-                'faith' => $allCategories->where('category_type', 'faith'),
-                'rehabilitation' => $allCategories->where('category_type', 'rehabilitation'),
-                'academic' => $allCategories->where('category_type', 'academic'),
-                'creative_social' => $allCategories->where('category_type', 'creative_social')
+            $categoryCounts = $baseQuery->clone()
+                ->select('category', DB::raw('COUNT(*) as activities_count'))
+                ->whereNotNull('category')
+                ->groupBy('category')
+                ->pluck('activities_count', 'category');
+
+            $categoryMeta = [
+                'Autism Spectrum Support' => ['type' => 'rehabilitation', 'color_code' => '#8B5CF6'],
+                'Hearing Impairment' => ['type' => 'rehabilitation', 'color_code' => '#2563EB'],
+                'Visual Impairment' => ['type' => 'rehabilitation', 'color_code' => '#059669'],
+                'Physical Disabilities' => ['type' => 'rehabilitation', 'color_code' => '#DC2626'],
+                'Learning Support' => ['type' => 'academic', 'color_code' => '#D97706'],
+                'Speech Therapy' => ['type' => 'academic', 'color_code' => '#0EA5E9'],
             ];
 
-            // Transform categories to include proper data structure
-            foreach ($categoriesGrouped as $type => $categories) {
-                $categoriesGrouped[$type] = $categories->map(function ($category) {
-                    return (object)[
-                        'id' => $category->id,
-                        'name' => $category->category_name,
-                        'slug' => \Illuminate\Support\Str::slug($category->category_name),
-                        'description' => $category->category_description ?? "Activities in the {$category->category_name} category",
-                        'activities_count' => $category->activities_count,
-                        'color_code' => $category->category_color,
-                        'icon_class' => $category->category_icon ?: $this->getCategoryIcon($category->category_name),
-                        'type' => $category->category_type,
-                        'type_display' => $category->type_display
-                    ];
-                });
+            $categoriesGrouped = [
+                'faith' => collect(),
+                'rehabilitation' => collect(),
+                'academic' => collect(),
+                'creative_social' => collect(),
+            ];
+
+            foreach ($categoryCounts as $name => $count) {
+                $meta = $categoryMeta[$name] ?? ['type' => 'rehabilitation', 'color_code' => '#8B5CF6'];
+                $type = $meta['type'];
+                $categoriesGrouped[$type]->push((object) [
+                    'id' => null,
+                    'name' => $name,
+                    'slug' => \Illuminate\Support\Str::slug($name),
+                    'description' => "Activities in the {$name} category",
+                    'activities_count' => (int) $count,
+                    'color_code' => $meta['color_code'],
+                    'icon_class' => $this->getCategoryIcon($name),
+                    'type' => $type,
+                    'type_display' => ucwords(str_replace('_', ' ', $type)),
+                ]);
             }
 
             Log::info('Categories loaded successfully', [
@@ -562,46 +573,33 @@ class ActivityController extends Controller
         try {
             $this->logUserAction('view_category_activities', ['category_slug' => $categorySlug]);
 
-            // [ClaudeFix: 2025-07-07] Handle slug normalization and fallback to ENUM category search
-            $category = Category::where('slug', $categorySlug)->first();
+            $categoryName = str_replace('-', ' ', $categorySlug);
+            $categoryName = ucwords($categoryName);
 
-            if (!$category) {
-                // Try to find by converting slug to title case for ENUM matching
-                $categoryName = str_replace('-', ' ', $categorySlug);
-                $categoryName = ucwords($categoryName);
+            $activitiesQuery = Activity::where('category', $categoryName)
+                ->where('is_active', true)
+                ->with(['sessions', 'creator']);
 
-                // Check if activities exist with this category directly (for ENUM-based categories)
-                $activities = Activity::whereHas('category', function ($q) use ($categoryName) {
-                    $q->where('category_name', $categoryName);
-                })
-                    ->where('is_active', true)
-                    ->where('centre_id', session('centre_id'))
-                    ->with(['sessions', 'creator'])
-                    ->paginate(9);
-
-                if ($activities->count() > 0) {
-                    // Create a mock category object for display with fallback values
-                    $category = (object) [
-                        'id' => null,
-                        'name' => $categoryName,
-                        'slug' => $categorySlug,
-                        'description' => "Activity in the {$categoryName} category",
-                        'type' => 'rehabilitation',
-                        'icon_class' => 'fas fa-tasks',
-                        'color_code' => '#8B5CF6'
-                    ];
-                } else {
-                    // Category not found at all
-                    return redirect()->route('rehabilitation.categories')
-                        ->with('error', 'Category not found.');
-                }
-            } else {
-                $activities = Activity::where('category_id', $category->id)
-                    ->where('is_active', true)
-                    ->where('centre_id', session('centre_id'))
-                    ->with(['sessions', 'creator'])
-                    ->paginate(9);
+            $centreId = session('centre_id');
+            if ($centreId) {
+                $activitiesQuery->where('centre_id', $centreId);
             }
+
+            $activities = $activitiesQuery->paginate(9);
+            if ($activities->total() === 0) {
+                return redirect()->route('activities.categories')
+                    ->with('error', 'Category not found.');
+            }
+
+            $category = (object) [
+                'id' => null,
+                'name' => $categoryName,
+                'slug' => $categorySlug,
+                'description' => "Activities in the {$categoryName} category",
+                'type' => 'rehabilitation',
+                'icon_class' => $this->getCategoryIcon($categoryName),
+                'color_code' => '#8B5CF6',
+            ];
 
             return view('rehabilitation.categoryshow', compact('category', 'activities'));
         } catch (Exception $e) {

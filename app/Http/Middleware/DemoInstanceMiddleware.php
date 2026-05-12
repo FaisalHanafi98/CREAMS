@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\URL;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
@@ -50,6 +51,9 @@ class DemoInstanceMiddleware
 
         // Store in request for easy access
         $request->attributes->set('demo_id', $demoId);
+
+        // Ensure plain route('...') calls can resolve routes that require {demo_id}
+        URL::defaults(['demo_id' => $demoId]);
 
         // Share with all views
         view()->share('demo_id', $demoId);

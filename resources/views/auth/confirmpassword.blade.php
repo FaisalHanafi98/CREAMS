@@ -50,7 +50,7 @@
                 </div>
             @endif
             
-            <form method="POST" action="{{ route('password.confirm') }}">
+            <form method="POST" action="{{ demo_route('password.confirm') }}">
                 @csrf
                 
                 <div class="form-group password-field">

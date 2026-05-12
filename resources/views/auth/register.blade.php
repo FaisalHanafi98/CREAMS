@@ -534,15 +534,15 @@
             <div class="col">
                 <h1 class="dashboard-title">User Registration</h1>
                 <div class="breadcrumb">
-                    <a href="{{ route('dashboard') }}">Dashboard</a>
+                    <a href="{{ demo_route('dashboard') }}">Dashboard</a>
                     <span class="separator">/</span>
-                    <a href="{{ route('staffs.home') }}">Staff Management</a>
+                    <a href="{{ demo_route('staffs.home') }}">Staff Management</a>
                     <span class="separator">/</span>
                     <span class="current">Registration</span>
                 </div>
             </div>
             <div class="col-auto">
-                <a href="{{ route('staffs.home') }}" class="btn btn-secondary">
+                <a href="{{ demo_route('staffs.home') }}" class="btn btn-secondary">
                     <i class="fas fa-arrow-left"></i> Back to Staff Directory
                 </a>
             </div>
@@ -565,7 +565,7 @@
                 <button class="tab-btn" id="tab-3">Review & Submit</button>
             </div>
             
-            <form action="{{ route('auth.save') }}" method="POST" id="registration-form" enctype="multipart/form-data" onsubmit="return handleFormSubmit();">
+            <form action="{{ demo_route('auth.save') }}" method="POST" id="registration-form" enctype="multipart/form-data" onsubmit="return handleFormSubmit();">
                 @csrf
                 
                 <div class="form-sections-container">

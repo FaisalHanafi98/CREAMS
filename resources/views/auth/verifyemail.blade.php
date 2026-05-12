@@ -49,14 +49,14 @@
             @endif
             
             <div class="action-buttons">
-                <form method="POST" action="{{ route('verification.send') }}">
+                <form method="POST" action="{{ demo_route('verification.send') }}">
                     @csrf
                     <button type="submit" class="btn-verify">
                         <i class="fas fa-paper-plane me-2"></i> Resend Verification Email
                     </button>
                 </form>
                 
-                <form method="POST" action="{{ route('logout') }}" class="mt-3">
+                <form method="POST" action="{{ demo_route('logout') }}" class="mt-3">
                     @csrf
                     <button type="submit" class="btn-logout">
                         <i class="fas fa-sign-out-alt me-2"></i> Log Out

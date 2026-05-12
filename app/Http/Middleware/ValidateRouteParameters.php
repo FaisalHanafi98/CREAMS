@@ -58,6 +58,9 @@ class ValidateRouteParameters
     private function validateParameter($key, $value, $request)
     {
         switch ($key) {
+            case 'demo_id':
+                return $this->validateDemoId($value);
+
             case 'id':
                 return $this->validateId($value, $request);
                 
@@ -93,6 +96,18 @@ class ValidateRouteParameters
             default:
                 return $this->validateGenericId($value);
         }
+    }
+
+    /**
+     * Validate demo instance ID route parameter.
+     */
+    private function validateDemoId($value)
+    {
+        if (empty($value) || !is_string($value)) {
+            return false;
+        }
+
+        return preg_match('/^[a-zA-Z0-9_-]{1,32}$/', $value) === 1;
     }
     
     /**

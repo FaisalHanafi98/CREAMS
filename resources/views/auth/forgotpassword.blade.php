@@ -323,7 +323,7 @@
                 </div>
             @endif
             
-            <form method="POST" action="{{ route('password.email') }}" id="forgot-form">
+            <form method="POST" action="{{ demo_route('password.email') }}" id="forgot-form">
                 @csrf
                 
                 <div class="form-group">
@@ -338,7 +338,7 @@
             </form>
             
             <div class="login-link">
-                Remember your password? <a href="{{ route('auth.loginpage') }}">Return to Login</a>
+                Remember your password? <a href="{{ demo_route('auth.loginpage') }}">Return to Login</a>
             </div>
         </div>
     </div>
