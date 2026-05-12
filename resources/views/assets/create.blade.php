@@ -645,11 +645,12 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const nameInput = document.getElementById('name');
-    const typeSelect = document.getElementById('type');
+    const nameInput = document.getElementById('name') || document.getElementById('asset_name');
+    const typeSelect = document.getElementById('type') || document.getElementById('category_id');
     const assetIdInput = document.getElementById('asset_id');
 
     function generateAssetId() {
+        if (!nameInput || !typeSelect || !assetIdInput) return;
         const name = nameInput.value;
         const type = typeSelect.value;
 
@@ -662,14 +663,14 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    nameInput.addEventListener('blur', generateAssetId);
-    typeSelect.addEventListener('change', generateAssetId);
+    if (nameInput) nameInput.addEventListener('blur', generateAssetId);
+    if (typeSelect) typeSelect.addEventListener('change', generateAssetId);
 
     const imagesInput = document.getElementById('images');
     const previewContainer = document.getElementById('imagePreviewContainer');
     const previewsDiv = document.getElementById('imagePreviews');
 
-    imagesInput.addEventListener('change', function(e) {
+    if (imagesInput) imagesInput.addEventListener('change', function(e) {
         const files = Array.from(e.target.files);
         previewsDiv.innerHTML = '';
 
