@@ -63,6 +63,7 @@ class SecurityHeadersMiddleware
             "img-src 'self' data: https:",
             "font-src 'self' data: https://fonts.gstatic.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net",
             "connect-src 'self' https://wttr.in https://cdn.jsdelivr.net https://cdnjs.cloudflare.com",
+            "frame-src https://www.google.com",
             "frame-ancestors 'self'",
             "base-uri 'self'",
             "form-action 'self'",
