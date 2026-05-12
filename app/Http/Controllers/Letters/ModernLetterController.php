@@ -72,17 +72,19 @@ class ModernLetterController extends Controller
             $letter = Letter::create([
                 'letter_subject' => $validated['letter_subject'],
                 'letter_content' => $validated['letter_content'],
-                'letter_date' => now(),
-                'letter_data' => json_encode([
-                    'recipient_name' => $validated['recipient_name'],
+                'letter_type'    => $validated['letter_type'],
+                'letter_date'    => now(),
+                'letter_data'    => json_encode([
+                    'recipient_name'    => $validated['recipient_name'],
                     'recipient_address' => $validated['recipient_address'] ?? '',
-                    'letter_type' => $validated['letter_type'],
-                    'sender_name' => session('name'),
-                    'sender_role' => session('role'),
-                    'centre_id' => session('centre_id')
+                    'letter_type'       => $validated['letter_type'],
+                    'sender_name'       => session('name'),
+                    'sender_role'       => session('role'),
+                    'centre_id'         => session('centre_id')
                 ]),
-                'template_id' => $validated['template_id'],
-                'created_by' => session('id'),
+                'centre_id'    => session('centre_id'),
+                'template_id'  => $validated['template_id'],
+                'created_by'   => session('id'),
                 'generated_by' => session('id')
             ]);
 
