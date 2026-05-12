@@ -401,10 +401,10 @@
 
                             <div class="row g-3">
                                 <div class="col-md-6">
-                                    <label for="name" class="asset-form-label">Asset Name <span class="required">*</span></label>
-                                    <input type="text" class="form-control asset-input @error('name') is-invalid @enderror"
-                                           id="name" name="name" value="{{ old('name') }}" required>
-                                    @error('name')
+                                    <label for="asset_name" class="asset-form-label">Asset Name <span class="required">*</span></label>
+                                    <input type="text" class="form-control asset-input @error('asset_name') is-invalid @enderror"
+                                           id="asset_name" name="asset_name" value="{{ old('asset_name') }}" required>
+                                    @error('asset_name')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
@@ -419,27 +419,23 @@
                                     <div class="asset-field-help">Leave blank to let the form generate an ID from the asset name and type.</div>
                                 </div>
                                 <div class="col-md-6">
-                                    <label for="type" class="asset-form-label">Asset Type <span class="required">*</span></label>
-                                    <select class="form-select asset-input @error('type') is-invalid @enderror" id="type" name="type" required>
-                                        <option value="">Select asset type</option>
-                                        <option value="furniture" {{ old('type') == 'furniture' ? 'selected' : '' }}>Furniture</option>
-                                        <option value="equipment" {{ old('type') == 'equipment' ? 'selected' : '' }}>Equipment</option>
-                                        <option value="electronics" {{ old('type') == 'electronics' ? 'selected' : '' }}>Electronics</option>
-                                        <option value="vehicle" {{ old('type') == 'vehicle' ? 'selected' : '' }}>Vehicle</option>
-                                        <option value="medical" {{ old('type') == 'medical' ? 'selected' : '' }}>Medical Equipment</option>
-                                        <option value="educational" {{ old('type') == 'educational' ? 'selected' : '' }}>Educational Material</option>
-                                        <option value="other" {{ old('type') == 'other' ? 'selected' : '' }}>Other</option>
+                                    <label for="category_id" class="asset-form-label">Category <span class="required">*</span></label>
+                                    <select class="form-select asset-input @error('category_id') is-invalid @enderror" id="category_id" name="category_id" required>
+                                        <option value="">Select category</option>
+                                        @foreach($categories as $cat)
+                                            <option value="{{ $cat->id }}" {{ old('category_id') == $cat->id ? 'selected' : '' }}>{{ $cat->category_name }}</option>
+                                        @endforeach
                                     </select>
-                                    @error('type')
+                                    @error('category_id')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
                                 <div class="col-md-6">
-                                    <label for="brand" class="asset-form-label">Brand</label>
-                                    <input type="text" class="form-control asset-input @error('brand') is-invalid @enderror"
-                                           id="brand" name="brand" value="{{ old('brand') }}"
+                                    <label for="manufacturer" class="asset-form-label">Brand / Manufacturer</label>
+                                    <input type="text" class="form-control asset-input @error('manufacturer') is-invalid @enderror"
+                                           id="manufacturer" name="manufacturer" value="{{ old('manufacturer') }}"
                                            placeholder="Manufacturer or brand name">
-                                    @error('brand')
+                                    @error('manufacturer')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
@@ -518,11 +514,12 @@
                                     <label for="condition" class="asset-form-label">Condition <span class="required">*</span></label>
                                     <select class="form-select asset-input @error('condition') is-invalid @enderror" id="condition" name="condition" required>
                                         <option value="">Select condition</option>
+                                        <option value="new" {{ old('condition') == 'new' ? 'selected' : '' }}>New</option>
                                         <option value="excellent" {{ old('condition') == 'excellent' ? 'selected' : '' }}>Excellent</option>
                                         <option value="good" {{ old('condition') == 'good' ? 'selected' : '' }}>Good</option>
                                         <option value="fair" {{ old('condition') == 'fair' ? 'selected' : '' }}>Fair</option>
                                         <option value="poor" {{ old('condition') == 'poor' ? 'selected' : '' }}>Poor</option>
-                                        <option value="damaged" {{ old('condition') == 'damaged' ? 'selected' : '' }}>Damaged</option>
+                                        <option value="broken" {{ old('condition') == 'broken' ? 'selected' : '' }}>Broken</option>
                                     </select>
                                     @error('condition')
                                         <div class="invalid-feedback">{{ $message }}</div>
@@ -545,12 +542,14 @@
                             <div class="row g-3">
                                 <div class="col-12">
                                     <label for="description" class="asset-form-label">Asset Description</label>
-                                    <textarea class="form-control asset-input @error('description') is-invalid @enderror"
-                                              id="description" name="description" rows="4"
-                                              placeholder="Describe the asset, its purpose, and any identifying notes...">{{ old('description') }}</textarea>
-                                    @error('description')
+                                    <textarea class="form-control asset-input @error('asset_description') is-invalid @enderror"
+                                              id="asset_description" name="asset_description" rows="4"
+                                              placeholder="Describe the asset, its purpose, and any identifying notes...">{{ old('asset_description') }}</textarea>
+                                    @error('asset_description')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
+                                    {{-- Status hidden field — defaults to available on creation --}}
+                                    <input type="hidden" name="status" value="{{ old('status', 'available') }}">
                                 </div>
                             </div>
                         </section>

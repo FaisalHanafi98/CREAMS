@@ -302,9 +302,12 @@ class ModernLetterController extends Controller
                 throw new Exception('Letter file not found');
             }
 
+            // Sanitise reference for filename — slashes are invalid in Content-Disposition
+            $safeFilename = str_replace(['/', '\\', ' '], ['_', '_', '_'], $letter->letter_id) . '.pdf';
+
             return Storage::disk('local')->download(
                 $letter->letter_file_path,
-                $letter->letter_id . '.pdf'
+                $safeFilename
             );
 
         } catch (Exception $e) {
