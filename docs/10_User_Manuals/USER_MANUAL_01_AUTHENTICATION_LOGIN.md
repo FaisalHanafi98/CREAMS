@@ -11,7 +11,8 @@
 | Item | Value |
 |---|---|
 | Login URL (local development) | `http://localhost:8000/auth/login` |
-| Login URL (staging/production) | `https://<host>/creams/<demo_id>/auth/login` (see your administrator for the current `demo_id`) |
+| Login URL (staging/non-production compatibility) | `https://<host>/creams/<demo_id>/auth/login` |
+| Login URL (official live production UX) | Clean direct production URLs such as `https://pdk-creams.org/login` without visible `demo`, `uat`, `staging`, or `/creams/<demo_id>/` markers |
 | Identifier | Either your registered email address OR your IIUM ID |
 | IIUM ID format | 8 characters: 4 letters followed by 4 numbers (example: `ABCD1234`) |
 | Password minimum (new accounts) | 12 characters |

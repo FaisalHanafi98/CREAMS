@@ -25,6 +25,7 @@ This is **not** a system description, not a tech-stack reference, not a feature 
 - Do **not** use stale numbers ("329 tests", "13% coverage", "306 tests", etc.) — measure first.
 - Roles are **Admin, Supervisor, Teacher, AJK** (+ Trainee, Parent planned). Not Admin/Manager/Staff/Caretaker. See ADR-002.
 - Auth is **custom session-based** via `POST /auth/check`. Not Breeze + Sanctum.
+- **Production URL policy**: `pdk-creams.org` is the live stakeholder-facing site. Public production URLs must be clean and meaningful (`/`, `/login`, `/contact`, `/dashboard`, etc.) with no visible `demo`, `uat`, `staging`, `/creams/{demo_id}`, or other testing/multi-instance markers in the public user journey. If code still contains demo-prefixed route architecture, treat it as legacy/dev-compat behavior to contain or remove from production UX, not as the desired live URL contract.
 - Deployment target is **Lightsail $5 shared** (pending verification). Not Vercel, not ECS.
 
 ## Data confidentiality

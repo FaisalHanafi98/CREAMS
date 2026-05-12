@@ -48,6 +48,8 @@ Two routing modes exist simultaneously:
 
 The `demo_id` can be any alphanumeric string up to 32 chars. `uat` and `staging` are recommended for non-production.
 
+> **Production URL distinction (2026-05-11):** The official stakeholder-facing production domain is `pdk-creams.org` and its intended public UX is clean direct routes such as `/`, `/login`, `/contact`, and `/dashboard`. If `/creams/{demo_id}/...` routes still appear in code, treat them as legacy/dev-compat or multi-instance architecture, not as the desired public production address scheme. Production must not visibly expose `demo`, `uat`, `staging`, or similar testing markers in the user journey.
+
 ### Multi-centre isolation (VERIFIED)
 
 Two mechanisms enforce PDPA-required data isolation between centres:
