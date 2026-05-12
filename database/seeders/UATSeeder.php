@@ -4,62 +4,44 @@ namespace Database\Seeders;
 
 use App\Models\Activity;
 use App\Models\Centre;
+use App\Models\Staff;
 use App\Models\Trainee;
-use App\Models\User;
 use Faker\Factory as FakerFactory;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
-/**
- * UATSeeder
- *
- * Standalone, anonymised seed for the 5-day UAT staging sprint.
- *
- * Data discipline:
- *   - All names, emails, phones, addresses, ICs are Faker-generated.
- *   - No real PPDK centre names. Centres are labelled "UAT Centre A/B/C".
- *   - Centre IDs use the UA1/UA2/UA3 prefix to avoid colliding with the
- *     production-style 01/02/03 centre codes used by CREAMSSeederFoundationManagement.
- *   - All staff use the same UAT password to simplify the recorded walkthrough.
- *   - IC numbers are constructed programmatically so no literal IC pattern appears in source.
- *   - Email domain is @uat.creams.test so seeded accounts are obvious in logs.
- *
- * Idempotent: re-runs reuse existing rows by stable identifier.
- *
- * Usage: php artisan db:seed --class=UATSeeder
- *        php artisan migrate:fresh --seed --seeder=UATSeeder
- */
 class UATSeeder extends Seeder
 {
     private const UAT_PASS = 'UatPass2026!';
     private const UAT_EMAIL_DOMAIN = 'uat.creams.test';
-    private const TRAINEES_PER_CENTRE = 7;
-    private const ACTIVITIES_PER_CENTRE = 3;
+    private const TRAINEES_PER_CENTRE = 20;
+    private const ACTIVITIES_PER_CENTRE = 6;
 
     private \Faker\Generator $faker;
 
     public function __construct()
     {
-        $this->faker = FakerFactory::create();
-        $this->faker->seed(20260501);
+        $this->faker = FakerFactory::create('ms_MY');
+        $this->faker->seed(20260507);
     }
 
     public function run(): void
     {
-        $this->command->info('UATSeeder: starting anonymised UAT seed');
+        $this->command->info('UATSeeder: seeding realistic synthetic data for demo');
 
         DB::transaction(function () {
             $centres = $this->seedCentres();
             $this->seedStaff($centres);
+            $this->call(DemoSampleUsersSeeder::class);
             $this->seedTrainees($centres);
             $this->seedActivities($centres);
             $this->seedSessions($centres);
             $this->seedEnrollments($centres);
-            $this->seedStaffAttendance($centres);
             $this->seedSessionAttendance();
             $this->seedTraineeAttendances();
-            $this->seedVolunteerApplications();
+            $this->seedStaffAttendance($centres);
+            $this->seedVolunteerApplications($centres);
         });
 
         $this->printSummary();
@@ -67,27 +49,25 @@ class UATSeeder extends Seeder
 
     private function seedCentres(): array
     {
-        $this->command->info('  centres...');
-
         $defs = [
-            ['centre_id' => 'UA1', 'label' => 'A'],
-            ['centre_id' => 'UA2', 'label' => 'B'],
-            ['centre_id' => 'UA3', 'label' => 'C'],
+            ['centre_id' => '01', 'centre_name' => 'Gombak', 'state' => 'Selangor', 'centre_address' => 'Jalan Gombak, 53100 Gombak, Selangor', 'centre_email' => 'gombak@' . self::UAT_EMAIL_DOMAIN],
+            ['centre_id' => '02', 'centre_name' => 'Kuantan', 'state' => 'Pahang', 'centre_address' => 'Jalan Teluk Sisek, 25050 Kuantan, Pahang', 'centre_email' => 'kuantan@' . self::UAT_EMAIL_DOMAIN],
+            ['centre_id' => '03', 'centre_name' => 'Pagoh', 'state' => 'Johor', 'centre_address' => 'Jalan Panchor, 84600 Pagoh, Johor', 'centre_email' => 'pagoh@' . self::UAT_EMAIL_DOMAIN],
         ];
 
         $centres = [];
         foreach ($defs as $def) {
-            $centres[$def['centre_id']] = Centre::firstOrCreate(
+            $centres[$def['centre_id']] = Centre::updateOrCreate(
                 ['centre_id' => $def['centre_id']],
                 [
-                    'centre_name' => 'UAT Centre ' . $def['label'],
-                    'state' => $this->faker->randomElement(['Selangor', 'Pulau Pinang', 'Johor']),
-                    'centre_address' => $this->faker->streetAddress() . ', UAT District',
-                    'centre_phone' => '+60-3-' . $this->faker->numerify('####-####'),
-                    'centre_email' => 'centre.' . strtolower($def['label']) . '@' . self::UAT_EMAIL_DOMAIN,
-                    'centre_capacity' => 50,
+                    'centre_name' => $def['centre_name'],
+                    'state' => $def['state'],
+                    'centre_address' => $def['centre_address'],
+                    'centre_phone' => '+60-3-' . $this->faker->numerify('#### ####'),
+                    'centre_email' => $def['centre_email'],
+                    'centre_capacity' => 75,
                     'centre_status' => 'active',
-                    'centre_description' => 'UAT-only centre, anonymised data, not a real PPDK.',
+                    'centre_description' => 'Synthetic stakeholder demo centre for CREAMS UAT.',
                     'is_active' => true,
                 ]
             );
@@ -98,52 +78,36 @@ class UATSeeder extends Seeder
 
     private function seedStaff(array $centres): void
     {
-        $this->command->info('  staff (admins, supervisors, teachers, AJKs)...');
-
-        $superAdminEmail = 'super.admin@' . self::UAT_EMAIL_DOMAIN;
-        User::firstOrCreate(
-            ['email' => $superAdminEmail],
+        Staff::updateOrCreate(
+            ['email' => 'super.admin@' . self::UAT_EMAIL_DOMAIN],
             [
                 'name' => 'UAT Super Admin',
                 'role' => 'admin',
-                'centre_id' => 'UA1',
+                'centre_id' => '01',
                 'password' => Hash::make(self::UAT_PASS),
                 'status' => 'active',
-                'phone' => '+60-3-0000-0000',
+                'phone' => '+60-12-5000000',
                 'email_verified_at' => now(),
             ]
         );
 
-        $rolesPerCentre = [
-            'admin' => 1,
-            'supervisor' => 1,
-            'teacher' => 2,
-            'ajk' => 1,
-        ];
-
+        $rolesPerCentre = ['admin' => 1, 'supervisor' => 2, 'teacher' => 4, 'ajk' => 2];
         foreach ($centres as $centreId => $centre) {
-            $centreLabel = strtolower(substr($centre->centre_name, -1));
-
             foreach ($rolesPerCentre as $role => $count) {
                 for ($i = 1; $i <= $count; $i++) {
-                    $email = sprintf(
-                        '%s.%s%d@%s',
-                        $role,
-                        $centreLabel,
-                        $i,
-                        self::UAT_EMAIL_DOMAIN
-                    );
-
-                    User::firstOrCreate(
+                    $email = sprintf('%s.%s.%d@%s', $role, strtolower($centre->centre_name), $i, self::UAT_EMAIL_DOMAIN);
+                    Staff::updateOrCreate(
                         ['email' => $email],
                         [
-                            'name' => sprintf('UAT %s %s%d', ucfirst($role), strtoupper($centreLabel), $i),
+                            'name' => $this->faker->name(),
                             'role' => $role,
                             'centre_id' => $centreId,
+                            'position' => ucfirst($role),
                             'password' => Hash::make(self::UAT_PASS),
                             'status' => 'active',
                             'email_verified_at' => now(),
-                            'phone' => '+60-1' . $this->faker->numerify('#-####-####'),
+                            'phone' => '+60-1' . $this->faker->numerify('#-#### ####'),
+                            'address' => $centre->centre_name . ', ' . $centre->state,
                         ]
                     );
                 }
@@ -153,41 +117,42 @@ class UATSeeder extends Seeder
 
     private function seedTrainees(array $centres): void
     {
-        $this->command->info('  trainees (' . self::TRAINEES_PER_CENTRE . ' per centre)...');
+        $conditions = [
+            'Autism Spectrum Support',
+            'Learning Support',
+            'Speech Therapy',
+            'Physical Disabilities',
+            'Hearing Impairment',
+            'Visual Impairment',
+        ];
+        $relationships = ['Mother', 'Father', 'Guardian', 'Older Sibling', 'Aunt', 'Uncle'];
 
         foreach ($centres as $centreId => $centre) {
             for ($i = 1; $i <= self::TRAINEES_PER_CENTRE; $i++) {
                 $traineeId = sprintf('UAT-%s-%03d', $centreId, $i);
-
-                Trainee::firstOrCreate(
+                Trainee::updateOrCreate(
                     ['trainee_id' => $traineeId],
                     [
-                        'trainee_first_name' => 'UAT' . $i,
+                        'trainee_first_name' => $this->faker->firstName(),
                         'trainee_last_name' => $this->faker->lastName(),
-                        'trainee_email' => sprintf('trainee.%s.%d@%s', strtolower($centreId), $i, self::UAT_EMAIL_DOMAIN),
+                        'trainee_email' => sprintf('trainee.%s.%03d@%s', strtolower($centre->centre_name), $i, self::UAT_EMAIL_DOMAIN),
                         'ic_number' => $this->generateFakeIc(),
-                        'trainee_date_of_birth' => $this->faker->dateTimeBetween('-15 years', '-5 years')->format('Y-m-d'),
+                        'trainee_date_of_birth' => $this->faker->dateTimeBetween('-18 years', '-6 years')->format('Y-m-d'),
                         'gender' => $this->faker->randomElement(['Male', 'Female']),
-                        'trainee_phone_number' => '+60-1' . $this->faker->numerify('#-####-####'),
-                        'trainee_address' => $this->faker->streetAddress() . ', UAT District',
-                        'trainee_condition' => $this->faker->randomElement([
-                            'Autism Spectrum',
-                            'Down Syndrome',
-                            'Cerebral Palsy',
-                            'Learning Disability',
-                            'Speech Delay',
-                        ]),
+                        'trainee_phone_number' => '+60-1' . $this->faker->numerify('#-#### ####'),
+                        'trainee_address' => $centre->centre_name . ', ' . $centre->state,
+                        'trainee_condition' => $conditions[array_rand($conditions)],
                         'centre_id' => $centreId,
                         'centre_name' => $centre->centre_name,
                         'status' => 'active',
-                        'guardian_name' => 'UAT Guardian ' . $i,
-                        'guardian_phone' => '+60-1' . $this->faker->numerify('#-####-####'),
-                        'guardian_email' => sprintf('guardian.%s.%d@%s', strtolower($centreId), $i, self::UAT_EMAIL_DOMAIN),
-                        'guardian_relationship' => $this->faker->randomElement(['Parent', 'Guardian']),
+                        'guardian_name' => $this->faker->name(),
+                        'guardian_phone' => '+60-1' . $this->faker->numerify('#-#### ####'),
+                        'guardian_email' => sprintf('guardian.%s.%03d@%s', strtolower($centre->centre_name), $i, self::UAT_EMAIL_DOMAIN),
+                        'guardian_relationship' => $relationships[array_rand($relationships)],
                         'photo_consent' => true,
                         'services_consent' => true,
                         'data_consent' => true,
-                        'registration_date' => now()->subDays($this->faker->numberBetween(30, 365)),
+                        'registration_date' => now()->subDays($this->faker->numberBetween(10, 280)),
                     ]
                 );
             }
@@ -196,50 +161,30 @@ class UATSeeder extends Seeder
 
     private function seedActivities(array $centres): void
     {
-        $this->command->info('  activities (' . self::ACTIVITIES_PER_CENTRE . ' per centre)...');
-
         $categories = [
             'Autism Spectrum Support',
-            'Hearing Impairment',
-            'Visual Impairment',
-            'Physical Disabilities',
             'Learning Support',
             'Speech Therapy',
-        ];
-
-        $names = [
-            'Sensory Play Workshop',
-            'Speech Skills Group',
-            'Motor Skills Circuit',
-            'Communication Basics',
-            'Music and Movement',
-            'Art Therapy Session',
-            'Social Skills Group',
-            'Numeracy Foundation',
-            'Reading Readiness',
+            'Physical Disabilities',
+            'Hearing Impairment',
+            'Visual Impairment',
         ];
 
         foreach ($centres as $centreId => $centre) {
-            $teacher = User::where('centre_id', $centreId)->where('role', 'teacher')->first();
-            $instructorId = $teacher ? $teacher->id : null;
-
+            $teacher = Staff::where('centre_id', $centreId)->where('role', 'teacher')->first();
             for ($i = 0; $i < self::ACTIVITIES_PER_CENTRE; $i++) {
-                $name = $names[($i + array_search($centreId, array_keys($centres)) * 3) % count($names)];
-
-                Activity::firstOrCreate(
+                $category = $categories[$i % count($categories)];
+                Activity::updateOrCreate(
+                    ['centre_id' => $centreId, 'activity_name' => $category . ' Program - ' . $centre->centre_name],
                     [
-                        'centre_id' => $centreId,
-                        'activity_name' => 'UAT ' . $name . ' (' . $centreId . ')',
-                    ],
-                    [
-                        'activity_description' => 'UAT-only activity for centre ' . $centre->centre_name . '. Anonymised seed data.',
-                        'category' => $categories[$i % count($categories)],
-                        'duration_weeks' => $this->faker->numberBetween(4, 12),
-                        'sessions_per_week' => $this->faker->numberBetween(1, 3),
+                        'activity_description' => 'Structured synthetic UAT program for ' . $category . '.',
+                        'category' => $category,
+                        'duration_weeks' => 12,
+                        'sessions_per_week' => 2,
                         'session_duration_minutes' => 60,
-                        'max_participants' => 10,
-                        'activity_location' => 'UAT Centre ' . substr($centre->centre_name, -1) . ' Hall ' . ($i + 1),
-                        'instructor_id' => $instructorId,
+                        'max_participants' => 12,
+                        'activity_location' => $centre->centre_name . ' Therapy Room ' . ($i + 1),
+                        'instructor_id' => $teacher?->id,
                         'is_active' => true,
                     ]
                 );
@@ -249,100 +194,54 @@ class UATSeeder extends Seeder
 
     private function seedSessions(array $centres): void
     {
-        $this->command->info('  activity sessions (3 past + 1 today + 1 upcoming per activity)...');
-
-        $sessionTimes = [['09:00:00', '10:00:00'], ['10:30:00', '11:30:00'], ['14:00:00', '15:00:00']];
-
         foreach ($centres as $centreId => $centre) {
             $activities = DB::table('activities')->where('centre_id', $centreId)->get();
-            $teacher    = DB::table('staffs')->where('centre_id', $centreId)->where('role', 'teacher')->first();
-            $instructorId = $teacher ? $teacher->id : null;
-
+            $teacher = DB::table('staffs')->where('centre_id', $centreId)->where('role', 'teacher')->first();
             foreach ($activities as $idx => $activity) {
-                $times = $sessionTimes[$idx % count($sessionTimes)];
+                $start = ($idx % 2 === 0) ? '09:00:00' : '14:00:00';
+                $end = ($idx % 2 === 0) ? '10:00:00' : '15:00:00';
 
-                // 3 completed past sessions (weekly, last 3 weeks)
-                for ($week = 3; $week >= 1; $week--) {
+                for ($week = 4; $week >= 1; $week--) {
                     $date = now()->subWeeks($week)->startOfWeek()->addDays(1)->format('Y-m-d');
                     DB::table('activity_occurrences')->updateOrInsert(
-                        ['activity_id' => $activity->id, 'session_date' => $date, 'start_time' => $times[0]],
+                        ['activity_id' => $activity->id, 'session_date' => $date, 'start_time' => $start],
                         [
-                            'session_name'        => $activity->activity_name . ' — Week ' . (4 - $week),
-                            'session_description' => 'UAT session ' . (4 - $week) . ' of ' . $activity->activity_name,
-                            'end_time'            => $times[1],
-                            'location'            => 'UAT Centre ' . substr($centre->centre_name, -1) . ' Hall',
-                            'instructor_id'       => $instructorId,
-                            'session_status'      => 'completed',
-                            'max_participants'    => 10,
-                            'current_participants' => 5,
-                            'created_at'          => now(),
-                            'updated_at'          => now(),
+                            'session_name' => $activity->activity_name . ' - Week ' . (5 - $week),
+                            'session_description' => 'Completed UAT session',
+                            'end_time' => $end,
+                            'location' => $centre->centre_name . ' Hall',
+                            'instructor_id' => $teacher?->id,
+                            'session_status' => 'completed',
+                            'max_participants' => 12,
+                            'current_participants' => 10,
+                            'created_at' => now(),
+                            'updated_at' => now(),
                         ]
                     );
                 }
-
-                // 1 session today so dashboard "Today's Schedule" is populated
-                $todayDate = now()->format('Y-m-d');
-                DB::table('activity_occurrences')->updateOrInsert(
-                    ['activity_id' => $activity->id, 'session_date' => $todayDate, 'start_time' => $times[0]],
-                    [
-                        'session_name'        => $activity->activity_name . ' — Today',
-                        'session_description' => 'UAT demo session for today — ' . $activity->activity_name,
-                        'end_time'            => $times[1],
-                        'location'            => 'UAT Centre ' . substr($centre->centre_name, -1) . ' Hall',
-                        'instructor_id'       => $instructorId,
-                        'session_status'      => 'scheduled',
-                        'max_participants'    => 10,
-                        'current_participants' => 5,
-                        'created_at'          => now(),
-                        'updated_at'          => now(),
-                    ]
-                );
-
-                // 1 upcoming scheduled session (next week)
-                $upcomingDate = now()->addWeek()->startOfWeek()->addDays(1)->format('Y-m-d');
-                DB::table('activity_occurrences')->updateOrInsert(
-                    ['activity_id' => $activity->id, 'session_date' => $upcomingDate, 'start_time' => $times[0]],
-                    [
-                        'session_name'        => $activity->activity_name . ' — Week 4',
-                        'session_description' => 'UAT upcoming session for ' . $activity->activity_name,
-                        'end_time'            => $times[1],
-                        'location'            => 'UAT Centre ' . substr($centre->centre_name, -1) . ' Hall',
-                        'instructor_id'       => $instructorId,
-                        'session_status'      => 'scheduled',
-                        'max_participants'    => 10,
-                        'current_participants' => 0,
-                        'created_at'          => now(),
-                        'updated_at'          => now(),
-                    ]
-                );
             }
         }
     }
 
     private function seedEnrollments(array $centres): void
     {
-        $this->command->info('  activity enrollments (5 trainees per activity)...');
-
         $admin = DB::table('staffs')->where('role', 'admin')->first();
-
         foreach ($centres as $centreId => $centre) {
             $activities = DB::table('activities')->where('centre_id', $centreId)->get();
-            $trainees   = DB::table('trainees')->where('centre_id', $centreId)->limit(5)->get();
-
+            $trainees = DB::table('trainees')->where('centre_id', $centreId)->limit(12)->get();
             foreach ($activities as $activity) {
                 foreach ($trainees as $trainee) {
                     DB::table('activity_enrollments')->updateOrInsert(
                         ['activity_id' => $activity->id, 'trainee_id' => $trainee->id],
                         [
-                            'enrollment_date'     => now()->subWeeks(4)->format('Y-m-d'),
-                            'enrollment_status'   => 'enrolled',
-                            'enrollment_notes'    => 'UAT enrollment — anonymised',
-                            'progress_percentage' => $this->faker->numberBetween(30, 80),
-                            'attendance_count'    => 3,
-                            'enrolled_by'         => $admin ? $admin->id : null,
-                            'created_at'          => now(),
-                            'updated_at'          => now(),
+                            'enrollment_date' => now()->subMonths(2)->format('Y-m-d'),
+                            'enrollment_status' => 'enrolled',
+                            'enrollment_notes' => 'UAT synthetic enrollment',
+                            'progress_percentage' => $this->faker->numberBetween(25, 90),
+                            'attendance_count' => $this->faker->numberBetween(4, 10),
+                            'enrolled_by' => $admin?->id,
+                            'created_at' => now(),
+                            'updated_at' => now(),
                         ]
                     );
                 }
@@ -350,43 +249,34 @@ class UATSeeder extends Seeder
         }
     }
 
-    private function seedStaffAttendance(array $centres): void
+    private function seedSessionAttendance(): void
     {
-        $this->command->info('  staff attendance (last 5 working days)...');
-
-        $statusWeights = array_merge(array_fill(0, 18, 'present'), array_fill(0, 1, 'late'), array_fill(0, 1, 'absent'));
-
-        foreach ($centres as $centreId => $centre) {
-            $staff = DB::table('staffs')->where('centre_id', $centreId)->get();
-
-            for ($day = 5; $day >= 1; $day--) {
-                $date = now()->subWeekdays($day)->format('Y-m-d');
-
-                foreach ($staff as $member) {
-                    $status = $statusWeights[array_rand($statusWeights)];
-                    DB::table('staff_attendances')->updateOrInsert(
-                        ['user_id' => $member->id, 'attendance_date' => $date],
-                        [
-                            'centre_id'    => $centreId,
-                            'check_in_time' => $status === 'absent' ? null : ($status === 'late' ? '09:20:00' : '08:55:00'),
-                            'status'       => $status,
-                            'approved'     => 1,
-                            'created_at'   => now(),
-                            'updated_at'   => now(),
-                        ]
-                    );
-                }
+        $statuses = array_merge(array_fill(0, 8, 'present'), array_fill(0, 1, 'late'), array_fill(0, 1, 'absent'));
+        $admin = DB::table('staffs')->where('role', 'admin')->first();
+        $completedSessions = DB::table('activity_occurrences')->where('session_status', 'completed')->get();
+        foreach ($completedSessions as $session) {
+            $enrolled = DB::table('activity_enrollments')->where('activity_id', $session->activity_id)->pluck('trainee_id');
+            foreach ($enrolled as $traineeId) {
+                $status = $statuses[array_rand($statuses)];
+                DB::table('session_attendance')->updateOrInsert(
+                    ['session_id' => $session->id, 'trainee_id' => $traineeId],
+                    [
+                        'attendance_status' => $status,
+                        'check_in_time' => $status === 'absent' ? null : ($status === 'late' ? '09:15:00' : '09:00:00'),
+                        'notes' => null,
+                        'marked_by' => $admin?->id,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]
+                );
             }
         }
     }
 
     private function seedTraineeAttendances(): void
     {
-        $this->command->info('  trainee_attendances (mirror of session_attendance for Trainee model)...');
-
         $admin = DB::table('staffs')->where('role', 'admin')->first();
-
-        $sessionAttendances = DB::table('session_attendance')
+        $rows = DB::table('session_attendance')
             ->join('activity_occurrences', 'session_attendance.session_id', '=', 'activity_occurrences.id')
             ->select(
                 'session_attendance.trainee_id',
@@ -397,164 +287,106 @@ class UATSeeder extends Seeder
             )
             ->get();
 
-        foreach ($sessionAttendances as $record) {
+        foreach ($rows as $row) {
             DB::table('trainee_attendances')->updateOrInsert(
-                ['trainee_id' => $record->trainee_id, 'activity_id' => $record->activity_id, 'session_id' => $record->session_id],
+                ['trainee_id' => $row->trainee_id, 'activity_id' => $row->activity_id, 'session_id' => $row->session_id],
                 [
-                    'attendance_date'  => $record->session_date,
-                    'status'           => $record->status,
-                    'notes'            => null,
-                    'marked_by_user_id' => $admin ? $admin->id : null,
-                    'marked_at'        => now(),
-                    'created_at'       => now(),
-                    'updated_at'       => now(),
+                    'attendance_date' => $row->session_date,
+                    'status' => $row->status,
+                    'notes' => null,
+                    'marked_by_user_id' => $admin?->id,
+                    'marked_at' => now(),
+                    'created_at' => now(),
+                    'updated_at' => now(),
                 ]
             );
         }
     }
 
-    private function seedSessionAttendance(): void
+    private function seedStaffAttendance(array $centres): void
     {
-        $this->command->info('  session attendance (enrolled trainees in completed sessions)...');
-
-        $statusWeights = array_merge(array_fill(0, 8, 'present'), array_fill(0, 1, 'absent'), array_fill(0, 1, 'late'));
-
-        $completedSessions = DB::table('activity_occurrences')
-            ->where('session_status', 'completed')
-            ->get();
-
-        $admin = DB::table('staffs')->where('role', 'admin')->first();
-
-        foreach ($completedSessions as $session) {
-            $enrolled = DB::table('activity_enrollments')
-                ->where('activity_id', $session->activity_id)
-                ->where('enrollment_status', 'enrolled')
-                ->pluck('trainee_id');
-
-            foreach ($enrolled as $traineeId) {
-                $status = $statusWeights[array_rand($statusWeights)];
-                DB::table('session_attendance')->updateOrInsert(
-                    ['session_id' => $session->id, 'trainee_id' => $traineeId],
-                    [
-                        'attendance_status' => $status,
-                        'check_in_time'     => $status === 'absent' ? null : ($status === 'late' ? '09:15:00' : '09:00:00'),
-                        'notes'             => null,
-                        'marked_by'         => $admin ? $admin->id : null,
-                        'created_at'        => now(),
-                        'updated_at'        => now(),
-                    ]
-                );
+        $statuses = array_merge(array_fill(0, 18, 'present'), array_fill(0, 1, 'late'), array_fill(0, 1, 'absent'));
+        foreach ($centres as $centreId => $centre) {
+            $staff = DB::table('staffs')->where('centre_id', $centreId)->get();
+            for ($day = 10; $day >= 1; $day--) {
+                $date = now()->subWeekdays($day)->format('Y-m-d');
+                foreach ($staff as $member) {
+                    $status = $statuses[array_rand($statuses)];
+                    DB::table('staff_attendances')->updateOrInsert(
+                        ['user_id' => $member->id, 'attendance_date' => $date],
+                        [
+                            'centre_id' => $centreId,
+                            'check_in_time' => $status === 'absent' ? null : ($status === 'late' ? '09:20:00' : '08:55:00'),
+                            'status' => $status,
+                            'approved' => 1,
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ]
+                    );
+                }
             }
         }
     }
 
-    private function seedVolunteerApplications(): void
+    private function seedVolunteerApplications(array $centres): void
     {
-        $this->command->info('  volunteer applications (10 anonymised records)...');
+        $centreIds = array_keys($centres);
+        $statuses = ['applied', 'applied', 'approved', 'approved', 'approved', 'rejected', 'active', 'active'];
+        $admin = DB::table('staffs')->where('role', 'admin')->first();
 
-        $adminUser = DB::table('staffs')->where('role', 'admin')->first();
-        $centres   = DB::table('centres')->where('centre_id', 'like', 'UA%')->get();
-
-        $applications = [
-            ['status' => 'applied',   'days' => 2],
-            ['status' => 'applied',   'days' => 5],
-            ['status' => 'applied',   'days' => 8],
-            ['status' => 'approved',  'days' => 20],
-            ['status' => 'approved',  'days' => 35],
-            ['status' => 'approved',  'days' => 50],
-            ['status' => 'approved',  'days' => 60],
-            ['status' => 'rejected',  'days' => 45],
-            ['status' => 'rejected',  'days' => 70],
-            ['status' => 'active',    'days' => 90],
-        ];
-
-        $skills = [
-            'Teaching, communication, basic first aid',
-            'Special education, music therapy, Bahasa Malaysia',
-            'Physical therapy assistant, swimming instructor',
-            'Art and craft, occupational therapy aide',
-            'IT skills, report writing, data entry',
-        ];
-
-        $availability = ['Weekdays 9am–5pm', 'Weekends only', 'Flexible — 2 days per week', 'Full time'];
-
-        $motivations = [
-            'I have a sibling with Down Syndrome and want to contribute to the community.',
-            'As a psychology student I want to gain hands-on experience working with children.',
-            'I believe every individual deserves the opportunity to thrive.',
-        ];
-
-        foreach ($applications as $idx => $app) {
-            $centreObj  = $centres[$idx % count($centres)];
-            $createdAt  = now()->subDays($app['days']);
-            $reviewedAt = in_array($app['status'], ['approved', 'rejected', 'active'])
-                ? $createdAt->copy()->addDays(2)
-                : null;
-
-            $gender   = $this->faker->randomElement(['male', 'female']);
-            $lastName = $this->faker->lastName();
-            $firstName = $this->faker->firstName($gender);
-
+        foreach ($statuses as $idx => $status) {
+            $createdAt = now()->subDays(($idx + 1) * 4);
+            $reviewedAt = in_array($status, ['approved', 'rejected', 'active'], true) ? $createdAt->copy()->addDays(2) : null;
+            $volunteerId = 'UAT-VOL-' . str_pad((string) ($idx + 1), 3, '0', STR_PAD_LEFT);
             DB::table('volunteers')->updateOrInsert(
-                ['email' => 'uat.vol.' . ($idx + 1) . '@' . self::UAT_EMAIL_DOMAIN],
+                ['volunteer_id' => $volunteerId],
                 [
-                    'volunteer_id'      => 'UAT-VOL-' . str_pad($idx + 1, 3, '0', STR_PAD_LEFT),
-                    'name'              => $firstName . ' ' . $lastName,
-                    'email'             => 'uat.vol.' . ($idx + 1) . '@' . self::UAT_EMAIL_DOMAIN,
-                    'phone'             => '+60-1' . $this->faker->numerify('#-####-####'),
-                    'address'           => $this->faker->streetAddress() . ', UAT District',
-                    'date_of_birth'     => $this->faker->dateTimeBetween('-40 years', '-20 years')->format('Y-m-d'),
-                    'gender'            => $gender,
-                    'skills'            => $skills[$idx % count($skills)],
-                    'availability'      => $availability[$idx % count($availability)],
-                    'motivation'        => $motivations[$idx % count($motivations)],
-                    'centre_id'         => in_array($app['status'], ['approved', 'active']) ? $centreObj->centre_id : null,
-                    'status'            => $app['status'],
+                    'volunteer_id' => $volunteerId,
+                    'name' => $this->faker->name(),
+                    'email' => sprintf('volunteer.%02d@%s', $idx + 1, self::UAT_EMAIL_DOMAIN),
+                    'phone' => '+60-1' . $this->faker->numerify('#-#### ####'),
+                    'address' => 'Malaysia',
+                    'date_of_birth' => $this->faker->dateTimeBetween('-40 years', '-20 years')->format('Y-m-d'),
+                    'gender' => $this->faker->randomElement(['male', 'female']),
+                    'skills' => $this->faker->randomElement([
+                        'Special education support, communication, classroom assistance',
+                        'Occupational therapy assistant, sensory activity facilitation',
+                        'Sports and mobility coaching, teamwork facilitation',
+                    ]),
+                    'availability' => $this->faker->randomElement(['Weekdays 9am-5pm', 'Weekends only', 'Flexible 2 days per week']),
+                    'motivation' => 'I want to contribute to inclusive learning and rehabilitation support.',
+                    'centre_id' => in_array($status, ['approved', 'active'], true) ? $centreIds[$idx % count($centreIds)] : null,
+                    'status' => $status,
                     'registration_date' => $createdAt->format('Y-m-d'),
-                    'reviewed_by'       => $reviewedAt ? ($adminUser ? $adminUser->id : null) : null,
-                    'review_notes'      => $reviewedAt ? 'UAT review note — anonymised.' : null,
-                    'reviewed_at'       => $reviewedAt,
-                    'created_at'        => $createdAt,
-                    'updated_at'        => $reviewedAt ?? $createdAt,
+                    'reviewed_by' => $reviewedAt ? $admin?->id : null,
+                    'review_notes' => $reviewedAt ? 'Synthetic UAT review.' : null,
+                    'reviewed_at' => $reviewedAt,
+                    'created_at' => $createdAt,
+                    'updated_at' => $reviewedAt ?? $createdAt,
                 ]
             );
         }
     }
 
-    /**
-     * Generate a fake IC number that does not collide with any real Malaysian IC.
-     * State codes 70-99 are unused by the real IC scheme, so prefixing with 99 keeps
-     * the format recognisable while making the value obviously synthetic.
-     */
     private function generateFakeIc(): string
     {
-        $yymmdd = $this->faker->dateTimeBetween('-15 years', '-5 years')->format('ymd');
-        $stateCode = '99';
-        $sequence = $this->faker->numerify('####');
-
-        return sprintf('%s-%s-%s', $yymmdd, $stateCode, $sequence);
+        $yymmdd = $this->faker->dateTimeBetween('-18 years', '-6 years')->format('ymd');
+        return sprintf('%s-99-%s', $yymmdd, $this->faker->numerify('####'));
     }
 
     private function printSummary(): void
     {
-        $this->command->info('');
-        $this->command->info('UATSeeder complete.');
-        $this->command->info('  centres:     ' . Centre::where('centre_id', 'like', 'UA%')->count());
-        $this->command->info('  staff:       ' . User::where('email', 'like', '%@' . self::UAT_EMAIL_DOMAIN)->count());
-        $this->command->info('  trainees:    ' . Trainee::where('trainee_id', 'like', 'UAT-%')->count());
-        $this->command->info('  activities:  ' . Activity::where('activity_name', 'like', 'UAT %')->count());
-        $this->command->info('  sessions:    ' . DB::table('activity_occurrences')->count() . ' (incl. ' . DB::table('activity_occurrences')->whereDate('session_date', now())->count() . ' today)');
-        $this->command->info('  enrollments: ' . DB::table('activity_enrollments')->count());
-        $this->command->info('  staff_att:   ' . DB::table('staff_attendances')->count());
-        $this->command->info('  sess_att:    ' . DB::table('session_attendance')->count());
-        $this->command->info('  trainee_att: ' . DB::table('trainee_attendances')->count());
-        $this->command->info('  volunteers:  ' . DB::table('volunteers')->where('email', 'like', '%@' . self::UAT_EMAIL_DOMAIN)->count());
-        $this->command->info('');
-        $this->command->info('UAT login: any seeded staff email + password ' . self::UAT_PASS);
-        $this->command->info('Sample logins:');
-        $this->command->info('  admin:      super.admin@' . self::UAT_EMAIL_DOMAIN);
-        $this->command->info('  supervisor: supervisor.a1@' . self::UAT_EMAIL_DOMAIN);
-        $this->command->info('  teacher:    teacher.a1@' . self::UAT_EMAIL_DOMAIN);
-        $this->command->info('  ajk:        ajk.a1@' . self::UAT_EMAIL_DOMAIN);
+        $this->command->info('UATSeeder complete');
+        $this->command->info('centres: ' . Centre::whereIn('centre_id', ['01', '02', '03'])->count());
+        $this->command->info('staffs: ' . DB::table('staffs')->count());
+        $this->command->info('trainees: ' . DB::table('trainees')->count());
+        $this->command->info('activities: ' . DB::table('activities')->count());
+        $this->command->info('sessions: ' . DB::table('activity_occurrences')->count());
+        $this->command->info('enrollments: ' . DB::table('activity_enrollments')->count());
+        $this->command->info('session attendance: ' . DB::table('session_attendance')->count());
+        $this->command->info('trainee attendance: ' . DB::table('trainee_attendances')->count());
+        $this->command->info('staff attendance: ' . DB::table('staff_attendances')->count());
+        $this->command->info('volunteers: ' . DB::table('volunteers')->count());
+        $this->command->info('password for UAT users: ' . self::UAT_PASS);
     }
 }
