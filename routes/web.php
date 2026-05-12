@@ -620,10 +620,10 @@ Route::middleware(['auth', 'validate.params'])->group(function () {
 
     // Legacy Letter Routes — redirect to modern system
     Route::get('/letters-old', function () {
-        return redirect()->route('letters.modern.index');
+        return redirect()->route('letters.dashboard');
     })->name('letters.old.index');
     Route::get('/letters-old/create', function () {
-        return redirect()->route('letters.modern.create');
+        return redirect()->route('letters.dashboard');
     })->name('letters.old.create');
 
     // Letter Archive with inline HTML (Direct Fix)
@@ -649,7 +649,7 @@ Route::middleware(['auth', 'validate.params'])->group(function () {
                 <div class="d-flex justify-content-between align-items-center mb-4 mt-3">
                     <h2><i class="fas fa-archive"></i> Letter Archive</h2>
                     <div>
-                        <a href="' . route('profile') . '#letters-tab" class="btn btn-primary">
+                        <a href="' . route('letters.dashboard') . '" class="btn btn-primary">
                             <i class="fas fa-plus"></i> Generate New Letter
                         </a>
                         <a href="' . route('dashboard') . '" class="btn btn-secondary">
@@ -818,15 +818,15 @@ Route::prefix('admin')->middleware(['auth', 'role:admin'])->group(function () {
 
     // Legacy admin letter routes — redirected to modern system
     Route::get('/letters', function () {
-        return redirect()->route('letters.modern.index');
+        return redirect()->route('letters.dashboard');
     })->name('admin.letters.index');
 
     Route::get('/letters/history', function () {
-        return redirect()->route('letters.modern.index');
+        return redirect()->route('letters.index');
     })->name('admin.letters.history');
 
     Route::get('/letters/{id}/download', function ($id) {
-        return redirect()->route('letters.modern.download', $id);
+        return redirect()->route('letters.download', $id);
     })->name('admin.letters.download');
 
     // Redirect routes to common routes

@@ -739,14 +739,6 @@
                             <span>Security</span>
                         </a>
                     </li>
-                    @if(session('role') === 'admin')
-                    <li class="nav-item" role="presentation">
-                        <a class="nav-link" id="letters-tab" data-bs-toggle="tab" href="#letters" role="tab">
-                            <i class="fas fa-file-alt"></i>
-                            <span>Letter Generator</span>
-                        </a>
-                    </li>
-                    @endif
                 </ul>
             </div>
             
@@ -972,180 +964,6 @@
                     </div>
                 </div>
                 
-                @if(session('role') === 'admin')
-                <!-- Letter Generator Tab -->
-                <div class="tab-pane fade" id="letters" role="tabpanel">
-                    <!-- Template Management Section -->
-                    <div class="form-section">
-                        <h4><i class="fas fa-layer-group"></i> Letter Template Management</h4>
-                        
-                        <!-- Current Template Status -->
-                        <div class="alert alert-info mb-4">
-                            <h6><i class="fas fa-info-circle"></i> Current Active Template</h6>
-                            <p class="mb-0" id="current-template-info">
-                                @php
-                                    $activeTemplate = \App\Models\LetterTemplate::where('is_active', true)->latest()->first();
-                                @endphp
-                                @if($activeTemplate)
-                                    <strong>{{ $activeTemplate->template_name }}</strong>
-                                    @if($activeTemplate->template_description)
-                                        - {{ $activeTemplate->template_description }}
-                                    @endif
-                                    <br><small class="text-muted">Created: {{ $activeTemplate->created_at->format('d M Y H:i') }}</small>
-                                @else
-                                    <em>No active template found. Default template will be used.</em>
-                                @endif
-                            </p>
-                        </div>
-                        
-                        <!-- Template Name -->
-                        <div class="form-group mb-4">
-                            <label for="template_name">Template Name</label>
-                            <input type="text" class="form-control" id="template_name" name="template_name" placeholder="e.g., Official Recommendation Letter">
-                            <small class="form-text text-muted">Give your template a descriptive name</small>
-                        </div>
-
-                        <!-- Template Description -->
-                        <div class="form-group mb-4">
-                            <label for="template_description">Template Description</label>
-                            <input type="text" class="form-control" id="template_description" name="template_description" placeholder="Brief description of template purpose">
-                        </div>
-
-                        <!-- Letter Header Image -->
-                        <div class="form-group mb-4">
-                            <label>Letter Header (Image)</label>
-                            <input type="file" id="header-input" name="header_image" accept="image/*" style="display: none;">
-                            <div class="upload-area" onclick="document.getElementById('header-input').click();">
-                                <div id="header-preview" class="preview-area">
-                                    @if($activeTemplate && $activeTemplate->header_image_url)
-                                        <img src="{{ $activeTemplate->header_image_url }}" alt="Header Image" style="max-width: 20%; height: auto; max-height: 80px; border: 2px solid #ddd; border-radius: 8px;">
-                                    @else
-                                        <i class="fas fa-cloud-upload-alt"></i>
-                                        <p>Click to upload header image</p>
-                                    @endif
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Header Text Option -->
-                        <div class="form-group mb-4">
-                            <label for="header_text">Header Text (Optional)</label>
-                            <textarea class="form-control" id="header_text" name="header_text" rows="2" placeholder="Optional text to overlay on header image or use as header if no image"></textarea>
-                            <small class="form-text text-muted">This text will appear over the header image or replace it if no image is uploaded</small>
-                        </div>
-
-                        <!-- Letter Footer Image -->
-                        <div class="form-group mb-4">
-                            <label>Letter Footer (Image)</label>
-                            <input type="file" id="footer-input" name="footer_image" accept="image/*" style="display: none;">
-                            <div class="upload-area" onclick="document.getElementById('footer-input').click();">
-                                <div id="footer-preview" class="preview-area">
-                                    @if($activeTemplate && $activeTemplate->footer_image_url)
-                                        <img src="{{ $activeTemplate->footer_image_url }}" alt="Footer Image" style="max-width: 20%; height: auto; max-height: 60px; border: 2px solid #ddd; border-radius: 8px;">
-                                    @else
-                                        <i class="fas fa-cloud-upload-alt"></i>
-                                        <p>Click to upload footer image</p>
-                                    @endif
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Footer Text Option -->
-                        <div class="form-group mb-4">
-                            <label for="footer_text">Footer Text (Optional)</label>
-                            <textarea class="form-control" id="footer_text" name="footer_text" rows="2" placeholder="Optional text to overlay on footer image or use as footer if no image"></textarea>
-                            <small class="form-text text-muted">This text will appear over the footer image or replace it if no image is uploaded</small>
-                        </div>
-
-                        <div class="template-actions mb-4">
-                            <button type="button" class="btn btn-outline-primary" id="save-template-btn">
-                                <i class="fas fa-save"></i> Save Template
-                            </button>
-                            <button type="button" class="btn btn-outline-success" id="load-templates-btn">
-                                <i class="fas fa-download"></i> Load Saved Template
-                            </button>
-                            <button type="button" class="btn btn-outline-secondary" id="view-templates-archive-btn">
-                                <i class="fas fa-folder-open"></i> View Letter Archive
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="form-section">
-                        <h4><i class="fas fa-file-alt"></i> Letter Generator</h4>
-                        <form id="letter-form" action="{{ route('profile.letter.generate') }}" method="POST" enctype="multipart/form-data">
-                            @csrf
-                            <input type="hidden" name="immediate_download" value="1">
-                            
-                            <!-- Letter Reference and Date -->
-                            <div class="row mb-4">
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label for="letter_ref">Letter Reference ID</label>
-                                        <div class="input-group">
-                                            <input type="text" class="form-control" id="letter_ref" name="reference_number" value="" required readonly>
-                                            <div class="input-group-append">
-                                                <button type="button" class="btn btn-outline-secondary" id="generate-ref-btn" title="Generate New Reference" style="cursor: pointer; z-index: 5;">
-                                                    <i class="fas fa-refresh" style="pointer-events: none;"></i>
-                                                </button>
-                                            </div>
-                                        </div>
-                                        <small class="form-text text-muted">Unique reference number for this letter</small>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label for="letter_date">Letter Date</label>
-                                        <input type="date" class="form-control" id="letter_date" name="letter_date" value="{{ date('Y-m-d') }}" required>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <!-- Letter Name -->
-                            <div class="form-group mb-4">
-                                <label for="letter_name">Letter Name <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="letter_name" name="letter_name" placeholder="e.g., Recommendation Letter for John Doe" required>
-                                <small class="form-text text-muted">This name will be used as the filename when downloading the PDF</small>
-                            </div>
-                            
-                            <!-- Recipient Information -->
-                            <div class="form-group">
-                                <label for="recipient_name">Recipient Name</label>
-                                <input type="text" class="form-control" id="recipient_name" name="recipient_name" placeholder="Enter recipient's full name" required>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="recipient_address">Recipient Address</label>
-                                <textarea class="form-control" id="recipient_address" name="recipient_address" rows="3" placeholder="Enter complete address including postal code" required></textarea>
-                            </div>
-                            
-                            <!-- Letter Subject and Content -->
-                            <div class="form-group">
-                                <label for="letter_subject">Letter Subject</label>
-                                <input type="text" class="form-control" id="letter_subject" name="subject" placeholder="Enter letter subject" required>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="letter_content">Letter Content</label>
-                                <textarea class="form-control" id="letter_content" name="content" rows="8" placeholder="Enter the main content of your letter..." required></textarea>
-                                <small class="form-text text-muted">You can use basic formatting. The content will be automatically formatted in the final letter.</small>
-                            </div>
-                            
-                            <!-- Letter Preview -->
-                            <div class="letter-preview" id="letter-preview" style="display: none;">
-                                <h5><i class="fas fa-eye"></i> Letter Preview</h5>
-                                <div id="preview-content">
-                                    <!-- Preview will be generated here -->
-                                </div>
-                            </div>
-                            
-                            <div class="form-actions">
-                                <button type="button" class="btn btn-outline-info" id="preview-letter">Preview Letter</button>
-                                <button type="submit" class="btn btn-primary">Generate & Download Letter</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-                @endif
             </div>
         </div>
     </div>
@@ -1182,19 +1000,11 @@ $(document).ready(function() {
         };
     }
     
-    // Handle hash navigation on page load - support multiple hash variants
+    // Handle legacy letter-generator hashes by routing users to the dedicated module.
     const validLetterHashes = ['#letters', '#letter', '#lettergenerator', '#letter-generator', '#letters-tab'];
     if (validLetterHashes.includes(window.location.hash.toLowerCase())) {
-        // Activate the letters tab (Bootstrap 5)
-        const lettersTabEl = document.getElementById('letters-tab');
-        if (lettersTabEl) { bootstrap.Tab.getOrCreateInstance(lettersTabEl).show(); }
-        
-        // Scroll to letters section after a short delay to allow tab to load
-        setTimeout(function() {
-            $('html, body').animate({
-                scrollTop: $('#letters-tab').offset().top - 100
-            }, 500);
-        }, 300);
+        window.location.replace('{{ route("letters.dashboard") }}');
+        return;
     }
     
     // Initially show avatar overlay in locked state so users know it exists
@@ -2350,26 +2160,10 @@ $(document).ready(function() {
                         $('#footer-preview').html(`<img src="${escapeHtml(template.footer_image_path)}" alt="Footer Image" style="max-width: 20%; height: auto; max-height: 60px; border: 2px solid #ddd; border-radius: 8px;">`);
                     }
                     
-                    // Close modal
+                    // Close modal and hand off to the dedicated letters module.
                     $('#templatesModal').modal('hide');
-                    
-                    // Navigate to letters tab automatically
-                    $('#letters-tab').tab('show');
-                    
-                    // Update the current template display
-                    $('#current-template-info').html(`
-                        <strong>${template.template_name}</strong> - ${template.template_description || 'No description'}<br>
-                        <small class="text-muted">Created: ${new Date(template.created_at).toLocaleDateString()} | Loaded: ${new Date().toLocaleDateString()}</small>
-                    `);
-                    
-                    // Scroll to letters section
-                    setTimeout(function() {
-                        $('html, body').animate({
-                            scrollTop: $('#letters-tab').offset().top - 100
-                        }, 500);
-                    }, 300);
-                    
-                    showSuccessAlert(`Template "${template.template_name}" loaded successfully! Content has been populated in the letter generator.`);
+                    window.location.href = '{{ route("letters.dashboard") }}';
+                    return;
                 } else {
                     showErrorAlert('Failed to load template: ' + response.message);
                 }
@@ -2385,51 +2179,9 @@ $(document).ready(function() {
     function checkForSelectedTemplate() {
         const selectedTemplate = localStorage.getItem('selectedTemplate');
         if (selectedTemplate) {
-            try {
-                const templateData = JSON.parse(selectedTemplate);
-                
-                // Populate template fields
-                $('#template_name').val(templateData.name || '');
-                $('#template_description').val(templateData.description || '');
-                $('#header_text').val(templateData.headerText || '');
-                $('#footer_text').val(templateData.footerText || '');
-                
-                // Handle header image
-                if (templateData.headerImage) {
-                    // SECURITY: Escape image path to prevent XSS
-                    $('#header-preview').html(`<img src="${escapeHtml(templateData.headerImage)}" alt="Header Image" style="max-width: 20%; height: auto; max-height: 80px; border: 2px solid #ddd; border-radius: 8px;">`);
-                }
-
-                // Handle footer image
-                if (templateData.footerImage) {
-                    // SECURITY: Escape image path to prevent XSS
-                    $('#footer-preview').html(`<img src="${escapeHtml(templateData.footerImage)}" alt="Footer Image" style="max-width: 20%; height: auto; max-height: 60px; border: 2px solid #ddd; border-radius: 8px;">`);
-                }
-                
-                // Clear localStorage
-                localStorage.removeItem('selectedTemplate');
-                
-                // Show success message
-                showSuccessAlert(`Template "${templateData.name}" loaded successfully! You can now modify the content and generate a new letter.`);
-                
-                // Handle letters section navigation
-                const allValidLetterHashes = ['#letters', '#letter', '#lettergenerator', '#letter-generator', '#letters-tab'];
-                if (allValidLetterHashes.includes(window.location.hash.toLowerCase())) {
-                    // Activate the letters tab
-                    $('#letters-tab').tab('show');
-                    
-                    // Scroll to letters section after a short delay to allow tab to load
-                    setTimeout(function() {
-                        $('html, body').animate({
-                            scrollTop: $('#letters-tab').offset().top - 100
-                        }, 500);
-                    }, 100);
-                }
-                
-            } catch (e) {
-                console.error('Error parsing selected template:', e);
-                localStorage.removeItem('selectedTemplate');
-            }
+            localStorage.removeItem('selectedTemplate');
+            window.location.replace('{{ route("letters.dashboard") }}');
+            return;
         }
     }
     

@@ -14,7 +14,6 @@
     <meta name="theme-color" content="#764ba2">
     <meta name="msapplication-TileColor" content="#667eea">
     <meta name="description" content="CREAMS - Community-based REhAbilitation Management System Dashboard">
-
     <!-- PWA Manifest -->
     <link rel="manifest" href="/manifest.json">
 
@@ -1160,8 +1159,14 @@
                 </a>
             </li>
 
+            @php
+                $currentRouteName = Route::currentRouteName() ?? '';
+                $isProfileRoute = strpos($currentRouteName, 'profile') !== false;
+                $isLettersRoute = str_starts_with($currentRouteName, 'letters.');
+                $isVolunteerRoute = in_array(session('role'), ['admin', 'supervisor']) && strpos($currentRouteName, 'volunteer') !== false;
+            @endphp
             <li
-                class="sidebar-item {{ strpos(Route::currentRouteName(), 'profile') !== false || (in_array(session('role'), ['admin', 'supervisor']) && strpos(Route::currentRouteName(), 'volunteer') !== false) ? 'submenu-open' : '' }}">
+                class="sidebar-item {{ $isProfileRoute || $isLettersRoute || $isVolunteerRoute ? 'submenu-open' : '' }}">
                 <a href="#" class="sidebar-link">
                     <span class="sidebar-icon"><i class="fas fa-user-circle"></i></span>
                     <span class="sidebar-text">My Profile</span>
@@ -1181,6 +1186,14 @@
                             </a>
                         @endif
                     </li>
+                    @if (in_array(session('role'), ['admin', 'supervisor']) && Route::has('letters.dashboard'))
+                        <li>
+                            <a href="{{ route('letters.dashboard') }}"
+                                class="sidebar-submenu-link {{ $isLettersRoute ? 'active' : '' }}">
+                                Letters
+                            </a>
+                        </li>
+                    @endif
                     @if (in_array(session('role'), ['admin', 'supervisor']))
                         <li>
                             <a href="{{ route('admin.volunteers.index') }}"

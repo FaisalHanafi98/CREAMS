@@ -12,7 +12,7 @@
                     <p class="text-muted">Manage your generated letters and templates</p>
                 </div>
                 <div class="d-flex gap-2">
-                    <a href="{{ route('profile') }}#letters-tab" class="btn btn-outline-primary">
+                    <a href="{{ route('letters.dashboard') }}" class="btn btn-outline-primary">
                         <i class="fas fa-plus"></i> Generate New Letter
                     </a>
                     <button class="btn btn-primary" onclick="exportLetters()">
@@ -180,8 +180,8 @@
                             <i class="fas fa-file-alt fa-3x text-muted mb-3"></i>
                             <h5 class="text-muted">No letters found</h5>
                             <p class="text-muted">Start by generating your first letter from the profile page.</p>
-                            <a href="{{ route('profile') }}#letters-tab" class="btn btn-primary">
-                                <i class="fas fa-plus"></i> Generate Letter
+                            <a href="{{ route('letters.dashboard') }}" class="btn btn-primary">
+                                <i class="fas fa-plus"></i> Open Letter Generator
                             </a>
                         </div>
                     @endif
