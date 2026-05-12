@@ -21,11 +21,11 @@ class EnhancedAuthenticate
                 return response()->json([
                     'error' => 'Unauthorized',
                     'message' => 'Please login to continue',
-                    'redirect' => route('login')
+                    'redirect' => route('auth.loginpage')
                 ], 401);
             }
             
-            return redirect()->route('login')
+            return redirect()->route('auth.loginpage')
                 ->with('error', 'Please login to continue')
                 ->with('intended_url', $request->fullUrl());
         }
@@ -42,11 +42,11 @@ class EnhancedAuthenticate
                 return response()->json([
                     'error' => 'Session Expired',
                     'message' => 'Your session has expired. Please login again',
-                    'redirect' => route('login')
+                    'redirect' => route('auth.loginpage')
                 ], 401);
             }
             
-            return redirect()->route('login')
+            return redirect()->route('auth.loginpage')
                 ->with('error', 'Session expired. Please login again')
                 ->with('intended_url', $request->fullUrl());
         }
@@ -65,11 +65,11 @@ class EnhancedAuthenticate
                     return response()->json([
                         'error' => 'Account Inactive',
                         'message' => 'Your account is no longer active',
-                        'redirect' => route('login')
+                        'redirect' => route('auth.loginpage')
                     ], 401);
                 }
                 
-                return redirect()->route('login')
+                return redirect()->route('auth.loginpage')
                     ->with('error', 'Account not found or inactive');
             }
             
