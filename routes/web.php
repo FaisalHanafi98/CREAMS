@@ -107,15 +107,7 @@ Route::middleware('guest')->group(function () {
     // Enhanced login routes removed — duplicate of /login above
     // LoginController kept available for future use if needed
 
-    // Registration routes - legacy auth/register now redirects to staffs/register
-    Route::get('/auth/register', function () {
-        return redirect()->route('staffs.register');
-    });
-    Route::get('/registration', [MainController::class, 'registration'])->name('registration');
-    Route::get('/staffs/register', [MainController::class, 'registration'])->name('staffs.register');
-    Route::post('/auth/save', [MainController::class, 'save'])
-        ->name('auth.save')
-        ->middleware('throttle:registration');
+    // Registration routes removed from guest group — moved to authenticated admin/supervisor group below
 });
 
 // Password reset routes - accessible to both guests and authenticated users
@@ -415,6 +407,18 @@ Route::middleware(['auth', 'validate.params'])->group(function () {
     Route::get('/teachershome', function () {
         return redirect()->route('staffs.home');
     })->name('teachershome');
+
+    // Staff registration routes (Admin and Supervisor only)
+    Route::middleware(['role:admin,supervisor'])->group(function () {
+        Route::get('/staffs/register', [MainController::class, 'registration'])->name('staffs.register');
+        Route::get('/registration', [MainController::class, 'registration'])->name('registration');
+        Route::get('/auth/register', function () {
+            return redirect()->route('staffs.register');
+        });
+        Route::post('/auth/save', [MainController::class, 'save'])
+            ->name('auth.save')
+            ->middleware('throttle:registration');
+    });
 
     // User update routes (admin only - manages staff accounts)
     Route::middleware(['role:admin'])->group(function () {
