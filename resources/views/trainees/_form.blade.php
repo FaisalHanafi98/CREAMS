@@ -114,7 +114,7 @@
                                id="ic_number" 
                                class="form-control @error('ic_number') is-invalid @enderror" 
                                value="{{ old('ic_number', isset($trainee) ? $trainee->ic_number : '') }}" 
-                               placeholder="e.g., 123456-78-9012"
+                               placeholder="Format: YYMMDD-XX-NNNN"
                                required>
                         @error('ic_number')
                             <span class="invalid-feedback">{{ $message }}</span>
@@ -300,13 +300,14 @@
                 </div>
                 <div class="col-md-6">
                     <div class="form-group">
-                        <label for="guardian_phone">Guardian Phone</label>
-                        <input type="text" 
-                               name="guardian_phone" 
-                               id="guardian_phone" 
-                               class="form-control @error('guardian_phone') is-invalid @enderror" 
-                               value="{{ old('guardian_phone', isset($trainee) ? $trainee->guardian_phone : '') }}" 
-                               placeholder="Guardian contact number">
+                        <label for="guardian_phone">Guardian Phone <span class="text-danger">*</span></label>
+                        <input type="text"
+                               name="guardian_phone"
+                               id="guardian_phone"
+                               class="form-control @error('guardian_phone') is-invalid @enderror"
+                               value="{{ old('guardian_phone', isset($trainee) ? $trainee->guardian_phone : '') }}"
+                               placeholder="e.g. 0123456789"
+                               required>
                         @error('guardian_phone')
                             <span class="invalid-feedback">{{ $message }}</span>
                         @enderror
