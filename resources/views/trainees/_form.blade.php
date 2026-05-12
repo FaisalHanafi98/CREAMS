@@ -144,11 +144,12 @@
             </div>
 
             <div class="form-group">
-                <label for="trainee_address">Address</label>
-                <textarea name="trainee_address" 
-                          id="trainee_address" 
-                          class="form-control @error('trainee_address') is-invalid @enderror" 
-                          rows="3">{{ old('trainee_address', isset($trainee) ? $trainee->trainee_address : '') }}</textarea>
+                <label for="trainee_address">Address <span class="text-danger">*</span></label>
+                <textarea name="trainee_address"
+                          id="trainee_address"
+                          class="form-control @error('trainee_address') is-invalid @enderror"
+                          rows="3" required
+                          placeholder="Trainee's full residential address">{{ old('trainee_address', isset($trainee) ? $trainee->trainee_address : '') }}</textarea>
                 @error('trainee_address')
                     <span class="invalid-feedback">{{ $message }}</span>
                 @enderror
@@ -285,13 +286,13 @@
             <div class="row">
                 <div class="col-md-6">
                     <div class="form-group">
-                        <label for="guardian_name">Guardian Name</label>
-                        <input type="text" 
-                               name="guardian_name" 
-                               id="guardian_name" 
-                               class="form-control @error('guardian_name') is-invalid @enderror" 
-                               value="{{ old('guardian_name', isset($trainee) ? $trainee->guardian_name : '') }}" 
-                               placeholder="Parent or guardian name">
+                        <label for="guardian_name">Guardian Name <span class="text-danger">*</span></label>
+                        <input type="text"
+                               name="guardian_name"
+                               id="guardian_name"
+                               class="form-control @error('guardian_name') is-invalid @enderror"
+                               value="{{ old('guardian_name', isset($trainee) ? $trainee->guardian_name : '') }}"
+                               placeholder="Parent or guardian full name" required>
                         @error('guardian_name')
                             <span class="invalid-feedback">{{ $message }}</span>
                         @enderror
