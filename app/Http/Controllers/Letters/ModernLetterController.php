@@ -70,11 +70,13 @@ class ModernLetterController extends Controller
             
             // Create letter record
             $letter = Letter::create([
-                'letter_subject' => $validated['letter_subject'],
-                'letter_content' => $validated['letter_content'],
-                'letter_type'    => $validated['letter_type'],
-                'letter_date'    => now(),
-                'letter_data'    => json_encode([
+                'letter_subject'   => $validated['letter_subject'],
+                'letter_content'   => $validated['letter_content'],
+                'letter_type'      => $validated['letter_type'],
+                'letter_date'      => now(),
+                'recipient_name'   => $validated['recipient_name'],
+                'recipient_address' => $validated['recipient_address'] ?? '',
+                'letter_data'      => json_encode([
                     'recipient_name'    => $validated['recipient_name'],
                     'recipient_address' => $validated['recipient_address'] ?? '',
                     'letter_type'       => $validated['letter_type'],
