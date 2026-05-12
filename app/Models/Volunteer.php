@@ -30,6 +30,7 @@ class Volunteer extends Model
         'motivation',
         'status',
         'centre_id',
+        'registration_date',
         // Admin fields (actual database columns)
         'reviewed_by',
         'reviewed_at',

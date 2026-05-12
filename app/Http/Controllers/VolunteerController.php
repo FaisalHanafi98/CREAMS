@@ -106,6 +106,7 @@ public function submit(Request $request)
             'availability' => implode(', ', $validatedData['availability']),
             'motivation' => $validatedData['motivation'],
             'status' => 'applied',
+            'registration_date' => now()->toDateString(),
         ]);
 
         Log::info('Volunteer application saved successfully', [
