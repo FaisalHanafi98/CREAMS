@@ -179,19 +179,13 @@ class ModernLetterController extends Controller
             // Generate filename
             $filename = $letter->letter_id . '_' . time() . '.pdf';
             $filePath = 'letters/' . $filename;
-            
-            // Ensure letters directory exists
-            if (!file_exists(public_path('letters'))) {
-                mkdir(public_path('letters'), 0755, true);
-            }
 
-            // Save PDF to public directory
-            $fullPath = public_path($filePath);
-            file_put_contents($fullPath, $dompdf->output());
+            // Save PDF to private storage (PDPA — not publicly accessible)
+            Storage::disk('local')->put($filePath, $dompdf->output());
 
             Log::info('PDF generated successfully', [
                 'file_path' => $filePath,
-                'file_size' => filesize($fullPath),
+                'file_size' => Storage::disk('local')->size($filePath),
                 'letter_id' => $letter->id
             ]);
 
@@ -301,13 +295,15 @@ class ModernLetterController extends Controller
                 abort(403, 'Unauthorized access to letter');
             }
 
-            $filePath = public_path($letter->letter_file_path);
-            
-            if (!file_exists($filePath)) {
+            // PDPA: letters are in private storage, served only through this controller
+            if (!Storage::disk('local')->exists($letter->letter_file_path)) {
                 throw new Exception('Letter file not found');
             }
 
-            return response()->download($filePath, $letter->letter_id . '.pdf');
+            return Storage::disk('local')->download(
+                $letter->letter_file_path,
+                $letter->letter_id . '.pdf'
+            );
 
         } catch (Exception $e) {
             Log::error('Letter download error', [

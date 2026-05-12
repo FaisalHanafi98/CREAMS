@@ -659,33 +659,17 @@ class LetterTemplateController extends Controller
             $timestamp = time();
             $filename = "LTR_{$date->format('Y')}_{$date->format('m')}_{$cleanReference}_{$timestamp}.pdf";
             
-            // Storage paths
+            // Storage path — private, never publicly accessible (PDPA compliance)
             $storagePath = 'letters/' . $filename;
-            $publicPath = public_path('letters/' . $filename);
-            
-            // Ensure directories exist
-            Storage::makeDirectory('public/letters');
-            if (!file_exists(public_path('letters'))) {
-                mkdir(public_path('letters'), 0755, true);
-            }
-            
-            // Ensure temp directory exists
-            if (!file_exists(storage_path('app/temp'))) {
-                mkdir(storage_path('app/temp'), 0755, true);
-            }
-            
+
             // Generate PDF content
             $pdfContent = $pdf->output();
-            
-            // Save to storage (for internal use)
-            Storage::put('public/' . $storagePath, $pdfContent);
-            
-            // Also save directly to public/letters (for direct access)
-            file_put_contents($publicPath, $pdfContent);
-            
+
+            // Save to private storage only — not public/letters
+            Storage::disk('local')->put($storagePath, $pdfContent);
+
             Log::info('PDF generated successfully', [
                 'storage_path' => $storagePath,
-                'public_path' => $publicPath,
                 'letter_id' => $letter->id,
                 'gd_available' => $gdAvailable,
                 'file_size' => strlen($pdfContent)
@@ -768,14 +752,12 @@ class LetterTemplateController extends Controller
 </html>";
             
             $storagePath = 'letters/' . $filename;
-            $publicPath = public_path('letters/' . $filename);
-            
-            Storage::put('public/' . $storagePath, $fullHtmlContent);
-            file_put_contents($publicPath, $fullHtmlContent);
-            
+
+            // Save fallback HTML to private storage (PDPA compliance)
+            Storage::disk('local')->put($storagePath, $fullHtmlContent);
+
             Log::info('Fallback HTML letter created', [
                 'storage_path' => $storagePath,
-                'public_path' => $publicPath,
                 'letter_id' => $letter->id
             ]);
             
@@ -803,18 +785,16 @@ class LetterTemplateController extends Controller
                 return redirect()->back()->with('error', 'PDF not found for this letter.');
             }
             
-            // Get the public PDF path
-            $publicPdfPath = public_path('letters/' . basename($letter->letter_file_path));
-            
-            if (!file_exists($publicPdfPath)) {
+            // PDPA: read from private storage only
+            if (!Storage::disk('local')->exists($letter->letter_file_path)) {
                 return redirect()->back()->with('error', 'PDF file not found.');
             }
-            
-            // Return the PDF file
-            return response()->file($publicPdfPath, [
-                'Content-Type' => 'application/pdf',
-                'Content-Disposition' => 'inline; filename="' . basename($letter->letter_file_path) . '"'
-            ]);
+
+            return Storage::disk('local')->response(
+                $letter->letter_file_path,
+                null,
+                ['Content-Type' => 'application/pdf', 'Content-Disposition' => 'inline; filename="' . basename($letter->letter_file_path) . '"']
+            );
             
         } catch (\Exception $e) {
             Log::error('Error viewing letter PDF', [
@@ -844,24 +824,22 @@ class LetterTemplateController extends Controller
                 return redirect()->back()->with('error', 'PDF not found for this letter.');
             }
             
-            // Get the public PDF path
-            $publicPdfPath = public_path('letters/' . basename($letter->letter_file_path));
-            
-            if (!file_exists($publicPdfPath)) {
+            // PDPA: read from private storage only
+            if (!Storage::disk('local')->exists($letter->letter_file_path)) {
                 return redirect()->back()->with('error', 'PDF file not found.');
             }
-            
+
             // Log the download
             Log::info('Letter PDF downloaded', [
                 'letter_id' => $letter->id,
                 'reference' => $letter->letter_id,
                 'downloaded_by' => session('id')
             ]);
-            
+
             // Use letter name for filename, fallback to reference if no name
             $filename = $letter->letter_name ?: str_replace(['/', '\\'], '_', $letter->letter_id);
             $cleanFilename = str_replace(['/', '\\', ':', '*', '?', '"', '<', '>', '|'], '_', $filename) . '.pdf';
-            return response()->download($publicPdfPath, $cleanFilename, [
+            return Storage::disk('local')->download($letter->letter_file_path, $cleanFilename, [
                 'Content-Type' => 'application/pdf'
             ]);
             

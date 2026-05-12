@@ -204,12 +204,12 @@ class LetterController extends Controller
                 abort(403, 'Unauthorized access');
             }
 
-            if (!$letter->letter_file_path || !Storage::disk('public')->exists($letter->letter_file_path)) {
+            // PDPA: letters stored in private storage, not publicly accessible
+            if (!$letter->letter_file_path || !Storage::disk('local')->exists($letter->letter_file_path)) {
                 abort(404, 'PDF file not found');
             }
 
-            $filePath = storage_path('app/public/' . $letter->letter_file_path);
-            return response()->file($filePath);
+            return Storage::disk('local')->response($letter->letter_file_path);
 
         } catch (\Exception $e) {
             Log::error('Error viewing letter: ' . $e->getMessage());
@@ -230,14 +230,13 @@ class LetterController extends Controller
                 abort(403, 'Unauthorized access');
             }
 
-            if (!$letter->letter_file_path || !Storage::disk('public')->exists($letter->letter_file_path)) {
+            // PDPA: letters stored in private storage, served only through this controller
+            if (!$letter->letter_file_path || !Storage::disk('local')->exists($letter->letter_file_path)) {
                 abort(404, 'PDF file not found');
             }
 
-            $filePath = storage_path('app/public/' . $letter->letter_file_path);
             $filename = 'letter_' . $letter->letter_id . '.pdf';
-
-            return response()->download($filePath, $filename);
+            return Storage::disk('local')->download($letter->letter_file_path, $filename);
 
         } catch (\Exception $e) {
             Log::error('Error downloading letter: ' . $e->getMessage());
@@ -261,9 +260,9 @@ class LetterController extends Controller
                 ], 403);
             }
 
-            // Delete PDF file if exists
-            if ($letter->letter_file_path && Storage::disk('public')->exists($letter->letter_file_path)) {
-                Storage::disk('public')->delete($letter->letter_file_path);
+            // Delete PDF file from private storage
+            if ($letter->letter_file_path && Storage::disk('local')->exists($letter->letter_file_path)) {
+                Storage::disk('local')->delete($letter->letter_file_path);
             }
 
             $letter->delete();
@@ -346,11 +345,9 @@ class LetterController extends Controller
         $filename = 'letter_' . str_replace(['/', ' '], ['_', '_'], $letter->letter_id) . '_' . date('Ymd') . '.pdf';
         $path = 'letters/' . date('Y/m') . '/' . $filename;
 
-        // Ensure directory exists
-        Storage::disk('public')->makeDirectory('letters/' . date('Y/m'));
-        
-        // Save PDF
-        $fullPath = storage_path('app/public/' . $path);
+        // Save PDF to private storage (PDPA — not publicly accessible via URL)
+        Storage::disk('local')->makeDirectory('letters/' . date('Y/m'));
+        $fullPath = storage_path('app/' . $path);
         $pdf->save($fullPath);
 
         return $path;
