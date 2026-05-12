@@ -89,6 +89,14 @@ class SecurityHeadersMiddleware
         ];
         $response->headers->set('Permissions-Policy', implode(', ', $permissionsPolicy));
 
+        // Cache-Control: Prevent browser from caching authenticated pages (PDPA compliance).
+        // Only applied when the user has an active session to avoid impacting public pages.
+        if (session()->has('id')) {
+            $response->headers->set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+            $response->headers->set('Pragma', 'no-cache');
+            $response->headers->set('Expires', '0');
+        }
+
         return $response;
     }
 }
