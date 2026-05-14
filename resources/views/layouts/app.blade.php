@@ -1287,6 +1287,7 @@
                             Home
                         </a>
                     </li>
+                    @if (session('role') !== 'ajk')
                     <li>
                         <a href="{{ route('activities.categories') }}"
                             class="sidebar-submenu-link {{ Route::currentRouteName() == 'activities.categories' ? 'active' : '' }}">
@@ -1299,6 +1300,7 @@
                             Schedule
                         </a>
                     </li>
+                    @endif
                 </ul>
             </li>
 
@@ -1323,12 +1325,14 @@
                             </a>
                         @endif
                     </li>
+                    @if (in_array(session('role'), ['admin', 'supervisor']))
                     <li>
                         <a href="{{ route('centre.asset-parents') }}"
                             class="sidebar-submenu-link {{ strpos(Route::currentRouteName(), 'centre.asset-parents') !== false ? 'active' : '' }}">
                             Asset
                         </a>
                     </li>
+                    @endif
                     @if (in_array(session('role'), ['admin', 'supervisor']))
                         <li>
                             <a href="{{ route('centres.attendance.index') }}"

@@ -3053,7 +3053,7 @@ class ActivityController extends Controller
             $role = session('role');
 
             if (!$userId) {
-                return redirect()->route('login');
+                return redirect()->route('auth.loginpage');
             }
 
             Log::info('Loading personal schedule', ['user_id' => $userId, 'role' => $role]);

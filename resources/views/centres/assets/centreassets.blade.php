@@ -14,7 +14,7 @@
                     <i class="fas fa-arrow-left"></i> Back to Centre
                 </a>
                 @if (in_array(session('role'), ['admin', 'supervisor']))
-                    <a href="{{ route('assets.create') }}?centre={{ $centre->centre_name }}" class="btn btn-primary">
+                    <a href="{{ route('asset-parents.create') }}?centre={{ $centre->centre_name }}" class="btn btn-primary">
                         <i class="fas fa-plus"></i> Add New Asset
                     </a>
                 @endif
@@ -160,12 +160,12 @@
                                         </td>
                                         <td>
                                             <div class="action-buttons">
-                                                <a href="{{ route('assets.show', $asset->asset_id) }}"
+                                                <a href="{{ route('asset-parents.show', $asset->id) }}"
                                                     class="btn btn-sm btn-outline-primary" title="View Details">
                                                     <i class="fas fa-eye"></i>
                                                 </a>
                                                 @if (in_array(session('role'), ['admin', 'supervisor']))
-                                                    <a href="{{ route('assets.edit', $asset->asset_id) }}"
+                                                    <a href="{{ route('asset-parents.edit', $asset->id) }}"
                                                         class="btn btn-sm btn-outline-warning" title="Edit Asset">
                                                         <i class="fas fa-edit"></i>
                                                     </a>
@@ -192,7 +192,7 @@
                         <h4>No Asset Found</h4>
                         <p>This centre doesn't have any assets registered yet.</p>
                         @if (in_array(session('role'), ['admin', 'supervisor']))
-                            <a href="{{ route('assets.create') }}?centre={{ $centre->centre_name }}"
+                            <a href="{{ route('asset-parents.create') }}?centre={{ $centre->centre_name }}"
                                 class="btn btn-primary">
                                 <i class="fas fa-plus"></i> Add First Asset
                             </a>

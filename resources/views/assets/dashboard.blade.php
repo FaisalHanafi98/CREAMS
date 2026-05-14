@@ -652,7 +652,7 @@
 @push('scripts')
     <script>
         function rentAsset(assetId) {
-            document.getElementById('rentAssetForm').action = `/assets/${assetId}/rent`;
+            document.getElementById('rentAssetForm').action = `/asset-parents/${assetId}/rent`;
             $('#rentAssetModal').modal('show');
         }
 
@@ -661,7 +661,7 @@
                 // Create a form to submit the return request
                 const form = document.createElement('form');
                 form.method = 'POST';
-                form.action = `/assets/${assetId}/return`;
+                form.action = `/asset-parents/${assetId}/return`;
 
                 const csrfToken = document.createElement('input');
                 csrfToken.type = 'hidden';
@@ -675,14 +675,14 @@
         }
 
         function editAsset(assetId) {
-            window.location.href = `/assets/${assetId}/edit`;
+            window.location.href = `/asset-parents/${assetId}/edit`;
         }
 
         function deleteAsset(assetId) {
             if (confirm('Are you sure you want to delete this asset? This action cannot be undone.')) {
                 const form = document.createElement('form');
                 form.method = 'POST';
-                form.action = `/assets/${assetId}`;
+                form.action = `/asset-parents/${assetId}`;
 
                 const csrfToken = document.createElement('input');
                 csrfToken.type = 'hidden';

@@ -476,6 +476,16 @@ Route::middleware(['auth', 'validate.params'])->group(function () {
 
     // General centre assets route (view accessible to all, create admin only)
     Route::get('/centre/asset-parents', [AssetController::class, 'index'])->name('centre.asset-parents');
+
+    // /assets/* redirect aliases — prevent production Nginx from serving public/assets/ as static files
+    // and support legacy views that reference route names under 'assets.*' namespace
+    Route::redirect('/assets', '/asset-parents')->name('assets.index');
+    Route::redirect('/assets/create', '/asset-parents/create')->name('assets.create');
+    Route::redirect('/assets/reports', '/asset-parents/reports')->name('assets.reports');
+    Route::redirect('/assets/maintenance', '/asset-parents/maintenance')->name('assets.maintenance');
+    Route::redirect('/assets/movements', '/asset-parents/movements')->name('assets.movements');
+    Route::get('/assets/{id}', fn($id) => redirect("/asset-parents/{$id}"))->name('assets.show');
+    Route::get('/assets/{id}/edit', fn($id) => redirect("/asset-parents/{$id}/edit"))->name('assets.edit');
     Route::post('/centre/asset-parents', [AssetController::class, 'store'])
         ->middleware('role:admin')
         ->name('centre.asset-parents.store');
@@ -565,7 +575,8 @@ Route::middleware(['auth', 'validate.params'])->group(function () {
 
     // Attendance Management (admin/supervisor/teacher only - attendance marking authority)
     Route::prefix('attendance')->name('attendance.')->middleware(['role:admin,supervisor,teacher'])->group(function () {
-        Route::get('/', [App\Http\Controllers\Activity\AttendanceController::class, 'index'])->name('index');
+        // Use Centre\AttendanceController for the index — it has a working view and proper queries
+        Route::get('/', [App\Http\Controllers\Centre\AttendanceController::class, 'index'])->name('index');
         Route::post('/', [App\Http\Controllers\Activity\AttendanceController::class, 'store'])->name('store');
         Route::get('/report', [App\Http\Controllers\Activity\AttendanceController::class, 'report'])->name('report');
         Route::get('/trainee/{id}', function ($id) {
@@ -575,7 +586,8 @@ Route::middleware(['auth', 'validate.params'])->group(function () {
 
     // Activity Attendance Management (admin/supervisor/teacher only - attendance marking authority)
     Route::prefix('activity-attendance')->name('activity-attendance.')->middleware(['role:admin,supervisor,teacher'])->group(function () {
-        Route::get('/', [App\Http\Controllers\Activity\AttendanceController::class, 'index'])->name('index');
+        // Use Centre\AttendanceController for the index — same working view as /attendance
+        Route::get('/', [App\Http\Controllers\Centre\AttendanceController::class, 'index'])->name('index');
         Route::post('/', [App\Http\Controllers\Activity\AttendanceController::class, 'store'])->name('store');
         Route::get('/stats/today', [App\Http\Controllers\Activity\AttendanceController::class, 'getTodayStats'])->name('stats.today');
         Route::get('/session/{id}/form', [App\Http\Controllers\Activity\AttendanceController::class, 'getAttendanceForm'])->name('session.form');

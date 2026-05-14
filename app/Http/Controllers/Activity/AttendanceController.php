@@ -23,7 +23,7 @@ class AttendanceController extends Controller
         try {
             // Check authentication
             if (!session()->has('id')) {
-                return redirect()->route('login');
+                return redirect()->route('auth.loginpage');
             }
 
             $user = (object) [
@@ -52,7 +52,7 @@ class AttendanceController extends Controller
                 'activity' => function($q) {
                     $q->select('id', 'activity_name', 'centre_id', 'activity_type');
                 },
-                'activity.centre:id,centre_name',
+                'activity.centre:centre_id,centre_name',
                 'teacher:id,name',
                 'sessionEnrollments' => function($q) {
                     $q->with('trainee:id,trainee_first_name,trainee_last_name,unique_identifier');
@@ -83,12 +83,13 @@ class AttendanceController extends Controller
             $stats = $this->calculateAttendanceStats($sessions);
             
             // Get centres for filter dropdown (with proper authorization)
+            // Centre model uses centre_id as primary key, not id
             $centres = collect();
             if ($user->role === 'admin') {
-                $centres = \App\Models\Centre::select('id', 'centre_name')->get();
+                $centres = \App\Models\Centre::select('centre_id', 'centre_name')->get();
             } elseif ($user->role === 'supervisor') {
-                $centres = \App\Models\Centre::where('id', $user->centre_id)
-                    ->select('id', 'centre_name')->get();
+                $centres = \App\Models\Centre::where('centre_id', $user->centre_id)
+                    ->select('centre_id', 'centre_name')->get();
             }
             
             // Get activities for filter (with centre restrictions)
@@ -108,7 +109,7 @@ class AttendanceController extends Controller
             // Get upcoming birthdays (cached)
             $upcomingBirthdays = $this->getUpcomingBirthdays($selectedCentreId);
             
-            return view('attendance.enhanced-index', compact(
+            return view('attendance.home', compact(
                 'sessions',
                 'stats',
                 'centres',

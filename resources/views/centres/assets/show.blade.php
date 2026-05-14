@@ -699,7 +699,7 @@
             if (confirm('Are you sure you want to delete this asset? This action cannot be undone.')) {
                 const form = document.createElement('form');
                 form.method = 'POST';
-                form.action = `/centres/assets/${assetId}`;
+                form.action = `/asset-parents/${assetId}`;
 
                 const csrfToken = document.createElement('input');
                 csrfToken.type = 'hidden';

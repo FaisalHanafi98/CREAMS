@@ -29,7 +29,7 @@ class ActivityWizardController extends Controller
         try {
             // Check authentication
             if (!session()->has('id')) {
-                return redirect()->route('login');
+                return redirect()->route('auth.loginpage');
             }
 
             // Check authorization - only admin can create activities

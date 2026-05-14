@@ -143,7 +143,7 @@
                                                     <i class="fas fa-check"></i> Completed
                                                 </span>
                                             @else
-                                                <a href="{{ route('centre.enhanced-attendance.mark-session', $session->id) }}" 
+                                                <a href="{{ route('centre.attendance.mark-session', $session->id) }}" 
                                                    class="btn btn-outline-primary btn-sm">
                                                     <i class="fas fa-clipboard-check"></i> Mark Attendance
                                                 </a>
@@ -215,7 +215,7 @@
                     @endif
                 </div>
                 <div class="card-footer">
-                    <a href="{{ route('centre.enhanced-attendance.analytics') }}" class="btn btn-outline-success btn-sm btn-block">
+                    <a href="{{ route('centre.attendance.analytics') }}" class="btn btn-outline-success btn-sm btn-block">
                         <i class="fas fa-chart-bar"></i> View Detailed Analytics
                     </a>
                 </div>
@@ -231,10 +231,10 @@
                 </div>
                 <div class="card-body">
                     <div class="quick-actions">
-                        <a href="{{ route('centre.enhanced-attendance.analytics') }}" class="btn btn-outline-info btn-block mb-2">
+                        <a href="{{ route('centre.attendance.analytics') }}" class="btn btn-outline-info btn-block mb-2">
                             <i class="fas fa-chart-bar"></i> Attendance Reports
                         </a>
-                        <a href="{{ route('centre.enhanced-attendance.export') }}?format=excel" class="btn btn-outline-success btn-block mb-2">
+                        <a href="{{ route('centre.attendance.export') }}?format=excel" class="btn btn-outline-success btn-block mb-2">
                             <i class="fas fa-file-excel"></i> Export to Excel
                         </a>
                         <a href="{{ route('activities.index') }}" class="btn btn-outline-primary btn-block mb-2">
@@ -343,7 +343,7 @@
 @push('scripts')
 <script>
 function changeDate(date) {
-    window.location.href = `{{ route('centre.enhanced-attendance.index') }}?date=${date}`;
+    window.location.href = `{{ route('centre.attendance.index') }}?date=${date}`;
 }
 
 function setToday() {

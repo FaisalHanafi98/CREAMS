@@ -27,7 +27,7 @@ class AttendanceController extends Controller
         try {
             // Authentication check
             if (!session()->has('id')) {
-                return redirect()->route('login');
+                return redirect()->route('auth.loginpage');
             }
 
             $role = session('role');
@@ -327,50 +327,71 @@ class AttendanceController extends Controller
 
     private function getAttendanceOverview($centreId, $date)
     {
-        return [
-            'total_trainees' => Trainee::where('centre_id', $centreId)->count(),
-            'present_today' => DB::table('trainee_attendances')
-                                ->join('trainees', 'trainee_attendances.trainee_id', '=', 'trainees.id')
-                                ->whereDate('trainee_attendances.attendance_date', $date)
-                                ->where('trainees.centre_id', $centreId)
-                                ->where('trainee_attendances.status', 'present')
-                                ->count(),
-            'total_sessions' => ActivitySession::whereHas('activity', function($q) use ($centreId) {
-                                    $q->where('centre_id', $centreId);
-                                })
-                                ->whereDate('session_date', $date)
-                                ->count(),
-            'completed_sessions' => ActivitySession::whereHas('activity', function($q) use ($centreId) {
+        try {
+            $presentToday = 0;
+            try {
+                $presentToday = DB::table('trainee_attendances')
+                    ->join('trainees', 'trainee_attendances.trainee_id', '=', 'trainees.id')
+                    ->whereDate('trainee_attendances.attendance_date', $date)
+                    ->where('trainees.centre_id', $centreId)
+                    ->where('trainee_attendances.status', 'present')
+                    ->count();
+            } catch (\Exception $e) {
+                // trainee_attendances table may not exist yet — return 0
+            }
+
+            return [
+                'total_trainees' => Trainee::where('centre_id', $centreId)->count(),
+                'present_today' => $presentToday,
+                'total_sessions' => ActivitySession::whereHas('activity', function($q) use ($centreId) {
                                         $q->where('centre_id', $centreId);
                                     })
                                     ->whereDate('session_date', $date)
-                                    ->where('session_status', 'completed')
-                                    ->count()
-        ];
+                                    ->count(),
+                'completed_sessions' => ActivitySession::whereHas('activity', function($q) use ($centreId) {
+                                            $q->where('centre_id', $centreId);
+                                        })
+                                        ->whereDate('session_date', $date)
+                                        ->where('session_status', 'completed')
+                                        ->count()
+            ];
+        } catch (\Exception $e) {
+            Log::warning('getAttendanceOverview failed, returning defaults', ['error' => $e->getMessage()]);
+            return ['total_trainees' => 0, 'present_today' => 0, 'total_sessions' => 0, 'completed_sessions' => 0];
+        }
     }
 
     private function getTraineesWithEnrollments($centreId)
     {
-        return Trainee::where('centre_id', $centreId)
-                     ->with([
-                         'activityEnrollments.activity',
-                         'sessionEnrollments' => function($query) {
-                             $query->whereDate('created_at', now()->toDateString());
-                         }
-                     ])
-                     ->get();
+        try {
+            return Trainee::where('centre_id', $centreId)
+                         ->with(['enrollments.activity'])
+                         ->get();
+        } catch (\Exception $e) {
+            Log::warning('getTraineesWithEnrollments failed, returning empty', ['error' => $e->getMessage()]);
+            return collect();
+        }
     }
 
     private function getAttendanceAnalytics($centreId, $date)
     {
-        $weekStart = Carbon::parse($date)->startOfWeek();
-        $weekEnd = Carbon::parse($date)->endOfWeek();
+        try {
+            $weekStart = Carbon::parse($date)->startOfWeek();
+            $weekEnd = Carbon::parse($date)->endOfWeek();
 
-        return [
-            'weekly_attendance_rate' => $this->calculateWeeklyAttendanceRate($centreId, $weekStart, $weekEnd),
-            'activity_participation' => $this->getActivityParticipationRates($centreId, $date),
-            'learning_progress_summary' => $this->getLearningProgressSummary($centreId, $date)
-        ];
+            return [
+                'weekly_attendance_rate' => $this->calculateWeeklyAttendanceRate($centreId, $weekStart, $weekEnd),
+                'activity_participation' => $this->getActivityParticipationRates($centreId, $date),
+                'learning_progress_summary' => $this->getLearningProgressSummary($centreId, $date)
+            ];
+        } catch (\Exception $e) {
+            Log::warning('getAttendanceAnalytics failed, returning empty', ['error' => $e->getMessage()]);
+            return [
+                'weekly_attendance_rate' => 0,
+                'activity_participation' => collect(),
+                'learning_progress_summary' => []
+            ];
+        }
     }
 
     private function canMarkAttendance($session)

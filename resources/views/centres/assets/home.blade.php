@@ -410,14 +410,14 @@
                 </div>
                 <div class="col-md-4 text-end">
                     @if (in_array(session('role'), ['admin', 'supervisor']))
-                        <a href="{{ route('assets.create') }}" class="btn btn-light me-2">
+                        <a href="{{ route('asset-parents.create') }}" class="btn btn-light me-2">
                             <i class="fas fa-plus me-2"></i>Add Asset
                         </a>
                     @endif
-                    <a href="{{ route('assets.reports') }}" class="btn btn-light me-2">
+                    <a href="{{ route('asset-parents.reports') }}" class="btn btn-light me-2">
                         <i class="fas fa-chart-bar me-2"></i>Reports
                     </a>
-                    <a href="{{ route('assets.maintenance') }}" class="btn btn-light me-2">
+                    <a href="{{ route('asset-parents.maintenance') }}" class="btn btn-light me-2">
                         <i class="fas fa-tools me-2"></i>Maintenance
                     </a>
                     <a href="{{ route('dashboard') }}" class="btn btn-light">
@@ -672,18 +672,18 @@
 
         // Asset actions
         function viewAsset(assetId) {
-            window.location.href = `/assets/${assetId}`;
+            window.location.href = `/asset-parents/${assetId}`;
         }
 
         function editAsset(assetId) {
-            window.location.href = `/assets/${assetId}/edit`;
+            window.location.href = `/asset-parents/${assetId}/edit`;
         }
 
         function confirmDelete(assetId) {
             if (confirm('Are you sure you want to delete this asset? This action cannot be undone.')) {
                 const form = document.createElement('form');
                 form.method = 'POST';
-                form.action = `/assets/${assetId}`;
+                form.action = `/asset-parents/${assetId}`;
 
                 const csrfToken = document.createElement('input');
                 csrfToken.type = 'hidden';

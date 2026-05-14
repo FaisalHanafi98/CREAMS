@@ -41,7 +41,7 @@ class AssetController extends Controller
         try {
             // Check authentication
             if (!session()->has('id')) {
-                return redirect()->route('login');
+                return redirect()->route('auth.loginpage');
             }
 
             $role = session('role');
@@ -119,7 +119,7 @@ class AssetController extends Controller
         try {
             // Check authentication
             if (!session()->has('id')) {
-                return redirect()->route('login');
+                return redirect()->route('auth.loginpage');
             }
 
             $role = session('role');
@@ -235,7 +235,7 @@ class AssetController extends Controller
     public function create(Request $request)
     {
         if (!session()->has('id')) {
-            return redirect()->route('login');
+            return redirect()->route('auth.loginpage');
         }
 
         if (!in_array(session('role'), ['admin', 'supervisor'])) {
@@ -258,7 +258,7 @@ class AssetController extends Controller
     {
         try {
             if (!session()->has('id')) {
-                return redirect()->route('login');
+                return redirect()->route('auth.loginpage');
             }
 
             if (!in_array(session('role'), ['admin', 'supervisor'])) {
@@ -369,7 +369,7 @@ class AssetController extends Controller
     {
         try {
             if (!session()->has('id')) {
-                return redirect()->route('login');
+                return redirect()->route('auth.loginpage');
             }
 
             $asset = Asset::findOrFail($id);
@@ -436,7 +436,7 @@ class AssetController extends Controller
     public function edit(Asset $asset)
     {
         if (!session()->has('id')) {
-            return redirect()->route('login');
+            return redirect()->route('auth.loginpage');
         }
 
         if (!in_array(session('role'), ['admin', 'supervisor'])) {
@@ -462,7 +462,7 @@ class AssetController extends Controller
     {
         try {
             if (!session()->has('id')) {
-                return redirect()->route('login');
+                return redirect()->route('auth.loginpage');
             }
 
             if (!in_array(session('role'), ['admin', 'supervisor'])) {
@@ -587,7 +587,7 @@ class AssetController extends Controller
     {
         try {
             if (!session()->has('id')) {
-                return redirect()->route('login');
+                return redirect()->route('auth.loginpage');
             }
 
             if (!in_array(session('role'), ['admin'])) {
@@ -727,7 +727,7 @@ class AssetController extends Controller
     {
         try {
             if (!session()->has('id')) {
-                return redirect()->route('login');
+                return redirect()->route('auth.loginpage');
             }
 
             if (!in_array(session('role'), ['admin', 'supervisor'])) {
@@ -783,7 +783,7 @@ class AssetController extends Controller
     {
         try {
             if (!session()->has('id')) {
-                return redirect()->route('login');
+                return redirect()->route('auth.loginpage');
             }
 
             if (!in_array(session('role'), ['admin', 'supervisor'])) {
