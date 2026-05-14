@@ -8,7 +8,7 @@
         <h2 class="fw-bold mb-0">
             <i class="fas fa-arrows-alt me-2 text-info"></i>Asset Movements
         </h2>
-        <a href="{{ route('asset-parents.index') }}" class="btn btn-outline-secondary btn-sm">
+        <a href="{{ route('assets.index') }}" class="btn btn-outline-secondary btn-sm">
             <i class="fas fa-arrow-left me-1"></i>Back to Assets
         </a>
     </div>
@@ -34,7 +34,7 @@
                         <tr>
                             <td>{{ $record->id }}</td>
                             <td>
-                                <a href="{{ route('asset-parents.show', $record->asset_id) }}" class="text-decoration-none">
+                                <a href="{{ route('assets.show', $record->asset_id) }}" class="text-decoration-none">
                                     {{ $record->asset?->asset_name ?? 'Unknown' }}
                                 </a>
                             </td>

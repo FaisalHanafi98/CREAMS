@@ -474,21 +474,11 @@ Route::middleware(['auth', 'validate.params'])->group(function () {
         return redirect()->route('centres.index');
     })->middleware(['centre.access:centre']);
 
-    // General centre assets route (view accessible to all, create admin only)
-    Route::get('/centre/asset-parents', [AssetController::class, 'index'])->name('centre.asset-parents');
-
-    // /assets/* redirect aliases — prevent production Nginx from serving public/assets/ as static files
-    // and support legacy views that reference route names under 'assets.*' namespace
-    Route::redirect('/assets', '/asset-parents')->name('assets.index');
-    Route::redirect('/assets/create', '/asset-parents/create')->name('assets.create');
-    Route::redirect('/assets/reports', '/asset-parents/reports')->name('assets.reports');
-    Route::redirect('/assets/maintenance', '/asset-parents/maintenance')->name('assets.maintenance');
-    Route::redirect('/assets/movements', '/asset-parents/movements')->name('assets.movements');
-    Route::get('/assets/{id}', fn($id) => redirect("/asset-parents/{$id}"))->name('assets.show');
-    Route::get('/assets/{id}/edit', fn($id) => redirect("/asset-parents/{$id}/edit"))->name('assets.edit');
-    Route::post('/centre/asset-parents', [AssetController::class, 'store'])
+    // Centre asset shortcut — sidebar entry point for admin/supervisor
+    Route::get('/centre/assets', [AssetController::class, 'index'])->name('centre.assets');
+    Route::post('/centre/assets', [AssetController::class, 'store'])
         ->middleware('role:admin')
-        ->name('centre.asset-parents.store');
+        ->name('centre.assets.store');
 
     // Staff Daily Attendance Management (admin/supervisor/teacher only - attendance authority)
     Route::prefix('centres/attendance')->name('centres.attendance.')
@@ -518,12 +508,12 @@ Route::middleware(['auth', 'validate.params'])->group(function () {
 
         // Wildcard routes AFTER static routes to prevent shadowing
         Route::get('/{id}', [CentreController::class, 'show'])->name('show');
-        Route::get('/{id}/asset-parents', [CentreController::class, 'assetParents'])->name('asset-parents');
+        Route::get('/{id}/assets', [CentreController::class, 'assetParents'])->name('assets');
         Route::get('/{id}/metrics', [CentreController::class, 'getMetrics'])->name('metrics');
     });
 
     // Asset - READ and operational access for all, CRUD restricted to admin
-    Route::prefix('asset-parents')->name('asset-parents.')->middleware(['centre.access:asset'])->group(function () {
+    Route::prefix('assets')->name('assets.')->middleware(['centre.access:asset'])->group(function () {
         // View and operational routes - accessible to all authenticated users
         Route::get('/', [AssetController::class, 'index'])->name('index');
         Route::get('/reports', [AssetController::class, 'reports'])->name('reports');
@@ -819,7 +809,7 @@ Route::prefix('admin')->middleware(['auth', 'role:admin'])->group(function () {
         Route::get('/{id}/edit', [CentreController::class, 'edit'])->name('edit');
         Route::put('/{id}', [CentreController::class, 'update'])->name('update');
         Route::delete('/{id}', [CentreController::class, 'destroy'])->name('destroy');
-        Route::get('/{id}/asset-parents', [CentreController::class, 'assets'])->name('asset-parents');
+        Route::get('/{id}/assets', [CentreController::class, 'assets'])->name('assets');
     });
 
     // Legacy admin.asset-parents block removed - shadowed by asset-parents block at line ~505
@@ -849,9 +839,9 @@ Route::prefix('admin')->middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/centres', function () {
         return redirect()->route('centres.index');
     })->name('admin.centres');
-    Route::get('/asset-parents', function () {
-        return redirect()->route('asset-parents');
-    })->name('admin.asset-parents');
+    Route::get('/assets-admin', function () {
+        return redirect()->route('assets.index');
+    })->name('admin.assets');
     Route::get('/activities', function () {
         return redirect()->route('activities.home');
     })->name('admin.activities');

@@ -29,7 +29,7 @@ class AssetManagementTest extends TestCase
     {
         $user = User::factory()->admin()->create(['centre_id' => '01']);
 
-        $response = $this->actingAs($user)->get('/asset-parents');
+        $response = $this->actingAs($user)->get('/assets');
         $this->assertTrue(
             $response->getStatusCode() === 200 || $response->isRedirect(),
             'Asset list should be accessible or redirect for centre access'
@@ -40,7 +40,7 @@ class AssetManagementTest extends TestCase
     {
         $user = User::factory()->admin()->create(['centre_id' => '01']);
 
-        $response = $this->actingAs($user)->get('/asset-parents/create');
+        $response = $this->actingAs($user)->get('/assets/create');
         $this->assertTrue(
             in_array($response->getStatusCode(), [200, 302, 500]),
             'Asset create page should route correctly (got ' . $response->getStatusCode() . ')'
@@ -53,7 +53,7 @@ class AssetManagementTest extends TestCase
     {
         $user = User::factory()->admin()->create(['centre_id' => '01']);
 
-        $response = $this->actingAs($user)->get('/asset-parents/reports');
+        $response = $this->actingAs($user)->get('/assets/reports');
         $response->assertStatus(200);
     }
 
@@ -61,7 +61,7 @@ class AssetManagementTest extends TestCase
     {
         $user = User::factory()->admin()->create(['centre_id' => '01']);
 
-        $response = $this->actingAs($user)->get('/asset-parents/maintenance');
+        $response = $this->actingAs($user)->get('/assets/maintenance');
         $response->assertStatus(200);
     }
 
@@ -69,7 +69,7 @@ class AssetManagementTest extends TestCase
     {
         $user = User::factory()->admin()->create(['centre_id' => '01']);
 
-        $response = $this->actingAs($user)->get('/asset-parents/movements');
+        $response = $this->actingAs($user)->get('/assets/movements');
         $this->assertTrue(
             $response->getStatusCode() === 200 || $response->isRedirect(),
             'Asset movements should be accessible or redirect for centre access'
@@ -80,7 +80,7 @@ class AssetManagementTest extends TestCase
     {
         $user = User::factory()->supervisor()->create(['centre_id' => '01']);
 
-        $response = $this->actingAs($user)->get('/asset-parents');
+        $response = $this->actingAs($user)->get('/assets');
         $this->assertTrue(
             $response->getStatusCode() === 200 || $response->isRedirect(),
             'Supervisor should access asset list or redirect for centre access'

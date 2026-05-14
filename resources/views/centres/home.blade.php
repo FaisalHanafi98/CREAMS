@@ -68,7 +68,7 @@
                                         <i class="fas fa-clock"></i> Attendance
                                     </a>
                                 @endif
-                                <a href="{{ route('centres.asset-parents', $centre->centre_id) }}"
+                                <a href="{{ route('centres.assets', $centre->centre_id) }}"
                                     class="btn btn-secondary">
                                     <i class="fas fa-boxes"></i> Asset
                                 </a>

@@ -465,7 +465,7 @@
                     <p>Detailed information and specifications for this asset</p>
                 </div>
                 <div class="col-md-4 text-end">
-                    <a href="{{ route('centres.asset-parents.index') }}" class="btn btn-light">
+                    <a href="{{ route('assets.index') }}" class="btn btn-light">
                         <i class="fas fa-arrow-left me-2"></i>Back to Asset
                     </a>
                 </div>
@@ -670,13 +670,13 @@
         <!-- Action Buttons -->
         <div class="action-buttons">
             <div>
-                <a href="{{ route('centres.asset-parents.index') }}" class="btn btn-outline-secondary">
+                <a href="{{ route('assets.index') }}" class="btn btn-outline-secondary">
                     <i class="fas fa-list"></i>View All Asset
                 </a>
             </div>
             <div class="d-flex gap-2 flex-wrap">
                 @if (in_array(session('role'), ['admin', 'supervisor']))
-                    <a href="{{ route('centres.asset-parents.edit', $asset->asset_id) }}" class="btn btn-warning">
+                    <a href="{{ route('assets.edit', $asset->asset_id) }}" class="btn btn-warning">
                         <i class="fas fa-edit"></i>Edit Asset
                     </a>
                 @endif
@@ -699,7 +699,7 @@
             if (confirm('Are you sure you want to delete this asset? This action cannot be undone.')) {
                 const form = document.createElement('form');
                 form.method = 'POST';
-                form.action = `/asset-parents/${assetId}`;
+                form.action = `/assets/${assetId}`;
 
                 const csrfToken = document.createElement('input');
                 csrfToken.type = 'hidden';

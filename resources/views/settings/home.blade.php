@@ -182,7 +182,7 @@
         </a>
       </li>
       <li>
-        <a href="{{ route('centre.asset-parents') }}">
+        <a href="{{ route('centre.assets') }}">
           <i class="fas fa-boxes"></i>
           <span>Asset</span>
         </a>

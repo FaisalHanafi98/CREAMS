@@ -73,7 +73,7 @@
         </a>
       </li>
       <li>
-        <a href="{{ route('admin.asset-parents') }}">
+        <a href="{{ route('admin.assets') }}">
           <i class="fas fa-boxes"></i>
           <span>Asset</span>
           <div class="tooltip-sidebar">Asset</div>

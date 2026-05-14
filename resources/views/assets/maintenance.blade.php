@@ -9,7 +9,7 @@
             <i class="fas fa-tools me-2 text-warning"></i>Maintenance Records
         </h2>
         <div class="d-flex gap-2">
-            <a href="{{ route('asset-parents.index') }}" class="btn btn-outline-secondary btn-sm">
+            <a href="{{ route('assets.index') }}" class="btn btn-outline-secondary btn-sm">
                 <i class="fas fa-arrow-left me-1"></i>Back to Assets
             </a>
         </div>
@@ -74,7 +74,7 @@
                         <tr>
                             <td>{{ $record->id }}</td>
                             <td>
-                                <a href="{{ route('asset-parents.show', $record->asset_id) }}" class="text-decoration-none">
+                                <a href="{{ route('assets.show', $record->asset_id) }}" class="text-decoration-none">
                                     {{ $record->asset?->asset_name ?? 'Unknown' }}
                                 </a>
                                 <div class="text-muted small">{{ $record->asset?->asset_tag ?? '' }}</div>

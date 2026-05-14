@@ -17,7 +17,7 @@
                         <i class="fas fa-edit"></i> Edit Centre
                     </a>
                 @endif
-                <a href="{{ route('centres.asset-parents', $centre->centre_id) }}" class="btn btn-primary">
+                <a href="{{ route('centres.assets', $centre->centre_id) }}" class="btn btn-primary">
                     <i class="fas fa-box"></i> View Asset
                 </a>
                 <a href="{{ route('centres.index') }}" class="btn btn-outline-secondary">
@@ -208,7 +208,7 @@
                 <div class="detail-card mt-4">
                     <div class="detail-card-header">
                         <h3>Asset Overview</h3>
-                        <a href="{{ route('centres.asset-parents', $centre->centre_id) }}"
+                        <a href="{{ route('centres.assets', $centre->centre_id) }}"
                             class="btn btn-sm btn-outline-light">
                             Manage Asset
                         </a>
@@ -242,7 +242,7 @@
                                 <i class="fas fa-box fa-2x text-muted mb-2"></i>
                                 <p class="text-muted mb-0">No assets registered</p>
                                 @if (session('role') === 'admin')
-                                    <a href="{{ route('centres.asset-parents', $centre->centre_id) }}"
+                                    <a href="{{ route('centres.assets', $centre->centre_id) }}"
                                         class="btn btn-sm btn-primary mt-2">
                                         Add Asset
                                     </a>
@@ -293,7 +293,7 @@
                             <h3>Quick Actions</h3>
                         </div>
                         <div class="quick-actions-body">
-                            <a href="{{ route('centres.asset-parents', $centre->centre_id) }}" class="action-item">
+                            <a href="{{ route('centres.assets', $centre->centre_id) }}" class="action-item">
                                 <i class="fas fa-box"></i>
                                 <span>Manage Asset</span>
                             </a>

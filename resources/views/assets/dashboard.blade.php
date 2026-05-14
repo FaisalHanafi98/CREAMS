@@ -417,7 +417,7 @@
                         <span>&times;</span>
                     </button>
                 </div>
-                <form id="addAssetForm" method="POST" action="{{ route('centre.asset-parents.store') }}">
+                <form id="addAssetForm" method="POST" action="{{ route('centre.assets.store') }}">
                     @csrf
                     <div class="modal-body">
                         @if ($errors->any())
@@ -652,7 +652,7 @@
 @push('scripts')
     <script>
         function rentAsset(assetId) {
-            document.getElementById('rentAssetForm').action = `/asset-parents/${assetId}/rent`;
+            document.getElementById('rentAssetForm').action = `/assets/${assetId}/rent`;
             $('#rentAssetModal').modal('show');
         }
 
@@ -661,7 +661,7 @@
                 // Create a form to submit the return request
                 const form = document.createElement('form');
                 form.method = 'POST';
-                form.action = `/asset-parents/${assetId}/return`;
+                form.action = `/assets/${assetId}/return`;
 
                 const csrfToken = document.createElement('input');
                 csrfToken.type = 'hidden';
@@ -675,14 +675,14 @@
         }
 
         function editAsset(assetId) {
-            window.location.href = `/asset-parents/${assetId}/edit`;
+            window.location.href = `/assets/${assetId}/edit`;
         }
 
         function deleteAsset(assetId) {
             if (confirm('Are you sure you want to delete this asset? This action cannot be undone.')) {
                 const form = document.createElement('form');
                 form.method = 'POST';
-                form.action = `/asset-parents/${assetId}`;
+                form.action = `/assets/${assetId}`;
 
                 const csrfToken = document.createElement('input');
                 csrfToken.type = 'hidden';

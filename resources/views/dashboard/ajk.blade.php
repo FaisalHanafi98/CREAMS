@@ -1231,7 +1231,7 @@
                                 <div class="action-label-enhanced">Schedule Maintenance</div>
                             </a>
                             
-                            <a href="{{ route('centre.asset-parents') }}" class="action-card-enhanced">
+                            <a href="{{ route('centre.assets') }}" class="action-card-enhanced">
                                 <div class="action-icon-enhanced">
                                     <i class="fas fa-boxes"></i>
                                 </div>

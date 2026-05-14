@@ -349,7 +349,7 @@
                 <div class="asset-breadcrumb">
                     <a href="{{ route('dashboard') }}">Dashboard</a>
                     <i class="fas fa-chevron-right text-muted"></i>
-                    <a href="{{ route('asset-parents.index') }}">Assets</a>
+                    <a href="{{ route('assets.index') }}">Assets</a>
                     <i class="fas fa-chevron-right text-muted"></i>
                     <span class="asset-breadcrumb-current">Create Asset</span>
                 </div>
@@ -362,7 +362,7 @@
                 </p>
             </div>
             <div class="col-lg-4 asset-header-actions">
-                <a href="{{ route('asset-parents.index') }}" class="asset-outline-btn">
+                <a href="{{ route('assets.index') }}" class="asset-outline-btn">
                     <i class="fas fa-arrow-left"></i>
                     Back to Assets
                 </a>
@@ -384,7 +384,7 @@
     <div class="row g-4">
         <div class="col-xl-8">
             <div class="asset-form-shell">
-                <form action="{{ route('asset-parents.store') }}" method="POST" enctype="multipart/form-data">
+                <form action="{{ route('assets.store') }}" method="POST" enctype="multipart/form-data">
                     @csrf
 
                     <div class="asset-form-body">
@@ -585,7 +585,7 @@
                     </div>
 
                     <div class="asset-form-actions">
-                        <a href="{{ route('asset-parents.index') }}" class="asset-secondary-btn">
+                        <a href="{{ route('assets.index') }}" class="asset-secondary-btn">
                             <i class="fas fa-times"></i>
                             Cancel
                         </a>

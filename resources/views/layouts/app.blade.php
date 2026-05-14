@@ -1327,8 +1327,8 @@
                     </li>
                     @if (in_array(session('role'), ['admin', 'supervisor']))
                     <li>
-                        <a href="{{ route('centre.asset-parents') }}"
-                            class="sidebar-submenu-link {{ strpos(Route::currentRouteName(), 'centre.asset-parents') !== false ? 'active' : '' }}">
+                        <a href="{{ route('centre.assets') }}"
+                            class="sidebar-submenu-link {{ strpos(Route::currentRouteName(), 'assets') !== false ? 'active' : '' }}">
                             Asset
                         </a>
                     </li>

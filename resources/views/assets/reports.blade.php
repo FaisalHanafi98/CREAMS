@@ -8,7 +8,7 @@
         <h2 class="fw-bold mb-0">
             <i class="fas fa-chart-bar me-2 text-primary"></i>Asset Reports
         </h2>
-        <a href="{{ route('asset-parents.index') }}" class="btn btn-outline-secondary btn-sm">
+        <a href="{{ route('assets.index') }}" class="btn btn-outline-secondary btn-sm">
             <i class="fas fa-arrow-left me-1"></i>Back to Assets
         </a>
     </div>

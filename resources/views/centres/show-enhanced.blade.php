@@ -35,7 +35,7 @@
                                 Edit Centre
                             </a>
                         @endif
-                        <a href="{{ route('centres.asset-parents', $centre->centre_id) }}" class="btn btn-info">
+                        <a href="{{ route('centres.assets', $centre->centre_id) }}" class="btn btn-info">
                             <i class="fas fa-boxes"></i>
                             Manage Assets
                         </a>
@@ -550,7 +550,7 @@
                 <div class="analytics-card">
                     <div class="card-header">
                         <h3><i class="fas fa-boxes"></i> Asset Overview</h3>
-                        <a href="{{ route('centres.asset-parents', $centre->centre_id) }}" class="view-all-link">Manage
+                        <a href="{{ route('centres.assets', $centre->centre_id) }}" class="view-all-link">Manage
                             Assets</a>
                     </div>
                     <div class="card-content">
@@ -612,7 +612,7 @@
                                 <h4>No Assets Registered</h4>
                                 <p>No assets have been registered for this centre yet.</p>
                                 @if (in_array(session('role'), ['admin', 'supervisor']))
-                                    <a href="{{ route('centres.asset-parents', $centre->centre_id) }}"
+                                    <a href="{{ route('centres.assets', $centre->centre_id) }}"
                                         class="btn btn-primary btn-sm">
                                         <i class="fas fa-plus"></i>
                                         Add Assets
@@ -641,7 +641,7 @@
                                     </div>
                                 </a>
 
-                                <a href="{{ route('centres.asset-parents', $centre->centre_id) }}" class="action-item">
+                                <a href="{{ route('centres.assets', $centre->centre_id) }}" class="action-item">
                                     <div class="action-icon">
                                         <i class="fas fa-boxes"></i>
                                     </div>

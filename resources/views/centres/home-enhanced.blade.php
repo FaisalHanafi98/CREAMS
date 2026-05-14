@@ -208,7 +208,7 @@
                                             </a>
                                         @endif
                                         <a class="dropdown-item"
-                                            href="{{ route('centres.asset-parents', $centre->centre_id) }}">
+                                            href="{{ route('centres.assets', $centre->centre_id) }}">
                                             <i class="fas fa-boxes"></i> Manage Assets
                                         </a>
                                         <a class="dropdown-item"
@@ -305,7 +305,7 @@
                                         Edit
                                     </a>
                                 @endif
-                                <a href="{{ route('centres.asset-parents', $centre->centre_id) }}"
+                                <a href="{{ route('centres.assets', $centre->centre_id) }}"
                                     class="btn btn-outline-info btn-sm">
                                     <i class="fas fa-boxes"></i>
                                     Assets
@@ -393,7 +393,7 @@
                                     <i class="fas fa-edit"></i>
                                 </a>
                             @endif
-                            <a href="{{ route('centres.asset-parents', $centre->centre_id) }}" class="action-link"
+                            <a href="{{ route('centres.assets', $centre->centre_id) }}" class="action-link"
                                 title="Manage Assets">
                                 <i class="fas fa-boxes"></i>
                             </a>

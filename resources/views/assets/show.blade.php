@@ -7,7 +7,7 @@
     <!-- Breadcrumb -->
     <nav aria-label="breadcrumb" class="mb-3">
         <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="{{ route('asset-parents.index') }}">Assets</a></li>
+            <li class="breadcrumb-item"><a href="{{ route('assets.index') }}">Assets</a></li>
             <li class="breadcrumb-item active">{{ $asset->asset_name }}</li>
         </ol>
     </nav>
@@ -19,11 +19,11 @@
         </h2>
         <div class="d-flex gap-2">
             @if(in_array(session('role'), ['admin', 'supervisor']))
-                <a href="{{ route('asset-parents.edit', $asset->id) }}" class="btn btn-outline-primary btn-sm">
+                <a href="{{ route('assets.edit', $asset->id) }}" class="btn btn-outline-primary btn-sm">
                     <i class="fas fa-pencil-alt me-1"></i>Edit
                 </a>
             @endif
-            <a href="{{ route('asset-parents.index') }}" class="btn btn-outline-secondary btn-sm">
+            <a href="{{ route('assets.index') }}" class="btn btn-outline-secondary btn-sm">
                 <i class="fas fa-arrow-left me-1"></i>Back
             </a>
         </div>
