@@ -26,7 +26,7 @@ return new class extends Migration
             $adminUserId = DB::table('staffs')->insertGetId([
                 'name' => 'System Administrator',
                 'email' => 'admin@creams.system',
-                'password' => bcrypt('admin123'),
+                'password' => bcrypt(uniqid('', true)),
                 'role' => 'admin',
                 'status' => 'active',
                 'phone' => '',
@@ -61,8 +61,10 @@ return new class extends Migration
             $table->index('enrolled_by', 'idx_activity_enrollments_enrolled_by');
         });
 
-        // Add comment to document the change
-        DB::statement("ALTER TABLE activity_enrollments MODIFY COLUMN enrolled_by BIGINT UNSIGNED NULL COMMENT 'Foreign key to staffs table - tracks which staff member enrolled the trainee'");
+        // Add column comment on MySQL only (SQLite does not support MODIFY COLUMN syntax)
+        if (DB::getDriverName() === 'mysql') {
+            DB::statement("ALTER TABLE activity_enrollments MODIFY COLUMN enrolled_by BIGINT UNSIGNED NULL COMMENT 'Foreign key to staffs table - tracks which staff member enrolled the trainee'");
+        }
     }
 
     /**

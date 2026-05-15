@@ -87,7 +87,7 @@ class CreateCreamsClientManagementTables extends Migration
             $table->enum('inquiry_type', ['general', 'services', 'volunteer', 'donation', 'other'])->default('general');
             $table->enum('status', ['new', 'read', 'replied', 'resolved'])->default('new');
             $table->string('centre_id', 10)->nullable();
-            $table->integer('replied_by')->nullable();
+            $table->unsignedBigInteger('replied_by')->nullable(); // matches staffs.id (bigint unsigned)
             $table->timestamp('replied_at')->nullable();
             $table->text('reply_message')->nullable();
             $table->timestamps();
