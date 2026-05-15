@@ -56,13 +56,14 @@ class TraineeHomeController extends Controller
             }
             
             // Get the filtered trainees with eager loading for relationships and pagination
+            // Newest first so recently created trainees are immediately visible on page 1
             $trainees = $query->with([
-                'centre', 
-                'activities', 
+                'centre',
+                'activities',
                 'enrollments' => function($query) {
                     $query->whereIn('enrollment_status', ['enrolled', 'active']);
                 }
-            ])->paginate(8);
+            ])->latest()->paginate(8);
             
             // Get all active centers for filter dropdown
             // Check if we need to use status or centre_status based on your DB structure

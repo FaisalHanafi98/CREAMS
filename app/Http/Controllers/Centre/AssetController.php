@@ -433,11 +433,13 @@ class AssetController extends Controller
     /**
      * Show the form for editing the specified asset
      */
-    public function edit(Asset $asset)
+    public function edit($id)
     {
         if (!session()->has('id')) {
             return redirect()->route('auth.loginpage');
         }
+
+        $asset = Asset::findOrFail($id);
 
         if (!in_array(session('role'), ['admin', 'supervisor'])) {
             abort(403, 'Unauthorized access');
@@ -449,7 +451,9 @@ class AssetController extends Controller
         }
 
         $categories = AssetCategory::active()->get();
-        $centres = session('role') === 'admin' ? Centre::all() : Centre::where('id', session('centre_id'))->get();
+        $centres = session('role') === 'admin'
+            ? Centre::all()
+            : Centre::where('centre_id', session('centre_id'))->get();
         $users = User::where('centre_id', $asset->centre_id)->get();
 
         return view('assets.edit', compact('asset', 'categories', 'centres', 'users'));
@@ -458,12 +462,14 @@ class AssetController extends Controller
     /**
      * Update the specified asset
      */
-    public function update(Request $request, Asset $asset)
+    public function update(Request $request, $id)
     {
         try {
             if (!session()->has('id')) {
                 return redirect()->route('auth.loginpage');
             }
+
+            $asset = Asset::findOrFail($id);
 
             if (!in_array(session('role'), ['admin', 'supervisor'])) {
                 abort(403, 'Unauthorized access');
