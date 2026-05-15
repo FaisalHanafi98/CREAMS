@@ -1,22 +1,18 @@
-name: CREAMS CI/CD Pipeline
+name: CREAMS Deploy
+
+# Deployment is manual via SSH on Hostinger shared hosting.
+# This workflow only runs tests on push to main and dev.
+# To deploy: SSH to server and run git pull + php artisan cache commands.
 
 on:
   push:
     branches:
-      - main      # Deploy to production
-      - staging   # Deploy to staging
-      - dev       # Deploy to development
-
-env:
-  SSH_USER: ec2-user
-  SERVER_IP: ${{ secrets.LIGHTSAIL_IP }}
+      - main
+      - dev
 
 jobs:
-  # ============================================
-  # JOB 1: Run Tests
-  # ============================================
   test:
-    name: Run Tests
+    name: Run Tests Before Deploy
     runs-on: ubuntu-latest
 
     services:
@@ -27,21 +23,24 @@ jobs:
           MYSQL_DATABASE: creams_test
         ports:
           - 3306:3306
-        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup PHP
+      - name: Setup PHP 8.2
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.1'
+          php-version: '8.2'
           extensions: mbstring, pdo_mysql, bcmath, xml, curl, zip, gd
-          coverage: xdebug
 
       - name: Install Composer dependencies
-        run: composer install --prefer-dist --no-progress --no-suggest
+        run: composer install --prefer-dist --no-progress --no-interaction
 
       - name: Copy environment file
         run: cp .env.example .env
@@ -69,145 +68,9 @@ jobs:
           DB_USERNAME: root
           DB_PASSWORD: password
 
-  # ============================================
-  # JOB 2: Deploy to Development
-  # ============================================
-  deploy-dev:
-    name: Deploy to Development
-    needs: test
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/dev'
-    environment: development
-
-    steps:
-      - name: Deploy to dev server
-        uses: appleboy/ssh-action@v1.0.0
-        with:
-          host: ${{ secrets.LIGHTSAIL_IP }}
-          username: ec2-user
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: |
-            cd /var/www/creams-dev
-
-            # Pull latest changes
-            git fetch origin dev
-            git reset --hard origin/dev
-
-            # Install dependencies
-            composer install --no-dev --optimize-autoloader
-            npm ci && npm run build
-
-            # Preview migrations before applying
-            php artisan migrate --pretend || true
-            php artisan migrate --force
-
-            # Clear and rebuild caches
-            php artisan config:clear
-            php artisan route:clear
-            php artisan view:clear
-            php artisan config:cache
-            php artisan route:cache
-            php artisan view:cache
-
-            # Restart PHP-FPM
-            sudo systemctl reload php-fpm
-
-            echo "✅ Development deployment complete!"
-
-  # ============================================
-  # JOB 3: Deploy to Staging
-  # ============================================
-  deploy-staging:
-    name: Deploy to Staging
-    needs: test
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/staging'
-    environment: staging
-
-    steps:
-      - name: Deploy to staging server
-        uses: appleboy/ssh-action@v1.0.0
-        with:
-          host: ${{ secrets.LIGHTSAIL_IP }}
-          username: ec2-user
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: |
-            cd /var/www/creams-staging
-
-            # Pull latest changes
-            git fetch origin staging
-            git reset --hard origin/staging
-
-            # Install dependencies
-            composer install --no-dev --optimize-autoloader
-            npm ci && npm run build
-
-            # Preview migrations before applying
-            php artisan migrate --pretend || true
-            php artisan migrate --force
-
-            # Clear and rebuild caches
-            php artisan config:clear
-            php artisan route:clear
-            php artisan view:clear
-            php artisan config:cache
-            php artisan route:cache
-            php artisan view:cache
-
-            # Restart PHP-FPM
-            sudo systemctl reload php-fpm
-
-            echo "✅ Staging deployment complete!"
-
-  # ============================================
-  # JOB 4: Deploy to Production
-  # ============================================
-  deploy-production:
-    name: Deploy to Production
-    needs: test
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
-    environment: production
-
-    steps:
-      - name: Deploy to production server
-        uses: appleboy/ssh-action@v1.0.0
-        with:
-          host: ${{ secrets.LIGHTSAIL_IP }}
-          username: ec2-user
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: |
-            cd /var/www/creams-prod
-
-            # Enable maintenance mode
-            php artisan down --message="Deploying updates..." --retry=60
-
-            # Pull latest changes
-            git fetch origin main
-            git reset --hard origin/main
-
-            # Install dependencies
-            composer install --no-dev --optimize-autoloader
-            npm ci && npm run build
-
-            # Preview migrations before applying
-            echo "=== Migration preview ==="
-            php artisan migrate --pretend || true
-            echo "=== Applying migrations ==="
-            php artisan migrate --force
-
-            # Clear and rebuild caches
-            php artisan config:clear
-            php artisan route:clear
-            php artisan view:clear
-            php artisan config:cache
-            php artisan route:cache
-            php artisan view:cache
-
-            # Restart PHP-FPM
-            sudo systemctl reload php-fpm
-
-            # Disable maintenance mode
-            php artisan up
-
-            echo "✅ Production deployment complete!"
+      - name: Remind to deploy manually
+        if: success()
+        run: |
+          echo "Tests passed on branch ${{ github.ref_name }}"
+          echo "To deploy to production: SSH to server, cd public_html, git pull origin main"
+          echo "Then: php artisan config:cache && php artisan route:cache && php artisan view:cache"

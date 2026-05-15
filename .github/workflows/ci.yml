@@ -2,9 +2,9 @@ name: CREAMS CI — Tests & Lint
 
 on:
   push:
-    branches: [Fixers]
+    branches: [main, dev, Fixers]
   pull_request:
-    branches: [main, Fixers]
+    branches: [main, dev, Fixers]
 
 jobs:
   test:
@@ -15,10 +15,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup PHP 8.1
+      - name: Setup PHP 8.2
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.1'
+          php-version: '8.2'
           extensions: mbstring, pdo_sqlite, xml, dom, curl, zip, gd, bcmath
           coverage: xdebug
 
