@@ -13,13 +13,19 @@ class CreateCreamsSystemConstraints extends Migration
      */
     public function up(): void
     {
-        // Skip if constraints already exist (preserves current logic)
-        if (
-            Schema::hasColumn('staffs', 'centre_id') &&
-            collect(DB::select("SHOW CREATE TABLE staffs"))[0]->{'Create Table'} ?? '' &&
-            str_contains(collect(DB::select("SHOW CREATE TABLE staffs"))[0]->{'Create Table'} ?? '', 'FOREIGN KEY')
-        ) {
+        // SQLite does not support the foreign key addition syntax used here.
+        // CI runs migrations on SQLite; production runs on MySQL.
+        // Skip the entire migration on SQLite — tests do not rely on FK constraints.
+        if (DB::getDriverName() === 'sqlite') {
             return;
+        }
+
+        // On MySQL: skip if foreign keys are already present (idempotent re-run safety)
+        if (Schema::hasColumn('staffs', 'centre_id')) {
+            $create = DB::select("SHOW CREATE TABLE staffs");
+            if (!empty($create) && str_contains($create[0]->{'Create Table'} ?? '', 'FOREIGN KEY')) {
+                return;
+            }
         }
 
         // 1. FOUNDATION CONSTRAINTS
