@@ -348,7 +348,7 @@ class AssetController extends Controller
                 'created_by' => session('id')
             ]);
 
-            return redirect()->route('asset-parents.show', $asset->id)
+            return redirect()->route('assets.show', $asset->id)
                 ->with('success', 'Asset created successfully');
         } catch (Exception $e) {
             Log::error('Error creating asset', [
@@ -426,7 +426,7 @@ class AssetController extends Controller
                 'error' => $e->getMessage()
             ]);
 
-            return redirect()->route('asset-parents.index')->with('error', 'Error loading asset details');
+            return redirect()->route('assets.index')->with('error', 'Error loading asset details');
         }
     }
 
@@ -572,7 +572,7 @@ class AssetController extends Controller
                 'assignment_changed' => $oldAssignedTo != $newAssignedTo
             ]);
 
-            return redirect()->route('asset-parents.show', $asset->id)
+            return redirect()->route('assets.show', $asset->id)
                 ->with('success', 'Asset updated successfully');
         } catch (Exception $e) {
             Log::error('Error updating asset', [
@@ -634,7 +634,7 @@ class AssetController extends Controller
                 'deleted_by' => session('id')
             ]);
 
-            return redirect()->route('asset-parents.index')
+            return redirect()->route('assets.index')
                 ->with('success', 'Asset deleted successfully');
         } catch (Exception $e) {
             Log::error('Error deleting asset', [

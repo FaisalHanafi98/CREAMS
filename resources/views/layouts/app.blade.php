@@ -1264,12 +1264,14 @@
                             Home
                         </a>
                     </li>
+                    @if (session('role') !== 'ajk')
                     <li>
                         <a href="{{ route('trainees.create') }}"
                             class="sidebar-submenu-link {{ Route::currentRouteName() == 'trainees.create' ? 'active' : '' }}">
                             Registration
                         </a>
                     </li>
+                    @endif
                 </ul>
             </li>
 

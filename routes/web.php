@@ -754,9 +754,12 @@ Route::middleware(['auth', 'centre.access:trainee'])->group(function () {
 Route::middleware(['auth', 'centre.access:trainee'])->prefix('trainees')->name('trainees.')->group(function () {
     Route::get('/home', [TraineeHomeController::class, 'index'])->name('home');
     Route::get('/index', [TraineeHomeController::class, 'index'])->name('index'); // Alternative route
-    Route::get('/create', [TraineeRegistrationController::class, 'index'])->name('create');
-    Route::get('/register', [TraineeRegistrationController::class, 'index'])->name('register');
-    Route::post('/', [TraineeRegistrationController::class, 'store'])->name('store');
+    // Trainee create/store — Admin, Supervisor, and Teacher only. AJK cannot register trainees.
+    Route::middleware(['role:admin,supervisor,teacher'])->group(function () {
+        Route::get('/create', [TraineeRegistrationController::class, 'index'])->name('create');
+        Route::get('/register', [TraineeRegistrationController::class, 'index'])->name('register');
+        Route::post('/', [TraineeRegistrationController::class, 'store'])->name('store');
+    });
     Route::get('/schedule/{encrypted_id}', [TraineeHomeController::class, 'schedule'])->name('schedule'); // Schedule route with encrypted ID
     Route::get('/attendance/{encrypted_id}', [TraineeHomeController::class, 'attendance'])->name('attendance'); // Attendance route with encrypted ID
     Route::post('/attendance/{encrypted_id}/mark', [TraineeHomeController::class, 'markAttendance'])->name('attendance.mark'); // Mark attendance route
