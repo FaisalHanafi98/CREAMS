@@ -1140,9 +1140,12 @@
                         </a>
                     @endif
                     <div class="dropdown-divider"></div>
-                    <a href="{{ route('logout') }}" class="dropdown-item text-danger">
-                        <i class="fas fa-sign-out-alt"></i> Logout
-                    </a>
+                    <form method="POST" action="{{ route('logout.post') }}" style="margin:0;padding:0;">
+                        @csrf
+                        <button type="submit" class="dropdown-item text-danger" style="background:none;border:none;width:100%;text-align:left;cursor:pointer;">
+                            <i class="fas fa-sign-out-alt"></i> Logout
+                        </button>
+                    </form>
                 </div>
             </div>
         </div>

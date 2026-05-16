@@ -600,6 +600,22 @@
 
 @section('content')
 <div class="container-fluid">
+    {{-- Persistent success/error banners (in addition to toast) --}}
+    @if(session('success'))
+    <div class="alert alert-success alert-dismissible fade show mb-3" role="alert">
+        <i class="fas fa-check-circle me-2"></i>
+        <strong>{{ session('success') }}</strong>
+        &mdash; Use the search box below to find the new record.
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    @endif
+    @if(session('error'))
+    <div class="alert alert-danger alert-dismissible fade show mb-3" role="alert">
+        <i class="fas fa-exclamation-circle me-2"></i> {{ session('error') }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    @endif
+
     <!-- Header -->
     <div class="trainee-header">
         <div class="row align-items-center">

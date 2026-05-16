@@ -19,6 +19,20 @@
     </div>
     @endif
 
+    @if($errors->any())
+    <div class="alert alert-danger mb-4" role="alert">
+        <h6 class="alert-heading font-weight-bold mb-2">
+            <i class="fas fa-exclamation-triangle mr-1"></i>
+            Please fix the following before submitting:
+        </h6>
+        <ul class="mb-0 pl-3">
+            @foreach($errors->all() as $error)
+                <li>{{ $error }}</li>
+            @endforeach
+        </ul>
+    </div>
+    @endif
+
     <!-- Personal Information Section -->
     <div class="card mb-4">
         <div class="card-header">
