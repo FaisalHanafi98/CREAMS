@@ -49,7 +49,10 @@ for i in "${!PATTERNS[@]}"; do
         # Exclude docs/ and resources/views/ from code-pattern checks — both contain
         # UI text and code examples that legitimately match "password" patterns.
         # IC pattern still applies to docs/ (PDPA). views/ IC exclusion is below.
-        MATCHES=$(echo "$STAGED_FILES" | xargs grep -lnE "${PATTERNS[$i]}" 2>/dev/null | grep -v '.githooks/' | grep -v '.env.example' | grep -v '^docs/' | grep -v '^resources/views/' | grep -v '^database/seeders/IRLSeeder\.php$')
+        # app/Http/Controllers/MainController.php contains validation error
+        # message strings (e.g. 'Password must be at least 8 characters.')
+        # that match the password pattern but are not credentials.
+        MATCHES=$(echo "$STAGED_FILES" | xargs grep -lnE "${PATTERNS[$i]}" 2>/dev/null | grep -v '.githooks/' | grep -v '.env.example' | grep -v '^docs/' | grep -v '^resources/views/' | grep -v '^database/seeders/IRLSeeder\.php$' | grep -v '^app/Http/Controllers/MainController\.php$')
     else
         MATCHES=$(echo "$STAGED_FILES" | xargs grep -lnE "${PATTERNS[$i]}" 2>/dev/null | grep -v '.githooks/' | grep -v '.env.example' | grep -v '^database/seeders/IRLSeeder\.php$')
     fi

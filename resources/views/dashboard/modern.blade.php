@@ -3079,7 +3079,9 @@ async function fetchWeather() {
         weatherWidget.title = `Feels like ${feelsLike}°C • Humidity: ${humidity}% • ${locationName}, Malaysia`;
 
     } catch (error) {
-        console.error('Weather fetch error:', error);
+        // Suppress console.error — weather API is optional and may be blocked
+        // by server-side outbound restrictions. UI already shows fallback.
+        console.warn('Weather widget: service unreachable, showing fallback.');
         weatherWidget.innerHTML = `
             <i class="fas fa-cloud"></i>
             <span>Weather unavailable</span>

@@ -692,68 +692,62 @@ class MainController extends Controller
      */
     public function logout(Request $request)
     {
-        $userId = session('id');
+        $userId   = session('id');
         $userRole = session('role');
         $sessionId = session()->getId();
 
         Log::info('User logout initiated', [
-            'user_id' => $userId,
-            'role' => $userRole,
+            'user_id'    => $userId,
+            'role'       => $userRole,
             'session_id' => $sessionId,
-            'ip' => $request->ip()
+            'ip'         => $request->ip(),
         ]);
 
-        // Check if user had remember me enabled before logout
-        $hadRememberMe = session('remember_me', false);
-        
-        // If the user is logged in and wants to clear remember me completely
+        // Always null out the DB remember_token on logout.
+        // Preserving it allows RememberMe middleware to re-authenticate
+        // the user on the very next request (e.g. the redirect-target '/')
+        // even after session->invalidate() has cleared the session data.
         if ($userId) {
             try {
                 $user = User::find($userId);
-
-                if ($user && !$hadRememberMe) {
-                    // Only clear remember token if they didn't have remember me enabled
-                    Log::debug('Clearing remember token for non-remember user', ['user_id' => $userId]);
+                if ($user) {
                     $user->remember_token = null;
                     $user->save();
-                } elseif ($user && $hadRememberMe) {
-                    // Keep remember token for remember me users
-                    Log::debug('Preserving remember token for remember me user', ['user_id' => $userId]);
-                } else {
-                    Log::warning('User not found during logout', ['user_id' => $userId]);
+                    Log::debug('Remember token nulled in DB on logout', ['user_id' => $userId]);
                 }
             } catch (\Exception $e) {
-                Log::error('Error updating user during logout', [
+                Log::error('Error clearing remember token during logout', [
                     'user_id' => $userId,
-                    'message' => $e->getMessage()
+                    'message' => $e->getMessage(),
                 ]);
             }
         }
 
-        // Clear remember token cookie only if they didn't have remember me
-        if (!$hadRememberMe) {
-            Cookie::queue(Cookie::forget('remember_token'));
-            Log::debug('Cleared remember token cookie for non-remember logout');
-        } else {
-            Log::debug('Preserving remember token cookie for remember me user');
-        }
+        // Always delete the remember_token cookie — regardless of how the
+        // session was established. This prevents the RememberMe middleware
+        // from finding a stale cookie and re-authenticating after logout.
+        Cookie::queue(Cookie::forget('remember_token'));
 
-        // Store log data before clearing session
+        // Store log data before the session is cleared
         $logData = [
-            'user_id' => $userId,
-            'role' => $userRole,
-            'session_id' => $sessionId,
-            'logout_time' => now()->toDateTimeString()
+            'user_id'     => $userId,
+            'role'        => $userRole,
+            'session_id'  => $sessionId,
+            'logout_time' => now()->toDateTimeString(),
         ];
 
-        // Clear the session
+        // Invalidate the session fully and generate a fresh CSRF token
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        // Log after session is cleared
         Log::info('User logged out successfully', $logData);
 
-        return redirect('/');
+        // Redirect directly to the login page — NOT to '/' — because the
+        // homepage closure at routes/web.php redirects authenticated users
+        // to their role dashboard. Sending to '/' with a stale cookie could
+        // cause a visible flash back to the dashboard before the cookie is
+        // fully processed by the browser.
+        return redirect()->route('auth.loginpage');
     }
     
     /**
