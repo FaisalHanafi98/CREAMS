@@ -723,9 +723,7 @@ class MainController extends Controller
             }
         }
 
-        // Always delete the remember_token cookie — regardless of how the
-        // session was established. This prevents the RememberMe middleware
-        // from finding a stale cookie and re-authenticating after logout.
+        // Always delete the remember_token cookie on every logout path.
         Cookie::queue(Cookie::forget('remember_token'));
 
         // Store log data before the session is cleared
@@ -736,17 +734,25 @@ class MainController extends Controller
             'logout_time' => now()->toDateTimeString(),
         ];
 
-        // Invalidate the session fully and generate a fresh CSRF token
+        // Belt-and-suspenders: explicitly forget every custom session key
+        // before calling invalidate(). On some PHP session drivers (file,
+        // shared-host), invalidate() may not remove the old session file
+        // immediately. Explicit forget ensures the auth keys are gone even
+        // if the file persists briefly.
+        $request->session()->forget([
+            'id', 'role', 'centre_id', 'name', 'email', 'iium_id',
+            'avatar', 'user_avatar', 'phone', 'address', 'bio',
+            'date_of_birth', 'logged_in', 'login_time', 'login_method',
+            'remember_me', 'last_activity', 'last_refresh',
+        ]);
+        $request->session()->flush();
+
+        // Invalidate the session (generates new ID, clears remaining data)
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
         Log::info('User logged out successfully', $logData);
 
-        // Redirect directly to the login page — NOT to '/' — because the
-        // homepage closure at routes/web.php redirects authenticated users
-        // to their role dashboard. Sending to '/' with a stale cookie could
-        // cause a visible flash back to the dashboard before the cookie is
-        // fully processed by the browser.
         return redirect()->route('auth.loginpage');
     }
     

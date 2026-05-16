@@ -90,12 +90,20 @@ class SecurityHeadersMiddleware
         ];
         $response->headers->set('Permissions-Policy', implode(', ', $permissionsPolicy));
 
-        // Cache-Control: Prevent browser from caching authenticated pages (PDPA compliance).
-        // Only applied when the user has an active session to avoid impacting public pages.
+        // Cache-Control: Prevent browser AND LiteSpeed from caching authenticated pages.
+        // Applied whenever a session exists (logged in) OR for all PHP-processed responses
+        // on routes that are not purely public static content.
         if (session()->has('id')) {
+            // Authenticated page — must never be cached by browser or proxy.
             $response->headers->set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
             $response->headers->set('Pragma', 'no-cache');
             $response->headers->set('Expires', '0');
+            // LiteSpeed-specific: tell LiteSpeed not to cache this response.
+            // Without this, LiteSpeed on Hostinger may serve a cached authenticated
+            // page to unauthenticated users, making logout appear not to work.
+            $response->headers->set('X-LiteSpeed-Cache-Control', 'no-cache, no-store');
+            // Vary by Cookie so any caching layer treats each session as distinct.
+            $response->headers->set('Vary', 'Cookie');
         }
 
         return $response;
