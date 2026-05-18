@@ -14,8 +14,37 @@
     RewriteCond %{REQUEST_URI} (.+)/$
     RewriteRule ^ %1 [L,R=301]
 
+    # Route /assets/* to Laravel so LiteSpeed does not serve public/assets/
+    # as a static directory (would return 403 instead of the Asset module).
+    RewriteRule ^assets(/.*)?$ index.php [L]
+
     # Send Requests To Front Controller...
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteRule ^ index.php [L]
+</IfModule>
+
+# ---------------------------------------------------------------------------
+# LiteSpeed / Proxy Cache Control
+#
+# Production evidence shows LiteSpeed serving authenticated dashboard pages
+# from cache without running PHP. This causes logout to appear ineffective
+# because the browser receives cached HTML that bypasses all middleware.
+#
+# These directives tell LiteSpeed and any upstream proxy not to store or
+# serve cached copies of ANY response from this application. Public pages
+# (home, contact, volunteer) accept the small performance cost in exchange
+# for correct PDPA-compliant session behaviour.
+# ---------------------------------------------------------------------------
+<IfModule mod_headers.c>
+    # Standard browser and proxy no-cache
+    Header always set Cache-Control "no-store, no-cache, must-revalidate, private"
+    Header always set Pragma "no-cache"
+    Header always set Expires "0"
+
+    # LiteSpeed-specific: bypass its internal page cache
+    Header always set X-LiteSpeed-Cache-Control "no-cache, no-store"
+
+    # Vary by Cookie so any intermediate cache treats each session separately
+    Header always set Vary "Cookie"
 </IfModule>
