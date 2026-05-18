@@ -1121,12 +1121,12 @@
                             <i class="fas fa-user-circle"></i> My Profile
                         </a>
                     @else
-                        <a href="#" class="dropdown-item" onclick="alert('Profile feature coming soon')">
+                        <span class="dropdown-item text-muted" style="cursor:default;opacity:0.55;">
                             <i class="fas fa-user-circle"></i> My Profile
                         </a>
                     @endif
                     <a href="#" class="dropdown-item"
-                        onclick="event.preventDefault(); triggerNotificationDropdown(); return false;">
+                        onclick="triggerNotificationDropdown();">
                         <i class="fas fa-bell"></i> Notification
                     </a>
                     @if (Route::has(session('role') . '.settings'))
@@ -1135,7 +1135,7 @@
                         </a>
                     @else
                         <a href="#" class="dropdown-item"
-                            onclick="if(typeof showSettingsMessage === 'function') { showSettingsMessage(); } else { alert('Function not available!'); }">
+                            aria-disabled="true" tabindex="-1" style="opacity:0.6;cursor:default;pointer-events:none;">
                             <i class="fas fa-cog"></i> Settings
                         </a>
                     @endif
@@ -1183,10 +1183,7 @@
                                 Personal Info
                             </a>
                         @else
-                            <a href="#" class="sidebar-submenu-link"
-                                onclick="alert('Profile feature coming soon')">
-                                Personal Info
-                            </a>
+                            <span class="sidebar-submenu-link text-muted" style="cursor:default;opacity:0.6;">Personal Info</span>
                         @endif
                     </li>
                     @if (in_array(session('role'), ['admin', 'supervisor']) && Route::has('letters.dashboard'))
@@ -1228,10 +1225,7 @@
                                     {{ session('role') === 'ajk' ? 'View Staffs' : 'Home' }}
                                 </a>
                             @else
-                                <a href="#" class="sidebar-submenu-link"
-                                    onclick="alert('User feature coming soon')">
-                                    Home
-                                </a>
+                                <span class="sidebar-submenu-link text-muted" style="cursor:default;opacity:0.6;">Home</span>
                             @endif
                         </li>
                         @if(session('role') !== 'ajk')
@@ -1242,10 +1236,7 @@
                                     Registration
                                 </a>
                             @else
-                                <a href="#" class="sidebar-submenu-link"
-                                    onclick="alert('Registration feature coming soon')">
-                                    Registration
-                                </a>
+                                <span class="sidebar-submenu-link text-muted" style="cursor:default;opacity:0.6;">Registration</span>
                             @endif
                         </li>
                         @endif
@@ -1324,10 +1315,7 @@
                                 Home
                             </a>
                         @else
-                            <a href="#" class="sidebar-submenu-link"
-                                onclick="alert('Centre feature coming soon')">
-                                Home
-                            </a>
+                            <span class="sidebar-submenu-link text-muted" style="cursor:default;opacity:0.6;">Home</span>
                         @endif
                     </li>
                     @if (in_array(session('role'), ['admin', 'supervisor']))
@@ -1363,7 +1351,7 @@
                     </a>
                 @else
                     <a href="#" class="sidebar-link"
-                        onclick="if(typeof showReportsMessage === 'function') { showReportsMessage(); } else { alert('Function not available!'); }">
+                        aria-disabled="true" tabindex="-1" style="opacity:0.6;cursor:default;pointer-events:none;">
                         <span class="sidebar-icon"><i class="fas fa-chart-bar"></i></span>
                         <span class="sidebar-text">Reports</span>
                         <span class="feature-badge">Development</span>
@@ -1380,7 +1368,7 @@
                     </a>
                 @else
                     <a href="#" class="sidebar-link"
-                        onclick="if(typeof showSettingsMessage === 'function') { showSettingsMessage(); } else { alert('Function not available!'); }">
+                        aria-disabled="true" tabindex="-1" style="opacity:0.6;cursor:default;pointer-events:none;">
                         <span class="sidebar-icon"><i class="fas fa-cog"></i></span>
                         <span class="sidebar-text">Settings</span>
                         <span class="feature-badge">Development</span>
@@ -2222,6 +2210,24 @@
 
     @yield('scripts')
     @stack('scripts')
+
+    {{--
+        BFCache guard — authenticated layout only.
+        Modern browsers (Chrome, Firefox, Safari) keep pages in a Back-Forward
+        Cache (BFCache) in memory. When the user presses Back after logout, the
+        browser restores the page from BFCache without making a new HTTP request,
+        so server-side session checks never run. This pageshow listener detects
+        a BFCache restore (event.persisted === true) and immediately redirects to
+        the login page, preventing stale authenticated content from appearing.
+    --}}
+    <script>
+        window.addEventListener('pageshow', function (event) {
+            if (event.persisted) {
+                // Page was restored from BFCache — session may be stale.
+                window.location.replace('{{ route("auth.loginpage") }}');
+            }
+        });
+    </script>
 </body>
 
 </html>

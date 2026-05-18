@@ -316,11 +316,11 @@ class TraineeRegistrationController extends Controller
                 'centre' => $trainee->centre_name
             ]);
             
-            return $this->successResponse(
-                'Trainee registered successfully.',
-                null,
-                'trainees.home'
-            );
+            // Redirect with both flash AND query param — the query param
+            // ensures the success banner shows even if session flash is not
+            // available in the Blade @section render order.
+            return redirect()->route('trainees.home', ['created' => '1'])
+                ->with('success', 'Trainee registered successfully.');
                 
         } catch (\Exception $e) {
             DB::rollBack();

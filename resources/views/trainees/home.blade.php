@@ -600,19 +600,23 @@
 
 @section('content')
 <div class="container-fluid">
-    {{-- Persistent success/error banners (in addition to toast) --}}
-    @if(session('success'))
+    {{-- Persistent success/error banners --}}
+    @php
+        $successMsg = session('success') ?: (request('created') ? 'Trainee registered successfully.' : null);
+        $errorMsg   = session('error');
+    @endphp
+    @if($successMsg)
     <div class="alert alert-success alert-dismissible fade show mb-3" role="alert">
         <i class="fas fa-check-circle me-2"></i>
-        <strong>{{ session('success') }}</strong>
+        <strong>{{ $successMsg }}</strong>
         &mdash; Use the search box below to find the new record.
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
     @endif
-    @if(session('error'))
+    @if($errorMsg)
     <div class="alert alert-danger alert-dismissible fade show mb-3" role="alert">
-        <i class="fas fa-exclamation-circle me-2"></i> {{ session('error') }}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        <i class="fas fa-exclamation-circle me-2"></i> {{ $errorMsg }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
     @endif
 
