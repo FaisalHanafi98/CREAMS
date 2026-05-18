@@ -7,6 +7,27 @@ define('LARAVEL_START', microtime(true));
 
 /*
 |--------------------------------------------------------------------------
+| Prevent LiteSpeed / Proxy Caching (Hostinger Shared Hosting)
+|--------------------------------------------------------------------------
+|
+| LiteSpeed on Hostinger caches PHP responses and serves them without
+| running PHP on subsequent requests. This causes logout to appear broken
+| because protected pages are served from cache after session invalidation.
+|
+| Setting these headers here — before the framework boots — ensures they
+| are present on every PHP-executed response regardless of middleware or
+| .htaccess compatibility. LiteSpeed reads X-LiteSpeed-Cache-Control to
+| decide whether to cache a response.
+|
+*/
+header('Cache-Control: no-store, no-cache, must-revalidate, private');
+header('Pragma: no-cache');
+header('Expires: 0');
+header('X-LiteSpeed-Cache-Control: no-cache, no-store');
+header('Vary: Cookie');
+
+/*
+|--------------------------------------------------------------------------
 | Check If The Application Is Under Maintenance
 |--------------------------------------------------------------------------
 |
