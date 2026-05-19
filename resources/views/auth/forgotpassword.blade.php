@@ -323,7 +323,7 @@
                 </div>
             @endif
             
-            <form method="POST" action="{{ demo_route('password.email') }}" id="forgot-form">
+            <form method="POST" action="{{ demo_route('password.email') }}" id="forgot-form" novalidate>
                 @csrf
                 
                 <div class="form-group">

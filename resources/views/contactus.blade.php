@@ -131,7 +131,7 @@
                     </div>
                     @endif
 
-                    <form action="{{ route('contact.submit') }}" method="POST" id="contactForm">
+                    <form action="{{ route('contact.submit') }}" method="POST" id="contactForm" novalidate>
                         @csrf
                         <div class="row">
                             <div class="col-md-6">
@@ -164,7 +164,7 @@
                                     <label for="phone">Phone Number</label>
                                     <input type="tel" name="phone" id="phone" 
                                            class="form-control @error('phone') is-invalid @enderror" 
-                                           value="{{ old('phone', '+60') }}" 
+                                           value="{{ old('phone') }}"
                                            placeholder="+60123456789">
                                     @error('phone')
                                         <div class="invalid-feedback">{{ $message }}</div>

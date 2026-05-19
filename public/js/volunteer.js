@@ -125,8 +125,20 @@ function initializeMultiStepForm() {
 
     function validateField(field) {
         const value = field.type === 'checkbox' ? field.checked : field.value.trim();
-        const isValid = field.type === 'checkbox' ? field.checked : value !== '';
-        toggleFieldError(field, isValid, 'This field is required');
+        let isValid = field.type === 'checkbox' ? field.checked : value !== '';
+        let message = 'This field is required';
+
+        if (isValid && field.type === 'email' && value) {
+            isValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+            message = 'Please enter a valid email address';
+        }
+
+        if (isValid && field.type === 'tel' && value) {
+            isValid = /^[\+]?[0-9\s\-\(\)]{8,}$/.test(value);
+            message = 'Please enter a valid phone number';
+        }
+
+        toggleFieldError(field, isValid, message);
         return isValid;
     }
 

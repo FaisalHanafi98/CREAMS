@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 use Carbon\Carbon;
 use App\Models\User;
 use App\Models\Trainee;
@@ -673,13 +674,18 @@ class DashboardController extends Controller
                 ->count();
             
             // Calculate maintenance alerts
-            $maintenanceAlerts = DB::table('assets')
+            $maintenanceAlertsQuery = DB::table('assets')
                 ->where('centre_id', $centreId)
-                ->where(function($query) {
-                    $query->where('status', 'maintenance_required')
-                          ->orWhere('next_maintenance_date', '<=', now()->addDays(7));
-                })
-                ->count();
+                ->where('status', 'maintenance');
+
+            if (Schema::hasColumn('assets', 'next_maintenance_date')) {
+                $maintenanceAlertsQuery->orWhere(function ($query) use ($centreId) {
+                    $query->where('centre_id', $centreId)
+                        ->where('next_maintenance_date', '<=', now()->addDays(7));
+                });
+            }
+
+            $maintenanceAlerts = $maintenanceAlertsQuery->count();
             
             return [
                 [
@@ -2107,21 +2113,27 @@ class DashboardController extends Controller
                 // AJK performance stats - focus on facility management
                 $facilitiesManaged = DB::table('assets')
                     ->where('centre_id', $centreId)
-                    ->where('assigned_to', $userId)
+                    ->where('assigned_to_user', $userId)
                     ->count();
 
                 $maintenanceTasksCompleted = DB::table('asset_maintenance')
                     ->join('assets', 'asset_maintenance.asset_id', '=', 'assets.id')
                     ->where('assets.centre_id', $centreId)
-                    ->where('asset_maintenance.performed_by', $userId)
+                    ->where(function ($query) use ($userId) {
+                        $query->where('asset_maintenance.performed_by_user_id', $userId)
+                            ->orWhere('asset_maintenance.performed_by', (string) $userId);
+                    })
                     ->where('asset_maintenance.status', 'completed')
                     ->count();
 
                 $thisWeekTasks = DB::table('asset_maintenance')
                     ->join('assets', 'asset_maintenance.asset_id', '=', 'assets.id')
                     ->where('assets.centre_id', $centreId)
-                    ->where('asset_maintenance.assigned_to', $userId)
-                    ->whereBetween('asset_maintenance.session_date', [
+                    ->where(function ($query) use ($userId) {
+                        $query->where('asset_maintenance.performed_by_user_id', $userId)
+                            ->orWhere('asset_maintenance.performed_by', (string) $userId);
+                    })
+                    ->whereBetween('asset_maintenance.scheduled_date', [
                         now()->startOfWeek()->format('Y-m-d'), 
                         now()->endOfWeek()->format('Y-m-d')
                     ])

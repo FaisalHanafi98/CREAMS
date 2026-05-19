@@ -78,18 +78,10 @@ class UATSeeder extends Seeder
 
     private function seedStaff(array $centres): void
     {
-        Staff::updateOrCreate(
-            ['email' => 'super.admin@' . self::UAT_EMAIL_DOMAIN],
-            [
-                'name' => 'UAT Super Admin',
-                'role' => 'admin',
-                'centre_id' => '01',
-                'password' => Hash::make(self::UAT_PASS),
-                'status' => 'active',
-                'phone' => '+60-12-5000000',
-                'email_verified_at' => now(),
-            ]
-        );
+        $this->seedPublishedUatAccount('admin', 'UATA0001', 'super.admin@' . self::UAT_EMAIL_DOMAIN, 'UAT Super Admin', '01');
+        $this->seedPublishedUatAccount('supervisor', 'UATS0001', 'supervisor.a1@' . self::UAT_EMAIL_DOMAIN, 'UAT Centre A Supervisor', '01');
+        $this->seedPublishedUatAccount('teacher', 'UATT0001', 'teacher.a1@' . self::UAT_EMAIL_DOMAIN, 'UAT Centre A Teacher', '01');
+        $this->seedPublishedUatAccount('ajk', 'UATJ0001', 'ajk.a1@' . self::UAT_EMAIL_DOMAIN, 'UAT Centre A AJK', '01');
 
         $rolesPerCentre = ['admin' => 1, 'supervisor' => 2, 'teacher' => 4, 'ajk' => 2];
         foreach ($centres as $centreId => $centre) {
@@ -113,6 +105,25 @@ class UATSeeder extends Seeder
                 }
             }
         }
+    }
+
+    private function seedPublishedUatAccount(string $role, string $iiumId, string $email, string $name, string $centreId): void
+    {
+        Staff::updateOrCreate(
+            ['email' => $email],
+            [
+                'iium_id' => $iiumId,
+                'name' => $name,
+                'role' => $role,
+                'centre_id' => $centreId,
+                'position' => ucfirst($role),
+                'password' => Hash::make(self::UAT_PASS),
+                'status' => 'active',
+                'phone' => '+60-12-' . $this->faker->unique()->numerify('#######'),
+                'email_verified_at' => now(),
+                'address' => 'Synthetic UAT account for stakeholder browser testing.',
+            ]
+        );
     }
 
     private function seedTrainees(array $centres): void
@@ -347,7 +358,7 @@ class UATSeeder extends Seeder
                     'phone' => '+60-1' . $this->faker->numerify('#-#### ####'),
                     'address' => 'Malaysia',
                     'date_of_birth' => $this->faker->dateTimeBetween('-40 years', '-20 years')->format('Y-m-d'),
-                    'gender' => $this->faker->randomElement(['male', 'female']),
+                    'gender' => $this->faker->randomElement(['Male', 'Female']),
                     'skills' => $this->faker->randomElement([
                         'Special education support, communication, classroom assistance',
                         'Occupational therapy assistant, sensory activity facilitation',

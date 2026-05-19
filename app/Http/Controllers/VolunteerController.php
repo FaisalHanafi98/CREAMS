@@ -29,6 +29,12 @@ return view('volunteers.home');
 public function submit(Request $request)
 {
     try {
+        $request->merge([
+            'first_name' => trim((string) $request->input('first_name', '')),
+            'last_name' => trim((string) $request->input('last_name', '')),
+            'email' => strtolower(trim((string) $request->input('email', ''))),
+        ]);
+
         Log::info('Volunteer form submission started', [
             'email' => $request->email,
             'name' => $request->first_name . ' ' . $request->last_name
@@ -198,6 +204,7 @@ public function submit(Request $request)
 
         // Redirect back with success message
         return redirect()->route('volunteer')
+            ->with('volunteer_application_id', $application->volunteer_id)
             ->with('success', 'Thank you for your volunteer application! We have received your submission and sent a confirmation email to ' . $application->email . '. We will contact you within 7-10 business days regarding the next steps.');
         
     } catch (\Exception $e) {

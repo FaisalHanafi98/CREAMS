@@ -420,7 +420,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     }
     function isValidEmail(email) {
-    const emailRegex = /^[^\s@]+@[^\s@]+.[^\s@]{2,}$/;
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
     return emailRegex.test(email.trim());
     }
     function isValidPhone(phone) {

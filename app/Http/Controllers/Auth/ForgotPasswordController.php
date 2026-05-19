@@ -17,6 +17,8 @@ use Illuminate\Support\Facades\Log;
 
 class ForgotPasswordController extends Controller
 {
+    private const NEUTRAL_RESET_MESSAGE = 'If an account exists for this email, a reset link will be sent.';
+
     /**
      * Display forgot password form.
      *
@@ -40,14 +42,14 @@ class ForgotPasswordController extends Controller
             'email' => 'required|email',
         ]);
 
-        $email = $request->email;
+        $email = strtolower(trim($request->email));
         Log::info('Password reset requested for email', ['email' => $email]);
         
         $user = $this->findUserByEmail($email);
         
         if (!$user) {
-            Log::warning('Password reset failed: User not found', ['email' => $email]);
-            return back()->with('error', 'We can\'t find a user with that email address.');
+            Log::info('Password reset requested for non-existing account; neutral response returned', ['email' => $email]);
+            return back()->with('success', self::NEUTRAL_RESET_MESSAGE);
         }
 
         Log::info('User found for password reset', [
@@ -90,15 +92,15 @@ class ForgotPasswordController extends Controller
             Mail::to($email)->send(new PasswordResetEmail($mailData));
             
             Log::info('Password reset email sent successfully', ['email' => $email]);
-            return back()->with('success', 'We have emailed your password reset link. Please check your inbox.');
         } catch (\Exception $e) {
             Log::error('Failed to send password reset email', [
                 'email' => $email,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            return back()->with('error', 'Could not send reset email. Please try again later.');
         }
+
+        return back()->with('success', self::NEUTRAL_RESET_MESSAGE);
     }
 
     /**

@@ -42,6 +42,11 @@ Log::info('Contact page accessed', [
 public function submit(Request $request)
 {
     try {
+        $request->merge([
+            'name' => trim((string) $request->input('name', '')),
+            'email' => strtolower(trim((string) $request->input('email', ''))),
+        ]);
+
         Log::info('Contact form submission started', [
             'ip' => $request->ip(),
             'user_agent' => $request->userAgent(),
@@ -59,7 +64,7 @@ public function submit(Request $request)
             ],
             'email' => [
                 'required',
-                'email:rfc,dns',
+                'email:rfc',
                 'max:255'
             ],
             'phone' => [

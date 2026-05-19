@@ -251,6 +251,11 @@
                     <div class="alert alert-success mb-4" role="alert">
                         <i class="fas fa-check-circle me-2"></i>
                         <strong>Application received.</strong> {{ session('success') }}
+                        @if(session('volunteer_application_id'))
+                            <div class="mt-2">
+                                Application reference: <strong>{{ session('volunteer_application_id') }}</strong>
+                            </div>
+                        @endif
                     </div>
                     @endif
                     @if(session('error'))
@@ -270,7 +275,7 @@
                     @endif
 
                     {{-- Main Form --}}
-                    <form id="volunteerForm" action="{{ route('volunteer.submit') }}" method="POST">
+                    <form id="volunteerForm" action="{{ route('volunteer.submit') }}" method="POST" novalidate>
                         @csrf
                         
                         {{-- Step 1: Personal Information --}}
@@ -310,7 +315,7 @@
                                 <div class="form-group col-md-6">
                                     <label for="phone">Phone Number <span class="required">*</span></label>
                                     <input type="tel" class="form-control @error('phone') is-invalid @enderror" 
-                                           id="phone" name="phone" value="{{ old('phone', '+60') }}" 
+                                           id="phone" name="phone" value="{{ old('phone') }}"
                                            placeholder="+60123456789" required>
                                     @error('phone')
                                         <div class="invalid-feedback">{{ $message }}</div>
@@ -381,7 +386,7 @@
                                 <div class="form-group col-md-6">
                                     <label for="emergency_contact_phone">Emergency Contact Phone</label>
                                     <input type="tel" class="form-control @error('emergency_contact_phone') is-invalid @enderror" 
-                                           id="emergency_contact_phone" name="emergency_contact_phone" value="{{ old('emergency_contact_phone', '+60') }}"
+                                           id="emergency_contact_phone" name="emergency_contact_phone" value="{{ old('emergency_contact_phone') }}"
                                            placeholder="+60123456789">
                                     @error('emergency_contact_phone')
                                         <div class="invalid-feedback">{{ $message }}</div>
