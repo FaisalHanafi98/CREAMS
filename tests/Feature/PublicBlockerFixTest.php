@@ -105,7 +105,9 @@ class PublicBlockerFixTest extends TestCase
             ->assertSessionHas('success', self::NEUTRAL_RESET_MESSAGE)
             ->assertSessionMissing('error');
 
-        Mail::assertSent(PasswordResetEmail::class);
+        // PasswordResetEmail implements ShouldQueue, so Mail::to()->send()
+        // dispatches it to the queue rather than sending synchronously.
+        Mail::assertQueued(PasswordResetEmail::class);
         $this->assertDatabaseHas('password_resets', ['email' => $user->email]);
     }
 

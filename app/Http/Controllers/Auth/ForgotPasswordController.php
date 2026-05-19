@@ -111,7 +111,12 @@ class ForgotPasswordController extends Controller
      */
     private function findUserByEmail($email)
     {
-        $user = User::where('email', $email)->first();
+        // withoutGlobalScopes() bypasses CentreScope so password reset works
+        // regardless of session state (unauthenticated request, test session
+        // carry-over, or admin with cross-centre access).
+        $user = User::withoutGlobalScopes()->where('email', $email)
+                    ->where('status', 'active')
+                    ->first();
         
         if ($user) {
             Log::info('User found', [
