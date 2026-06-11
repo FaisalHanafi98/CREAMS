@@ -129,3 +129,21 @@ Carbon\Exceptions\UnknownMethodException: Method Carbon\Carbon::setWeekStartsAt 
 ```
 
 **Result**: ~2.92 GB / ~1,960 files relocated, 0 deleted, 0 application files touched. Changes are staged but **not committed** — commit requires owner approval per the root SOP (CREAMS is a PDPA project; auto-commit is prohibited).
+
+---
+
+## INCIDENT ADDENDUM — 2026-06-11 (late evening): untracked Archive bulk deleted by unknown actor
+
+After the archive moves were committed (`0ac1ac4`) and pushed, the on-disk `Archive/` tree was deleted by an unidentified process or manual action (not in the Recycle Bin; no matching commands in OpenCode session logs; not caused by this session's git operations).
+
+**Recovered in full** (from git): all 89 tracked Archive files via `git restore Archive/`.
+
+**Recovered partially** (from `stash@{1}`, the 2026-06-10 OpenCode Wave-1 stash): 6 UAT result JSONs (now force-added and tracked under `Archive/Historical_Screenshots/audit_screenshots/`) and 6 IRL reference PDFs (byte-duplicates of tracked files — no information loss).
+
+**Lost permanently** (untracked, gitignored, no surviving copy found):
+- `Archive/Historical_Screenshots/audit_screenshots/` PNG corpus (~505 MB, ~550 images). The machine-readable UAT JSON evidence survives.
+- `Archive/Legacy_Backups/storage-logs/` (~583 MB of dated Laravel/security/database logs, Nov 2025 - May 2026). PDPA-sensitive; treat as an unplanned retention end.
+- `Archive/Historical_UAT/` Playwright traces + HTML report (~1.7 GB) — regenerable by re-running the Playwright suite; no unique information.
+- `Archive/Historical_Screenshots/misc_images/` (4 mockup images) and `tmp-pw-harness/` node_modules (no value).
+
+**Root-cause lesson**: ignored-and-untracked content inside the repo tree has no safety net — it survives neither stashes, branch switches, nor deletion. Anything in `Archive/` worth keeping must be either git-tracked or backed up outside the repository. The recovered UAT JSONs were tracked immediately for this reason; `automation/` (recovered the same evening from `stash@{1}`) was backed up to `../CREAMS_automation_backup_2026-06-11.tar.gz` pending a PII-redaction pass before tracking.

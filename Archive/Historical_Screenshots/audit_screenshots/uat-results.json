@@ -1,0 +1,2953 @@
+{
+  "stamp": "20260518T092233Z",
+  "outDir": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-functional-uat-final-20260518T092233Z",
+  "environment": {
+    "target": "https://pdk-creams.org",
+    "dateTime": "2026-05-18T09:22:33.553Z",
+    "browser": "Playwright Chromium 1.60 / Chrome for Testing",
+    "javascriptEnabled": true,
+    "cleanContextsPerRole": true,
+    "syntheticDataOnly": true
+  },
+  "logins": [
+    {
+      "role": "Admin",
+      "email": "lakshmi.krishnan@iium.edu.my",
+      "loginPageUrl": "https://pdk-creams.org/auth/login",
+      "redirectChain": [
+        {
+          "url": "https://pdk-creams.org/auth/login",
+          "status": 200
+        },
+        {
+          "url": "https://pdk-creams.org/admin/dashboard",
+          "status": 200
+        },
+        {
+          "url": "https://pdk-creams.org/admin/dashboard",
+          "status": 200
+        }
+      ],
+      "finalDashboard": "https://pdk-creams.org/admin/dashboard",
+      "dashboardHeading": "👨‍💼 Welcome back, Dr. Lakshmi a/p Krishnan!",
+      "protectedPageAccessibleAfterLogin": true,
+      "bodySample": "CREAMS Admin Dashboard Dr. Lakshmi a/p Krishnan Administration Dashboard My Profile Personal Info Letters Volunteer Applications MANAGEMENT Staffs Home Registration Trainee Home Registration Activity Home Category Schedule Centre Home Asset Attendance REPORTS & SETTINGS Reports Development Settings Development Logout 🌙 Good Evening 👨‍💼 Admin 👨‍💼 Welcome back, Dr. Lakshmi a/p Krishnan! Your Admin dashboard is ready. Monday, May 18, 2026 5:22 PM 33°C Partly cloudy • Gombak General Personal 0 ACTIVE STAFF In Service 0 ACTIVE TRAINEES Growing 0 ONGOING ACTIVITIES Running 0 SESSIONS THIS WEEK ",
+      "consoleErrors": [
+        {
+          "type": "warning",
+          "text": "Weather widget: service unreachable, showing fallback.",
+          "url": "https://pdk-creams.org/admin/dashboard"
+        }
+      ],
+      "failedRequests": [
+        {
+          "url": "https://wttr.in/Gombak%2CMalaysia?format=j1",
+          "method": "GET",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        }
+      ],
+      "networkErrors": [],
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-functional-uat-final-20260518T092233Z\\login_Admin_pass.png",
+      "pass": true
+    },
+    {
+      "role": "Supervisor",
+      "email": "supervisor.gombak@iium.edu.my",
+      "loginPageUrl": "https://pdk-creams.org/auth/login",
+      "redirectChain": [
+        {
+          "url": "https://pdk-creams.org/auth/login",
+          "status": 200
+        },
+        {
+          "url": "https://pdk-creams.org/supervisor/dashboard",
+          "status": 200
+        },
+        {
+          "url": "https://pdk-creams.org/supervisor/dashboard",
+          "status": 200
+        }
+      ],
+      "finalDashboard": "https://pdk-creams.org/supervisor/dashboard",
+      "dashboardHeading": "👨‍💼 Welcome back, Dr. Aminah binti Mohd Said!",
+      "protectedPageAccessibleAfterLogin": true,
+      "bodySample": "CREAMS Supervisor Dashboard Dr. Aminah binti Mohd Said Supervisor Dashboard My Profile Personal Info Letters Volunteer Applications MANAGEMENT Staffs Home Registration Trainee Home Registration Activity Home Category Schedule Centre Home Asset Attendance REPORTS & SETTINGS Reports Development Settings Development Logout 🌙 Good Evening 👨‍💼 Supervisor 👨‍💼 Welcome back, Dr. Aminah binti Mohd Said! Your Supervisor dashboard is ready. Monday, May 18, 2026 5:22 PM 33°C Partly cloudy • Gombak Personal Live Data: Statistics updated from database records • Centre: Your Centre • Last updated: May 1",
+      "consoleErrors": [
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 404 ()",
+          "url": "https://pdk-creams.org/assets/71"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 404 ()",
+          "url": "https://pdk-creams.org/assets/118"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 404 ()",
+          "url": "https://pdk-creams.org/assets/55"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 403 ()",
+          "url": "https://pdk-creams.org/admin/dashboard"
+        }
+      ],
+      "failedRequests": [
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        }
+      ],
+      "networkErrors": [],
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-functional-uat-final-20260518T092233Z\\login_Supervisor_pass.png",
+      "pass": true
+    },
+    {
+      "role": "Teacher",
+      "email": "ahmad.hassan@iium.edu.my",
+      "loginPageUrl": "https://pdk-creams.org/auth/login",
+      "redirectChain": [
+        {
+          "url": "https://pdk-creams.org/auth/login",
+          "status": 200
+        },
+        {
+          "url": "https://pdk-creams.org/teacher/dashboard",
+          "status": 200
+        },
+        {
+          "url": "https://pdk-creams.org/teacher/dashboard",
+          "status": 200
+        }
+      ],
+      "finalDashboard": "https://pdk-creams.org/teacher/dashboard",
+      "dashboardHeading": "👩‍🏫 Welcome back, Ustaz Ahmad bin Hassan!",
+      "protectedPageAccessibleAfterLogin": true,
+      "bodySample": "CREAMS Teacher Dashboard Ustaz Ahmad bin Hassan Teacher Dashboard My Profile Personal Info MANAGEMENT Trainee Home Registration Activity Home Category Schedule Centre Home REPORTS & SETTINGS Reports Development Settings Development Logout 🌙 Good Evening 👩‍🏫 Teacher 👩‍🏫 Welcome back, Ustaz Ahmad bin Hassan! Your Teacher dashboard is ready. Monday, May 18, 2026 5:22 PM 33°C Partly cloudy • Gombak Personal Live Data: Statistics updated from database records • Centre: Your Centre • Last updated: May 18, 2026 at 5:22 PM Refresh 0 MY ACTIVITIES Activities I created/teach Ready to Create 0 THIS ",
+      "consoleErrors": [
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 404 ()",
+          "url": "https://pdk-creams.org/assets/71"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 404 ()",
+          "url": "https://pdk-creams.org/assets/118"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 404 ()",
+          "url": "https://pdk-creams.org/assets/55"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 403 ()",
+          "url": "https://pdk-creams.org/admin/dashboard"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 403 ()",
+          "url": "https://pdk-creams.org/letters"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 403 ()",
+          "url": "https://pdk-creams.org/assets/create"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 403 ()",
+          "url": "https://pdk-creams.org/letters"
+        }
+      ],
+      "failedRequests": [
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        }
+      ],
+      "networkErrors": [],
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-functional-uat-final-20260518T092233Z\\login_Teacher_pass.png",
+      "pass": true
+    },
+    {
+      "role": "AJK",
+      "email": "fatimah.abdullah@iium.edu.my",
+      "loginPageUrl": "https://pdk-creams.org/auth/login",
+      "redirectChain": [
+        {
+          "url": "https://pdk-creams.org/auth/login",
+          "status": 200
+        },
+        {
+          "url": "https://pdk-creams.org/ajk/dashboard",
+          "status": 200
+        },
+        {
+          "url": "https://pdk-creams.org/ajk/dashboard",
+          "status": 200
+        }
+      ],
+      "finalDashboard": "https://pdk-creams.org/ajk/dashboard",
+      "dashboardHeading": "👷‍♂️ Welcome back, Siti Fatimah binti Abdullah!",
+      "protectedPageAccessibleAfterLogin": true,
+      "bodySample": "CREAMS Ajk Dashboard Siti Fatimah binti Abdullah AJK Dashboard My Profile Personal Info MANAGEMENT Staffs Home Trainee Home Activity Home Centre Home REPORTS & SETTINGS Reports Development Settings Development Logout 🌙 Good Evening 👷‍♂️ Ajk 👷‍♂️ Welcome back, Siti Fatimah binti Abdullah! Your Ajk dashboard is ready. Monday, May 18, 2026 5:22 PM 33°C Partly cloudy • Gombak Personal Live Data: Statistics updated from database records • Centre: Your Centre • Last updated: May 18, 2026 at 5:22 PM Refresh 0 FACILITIES MANAGED Assets under your care Ready to Manage 0 THIS WEEK'S TASKS Maintenance",
+      "consoleErrors": [
+        {
+          "type": "warning",
+          "text": "Weather widget: service unreachable, showing fallback.",
+          "url": "https://pdk-creams.org/ajk/dashboard"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 404 ()",
+          "url": "https://pdk-creams.org/assets/71"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 404 ()",
+          "url": "https://pdk-creams.org/assets/118"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 404 ()",
+          "url": "https://pdk-creams.org/assets/55"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 403 ()",
+          "url": "https://pdk-creams.org/admin/dashboard"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 403 ()",
+          "url": "https://pdk-creams.org/letters"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 403 ()",
+          "url": "https://pdk-creams.org/trainees/create"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 403 ()",
+          "url": "https://pdk-creams.org/assets/create"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 403 ()",
+          "url": "https://pdk-creams.org/letters"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 403 ()",
+          "url": "https://pdk-creams.org/attendance"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 403 ()",
+          "url": "https://pdk-creams.org/activity-attendance"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 403 ()",
+          "url": "https://pdk-creams.org/staffs/create"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 403 ()",
+          "url": "https://pdk-creams.org/staffs/create"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 403 ()",
+          "url": "https://pdk-creams.org/staffs/create"
+        }
+      ],
+      "failedRequests": [
+        {
+          "url": "https://wttr.in/Gombak%2CMalaysia?format=j1",
+          "method": "GET",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        }
+      ],
+      "networkErrors": [],
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-functional-uat-final-20260518T092233Z\\login_AJK_pass.png",
+      "pass": true
+    }
+  ],
+  "assets": [
+    {
+      "urlAction": "/assets/71",
+      "role": "Admin",
+      "httpStatus": 200,
+      "finalUrl": "https://pdk-creams.org/assets/71",
+      "result": "Usable asset detail content rendered",
+      "screenshotEvidence": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-functional-uat-final-20260518T092233Z\\Admin_asset_71.png",
+      "pass": true
+    },
+    {
+      "urlAction": "/assets/118",
+      "role": "Admin",
+      "httpStatus": 200,
+      "finalUrl": "https://pdk-creams.org/assets/118",
+      "result": "Usable asset detail content rendered",
+      "screenshotEvidence": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-functional-uat-final-20260518T092233Z\\Admin_asset_118.png",
+      "pass": true
+    },
+    {
+      "urlAction": "/assets/7",
+      "role": "Admin",
+      "httpStatus": 200,
+      "finalUrl": "https://pdk-creams.org/assets/7",
+      "result": "Usable asset detail content rendered",
+      "screenshotEvidence": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-functional-uat-final-20260518T092233Z\\Admin_asset_7.png",
+      "pass": true
+    },
+    {
+      "urlAction": "/assets/55",
+      "role": "Admin",
+      "httpStatus": 200,
+      "finalUrl": "https://pdk-creams.org/assets/55",
+      "result": "Usable asset detail content rendered",
+      "screenshotEvidence": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-functional-uat-final-20260518T092233Z\\Admin_asset_55.png",
+      "pass": true
+    },
+    {
+      "urlAction": "/assets/71",
+      "role": "Supervisor",
+      "httpStatus": 404,
+      "finalUrl": "https://pdk-creams.org/assets/71",
+      "result": "No usable asset detail content",
+      "screenshotEvidence": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-functional-uat-final-20260518T092233Z\\Supervisor_asset_71.png",
+      "pass": true
+    },
+    {
+      "urlAction": "/assets/118",
+      "role": "Supervisor",
+      "httpStatus": 404,
+      "finalUrl": "https://pdk-creams.org/assets/118",
+      "result": "No usable asset detail content",
+      "screenshotEvidence": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-functional-uat-final-20260518T092233Z\\Supervisor_asset_118.png",
+      "pass": true
+    },
+    {
+      "urlAction": "/assets/7",
+      "role": "Supervisor",
+      "httpStatus": 200,
+      "finalUrl": "https://pdk-creams.org/assets/7",
+      "result": "Usable asset detail content rendered",
+      "screenshotEvidence": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-functional-uat-final-20260518T092233Z\\Supervisor_asset_7.png",
+      "pass": true
+    },
+    {
+      "urlAction": "/assets/55",
+      "role": "Supervisor",
+      "httpStatus": 404,
+      "finalUrl": "https://pdk-creams.org/assets/55",
+      "result": "No usable asset detail content",
+      "screenshotEvidence": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-functional-uat-final-20260518T092233Z\\Supervisor_asset_55.png",
+      "pass": true
+    },
+    {
+      "urlAction": "/assets/71",
+      "role": "Teacher",
+      "httpStatus": 404,
+      "finalUrl": "https://pdk-creams.org/assets/71",
+      "result": "No usable asset detail content",
+      "screenshotEvidence": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-functional-uat-final-20260518T092233Z\\Teacher_asset_71.png",
+      "pass": true
+    },
+    {
+      "urlAction": "/assets/118",
+      "role": "Teacher",
+      "httpStatus": 404,
+      "finalUrl": "https://pdk-creams.org/assets/118",
+      "result": "No usable asset detail content",
+      "screenshotEvidence": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-functional-uat-final-20260518T092233Z\\Teacher_asset_118.png",
+      "pass": true
+    },
+    {
+      "urlAction": "/assets/7",
+      "role": "Teacher",
+      "httpStatus": 200,
+      "finalUrl": "https://pdk-creams.org/teacher/dashboard",
+      "result": "No usable asset detail content",
+      "screenshotEvidence": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-functional-uat-final-20260518T092233Z\\Teacher_asset_7.png",
+      "pass": false
+    },
+    {
+      "urlAction": "/assets/55",
+      "role": "Teacher",
+      "httpStatus": 404,
+      "finalUrl": "https://pdk-creams.org/assets/55",
+      "result": "No usable asset detail content",
+      "screenshotEvidence": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-functional-uat-final-20260518T092233Z\\Teacher_asset_55.png",
+      "pass": true
+    },
+    {
+      "urlAction": "/assets/71",
+      "role": "AJK",
+      "httpStatus": 404,
+      "finalUrl": "https://pdk-creams.org/assets/71",
+      "result": "No usable asset detail content",
+      "screenshotEvidence": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-functional-uat-final-20260518T092233Z\\AJK_asset_71.png",
+      "pass": true
+    },
+    {
+      "urlAction": "/assets/118",
+      "role": "AJK",
+      "httpStatus": 404,
+      "finalUrl": "https://pdk-creams.org/assets/118",
+      "result": "No usable asset detail content",
+      "screenshotEvidence": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-functional-uat-final-20260518T092233Z\\AJK_asset_118.png",
+      "pass": true
+    },
+    {
+      "urlAction": "/assets/7",
+      "role": "AJK",
+      "httpStatus": 200,
+      "finalUrl": "https://pdk-creams.org/ajk/dashboard",
+      "result": "No usable asset detail content",
+      "screenshotEvidence": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-functional-uat-final-20260518T092233Z\\AJK_asset_7.png",
+      "pass": false
+    },
+    {
+      "urlAction": "/assets/55",
+      "role": "AJK",
+      "httpStatus": 404,
+      "finalUrl": "https://pdk-creams.org/assets/55",
+      "result": "No usable asset detail content",
+      "screenshotEvidence": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-functional-uat-final-20260518T092233Z\\AJK_asset_55.png",
+      "pass": true
+    }
+  ],
+  "placeholders": [
+    {
+      "page": "/admin/dashboard",
+      "role": "Admin",
+      "suspiciousHrefCountAfterJsRender": 9,
+      "examples": [
+        {
+          "text": "Notification",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"dropdown-item\" onclick=\"event.preventDefault(); triggerNotificationDropdown(); return false;\">\n                        <i class=\"fas fa-bell\"></i> Notification\n                    </a>",
+          "clickResult": "not clicked"
+        },
+        {
+          "text": "Settings",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"dropdown-item\" onclick=\"if(typeof showSettingsMessage === 'function') { showSettingsMessage(); } else { alert('Function not available!'); }\">\n                            <i class=\"fas fa-cog\"></i> Settings\n                        </a>",
+          "clickResult": "not clicked"
+        },
+        {
+          "text": "My Profile",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"sidebar-link\">\n                    <span class=\"sidebar-icon\"><i class=\"fas fa-user-circle\"></i></span>\n                    <span class=\"sidebar-text\">My Profile</span>\n                    <i class=\"fas fa-chevron-right sidebar-toggle-submenu\"></i>\n                </a>",
+          "clickResult": "not clicked"
+        }
+      ],
+      "clickResult": "not clicked | not clicked | not clicked",
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-functional-uat-final-20260518T092233Z\\Admin_placeholder_admin_dashboard.png",
+      "pass": false,
+      "finalUrl": "https://pdk-creams.org/admin/dashboard",
+      "httpStatus": 200
+    },
+    {
+      "page": "/activities/home",
+      "role": "Admin",
+      "suspiciousHrefCountAfterJsRender": 9,
+      "examples": [
+        {
+          "text": "Notification",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"dropdown-item\" onclick=\"event.preventDefault(); triggerNotificationDropdown(); return false;\">\n                        <i class=\"fas fa-bell\"></i> Notification\n                    </a>",
+          "clickResult": "not clicked"
+        },
+        {
+          "text": "Settings",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"dropdown-item\" onclick=\"if(typeof showSettingsMessage === 'function') { showSettingsMessage(); } else { alert('Function not available!'); }\">\n                            <i class=\"fas fa-cog\"></i> Settings\n                        </a>",
+          "clickResult": "not clicked"
+        },
+        {
+          "text": "My Profile",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"sidebar-link\">\n                    <span class=\"sidebar-icon\"><i class=\"fas fa-user-circle\"></i></span>\n                    <span class=\"sidebar-text\">My Profile</span>\n                    <i class=\"fas fa-chevron-right sidebar-toggle-submenu\"></i>\n                </a>",
+          "clickResult": "not clicked"
+        }
+      ],
+      "clickResult": "not clicked | not clicked | not clicked",
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-functional-uat-final-20260518T092233Z\\Admin_placeholder_activities_home.png",
+      "pass": false,
+      "finalUrl": "https://pdk-creams.org/activities/home",
+      "httpStatus": 200
+    },
+    {
+      "page": "/activities/categories",
+      "role": "Admin",
+      "suspiciousHrefCountAfterJsRender": 9,
+      "examples": [
+        {
+          "text": "Notification",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"dropdown-item\" onclick=\"event.preventDefault(); triggerNotificationDropdown(); return false;\">\n                        <i class=\"fas fa-bell\"></i> Notification\n                    </a>",
+          "clickResult": "not clicked"
+        },
+        {
+          "text": "Settings",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"dropdown-item\" onclick=\"if(typeof showSettingsMessage === 'function') { showSettingsMessage(); } else { alert('Function not available!'); }\">\n                            <i class=\"fas fa-cog\"></i> Settings\n                        </a>",
+          "clickResult": "not clicked"
+        },
+        {
+          "text": "My Profile",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"sidebar-link\">\n                    <span class=\"sidebar-icon\"><i class=\"fas fa-user-circle\"></i></span>\n                    <span class=\"sidebar-text\">My Profile</span>\n                    <i class=\"fas fa-chevron-right sidebar-toggle-submenu\"></i>\n                </a>",
+          "clickResult": "not clicked"
+        }
+      ],
+      "clickResult": "not clicked | not clicked | not clicked",
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-functional-uat-final-20260518T092233Z\\Admin_placeholder_activities_categories.png",
+      "pass": false,
+      "finalUrl": "https://pdk-creams.org/activities/categories",
+      "httpStatus": 200
+    },
+    {
+      "page": "/activities/schedule",
+      "role": "Admin",
+      "suspiciousHrefCountAfterJsRender": 9,
+      "examples": [
+        {
+          "text": "Notification",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"dropdown-item\" onclick=\"event.preventDefault(); triggerNotificationDropdown(); return false;\">\n                        <i class=\"fas fa-bell\"></i> Notification\n                    </a>",
+          "clickResult": "not clicked"
+        },
+        {
+          "text": "Settings",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"dropdown-item\" onclick=\"if(typeof showSettingsMessage === 'function') { showSettingsMessage(); } else { alert('Function not available!'); }\">\n                            <i class=\"fas fa-cog\"></i> Settings\n                        </a>",
+          "clickResult": "not clicked"
+        },
+        {
+          "text": "My Profile",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"sidebar-link\">\n                    <span class=\"sidebar-icon\"><i class=\"fas fa-user-circle\"></i></span>\n                    <span class=\"sidebar-text\">My Profile</span>\n                    <i class=\"fas fa-chevron-right sidebar-toggle-submenu\"></i>\n                </a>",
+          "clickResult": "not clicked"
+        }
+      ],
+      "clickResult": "not clicked | not clicked | not clicked",
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-functional-uat-final-20260518T092233Z\\Admin_placeholder_activities_schedule.png",
+      "pass": false,
+      "finalUrl": "https://pdk-creams.org/activities/schedule",
+      "httpStatus": 200
+    },
+    {
+      "page": "/centres/home",
+      "role": "Admin",
+      "suspiciousHrefCountAfterJsRender": 9,
+      "examples": [
+        {
+          "text": "Notification",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"dropdown-item\" onclick=\"event.preventDefault(); triggerNotificationDropdown(); return false;\">\n                        <i class=\"fas fa-bell\"></i> Notification\n                    </a>",
+          "clickResult": "not clicked"
+        },
+        {
+          "text": "Settings",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"dropdown-item\" onclick=\"if(typeof showSettingsMessage === 'function') { showSettingsMessage(); } else { alert('Function not available!'); }\">\n                            <i class=\"fas fa-cog\"></i> Settings\n                        </a>",
+          "clickResult": "not clicked"
+        },
+        {
+          "text": "My Profile",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"sidebar-link\">\n                    <span class=\"sidebar-icon\"><i class=\"fas fa-user-circle\"></i></span>\n                    <span class=\"sidebar-text\">My Profile</span>\n                    <i class=\"fas fa-chevron-right sidebar-toggle-submenu\"></i>\n                </a>",
+          "clickResult": "not clicked"
+        }
+      ],
+      "clickResult": "not clicked | not clicked | not clicked",
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-functional-uat-final-20260518T092233Z\\Admin_placeholder_centres_home.png",
+      "pass": false,
+      "finalUrl": "https://pdk-creams.org/centres/home",
+      "httpStatus": 200
+    },
+    {
+      "page": "/assets",
+      "role": "Admin",
+      "suspiciousHrefCountAfterJsRender": 9,
+      "examples": [
+        {
+          "text": "Notification",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"dropdown-item\" onclick=\"event.preventDefault(); triggerNotificationDropdown(); return false;\">\n                        <i class=\"fas fa-bell\"></i> Notification\n                    </a>",
+          "clickResult": "not clicked"
+        },
+        {
+          "text": "Settings",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"dropdown-item\" onclick=\"if(typeof showSettingsMessage === 'function') { showSettingsMessage(); } else { alert('Function not available!'); }\">\n                            <i class=\"fas fa-cog\"></i> Settings\n                        </a>",
+          "clickResult": "not clicked"
+        },
+        {
+          "text": "My Profile",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"sidebar-link\">\n                    <span class=\"sidebar-icon\"><i class=\"fas fa-user-circle\"></i></span>\n                    <span class=\"sidebar-text\">My Profile</span>\n                    <i class=\"fas fa-chevron-right sidebar-toggle-submenu\"></i>\n                </a>",
+          "clickResult": "not clicked"
+        }
+      ],
+      "clickResult": "not clicked | not clicked | not clicked",
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-functional-uat-final-20260518T092233Z\\Admin_placeholder_assets.png",
+      "pass": false,
+      "finalUrl": "https://pdk-creams.org/assets",
+      "httpStatus": 200
+    },
+    {
+      "page": "/assets/reports",
+      "role": "Admin",
+      "suspiciousHrefCountAfterJsRender": 9,
+      "examples": [
+        {
+          "text": "Notification",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"dropdown-item\" onclick=\"event.preventDefault(); triggerNotificationDropdown(); return false;\">\n                        <i class=\"fas fa-bell\"></i> Notification\n                    </a>",
+          "clickResult": "not clicked"
+        },
+        {
+          "text": "Settings",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"dropdown-item\" onclick=\"if(typeof showSettingsMessage === 'function') { showSettingsMessage(); } else { alert('Function not available!'); }\">\n                            <i class=\"fas fa-cog\"></i> Settings\n                        </a>",
+          "clickResult": "not clicked"
+        },
+        {
+          "text": "My Profile",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"sidebar-link\">\n                    <span class=\"sidebar-icon\"><i class=\"fas fa-user-circle\"></i></span>\n                    <span class=\"sidebar-text\">My Profile</span>\n                    <i class=\"fas fa-chevron-right sidebar-toggle-submenu\"></i>\n                </a>",
+          "clickResult": "not clicked"
+        }
+      ],
+      "clickResult": "not clicked | not clicked | not clicked",
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-functional-uat-final-20260518T092233Z\\Admin_placeholder_assets_reports.png",
+      "pass": false,
+      "finalUrl": "https://pdk-creams.org/assets/reports",
+      "httpStatus": 200
+    },
+    {
+      "page": "/assets/maintenance",
+      "role": "Admin",
+      "suspiciousHrefCountAfterJsRender": 9,
+      "examples": [
+        {
+          "text": "Notification",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"dropdown-item\" onclick=\"event.preventDefault(); triggerNotificationDropdown(); return false;\">\n                        <i class=\"fas fa-bell\"></i> Notification\n                    </a>",
+          "clickResult": "not clicked"
+        },
+        {
+          "text": "Settings",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"dropdown-item\" onclick=\"if(typeof showSettingsMessage === 'function') { showSettingsMessage(); } else { alert('Function not available!'); }\">\n                            <i class=\"fas fa-cog\"></i> Settings\n                        </a>",
+          "clickResult": "not clicked"
+        },
+        {
+          "text": "My Profile",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"sidebar-link\">\n                    <span class=\"sidebar-icon\"><i class=\"fas fa-user-circle\"></i></span>\n                    <span class=\"sidebar-text\">My Profile</span>\n                    <i class=\"fas fa-chevron-right sidebar-toggle-submenu\"></i>\n                </a>",
+          "clickResult": "not clicked"
+        }
+      ],
+      "clickResult": "not clicked | not clicked | not clicked",
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-functional-uat-final-20260518T092233Z\\Admin_placeholder_assets_maintenance.png",
+      "pass": false,
+      "finalUrl": "https://pdk-creams.org/assets/maintenance",
+      "httpStatus": 200
+    },
+    {
+      "page": "/assets/movements",
+      "role": "Admin",
+      "suspiciousHrefCountAfterJsRender": 9,
+      "examples": [
+        {
+          "text": "Notification",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"dropdown-item\" onclick=\"event.preventDefault(); triggerNotificationDropdown(); return false;\">\n                        <i class=\"fas fa-bell\"></i> Notification\n                    </a>",
+          "clickResult": "not clicked"
+        },
+        {
+          "text": "Settings",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"dropdown-item\" onclick=\"if(typeof showSettingsMessage === 'function') { showSettingsMessage(); } else { alert('Function not available!'); }\">\n                            <i class=\"fas fa-cog\"></i> Settings\n                        </a>",
+          "clickResult": "not clicked"
+        },
+        {
+          "text": "My Profile",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"sidebar-link\">\n                    <span class=\"sidebar-icon\"><i class=\"fas fa-user-circle\"></i></span>\n                    <span class=\"sidebar-text\">My Profile</span>\n                    <i class=\"fas fa-chevron-right sidebar-toggle-submenu\"></i>\n                </a>",
+          "clickResult": "not clicked"
+        }
+      ],
+      "clickResult": "not clicked | not clicked | not clicked",
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-functional-uat-final-20260518T092233Z\\Admin_placeholder_assets_movements.png",
+      "pass": false,
+      "finalUrl": "https://pdk-creams.org/assets/movements",
+      "httpStatus": 200
+    },
+    {
+      "page": "/trainees/home",
+      "role": "Admin",
+      "suspiciousHrefCountAfterJsRender": 9,
+      "examples": [
+        {
+          "text": "Notification",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"dropdown-item\" onclick=\"event.preventDefault(); triggerNotificationDropdown(); return false;\">\n                        <i class=\"fas fa-bell\"></i> Notification\n                    </a>",
+          "clickResult": "not clicked"
+        },
+        {
+          "text": "Settings",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"dropdown-item\" onclick=\"if(typeof showSettingsMessage === 'function') { showSettingsMessage(); } else { alert('Function not available!'); }\">\n                            <i class=\"fas fa-cog\"></i> Settings\n                        </a>",
+          "clickResult": "not clicked"
+        },
+        {
+          "text": "My Profile",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"sidebar-link\">\n                    <span class=\"sidebar-icon\"><i class=\"fas fa-user-circle\"></i></span>\n                    <span class=\"sidebar-text\">My Profile</span>\n                    <i class=\"fas fa-chevron-right sidebar-toggle-submenu\"></i>\n                </a>",
+          "clickResult": "not clicked"
+        }
+      ],
+      "clickResult": "not clicked | not clicked | not clicked",
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-functional-uat-final-20260518T092233Z\\Admin_placeholder_trainees_home.png",
+      "pass": false,
+      "finalUrl": "https://pdk-creams.org/trainees/home",
+      "httpStatus": 200
+    },
+    {
+      "page": "/letters",
+      "role": "Admin",
+      "suspiciousHrefCountAfterJsRender": 9,
+      "examples": [
+        {
+          "text": "Notification",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"dropdown-item\" onclick=\"event.preventDefault(); triggerNotificationDropdown(); return false;\">\n                        <i class=\"fas fa-bell\"></i> Notification\n                    </a>",
+          "clickResult": "not clicked"
+        },
+        {
+          "text": "Settings",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"dropdown-item\" onclick=\"if(typeof showSettingsMessage === 'function') { showSettingsMessage(); } else { alert('Function not available!'); }\">\n                            <i class=\"fas fa-cog\"></i> Settings\n                        </a>",
+          "clickResult": "not clicked"
+        },
+        {
+          "text": "My Profile",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"sidebar-link\">\n                    <span class=\"sidebar-icon\"><i class=\"fas fa-user-circle\"></i></span>\n                    <span class=\"sidebar-text\">My Profile</span>\n                    <i class=\"fas fa-chevron-right sidebar-toggle-submenu\"></i>\n                </a>",
+          "clickResult": "not clicked"
+        }
+      ],
+      "clickResult": "not clicked | not clicked | not clicked",
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-functional-uat-final-20260518T092233Z\\Admin_placeholder_letters.png",
+      "pass": false,
+      "finalUrl": "https://pdk-creams.org/letters",
+      "httpStatus": 200
+    },
+    {
+      "page": "/admin/dashboard",
+      "role": "Supervisor",
+      "suspiciousHrefCountAfterJsRender": 0,
+      "examples": [],
+      "clickResult": "",
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-functional-uat-final-20260518T092233Z\\Supervisor_placeholder_admin_dashboard.png",
+      "pass": true,
+      "finalUrl": "https://pdk-creams.org/admin/dashboard",
+      "httpStatus": 403
+    },
+    {
+      "page": "/activities/home",
+      "role": "Supervisor",
+      "suspiciousHrefCountAfterJsRender": 9,
+      "examples": [
+        {
+          "text": "Notification",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"dropdown-item\" onclick=\"event.preventDefault(); triggerNotificationDropdown(); return false;\">\n                        <i class=\"fas fa-bell\"></i> Notification\n                    </a>",
+          "clickResult": "not clicked"
+        },
+        {
+          "text": "Settings",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"dropdown-item\" onclick=\"if(typeof showSettingsMessage === 'function') { showSettingsMessage(); } else { alert('Function not available!'); }\">\n                            <i class=\"fas fa-cog\"></i> Settings\n                        </a>",
+          "clickResult": "not clicked"
+        },
+        {
+          "text": "My Profile",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"sidebar-link\">\n                    <span class=\"sidebar-icon\"><i class=\"fas fa-user-circle\"></i></span>\n                    <span class=\"sidebar-text\">My Profile</span>\n                    <i class=\"fas fa-chevron-right sidebar-toggle-submenu\"></i>\n                </a>",
+          "clickResult": "not clicked"
+        }
+      ],
+      "clickResult": "not clicked | not clicked | not clicked",
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-functional-uat-final-20260518T092233Z\\Supervisor_placeholder_activities_home.png",
+      "pass": false,
+      "finalUrl": "https://pdk-creams.org/activities/home",
+      "httpStatus": 200
+    },
+    {
+      "page": "/activities/categories",
+      "role": "Supervisor",
+      "suspiciousHrefCountAfterJsRender": 9,
+      "examples": [
+        {
+          "text": "Notification",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"dropdown-item\" onclick=\"event.preventDefault(); triggerNotificationDropdown(); return false;\">\n                        <i class=\"fas fa-bell\"></i> Notification\n                    </a>",
+          "clickResult": "not clicked"
+        },
+        {
+          "text": "Settings",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"dropdown-item\" onclick=\"if(typeof showSettingsMessage === 'function') { showSettingsMessage(); } else { alert('Function not available!'); }\">\n                            <i class=\"fas fa-cog\"></i> Settings\n                        </a>",
+          "clickResult": "not clicked"
+        },
+        {
+          "text": "My Profile",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"sidebar-link\">\n                    <span class=\"sidebar-icon\"><i class=\"fas fa-user-circle\"></i></span>\n                    <span class=\"sidebar-text\">My Profile</span>\n                    <i class=\"fas fa-chevron-right sidebar-toggle-submenu\"></i>\n                </a>",
+          "clickResult": "not clicked"
+        }
+      ],
+      "clickResult": "not clicked | not clicked | not clicked",
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-functional-uat-final-20260518T092233Z\\Supervisor_placeholder_activities_categories.png",
+      "pass": false,
+      "finalUrl": "https://pdk-creams.org/activities/categories",
+      "httpStatus": 200
+    },
+    {
+      "page": "/activities/schedule",
+      "role": "Supervisor",
+      "suspiciousHrefCountAfterJsRender": 9,
+      "examples": [
+        {
+          "text": "Notification",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"dropdown-item\" onclick=\"event.preventDefault(); triggerNotificationDropdown(); return false;\">\n                        <i class=\"fas fa-bell\"></i> Notification\n                    </a>",
+          "clickResult": "not clicked"
+        },
+        {
+          "text": "Settings",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"dropdown-item\" onclick=\"if(typeof showSettingsMessage === 'function') { showSettingsMessage(); } else { alert('Function not available!'); }\">\n                            <i class=\"fas fa-cog\"></i> Settings\n                        </a>",
+          "clickResult": "not clicked"
+        },
+        {
+          "text": "My Profile",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"sidebar-link\">\n                    <span class=\"sidebar-icon\"><i class=\"fas fa-user-circle\"></i></span>\n                    <span class=\"sidebar-text\">My Profile</span>\n                    <i class=\"fas fa-chevron-right sidebar-toggle-submenu\"></i>\n                </a>",
+          "clickResult": "not clicked"
+        }
+      ],
+      "clickResult": "not clicked | not clicked | not clicked",
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-functional-uat-final-20260518T092233Z\\Supervisor_placeholder_activities_schedule.png",
+      "pass": false,
+      "finalUrl": "https://pdk-creams.org/activities/schedule",
+      "httpStatus": 200
+    },
+    {
+      "page": "/centres/home",
+      "role": "Supervisor",
+      "suspiciousHrefCountAfterJsRender": 9,
+      "examples": [
+        {
+          "text": "Notification",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"dropdown-item\" onclick=\"event.preventDefault(); triggerNotificationDropdown(); return false;\">\n                        <i class=\"fas fa-bell\"></i> Notification\n                    </a>",
+          "clickResult": "not clicked"
+        },
+        {
+          "text": "Settings",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"dropdown-item\" onclick=\"if(typeof showSettingsMessage === 'function') { showSettingsMessage(); } else { alert('Function not available!'); }\">\n                            <i class=\"fas fa-cog\"></i> Settings\n                        </a>",
+          "clickResult": "not clicked"
+        },
+        {
+          "text": "My Profile",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"sidebar-link\">\n                    <span class=\"sidebar-icon\"><i class=\"fas fa-user-circle\"></i></span>\n                    <span class=\"sidebar-text\">My Profile</span>\n                    <i class=\"fas fa-chevron-right sidebar-toggle-submenu\"></i>\n                </a>",
+          "clickResult": "not clicked"
+        }
+      ],
+      "clickResult": "not clicked | not clicked | not clicked",
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-functional-uat-final-20260518T092233Z\\Supervisor_placeholder_centres_home.png",
+      "pass": false,
+      "finalUrl": "https://pdk-creams.org/centres/home",
+      "httpStatus": 200
+    },
+    {
+      "page": "/assets",
+      "role": "Supervisor",
+      "suspiciousHrefCountAfterJsRender": 9,
+      "examples": [
+        {
+          "text": "Notification",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"dropdown-item\" onclick=\"event.preventDefault(); triggerNotificationDropdown(); return false;\">\n                        <i class=\"fas fa-bell\"></i> Notification\n                    </a>",
+          "clickResult": "not clicked"
+        },
+        {
+          "text": "Settings",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"dropdown-item\" onclick=\"if(typeof showSettingsMessage === 'function') { showSettingsMessage(); } else { alert('Function not available!'); }\">\n                            <i class=\"fas fa-cog\"></i> Settings\n                        </a>",
+          "clickResult": "not clicked"
+        },
+        {
+          "text": "My Profile",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"sidebar-link\">\n                    <span class=\"sidebar-icon\"><i class=\"fas fa-user-circle\"></i></span>\n                    <span class=\"sidebar-text\">My Profile</span>\n                    <i class=\"fas fa-chevron-right sidebar-toggle-submenu\"></i>\n                </a>",
+          "clickResult": "not clicked"
+        }
+      ],
+      "clickResult": "not clicked | not clicked | not clicked",
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-functional-uat-final-20260518T092233Z\\Supervisor_placeholder_assets.png",
+      "pass": false,
+      "finalUrl": "https://pdk-creams.org/assets",
+      "httpStatus": 200
+    },
+    {
+      "page": "/assets/reports",
+      "role": "Supervisor",
+      "suspiciousHrefCountAfterJsRender": 9,
+      "examples": [
+        {
+          "text": "Notification",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"dropdown-item\" onclick=\"event.preventDefault(); triggerNotificationDropdown(); return false;\">\n                        <i class=\"fas fa-bell\"></i> Notification\n                    </a>",
+          "clickResult": "not clicked"
+        },
+        {
+          "text": "Settings",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"dropdown-item\" onclick=\"if(typeof showSettingsMessage === 'function') { showSettingsMessage(); } else { alert('Function not available!'); }\">\n                            <i class=\"fas fa-cog\"></i> Settings\n                        </a>",
+          "clickResult": "not clicked"
+        },
+        {
+          "text": "My Profile",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"sidebar-link\">\n                    <span class=\"sidebar-icon\"><i class=\"fas fa-user-circle\"></i></span>\n                    <span class=\"sidebar-text\">My Profile</span>\n                    <i class=\"fas fa-chevron-right sidebar-toggle-submenu\"></i>\n                </a>",
+          "clickResult": "not clicked"
+        }
+      ],
+      "clickResult": "not clicked | not clicked | not clicked",
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-functional-uat-final-20260518T092233Z\\Supervisor_placeholder_assets_reports.png",
+      "pass": false,
+      "finalUrl": "https://pdk-creams.org/assets/reports",
+      "httpStatus": 200
+    },
+    {
+      "page": "/assets/maintenance",
+      "role": "Supervisor",
+      "suspiciousHrefCountAfterJsRender": 9,
+      "examples": [
+        {
+          "text": "Notification",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"dropdown-item\" onclick=\"event.preventDefault(); triggerNotificationDropdown(); return false;\">\n                        <i class=\"fas fa-bell\"></i> Notification\n                    </a>",
+          "clickResult": "not clicked"
+        },
+        {
+          "text": "Settings",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"dropdown-item\" onclick=\"if(typeof showSettingsMessage === 'function') { showSettingsMessage(); } else { alert('Function not available!'); }\">\n                            <i class=\"fas fa-cog\"></i> Settings\n                        </a>",
+          "clickResult": "not clicked"
+        },
+        {
+          "text": "My Profile",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"sidebar-link\">\n                    <span class=\"sidebar-icon\"><i class=\"fas fa-user-circle\"></i></span>\n                    <span class=\"sidebar-text\">My Profile</span>\n                    <i class=\"fas fa-chevron-right sidebar-toggle-submenu\"></i>\n                </a>",
+          "clickResult": "not clicked"
+        }
+      ],
+      "clickResult": "not clicked | not clicked | not clicked",
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-functional-uat-final-20260518T092233Z\\Supervisor_placeholder_assets_maintenance.png",
+      "pass": false,
+      "finalUrl": "https://pdk-creams.org/assets/maintenance",
+      "httpStatus": 200
+    },
+    {
+      "page": "/assets/movements",
+      "role": "Supervisor",
+      "suspiciousHrefCountAfterJsRender": 9,
+      "examples": [
+        {
+          "text": "Notification",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"dropdown-item\" onclick=\"event.preventDefault(); triggerNotificationDropdown(); return false;\">\n                        <i class=\"fas fa-bell\"></i> Notification\n                    </a>",
+          "clickResult": "not clicked"
+        },
+        {
+          "text": "Settings",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"dropdown-item\" onclick=\"if(typeof showSettingsMessage === 'function') { showSettingsMessage(); } else { alert('Function not available!'); }\">\n                            <i class=\"fas fa-cog\"></i> Settings\n                        </a>",
+          "clickResult": "not clicked"
+        },
+        {
+          "text": "My Profile",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"sidebar-link\">\n                    <span class=\"sidebar-icon\"><i class=\"fas fa-user-circle\"></i></span>\n                    <span class=\"sidebar-text\">My Profile</span>\n                    <i class=\"fas fa-chevron-right sidebar-toggle-submenu\"></i>\n                </a>",
+          "clickResult": "not clicked"
+        }
+      ],
+      "clickResult": "not clicked | not clicked | not clicked",
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-functional-uat-final-20260518T092233Z\\Supervisor_placeholder_assets_movements.png",
+      "pass": false,
+      "finalUrl": "https://pdk-creams.org/assets/movements",
+      "httpStatus": 200
+    },
+    {
+      "page": "/trainees/home",
+      "role": "Supervisor",
+      "suspiciousHrefCountAfterJsRender": 9,
+      "examples": [
+        {
+          "text": "Notification",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"dropdown-item\" onclick=\"event.preventDefault(); triggerNotificationDropdown(); return false;\">\n                        <i class=\"fas fa-bell\"></i> Notification\n                    </a>",
+          "clickResult": "not clicked"
+        },
+        {
+          "text": "Settings",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"dropdown-item\" onclick=\"if(typeof showSettingsMessage === 'function') { showSettingsMessage(); } else { alert('Function not available!'); }\">\n                            <i class=\"fas fa-cog\"></i> Settings\n                        </a>",
+          "clickResult": "not clicked"
+        },
+        {
+          "text": "My Profile",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"sidebar-link\">\n                    <span class=\"sidebar-icon\"><i class=\"fas fa-user-circle\"></i></span>\n                    <span class=\"sidebar-text\">My Profile</span>\n                    <i class=\"fas fa-chevron-right sidebar-toggle-submenu\"></i>\n                </a>",
+          "clickResult": "not clicked"
+        }
+      ],
+      "clickResult": "not clicked | not clicked | not clicked",
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-functional-uat-final-20260518T092233Z\\Supervisor_placeholder_trainees_home.png",
+      "pass": false,
+      "finalUrl": "https://pdk-creams.org/trainees/home",
+      "httpStatus": 200
+    },
+    {
+      "page": "/letters",
+      "role": "Supervisor",
+      "suspiciousHrefCountAfterJsRender": 9,
+      "examples": [
+        {
+          "text": "Notification",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"dropdown-item\" onclick=\"event.preventDefault(); triggerNotificationDropdown(); return false;\">\n                        <i class=\"fas fa-bell\"></i> Notification\n                    </a>",
+          "clickResult": "not clicked"
+        },
+        {
+          "text": "Settings",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"dropdown-item\" onclick=\"if(typeof showSettingsMessage === 'function') { showSettingsMessage(); } else { alert('Function not available!'); }\">\n                            <i class=\"fas fa-cog\"></i> Settings\n                        </a>",
+          "clickResult": "not clicked"
+        },
+        {
+          "text": "My Profile",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"sidebar-link\">\n                    <span class=\"sidebar-icon\"><i class=\"fas fa-user-circle\"></i></span>\n                    <span class=\"sidebar-text\">My Profile</span>\n                    <i class=\"fas fa-chevron-right sidebar-toggle-submenu\"></i>\n                </a>",
+          "clickResult": "not clicked"
+        }
+      ],
+      "clickResult": "not clicked | not clicked | not clicked",
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-functional-uat-final-20260518T092233Z\\Supervisor_placeholder_letters.png",
+      "pass": false,
+      "finalUrl": "https://pdk-creams.org/letters",
+      "httpStatus": 200
+    },
+    {
+      "page": "/admin/dashboard",
+      "role": "Teacher",
+      "suspiciousHrefCountAfterJsRender": 0,
+      "examples": [],
+      "clickResult": "",
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-functional-uat-final-20260518T092233Z\\Teacher_placeholder_admin_dashboard.png",
+      "pass": true,
+      "finalUrl": "https://pdk-creams.org/admin/dashboard",
+      "httpStatus": 403
+    },
+    {
+      "page": "/activities/home",
+      "role": "Teacher",
+      "suspiciousHrefCountAfterJsRender": 8,
+      "examples": [
+        {
+          "text": "Notification",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"dropdown-item\" onclick=\"event.preventDefault(); triggerNotificationDropdown(); return false;\">\n                        <i class=\"fas fa-bell\"></i> Notification\n                    </a>",
+          "clickResult": "not clicked"
+        },
+        {
+          "text": "Settings",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"dropdown-item\" onclick=\"if(typeof showSettingsMessage === 'function') { showSettingsMessage(); } else { alert('Function not available!'); }\">\n                            <i class=\"fas fa-cog\"></i> Settings\n                        </a>",
+          "clickResult": "not clicked"
+        },
+        {
+          "text": "My Profile",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"sidebar-link\">\n                    <span class=\"sidebar-icon\"><i class=\"fas fa-user-circle\"></i></span>\n                    <span class=\"sidebar-text\">My Profile</span>\n                    <i class=\"fas fa-chevron-right sidebar-toggle-submenu\"></i>\n                </a>",
+          "clickResult": "not clicked"
+        }
+      ],
+      "clickResult": "not clicked | not clicked | not clicked",
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-functional-uat-final-20260518T092233Z\\Teacher_placeholder_activities_home.png",
+      "pass": false,
+      "finalUrl": "https://pdk-creams.org/activities/home",
+      "httpStatus": 200
+    },
+    {
+      "page": "/activities/categories",
+      "role": "Teacher",
+      "suspiciousHrefCountAfterJsRender": 8,
+      "examples": [
+        {
+          "text": "Notification",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"dropdown-item\" onclick=\"event.preventDefault(); triggerNotificationDropdown(); return false;\">\n                        <i class=\"fas fa-bell\"></i> Notification\n                    </a>",
+          "clickResult": "not clicked"
+        },
+        {
+          "text": "Settings",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"dropdown-item\" onclick=\"if(typeof showSettingsMessage === 'function') { showSettingsMessage(); } else { alert('Function not available!'); }\">\n                            <i class=\"fas fa-cog\"></i> Settings\n                        </a>",
+          "clickResult": "not clicked"
+        },
+        {
+          "text": "My Profile",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"sidebar-link\">\n                    <span class=\"sidebar-icon\"><i class=\"fas fa-user-circle\"></i></span>\n                    <span class=\"sidebar-text\">My Profile</span>\n                    <i class=\"fas fa-chevron-right sidebar-toggle-submenu\"></i>\n                </a>",
+          "clickResult": "not clicked"
+        }
+      ],
+      "clickResult": "not clicked | not clicked | not clicked",
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-functional-uat-final-20260518T092233Z\\Teacher_placeholder_activities_categories.png",
+      "pass": false,
+      "finalUrl": "https://pdk-creams.org/activities/categories",
+      "httpStatus": 200
+    },
+    {
+      "page": "/activities/schedule",
+      "role": "Teacher",
+      "suspiciousHrefCountAfterJsRender": 8,
+      "examples": [
+        {
+          "text": "Notification",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"dropdown-item\" onclick=\"event.preventDefault(); triggerNotificationDropdown(); return false;\">\n                        <i class=\"fas fa-bell\"></i> Notification\n                    </a>",
+          "clickResult": "not clicked"
+        },
+        {
+          "text": "Settings",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"dropdown-item\" onclick=\"if(typeof showSettingsMessage === 'function') { showSettingsMessage(); } else { alert('Function not available!'); }\">\n                            <i class=\"fas fa-cog\"></i> Settings\n                        </a>",
+          "clickResult": "not clicked"
+        },
+        {
+          "text": "My Profile",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"sidebar-link\">\n                    <span class=\"sidebar-icon\"><i class=\"fas fa-user-circle\"></i></span>\n                    <span class=\"sidebar-text\">My Profile</span>\n                    <i class=\"fas fa-chevron-right sidebar-toggle-submenu\"></i>\n                </a>",
+          "clickResult": "not clicked"
+        }
+      ],
+      "clickResult": "not clicked | not clicked | not clicked",
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-functional-uat-final-20260518T092233Z\\Teacher_placeholder_activities_schedule.png",
+      "pass": false,
+      "finalUrl": "https://pdk-creams.org/activities/schedule",
+      "httpStatus": 200
+    },
+    {
+      "page": "/centres/home",
+      "role": "Teacher",
+      "suspiciousHrefCountAfterJsRender": 8,
+      "examples": [
+        {
+          "text": "Notification",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"dropdown-item\" onclick=\"event.preventDefault(); triggerNotificationDropdown(); return false;\">\n                        <i class=\"fas fa-bell\"></i> Notification\n                    </a>",
+          "clickResult": "not clicked"
+        },
+        {
+          "text": "Settings",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"dropdown-item\" onclick=\"if(typeof showSettingsMessage === 'function') { showSettingsMessage(); } else { alert('Function not available!'); }\">\n                            <i class=\"fas fa-cog\"></i> Settings\n                        </a>",
+          "clickResult": "not clicked"
+        },
+        {
+          "text": "My Profile",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"sidebar-link\">\n                    <span class=\"sidebar-icon\"><i class=\"fas fa-user-circle\"></i></span>\n                    <span class=\"sidebar-text\">My Profile</span>\n                    <i class=\"fas fa-chevron-right sidebar-toggle-submenu\"></i>\n                </a>",
+          "clickResult": "not clicked"
+        }
+      ],
+      "clickResult": "not clicked | not clicked | not clicked",
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-functional-uat-final-20260518T092233Z\\Teacher_placeholder_centres_home.png",
+      "pass": false,
+      "finalUrl": "https://pdk-creams.org/centres/home",
+      "httpStatus": 200
+    },
+    {
+      "page": "/assets",
+      "role": "Teacher",
+      "suspiciousHrefCountAfterJsRender": 8,
+      "examples": [
+        {
+          "text": "Notification",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"dropdown-item\" onclick=\"event.preventDefault(); triggerNotificationDropdown(); return false;\">\n                        <i class=\"fas fa-bell\"></i> Notification\n                    </a>",
+          "clickResult": "not clicked"
+        },
+        {
+          "text": "Settings",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"dropdown-item\" onclick=\"if(typeof showSettingsMessage === 'function') { showSettingsMessage(); } else { alert('Function not available!'); }\">\n                            <i class=\"fas fa-cog\"></i> Settings\n                        </a>",
+          "clickResult": "not clicked"
+        },
+        {
+          "text": "My Profile",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"sidebar-link\">\n                    <span class=\"sidebar-icon\"><i class=\"fas fa-user-circle\"></i></span>\n                    <span class=\"sidebar-text\">My Profile</span>\n                    <i class=\"fas fa-chevron-right sidebar-toggle-submenu\"></i>\n                </a>",
+          "clickResult": "not clicked"
+        }
+      ],
+      "clickResult": "not clicked | not clicked | not clicked",
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-functional-uat-final-20260518T092233Z\\Teacher_placeholder_assets.png",
+      "pass": false,
+      "finalUrl": "https://pdk-creams.org/teacher/dashboard",
+      "httpStatus": 200
+    },
+    {
+      "page": "/assets/reports",
+      "role": "Teacher",
+      "suspiciousHrefCountAfterJsRender": 8,
+      "examples": [
+        {
+          "text": "Notification",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"dropdown-item\" onclick=\"event.preventDefault(); triggerNotificationDropdown(); return false;\">\n                        <i class=\"fas fa-bell\"></i> Notification\n                    </a>",
+          "clickResult": "not clicked"
+        },
+        {
+          "text": "Settings",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"dropdown-item\" onclick=\"if(typeof showSettingsMessage === 'function') { showSettingsMessage(); } else { alert('Function not available!'); }\">\n                            <i class=\"fas fa-cog\"></i> Settings\n                        </a>",
+          "clickResult": "not clicked"
+        },
+        {
+          "text": "My Profile",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"sidebar-link\">\n                    <span class=\"sidebar-icon\"><i class=\"fas fa-user-circle\"></i></span>\n                    <span class=\"sidebar-text\">My Profile</span>\n                    <i class=\"fas fa-chevron-right sidebar-toggle-submenu\"></i>\n                </a>",
+          "clickResult": "not clicked"
+        }
+      ],
+      "clickResult": "not clicked | not clicked | not clicked",
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-functional-uat-final-20260518T092233Z\\Teacher_placeholder_assets_reports.png",
+      "pass": false,
+      "finalUrl": "https://pdk-creams.org/teacher/dashboard",
+      "httpStatus": 200
+    },
+    {
+      "page": "/assets/maintenance",
+      "role": "Teacher",
+      "suspiciousHrefCountAfterJsRender": 8,
+      "examples": [
+        {
+          "text": "Notification",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"dropdown-item\" onclick=\"event.preventDefault(); triggerNotificationDropdown(); return false;\">\n                        <i class=\"fas fa-bell\"></i> Notification\n                    </a>",
+          "clickResult": "not clicked"
+        },
+        {
+          "text": "Settings",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"dropdown-item\" onclick=\"if(typeof showSettingsMessage === 'function') { showSettingsMessage(); } else { alert('Function not available!'); }\">\n                            <i class=\"fas fa-cog\"></i> Settings\n                        </a>",
+          "clickResult": "not clicked"
+        },
+        {
+          "text": "My Profile",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"sidebar-link\">\n                    <span class=\"sidebar-icon\"><i class=\"fas fa-user-circle\"></i></span>\n                    <span class=\"sidebar-text\">My Profile</span>\n                    <i class=\"fas fa-chevron-right sidebar-toggle-submenu\"></i>\n                </a>",
+          "clickResult": "not clicked"
+        }
+      ],
+      "clickResult": "not clicked | not clicked | not clicked",
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-functional-uat-final-20260518T092233Z\\Teacher_placeholder_assets_maintenance.png",
+      "pass": false,
+      "finalUrl": "https://pdk-creams.org/teacher/dashboard",
+      "httpStatus": 200
+    },
+    {
+      "page": "/assets/movements",
+      "role": "Teacher",
+      "suspiciousHrefCountAfterJsRender": 8,
+      "examples": [
+        {
+          "text": "Notification",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"dropdown-item\" onclick=\"event.preventDefault(); triggerNotificationDropdown(); return false;\">\n                        <i class=\"fas fa-bell\"></i> Notification\n                    </a>",
+          "clickResult": "not clicked"
+        },
+        {
+          "text": "Settings",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"dropdown-item\" onclick=\"if(typeof showSettingsMessage === 'function') { showSettingsMessage(); } else { alert('Function not available!'); }\">\n                            <i class=\"fas fa-cog\"></i> Settings\n                        </a>",
+          "clickResult": "not clicked"
+        },
+        {
+          "text": "My Profile",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"sidebar-link\">\n                    <span class=\"sidebar-icon\"><i class=\"fas fa-user-circle\"></i></span>\n                    <span class=\"sidebar-text\">My Profile</span>\n                    <i class=\"fas fa-chevron-right sidebar-toggle-submenu\"></i>\n                </a>",
+          "clickResult": "not clicked"
+        }
+      ],
+      "clickResult": "not clicked | not clicked | not clicked",
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-functional-uat-final-20260518T092233Z\\Teacher_placeholder_assets_movements.png",
+      "pass": false,
+      "finalUrl": "https://pdk-creams.org/teacher/dashboard",
+      "httpStatus": 200
+    },
+    {
+      "page": "/trainees/home",
+      "role": "Teacher",
+      "suspiciousHrefCountAfterJsRender": 8,
+      "examples": [
+        {
+          "text": "Notification",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"dropdown-item\" onclick=\"event.preventDefault(); triggerNotificationDropdown(); return false;\">\n                        <i class=\"fas fa-bell\"></i> Notification\n                    </a>",
+          "clickResult": "not clicked"
+        },
+        {
+          "text": "Settings",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"dropdown-item\" onclick=\"if(typeof showSettingsMessage === 'function') { showSettingsMessage(); } else { alert('Function not available!'); }\">\n                            <i class=\"fas fa-cog\"></i> Settings\n                        </a>",
+          "clickResult": "not clicked"
+        },
+        {
+          "text": "My Profile",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"sidebar-link\">\n                    <span class=\"sidebar-icon\"><i class=\"fas fa-user-circle\"></i></span>\n                    <span class=\"sidebar-text\">My Profile</span>\n                    <i class=\"fas fa-chevron-right sidebar-toggle-submenu\"></i>\n                </a>",
+          "clickResult": "not clicked"
+        }
+      ],
+      "clickResult": "not clicked | not clicked | not clicked",
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-functional-uat-final-20260518T092233Z\\Teacher_placeholder_trainees_home.png",
+      "pass": false,
+      "finalUrl": "https://pdk-creams.org/trainees/home",
+      "httpStatus": 200
+    },
+    {
+      "page": "/letters",
+      "role": "Teacher",
+      "suspiciousHrefCountAfterJsRender": 0,
+      "examples": [],
+      "clickResult": "",
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-functional-uat-final-20260518T092233Z\\Teacher_placeholder_letters.png",
+      "pass": true,
+      "finalUrl": "https://pdk-creams.org/letters",
+      "httpStatus": 403
+    },
+    {
+      "page": "/admin/dashboard",
+      "role": "AJK",
+      "suspiciousHrefCountAfterJsRender": 0,
+      "examples": [],
+      "clickResult": "",
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-functional-uat-final-20260518T092233Z\\AJK_placeholder_admin_dashboard.png",
+      "pass": true,
+      "finalUrl": "https://pdk-creams.org/admin/dashboard",
+      "httpStatus": 403
+    },
+    {
+      "page": "/activities/home",
+      "role": "AJK",
+      "suspiciousHrefCountAfterJsRender": 10,
+      "examples": [
+        {
+          "text": "Notification",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"dropdown-item\" onclick=\"event.preventDefault(); triggerNotificationDropdown(); return false;\">\n                        <i class=\"fas fa-bell\"></i> Notification\n                    </a>",
+          "clickResult": "not clicked"
+        },
+        {
+          "text": "Settings",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"dropdown-item\" onclick=\"if(typeof showSettingsMessage === 'function') { showSettingsMessage(); } else { alert('Function not available!'); }\">\n                            <i class=\"fas fa-cog\"></i> Settings\n                        </a>",
+          "clickResult": "not clicked"
+        },
+        {
+          "text": "My Profile",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"sidebar-link\">\n                    <span class=\"sidebar-icon\"><i class=\"fas fa-user-circle\"></i></span>\n                    <span class=\"sidebar-text\">My Profile</span>\n                    <i class=\"fas fa-chevron-right sidebar-toggle-submenu\"></i>\n                </a>",
+          "clickResult": "not clicked"
+        }
+      ],
+      "clickResult": "not clicked | not clicked | not clicked",
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-functional-uat-final-20260518T092233Z\\AJK_placeholder_activities_home.png",
+      "pass": false,
+      "finalUrl": "https://pdk-creams.org/activities/home",
+      "httpStatus": 200
+    },
+    {
+      "page": "/activities/categories",
+      "role": "AJK",
+      "suspiciousHrefCountAfterJsRender": 10,
+      "examples": [
+        {
+          "text": "Notification",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"dropdown-item\" onclick=\"event.preventDefault(); triggerNotificationDropdown(); return false;\">\n                        <i class=\"fas fa-bell\"></i> Notification\n                    </a>",
+          "clickResult": "not clicked"
+        },
+        {
+          "text": "Settings",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"dropdown-item\" onclick=\"if(typeof showSettingsMessage === 'function') { showSettingsMessage(); } else { alert('Function not available!'); }\">\n                            <i class=\"fas fa-cog\"></i> Settings\n                        </a>",
+          "clickResult": "not clicked"
+        },
+        {
+          "text": "My Profile",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"sidebar-link\">\n                    <span class=\"sidebar-icon\"><i class=\"fas fa-user-circle\"></i></span>\n                    <span class=\"sidebar-text\">My Profile</span>\n                    <i class=\"fas fa-chevron-right sidebar-toggle-submenu\"></i>\n                </a>",
+          "clickResult": "not clicked"
+        }
+      ],
+      "clickResult": "not clicked | not clicked | not clicked",
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-functional-uat-final-20260518T092233Z\\AJK_placeholder_activities_categories.png",
+      "pass": false,
+      "finalUrl": "https://pdk-creams.org/ajk/dashboard",
+      "httpStatus": 200
+    },
+    {
+      "page": "/activities/schedule",
+      "role": "AJK",
+      "suspiciousHrefCountAfterJsRender": 10,
+      "examples": [
+        {
+          "text": "Notification",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"dropdown-item\" onclick=\"event.preventDefault(); triggerNotificationDropdown(); return false;\">\n                        <i class=\"fas fa-bell\"></i> Notification\n                    </a>",
+          "clickResult": "not clicked"
+        },
+        {
+          "text": "Settings",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"dropdown-item\" onclick=\"if(typeof showSettingsMessage === 'function') { showSettingsMessage(); } else { alert('Function not available!'); }\">\n                            <i class=\"fas fa-cog\"></i> Settings\n                        </a>",
+          "clickResult": "not clicked"
+        },
+        {
+          "text": "My Profile",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"sidebar-link\">\n                    <span class=\"sidebar-icon\"><i class=\"fas fa-user-circle\"></i></span>\n                    <span class=\"sidebar-text\">My Profile</span>\n                    <i class=\"fas fa-chevron-right sidebar-toggle-submenu\"></i>\n                </a>",
+          "clickResult": "not clicked"
+        }
+      ],
+      "clickResult": "not clicked | not clicked | not clicked",
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-functional-uat-final-20260518T092233Z\\AJK_placeholder_activities_schedule.png",
+      "pass": false,
+      "finalUrl": "https://pdk-creams.org/ajk/dashboard",
+      "httpStatus": 200
+    },
+    {
+      "page": "/centres/home",
+      "role": "AJK",
+      "suspiciousHrefCountAfterJsRender": 10,
+      "examples": [
+        {
+          "text": "Notification",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"dropdown-item\" onclick=\"event.preventDefault(); triggerNotificationDropdown(); return false;\">\n                        <i class=\"fas fa-bell\"></i> Notification\n                    </a>",
+          "clickResult": "not clicked"
+        },
+        {
+          "text": "Settings",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"dropdown-item\" onclick=\"if(typeof showSettingsMessage === 'function') { showSettingsMessage(); } else { alert('Function not available!'); }\">\n                            <i class=\"fas fa-cog\"></i> Settings\n                        </a>",
+          "clickResult": "not clicked"
+        },
+        {
+          "text": "My Profile",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"sidebar-link\">\n                    <span class=\"sidebar-icon\"><i class=\"fas fa-user-circle\"></i></span>\n                    <span class=\"sidebar-text\">My Profile</span>\n                    <i class=\"fas fa-chevron-right sidebar-toggle-submenu\"></i>\n                </a>",
+          "clickResult": "not clicked"
+        }
+      ],
+      "clickResult": "not clicked | not clicked | not clicked",
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-functional-uat-final-20260518T092233Z\\AJK_placeholder_centres_home.png",
+      "pass": false,
+      "finalUrl": "https://pdk-creams.org/centres/home",
+      "httpStatus": 200
+    },
+    {
+      "page": "/assets",
+      "role": "AJK",
+      "suspiciousHrefCountAfterJsRender": 10,
+      "examples": [
+        {
+          "text": "Notification",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"dropdown-item\" onclick=\"event.preventDefault(); triggerNotificationDropdown(); return false;\">\n                        <i class=\"fas fa-bell\"></i> Notification\n                    </a>",
+          "clickResult": "not clicked"
+        },
+        {
+          "text": "Settings",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"dropdown-item\" onclick=\"if(typeof showSettingsMessage === 'function') { showSettingsMessage(); } else { alert('Function not available!'); }\">\n                            <i class=\"fas fa-cog\"></i> Settings\n                        </a>",
+          "clickResult": "not clicked"
+        },
+        {
+          "text": "My Profile",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"sidebar-link\">\n                    <span class=\"sidebar-icon\"><i class=\"fas fa-user-circle\"></i></span>\n                    <span class=\"sidebar-text\">My Profile</span>\n                    <i class=\"fas fa-chevron-right sidebar-toggle-submenu\"></i>\n                </a>",
+          "clickResult": "not clicked"
+        }
+      ],
+      "clickResult": "not clicked | not clicked | not clicked",
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-functional-uat-final-20260518T092233Z\\AJK_placeholder_assets.png",
+      "pass": false,
+      "finalUrl": "https://pdk-creams.org/ajk/dashboard",
+      "httpStatus": 200
+    },
+    {
+      "page": "/assets/reports",
+      "role": "AJK",
+      "suspiciousHrefCountAfterJsRender": 10,
+      "examples": [
+        {
+          "text": "Notification",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"dropdown-item\" onclick=\"event.preventDefault(); triggerNotificationDropdown(); return false;\">\n                        <i class=\"fas fa-bell\"></i> Notification\n                    </a>",
+          "clickResult": "not clicked"
+        },
+        {
+          "text": "Settings",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"dropdown-item\" onclick=\"if(typeof showSettingsMessage === 'function') { showSettingsMessage(); } else { alert('Function not available!'); }\">\n                            <i class=\"fas fa-cog\"></i> Settings\n                        </a>",
+          "clickResult": "not clicked"
+        },
+        {
+          "text": "My Profile",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"sidebar-link\">\n                    <span class=\"sidebar-icon\"><i class=\"fas fa-user-circle\"></i></span>\n                    <span class=\"sidebar-text\">My Profile</span>\n                    <i class=\"fas fa-chevron-right sidebar-toggle-submenu\"></i>\n                </a>",
+          "clickResult": "not clicked"
+        }
+      ],
+      "clickResult": "not clicked | not clicked | not clicked",
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-functional-uat-final-20260518T092233Z\\AJK_placeholder_assets_reports.png",
+      "pass": false,
+      "finalUrl": "https://pdk-creams.org/ajk/dashboard",
+      "httpStatus": 200
+    },
+    {
+      "page": "/assets/maintenance",
+      "role": "AJK",
+      "suspiciousHrefCountAfterJsRender": 10,
+      "examples": [
+        {
+          "text": "Notification",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"dropdown-item\" onclick=\"event.preventDefault(); triggerNotificationDropdown(); return false;\">\n                        <i class=\"fas fa-bell\"></i> Notification\n                    </a>",
+          "clickResult": "not clicked"
+        },
+        {
+          "text": "Settings",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"dropdown-item\" onclick=\"if(typeof showSettingsMessage === 'function') { showSettingsMessage(); } else { alert('Function not available!'); }\">\n                            <i class=\"fas fa-cog\"></i> Settings\n                        </a>",
+          "clickResult": "not clicked"
+        },
+        {
+          "text": "My Profile",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"sidebar-link\">\n                    <span class=\"sidebar-icon\"><i class=\"fas fa-user-circle\"></i></span>\n                    <span class=\"sidebar-text\">My Profile</span>\n                    <i class=\"fas fa-chevron-right sidebar-toggle-submenu\"></i>\n                </a>",
+          "clickResult": "not clicked"
+        }
+      ],
+      "clickResult": "not clicked | not clicked | not clicked",
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-functional-uat-final-20260518T092233Z\\AJK_placeholder_assets_maintenance.png",
+      "pass": false,
+      "finalUrl": "https://pdk-creams.org/ajk/dashboard",
+      "httpStatus": 200
+    },
+    {
+      "page": "/assets/movements",
+      "role": "AJK",
+      "suspiciousHrefCountAfterJsRender": 10,
+      "examples": [
+        {
+          "text": "Notification",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"dropdown-item\" onclick=\"event.preventDefault(); triggerNotificationDropdown(); return false;\">\n                        <i class=\"fas fa-bell\"></i> Notification\n                    </a>",
+          "clickResult": "not clicked"
+        },
+        {
+          "text": "Settings",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"dropdown-item\" onclick=\"if(typeof showSettingsMessage === 'function') { showSettingsMessage(); } else { alert('Function not available!'); }\">\n                            <i class=\"fas fa-cog\"></i> Settings\n                        </a>",
+          "clickResult": "not clicked"
+        },
+        {
+          "text": "My Profile",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"sidebar-link\">\n                    <span class=\"sidebar-icon\"><i class=\"fas fa-user-circle\"></i></span>\n                    <span class=\"sidebar-text\">My Profile</span>\n                    <i class=\"fas fa-chevron-right sidebar-toggle-submenu\"></i>\n                </a>",
+          "clickResult": "not clicked"
+        }
+      ],
+      "clickResult": "not clicked | not clicked | not clicked",
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-functional-uat-final-20260518T092233Z\\AJK_placeholder_assets_movements.png",
+      "pass": false,
+      "finalUrl": "https://pdk-creams.org/ajk/dashboard",
+      "httpStatus": 200
+    },
+    {
+      "page": "/trainees/home",
+      "role": "AJK",
+      "suspiciousHrefCountAfterJsRender": 10,
+      "examples": [
+        {
+          "text": "Notification",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"dropdown-item\" onclick=\"event.preventDefault(); triggerNotificationDropdown(); return false;\">\n                        <i class=\"fas fa-bell\"></i> Notification\n                    </a>",
+          "clickResult": "not clicked"
+        },
+        {
+          "text": "Settings",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"dropdown-item\" onclick=\"if(typeof showSettingsMessage === 'function') { showSettingsMessage(); } else { alert('Function not available!'); }\">\n                            <i class=\"fas fa-cog\"></i> Settings\n                        </a>",
+          "clickResult": "not clicked"
+        },
+        {
+          "text": "My Profile",
+          "href": "#",
+          "outerHTML": "<a href=\"#\" class=\"sidebar-link\">\n                    <span class=\"sidebar-icon\"><i class=\"fas fa-user-circle\"></i></span>\n                    <span class=\"sidebar-text\">My Profile</span>\n                    <i class=\"fas fa-chevron-right sidebar-toggle-submenu\"></i>\n                </a>",
+          "clickResult": "not clicked"
+        }
+      ],
+      "clickResult": "not clicked | not clicked | not clicked",
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-functional-uat-final-20260518T092233Z\\AJK_placeholder_trainees_home.png",
+      "pass": false,
+      "finalUrl": "https://pdk-creams.org/trainees/home",
+      "httpStatus": 200
+    },
+    {
+      "page": "/letters",
+      "role": "AJK",
+      "suspiciousHrefCountAfterJsRender": 0,
+      "examples": [],
+      "clickResult": "",
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-functional-uat-final-20260518T092233Z\\AJK_placeholder_letters.png",
+      "pass": true,
+      "finalUrl": "https://pdk-creams.org/letters",
+      "httpStatus": 403
+    }
+  ],
+  "restricted": [
+    {
+      "role": "Teacher",
+      "page": "/assets",
+      "restrictedControlLinkVisible": false,
+      "hrefAction": "/assets",
+      "backendResult": "200 https://pdk-creams.org/teacher/dashboard",
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-functional-uat-final-20260518T092233Z\\Teacher_restricted_assets.png",
+      "pass": true
+    },
+    {
+      "role": "Teacher",
+      "page": "/assets/create",
+      "restrictedControlLinkVisible": false,
+      "hrefAction": "/assets/create",
+      "backendResult": "403 https://pdk-creams.org/assets/create",
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-functional-uat-final-20260518T092233Z\\Teacher_restricted_assets_create.png",
+      "pass": true
+    },
+    {
+      "role": "Teacher",
+      "page": "/letters",
+      "restrictedControlLinkVisible": false,
+      "hrefAction": "/letters",
+      "backendResult": "403 https://pdk-creams.org/letters",
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-functional-uat-final-20260518T092233Z\\Teacher_restricted_letters.png",
+      "pass": true
+    },
+    {
+      "role": "Teacher",
+      "page": "/attendance",
+      "restrictedControlLinkVisible": false,
+      "hrefAction": "/attendance",
+      "backendResult": "200 https://pdk-creams.org/attendance",
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-functional-uat-final-20260518T092233Z\\Teacher_restricted_attendance.png",
+      "pass": true
+    },
+    {
+      "role": "Teacher",
+      "page": "/activity-attendance",
+      "restrictedControlLinkVisible": false,
+      "hrefAction": "/activity-attendance",
+      "backendResult": "200 https://pdk-creams.org/activity-attendance",
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-functional-uat-final-20260518T092233Z\\Teacher_restricted_activity_attendance.png",
+      "pass": true
+    },
+    {
+      "role": "AJK",
+      "page": "/assets",
+      "restrictedControlLinkVisible": false,
+      "hrefAction": "/assets",
+      "backendResult": "200 https://pdk-creams.org/ajk/dashboard",
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-functional-uat-final-20260518T092233Z\\AJK_restricted_assets.png",
+      "pass": true
+    },
+    {
+      "role": "AJK",
+      "page": "/assets/create",
+      "restrictedControlLinkVisible": false,
+      "hrefAction": "/assets/create",
+      "backendResult": "403 https://pdk-creams.org/assets/create",
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-functional-uat-final-20260518T092233Z\\AJK_restricted_assets_create.png",
+      "pass": true
+    },
+    {
+      "role": "AJK",
+      "page": "/letters",
+      "restrictedControlLinkVisible": false,
+      "hrefAction": "/letters",
+      "backendResult": "403 https://pdk-creams.org/letters",
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-functional-uat-final-20260518T092233Z\\AJK_restricted_letters.png",
+      "pass": true
+    },
+    {
+      "role": "AJK",
+      "page": "/attendance",
+      "restrictedControlLinkVisible": false,
+      "hrefAction": "/attendance",
+      "backendResult": "403 https://pdk-creams.org/attendance",
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-functional-uat-final-20260518T092233Z\\AJK_restricted_attendance.png",
+      "pass": true
+    },
+    {
+      "role": "AJK",
+      "page": "/activity-attendance",
+      "restrictedControlLinkVisible": false,
+      "hrefAction": "/activity-attendance",
+      "backendResult": "403 https://pdk-creams.org/activity-attendance",
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-functional-uat-final-20260518T092233Z\\AJK_restricted_activity_attendance.png",
+      "pass": true
+    },
+    {
+      "role": "AJK",
+      "page": "/staffs/create",
+      "restrictedControlLinkVisible": false,
+      "hrefAction": "/staffs/create",
+      "backendResult": "403 https://pdk-creams.org/staffs/create",
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-functional-uat-final-20260518T092233Z\\AJK_restricted_staffs_create.png",
+      "pass": true
+    }
+  ],
+  "trainee": [
+    {
+      "role": "Admin",
+      "createFormVisible": true,
+      "submitAttempted": true,
+      "statusFinalUrl": "200 https://pdk-creams.org/trainees/create",
+      "flashValidationMessage": "CREAMS Trainee Management Dr. Lakshmi a/p Krishnan Administration Dashboard My Profile Personal Info Letters Volunteer Applications MANAGEMENT Staffs Home Registration Trainee Home Registration Activity Home Category Schedule Centre Home Asset Attendance REPORTS & SETTINGS Reports Development Settings Development Logout Register New Trainee Add a new trainee to the CREAMS rehabilitation program with comprehensive information collection Dashboard Trainee Register Personal Information FIRST NAME",
+      "recordSearchable": false,
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-functional-uat-final-20260518T092233Z\\Admin_trainee_submit.png",
+      "pass": false
+    },
+    {
+      "role": "Supervisor",
+      "createFormVisible": true,
+      "submitAttempted": true,
+      "statusFinalUrl": "200 https://pdk-creams.org/trainees/create",
+      "flashValidationMessage": "CREAMS Trainee Management Dr. Aminah binti Mohd Said Supervisor Dashboard My Profile Personal Info Letters Volunteer Applications MANAGEMENT Staffs Home Registration Trainee Home Registration Activity Home Category Schedule Centre Home Asset Attendance REPORTS & SETTINGS Reports Development Settings Development Logout Register New Trainee Add a new trainee to the CREAMS rehabilitation program with comprehensive information collection Dashboard Trainee Register Personal Information FIRST NAME *",
+      "recordSearchable": false,
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-functional-uat-final-20260518T092233Z\\Supervisor_trainee_submit.png",
+      "pass": false
+    },
+    {
+      "role": "Teacher",
+      "createFormVisible": true,
+      "submitAttempted": true,
+      "statusFinalUrl": "200 https://pdk-creams.org/trainees/create",
+      "flashValidationMessage": "CREAMS Trainee Management Ustaz Ahmad bin Hassan Teacher Dashboard My Profile Personal Info MANAGEMENT Trainee Home Registration Activity Home Category Schedule Centre Home REPORTS & SETTINGS Reports Development Settings Development Logout Register New Trainee Add a new trainee to the CREAMS rehabilitation program with comprehensive information collection Dashboard Trainee Register Personal Information FIRST NAME * LAST NAME * DATE OF BIRTH * GENDER * Select Gender Male Female EMAIL ADDRESS *",
+      "recordSearchable": false,
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-functional-uat-final-20260518T092233Z\\Teacher_trainee_submit.png",
+      "pass": false
+    },
+    {
+      "role": "AJK",
+      "createFormVisible": false,
+      "submitAttempted": false,
+      "statusFinalUrl": "403 https://pdk-creams.org/trainees/create",
+      "flashValidationMessage": "",
+      "recordSearchable": false,
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-functional-uat-final-20260518T092233Z\\AJK_trainee_create.png",
+      "pass": true
+    }
+  ],
+  "logout": [
+    {
+      "role": "Admin",
+      "logoutFinalUrl": "https://pdk-creams.org/admin/dashboard",
+      "protectedDirectNavAfterLogout": "https://pdk-creams.org/admin/dashboard",
+      "backButtonBehavior": "https://pdk-creams.org/trainees/create",
+      "refreshBehavior": "https://pdk-creams.org/trainees/create",
+      "sensitiveCachedContentVisible": true,
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-functional-uat-final-20260518T092233Z\\Admin_logout_after.png",
+      "pass": false
+    },
+    {
+      "role": "Supervisor",
+      "logoutFinalUrl": "https://pdk-creams.org/supervisor/dashboard",
+      "protectedDirectNavAfterLogout": "https://pdk-creams.org/supervisor/dashboard",
+      "backButtonBehavior": "https://pdk-creams.org/trainees/home?search=codex.pw.supervisor.20260518t092233z%40uat.creams.test",
+      "refreshBehavior": "https://pdk-creams.org/trainees/home?search=codex.pw.supervisor.20260518t092233z%40uat.creams.test",
+      "sensitiveCachedContentVisible": true,
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-functional-uat-final-20260518T092233Z\\Supervisor_logout_after.png",
+      "pass": false
+    },
+    {
+      "role": "Teacher",
+      "logoutFinalUrl": "https://pdk-creams.org/teacher/dashboard",
+      "protectedDirectNavAfterLogout": "https://pdk-creams.org/teacher/dashboard",
+      "backButtonBehavior": "https://pdk-creams.org/activity-attendance",
+      "refreshBehavior": "https://pdk-creams.org/activity-attendance",
+      "sensitiveCachedContentVisible": true,
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-functional-uat-final-20260518T092233Z\\Teacher_logout_after.png",
+      "pass": false
+    },
+    {
+      "role": "AJK",
+      "logoutFinalUrl": "https://pdk-creams.org/ajk/dashboard",
+      "protectedDirectNavAfterLogout": "https://pdk-creams.org/ajk/dashboard",
+      "backButtonBehavior": "https://pdk-creams.org/staffs/create",
+      "refreshBehavior": "https://pdk-creams.org/staffs/create",
+      "sensitiveCachedContentVisible": false,
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-functional-uat-final-20260518T092233Z\\AJK_logout_after.png",
+      "pass": false
+    }
+  ],
+  "modals": [
+    {
+      "module": "Letters",
+      "action": "Generate New Letter",
+      "syntheticRecordUsed": false,
+      "result": "https://pdk-creams.org/letters",
+      "consoleError": [],
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-functional-uat-final-20260518T092233Z\\modal_Letters_Generate_New_Letter.png",
+      "pass": true
+    },
+    {
+      "module": "Assets",
+      "action": "Add New Asset",
+      "syntheticRecordUsed": false,
+      "result": "https://pdk-creams.org/assets",
+      "consoleError": [],
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-functional-uat-final-20260518T092233Z\\modal_Assets_Add_New_Asset.png",
+      "pass": true
+    },
+    {
+      "module": "Trainee",
+      "action": "Register Trainee",
+      "syntheticRecordUsed": false,
+      "result": "https://pdk-creams.org/trainees/create",
+      "consoleError": [],
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-functional-uat-final-20260518T092233Z\\modal_Trainee_Register_Trainee.png",
+      "pass": true
+    }
+  ],
+  "consoleNetwork": [
+    {
+      "page": "Admin",
+      "consoleErrors": [
+        {
+          "type": "warning",
+          "text": "Weather widget: service unreachable, showing fallback.",
+          "url": "https://pdk-creams.org/admin/dashboard"
+        }
+      ],
+      "failedRequests": [
+        {
+          "url": "https://wttr.in/Gombak%2CMalaysia?format=j1",
+          "method": "GET",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        }
+      ],
+      "networkErrors": [],
+      "fourOhFourCount": 0,
+      "fiveHundredCount": 0
+    },
+    {
+      "page": "Supervisor",
+      "consoleErrors": [
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 404 ()",
+          "url": "https://pdk-creams.org/assets/71"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 404 ()",
+          "url": "https://pdk-creams.org/assets/118"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 404 ()",
+          "url": "https://pdk-creams.org/assets/55"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 403 ()",
+          "url": "https://pdk-creams.org/admin/dashboard"
+        }
+      ],
+      "failedRequests": [
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        }
+      ],
+      "networkErrors": [
+        {
+          "url": "https://pdk-creams.org/assets/71",
+          "status": 404
+        },
+        {
+          "url": "https://pdk-creams.org/assets/118",
+          "status": 404
+        },
+        {
+          "url": "https://pdk-creams.org/assets/55",
+          "status": 404
+        },
+        {
+          "url": "https://pdk-creams.org/admin/dashboard",
+          "status": 403
+        }
+      ],
+      "fourOhFourCount": 3,
+      "fiveHundredCount": 0
+    },
+    {
+      "page": "Teacher",
+      "consoleErrors": [
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 404 ()",
+          "url": "https://pdk-creams.org/assets/71"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 404 ()",
+          "url": "https://pdk-creams.org/assets/118"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 404 ()",
+          "url": "https://pdk-creams.org/assets/55"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 403 ()",
+          "url": "https://pdk-creams.org/admin/dashboard"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 403 ()",
+          "url": "https://pdk-creams.org/letters"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 403 ()",
+          "url": "https://pdk-creams.org/assets/create"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 403 ()",
+          "url": "https://pdk-creams.org/letters"
+        }
+      ],
+      "failedRequests": [
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        }
+      ],
+      "networkErrors": [
+        {
+          "url": "https://pdk-creams.org/assets/71",
+          "status": 404
+        },
+        {
+          "url": "https://pdk-creams.org/assets/118",
+          "status": 404
+        },
+        {
+          "url": "https://pdk-creams.org/assets/55",
+          "status": 404
+        },
+        {
+          "url": "https://pdk-creams.org/admin/dashboard",
+          "status": 403
+        },
+        {
+          "url": "https://pdk-creams.org/letters",
+          "status": 403
+        },
+        {
+          "url": "https://pdk-creams.org/assets/create",
+          "status": 403
+        },
+        {
+          "url": "https://pdk-creams.org/letters",
+          "status": 403
+        }
+      ],
+      "fourOhFourCount": 3,
+      "fiveHundredCount": 0
+    },
+    {
+      "page": "AJK",
+      "consoleErrors": [
+        {
+          "type": "warning",
+          "text": "Weather widget: service unreachable, showing fallback.",
+          "url": "https://pdk-creams.org/ajk/dashboard"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 404 ()",
+          "url": "https://pdk-creams.org/assets/71"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 404 ()",
+          "url": "https://pdk-creams.org/assets/118"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 404 ()",
+          "url": "https://pdk-creams.org/assets/55"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 403 ()",
+          "url": "https://pdk-creams.org/admin/dashboard"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 403 ()",
+          "url": "https://pdk-creams.org/letters"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 403 ()",
+          "url": "https://pdk-creams.org/trainees/create"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 403 ()",
+          "url": "https://pdk-creams.org/assets/create"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 403 ()",
+          "url": "https://pdk-creams.org/letters"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 403 ()",
+          "url": "https://pdk-creams.org/attendance"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 403 ()",
+          "url": "https://pdk-creams.org/activity-attendance"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 403 ()",
+          "url": "https://pdk-creams.org/staffs/create"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 403 ()",
+          "url": "https://pdk-creams.org/staffs/create"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 403 ()",
+          "url": "https://pdk-creams.org/staffs/create"
+        }
+      ],
+      "failedRequests": [
+        {
+          "url": "https://wttr.in/Gombak%2CMalaysia?format=j1",
+          "method": "GET",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        }
+      ],
+      "networkErrors": [
+        {
+          "url": "https://pdk-creams.org/assets/71",
+          "status": 404
+        },
+        {
+          "url": "https://pdk-creams.org/assets/118",
+          "status": 404
+        },
+        {
+          "url": "https://pdk-creams.org/assets/55",
+          "status": 404
+        },
+        {
+          "url": "https://pdk-creams.org/admin/dashboard",
+          "status": 403
+        },
+        {
+          "url": "https://pdk-creams.org/letters",
+          "status": 403
+        },
+        {
+          "url": "https://pdk-creams.org/trainees/create",
+          "status": 403
+        },
+        {
+          "url": "https://pdk-creams.org/assets/create",
+          "status": 403
+        },
+        {
+          "url": "https://pdk-creams.org/letters",
+          "status": 403
+        },
+        {
+          "url": "https://pdk-creams.org/attendance",
+          "status": 403
+        },
+        {
+          "url": "https://pdk-creams.org/activity-attendance",
+          "status": 403
+        },
+        {
+          "url": "https://pdk-creams.org/staffs/create",
+          "status": 403
+        },
+        {
+          "url": "https://pdk-creams.org/staffs/create",
+          "status": 403
+        },
+        {
+          "url": "https://pdk-creams.org/staffs/create",
+          "status": 403
+        }
+      ],
+      "fourOhFourCount": 3,
+      "fiveHundredCount": 0
+    }
+  ],
+  "mutations": [
+    {
+      "module": "trainee",
+      "identifierEmailTag": "codex.pw.admin.20260518t092233z@uat.creams.test",
+      "roleUsed": "Admin",
+      "created": false,
+      "visible": false,
+      "cleanupNeeded": false,
+      "recordUrl": "https://pdk-creams.org/trainees/home?search=codex.pw.admin.20260518t092233z%40uat.creams.test"
+    },
+    {
+      "module": "trainee",
+      "identifierEmailTag": "codex.pw.supervisor.20260518t092233z@uat.creams.test",
+      "roleUsed": "Supervisor",
+      "created": false,
+      "visible": false,
+      "cleanupNeeded": false,
+      "recordUrl": "https://pdk-creams.org/trainees/home?search=codex.pw.supervisor.20260518t092233z%40uat.creams.test"
+    },
+    {
+      "module": "trainee",
+      "identifierEmailTag": "codex.pw.teacher.20260518t092233z@uat.creams.test",
+      "roleUsed": "Teacher",
+      "created": false,
+      "visible": false,
+      "cleanupNeeded": false,
+      "recordUrl": "https://pdk-creams.org/trainees/home?search=codex.pw.teacher.20260518t092233z%40uat.creams.test"
+    }
+  ],
+  "safeDemo": [],
+  "unsafeDemo": []
+}

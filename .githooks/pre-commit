@@ -52,7 +52,11 @@ for i in "${!PATTERNS[@]}"; do
         # app/Http/Controllers/MainController.php contains validation error
         # message strings (e.g. 'Password must be at least 8 characters.')
         # that match the password pattern but are not credentials.
-        MATCHES=$(echo "$STAGED_FILES" | xargs grep -lnE "${PATTERNS[$i]}" 2>/dev/null | grep -v '.githooks/' | grep -v '.env.example' | grep -v '^docs/' | grep -v '^resources/views/' | grep -v '^database/seeders/IRLSeeder\.php$' | grep -v '^app/Http/Controllers/MainController\.php$' | grep -v '^app/Http/Controllers/Auth/ForgotPasswordController\.php$')
+        # Archive/ is historical evidence (UAT result JSONs capture page HTML
+        # such as input type="password" and screenshot filenames like
+        # Admin_wrong_password.png). Code-pattern checks excluded; the IC
+        # pattern (PDPA) still applies to Archive/.
+        MATCHES=$(echo "$STAGED_FILES" | xargs grep -lnE "${PATTERNS[$i]}" 2>/dev/null | grep -v '.githooks/' | grep -v '.env.example' | grep -v '^docs/' | grep -v '^resources/views/' | grep -v '^Archive/' | grep -v '^database/seeders/IRLSeeder\.php$' | grep -v '^app/Http/Controllers/MainController\.php$' | grep -v '^app/Http/Controllers/Auth/ForgotPasswordController\.php$')
     else
         MATCHES=$(echo "$STAGED_FILES" | xargs grep -lnE "${PATTERNS[$i]}" 2>/dev/null | grep -v '.githooks/' | grep -v '.env.example' | grep -v '^database/seeders/IRLSeeder\.php$')
     fi

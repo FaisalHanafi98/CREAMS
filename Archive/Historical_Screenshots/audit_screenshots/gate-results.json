@@ -1,0 +1,1301 @@
+{
+  "stamp": "20260516T163536Z",
+  "outDir": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-uat-gate-20260516T163536Z",
+  "environment": {
+    "target": "https://pdk-creams.org",
+    "dateTime": "2026-05-16T16:35:36.695Z",
+    "browser": "Playwright Chromium",
+    "javascriptEnabled": true,
+    "cleanContextPerRole": true
+  },
+  "logins": [
+    {
+      "role": "Admin",
+      "email": "lakshmi.krishnan@iium.edu.my",
+      "redirectChain": [
+        {
+          "url": "https://pdk-creams.org/auth/login",
+          "status": 200
+        },
+        {
+          "url": "https://pdk-creams.org/admin/dashboard",
+          "status": 200
+        },
+        {
+          "url": "https://pdk-creams.org/admin/dashboard",
+          "status": 200
+        }
+      ],
+      "finalUrl": "https://pdk-creams.org/admin/dashboard",
+      "heading": "👨‍💼 Welcome back, Dr. Lakshmi a/p Krishnan!",
+      "protectedPageAccessible": true,
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-uat-gate-20260516T163536Z\\login_Admin_pass.png",
+      "bodySample": "CREAMS Admin Dashboard Dr. Lakshmi a/p Krishnan Administration Dashboard My Profile Personal Info Letters Volunteer Applications MANAGEMENT Staffs Home Registration Trainee Home Registration Activity Home Category Schedule Centre Home Asset Attendance REPORTS & SETTINGS Reports Development Settings Development Logout 🌅 Good Morning 👨‍💼 Admin 👨‍💼 Welcome back, Dr. Lakshmi a/p Krishnan! Your Admin dashboard is ready. Sunday, May 17, 2026 12:35 AM 28°C Cloudy • Gombak General Personal 0 ACTIVE STAFF In Service 0 ACTIVE TRAINEES Growing 0 ONGOING ACTIVITIES Running 0 SESSIONS THIS WEEK None No recent activities to display No Centre Activities Today The centre schedule is clear for today. Check back later for updates! Create New Activity 📅 Today's Schedule No centre activities scheduled f"
+    },
+    {
+      "role": "Supervisor",
+      "email": "supervisor.gombak@iium.edu.my",
+      "redirectChain": [
+        {
+          "url": "https://pdk-creams.org/auth/login",
+          "status": 200
+        },
+        {
+          "url": "https://pdk-creams.org/supervisor/dashboard",
+          "status": 200
+        },
+        {
+          "url": "https://pdk-creams.org/supervisor/dashboard",
+          "status": 200
+        }
+      ],
+      "finalUrl": "https://pdk-creams.org/supervisor/dashboard",
+      "heading": "👨‍💼 Welcome back, Dr. Aminah binti Mohd Said!",
+      "protectedPageAccessible": true,
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-uat-gate-20260516T163536Z\\login_Supervisor_pass.png",
+      "bodySample": "CREAMS Supervisor Dashboard Dr. Aminah binti Mohd Said Supervisor Dashboard My Profile Personal Info Letters Volunteer Applications MANAGEMENT Staffs Home Registration Trainee Home Registration Activity Home Category Schedule Centre Home Asset Attendance REPORTS & SETTINGS Reports Development Settings Development Logout 🌅 Good Morning 👨‍💼 Supervisor 👨‍💼 Welcome back, Dr. Aminah binti Mohd Said! Your Supervisor dashboard is ready. Sunday, May 17, 2026 12:35 AM 28°C Cloudy • Gombak Personal Live Data: Statistics updated from database records • Centre: Your Centre • Last updated: May 17, 2026 at 12:35 AM Refresh 0 MY ACTIVITIES Activities I created/teach Ready to Create 0 THIS WEEK'S SESSIONS Sessions I'm conducting Planning Time 0% SESSION COMPLETION Scheduled sessions conducted Good Pr"
+    },
+    {
+      "role": "Teacher",
+      "email": "ahmad.hassan@iium.edu.my",
+      "redirectChain": [
+        {
+          "url": "https://pdk-creams.org/auth/login",
+          "status": 200
+        },
+        {
+          "url": "https://pdk-creams.org/teacher/dashboard",
+          "status": 200
+        },
+        {
+          "url": "https://pdk-creams.org/teacher/dashboard",
+          "status": 200
+        }
+      ],
+      "finalUrl": "https://pdk-creams.org/teacher/dashboard",
+      "heading": "👩‍🏫 Welcome back, Ustaz Ahmad bin Hassan!",
+      "protectedPageAccessible": true,
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-uat-gate-20260516T163536Z\\login_Teacher_pass.png",
+      "bodySample": "CREAMS Teacher Dashboard Ustaz Ahmad bin Hassan Teacher Dashboard My Profile Personal Info MANAGEMENT Trainee Home Registration Activity Home Category Schedule Centre Home REPORTS & SETTINGS Reports Development Settings Development Logout 🌅 Good Morning 👩‍🏫 Teacher 👩‍🏫 Welcome back, Ustaz Ahmad bin Hassan! Your Teacher dashboard is ready. Sunday, May 17, 2026 12:35 AM Loading weather... Personal Live Data: Statistics updated from database records • Centre: Your Centre • Last updated: May 17, 2026 at 12:35 AM Refresh 0 MY ACTIVITIES Activities I created/teach Ready to Create 0 THIS WEEK'S SESSIONS Sessions I'm conducting Planning Time 0% SESSION COMPLETION Scheduled sessions conducted Good Progress 0% STUDENT ATTENDANCE Avg attendance in my sessions Good Engagement Recent Activities Yo"
+    },
+    {
+      "role": "AJK",
+      "email": "fatimah.abdullah@iium.edu.my",
+      "redirectChain": [
+        {
+          "url": "https://pdk-creams.org/auth/login",
+          "status": 200
+        },
+        {
+          "url": "https://pdk-creams.org/ajk/dashboard",
+          "status": 200
+        },
+        {
+          "url": "https://pdk-creams.org/ajk/dashboard",
+          "status": 200
+        }
+      ],
+      "finalUrl": "https://pdk-creams.org/ajk/dashboard",
+      "heading": "👷‍♂️ Welcome back, Siti Fatimah binti Abdullah!",
+      "protectedPageAccessible": true,
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-uat-gate-20260516T163536Z\\login_AJK_pass.png",
+      "bodySample": "CREAMS Ajk Dashboard Siti Fatimah binti Abdullah AJK Dashboard My Profile Personal Info MANAGEMENT Staffs Home Trainee Home Activity Home Centre Home REPORTS & SETTINGS Reports Development Settings Development Logout 🌅 Good Morning 👷‍♂️ Ajk 👷‍♂️ Welcome back, Siti Fatimah binti Abdullah! Your Ajk dashboard is ready. Sunday, May 17, 2026 12:36 AM 28°C Cloudy • Gombak Personal Live Data: Statistics updated from database records • Centre: Your Centre • Last updated: May 17, 2026 at 12:36 AM Refresh 0 FACILITIES MANAGED Assets under your care Ready to Manage 0 THIS WEEK'S TASKS Maintenance & facility tasks All Clear 0% TASK COMPLETION Facility management efficiency In Progress 0 TASKS COMPLETED Maintenance tasks finished Getting Started Recent Activities Your latest interactions No Recent A"
+    }
+  ],
+  "assets": [
+    {
+      "role": "Admin",
+      "url": "/assets/71",
+      "httpStatus": 200,
+      "finalUrl": "https://pdk-creams.org/assets/71",
+      "title": "Therapy Mat #7 - Asset Details",
+      "heading": "Therapy Mat #7",
+      "bodySample": "CREAMS Admin Dashboard Dr. Lakshmi a/p Krishnan Administration Dashboard My Profile Personal Info Letters Volunteer Applications MANAGEMENT Staffs Home Registration Trainee Home Registration Activity Home Category Schedule Centre Home Asset Attendance REPORTS & SETTINGS Reports Development Settings Development Logout Assets Therapy Mat #7 Therapy Mat #7 Edit Back Asset Information Asset Tag AST03007 Serial Number — Category — Centre Pagoh Manufacturer TherapyEquip Malaysia Model — Purchase Date Aug 22, 2025 Purchase Price RM 1,179.00 Warranty Expiry Aug 22, 2026 Expiring Soon Location — Assigned To Unassigned Notes — Maintenance History Schedule Date Type Status Priority Cost Notes Aug 27, 2025 Repair Completed Normal RM 188.00 Repair and component replacement Jan 06, 2025 Inspection Compl",
+      "serverError": false,
+      "consoleErrors": [],
+      "failedRequests": [
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        }
+      ],
+      "networkErrors": [],
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-uat-gate-20260516T163536Z\\Admin_asset_71.png",
+      "usable": true,
+      "pass": true
+    },
+    {
+      "role": "Admin",
+      "url": "/assets/118",
+      "httpStatus": 200,
+      "finalUrl": "https://pdk-creams.org/assets/118",
+      "title": "Classroom Desk #26 - Asset Details",
+      "heading": "Classroom Desk #26",
+      "bodySample": "CREAMS Admin Dashboard Dr. Lakshmi a/p Krishnan Administration Dashboard My Profile Personal Info Letters Volunteer Applications MANAGEMENT Staffs Home Registration Trainee Home Registration Activity Home Category Schedule Centre Home Asset Attendance REPORTS & SETTINGS Reports Development Settings Development Logout Assets Classroom Desk #26 Classroom Desk #26 Edit Back Asset Information Asset Tag AST04026 Serial Number — Category — Centre Gambang Manufacturer MediCare Tools Model — Purchase Date Mar 02, 2023 Purchase Price RM 226.00 Warranty Expiry Mar 02, 2025 Expired Location — Assigned To Unassigned Notes — Maintenance History Schedule Date Type Status Priority Cost Notes Aug 26, 2025 Routine Completed Normal RM 23.00 Regular maintenance and safety check May 19, 2025 Routine Completed",
+      "serverError": false,
+      "consoleErrors": [],
+      "failedRequests": [
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        }
+      ],
+      "networkErrors": [],
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-uat-gate-20260516T163536Z\\Admin_asset_118.png",
+      "usable": true,
+      "pass": true
+    },
+    {
+      "role": "Admin",
+      "url": "/assets/7",
+      "httpStatus": 200,
+      "finalUrl": "https://pdk-creams.org/assets/7",
+      "title": "Plastic Chair Blue #1 - Asset Details",
+      "heading": "Plastic Chair Blue #1",
+      "bodySample": "CREAMS Admin Dashboard Dr. Lakshmi a/p Krishnan Administration Dashboard My Profile Personal Info Letters Volunteer Applications MANAGEMENT Staffs Home Registration Trainee Home Registration Activity Home Category Schedule Centre Home Asset Attendance REPORTS & SETTINGS Reports Development Settings Development Logout Assets Plastic Chair Blue #1 Plastic Chair Blue #1 Edit Back Asset Information Asset Tag GMK007 Serial Number — Category — Centre Gombak Manufacturer PPT EDU SUPPLIES Model — Purchase Date Aug 25, 2023 Purchase Price RM 1,233.00 Warranty Expiry Aug 25, 2025 Expired Location — Assigned To Unassigned Notes — Maintenance History Schedule Date Type Status Priority Cost Notes Aug 25, 2025 Routine Completed Normal RM 17.00 Regular maintenance and safety check Jul 07, 2025 Routine Co",
+      "serverError": false,
+      "consoleErrors": [],
+      "failedRequests": [
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        }
+      ],
+      "networkErrors": [],
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-uat-gate-20260516T163536Z\\Admin_asset_7.png",
+      "usable": true,
+      "pass": true
+    },
+    {
+      "role": "Admin",
+      "url": "/assets/55",
+      "httpStatus": 200,
+      "finalUrl": "https://pdk-creams.org/assets/55",
+      "title": "Tablet #17 - Asset Details",
+      "heading": "Tablet #17",
+      "bodySample": "CREAMS Admin Dashboard Dr. Lakshmi a/p Krishnan Administration Dashboard My Profile Personal Info Letters Volunteer Applications MANAGEMENT Staffs Home Registration Trainee Home Registration Activity Home Category Schedule Centre Home Asset Attendance REPORTS & SETTINGS Reports Development Settings Development Logout Assets Tablet #17 Tablet #17 Edit Back Asset Information Asset Tag AST02017 Serial Number — Category — Centre Kuantan Manufacturer TherapyEquip Malaysia Model — Purchase Date Sep 16, 2024 Purchase Price RM 230.00 Warranty Expiry Sep 16, 2027 Expiring Soon Location — Assigned To Unassigned Notes — Maintenance History Schedule Date Type Status Priority Cost Notes Aug 22, 2025 Repair Completed Normal RM 233.00 Repair and component replacement Jul 26, 2025 Routine Completed Normal",
+      "serverError": false,
+      "consoleErrors": [],
+      "failedRequests": [
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        }
+      ],
+      "networkErrors": [],
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-uat-gate-20260516T163536Z\\Admin_asset_55.png",
+      "usable": true,
+      "pass": true
+    }
+  ],
+  "assetProtection": [
+    {
+      "role": "Teacher",
+      "url": "/assets/7",
+      "httpStatus": 200,
+      "finalUrl": "https://pdk-creams.org/teacher/dashboard",
+      "title": "Dashboard - CREAMS",
+      "heading": "👩‍🏫 Welcome back, Ustaz Ahmad bin Hassan!",
+      "bodySample": "CREAMS Teacher Dashboard Ustaz Ahmad bin Hassan Teacher Dashboard My Profile Personal Info MANAGEMENT Trainee Home Registration Activity Home Category Schedule Centre Home REPORTS & SETTINGS Reports Development Settings Development Logout Access Restricted This page requires one of the following roles: Administrator, Supervisor. You are currently logged in as a Teacher. If you believe you should have access to this page, please contact your system administrator. Access Restricted This page requires one of the following roles: Administrator, Supervisor. You are currently logged in as a Teacher. If you believe you should have access to this page, please contact your system administrator. 🌅 Good Morning 👩‍🏫 Teacher 👩‍🏫 Welcome back, Ustaz Ahmad bin Hassan! Your Teacher dashboard is ready",
+      "serverError": false,
+      "consoleErrors": [],
+      "failedRequests": [
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        }
+      ],
+      "networkErrors": [],
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-uat-gate-20260516T163536Z\\Teacher_asset_protected_7.png",
+      "noAssetDataVisible": true,
+      "ownDashboardRedirect": true,
+      "visibleRestrictionMessage": true,
+      "pass": true
+    },
+    {
+      "role": "AJK",
+      "url": "/assets/7",
+      "httpStatus": 200,
+      "finalUrl": "https://pdk-creams.org/ajk/dashboard",
+      "title": "Dashboard - CREAMS",
+      "heading": "👷‍♂️ Welcome back, Siti Fatimah binti Abdullah!",
+      "bodySample": "CREAMS Ajk Dashboard Siti Fatimah binti Abdullah AJK Dashboard My Profile Personal Info MANAGEMENT Staffs Home Trainee Home Activity Home Centre Home REPORTS & SETTINGS Reports Development Settings Development Logout Access Restricted This page requires one of the following roles: Administrator, Supervisor. You are currently logged in as a AJK Committee Member. If you believe you should have access to this page, please contact your system administrator. Access Restricted This page requires one of the following roles: Administrator, Supervisor. You are currently logged in as a AJK Committee Member. If you believe you should have access to this page, please contact your system administrator. 🌅 Good Morning 👷‍♂️ Ajk 👷‍♂️ Welcome back, Siti Fatimah binti Abdullah! Your Ajk dashboard is read",
+      "serverError": false,
+      "consoleErrors": [],
+      "failedRequests": [
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        }
+      ],
+      "networkErrors": [],
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-uat-gate-20260516T163536Z\\AJK_asset_protected_7.png",
+      "noAssetDataVisible": true,
+      "ownDashboardRedirect": true,
+      "visibleRestrictionMessage": true,
+      "pass": true
+    }
+  ],
+  "hrefs": [
+    {
+      "role": "Admin",
+      "page": "/admin/dashboard",
+      "httpStatus": 200,
+      "finalUrl": "https://pdk-creams.org/admin/dashboard",
+      "badHrefCount": 0,
+      "examples": [],
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-uat-gate-20260516T163536Z\\Admin_href_admin_dashboard.png",
+      "pass": true
+    },
+    {
+      "role": "Admin",
+      "page": "/activities/home",
+      "httpStatus": 200,
+      "finalUrl": "https://pdk-creams.org/activities/home",
+      "badHrefCount": 0,
+      "examples": [],
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-uat-gate-20260516T163536Z\\Admin_href_activities_home.png",
+      "pass": true
+    },
+    {
+      "role": "Admin",
+      "page": "/activities/categories",
+      "httpStatus": 200,
+      "finalUrl": "https://pdk-creams.org/activities/categories",
+      "badHrefCount": 0,
+      "examples": [],
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-uat-gate-20260516T163536Z\\Admin_href_activities_categories.png",
+      "pass": true
+    },
+    {
+      "role": "Admin",
+      "page": "/activities/schedule",
+      "httpStatus": 200,
+      "finalUrl": "https://pdk-creams.org/activities/schedule",
+      "badHrefCount": 0,
+      "examples": [],
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-uat-gate-20260516T163536Z\\Admin_href_activities_schedule.png",
+      "pass": true
+    },
+    {
+      "role": "Admin",
+      "page": "/centres/home",
+      "httpStatus": 200,
+      "finalUrl": "https://pdk-creams.org/centres/home",
+      "badHrefCount": 0,
+      "examples": [],
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-uat-gate-20260516T163536Z\\Admin_href_centres_home.png",
+      "pass": true
+    },
+    {
+      "role": "Admin",
+      "page": "/assets",
+      "httpStatus": 200,
+      "finalUrl": "https://pdk-creams.org/assets",
+      "badHrefCount": 0,
+      "examples": [],
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-uat-gate-20260516T163536Z\\Admin_href_assets.png",
+      "pass": true
+    },
+    {
+      "role": "Admin",
+      "page": "/assets/reports",
+      "httpStatus": 200,
+      "finalUrl": "https://pdk-creams.org/assets/reports",
+      "badHrefCount": 0,
+      "examples": [],
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-uat-gate-20260516T163536Z\\Admin_href_assets_reports.png",
+      "pass": true
+    },
+    {
+      "role": "Admin",
+      "page": "/assets/maintenance",
+      "httpStatus": 200,
+      "finalUrl": "https://pdk-creams.org/assets/maintenance",
+      "badHrefCount": 0,
+      "examples": [],
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-uat-gate-20260516T163536Z\\Admin_href_assets_maintenance.png",
+      "pass": true
+    },
+    {
+      "role": "Admin",
+      "page": "/assets/movements",
+      "httpStatus": 200,
+      "finalUrl": "https://pdk-creams.org/assets/movements",
+      "badHrefCount": 0,
+      "examples": [],
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-uat-gate-20260516T163536Z\\Admin_href_assets_movements.png",
+      "pass": true
+    },
+    {
+      "role": "Admin",
+      "page": "/trainees/home",
+      "httpStatus": 200,
+      "finalUrl": "https://pdk-creams.org/trainees/home",
+      "badHrefCount": 0,
+      "examples": [],
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-uat-gate-20260516T163536Z\\Admin_href_trainees_home.png",
+      "pass": true
+    },
+    {
+      "role": "Admin",
+      "page": "/letters",
+      "httpStatus": 200,
+      "finalUrl": "https://pdk-creams.org/letters",
+      "badHrefCount": 0,
+      "examples": [],
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-uat-gate-20260516T163536Z\\Admin_href_letters.png",
+      "pass": true
+    },
+    {
+      "role": "Supervisor",
+      "page": "/admin/dashboard",
+      "httpStatus": 403,
+      "finalUrl": "https://pdk-creams.org/admin/dashboard",
+      "badHrefCount": 0,
+      "examples": [],
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-uat-gate-20260516T163536Z\\Supervisor_href_admin_dashboard.png",
+      "pass": true
+    },
+    {
+      "role": "Supervisor",
+      "page": "/activities/home",
+      "httpStatus": 200,
+      "finalUrl": "https://pdk-creams.org/activities/home",
+      "badHrefCount": 0,
+      "examples": [],
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-uat-gate-20260516T163536Z\\Supervisor_href_activities_home.png",
+      "pass": true
+    },
+    {
+      "role": "Supervisor",
+      "page": "/activities/categories",
+      "httpStatus": 200,
+      "finalUrl": "https://pdk-creams.org/activities/categories",
+      "badHrefCount": 0,
+      "examples": [],
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-uat-gate-20260516T163536Z\\Supervisor_href_activities_categories.png",
+      "pass": true
+    },
+    {
+      "role": "Supervisor",
+      "page": "/activities/schedule",
+      "httpStatus": 200,
+      "finalUrl": "https://pdk-creams.org/activities/schedule",
+      "badHrefCount": 0,
+      "examples": [],
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-uat-gate-20260516T163536Z\\Supervisor_href_activities_schedule.png",
+      "pass": true
+    },
+    {
+      "role": "Supervisor",
+      "page": "/centres/home",
+      "httpStatus": 200,
+      "finalUrl": "https://pdk-creams.org/centres/home",
+      "badHrefCount": 0,
+      "examples": [],
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-uat-gate-20260516T163536Z\\Supervisor_href_centres_home.png",
+      "pass": true
+    },
+    {
+      "role": "Supervisor",
+      "page": "/assets",
+      "httpStatus": 200,
+      "finalUrl": "https://pdk-creams.org/assets",
+      "badHrefCount": 0,
+      "examples": [],
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-uat-gate-20260516T163536Z\\Supervisor_href_assets.png",
+      "pass": true
+    },
+    {
+      "role": "Supervisor",
+      "page": "/assets/reports",
+      "httpStatus": 200,
+      "finalUrl": "https://pdk-creams.org/assets/reports",
+      "badHrefCount": 0,
+      "examples": [],
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-uat-gate-20260516T163536Z\\Supervisor_href_assets_reports.png",
+      "pass": true
+    },
+    {
+      "role": "Supervisor",
+      "page": "/assets/maintenance",
+      "httpStatus": 200,
+      "finalUrl": "https://pdk-creams.org/assets/maintenance",
+      "badHrefCount": 0,
+      "examples": [],
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-uat-gate-20260516T163536Z\\Supervisor_href_assets_maintenance.png",
+      "pass": true
+    },
+    {
+      "role": "Supervisor",
+      "page": "/assets/movements",
+      "httpStatus": 200,
+      "finalUrl": "https://pdk-creams.org/assets/movements",
+      "badHrefCount": 0,
+      "examples": [],
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-uat-gate-20260516T163536Z\\Supervisor_href_assets_movements.png",
+      "pass": true
+    },
+    {
+      "role": "Supervisor",
+      "page": "/trainees/home",
+      "httpStatus": 200,
+      "finalUrl": "https://pdk-creams.org/trainees/home",
+      "badHrefCount": 0,
+      "examples": [],
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-uat-gate-20260516T163536Z\\Supervisor_href_trainees_home.png",
+      "pass": true
+    },
+    {
+      "role": "Supervisor",
+      "page": "/letters",
+      "httpStatus": 200,
+      "finalUrl": "https://pdk-creams.org/letters",
+      "badHrefCount": 0,
+      "examples": [],
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-uat-gate-20260516T163536Z\\Supervisor_href_letters.png",
+      "pass": true
+    },
+    {
+      "role": "Teacher",
+      "page": "/admin/dashboard",
+      "httpStatus": 403,
+      "finalUrl": "https://pdk-creams.org/admin/dashboard",
+      "badHrefCount": 0,
+      "examples": [],
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-uat-gate-20260516T163536Z\\Teacher_href_admin_dashboard.png",
+      "pass": true
+    },
+    {
+      "role": "Teacher",
+      "page": "/activities/home",
+      "httpStatus": 200,
+      "finalUrl": "https://pdk-creams.org/activities/home",
+      "badHrefCount": 0,
+      "examples": [],
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-uat-gate-20260516T163536Z\\Teacher_href_activities_home.png",
+      "pass": true
+    },
+    {
+      "role": "Teacher",
+      "page": "/activities/categories",
+      "httpStatus": 200,
+      "finalUrl": "https://pdk-creams.org/activities/categories",
+      "badHrefCount": 0,
+      "examples": [],
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-uat-gate-20260516T163536Z\\Teacher_href_activities_categories.png",
+      "pass": true
+    },
+    {
+      "role": "Teacher",
+      "page": "/activities/schedule",
+      "httpStatus": 200,
+      "finalUrl": "https://pdk-creams.org/activities/schedule",
+      "badHrefCount": 0,
+      "examples": [],
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-uat-gate-20260516T163536Z\\Teacher_href_activities_schedule.png",
+      "pass": true
+    },
+    {
+      "role": "Teacher",
+      "page": "/centres/home",
+      "httpStatus": 200,
+      "finalUrl": "https://pdk-creams.org/centres/home",
+      "badHrefCount": 0,
+      "examples": [],
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-uat-gate-20260516T163536Z\\Teacher_href_centres_home.png",
+      "pass": true
+    },
+    {
+      "role": "Teacher",
+      "page": "/assets",
+      "httpStatus": 200,
+      "finalUrl": "https://pdk-creams.org/teacher/dashboard",
+      "badHrefCount": 0,
+      "examples": [],
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-uat-gate-20260516T163536Z\\Teacher_href_assets.png",
+      "pass": true
+    },
+    {
+      "role": "Teacher",
+      "page": "/assets/reports",
+      "httpStatus": 200,
+      "finalUrl": "https://pdk-creams.org/teacher/dashboard",
+      "badHrefCount": 0,
+      "examples": [],
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-uat-gate-20260516T163536Z\\Teacher_href_assets_reports.png",
+      "pass": true
+    },
+    {
+      "role": "Teacher",
+      "page": "/assets/maintenance",
+      "httpStatus": 200,
+      "finalUrl": "https://pdk-creams.org/teacher/dashboard",
+      "badHrefCount": 0,
+      "examples": [],
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-uat-gate-20260516T163536Z\\Teacher_href_assets_maintenance.png",
+      "pass": true
+    },
+    {
+      "role": "Teacher",
+      "page": "/assets/movements",
+      "httpStatus": 200,
+      "finalUrl": "https://pdk-creams.org/teacher/dashboard",
+      "badHrefCount": 0,
+      "examples": [],
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-uat-gate-20260516T163536Z\\Teacher_href_assets_movements.png",
+      "pass": true
+    },
+    {
+      "role": "Teacher",
+      "page": "/trainees/home",
+      "httpStatus": 200,
+      "finalUrl": "https://pdk-creams.org/trainees/home",
+      "badHrefCount": 0,
+      "examples": [],
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-uat-gate-20260516T163536Z\\Teacher_href_trainees_home.png",
+      "pass": true
+    },
+    {
+      "role": "Teacher",
+      "page": "/letters",
+      "httpStatus": 403,
+      "finalUrl": "https://pdk-creams.org/letters",
+      "badHrefCount": 0,
+      "examples": [],
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-uat-gate-20260516T163536Z\\Teacher_href_letters.png",
+      "pass": true
+    },
+    {
+      "role": "AJK",
+      "page": "/admin/dashboard",
+      "httpStatus": 403,
+      "finalUrl": "https://pdk-creams.org/admin/dashboard",
+      "badHrefCount": 0,
+      "examples": [],
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-uat-gate-20260516T163536Z\\AJK_href_admin_dashboard.png",
+      "pass": true
+    },
+    {
+      "role": "AJK",
+      "page": "/activities/home",
+      "httpStatus": 200,
+      "finalUrl": "https://pdk-creams.org/activities/home",
+      "badHrefCount": 0,
+      "examples": [],
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-uat-gate-20260516T163536Z\\AJK_href_activities_home.png",
+      "pass": true
+    },
+    {
+      "role": "AJK",
+      "page": "/activities/categories",
+      "httpStatus": 200,
+      "finalUrl": "https://pdk-creams.org/ajk/dashboard",
+      "badHrefCount": 0,
+      "examples": [],
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-uat-gate-20260516T163536Z\\AJK_href_activities_categories.png",
+      "pass": true
+    },
+    {
+      "role": "AJK",
+      "page": "/activities/schedule",
+      "httpStatus": 200,
+      "finalUrl": "https://pdk-creams.org/ajk/dashboard",
+      "badHrefCount": 0,
+      "examples": [],
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-uat-gate-20260516T163536Z\\AJK_href_activities_schedule.png",
+      "pass": true
+    },
+    {
+      "role": "AJK",
+      "page": "/centres/home",
+      "httpStatus": 200,
+      "finalUrl": "https://pdk-creams.org/centres/home",
+      "badHrefCount": 0,
+      "examples": [],
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-uat-gate-20260516T163536Z\\AJK_href_centres_home.png",
+      "pass": true
+    },
+    {
+      "role": "AJK",
+      "page": "/assets",
+      "httpStatus": 200,
+      "finalUrl": "https://pdk-creams.org/ajk/dashboard",
+      "badHrefCount": 0,
+      "examples": [],
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-uat-gate-20260516T163536Z\\AJK_href_assets.png",
+      "pass": true
+    },
+    {
+      "role": "AJK",
+      "page": "/assets/reports",
+      "httpStatus": 200,
+      "finalUrl": "https://pdk-creams.org/ajk/dashboard",
+      "badHrefCount": 0,
+      "examples": [],
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-uat-gate-20260516T163536Z\\AJK_href_assets_reports.png",
+      "pass": true
+    },
+    {
+      "role": "AJK",
+      "page": "/assets/maintenance",
+      "httpStatus": 200,
+      "finalUrl": "https://pdk-creams.org/ajk/dashboard",
+      "badHrefCount": 0,
+      "examples": [],
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-uat-gate-20260516T163536Z\\AJK_href_assets_maintenance.png",
+      "pass": true
+    },
+    {
+      "role": "AJK",
+      "page": "/assets/movements",
+      "httpStatus": 200,
+      "finalUrl": "https://pdk-creams.org/ajk/dashboard",
+      "badHrefCount": 0,
+      "examples": [],
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-uat-gate-20260516T163536Z\\AJK_href_assets_movements.png",
+      "pass": true
+    },
+    {
+      "role": "AJK",
+      "page": "/trainees/home",
+      "httpStatus": 200,
+      "finalUrl": "https://pdk-creams.org/trainees/home",
+      "badHrefCount": 0,
+      "examples": [],
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-uat-gate-20260516T163536Z\\AJK_href_trainees_home.png",
+      "pass": true
+    },
+    {
+      "role": "AJK",
+      "page": "/letters",
+      "httpStatus": 403,
+      "finalUrl": "https://pdk-creams.org/letters",
+      "badHrefCount": 0,
+      "examples": [],
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-uat-gate-20260516T163536Z\\AJK_href_letters.png",
+      "pass": true
+    }
+  ],
+  "trainee": [
+    {
+      "role": "Admin",
+      "createFormVisible": true,
+      "submitAttempted": true,
+      "statusFinalUrl": "200 https://pdk-creams.org/trainees/create",
+      "flashValidationMessage": "Logout | * | * | * | * | * | * | * | * | * | * | * | * | * | * | * | * | *",
+      "recordSearchable": false,
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-uat-gate-20260516T163536Z\\Admin_trainee_submit_gate.png",
+      "pass": true
+    },
+    {
+      "role": "Supervisor",
+      "createFormVisible": true,
+      "submitAttempted": true,
+      "statusFinalUrl": "200 https://pdk-creams.org/trainees/create",
+      "flashValidationMessage": "Logout | * | * | * | * | * | * | * | * | * | * | * | * | * | * | * | * | *",
+      "recordSearchable": false,
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-uat-gate-20260516T163536Z\\Supervisor_trainee_submit_gate.png",
+      "pass": true
+    },
+    {
+      "role": "Teacher",
+      "createFormVisible": true,
+      "submitAttempted": true,
+      "statusFinalUrl": "200 https://pdk-creams.org/trainees/create",
+      "flashValidationMessage": "Logout | * | * | * | * | * | * | * | * | * | * | * | * | * | * | * | * | *",
+      "recordSearchable": false,
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-uat-gate-20260516T163536Z\\Teacher_trainee_submit_gate.png",
+      "pass": true
+    },
+    {
+      "role": "AJK",
+      "createFormVisible": false,
+      "submitAttempted": false,
+      "statusFinalUrl": "403 https://pdk-creams.org/trainees/create",
+      "flashValidationMessage": "",
+      "recordSearchable": false,
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-uat-gate-20260516T163536Z\\AJK_trainee_create.png",
+      "pass": true
+    }
+  ],
+  "logout": [
+    {
+      "role": "Admin",
+      "clickedSelector": "form[action*=\"logout\"] button",
+      "logoutFinalUrl": "https://pdk-creams.org/admin/dashboard",
+      "protectedDirectNavAfterLogout": "https://pdk-creams.org/admin/dashboard",
+      "backButtonBehavior": "https://pdk-creams.org/trainees/home?search=codex.gate.admin.20260516t163536z%40uat.creams.test",
+      "refreshBehavior": "https://pdk-creams.org/trainees/home?search=codex.gate.admin.20260516t163536z%40uat.creams.test",
+      "sensitiveCachedContentVisible": true,
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-uat-gate-20260516T163536Z\\Admin_logout_gate_after.png",
+      "pass": false
+    },
+    {
+      "role": "Supervisor",
+      "clickedSelector": "form[action*=\"logout\"] button",
+      "logoutFinalUrl": "https://pdk-creams.org/supervisor/dashboard",
+      "protectedDirectNavAfterLogout": "https://pdk-creams.org/supervisor/dashboard",
+      "backButtonBehavior": "https://pdk-creams.org/trainees/home?search=codex.gate.supervisor.20260516t163536z%40uat.creams.test",
+      "refreshBehavior": "https://pdk-creams.org/trainees/home?search=codex.gate.supervisor.20260516t163536z%40uat.creams.test",
+      "sensitiveCachedContentVisible": true,
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-uat-gate-20260516T163536Z\\Supervisor_logout_gate_after.png",
+      "pass": false
+    },
+    {
+      "role": "Teacher",
+      "clickedSelector": "form[action*=\"logout\"] button",
+      "logoutFinalUrl": "https://pdk-creams.org/teacher/dashboard",
+      "protectedDirectNavAfterLogout": "https://pdk-creams.org/teacher/dashboard",
+      "backButtonBehavior": "https://pdk-creams.org/trainees/home?search=codex.gate.teacher.20260516t163536z%40uat.creams.test",
+      "refreshBehavior": "https://pdk-creams.org/trainees/home?search=codex.gate.teacher.20260516t163536z%40uat.creams.test",
+      "sensitiveCachedContentVisible": true,
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-uat-gate-20260516T163536Z\\Teacher_logout_gate_after.png",
+      "pass": false
+    },
+    {
+      "role": "AJK",
+      "clickedSelector": "form[action*=\"logout\"] button",
+      "logoutFinalUrl": "https://pdk-creams.org/ajk/dashboard",
+      "protectedDirectNavAfterLogout": "https://pdk-creams.org/ajk/dashboard",
+      "backButtonBehavior": "https://pdk-creams.org/trainees/create",
+      "refreshBehavior": "https://pdk-creams.org/trainees/create",
+      "sensitiveCachedContentVisible": false,
+      "screenshot": "C:\\Users\\User1\\Desktop\\Career\\Development\\CREAMS\\docs\\audit\\screenshots\\live-uat-gate-20260516T163536Z\\AJK_logout_gate_after.png",
+      "pass": false
+    }
+  ],
+  "consoleNetwork": [
+    {
+      "role": "Admin",
+      "consoleErrors": [
+        {
+          "type": "warning",
+          "text": "Weather widget: service unreachable, showing fallback.",
+          "url": "https://pdk-creams.org/admin/dashboard"
+        }
+      ],
+      "failedRequests": [
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://wttr.in/Gombak%2CMalaysia?format=j1",
+          "method": "GET",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        }
+      ],
+      "networkErrors": [],
+      "fourOhFourCount": 0,
+      "fiveHundredCount": 0
+    },
+    {
+      "role": "Supervisor",
+      "consoleErrors": [
+        {
+          "type": "warning",
+          "text": "Weather widget: service unreachable, showing fallback.",
+          "url": "https://pdk-creams.org/supervisor/dashboard"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 403 ()",
+          "url": "https://pdk-creams.org/admin/dashboard"
+        }
+      ],
+      "failedRequests": [
+        {
+          "url": "https://wttr.in/Gombak%2CMalaysia?format=j1",
+          "method": "GET",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        }
+      ],
+      "networkErrors": [
+        {
+          "url": "https://pdk-creams.org/admin/dashboard",
+          "status": 403
+        }
+      ],
+      "fourOhFourCount": 0,
+      "fiveHundredCount": 0
+    },
+    {
+      "role": "Teacher",
+      "consoleErrors": [
+        {
+          "type": "warning",
+          "text": "Weather widget: service unreachable, showing fallback.",
+          "url": "https://pdk-creams.org/teacher/dashboard"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 403 ()",
+          "url": "https://pdk-creams.org/admin/dashboard"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 403 ()",
+          "url": "https://pdk-creams.org/letters"
+        }
+      ],
+      "failedRequests": [
+        {
+          "url": "https://wttr.in/Gombak%2CMalaysia?format=j1",
+          "method": "GET",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        }
+      ],
+      "networkErrors": [
+        {
+          "url": "https://pdk-creams.org/admin/dashboard",
+          "status": 403
+        },
+        {
+          "url": "https://pdk-creams.org/letters",
+          "status": 403
+        }
+      ],
+      "fourOhFourCount": 0,
+      "fiveHundredCount": 0
+    },
+    {
+      "role": "AJK",
+      "consoleErrors": [
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 403 ()",
+          "url": "https://pdk-creams.org/admin/dashboard"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 403 ()",
+          "url": "https://pdk-creams.org/letters"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 403 ()",
+          "url": "https://pdk-creams.org/trainees/create"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 403 ()",
+          "url": "https://pdk-creams.org/trainees/create"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 403 ()",
+          "url": "https://pdk-creams.org/trainees/create"
+        }
+      ],
+      "failedRequests": [
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "url": "https://pdk-creams.org/search",
+          "method": "POST",
+          "failure": "net::ERR_ABORTED"
+        }
+      ],
+      "networkErrors": [
+        {
+          "url": "https://pdk-creams.org/admin/dashboard",
+          "status": 403
+        },
+        {
+          "url": "https://pdk-creams.org/letters",
+          "status": 403
+        },
+        {
+          "url": "https://pdk-creams.org/trainees/create",
+          "status": 403
+        },
+        {
+          "url": "https://pdk-creams.org/trainees/create",
+          "status": 403
+        },
+        {
+          "url": "https://pdk-creams.org/trainees/create",
+          "status": 403
+        }
+      ],
+      "fourOhFourCount": 0,
+      "fiveHundredCount": 0
+    }
+  ],
+  "mutations": [
+    {
+      "module": "trainee",
+      "identifierEmailTag": "codex.gate.admin.20260516t163536z@uat.creams.test",
+      "roleUsed": "Admin",
+      "created": false,
+      "visible": false,
+      "cleanupNeeded": false,
+      "recordUrl": "https://pdk-creams.org/trainees/home?search=codex.gate.admin.20260516t163536z%40uat.creams.test"
+    },
+    {
+      "module": "trainee",
+      "identifierEmailTag": "codex.gate.supervisor.20260516t163536z@uat.creams.test",
+      "roleUsed": "Supervisor",
+      "created": false,
+      "visible": false,
+      "cleanupNeeded": false,
+      "recordUrl": "https://pdk-creams.org/trainees/home?search=codex.gate.supervisor.20260516t163536z%40uat.creams.test"
+    },
+    {
+      "module": "trainee",
+      "identifierEmailTag": "codex.gate.teacher.20260516t163536z@uat.creams.test",
+      "roleUsed": "Teacher",
+      "created": false,
+      "visible": false,
+      "cleanupNeeded": false,
+      "recordUrl": "https://pdk-creams.org/trainees/home?search=codex.gate.teacher.20260516t163536z%40uat.creams.test"
+    }
+  ]
+}
