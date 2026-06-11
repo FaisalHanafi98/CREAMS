@@ -19,14 +19,14 @@ This is **not** a system description, not a tech-stack reference, not a feature 
 
 ## Hard rules for CREAMS sessions
 
-- Do **not** follow archived prompts under `docs/archive/prompts/`.
+- Do **not** follow archived prompts under `Archive/Historical_AI_Artifacts/prompts/` (formerly `docs/archive/prompts/`; relocated by the 2026-06-11 governance audit — see `docs/audits/`).
 - Do **not** assume current state from documentation. Verify through code, `php artisan test`, and the running app before claiming anything is done.
 - Do **not** deploy. Deployment is on hold pending reality audit.
 - Do **not** use stale numbers ("329 tests", "13% coverage", "306 tests", etc.) — measure first.
 - Roles are **Admin, Supervisor, Teacher, AJK** (+ Trainee, Parent planned). Not Admin/Manager/Staff/Caretaker. See ADR-002.
 - Auth is **custom session-based** via `POST /auth/check`. Not Breeze + Sanctum.
 - **Production URL policy**: `pdk-creams.org` is the live stakeholder-facing site. Public production URLs must be clean and meaningful (`/`, `/login`, `/contact`, `/dashboard`, etc.) with no visible `demo`, `uat`, `staging`, `/creams/{demo_id}`, or other testing/multi-instance markers in the public user journey. If code still contains demo-prefixed route architecture, treat it as legacy/dev-compat behavior to contain or remove from production UX, not as the desired live URL contract.
-- Deployment target is **Lightsail $5 shared** (pending verification). Not Vercel, not ECS.
+- Deployment target is **Hostinger shared hosting** (manual SSH `git pull`, per `.github/workflows/deploy.yml`; live site `pdk-creams.org`). Not Lightsail, not Vercel, not ECS.
 
 ## Data confidentiality
 
@@ -153,4 +153,4 @@ Before ending a session or transferring to another AI:
 
 ---
 
-*Stale project CLAUDE.md (Feb 2026) remains at `docs/CLAUDE.md` for history. Do not trust it — it describes Laravel 10, Breeze+Sanctum, and 6 wrong roles.*
+*Stale project CLAUDE.md (Feb 2026) was archived to `Archive/Superseded_Documents/docs-CLAUDE.md` by the 2026-06-11 governance audit. Do not trust it — it describes Laravel 10, Breeze+Sanctum, and 6 wrong roles.*

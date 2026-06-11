@@ -36,7 +36,7 @@ Only after that audit should any feature or security task resume.
 
 ### DO NOT
 - Deploy to Lightsail or anywhere else. Deployment is gated on the code-reality audit + Portfolio co-tenancy coordination.
-- Follow any archived prompt under `docs/archive/prompts/`. They describe completed or superseded work.
+- Follow any archived prompt under `Archive/Historical_AI_Artifacts/prompts/`. They describe completed or superseded work.
 - Re-run the delta re-evaluation. Its output is `DELTA_REEVAL_REPORT_2026-03-22.md`; the work is done.
 - Re-apply CentreScope to the 26 already-scoped models. See `MULTI_CENTRE_ISOLATION.md`.
 - Re-rewrite `AuthenticationTest.php`. It was fixed in Wave 0 (Feb 2026).
@@ -72,9 +72,9 @@ No production push from this session chain. Push to `origin/Fixers` after docume
 |------|------|--------|
 | 2026-04-24 | `CREAMS_SESSION_CURRENT.md` (this) | Active — containment + re-baseline |
 | 2026-04-16 | `CREAMS_SESSION_2026-04-16.md` | Historical reference (security residuals + baseline prep) |
-| 2026-04-01 | `CREAMS_SESSION_2026-04-01.md` | Archived — `docs/archive/prompts/` |
-| 2026-04-01 | `CREAMS_SESSION_1_SECURITY_CLOSEOUT.md` | Archived — `docs/archive/prompts/` |
+| 2026-04-01 | `CREAMS_SESSION_2026-04-01.md` | Archived — `Archive/Historical_AI_Artifacts/prompts/` |
+| 2026-04-01 | `CREAMS_SESSION_1_SECURITY_CLOSEOUT.md` | Archived — `Archive/Historical_AI_Artifacts/prompts/` |
 | 2026-03-22 | `DELTA_REEVAL_REPORT_2026-03-22.md` | Historical — output preserved |
-| Pre-SOP | various loose prompts | Archived — `docs/archive/prompts/` |
+| Pre-SOP | various loose prompts | Archived — `Archive/Historical_AI_Artifacts/prompts/` |
 
-When a new session replaces this one, the new prompt takes the name `CREAMS_SESSION_CURRENT.md` and this file moves to `docs/archive/prompts/CREAMS_SESSION_2026-04-24.md`.
+When a new session replaces this one, the new prompt takes the name `CREAMS_SESSION_CURRENT.md` and this file moves to `Archive/Historical_AI_Artifacts/prompts/CREAMS_SESSION_2026-04-24.md`.

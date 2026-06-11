@@ -3,7 +3,7 @@
 > **Document type**: Documentation router (authority index)
 > **Scope**: All CREAMS sessions, all agents
 > **Supersedes**: `docs/CLAUDE.md` (stale — Feb 2026), `docs/CONSOLIDATED_DOCUMENTATION_INDEX.md` (stale — Jan 2025)
-> **Last containment pass**: 2026-04-24
+> **Last containment pass**: 2026-06-11 (governance audit — historical artifacts consolidated under root `Archive/`)
 
 ---
 
@@ -13,9 +13,9 @@ This file is the **single documentation entry point** for CREAMS. Every new sess
 
 ### Hard facts
 1. **The root SOP at `../CLAUDE.md` (repository parent) governs this project.** Anything in CREAMS docs that conflicts with it loses.
-2. **Archived docs under `docs/archive/` are historical only.** Do not cite them as current. Do not follow their instructions.
+2. **Archived docs under the repository-root `Archive/` are historical only.** (Moved from `docs/archive/` by the 2026-06-11 governance audit — see `docs/audits/REPOSITORY_GOVERNANCE_AUDIT.md`.) Do not cite them as current. Do not follow their instructions.
 3. **Old session prompts do not guide current work.** The only active session prompt is `docs/CREAMS_SESSION_CURRENT.md`.
-4. **Current deployment target is Lightsail** (shared $5 instance with Portfolio) per `docs/LIGHTSAIL_FOOTPRINT.md` — **pending code-reality verification**. Any guide that says otherwise (Vercel, ECS/Fargate, generic AWS) has been archived under `docs/archive/deployment/`.
+4. **Current deployment target is Hostinger shared hosting** (live site `pdk-creams.org`, manual SSH `git pull` deploys — see `.github/workflows/deploy.yml` and main commits `edbe77a`/`f6ec859`). `docs/LIGHTSAIL_FOOTPRINT.md` describes an earlier plan that was never realized. Older guides (Vercel, ECS/Fargate, generic AWS) are archived under `Archive/Superseded_Documents/deployment/`.
 5. **Do not assume current state from documentation.** CREAMS's documentation has drifted. Verify through code, tests, and running the application before claiming anything is done.
 
 ---
@@ -52,11 +52,11 @@ Loading any of the following will mislead a new session. They remain on disk for
 
 | File / path | Why |
 |-------------|-----|
-| `docs/archive/prompts/*` | Superseded session prompts, pre-SOP Claude prompts, completed re-eval prompts |
-| `docs/archive/deployment/*` (AWS, Vercel guides) | Deployment targets that were never actually used or have been abandoned |
-| `docs/archive/duplicates/user_manuals_copy/` | Byte-identical duplicate of `10_User_Manuals/` |
-| `docs/archive/quarantine/*` | Malformed filenames and filesystem artefacts — do not open inline |
-| `docs/CLAUDE.md` (still on disk, unmoved) | Feb 2026 — claims wrong auth stack (Breeze+Sanctum), wrong role names, wrong coverage targets. Awaits later cleanup session. |
+| `Archive/Historical_AI_Artifacts/prompts/*` | Superseded session prompts, pre-SOP Claude prompts, completed re-eval prompts |
+| `Archive/Superseded_Documents/deployment/*` (AWS, Vercel guides) | Deployment targets that were never actually used or have been abandoned |
+| `Archive/Superseded_Documents/duplicates/user_manuals_copy/` | Byte-identical duplicate of `10_User_Manuals/` |
+| `Archive/Legacy_Backups/quarantine/*` | Malformed filenames and filesystem artefacts — do not open inline |
+| `Archive/Superseded_Documents/docs-CLAUDE.md` | Feb 2026 — claims wrong auth stack (Breeze+Sanctum), wrong role names, wrong coverage targets. Archived from `docs/CLAUDE.md` 2026-06-11. |
 | `docs/CONSOLIDATED_DOCUMENTATION_INDEX.md` (still on disk) | Dated January 2025. Routes readers to non-existent folders and stale "first prompt" templates. Awaits later cleanup session. |
 | `docs/CREAMS_CODEBASE_DOCUMENTATION.md` (Dec 2025) | Pre-dates CentreScope, security waves, CI/CD, ADRs. 4+ months stale. |
 | `docs/06_Status_Reports/*` files with "FINAL" / "COMPLETE" / "ULTIMATE" in the name | Point-in-time demo-era snapshots — title language is misleading. |
@@ -67,7 +67,7 @@ Loading any of the following will mislead a new session. They remain on disk for
 
 1. **Test count** — at least five different numbers across active and historical docs. Only `TEST_BASELINE.md` is current; ignore test counts stated in roadmap/inventory headers.
 2. **CentreScope coverage** — older session docs say 3 or 4 scoped models. Current truth is 26-of-28 + two documented exceptions, per `MULTI_CENTRE_ISOLATION.md`.
-3. **Deployment target** — older docs reference Vercel or ECS. Current target is Lightsail (see above).
+3. **Deployment target** — older docs reference Vercel, ECS, or Lightsail. Current target is Hostinger shared hosting (see above).
 4. **Role names** — `docs/CLAUDE.md` claims Admin/Manager/Staff/Caretaker/Trainee/Parent. Real roles are Admin/Supervisor/Teacher/AJK (+ Trainee, Parent planned) — see ADR-002.
 5. **Auth stack** — `docs/CLAUDE.md` claims Breeze+Sanctum. Real stack is custom session-based auth via `POST /auth/check`.
 

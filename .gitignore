@@ -27,8 +27,12 @@ bootstrap/cache/*.php
 storage/phpstan/
 .memsearch/
 
-# Archive folder (old code, not app source)
-/archive/
+# Archive (historical artifacts — tracked docs stay tracked, bulky untracked artifact sets stay ignored)
+/Archive/Historical_UAT/
+/Archive/Historical_Screenshots/
+/Archive/Legacy_Backups/storage-logs/
+/Archive/Legacy_Exports/irl_reference_materials_DUPLICATE/
+/Archive/Historical_AI_Artifacts/tmp-pw-harness/
 
 # Root-level artefacts (screenshots, mockups, one-time scripts)
 *.jpg
