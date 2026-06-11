@@ -1,12 +1,26 @@
 # Test Suite Baseline
 
 **Document Type**: Quality Gate Reference
-**Last Updated**: 2026-04-25
+**Last Updated**: 2026-06-11
 **Rule**: The numbers in this document are a FLOOR. No session may leave the test suite below these counts. Regressions must be investigated before committing.
 
 ---
 
-## Baseline as of 2026-04-25
+## Baseline as of 2026-06-11 (Fixers synchronized to main @ 82aabd1, Laravel 12.58 / PHPUnit 11.5)
+
+| Metric | Count |
+|--------|-------|
+| **Tests passed** | **374** |
+| **Assertions** | **603** |
+| **Failures** | **0** |
+| **Errors** | **0** |
+| **Duration (approx)** | ~40s |
+
+Growth over the 2026-04-25 floor (+15 tests, +83 assertions) comes from `PublicBlockerFixTest` and expanded Asset/Trainee suites added on main. Run with `php -d memory_limit=1G artisan test` — the collision error renderer can exhaust the default 128M limit when reporting failures.
+
+---
+
+## Previous baseline (2026-04-25, Laravel 10 era)
 
 | Metric | Count |
 |--------|-------|
