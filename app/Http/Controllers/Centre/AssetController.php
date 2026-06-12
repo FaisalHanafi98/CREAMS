@@ -198,12 +198,12 @@ class AssetController extends Controller
             // Get maintenance alerts
             $maintenanceAlerts = AssetMaintenance::getRequiringAttention($centreId);
 
-            // Prepare stats for the dashboard view
+            // Prepare stats for the dashboard view ($statistics keys: available, in_use, maintenance)
             $stats = [
                 'total' => $statistics['total_assets'] ?? 0,
-                'available' => $statistics['available_assets'] ?? 0,
-                'rented' => $statistics['rented_assets'] ?? 0,
-                'maintenance' => $statistics['maintenance_assets'] ?? 0
+                'available' => $statistics['available'] ?? 0,
+                'rented' => $statistics['in_use'] ?? 0,
+                'maintenance' => $statistics['maintenance'] ?? 0
             ];
 
             return view('assets.dashboard', compact(
