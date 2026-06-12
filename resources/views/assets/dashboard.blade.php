@@ -317,7 +317,7 @@
                                         <td>{{ $asset->asset_name ?? 'Unnamed Asset' }}</td>
                                         <td>
                                             <span
-                                                class="badge badge-info">{{ ucfirst($asset->category->name ?? 'General') }}</span>
+                                                class="badge bg-info">{{ ucfirst($asset->category->name ?? 'General') }}</span>
                                         </td>
                                         <td>
                                             <span
@@ -328,12 +328,12 @@
                                                 $condition = $asset->condition ?? 'unknown';
                                                 $conditionClass =
                                                     $condition === 'new'
-                                                        ? 'badge-success'
+                                                        ? 'bg-success'
                                                         : ($condition === 'good'
-                                                            ? 'badge-primary'
+                                                            ? 'bg-primary'
                                                             : ($condition === 'fair'
-                                                                ? 'badge-warning'
-                                                                : 'badge-danger'));
+                                                                ? 'bg-warning text-dark'
+                                                                : 'bg-danger'));
                                             @endphp
                                             <span class="badge {{ $conditionClass }}">{{ ucfirst($condition) }}</span>
                                         </td>
