@@ -26,8 +26,6 @@ Verified that:
 3. [specific check]
 
 [Short explanation of why the change matters.]
-
-[Assisted by AI, reviewed manually by Faisal]
 ```
 
 ---
@@ -57,8 +55,6 @@ Verified that:
 
 A fresh clone of the Fixers branch would fail without this file.
 Centre isolation is the primary PDPA boundary in CREAMS.
-
-[Assisted by AI, reviewed manually by Faisal]
 ```
 
 ---
@@ -89,6 +85,9 @@ Write like a real developer explaining a change to a teammate who will read it i
 
 ### Avoid
 
+- **Any attribution or credit to Claude, AI assistants, or AI tooling.
+  No "Assisted by AI" footers, no Co-Authored-By AI trailers, no AI
+  mentions of any kind. Commits are authored by the project owner.**
 - Marketing tone or overpolished AI language
 - Vague phrases: "enhanced robustness", "improved reliability" — unless you can state what metric changed
 - Emojis in technical commit messages
@@ -155,8 +154,6 @@ Task:
 
 Rename only. No content change. Follows the docs/ consolidation
 from commit eadc22e.
-
-[Assisted by AI, reviewed manually by Faisal]
 ```
 
 ---
