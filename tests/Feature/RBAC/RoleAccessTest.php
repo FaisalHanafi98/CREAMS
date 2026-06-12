@@ -125,4 +125,19 @@ class RoleAccessTest extends TestCase
         $response = $this->get('/admin/trainees');
         $response->assertRedirect();
     }
+
+    public function test_forbidden_access_renders_styled_403_page()
+    {
+        $user = $this->makeUser('teacher');
+
+        $response = $this->withSession([
+            'id' => $user->id,
+            'role' => 'teacher',
+            'logged_in' => true,
+        ])->get('/admin/users');
+
+        $response->assertStatus(403);
+        $response->assertSee('Access Denied');
+        $response->assertSee('Go to My Dashboard');
+    }
 }
