@@ -21,16 +21,16 @@ class StaffAttendance extends Model
         'marked_by_user_id',
         'marked_by_email',
         'attendance_date',
-        'attendance_time',
+        'check_in_time',
         'centre_id',
         'status',
-        'remarks',
-        'attendance_type'
+        'leave_type',
+        'remarks'
     ];
 
     protected $casts = [
         'attendance_date' => 'date',
-        'attendance_time' => 'datetime:H:i:s'
+        'check_in_time' => 'datetime:H:i:s'
     ];
 
     /**
@@ -140,11 +140,12 @@ class StaffAttendance extends Model
             'marked_by_user_id' => $currentUserId,
             'marked_by_email' => $currentUserEmail,
             'attendance_date' => Carbon::today(),
-            'attendance_time' => $currentTime->format('H:i:s'),
+            // Table column is check_in_time; there is no attendance_time or
+            // attendance_type column in staff_attendances.
+            'check_in_time' => $currentTime->format('H:i:s'),
             'centre_id' => $centreId,
             'status' => $status,
-            'remarks' => $remarks,
-            'attendance_type' => $attendanceType
+            'remarks' => $remarks
         ]);
     }
 

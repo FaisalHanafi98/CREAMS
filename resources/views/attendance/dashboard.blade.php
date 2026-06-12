@@ -517,9 +517,9 @@
                         $attendance = $member->staffAttendances->first();
                         $status = $attendance ? $attendance->status : 'not-marked';
                         $statusLabel = $attendance ? ucfirst($attendance->status) : 'Not Marked';
-                        $hasCheckedIn = $member->staffAttendances->where('attendance_type', 'check_in')->first();
+                        $hasCheckedIn = $member->staffAttendances->first();
                     @endphp
-                    <div class="attendance-card {{ $status }} clickable" data-user-id="{{ $member->id }}" data-user-name="{{ $member->first_name }} {{ $member->last_name }}" onclick="markStaffAttendance({{ $member->id }}, '{{ $member->first_name }} {{ $member->last_name }}', '{{ $status }}', {{ $hasCheckedIn ? 'false' : 'true' }})">
+                    <div class="attendance-card {{ $status }} clickable" data-user-id="{{ $member->id }}" data-user-name="{{ $member->name }}" onclick="markStaffAttendance({{ $member->id }}, '{{ $member->name }}', '{{ $status }}', {{ $hasCheckedIn ? 'false' : 'true' }})">
                         <div class="person-info">
                             <div class="person-avatar">
                                 {{ strtoupper(substr($member->first_name, 0, 1) . substr($member->last_name, 0, 1)) }}
@@ -549,7 +549,7 @@
                                     }
                                 @endphp
                                 <small class="text-muted">
-                                    {{ $attendance->attendance_time->format('g:i A') }}
+                                    {{ $attendance->check_in_time?->format('g:i A') ?? '—' }}
                                     <br><small>by {{ $markedBy }}</small>
                                 </small>
                             @endif

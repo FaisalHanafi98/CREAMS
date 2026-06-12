@@ -116,8 +116,12 @@ class StaffAttendanceController extends Controller
             $validated = $request->validate([
                 'user_id' => 'required|integer|exists:staffs,id',
                 'status' => 'required|in:present,absent,late,sick_leave,emergency_leave,authorized_leave',
-                'remarks' => 'nullable|string|max:500'
+                'remarks' => 'nullable|string|max:500',
+                // The dashboard always sends check_in. Without this rule the key is
+                // absent from $validated and marking crashes with an array-key error.
+                'attendance_type' => 'nullable|string|in:check_in'
             ]);
+            $validated['attendance_type'] = $validated['attendance_type'] ?? 'check_in';
 
             $targetUserId = $validated['user_id'];
             $currentUserId = session('id');
@@ -170,7 +174,7 @@ class StaffAttendanceController extends Controller
                     'remarks' => $validated['remarks'],
                     'marked_by_user_id' => $currentUserId,
                     'marked_by_email' => $currentUserEmail,
-                    'attendance_time' => now()->format('H:i:s')
+                    'check_in_time' => now()->format('H:i:s')
                 ]);
 
                 Log::info('Staff attendance updated by admin', [
