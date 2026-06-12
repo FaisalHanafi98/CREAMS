@@ -32,6 +32,16 @@ class MainController extends Controller
      */
     public function login()
     {
+        // Authenticated users have no business on the login page — send them
+        // to the role-aware dashboard. Switching accounts requires an explicit
+        // logout first (a direct POST /auth/check still switches the session).
+        if (session()->has('id') && session('logged_in')) {
+            Log::info('Login page accessed by authenticated user, redirecting to dashboard', [
+                'user_id' => session('id'),
+            ]);
+            return redirect()->route('dashboard');
+        }
+
         Log::info('Login page accessed');
         return view("auth.login");
     }

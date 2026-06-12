@@ -28,6 +28,43 @@ class AuthenticationTest extends TestCase
         $response->assertStatus(200);
     }
 
+    public function test_authenticated_user_is_redirected_from_login_page(): void
+    {
+        $user = User::factory()->admin()->create([
+            'password' => bcrypt('password'),
+        ]);
+        $this->post(self::AUTH_CHECK, [
+            'identifier' => $user->email,
+            'password' => 'password',
+        ]);
+
+        $response = $this->get('/login');
+        $response->assertRedirect(route('dashboard'));
+    }
+
+    public function test_login_while_authenticated_switches_user(): void
+    {
+        $teacher = User::factory()->teacher()->create([
+            'password' => bcrypt('password'),
+        ]);
+        $admin = User::factory()->admin()->create([
+            'password' => bcrypt('password'),
+        ]);
+
+        $this->post(self::AUTH_CHECK, [
+            'identifier' => $teacher->email,
+            'password' => 'password',
+        ]);
+        $this->assertEquals($teacher->id, session('id'));
+
+        $this->post(self::AUTH_CHECK, [
+            'identifier' => $admin->email,
+            'password' => 'password',
+        ]);
+        $this->assertEquals($admin->id, session('id'));
+        $this->assertEquals('admin', session('role'));
+    }
+
     public function test_admin_can_login_via_email(): void
     {
         $user = User::factory()->admin()->create([

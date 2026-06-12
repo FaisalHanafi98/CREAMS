@@ -56,9 +56,9 @@ for i in "${!PATTERNS[@]}"; do
         # such as input type="password" and screenshot filenames like
         # Admin_wrong_password.png). Code-pattern checks excluded; the IC
         # pattern (PDPA) still applies to Archive/.
-        # tests/Browser/ specs authenticate with seeded UAT fixture credentials
-        # (same literals as the already-tracked global-setup.ts) — not secrets.
-        MATCHES=$(echo "$STAGED_FILES" | xargs grep -lnE "${PATTERNS[$i]}" 2>/dev/null | grep -v '.githooks/' | grep -v '.env.example' | grep -v '^docs/' | grep -v '^resources/views/' | grep -v '^Archive/' | grep -v '^tests/Browser/' | grep -v '^database/seeders/IRLSeeder\.php$' | grep -v '^app/Http/Controllers/MainController\.php$' | grep -v '^app/Http/Controllers/Auth/ForgotPasswordController\.php$')
+        # tests/ contain fixture credentials only (factory bcrypt('password'),
+        # seeded UAT logins — same literals as the tracked global-setup.ts).
+        MATCHES=$(echo "$STAGED_FILES" | xargs grep -lnE "${PATTERNS[$i]}" 2>/dev/null | grep -v '.githooks/' | grep -v '.env.example' | grep -v '^docs/' | grep -v '^resources/views/' | grep -v '^Archive/' | grep -v '^tests/' | grep -v '^database/seeders/IRLSeeder\.php$' | grep -v '^app/Http/Controllers/MainController\.php$' | grep -v '^app/Http/Controllers/Auth/ForgotPasswordController\.php$')
     else
         MATCHES=$(echo "$STAGED_FILES" | xargs grep -lnE "${PATTERNS[$i]}" 2>/dev/null | grep -v '.githooks/' | grep -v '.env.example' | grep -v '^database/seeders/IRLSeeder\.php$')
     fi
