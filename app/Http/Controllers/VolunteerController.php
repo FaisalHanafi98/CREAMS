@@ -619,7 +619,8 @@ public function adminIndex()
             'pending' => Volunteer::pending()->count(),
             'approved' => Volunteer::approved()->count(),
             'rejected' => Volunteer::rejected()->count(),
-            'active' => Volunteer::active()->count()
+            'active' => Volunteer::active()->count(),
+            'total' => Volunteer::count()
         ];
 
         // Get applications data for initial load

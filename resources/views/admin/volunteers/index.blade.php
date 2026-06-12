@@ -126,7 +126,8 @@
             <div class="stat-icon">
                 <i class="fas fa-users"></i>
             </div>
-            <div class="stat-value">{{ ($stats['pending'] ?? 0) + ($stats['approved'] ?? 0) + ($stats['rejected'] ?? 0) }}</div>
+            {{-- Total comes from the controller (all statuses incl. active), not a partial sum --}}
+            <div class="stat-value">{{ $stats['total'] ?? (($stats['pending'] ?? 0) + ($stats['approved'] ?? 0) + ($stats['rejected'] ?? 0) + ($stats['active'] ?? 0)) }}</div>
             <div class="stat-label">Total Applications</div>
         </div>
     </div>
