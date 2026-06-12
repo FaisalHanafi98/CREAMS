@@ -8,7 +8,7 @@
         <div class="card-header">
             <h5 class="card-title">Message</h5>
             <div class="card-options">
-                <button class="btn btn-sm btn-primary" data-toggle="modal" data-target="#composeModal">
+                <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#composeModal">
                     <i class="fas fa-paper-plane"></i> Compose New Message
                 </button>
             </div>
@@ -66,7 +66,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="composeModalLabel">Compose New Message</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
@@ -92,7 +92,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-primary">Send Message</button>
                 </div>
             </form>

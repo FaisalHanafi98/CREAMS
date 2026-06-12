@@ -11,7 +11,7 @@
                 <a href="{{ route('messages.index') }}" class="btn btn-sm btn-secondary">
                     <i class="fas fa-arrow-left"></i> Back to Message
                 </a>
-                <button class="btn btn-sm btn-primary ml-2" data-toggle="modal" data-target="#replyModal">
+                <button class="btn btn-sm btn-primary ml-2" data-bs-toggle="modal" data-bs-target="#replyModal">
                     <i class="fas fa-reply"></i> Reply
                 </button>
             </div>
@@ -66,7 +66,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="replyModalLabel">Reply to {{ $conversation['with'] }}</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
@@ -81,7 +81,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-primary">Send Reply</button>
                 </div>
             </form>

@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
 use App\Models\Message;
+use App\Models\MessageRecipient;
 use App\Models\Notification;
 use App\Models\User;
 
@@ -28,7 +29,27 @@ class MessageController extends Controller
                 ->orderBy('created_at', 'desc')
                 ->get();
 
-            $messages = $sent->map(function ($msg) {
+            $receivedPivots = MessageRecipient::where('recipient_id', $userId)
+                ->where('is_deleted', false)
+                ->get()
+                ->keyBy('message_id');
+
+            $received = Message::whereIn('id', $receivedPivots->keys())
+                ->with('sender')
+                ->orderBy('created_at', 'desc')
+                ->get();
+
+            $messages = $received->map(function ($msg) use ($receivedPivots) {
+                return [
+                    'id' => $msg->id,
+                    'read' => (bool) ($receivedPivots[$msg->id]->is_read ?? false),
+                    'sender_name' => $msg->sender ? $msg->sender->name : 'Unknown',
+                    'sender_role' => 'Inbox',
+                    'subject' => $msg->subject,
+                    'message' => $msg->message_body,
+                    'date' => $msg->sent_at ?? $msg->created_at,
+                ];
+            })->concat($sent->map(function ($msg) {
                 return [
                     'id' => $msg->id,
                     'read' => $msg->status === 'read',
@@ -38,7 +59,7 @@ class MessageController extends Controller
                     'message' => $msg->message_body,
                     'date' => $msg->sent_at ?? $msg->created_at,
                 ];
-            })->all();
+            }))->sortByDesc('date')->values()->all();
 
             $recipients = User::where('id', '!=', $userId)
                 ->orderBy('name')
@@ -93,6 +114,15 @@ class MessageController extends Controller
                 'priority' => $request->priority ?? 'normal',
                 'status' => 'sent',
                 'sent_at' => now(),
+            ]);
+
+            // Without this row the message never appears in any inbox —
+            // index() resolves received mail through message_recipients.
+            MessageRecipient::create([
+                'message_id' => $message->id,
+                'recipient_id' => $request->recipient_id,
+                'recipient_type' => 'user',
+                'is_read' => false,
             ]);
 
             // Notify recipient via notification system
