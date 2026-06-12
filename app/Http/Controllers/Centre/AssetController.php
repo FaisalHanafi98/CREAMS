@@ -98,7 +98,8 @@ class AssetController extends Controller
             ];
 
             // Get categories for filter dropdown
-            $categories = AssetCategory::where('status', 'active')->get();
+            // asset_categories has no status column — the model's active() scope uses is_active
+            $categories = AssetCategory::active()->get();
 
             return view('centres.asset-parents.index', compact('assets', 'centre', 'categories', 'statistics'));
         } catch (Exception $e) {

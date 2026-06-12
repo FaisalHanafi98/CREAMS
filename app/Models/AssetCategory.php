@@ -12,19 +12,28 @@ class AssetCategory extends Model
     use HasFactory;
 
     protected $fillable = [
-        'name',
-        'code',
-        'parent_id',
-        'description',
-        'icon',
-        'color',
+        'category_name',
+        'category_description',
         'is_active',
-        'depreciation_rate'
     ];
 
     protected $casts = [
         'is_active' => 'boolean'
     ];
+
+    /**
+     * The table stores category_name, but views and controllers refer to
+     * ->name. Bridge the schema/code naming drift in one place.
+     */
+    public function getNameAttribute(): ?string
+    {
+        return $this->category_name;
+    }
+
+    public function setNameAttribute($value): void
+    {
+        $this->attributes['category_name'] = $value;
+    }
 
     /**
      * Get the parent category
