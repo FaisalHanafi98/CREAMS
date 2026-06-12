@@ -248,7 +248,7 @@
                 <h5 class="modal-title" id="previewModalLabel">
                     <i class="fas fa-eye"></i> Letter Preview
                 </h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
@@ -256,7 +256,7 @@
                 <!-- Preview content will be loaded here -->
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                 <button type="button" class="btn btn-success" id="generateFromPreview">
                     <i class="fas fa-file-pdf"></i> Generate PDF
                 </button>

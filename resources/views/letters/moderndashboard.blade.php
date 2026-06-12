@@ -185,7 +185,7 @@
                 <h5 class="modal-title">
                     <i class="fas fa-file-alt me-2"></i>Generate New Letter
                 </h5>
-                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                <button type="button" class="close" data-bs-dismiss="modal"><span>&times;</span></button>
             </div>
             <form id="letterForm">
                 @csrf
@@ -239,7 +239,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-primary">
                         <i class="fas fa-file-pdf me-2"></i>Generate Letter
                     </button>

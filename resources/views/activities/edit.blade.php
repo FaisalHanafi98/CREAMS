@@ -285,7 +285,7 @@
                             </a>
                             <hr>
                             @if($role === 'admin')
-                                <button type="button" class="btn btn-danger btn-block" data-toggle="modal" data-target="#deleteModal">
+                                <button type="button" class="btn btn-danger btn-block" data-bs-toggle="modal" data-bs-target="#deleteModal">
                                     <i class="fas fa-trash-alt mr-2"></i> Delete Activity
                                 </button>
                             @endif
@@ -304,7 +304,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="deleteModalLabel">Delete Activity</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
@@ -317,7 +317,7 @@
                 <p>This will also delete all associated sessions and enrollment data.</p>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                 <form action="{{ route('activities.destroy', $activity->id) }}" method="POST" style="display: inline;">
                     @csrf
                     @method('DELETE')

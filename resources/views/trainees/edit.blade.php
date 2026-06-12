@@ -705,7 +705,7 @@
                                     <input type="text" class="form-control @error('ic_number') is-invalid @enderror" 
                                            id="ic_number" name="ic_number" 
                                            value="{{ old('ic_number', $trainee->ic_number ?? '') }}"
-                                           placeholder="e.g. 950101-01-2345" readonly>
+                                           placeholder="Format: YYMMDD-PB-NNNN" readonly>
                                     <small class="form-text text-muted">IC number cannot be changed after registration.</small>
                                     @error('ic_number')
                                         <div class="invalid-feedback">{{ $message }}</div>
@@ -1001,7 +1001,7 @@
                                     <i class="fas fa-times mr-1"></i> Cancel
                                 </a>
                                 <hr>
-                                <button type="button" class="btn btn-danger btn-block" data-toggle="modal" data-target="#deleteTraineeModal">
+                                <button type="button" class="btn btn-danger btn-block" data-bs-toggle="modal" data-bs-target="#deleteTraineeModal">
                                     <i class="fas fa-trash-alt mr-1"></i> Delete Trainee
                                 </button>
                             </div>
@@ -1019,7 +1019,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="deleteTraineeModalLabel">Delete Trainee</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
@@ -1034,7 +1034,7 @@
                 </p>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                 <form action="{{ route('traineeprofile.destroy', \App\Helpers\EncryptionHelper::generateEncryptedId($trainee->id)) }}" method="POST" style="display: inline;" onsubmit="return confirm('Are you absolutely sure you want to delete this trainee? This action cannot be undone.');">
                     @csrf
                     @method('DELETE')

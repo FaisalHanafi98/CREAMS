@@ -899,7 +899,7 @@
                     <i class="fas fa-exclamation-triangle text-warning"></i>
                     Schedule Conflicts Detected
                 </h5>
-                <button type="button" class="close" data-dismiss="modal">
+                <button type="button" class="close" data-bs-dismiss="modal">
                     <span>&times;</span>
                 </button>
             </div>
@@ -907,7 +907,7 @@
                 <!-- Dynamic conflict resolution options -->
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                 <button type="button" class="btn btn-warning" id="ignoreConflicts">Continue Anyway</button>
                 <button type="button" class="btn btn-primary" id="resolveConflicts">Auto-Resolve</button>
             </div>

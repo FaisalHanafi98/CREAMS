@@ -10,8 +10,18 @@
             <p class="page-subtitle">{{ $activity->activity_name }} ({{ $activity->activity_code }})</p>
         </div>
         <div class="page-actions">
+        @if ($errors->any())
+            <div class="alert alert-danger w-100" role="alert">
+                <strong>Session could not be saved:</strong>
+                <ul class="mb-0">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
             @if(session('role') === 'admin')
-            <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#createSessionModal">
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createSessionModal">
                 <i class="fas fa-plus"></i> Schedule New Session
             </button>
             @endif
@@ -189,7 +199,7 @@
                         </h5>
                         <p class="activity-subtitle">{{ $activity->activity_name }} ({{ $activity->activity_code }})</p>
                     </div>
-                    <button type="button" class="close" data-dismiss="modal">
+                    <button type="button" class="close" data-bs-dismiss="modal">
                         <span>&times;</span>
                     </button>
                 </div>
@@ -258,8 +268,8 @@
                                             data-validation="required">
                                         <option value="">Select centre...</option>
                                         @foreach($centres ?? [] as $centre)
-                                            <option value="{{ $centre->id }}" 
-                                                    {{ $activity->centre_id == $centre->id ? 'selected' : '' }}
+                                            <option value="{{ $centre->centre_id }}" 
+                                                    {{ $activity->centre_id == $centre->centre_id ? 'selected' : '' }}
                                                     data-location="{{ $centre->location }}"
                                                     data-hours="{{ $centre->operating_hours ?? '8:00 AM - 6:00 PM' }}">
                                                 {{ $centre->centre_name }} - {{ $centre->location }}
@@ -411,11 +421,11 @@
                                                class="form-control" 
                                                id="modal_max_capacity" 
                                                name="max_capacity" 
-                                               min="1" 
-                                               max="50" 
-                                               value="20" 
+                                               min="3" 
+                                               max="10" 
+                                               value="10" 
                                                required 
-                                               data-validation="required|numeric|min:1|max:50">
+                                               data-validation="required|numeric|min:3|max:10">
                                         <div class="input-group-append">
                                             <span class="input-group-text">people</span>
                                         </div>
@@ -503,7 +513,7 @@
                         </small>
                     </div>
                     <div class="footer-actions">
-                        <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
                             <i class="fas fa-times"></i> Cancel
                         </button>
                         <button type="submit" class="btn btn-primary" id="modalSubmitBtn">

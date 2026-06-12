@@ -434,7 +434,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">Centre Quick View</h5>
-                    <button type="button" class="close" data-dismiss="modal">
+                    <button type="button" class="close" data-bs-dismiss="modal">
                         <span>&times;</span>
                     </button>
                 </div>

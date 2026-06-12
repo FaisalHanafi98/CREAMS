@@ -62,8 +62,8 @@
                 </div>
                 <div class="col-md-6 text-md-right">
                     <ul class="footer-bottom-links">
-                        <li><a href="#" data-toggle="modal" data-target="#privacyPolicyModal"><i class="fas fa-shield-alt"></i> Privacy Policy</a></li>
-                        <li><a href="#" data-toggle="modal" data-target="#termsOfServiceModal"><i class="fas fa-gavel"></i> Terms of Service</a></li>
+                        <li><a href="#" data-bs-toggle="modal" data-bs-target="#privacyPolicyModal"><i class="fas fa-shield-alt"></i> Privacy Policy</a></li>
+                        <li><a href="#" data-bs-toggle="modal" data-bs-target="#termsOfServiceModal"><i class="fas fa-gavel"></i> Terms of Service</a></li>
                         <li><a href="#"><i class="fas fa-sitemap"></i> Sitemap</a></li>
                     </ul>
                 </div>
@@ -98,7 +98,7 @@
                 <h5 class="modal-title" id="termsOfServiceModalLabel">
                     <i class="fas fa-gavel"></i> Terms of Service
                 </h5>
-                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                <button type="button" class="close text-white" data-bs-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
@@ -226,7 +226,7 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
         </div>
     </div>
@@ -240,7 +240,7 @@
                 <h5 class="modal-title" id="privacyPolicyModalLabel">
                     <i class="fas fa-shield-alt"></i> Privacy Policy
                 </h5>
-                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                <button type="button" class="close text-white" data-bs-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
@@ -369,7 +369,7 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
         </div>
     </div>

@@ -459,7 +459,7 @@
                 <h5 class="modal-title" id="markAttendanceModalLabel">
                     <i class="fas fa-clock me-2"></i>Mark Attendance
                 </h5>
-                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                <button type="button" class="close text-white" data-bs-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
@@ -513,7 +513,7 @@
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                 <button type="button" class="btn btn-primary" id="submitAttendance">
                     <i class="fas fa-check me-2"></i>Mark Attendance
                 </button>
@@ -530,7 +530,7 @@
                 <h5 class="modal-title" id="weeklyReportModalLabel">
                     <i class="fas fa-calendar-week mr-2"></i>Weekly Report
                 </h5>
-                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                <button type="button" class="close text-white" data-bs-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
@@ -547,7 +547,7 @@
                 </ul>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-info" data-dismiss="modal">Got it!</button>
+                <button type="button" class="btn btn-info" data-bs-dismiss="modal">Got it!</button>
             </div>
         </div>
     </div>
@@ -561,7 +561,7 @@
                 <h5 class="modal-title" id="exportDataModalLabel">
                     <i class="fas fa-download mr-2"></i>Export Data
                 </h5>
-                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                <button type="button" class="close text-white" data-bs-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
@@ -578,7 +578,7 @@
                 </ul>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-success" data-dismiss="modal">Understood!</button>
+                <button type="button" class="btn btn-success" data-bs-dismiss="modal">Understood!</button>
             </div>
         </div>
     </div>

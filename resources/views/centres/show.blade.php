@@ -88,7 +88,7 @@
                                     <!-- Carousel Indicators -->
                                     <ol class="carousel-indicators">
                                         @foreach ($images as $index => $image)
-                                            <li data-target="#centreCarousel" data-slide-to="{{ $index }}"
+                                            <li data-bs-target="#centreCarousel" data-slide-to="{{ $index }}"
                                                 class="{{ $index === 0 ? 'active' : '' }}"></li>
                                         @endforeach
                                     </ol>

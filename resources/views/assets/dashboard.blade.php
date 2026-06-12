@@ -178,7 +178,7 @@
                                 {{ session('centre_name', 'your centre') }}</p>
                         </div>
                         <div class="col-md-4 text-md-right">
-                            <button class="btn btn-light btn-lg" data-toggle="modal" data-target="#addAssetModal">
+                            <button class="btn btn-light btn-lg" data-bs-toggle="modal" data-bs-target="#addAssetModal">
                                 <i class="fas fa-plus mr-2"></i>Add New Asset
                             </button>
                         </div>
@@ -387,8 +387,8 @@
                                                 <i class="fas fa-boxes fa-3x mb-3 opacity-50"></i>
                                                 <h5>No assets found</h5>
                                                 <p>Add your first asset to get started!</p>
-                                                <button class="btn btn-primary" data-toggle="modal"
-                                                    data-target="#addAssetModal">
+                                                <button class="btn btn-primary" data-bs-toggle="modal"
+                                                    data-bs-target="#addAssetModal">
                                                     <i class="fas fa-plus mr-2"></i>Add New Asset
                                                 </button>
                                             </div>
@@ -413,7 +413,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title"><i class="fas fa-plus mr-2"></i>Add New Asset</h5>
-                    <button type="button" class="close text-white" data-dismiss="modal">
+                    <button type="button" class="close text-white" data-bs-dismiss="modal">
                         <span>&times;</span>
                     </button>
                 </div>
@@ -597,7 +597,7 @@
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                         <button type="submit" class="btn btn-primary">
                             <i class="fas fa-save mr-2"></i>Add Asset
                         </button>
@@ -613,7 +613,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title"><i class="fas fa-hand-paper mr-2"></i>Use Asset</h5>
-                    <button type="button" class="close text-white" data-dismiss="modal">
+                    <button type="button" class="close text-white" data-bs-dismiss="modal">
                         <span>&times;</span>
                     </button>
                 </div>
@@ -638,7 +638,7 @@
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                         <button type="submit" class="btn btn-success">
                             <i class="fas fa-check mr-2"></i>Confirm Use
                         </button>

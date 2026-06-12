@@ -1117,7 +1117,11 @@ class ActivityController extends Controller
                 ->where('centre_id', session('centre_id'))
                 ->get(['id', 'name']);
 
-            return view('activities.sessions', compact('activity', 'sessions', 'role', 'teachers'));
+            // The create-session modal has a required centre dropdown; without
+            // this the select renders empty and the form can never submit.
+            $centres = Centre::where('centre_status', 'active')->get();
+
+            return view('activities.sessions', compact('activity', 'sessions', 'role', 'teachers', 'centres'));
         } catch (Exception $e) {
             Log::error('Error loading activity sessions: ' . $e->getMessage(), [
                 'activity_id' => $id,
@@ -1160,7 +1164,8 @@ class ActivityController extends Controller
             // Business Logic Validation
             $sessionDate = Carbon::parse($validated['date']);
             $startTime = Carbon::parse($validated['start_time']);
-            $endTime = $startTime->copy()->addMinutes($validated['duration']);
+            // Carbon 3 rejects numeric strings; the form posts duration as a string
+            $endTime = $startTime->copy()->addMinutes((int) $validated['duration']);
 
             // Rule 1: No sessions on weekends or Malaysia public holidays
             if (MalaysiaHolidays::isNonWorkingDay($sessionDate)) {
@@ -1188,25 +1193,20 @@ class ActivityController extends Controller
 
             // Calculate end time from duration
             $start = Carbon::parse($validated['start_time']);
-            $end = $start->copy()->addMinutes($validated['duration']);
+            $end = $start->copy()->addMinutes((int) $validated['duration']);
 
             $session = ActivitySession::create([
                 'activity_id' => $activity->id,
-                'teacher_id' => $validated['teacher_id'],
-                'scheduled_date' => $validated['date'],
-                'date' => $validated['date'],
+                'session_name' => $activity->activity_name . ' — ' . $sessionDate->format('d M Y'),
+                'session_date' => $validated['date'],
                 'start_time' => $validated['start_time'],
                 'end_time' => $end->format('H:i:s'),
-                'duration' => $validated['duration'],
-                'duration_minutes' => $validated['duration'],
                 'location' => $validated['location'],
-                'venue' => $validated['location'],
-                'room_number' => $validated['room_number'],
-                'max_capacity' => $validated['max_capacity'],
+                'instructor_id' => $validated['teacher_id'],
+                'session_status' => $validated['status'],
+                'session_notes' => $validated['notes'] ?? null,
                 'max_participants' => $validated['max_capacity'],
-                'enrolled_count' => 0,
-                'notes' => $validated['notes'] ?? null,
-                'status' => $validated['status']
+                'current_participants' => 0,
             ]);
 
             DB::commit();

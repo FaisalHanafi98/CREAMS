@@ -172,8 +172,8 @@
                                             @endif
                                             <button type="button" class="btn btn-sm btn-info view-letter" 
                                                     data-letter-id="{{ $letter->id }}" 
-                                                    data-toggle="modal"
-                                                    data-target="#letterModal"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#letterModal"
                                                     title="View Details">
                                                 <i class="fas fa-eye"></i>
                                             </button>
@@ -225,7 +225,7 @@
                 <h5 class="modal-title" id="letterModalLabel">
                     <i class="fas fa-file-alt"></i> Letter Details
                 </h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
@@ -237,7 +237,7 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                 <a href="#" id="downloadFromModal" class="btn btn-primary" style="display: none;">
                     <i class="fas fa-download"></i> Download PDF
                 </a>

@@ -279,7 +279,7 @@
                                 <i class="fas fa-times mr-2"></i> Cancel
                             </a>
                             <hr>
-                            <button type="button" class="btn btn-danger btn-block" data-toggle="modal" data-target="#deleteModal">
+                            <button type="button" class="btn btn-danger btn-block" data-bs-toggle="modal" data-bs-target="#deleteModal">
                                 <i class="fas fa-trash-alt mr-2"></i> Delete Centre
                             </button>
                         </div>
@@ -296,7 +296,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="deleteModalLabel">Delete Centre</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
@@ -309,7 +309,7 @@
                 <p>This will also affect all associated staff, trainees, and activities.</p>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                 <form action="{{ route('centres.destroy', $centre->centre_id) }}" method="POST" style="display: inline;">
                     @csrf
                     @method('DELETE')

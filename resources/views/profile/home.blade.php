@@ -1566,7 +1566,7 @@ $(document).ready(function() {
                     <div class="modal-content">
                         <div class="modal-header">
                             <h5 class="modal-title" id="letterPreviewModalLabel">Letter Preview</h5>
-                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
                                 <span aria-hidden="true">&times;</span>
                             </button>
                         </div>
@@ -1579,7 +1579,7 @@ $(document).ready(function() {
                             </div>
                         </div>
                         <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                         </div>
                     </div>
                 </div>
@@ -1983,7 +1983,7 @@ $(document).ready(function() {
                                 <button type="button" class="btn btn-sm btn-outline-secondary mr-2" onclick="minimizeModal()" title="Minimize">
                                     <i class="fas fa-minus"></i>
                                 </button>
-                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
                                     <span aria-hidden="true">&times;</span>
                                 </button>
                             </div>
@@ -1992,7 +1992,7 @@ $(document).ready(function() {
                             ${templatesHtml}
                         </div>
                         <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                         </div>
                     </div>
                 </div>
@@ -2047,7 +2047,7 @@ $(document).ready(function() {
                                 <button type="button" class="btn btn-sm btn-outline-secondary mr-2" onclick="minimizePreviewModal()" title="Minimize">
                                     <i class="fas fa-minus"></i>
                                 </button>
-                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
                                     <span aria-hidden="true">&times;</span>
                                 </button>
                             </div>
@@ -2062,7 +2062,7 @@ $(document).ready(function() {
                             <button type="button" class="btn btn-success" onclick="loadTemplateFromPreview(${templateId})">
                                 <i class="fas fa-download"></i> Load This Template
                             </button>
-                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                         </div>
                     </div>
                 </div>

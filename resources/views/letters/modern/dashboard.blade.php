@@ -15,7 +15,7 @@
                 <p class="page-subtitle">Create, manage, and send professional letters with ease</p>
             </div>
             <div class="header-actions">
-                <button class="btn btn-primary btn-lg create-letter-btn" data-toggle="modal" data-target="#quickCreateModal">
+                <button class="btn btn-primary btn-lg create-letter-btn" data-bs-toggle="modal" data-bs-target="#quickCreateModal">
                     <i class="fas fa-plus"></i>
                     Create New Letter
                 </button>
@@ -235,7 +235,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">Quick Letter Creation</h5>
-                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                <button type="button" class="close" data-bs-dismiss="modal"><span>&times;</span></button>
             </div>
             <div class="modal-body">
                 <div class="template-selection">
@@ -254,7 +254,7 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                 <a href="{{ route('letters.modern.create') }}" class="btn btn-outline-primary">
                     Create Custom Letter
                 </a>

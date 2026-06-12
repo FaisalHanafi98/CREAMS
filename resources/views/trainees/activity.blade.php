@@ -644,8 +644,8 @@
                         <div class="activity-card-actions">
                             <button class="btn btn-sm btn-info view-activity-btn" 
                                     data-id="{{ $activity->id }}"
-                                    data-toggle="modal" 
-                                    data-target="#activityDetailModal">
+                                    data-bs-toggle="modal" 
+                                    data-bs-target="#activityDetailModal">
                                 <i class="fas fa-eye"></i> View
                             </button>
                             
@@ -695,7 +695,7 @@
                 
                 <div class="activity-card-footer">
                     <div class="activity-card-actions">
-                        <button class="btn btn-sm btn-info" data-toggle="modal" data-target="#demoActivityModal">
+                        <button class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#demoActivityModal">
                             <i class="fas fa-eye"></i> View
                         </button>
                         
@@ -786,7 +786,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="activityDetailModalLabel">Activity Details</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
@@ -796,7 +796,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                     <a href="#" id="editActivityBtn" class="btn btn-primary">
                         <i class="fas fa-edit"></i> Edit Activity
                     </a>
@@ -811,7 +811,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="demoActivityModalLabel">Fine Motor Skills Practice</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
@@ -867,7 +867,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                     <button type="button" class="btn btn-primary">
                         <i class="fas fa-edit"></i> Edit Activity
                     </button>
@@ -882,7 +882,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="deleteActivityModalLabel">Confirm Delete</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
@@ -890,7 +890,7 @@
                     <p>Are you sure you want to delete this activity? This action cannot be undone.</p>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <form id="deleteActivityForm" method="POST" action="">
                         @csrf
                         @method('DELETE')
