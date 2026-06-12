@@ -70,7 +70,7 @@ class ActivitySchedule extends Model
     {
         $start = Carbon::parse($this->start_time);
         $end = Carbon::parse($this->end_time);
-        return $end->diffInMinutes($start);
+        return (int) $start->diffInMinutes($end); // Carbon 3 diffs are signed
     }
 
     public function getDisplayLocationAttribute()

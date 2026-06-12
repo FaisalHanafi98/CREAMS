@@ -509,7 +509,7 @@ class StaffController extends Controller
                     if ($session->start_time && $session->end_time) {
                         $start = \Carbon\Carbon::parse($session->start_time);
                         $end = \Carbon\Carbon::parse($session->end_time);
-                        $session->duration_minutes = $end->diffInMinutes($start);
+                        $session->duration_minutes = (int) $start->diffInMinutes($end); // Carbon 3 diffs are signed
                     }
                     // Calculate actual enrolled count for this session's activity
                     $session->enrolled_count = \DB::table('activity_enrollments')
@@ -550,7 +550,7 @@ class StaffController extends Controller
                         if ($session->start_time && $session->end_time) {
                             $start = \Carbon\Carbon::parse($session->start_time);
                             $end = \Carbon\Carbon::parse($session->end_time);
-                            $session->duration_minutes = $end->diffInMinutes($start);
+                            $session->duration_minutes = (int) $start->diffInMinutes($end); // Carbon 3 diffs are signed
                         }
                         
                         // Set start_date for compatibility with view

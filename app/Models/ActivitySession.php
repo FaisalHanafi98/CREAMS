@@ -290,7 +290,8 @@ class ActivitySession extends Model
     {
         $start = Carbon::parse($this->start_time);
         $end = Carbon::parse($this->end_time);
-        return $end->diffInMinutes($start);
+        // Carbon 3 diffs are signed; measure start->end for a positive duration
+        return (int) $start->diffInMinutes($end);
     }
 
     /**

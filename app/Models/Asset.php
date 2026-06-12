@@ -165,7 +165,7 @@ class Asset extends Model
 
         if ($expiry->isPast()) {
             return 'Expired';
-        } elseif ($expiry->diffInDays($now) <= 30) {
+        } elseif ($now->diffInDays($expiry) <= 30) { // Carbon 3 diffs are signed
             return 'Expiring Soon';
         } else {
             return 'Active';
