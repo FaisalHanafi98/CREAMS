@@ -46,9 +46,9 @@ test.describe('00 - Setup Diagnostics', () => {
 
     await page.goto('http://localhost:8000/login');
 
-    // Fill form
-    await page.fill('#identifier', 'lakshmi.krishnan@iium.edu.my');
-    await page.fill('#password', 'Admin@2024!');
+    // Fill form — canonical UAT admin, same account global-setup.ts authenticates with
+    await page.fill('#identifier', 'super.admin@uat.creams.test');
+    await page.fill('#password', 'UatPass2026!');
 
     console.log('✅ Form filled');
 
