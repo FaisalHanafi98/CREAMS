@@ -1,41 +1,46 @@
 /**
  * CREAMS Test Data Configuration
  *
- * These credentials are from TestingGuideDataSeeder.php
- * and verified working via Playwright MCP on 2026-01-25
+ * Canonical seeded UAT accounts (UATSeeder) — the same users
+ * global-setup.ts authenticates with. The previous
+ * TestingGuideDataSeeder users no longer exist in the database.
+ *
+ * NOTE: interactive logins share the per-IP throttle bucket
+ * (throttle:login). For full-suite runs set RATE_LIMIT_LOGIN=100
+ * in .env, or runs will start failing after 5 logins per minute.
  */
 
 export const TEST_USERS = {
   admin: {
-    email: 'lakshmi.krishnan@iium.edu.my',
-    password: 'Admin@2024!',
+    email: 'super.admin@uat.creams.test',
+    password: 'UatPass2026!',
     role: 'admin',
     dashboard: '/admin/dashboard',
-    name: 'Dr. Lakshmi a/p Krishnan',
+    name: 'UAT Super Admin',
     displayRole: 'Administration'
   },
   supervisor: {
-    email: 'supervisor.gombak@iium.edu.my',
-    password: 'Supervise@2024',
+    email: 'supervisor.a1@uat.creams.test',
+    password: 'UatPass2026!',
     role: 'supervisor',
     dashboard: '/supervisor/dashboard',
-    name: 'Dr. Aminah binti Mohd Said',
+    name: 'UAT Supervisor A1',
     displayRole: 'Supervisor'
   },
   teacher: {
-    email: 'ahmad.hassan@iium.edu.my',
-    password: 'Teacher@2024',
+    email: 'teacher.a1@uat.creams.test',
+    password: 'UatPass2026!',
     role: 'teacher',
     dashboard: '/teacher/dashboard',
-    name: 'Ustaz Ahmad bin Hassan',
+    name: 'UAT Teacher A1',
     displayRole: 'Teacher'
   },
   ajk: {
-    email: 'fatimah.abdullah@iium.edu.my',
-    password: 'AJK@2024',
+    email: 'ajk.a1@uat.creams.test',
+    password: 'UatPass2026!',
     role: 'ajk',
     dashboard: '/ajk/dashboard',
-    name: 'Siti Fatimah binti Abdullah',
+    name: 'UAT Ajk A1',
     displayRole: 'AJK'
   }
 } as const;

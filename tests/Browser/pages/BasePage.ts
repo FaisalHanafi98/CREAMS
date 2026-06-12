@@ -70,7 +70,8 @@ export class BasePage {
       const logoutBtn = document.querySelector('.logout-btn') as HTMLElement;
       if (logoutBtn) logoutBtn.click();
     });
-    await this.page.waitForURL('**/');
+    // MainController::logout redirects to the login page, not home
+    await this.page.waitForURL('**/auth/login');
   }
 
   /**

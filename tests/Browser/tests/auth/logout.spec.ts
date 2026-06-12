@@ -29,7 +29,7 @@ test.describe('Authentication - Logout', () => {
 
         await basePage.logout();
 
-        await expect(page).toHaveURL(/^http:\/\/localhost:8000\/?$/);
+        await expect(page).toHaveURL(/auth\/login/);
         expect(await basePage.isLoggedIn()).toBe(false);
       });
     });
@@ -45,7 +45,7 @@ test.describe('Authentication - Logout', () => {
 
         await basePage.logout();
 
-        await expect(page).toHaveURL(/^http:\/\/localhost:8000\/?$/);
+        await expect(page).toHaveURL(/auth\/login/);
       });
     });
 
@@ -60,7 +60,7 @@ test.describe('Authentication - Logout', () => {
 
         await basePage.logout();
 
-        await expect(page).toHaveURL(/^http:\/\/localhost:8000\/?$/);
+        await expect(page).toHaveURL(/auth\/login/);
       });
     });
 
@@ -75,7 +75,7 @@ test.describe('Authentication - Logout', () => {
 
         await basePage.logout();
 
-        await expect(page).toHaveURL(/^http:\/\/localhost:8000\/?$/);
+        await expect(page).toHaveURL(/auth\/login/);
       });
     });
   });
