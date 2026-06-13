@@ -59,3 +59,4 @@ tests/Browser/playwright-report/
 tests/Browser/test-results/
 tests/Browser/test-results.json/
 tests/Browser/dashboard-test-results.txt
+test-results/
