@@ -280,33 +280,46 @@ export class TraineePage extends BasePage {
   }
 
   /**
-   * Submit the trainee form and wait for result
-   * Form submission redirects to trainees.home on success with session flash
+   * Submit the trainee form and wait for result.
+   * Uses form.submit() via evaluate to bypass client-side JS validators
+   * (phone masking, button-disable handlers, etc.) that can prevent or
+   * delay the native form POST. waitForNavigation is registered before
+   * the evaluate fires to avoid the click→navigate race condition.
    */
   async submitForm(): Promise<void> {
-    // Prepare the form for submission: clear errors and disable HTML5 validation
+    // Disable HTML5 validation and clear any visible error states
     await this.page.evaluate(() => {
-      // Set novalidate on ALL forms (works for both create and edit pages)
       document.querySelectorAll('form').forEach(f => f.setAttribute('novalidate', 'true'));
-
-      // Clear all validation error classes and messages
       document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
       document.querySelectorAll('.phone-error, .invalid-feedback').forEach(el => el.remove());
     });
 
-    // Click the actual submit button — works on both create (form.trainee-form) and edit pages
-    const createBtn = this.page.locator('form.trainee-form button[type="submit"]');
-    if (await createBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
-      await createBtn.click();
-    } else {
-      // Edit page: find the main content form's submit button (not logout/delete forms)
-      const editBtn = this.page.locator('.container form button[type="submit"]:not(.btn-danger)').first();
-      await editBtn.click();
-    }
+    // Register waitForNavigation BEFORE form.submit() so the listener is in place
+    // when the browser starts the POST. form.submit() bypasses JS submit-event
+    // handlers (button-disable, client-side validators).
+    await Promise.all([
+      this.page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 30000 }),
+      this.page.evaluate(() => {
+        // Primary: create page uses form.trainee-form
+        const byClass = document.querySelector('form.trainee-form') as HTMLFormElement | null;
+        if (byClass) { byClass.submit(); return; }
 
-    // Wait for navigation (success redirect) or page reload (validation errors)
-    await this.page.waitForLoadState('domcontentloaded', { timeout: 30000 });
-    await this.page.waitForTimeout(500);
+        // Secondary: edit.blade.php has no class — find by trainee-specific input name
+        const byInput = Array.from(document.querySelectorAll('form')).find(
+          f => f.querySelector('[name="trainee_first_name"]') !== null ||
+               f.querySelector('[name="trainee_email"]') !== null
+        ) as HTMLFormElement | undefined;
+        if (byInput) { byInput.submit(); return; }
+
+        // Last resort: first form with a non-danger submit button (avoid global search forms)
+        for (const form of Array.from(document.querySelectorAll('form'))) {
+          if (form.querySelector('button[type="submit"]:not(.btn-danger)')) {
+            (form as HTMLFormElement).submit();
+            return;
+          }
+        }
+      }),
+    ]);
   }
 
   /**
@@ -421,8 +434,8 @@ export class TraineePage extends BasePage {
       await dialog.accept();
     });
 
-    // Step 1: Click "Delete Trainee" button to open the Bootstrap modal
-    const openModalBtn = this.page.locator('button[data-target="#deleteTraineeModal"]');
+    // Step 1: Click "Delete Trainee" button to open the Bootstrap 5 modal
+    const openModalBtn = this.page.locator('button[data-bs-target="#deleteTraineeModal"]');
     await openModalBtn.scrollIntoViewIfNeeded();
     await openModalBtn.click();
 
@@ -455,18 +468,35 @@ export class TraineePage extends BasePage {
   }
 
   /**
-   * Verify success - checks for redirect to trainee list OR success toast/alert
+   * Verify success - checks for redirect to trainee list OR success toast/alert.
+   * Uses waitForURL to handle the case where expectSuccessToast() is called while
+   * the POST→302→/trainees/home redirect is still in flight (page.url() would
+   * still report /trainees/create in that window).
    */
   async expectSuccessToast(expectedMessage?: string): Promise<void> {
+    // If still on a create/edit page, wait for the redirect to complete (up to 15s).
+    // waitForLoadState alone returns immediately if the current page is already loaded,
+    // which races the server redirect on slow connections.
+    const preUrl = this.page.url();
+    if (preUrl.includes('/create') || preUrl.includes('/edit/')) {
+      await this.page.waitForURL(
+        url => {
+          const s = url.toString();
+          return s.includes('trainees') && !s.includes('/create') && !s.includes('/edit/');
+        },
+        { timeout: 15000 }
+      ).catch(() => {});
+    }
+
     await this.page.waitForLoadState('domcontentloaded');
 
-    // Check multiple success indicators
     const currentUrl = this.page.url();
-    const redirected = currentUrl.includes('trainees') && !currentUrl.includes('create') && !currentUrl.includes('edit');
+    // Use '/create' and '/edit' (with leading slash) to avoid false positives from
+    // query parameters like '?created=1' which contain the substring 'create'.
+    const redirected = currentUrl.includes('trainees') && !currentUrl.includes('/create') && !currentUrl.includes('/edit');
     const hasToast = await this.page.locator('.toast-notification.toast-success, .toast-success, .alert-success, [class*="success"]').isVisible().catch(() => false);
     const hasSwal = await this.page.locator('.swal2-success, .swal2-popup:has(.swal2-success)').isVisible().catch(() => false);
 
-    // Any success indicator is acceptable
     expect(redirected || hasToast || hasSwal).toBe(true);
   }
 
@@ -539,24 +569,35 @@ export function generateTestTrainee(overrides: Partial<TraineeFormData> = {}): T
   const guardianPhone = `+60 ${phonePrefix}-${guardianPhoneBody.substring(0, 3)} ${guardianPhoneBody.substring(3)}`;
 
   // Generate valid IC number format: YYMMDD-SS-NNNN
-  const icYear = '05'; // Born 2005
-  const icMonth = '06';
-  const icDay = '15';
+  // Birth date derived from epoch day so the domain resets daily — no collision with
+  // ICs inserted by previous test runs on prior days. Serial uses the full 0-9999
+  // range (Math.random) so within-run collision probability ~1.4% for 17 tests.
+  const epochDays = Math.floor(timestamp / (24 * 60 * 60 * 1000));
+  const icYearVal = (epochDays % 40) + 60; // 60-99 => born 1960-1999
+  const icYear = icYearVal.toString().padStart(2, '0');
+  const icMonthVal = (epochDays % 12) + 1; // 1-12
+  const icMonth = icMonthVal.toString().padStart(2, '0');
+  const icDayVal = (epochDays % 28) + 1; // 1-28 (avoids month-end edge cases)
+  const icDay = icDayVal.toString().padStart(2, '0');
   const icState = '14'; // WP Kuala Lumpur
-  const icSerial = random.toString().padStart(4, '0').substring(0, 4);
+  const icSerial = random.toString().padStart(4, '0'); // full 0-9999 range
   const icNumber = `${icYear}${icMonth}${icDay}-${icState}-${icSerial}`;
+
+  // Date of birth matched to IC-encoded date
+  const fullBirthYear = icYearVal >= 60 ? 1900 + icYearVal : 2000 + icYearVal;
+  const dateOfBirth = `${fullBirthYear}-${icMonth}-${icDay}`;
 
   return {
     firstName: `TestTrainee${random}`,
     lastName: `Automation`,
-    dateOfBirth: '2005-06-15',
+    dateOfBirth: dateOfBirth,
     gender: 'Male',
     email: `test.trainee.${timestamp}@test.com`,
     icNumber: icNumber,
     phone: phone,
     address: '123 Test Street, Kuala Lumpur, Malaysia',
     condition: 'Learning Support',
-    centreName: 'Kuantan', // Updated to match actual database centre names
+    centreName: 'UAT Centre B', // Must match exists:centres,centre_name — seeded names: Test Centre, UAT Centre A, UAT Centre B, UAT Centre C
     guardianName: 'Test Guardian',
     guardianRelationship: 'Parent',
     guardianPhone: guardianPhone,

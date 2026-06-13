@@ -20,7 +20,7 @@ test.describe('Functional - Centre Management CRUD', () => {
 
     test('Centre list page loads successfully', async ({ page }) => {
       await page.goto('http://localhost:8000/centres/home');
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       // Should be on centres page
       await expect(page).toHaveURL(/centres/);
@@ -28,7 +28,7 @@ test.describe('Functional - Centre Management CRUD', () => {
 
     test('Centre create page loads successfully', async ({ page }) => {
       await page.goto('http://localhost:8000/centres/create');
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       // Check for form elements
       await expect(page.locator('input[name*="centre"], input[name*="name"]').first()).toBeVisible({
@@ -53,7 +53,7 @@ test.describe('Functional - Centre Management CRUD', () => {
 
     test('Centre creation form has required fields', async ({ page }) => {
       await page.goto('http://localhost:8000/centres/create');
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       // Check for common centre fields (actual field names use centre_ prefix)
       const fields = ['centre_name', 'centre_phone', 'centre_email', 'centre_address', 'centre_capacity'];
@@ -69,7 +69,7 @@ test.describe('Functional - Centre Management CRUD', () => {
 
     test('Shows validation error for empty centre name', async ({ page }) => {
       await page.goto('http://localhost:8000/centres/create');
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       // Centre create is a wizard form — try clicking Next without filling required fields
       const nextButton = page.locator('button:has-text("Next"), #nextStep').first();
@@ -170,7 +170,7 @@ test.describe('Functional - Centre Management CRUD', () => {
 
       if (await viewButton.isVisible({ timeout: 5000 }).catch(() => false)) {
         await viewButton.click();
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
 
         // Centre detail page shows sections like "Centre Information", "Recent Activity", etc.
         const hasCentreInfo = await page.locator('text=Centre Information, text=Contact Information, text=Operating Hours').first().isVisible({ timeout: 5000 }).catch(() => false);
@@ -187,7 +187,7 @@ test.describe('Functional - Centre Management CRUD', () => {
       const startTime = Date.now();
 
       await page.goto('http://localhost:8000/centres/home');
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       const loadTime = Date.now() - startTime;
       console.log(`Centre List Load Time: ${loadTime}ms`);

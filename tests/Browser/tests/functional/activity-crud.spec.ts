@@ -44,6 +44,21 @@ test.describe('Functional - Activity Management CRUD', () => {
     } catch (e) {
       console.log('Warning: Could not clean up test activities:', e.message);
     }
+
+    // Seed instructor qualifications — UAT staff have NULL specializations,
+    // causing InstructorQualificationRule to reject every instructor for all categories.
+    // Use spawnSync with args array to bypass cmd.exe shell-escaping issues on Windows.
+    const { spawnSync } = require('child_process');
+    const qualSeed = spawnSync('php', [
+      'artisan', 'tinker',
+      `--execute=DB::table('staffs')->whereIn('role', ['teacher','supervisor','admin'])->update(['education_specialization' => 'Special Education', 'teaching_specialization' => 'Rehabilitation']); echo 'seeded:' . DB::table('staffs')->whereIn('role', ['teacher','supervisor','admin'])->whereNotNull('education_specialization')->count();`
+    ], { cwd: path.join(__dirname, '../../../..'), encoding: 'utf-8', timeout: 15000 });
+    const seedOut = (qualSeed.stdout || '') + (qualSeed.stderr || '');
+    if (qualSeed.error || (seedOut.includes('Error') && !seedOut.includes('seeded:'))) {
+      console.log('Warning: Could not seed instructor qualifications:', qualSeed.error?.message || seedOut.slice(0, 200));
+    } else {
+      console.log('Seeded instructor qualifications for UAT staff:', seedOut.trim());
+    }
   });
 
   test.beforeEach(async ({ page }) => {
@@ -225,7 +240,7 @@ test.describe('Functional - Activity Management CRUD', () => {
       console.log('Submitting form...');
       await activityPage.submitForm();
       console.log('Waiting for network idle...');
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       const timing = await performanceHelper.endOperation('Create Activity (Full Wizard)', startTime, true);
 
@@ -267,7 +282,7 @@ test.describe('Functional - Activity Management CRUD', () => {
       }
 
       await activityPage.submitForm();
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       // Check for either success or validation
       const successToast = await page.locator('.toast-success').isVisible({ timeout: 3000 }).catch(() => false);
@@ -574,6 +589,11 @@ test.describe('Functional - Activity Management CRUD', () => {
   });
 
   test.afterAll(async () => {
+    const { spawnSync } = require('child_process');
+    spawnSync('php', [
+      'artisan', 'tinker',
+      `--execute=DB::table('staffs')->whereIn('role', ['teacher','supervisor','admin'])->update(['education_specialization' => null, 'teaching_specialization' => null]); echo 'restored';`
+    ], { cwd: path.join(__dirname, '../../../..'), encoding: 'utf-8', timeout: 15000 });
     console.log('\n=== ACTIVITY CRUD PERFORMANCE SUMMARY ===');
     console.log(`Total tests completed`);
     console.log('Check individual test logs for timing details');

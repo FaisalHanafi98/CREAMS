@@ -20,7 +20,7 @@ test.describe('Functional - Messages & Notifications', () => {
 
     test('Can access messages page', async ({ page }) => {
       await page.goto('http://localhost:8000/messages');
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       await expect(page).toHaveURL(/messages/);
     });
@@ -60,7 +60,7 @@ test.describe('Functional - Messages & Notifications', () => {
 
     test('Can access notifications page', async ({ page }) => {
       await page.goto('http://localhost:8000/notifications');
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       await expect(page).toHaveURL(/notifications/);
     });
@@ -108,7 +108,7 @@ test.describe('Functional - Messages & Notifications', () => {
       const startTime = Date.now();
 
       await page.goto('http://localhost:8000/messages');
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       const loadTime = Date.now() - startTime;
       console.log(`Messages Page Load Time: ${loadTime}ms`);
@@ -120,7 +120,7 @@ test.describe('Functional - Messages & Notifications', () => {
       const startTime = Date.now();
 
       await page.goto('http://localhost:8000/notifications');
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       const loadTime = Date.now() - startTime;
       console.log(`Notifications Page Load Time: ${loadTime}ms`);

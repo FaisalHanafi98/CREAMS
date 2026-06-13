@@ -62,7 +62,7 @@ export class DatabaseHelper {
     try {
       // Navigate to trainee list
       await this.page.goto(`${BASE_URL}/trainees/home`);
-      await this.page.waitForLoadState('networkidle');
+      await this.page.waitForLoadState('domcontentloaded');
 
       // Try to find trainee by name or IC in the list
       const searchTerm = trainee.firstName || trainee.icNumber || trainee.email;
@@ -77,7 +77,7 @@ export class DatabaseHelper {
         } else {
           await searchInput.press('Enter');
         }
-        await this.page.waitForLoadState('networkidle');
+        await this.page.waitForLoadState('domcontentloaded');
       }
 
       // Check if trainee appears in cards or table
@@ -131,7 +131,7 @@ export class DatabaseHelper {
     try {
       // Navigate to activity list
       await this.page.goto(`${BASE_URL}/activities/home`);
-      await this.page.waitForLoadState('networkidle');
+      await this.page.waitForLoadState('domcontentloaded');
 
       // Use client-side search via #searchInput
       const searchInput = this.page.locator('#searchInput');
@@ -199,7 +199,7 @@ export class DatabaseHelper {
     try {
       // First find the trainee
       await this.page.goto(`${BASE_URL}/trainees/home`);
-      await this.page.waitForLoadState('networkidle');
+      await this.page.waitForLoadState('domcontentloaded');
 
       // Search for trainee
       const searchInput = this.page.locator('input[type="search"], input[placeholder*="Search"]');
@@ -212,7 +212,7 @@ export class DatabaseHelper {
       const viewLink = this.page.locator('a:has-text("View")').first();
       if (await viewLink.isVisible()) {
         await viewLink.click();
-        await this.page.waitForLoadState('networkidle');
+        await this.page.waitForLoadState('domcontentloaded');
 
         // Check for updated values on the page
         const pageContent = await this.page.content();
@@ -253,7 +253,7 @@ export class DatabaseHelper {
    */
   async countRecords(pageUrl: string): Promise<number> {
     await this.page.goto(`${BASE_URL}${pageUrl}`);
-    await this.page.waitForLoadState('networkidle');
+    await this.page.waitForLoadState('domcontentloaded');
 
     // Try different methods to count
     const tableRows = await this.page.locator('table tbody tr').count();

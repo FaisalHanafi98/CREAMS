@@ -24,6 +24,7 @@
 import { request, FullConfig } from '@playwright/test';
 import * as path from 'node:path';
 import * as fs from 'node:fs';
+import { execSync } from 'node:child_process';
 
 // UAT credentials produced by database/seeders/UATSeeder.php (sprint May 2026).
 // Old TestingGuideDataSeeder credentials (lakshmi.krishnan@iium.edu.my, etc.) no
@@ -93,6 +94,21 @@ async function authenticate(role: { name: string; email: string; password: strin
 
 async function globalSetup(config: FullConfig) {
   console.log('\nGlobal setup: Pre-authenticating all roles...');
+
+  // Force-delete soft-deleted and live test trainees so the trainee_id sequential
+  // generator does not collide with records left over from prior test runs.
+  // (Trainee uses SoftDeletes; the generator only scans non-deleted rows, so
+  //  soft-deleted rows can still cause unique-key violations on trainee_id.)
+  const projectRoot = path.resolve(__dirname, '..', '..');
+  try {
+    execSync(
+      `php artisan tinker --execute="App\\Models\\Trainee::withTrashed()->where('trainee_email','LIKE','test.trainee.%@test.com')->forceDelete();"`,
+      { cwd: projectRoot, stdio: 'pipe' }
+    );
+    console.log('  Cleared test trainees from previous runs.\n');
+  } catch {
+    console.warn('  Warning: test trainee cleanup skipped (non-fatal).\n');
+  }
 
   const authDir = path.join(__dirname, '.auth');
   if (!fs.existsSync(authDir)) {

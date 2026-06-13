@@ -26,7 +26,15 @@ Verified that:
 3. [specific check]
 
 [Short explanation of why the change matters.]
+
+[Assisted by AI, reviewed manually by Faisal]
 ```
+
+The footer `[Assisted by AI, reviewed manually by Faisal]` is required on every
+commit where AI tooling contributed to the diff. It must appear as the last line
+of the message body, separated from the preceding paragraph by a blank line.
+Omit the footer only when the entire commit was written and reviewed by a human
+with no AI involvement.
 
 ---
 
@@ -55,6 +63,8 @@ Verified that:
 
 A fresh clone of the Fixers branch would fail without this file.
 Centre isolation is the primary PDPA boundary in CREAMS.
+
+[Assisted by AI, reviewed manually by Faisal]
 ```
 
 ---
@@ -85,9 +95,7 @@ Write like a real developer explaining a change to a teammate who will read it i
 
 ### Avoid
 
-- **Any attribution or credit to Claude, AI assistants, or AI tooling.
-  No "Assisted by AI" footers, no Co-Authored-By AI trailers, no AI
-  mentions of any kind. Commits are authored by the project owner.**
+- Co-Authored-By trailers naming a specific AI model or product
 - Marketing tone or overpolished AI language
 - Vague phrases: "enhanced robustness", "improved reliability" — unless you can state what metric changed
 - Emojis in technical commit messages

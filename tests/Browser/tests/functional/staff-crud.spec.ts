@@ -175,7 +175,7 @@ test.describe('Functional - Staff Management CRUD', () => {
       await staffPage.gotoCreate();
       await staffPage.fillForm(testStaff);
       await staffPage.submitForm();
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       const hasError = await staffPage.hasValidationErrors() ||
                        await page.locator('.toast-error').isVisible().catch(() => false);
@@ -198,7 +198,7 @@ test.describe('Functional - Staff Management CRUD', () => {
       await staffPage.gotoCreate();
       await staffPage.fillForm(duplicateStaff);
       await staffPage.submitForm();
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       const hasError = await staffPage.hasValidationErrors() ||
                        await page.locator('.toast-error').isVisible().catch(() => false);
@@ -304,7 +304,7 @@ test.describe('Functional - Staff Management CRUD', () => {
       await staffPage.editStaff(testStaff.firstName);
       await page.fill('#email, [name="email"]', 'invalid-email');
       await staffPage.submitForm();
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       const hasError = await staffPage.hasValidationErrors() ||
                        await page.locator('.toast-error').isVisible().catch(() => false);

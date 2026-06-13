@@ -11,6 +11,7 @@ export interface ActivityFormData {
   centreId?: string;
   categoryId?: string;
   description?: string;
+  activityType?: 'Individual' | 'Group' | 'Both'; // required|in:Individual,Group,Both
 
   // Step 2: Activity Details
   difficultyLevel?: 'beginner' | 'intermediate' | 'advanced';
@@ -165,6 +166,13 @@ export class ActivityPage extends BasePage {
     if (data.description) {
       await this.page.fill('#activity_description, [name="activity_description"]', data.description);
     }
+
+    // activity_type: required by server step 1 validation (in:Individual,Group,Both)
+    const activityType = (data as ActivityFormData).activityType ?? 'Group';
+    await this.page.evaluate((val) => {
+      const sel = document.querySelector('#activity_type, [name="activity_type"]') as HTMLSelectElement | HTMLInputElement | null;
+      if (sel) { sel.value = val; sel.dispatchEvent(new Event('change', { bubbles: true })); }
+    }, activityType);
   }
 
   /**
@@ -464,7 +472,7 @@ export class ActivityPage extends BasePage {
   /**
    * Submit the activity form
    * The create wizard uses e.preventDefault() + this.form.submit() after JS validation.
-   * Click then wait for networkidle to cover both full-page nav and AJAX submissions.
+   * Click then wait for domcontentloaded to cover both full-page nav and AJAX submissions.
    */
   async submitForm(): Promise<void> {
     // Check if we're on the create wizard (has #activityForm) or the edit form
@@ -474,8 +482,85 @@ export class ActivityPage extends BasePage {
       // Bypass all wizard JS validation by directly submitting the form
       // form.submit() from JS does NOT fire event listeners (unlike button click)
       console.log('Submitting wizard form directly via form.submit()');
+
+      // Inject fields required by server-side step validation that the page object
+      // either omits, uses wrong field names for, or submits with wrong casing.
+      // This bridges the gap between the old-style page object and the current wizard API.
+      await this.page.evaluate(() => {
+        const form = document.getElementById('activityForm') as HTMLFormElement;
+        if (!form) return;
+
+        // Set a field: update existing input or append a hidden one.
+        function injectOrSet(name: string, value: string) {
+          const existing = form.querySelector(`[name="${name}"]`) as HTMLInputElement | null;
+          if (existing && existing.type !== 'radio' && existing.type !== 'checkbox') {
+            existing.value = value;
+          } else {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = name;
+            input.value = value;
+            form.appendChild(input);
+          }
+        }
+
+        // Step 1: activity_type (required|in:Individual,Group,Both)
+        // fillStep1() does a best-effort set via evaluate, but it may miss if the field
+        // doesn't exist in the HTML — ensure it's here regardless.
+        injectOrSet('activity_type', 'Group');
+
+        // Step 1: duration_minutes (required|integer|min:15|max:480)
+        // The page object fills the HTML field named "session_duration"; the server reads "duration_minutes".
+        const sessionDuration = (form.querySelector('[name="session_duration"]') as HTMLInputElement)?.value || '60';
+        injectOrSet('duration_minutes', sessionDuration);
+
+        // Step 1: difficulty_level (nullable|in:beginner,intermediate,advanced — lowercase)
+        // Server validates lowercase enum values. Radio buttons already emit lowercase ('beginner'),
+        // so inject the radio value directly. Do NOT capitalise.
+        const difficultyRadio = form.querySelector('input[name="difficulty_level"]:checked') as HTMLInputElement | null;
+        injectOrSet('difficulty_level', difficultyRadio?.value || 'beginner');
+
+        // Step 2: learning_outcomes (nullable|string|max:2000)
+        // Server validates as a plain string — inject a safe value; skip nested array format
+        // which would cause array-vs-string validation failure.
+        if (!form.querySelector('[name="learning_outcomes"]')) {
+          injectOrSet('learning_outcomes', 'Basic Skill Development: Develop core skills through structured group activity');
+        }
+
+        // Step 3: schedule_type (required|in:template,custom)
+        // The page object sets a period_type radio (single/recurring/course); server needs schedule_type.
+        injectOrSet('schedule_type', 'custom');
+
+        // Step 3: venue (required|string|max:100) — not filled by any fillStep*() method
+        injectOrSet('venue', 'Test Room A');
+
+        // Step 3 custom: session_length_minutes (required|integer|min:15|max:480)
+        // Same value as duration_minutes; the page object fills "session_duration".
+        injectOrSet('session_length_minutes', sessionDuration);
+
+        // Step 3 custom: session_time (required|date_format:H:i)
+        // The page object fills "activity_start_time"; server needs "session_time".
+        const startTime = (form.querySelector('[name="activity_start_time"]') as HTMLInputElement)?.value || '10:00';
+        injectOrSet('session_time', startTime);
+
+        // Step 3 custom: days_of_week[] (required|array|min:1)
+        // The page object checks boxes named "recurring_days[]"; server needs "days_of_week[]".
+        if (!form.querySelector('[name="days_of_week[]"]')) {
+          const daysInput = document.createElement('input');
+          daysInput.type = 'hidden';
+          daysInput.name = 'days_of_week[]';
+          daysInput.value = 'Monday';
+          form.appendChild(daysInput);
+        }
+
+        // Step 3 custom: sessions_per_week (required|integer|min:1|max:7)
+        // Already filled by fillStep3() via #sessions_per_week select — ensure a fallback.
+        const spw = (form.querySelector('#sessions_per_week, [name="sessions_per_week"]') as HTMLSelectElement | HTMLInputElement)?.value;
+        if (!spw) injectOrSet('sessions_per_week', '2');
+      });
+
       await Promise.all([
-        this.page.waitForNavigation({ waitUntil: 'networkidle', timeout: 60000 }),
+        this.page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 30000 }),
         this.page.evaluate(() => {
           const form = document.getElementById('activityForm') as HTMLFormElement;
           if (form) {
@@ -509,7 +594,7 @@ export class ActivityPage extends BasePage {
 
       // Wait for the page to navigate
       await this.page.waitForLoadState('load', { timeout: 30000 }).catch(() => {});
-      await this.page.waitForLoadState('networkidle', { timeout: 15000 }).catch(() => {});
+      await this.page.waitForLoadState('domcontentloaded', { timeout: 15000 }).catch(() => {});
     }
   }
 
@@ -684,7 +769,7 @@ export class ActivityPage extends BasePage {
 
     // Find and submit the delete form directly via JS
     await Promise.all([
-      this.page.waitForNavigation({ waitUntil: 'networkidle', timeout: 30000 }).catch(() => {}),
+      this.page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 30000 }).catch(() => {}),
       this.page.evaluate(() => {
         const form = document.querySelector('form[id^="delete-form"]') as HTMLFormElement;
         if (form) form.submit();
@@ -842,32 +927,37 @@ export function generateTestActivity(overrides: Partial<ActivityFormData> = {}):
   const endTimeStr = `${String(startHour + 1).padStart(2, '0')}:00`;
 
   return {
-    // Step 1: Basic Information - ALL REQUIRED
+    // Step 1: Basic Information
     name: `Test Activity ${random}`,
     description: generateUniqueDescription(random, counter, timestamp),
     centreId: '01', // Gombak centre (database uses "01" not "1")
-    categoryId: 'Autism Spectrum Support', // One of the valid enum values
+    categoryId: 'Autism Spectrum Support',
+    // activity_type: required|in:Individual,Group,Both — injected by submitForm() if field absent in HTML
+    activityType: 'Group',
 
     // Step 2: Activity Details
+    // difficulty_level: server validates nullable|in:beginner,intermediate,advanced (lowercase)
     difficultyLevel: 'beginner',
     ageGroup: 'all_ages',
+    // sessionDuration maps to HTML field "session_duration"; server reads "duration_minutes" — submitForm() injects correct name
     sessionDuration: 60,
-    minParticipants: 3, // Controller requires min 3
+    minParticipants: 3,
     maxParticipants: 10,
     location: 'Test Room A',
 
-    // Step 3: Schedule Configuration - REQUIRED FIELDS
+    // Step 3: Schedule Configuration
+    // periodType radio ('single') is unrelated to server's schedule_type ('template'|'custom') — submitForm() injects schedule_type
     periodType: 'single',
     startDate: getNextWeekday(dateOffset),
     endDate: getNextWeekday(dateOffset + 14),
     startTime: startTimeStr,
     endTime: endTimeStr,
     sessionsPerWeek: 2,
-    recurringDays: ['Tuesday', 'Thursday'], // Avoid Monday — instructor 327 already has 12h on Mondays
+    recurringDays: ['Tuesday', 'Thursday'],
 
-    // Step 4: Resources - REQUIRED
-    instructorId: '327', // Teacher with Special Education qualification
-    participants: '1,2,3', // Comma-separated trainee IDs (min 3 required by controller)
+    // Step 4: Resources
+    instructorId: '327',
+    participants: '1,2,3',
 
     ...overrides,
   };

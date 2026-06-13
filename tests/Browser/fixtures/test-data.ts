@@ -82,7 +82,7 @@ export const ROUTES = {
   activitiesSchedule: '/activities/schedule',
   activitiesCreate: '/activities/create',
   centreAttendance: '/centres/attendance',
-  assetParents: '/centre/asset-parents',
+  assetParents: '/centre/assets',
 } as const;
 
 export const SELECTORS = {

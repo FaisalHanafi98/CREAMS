@@ -20,7 +20,7 @@ test.describe('Functional - IEP Management', () => {
 
     test('IEP list page loads successfully', async ({ page }) => {
       await page.goto('http://localhost:8000/iep');
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       await expect(page).toHaveURL(/iep/);
     });
@@ -168,7 +168,7 @@ test.describe('Functional - IEP Management', () => {
       const startTime = Date.now();
 
       await page.goto('http://localhost:8000/iep');
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       const loadTime = Date.now() - startTime;
       console.log(`IEP Page Load Time: ${loadTime}ms`);
