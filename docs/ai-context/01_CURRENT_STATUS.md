@@ -85,11 +85,25 @@ All fixes are confined to `tests/Browser/` — no application source code was ch
    hold pending reality audit." This must be explicitly lifted by the owner
    before any push to production is attempted.
 
-2. **PDPA cleanup — real data in tracked files**
-   Real email addresses were found in `automation/` scripts committed to the
-   repository. A backup file (`CF-01` or similar) containing real data may
-   also exist in git history. These must be scrubbed before production
-   deployment to comply with PDPA.
+2. **PDPA — real-data artefacts removed from tracking (2026-06-21)**
+   *Correction to the 2026-06-15 entry, which was a false positive.* The emails in
+   `Archive/Historical_Screenshots/audit_screenshots/*.json`
+   (`lakshmi.krishnan@`, `ahmad.hassan@`, `supervisor.gombak@`, `fatimah.abdullah@`)
+   are **synthetic test personas** defined in `database/seeders/TestingGuideDataSeeder.php`
+   with demo passwords — not real data. Owner confirmed: the **only** real-life data
+   lives in the IRL files; everything else is synthetic or semi-synthetic.
+
+   The genuine exposure was `Archive/Legacy_Exports/IRL_Files/` (49 real PDK centre
+   photos, invoices, forms — 64 MB) tracked **only on `Fixers`** (never on `main`/`dev`),
+   plus `database/real_data_backup.json` (synthetic DB dump with bcrypt hashes).
+   **Remediated this session**: both `git rm --cached` (local copies kept), added to
+   `.gitignore`, `GombakDataExtractor` env-gated to local-only, pre-commit hook extended
+   to block these paths.
+
+   **Remaining owner-only step**: the 64 MB of IRL files still exist in `Fixers` git
+   *history* (and on `origin/Fixers`, a public repo). Full purge needs `git filter-repo`
+   + force-push (high-risk, rewrites history). `main`/`dev` are clean, so a future
+   `main` merge after this commit will not carry the files.
 
 3. **Stale deployment documentation**
    Several docs under `docs/` still describe the old Lightsail architecture,
@@ -121,6 +135,12 @@ in .gitignore).
 
 ## Do not repeat
 
+- Do NOT flag `@iium.edu.my` emails as real PII without checking the seeders first —
+  the audit-JSON emails are synthetic personas from `TestingGuideDataSeeder.php`. The
+  2026-06-15 session wasted effort treating them as a real breach. Owner confirmed: the
+  ONLY real data is in the IRL files.
+- Do NOT re-commit `Archive/Legacy_Exports/IRL_Files/` or `database/real_data_backup.json` —
+  now gitignored; the pre-commit hook blocks them by path.
 - Do NOT deploy — hard rule is in effect until owner explicitly lifts it.
 - Do NOT reference Lightsail or `creams.faisalhanafi.com` — that target is superseded.
 - Do NOT run `migrate:fresh` on production.

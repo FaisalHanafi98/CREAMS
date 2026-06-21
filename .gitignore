@@ -60,3 +60,10 @@ tests/Browser/test-results/
 tests/Browser/test-results.json/
 tests/Browser/dashboard-test-results.txt
 test-results/
+
+# Real-data artefacts — never track (PDPA). Kept on local disk only.
+# IRL_Files holds real PDK centre photos, invoices, and forms.
+# real_data_backup.json is a DB dump produced by GombakDataExtractor.
+Archive/Legacy_Exports/IRL_Files/
+Archive/Legacy_Exports/irl_reference_materials_DUPLICATE/
+database/real_data_backup.json

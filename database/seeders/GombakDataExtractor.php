@@ -12,6 +12,17 @@ class GombakDataExtractor extends Seeder
      */
     public function run(): void
     {
+        // PDPA hard guard — never extract real data outside local development.
+        // Matches the IRLSeeder local-only gate. Output (real_data_backup.json)
+        // is gitignored, but regeneration on a shared environment would pull
+        // current production data, so block it here.
+        if (app()->environment() !== 'local') {
+            throw new \RuntimeException(
+                'GombakDataExtractor is HARD-GATED to APP_ENV=local. Current env: '
+                . app()->environment()
+            );
+        }
+
         $this->command->info('🔒 Extracting real Gombak centre data...');
         
         try {

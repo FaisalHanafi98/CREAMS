@@ -39,6 +39,21 @@ fi
 
 FOUND=0
 
+# Path-based blocklist for real-data artefacts. These files (centre photos,
+# invoices, DB dumps) carry real PDPA data but contain no IC/password literals,
+# so the content-pattern loop below would not catch them. Block by path.
+BLOCKED_PATHS=$(echo "$STAGED_FILES" | grep -E '^Archive/Legacy_Exports/IRL_Files/|^Archive/Legacy_Exports/irl_reference_materials_DUPLICATE/|(^|/)real_data_backup\.json$')
+if [ -n "$BLOCKED_PATHS" ]; then
+    echo -e "${RED}BLOCKED: Real-data artefacts must not be committed (PDPA)${NC}"
+    echo ""
+    echo "$BLOCKED_PATHS" | while read -r file; do
+        echo "    $file"
+    done
+    echo ""
+    echo "These paths are gitignored. Keep them on local disk only."
+    exit 1
+fi
+
 for i in "${!PATTERNS[@]}"; do
     # Exclude docs/ from code-pattern checks (password, key patterns) — docs contain code examples.
     # IC pattern still applies to docs/ since that is a PDPA requirement.
