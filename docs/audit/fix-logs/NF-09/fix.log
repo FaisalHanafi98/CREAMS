@@ -1,0 +1,44 @@
+NF-09 — learning-outcomes.index hard-500 -> defensive guard + smoke test
+Route: GET http://localhost:8000/activities/learning-outcomes  (name: activities.learning-outcomes.index, web.php:251)
+
+DISCOVERY (overturns the prior audit's "graceful 302" assumption):
+  LearningOutcome (app/Models/LearningOutcome.php) is a NON-Eloquent compatibility class (plain class,
+  no extends Model), but LearningOutcomeController::index calls Eloquent query methods on it
+  (LearningOutcome::with(['activity','creator'])->whereHas(...)->paginate(15)). PHP throws
+  "Error: Call to undefined method App\Models\LearningOutcome::with()". This is an Error, NOT a
+  QueryException, so the global handler does not catch it -> HARD HTTP 500.
+  Confirmed live: GET /activities/learning-outcomes -> 500 ("Server Error - CREAMS"), and in PHPUnit.
+  This is a 4th hard-500 route (same blind-spot class as NF-01/04/05), entangled with PHANTOM-02.
+
+BEFORE: HTTP 500 (Error: undefined method). Screenshot: 01-before.png.
+
+FIX (Option A — defensive guard; owner authorized editing the PHANTOM-02 controller for hard-500
+  mitigation only, NOT implementing the feature):
+  - app/Http/Controllers/LearningOutcomeController.php::index — wrapped the body in
+    try { ... } catch (\Throwable $e) { Log::error(...); return redirect()->route('dashboard')
+    ->with('error', 'Learning outcomes are currently unavailable.'); }
+  - catch \Throwable (not just \Exception) so the Error (undefined method) is caught.
+
+AFTER: HTTP 302 -> redirects to /dashboard with an 'error' flash; no Server Error page, 0 console
+  errors on the destination. Screenshot: 02-after.png.
+
+NEW TEST: tests/Feature/Audit/LearningOutcomesDegradationTest.php
+  test_learning_outcomes_index_degrades_gracefully_not_500:
+    GET route('activities.learning-outcomes.index') as admin -> assertStatus(302) + assertSessionHas('error').
+
+Verification:
+  - php -l LearningOutcomeController.php -> No syntax errors.
+  - Isolated: 1 test, 2 assertions -> OK.
+  - Full suite: 396 passed / 0 failed (641 assertions). New baseline 396 (was 395; +1 NF-09 test).
+
+UPDATE (sibling routes now guarded, owner-authorized): the remaining 7 LearningOutcomeController
+  methods (create, store, show, edit, update, destroy, updateOrder) were wrapped in the same
+  try/catch(\Throwable) pattern. The redirect methods degrade to a dashboard redirect with an error
+  flash; updateOrder returns a JSON error (503). The guards re-throw ValidationException so normal
+  form-validation flow is preserved (store/update/updateOrder). Verified at the HTTP layer:
+  /activities/learning-outcomes/create, /1, /1/edit all now return a 3xx redirect (was 500).
+  php -l clean; full PHPUnit suite 396/0.
+  The learning-outcomes FEATURE remains PHANTOM-02 (LearningOutcome is a non-Eloquent compatibility
+  class used as Eloquent); the guards are a hard-500 mitigation only, not an implementation. Proper
+  fix (implement the table-backed model, or remove the 8 routes) is still an owner decision.
+Timestamp: 2026-06-23T08:33:00Z (siblings guarded 2026-06-23T08:50:00Z)

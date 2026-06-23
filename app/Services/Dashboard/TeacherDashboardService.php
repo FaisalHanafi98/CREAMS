@@ -6,7 +6,7 @@ use App\Models\User;
 use App\Models\Trainee;
 use App\Models\Activity;
 use App\Models\ActivitySession;
-use App\Models\SessionEnrollment;
+use App\Models\ActivityEnrollment;
 use App\Models\ActivityAttendance;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -533,9 +533,9 @@ class TeacherDashboardService extends BaseDashboardService
     {
         try {
             $teacherActivities = Activity::where('teacher_id', $teacherId)->pluck('id');
-            return SessionEnrollment::whereHas('session', function ($query) use ($teacherActivities) {
-                $query->whereIn('activity_id', $teacherActivities);
-            })->where('status', 'active')->count();
+            return ActivityEnrollment::whereIn('activity_id', $teacherActivities)
+                ->where('enrollment_status', 'enrolled')
+                ->count();
         } catch (Exception $e) {
             return 0;
         }

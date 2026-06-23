@@ -1,0 +1,30 @@
+MD-03 Centre — BEFORE FIX
+Model: app/Models/Centre.php  Table: centres (live schema = ground truth, 16 columns;
+  PK centre_id string non-incrementing)
+Drift found (model vs live centres columns):
+  Phantom $fillable (4, no column): centre_image, centre_latitude, centre_longitude,
+    attendance_policies.
+  Phantom $casts (2): 'facilities' => 'array' (real column is centre_facilities, uncast),
+    'attendance_policies' => 'array' (no column).
+  No $guarded/$hidden. PK config correct.
+Runtime safety: attendance_policies is read once at Centre.php:211 as `$this->attendance_policies ?? []`
+  -> with no column it already returns null -> [], so removal is behavior-neutral there.
+  Centre CRUD tests pass -> live forms don't submit the phantom fields (dormant, latent risk only).
+Observation (NOT a phantom, left unchanged per owner Option A): real columns `state` and
+  `opening_time` are missing from $fillable (under-coverage; centre create/edit can't save them).
+Page check: GET /centres/home -> 200 ("Centre Management").
+Screenshot: 01-before.png
+Timestamp: 2026-06-23T06:02:22Z
+
+## MD-03 Centre — AFTER FIX
+Option chosen: A (remove phantom entries only).
+Changes (app/Models/Centre.php):
+  - $fillable: removed centre_image, centre_latitude, centre_longitude, attendance_policies.
+  - $casts: removed 'facilities' => 'array' and 'attendance_policies' => 'array'; kept
+    'is_active' => 'boolean'.
+Verification:
+  - php -l app/Models/Centre.php -> No syntax errors.
+  - GET /centres/home -> 200, 0 console errors.
+  - PHPUnit: 392 passed / 0 failed (636 assertions).
+Screenshot: 02-after.png
+Timestamp: 2026-06-23T06:03:25Z

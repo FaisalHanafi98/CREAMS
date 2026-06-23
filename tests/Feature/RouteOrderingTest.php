@@ -44,16 +44,18 @@ class RouteOrderingTest extends TestCase
         );
     }
 
-    public function test_asset_parents_create_not_shadowed_by_wildcard(): void
+    public function test_asset_parents_create_route_is_removed(): void
     {
         $user = User::factory()->admin()->create(['centre_id' => '01']);
 
+        // The /asset-parents route block was removed (see routes/web.php). This URL no longer
+        // matches a real route and hits Route::fallback (302 redirect). Asserts the removal so
+        // re-adding the block later is an intentional, visible change.
         $response = $this->actingAs($user)->get('/asset-parents/create');
-        // Should NOT return 404 — /create must not be matched as /{id}
-        $this->assertNotEquals(
-            404,
+        $this->assertEquals(
+            302,
             $response->getStatusCode(),
-            '/asset-parents/create should not be caught by /{id} wildcard route'
+            '/asset-parents/create should hit the fallback redirect (route block removed)'
         );
     }
 
@@ -68,14 +70,17 @@ class RouteOrderingTest extends TestCase
         );
     }
 
-    public function test_asset_parents_show_still_works_with_numeric_id(): void
+    public function test_asset_parents_show_route_is_removed(): void
     {
         $user = User::factory()->admin()->create(['centre_id' => '01']);
 
+        // The /asset-parents route block was removed (see routes/web.php). This URL no longer
+        // matches a real route and hits Route::fallback (302 redirect).
         $response = $this->actingAs($user)->get('/asset-parents/1');
-        $this->assertTrue(
-            in_array($response->getStatusCode(), [200, 302, 404, 500]),
-            '/asset-parents/{id} should still work for numeric IDs (got ' . $response->getStatusCode() . ')'
+        $this->assertEquals(
+            302,
+            $response->getStatusCode(),
+            '/asset-parents/{id} should hit the fallback redirect (route block removed)'
         );
     }
 }

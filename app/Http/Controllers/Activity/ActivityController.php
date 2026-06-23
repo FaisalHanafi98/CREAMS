@@ -9,7 +9,6 @@ use App\Models\Category;
 use App\Models\ActivitySession;
 use App\Models\ActivitySchedule;
 use App\Models\ActivityEnrollment;
-use App\Models\SessionEnrollment;
 use App\Models\Attendance;
 use App\Models\User;
 use App\Models\Trainee;
@@ -182,34 +181,35 @@ class ActivityController extends Controller
 
         $conflicts = [];
 
-        foreach ($participants as $participantId) {
-            $participantConflicts = SessionEnrollment::where('trainee_id', $participantId)
-                ->whereHas('session', function ($query) use ($date, $startTime, $endTime, $excludeActivityId) {
-                    $query->where('session_date', $date)
-                        ->where(function ($q) use ($startTime, $endTime) {
-                            $q->whereBetween('start_time', [$startTime, $endTime])
-                                ->orWhereBetween('end_time', [$startTime, $endTime])
-                                ->orWhere(function ($subQ) use ($startTime, $endTime) {
-                                    $subQ->where('start_time', '<=', $startTime)
-                                        ->where('end_time', '>=', $endTime);
-                                });
-                        });
+        $timeOverlapFilter = function($q) use ($startTime, $endTime) {
+            $q->whereBetween('start_time', [$startTime, $endTime])
+              ->orWhereBetween('end_time', [$startTime, $endTime])
+              ->orWhere(function($sub) use ($startTime, $endTime) {
+                  $sub->where('start_time', '<=', $startTime)->where('end_time', '>=', $endTime);
+              });
+        };
 
-                    if ($excludeActivityId) {
-                        $query->where('activity_id', '!=', $excludeActivityId);
-                    }
+        foreach ($participants as $participantId) {
+            $participantConflicts = ActivityEnrollment::where('trainee_id', $participantId)
+                ->where('enrollment_status', 'enrolled')
+                ->when($excludeActivityId, fn($q) => $q->where('activity_id', '!=', $excludeActivityId))
+                ->whereHas('activity.sessions', function($query) use ($date, $timeOverlapFilter) {
+                    $query->where('session_date', $date)->where($timeOverlapFilter);
                 })
-                ->with(['trainee', 'session.activity'])
+                ->with(['trainee', 'activity' => function($q) use ($date, $timeOverlapFilter) {
+                    $q->with(['sessions' => function($sq) use ($date, $timeOverlapFilter) {
+                        $sq->where('session_date', $date)->where($timeOverlapFilter);
+                    }]);
+                }])
                 ->get();
 
             // Check for daily session limit (5 sessions per trainee per day)
-            $dailySessionCount = SessionEnrollment::where('trainee_id', $participantId)
-                ->whereHas('session', function ($query) use ($date, $excludeActivityId) {
+            $dailySessionCount = ActivityEnrollment::where('trainee_id', $participantId)
+                ->where('enrollment_status', 'enrolled')
+                ->when($excludeActivityId, fn($q) => $q->where('activity_id', '!=', $excludeActivityId))
+                ->whereHas('activity.sessions', function($query) use ($date) {
                     $query->where('session_date', $date)
-                        ->whereIn('status', ['scheduled', 'ongoing']);
-                    if ($excludeActivityId) {
-                        $query->where('activity_id', '!=', $excludeActivityId);
-                    }
+                          ->whereIn('session_status', ['scheduled', 'ongoing']);
                 })
                 ->count();
 
@@ -224,10 +224,11 @@ class ActivityController extends Controller
                 $trainee = Trainee::find($participantId);
                 $conflicts[] = [
                     'trainee' => $trainee ? $trainee->trainee_first_name . ' ' . $trainee->trainee_last_name : 'Unknown',
-                    'conflicts' => $participantConflicts->map(function ($enrollment) {
+                    'conflicts' => $participantConflicts->map(function($enrollment) {
+                        $session = $enrollment->activity->sessions->first();
                         return [
-                            'activity' => $enrollment->session->activity->activity_name,
-                            'time' => $enrollment->session->start_time . ' - ' . $enrollment->session->end_time
+                            'activity' => $enrollment->activity->activity_name,
+                            'time'     => $session ? $session->start_time . ' - ' . $session->end_time : 'N/A',
                         ];
                     })->toArray()
                 ];
@@ -1728,12 +1729,11 @@ class ActivityController extends Controller
 
                 // Always use the integer ID for database relationships
                 ActivityEnrollment::create([
-                    'activity_id' => $activity->id,
-                    'trainee_id' => $trainee->id, // Use the integer primary key
-                    'enrollment_date' => $enrollmentDate,
-                    'start_date' => $enrollmentDate,
-                    'status' => 'enrolled',
-                    'enrolled_by' => session('id')
+                    'activity_id'       => $activity->id,
+                    'trainee_id'        => $trainee->id,
+                    'enrollment_date'   => $enrollmentDate,
+                    'enrollment_status' => 'enrolled',
+                    'enrolled_by'       => session('id')
                 ]);
 
                 $enrolledCount++;
@@ -2274,13 +2274,12 @@ class ActivityController extends Controller
 
                     // Create enrollment
                     ActivityEnrollment::create([
-                        'activity_id' => $id,
-                        'trainee_id' => $traineeId,
-                        'enrollment_date' => $request->enrollment_date,
-                        'start_date' => $request->enrollment_date,
-                        'status' => 'enrolled',
-                        'goals' => $request->goals,
-                        'enrolled_by' => session('id')
+                        'activity_id'      => $id,
+                        'trainee_id'       => $traineeId,
+                        'enrollment_date'  => $request->enrollment_date,
+                        'enrollment_status' => 'enrolled',
+                        'enrollment_notes' => $request->goals ?? null,
+                        'enrolled_by'      => session('id')
                     ]);
 
                     $enrolledCount++;
@@ -2991,33 +2990,36 @@ class ActivityController extends Controller
                 // Check participant conflicts if participants are specified
                 if (!empty($validated['participants'])) {
                     foreach ($validated['participants'] as $traineeId) {
-                        $participantConflicts = SessionEnrollment::whereHas('session', function ($query) use ($dayOfWeek) {
-                            $query->where('day_of_week', $dayOfWeek)
-                                ->whereIn('status', ['scheduled', 'ongoing']);
-                        })
-                            ->whereHas('session.activity', function ($query) {
-                                $query->where('activity_status', '!=', 'cancelled');
+                        $participantConflicts = ActivityEnrollment::where('trainee_id', $traineeId)
+                            ->where('enrollment_status', 'enrolled')
+                            ->whereHas('activity', fn($q) => $q->where('activity_status', '!=', 'cancelled'))
+                            ->whereHas('activity.sessions', function($query) use ($dayOfWeek) {
+                                $query->where('day_of_week', $dayOfWeek)
+                                      ->whereIn('session_status', ['scheduled', 'ongoing']);
                             })
-                            ->where('trainee_id', $traineeId)
-                            ->with(['session.activity'])
+                            ->with(['activity.sessions' => function($q) use ($dayOfWeek) {
+                                $q->where('day_of_week', $dayOfWeek)
+                                  ->whereIn('session_status', ['scheduled', 'ongoing']);
+                            }])
                             ->get();
 
                         foreach ($participantConflicts as $enrollment) {
-                            $session = $enrollment->session;
-                            $existingStart = Carbon::parse($session->start_time);
-                            $existingEnd = Carbon::parse($session->end_time);
+                            foreach ($enrollment->activity->sessions as $session) {
+                                $existingStart = Carbon::parse($session->start_time);
+                                $existingEnd = Carbon::parse($session->end_time);
 
-                            if ($this->timesOverlap($startTime, $endTime, $existingStart, $existingEnd)) {
-                                $hasConflicts = true;
-                                $trainee = Trainee::find($traineeId);
-                                $traineeName = $trainee ? $trainee->trainee_first_name . ' ' . $trainee->trainee_last_name : "Trainee #{$traineeId}";
+                                if ($this->timesOverlap($startTime, $endTime, $existingStart, $existingEnd)) {
+                                    $hasConflicts = true;
+                                    $trainee = Trainee::find($traineeId);
+                                    $traineeName = $trainee ? $trainee->trainee_first_name . ' ' . $trainee->trainee_last_name : "Trainee #{$traineeId}";
 
-                                $conflicts[] = [
-                                    'type' => 'participant',
-                                    'day' => $dayOfWeek,
-                                    'trainee_id' => $traineeId,
-                                    'message' => "Participant conflict on {$dayOfWeek}: {$traineeName} is already enrolled in '{$session->activity->activity_name}' from {$existingStart->format('g:i A')} to {$existingEnd->format('g:i A')}"
-                                ];
+                                    $conflicts[] = [
+                                        'type'       => 'participant',
+                                        'day'        => $dayOfWeek,
+                                        'trainee_id' => $traineeId,
+                                        'message'    => "Participant conflict on {$dayOfWeek}: {$traineeName} is already enrolled in '{$enrollment->activity->activity_name}' from {$existingStart->format('g:i A')} to {$existingEnd->format('g:i A')}"
+                                    ];
+                                }
                             }
                         }
                     }

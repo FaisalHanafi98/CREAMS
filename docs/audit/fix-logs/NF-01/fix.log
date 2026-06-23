@@ -1,0 +1,25 @@
+NF-01 — BEFORE FIX
+Route: GET http://localhost:8000/dashboard/modern-new
+HTTP Status: 500 Internal Server Error
+Error observed: InvalidArgumentException — View [dashboard.modernnew] not found.
+  modernNew() try-block returns view('dashboard.modernnew') (missing) -> caught by
+  catch(\Exception) -> catch ALSO returns the same missing view -> re-thrown out of
+  catch -> not caught by QueryException-only global handler -> hard 500.
+  Page title rendered: "Server Error - CREAMS". Authenticated fetch returned status 500.
+Login: super.admin@uat.creams.test (admin) via GET /auth/login -> POST /auth/check
+Screenshot: 01-before.png
+Timestamp: 2026-06-23T03:05:11Z
+
+## NF-01 — AFTER FIX
+Route: GET http://localhost:8000/dashboard/modern-new
+HTTP Status: 302 redirect (opaqueredirect on manual fetch) -> follows to /dashboard (200)
+Result: Lands on "Dashboard - CREAMS" (/dashboard) with an 'error' flash; no Server Error
+  page, 0 console errors on the destination page.
+Change: app/Http/Controllers/Dashboard/DashboardController.php — catch block of modernNew()
+  now returns redirect()->route('dashboard')->with('error', ...) instead of re-rendering
+  the missing view('dashboard.modernnew').
+Option chosen: A (graceful redirect)
+Screenshot: 02-after.png
+Timestamp: 2026-06-23T03:08:02Z
+
+PHPUnit: 392 passed / 0 failed (636 assertions) — EXECUTED 2026-06-23

@@ -569,9 +569,7 @@ Route::middleware(['auth', 'validate.params'])->group(function () {
         Route::get('/', [App\Http\Controllers\Centre\AttendanceController::class, 'index'])->name('index');
         Route::post('/', [App\Http\Controllers\Activity\AttendanceController::class, 'store'])->name('store');
         Route::get('/report', [App\Http\Controllers\Activity\AttendanceController::class, 'report'])->name('report');
-        Route::get('/trainee/{id}', function ($id) {
-            return view('attendance.trainee', compact('id'));
-        })->name('trainee');
+        Route::get('/trainee/{id}', [App\Http\Controllers\Activity\AttendanceController::class, 'trainee'])->name('trainee');
     });
 
     // Activity Attendance Management (admin/supervisor/teacher only - attendance marking authority)
@@ -812,7 +810,7 @@ Route::prefix('admin')->middleware(['auth', 'role:admin'])->group(function () {
         Route::get('/{id}/edit', [CentreController::class, 'edit'])->name('edit');
         Route::put('/{id}', [CentreController::class, 'update'])->name('update');
         Route::delete('/{id}', [CentreController::class, 'destroy'])->name('destroy');
-        Route::get('/{id}/assets', [CentreController::class, 'assets'])->name('assets');
+        Route::get('/{id}/assets', [CentreController::class, 'assetParents'])->name('assets');
     });
 
     // Legacy admin.asset-parents block removed - shadowed by asset-parents block at line ~505

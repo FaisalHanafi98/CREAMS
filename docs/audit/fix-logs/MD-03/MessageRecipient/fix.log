@@ -1,0 +1,31 @@
+MD-03 MessageRecipient — FULL REPAIR (model + 2 call sites)
+Model: app/Models/MessageRecipient.php  Table: message_recipients (live: id, message_id,
+  recipient_id, recipient_type, is_read, read_at, is_deleted, deleted_at, created_at, updated_at)
+
+BEFORE:
+  Phantom $fillable (3): recipient_type_specific, delivered_at, delivery_metadata (no columns;
+    recipient_type_specific is redundant with recipient_type).
+  Phantom $casts (2): delivered_at, delivery_metadata.
+  Write call sites:
+    - MessageController.php:121 (main send): real keys only -> OK (passed Playwright "Can create new message").
+    - Message.php:365 (broadcast create): passed phantom 'recipient_type_specific' -> broken write.
+    - NotificationService.php:148 (insert() — BYPASSES $fillable): passed 'recipient_type_specific'
+      + 'delivered_at' -> broken write that fillable removal alone cannot fix.
+  Write-proof (transactional, rolled back): old payload with recipient_type_specific ->
+    FAILED "Unknown column 'recipient_type_specific'".
+
+FIX (Option A — full repair; drop phantom fields everywhere, no migration, no rename):
+  - Model $fillable: removed recipient_type_specific, delivered_at, delivery_metadata.
+  - Model $casts: removed delivered_at, delivery_metadata.
+  - NotificationService.php (~137-145): removed 'recipient_type_specific' and 'delivered_at' from
+    the insert payload.
+  - Message.php:365: removed 'recipient_type_specific' from the create payload.
+  Rationale: dropped fields have no real column and recipient_type already captures the type; no
+  delivery-tracking column exists (delivery tracking would need a migration — deferred).
+
+AFTER (verified):
+  Write-proof (transactional, rolled back): MessageRecipient::create([real cols]) -> SUCCEEDED (id=2).
+  php -l on all 3 changed files: No syntax errors.
+  PHPUnit: 392 passed / 0 failed (636 assertions) — EXECUTED 2026-06-23.
+Evidence: this fix.log (write-path fix — proof is the transactional create/insert test).
+Timestamp: 2026-06-23T07:08:00Z

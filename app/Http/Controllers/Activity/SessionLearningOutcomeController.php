@@ -5,8 +5,8 @@ namespace App\Http\Controllers\Activity;
 use App\Http\Controllers\Controller;
 use App\Models\ActivitySession;
 use App\Models\LearningOutcome;
+use App\Models\ActivityEnrollment;
 use App\Models\TraineeCompetencyProgress;
-use App\Models\SessionEnrollment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -454,11 +454,17 @@ class SessionLearningOutcomeController extends Controller
         $sessionOutcomes = $this->getSessionOutcomes($sessionId);
         if (empty($sessionOutcomes)) return;
 
-        $enrolledCount = SessionEnrollment::where('session_id', $sessionId)->count();
+        $enrolledCount = ActivityEnrollment::where('activity_id', $session->activity_id)
+            ->where('enrollment_status', 'enrolled')
+            ->count();
         $totalPossibleAssessments = $enrolledCount * count($sessionOutcomes);
-        
+
+        $enrolledTraineeIds = ActivityEnrollment::where('activity_id', $session->activity_id)
+            ->where('enrollment_status', 'enrolled')
+            ->pluck('trainee_id');
+
         $completedAssessments = TraineeCompetencyProgress::whereIn('learning_outcome_id', $sessionOutcomes)
-            ->whereIn('trainee_id', SessionEnrollment::where('session_id', $sessionId)->pluck('trainee_id'))
+            ->whereIn('trainee_id', $enrolledTraineeIds)
             ->where('current_level', '!=', 'Not Started')
             ->count();
 

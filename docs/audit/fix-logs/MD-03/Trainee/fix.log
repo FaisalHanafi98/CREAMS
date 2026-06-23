@@ -1,0 +1,36 @@
+MD-03 Trainee — BEFORE FIX
+Model: app/Models/Trainee.php  Table: trainees (live schema = ground truth, 33 columns)
+Drift found (cross-referenced model vs live trainees columns):
+  Phantom $fillable (10, no column, no mutator): trainee_avatar, course_id, admission_date,
+    graduation_date, medical_info, assessment_data, tags, guardian_info, emergency_contact,
+    last_updated_by.
+  Functional aliases in $fillable (6, no column but have set*Attribute mutators -> KEEP):
+    name, email, phone, date_of_birth, address, condition.
+  Phantom $casts (9, no column): trainee_last_accessed_at, admission_date, graduation_date,
+    medical_info, assessment_data, tags, guardian_info, emergency_contact, date_of_birth.
+  $guarded: entirely ignored by Laravel (because $fillable is non-empty); contained phantom
+    trainee_last_accessed_at and a contradiction (status & course_id in BOTH $fillable and $guarded;
+    course_id also phantom). Net effect: 'status' looked guarded but was actually mass-assignable.
+  Phantom $hidden (2, no column): trainee_ic, medical_info.
+Runtime impact (BEFORE): dormant — trainee create/update tests pass, so live forms don't submit the
+  phantom keys. Latent data-loss risk: any future form/factory mass-assigning an array-cast phantom
+  (e.g. tags, medical_info) -> "Unknown column" QueryException -> caught -> 302, save lost.
+Page check: GET /trainees/home -> 200 ("Trainee Management - CREAMS").
+Screenshot: 01-before.png
+Timestamp: 2026-06-23T05:49:56Z
+
+## MD-03 Trainee — AFTER FIX
+Option chosen: A (remove phantom entries; keep the 6 functional aliases + mutators).
+Changes (app/Models/Trainee.php):
+  - $fillable: removed the 10 phantom entries; kept all real columns + the 6 alias fillables.
+  - $casts: removed the 9 phantom casts; kept trainee_date_of_birth, photo/services/data_consent,
+    registration_date.
+  - $guarded: dropped phantom trainee_last_accessed_at + course_id and the contradictory 'status'
+    (status stays mass-assignable via $fillable); kept created_at, updated_at.
+  - $hidden: removed phantom trainee_ic, medical_info; kept ic_number + medical_history (real PII).
+Verification:
+  - php -l app/Models/Trainee.php -> No syntax errors.
+  - GET /trainees/home -> 200, renders normally, 0 console errors.
+  - PHPUnit: 392 passed / 0 failed (636 assertions) — exercises trainee create/update mass-assignment.
+Screenshot: 02-after.png
+Timestamp: 2026-06-23T05:55:25Z

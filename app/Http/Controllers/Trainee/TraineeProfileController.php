@@ -682,7 +682,7 @@ class TraineeProfileController extends Controller
             ];
             
             // Generate PDF
-            $pdf = Pdf::loadView('trainees.pdf-profile', [
+            $pdf = Pdf::loadView('trainees.pdfprofile', [
                 'trainee' => $trainee,
                 'age' => $age,
                 'totalActivities' => $totalActivities,

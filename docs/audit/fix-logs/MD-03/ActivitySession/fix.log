@@ -1,0 +1,20 @@
+MD-03 ActivitySession — BEFORE FIX
+Model: app/Models/ActivitySession.php  Table: activity_occurrences (live: id, activity_id,
+  session_name, session_description, session_date, start_time, end_time, location, instructor_id,
+  session_status, session_notes, max_participants, current_participants, created_at, updated_at,
+  deleted_at)
+Drift: $fillable is all-real (0 phantom). Phantom $casts (2): session_materials => array,
+  recurring_pattern => array (no columns). Referenced nowhere except the cast lines (not fillable,
+  not read/written) -> pure dead config, no write entanglement.
+
+## MD-03 ActivitySession — AFTER FIX
+Option chosen: A (remove the 2 phantom casts).
+Changes (app/Models/ActivitySession.php):
+  - $casts: removed 'session_materials' => 'array' and 'recurring_pattern' => 'array'; kept
+    session_date, current_participants, max_participants casts.
+Verification:
+  - php -l -> No syntax errors.
+  - PHPUnit: 392 passed / 0 failed (636 assertions) — ActivitySession is heavily exercised by the
+    attendance/session/template feature tests.
+  - No screenshot: pure cast removal, zero behavior change (fields unused, not fillable).
+Timestamp: 2026-06-23T07:14:00Z

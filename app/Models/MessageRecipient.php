@@ -15,22 +15,17 @@ class MessageRecipient extends Model
         'message_id',
         'recipient_type',
         'recipient_id',
-        'recipient_type_specific',
         'is_read',
         'read_at',
-        'delivered_at',
         'is_deleted',
         'deleted_at',
-        'delivery_metadata'
     ];
 
     protected $casts = [
         'is_read' => 'boolean',
         'is_deleted' => 'boolean',
         'read_at' => 'datetime',
-        'delivered_at' => 'datetime',
         'deleted_at' => 'datetime',
-        'delivery_metadata' => 'array'
     ];
 
     /**

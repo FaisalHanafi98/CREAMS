@@ -130,6 +130,12 @@ class ValidateRouteParameters
             return $this->validateTraineeId($value);
         }
         
+        // 'session' must be checked before 'activit' because paths like
+        // /activity-attendance/session/{id}/form contain both substrings.
+        if (str_contains($path, 'session')) {
+            return $this->validateGenericId($value);
+        }
+
         if (str_contains($path, 'activit')) {
             return $this->validateActivityId($value);
         }

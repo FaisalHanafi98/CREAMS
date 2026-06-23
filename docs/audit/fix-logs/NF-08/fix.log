@@ -1,0 +1,28 @@
+NF-08 — false-confidence tests (asserted non-existent routes "work" via Route::fallback 302)
+Option chosen: A (convert to honest assertions; test count stays 392).
+
+BEFORE:
+  - tests/Feature/RBAC/AdminAccessTest.php::test_admin_can_access_reports (line 180)
+      GET /reports (ReportController imported in web.php but NEVER routed) -> Route::fallback 302.
+      Asserted status in [200,302] -> passed on the fallback (false "admin can access reports").
+  - tests/Feature/RouteOrderingTest.php::test_asset_parents_create_not_shadowed_by_wildcard (47)
+      GET /asset-parents/create -> /asset-parents route block was removed (web.php:816 comment) ->
+      fallback 302. Asserted !=404 -> passed on the fallback.
+  - tests/Feature/RouteOrderingTest.php::test_asset_parents_show_still_works_with_numeric_id (71)
+      GET /asset-parents/1 -> fallback 302. Asserted in [200,302,404,500] -> passed on the fallback.
+  Route::fallback (web.php:985) redirects authenticated users to {role}.dashboard (302), which is
+  why all three falsely passed. (RouteOrderingTest's CENTRES tests hit real routes — left intact.)
+
+AFTER:
+  Rewrote all 3 to honestly assert ABSENCE (the route is not defined / was removed -> fallback 302),
+  with accurate names:
+  - AdminAccessTest: test_reports_route_is_not_defined_falls_back_gracefully -> assertStatus(302).
+  - RouteOrderingTest: test_asset_parents_create_route_is_removed -> assertEquals(302, ...).
+  - RouteOrderingTest: test_asset_parents_show_route_is_removed -> assertEquals(302, ...).
+  These now document the real state and act as regression guards (if a /reports or /asset-parents
+  route is ever added, the behavior change is caught).
+Verification:
+  - PHPUnit: 392 passed / 0 failed (636 assertions) — count unchanged (conversion, not removal).
+Files: tests/Feature/RBAC/AdminAccessTest.php, tests/Feature/RouteOrderingTest.php.
+Evidence: this fix.log (test-only change — no page/screenshot).
+Timestamp: 2026-06-23T07:25:00Z

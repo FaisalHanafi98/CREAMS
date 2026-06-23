@@ -177,14 +177,17 @@ class AdminAccessTest extends TestCase
         $response->assertOk();
     }
 
-    public function test_admin_can_access_reports(): void
+    public function test_reports_route_is_not_defined_falls_back_gracefully(): void
     {
         $admin = User::factory()->admin()->create();
 
+        // There is no /reports route (ReportController is imported in web.php but never routed),
+        // so the request hits Route::fallback, which redirects with a "page not found" warning.
+        // This asserts the route's ABSENCE — adding a real /reports route later is then a visible,
+        // intentional change rather than a silent pass against a phantom route.
         $response = $this->actingAs($admin)->get('/reports');
 
-        // May be 200 OK or redirect to specific report, both acceptable
-        $this->assertContains($response->status(), [200, 302]);
+        $response->assertStatus(302);
     }
 
     // ========================================

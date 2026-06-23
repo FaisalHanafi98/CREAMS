@@ -63,9 +63,6 @@ class ActivitySession extends Model
     protected $casts = [
         'session_date' => 'date',
         // 'scheduled_date' => 'date', // Column doesn't exist, using session_date
-        'session_materials' => 'array',
-        'recurring_pattern' => 'array',
-        'attendance_marked' => 'boolean',
         'current_participants' => 'integer',
         'max_participants' => 'integer'
     ];
@@ -185,7 +182,25 @@ class ActivitySession extends Model
     {
         return $this->hasMany(ActivityEnrollment::class, 'activity_id', 'activity_id');
     }
-    
+
+    /**
+     * Active (enrolled) trainees for this session via activity_enrollments.
+     * Replaces the defunct SessionEnrollment model which targeted a non-existent table.
+     */
+    public function sessionEnrollments()
+    {
+        return $this->hasMany(ActivityEnrollment::class, 'activity_id', 'activity_id')
+            ->where('enrollment_status', 'enrolled');
+    }
+
+    /**
+     * Attendance records from trainee_attendances for this session.
+     */
+    public function traineeAttendances()
+    {
+        return $this->hasMany(Attendance::class, 'session_id');
+    }
+
     /**
      * Get enrollments that were made before or on this session's date
      */

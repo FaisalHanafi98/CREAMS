@@ -20,6 +20,7 @@ use App\Models\Trainee;
 use App\Models\Activity;
 use App\Models\Centre;
 use App\Models\Asset;
+use App\Models\ActivityEnrollment;
 use App\Models\Message;
 use App\Models\Notification;
 use Carbon\Carbon;
@@ -106,7 +107,7 @@ class AdminController extends Controller
                 'trainees' => [
                     'total' => Trainee::count(),
                     'active' => Trainee::where('status', 'active')->count(),
-                    'enrolled_activities' => DB::table('session_enrollments')->where('status', 'Active')->count(),
+                    'enrolled_activities' => ActivityEnrollment::where('enrollment_status', 'enrolled')->count(),
                     'new_this_month' => Trainee::whereMonth('created_at', now()->month)->count()
                 ],
                 

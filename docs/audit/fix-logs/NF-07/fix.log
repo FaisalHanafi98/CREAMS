@@ -1,0 +1,20 @@
+NF-07 — regression tests for the 3 P0 fixes (NF-01, NF-04, NF-05)
+Option chosen: A (strict exact status assertions).
+
+NEW FILE: tests/Feature/Audit/P0RegressionTest.php
+  use DatabaseTransactions, InteractsWithRoles; setUp creates Centre '01' (for NF-05).
+  - test_nf01_dashboard_modern_new_degrades_to_redirect_not_500:
+      GET route('dashboard.modern-new') as admin -> assertStatus(302).
+  - test_nf04_attendance_report_renders_not_500:
+      GET route('attendance.report') as admin -> assertStatus(200).
+  - test_nf05_admin_centre_assets_renders_not_500:
+      GET route('admin.centres.assets', ['id' => '01']) as admin -> assertStatus(200).
+
+Purpose: pin the fixed responses so the hard-500 regressions (missing view / missing method,
+which the global QueryException handler does not catch) cannot recur silently.
+
+Verification:
+  - Isolated run: 3 tests, 3 assertions -> OK.
+  - Full suite: 395 passed / 0 failed (639 assertions). New baseline = 395 (was 392; +3 NF-07 tests).
+Evidence: this fix.log (test-only addition — no page/screenshot).
+Timestamp: 2026-06-23T07:33:00Z

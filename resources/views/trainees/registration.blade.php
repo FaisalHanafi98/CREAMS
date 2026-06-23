@@ -209,17 +209,17 @@
                         <!-- Tabs for form sections -->
                         <ul class="nav nav-tabs mb-4" id="formTabs" role="tablist">
                             <li class="nav-item">
-                                <a class="nav-link active" id="basic-tab" data-toggle="tab" href="#basic" role="tab" aria-controls="basic" aria-selected="true">
+                                <a class="nav-link active" id="basic-tab" data-bs-toggle="tab" href="#basic" role="tab" aria-controls="basic" aria-selected="true">
                                     <i class="fas fa-user mr-1"></i>Basic Information
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link" id="guardian-tab" data-toggle="tab" href="#guardian" role="tab" aria-controls="guardian" aria-selected="false">
+                                <a class="nav-link" id="guardian-tab" data-bs-toggle="tab" href="#guardian" role="tab" aria-controls="guardian" aria-selected="false">
                                     <i class="fas fa-user-shield mr-1"></i>Guardian Information
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link" id="additional-tab" data-toggle="tab" href="#additional" role="tab" aria-controls="additional" aria-selected="false">
+                                <a class="nav-link" id="additional-tab" data-bs-toggle="tab" href="#additional" role="tab" aria-controls="additional" aria-selected="false">
                                     <i class="fas fa-clipboard-list mr-1"></i>Additional Information
                                 </a>
                             </li>
@@ -715,7 +715,7 @@
                 updateProgressBar();
             });
             
-            $('#formTabs a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+            $('#formTabs a[data-bs-toggle="tab"]').on('shown.bs.tab', function (e) {
                 updateProgressBar();
             });
             

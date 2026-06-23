@@ -58,17 +58,15 @@ class Trainee extends Model
         'gender',
         'trainee_address',
         'avatar',
-        'trainee_avatar',
         'trainee_condition',
         'centre_name',
         'centre_id',
         'ic_number',
         'status',
-        'course_id',
         // Guardian information
         'guardian_name',
         'guardian_phone',
-        'guardian_email', 
+        'guardian_email',
         'guardian_relationship',
         'guardian_address',
         // Emergency contact
@@ -83,16 +81,7 @@ class Trainee extends Model
         'services_consent',
         'data_consent',
         'registration_date',
-        // Enhanced fields for data integrity
-        'admission_date',
-        'graduation_date',
-        'medical_info',
-        'assessment_data',
-        'tags',
-        'guardian_info',
-        'emergency_contact',
-        'last_updated_by',
-        // Backwards compatibility aliases
+        // Backwards-compatibility aliases (mapped to real columns via set*Attribute mutators)
         'name', // Maps to full name
         'email', // Maps to trainee_email
         'phone', // Maps to trainee_phone_number
@@ -108,10 +97,6 @@ class Trainee extends Model
      * @var array<int, string>
      */
     protected $guarded = [
-        'trainee_last_accessed_at', // System-managed field
-        // 'trainee_attendance' field removed - doesn't exist in database
-        'course_id',               // Requires enrollment process
-        'status',                  // Status changes require approval
         'created_at',
         'updated_at',
     ];
@@ -124,9 +109,7 @@ class Trainee extends Model
      */
     protected $hidden = [
         'ic_number',              // Malaysian IC - PII, should not be exposed in APIs
-        'trainee_ic',             // Legacy IC field - PII
         'medical_history',        // Sensitive medical information
-        'medical_info',           // Sensitive medical information
     ];
 
     /**
@@ -136,20 +119,10 @@ class Trainee extends Model
      */
     protected $casts = [
         'trainee_date_of_birth' => 'date',
-        'trainee_last_accessed_at' => 'datetime',
-        // Enhanced casts for new fields
-        'admission_date' => 'date',
-        'graduation_date' => 'date',
-        'medical_info' => 'array',
-        'assessment_data' => 'array',
-        'tags' => 'array',
-        'guardian_info' => 'array',
-        'emergency_contact' => 'array',
         'photo_consent' => 'boolean',
         'services_consent' => 'boolean',
         'data_consent' => 'boolean',
         'registration_date' => 'date',
-        'date_of_birth' => 'date', // Compatibility
     ];
 
     /**
@@ -287,11 +260,13 @@ class Trainee extends Model
     }
 
     /**
-     * Get the session enrollments for the trainee.
+     * Get the active activity enrollments for the trainee.
+     * Replaces the defunct SessionEnrollment model (session_enrollments table absent).
      */
     public function sessionEnrollments()
     {
-        return $this->hasMany(SessionEnrollment::class, 'trainee_id');
+        return $this->hasMany(ActivityEnrollment::class, 'trainee_id')
+            ->where('enrollment_status', 'enrolled');
     }
 
     /**
@@ -586,9 +561,9 @@ class Trainee extends Model
         // Check if trainee is enrolled in this session's activity
         $enrollment = \App\Models\ActivityEnrollment::where('activity_id', $session->activity_id)
             ->where('trainee_id', $this->id)
-            ->where('status', 'active')
+            ->where('enrollment_status', 'enrolled')
             ->first();
-            
+
         if (!$enrollment) {
             throw new \Exception('Trainee is not enrolled in this activity session.');
         }
@@ -634,7 +609,7 @@ class Trainee extends Model
         return \App\Models\ActivitySession::whereDate('session_date', $today)
             ->whereHas('activity.enrollments', function($query) {
                 $query->where('trainee_id', $this->id)
-                      ->where('status', 'active');
+                      ->where('enrollment_status', 'enrolled');
             })
             ->with(['activity', 'teacher'])
             ->get();
@@ -662,7 +637,7 @@ class Trainee extends Model
         // Check enrollment
         $enrollment = \App\Models\ActivityEnrollment::where('activity_id', $session->activity_id)
             ->where('trainee_id', $this->id)
-            ->where('status', 'active')
+            ->where('enrollment_status', 'enrolled')
             ->first();
 
         if (!$enrollment) {

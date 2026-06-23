@@ -1,0 +1,30 @@
+NF-04 — BEFORE FIX
+Route: GET http://localhost:8000/attendance/report  (name: attendance.report, web.php:571)
+HTTP Status: 500 Internal Server Error
+Error observed: Missing controller method — Activity\AttendanceController has no report().
+  Public methods present: index, trainee, store, getTodayStats, export, getAttendanceForm.
+  Route dispatch to undefined method -> ReflectionException/Error -> not caught by the
+  QueryException-only global handler -> hard 500. Page title: "Server Error - CREAMS".
+  Authenticated fetch returned status 500.
+Context: route('attendance.report') is referenced by 3 live views
+  (attendance/trainee.blade.php:167 [D-08 view], attendance/home.blade.php:18,
+  attendance/attendancereport.blade.php:24). Removing the route would 500 those pages,
+  so Option B (implement report()) chosen over Option A.
+Login: super.admin@uat.creams.test (admin)
+Screenshot: 01-before.png
+Timestamp: 2026-06-23T03:30:32Z
+
+## NF-04 — AFTER FIX
+Route: GET http://localhost:8000/attendance/report
+HTTP Status: 200 OK
+Result: Renders "Attendance Reports | CREAMS" (attendance/report.blade.php static placeholder);
+  no Server Error page, 0 console errors. The 3 existing route('attendance.report') links
+  continue to resolve (route was always defined; only the method was missing).
+Change: app/Http/Controllers/Activity/AttendanceController.php — added
+  public function report() { return view('attendance.report'); } before calculateAttendanceStats().
+Option chosen: B (implement missing method) — corrected away from originally-picked Option A,
+  which would have 500'd the live trainee attendance page.
+Screenshot: 02-after.png
+Timestamp: 2026-06-23T03:31:50Z
+
+PHPUnit: 392 passed / 0 failed (636 assertions) — EXECUTED 2026-06-23

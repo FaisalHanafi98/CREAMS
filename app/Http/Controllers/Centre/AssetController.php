@@ -751,13 +751,12 @@ class AssetController extends Controller
 
             AssetMaintenance::create([
                 'asset_id' => $asset->id,
-                'type' => $validated['type'],
+                'maintenance_type' => $validated['type'],
                 'scheduled_date' => $validated['scheduled_date'],
                 'status' => 'scheduled',
                 'performed_by' => $validated['performed_by'],
                 'description' => $validated['description'],
                 'notes' => $validated['notes'],
-                'created_by' => session('id')
             ]);
 
             return back()->with('success', 'Maintenance scheduled successfully');
@@ -832,11 +831,10 @@ class AssetController extends Controller
                     case 'schedule_maintenance':
                         AssetMaintenance::create([
                             'asset_id' => $asset->id,
-                            'type' => $validated['maintenance_type'],
+                            'maintenance_type' => $validated['maintenance_type'],
                             'scheduled_date' => $validated['maintenance_date'],
                             'status' => 'scheduled',
                             'description' => 'Bulk scheduled maintenance',
-                            'created_by' => session('id')
                         ]);
                         $updatedCount++;
                         break;

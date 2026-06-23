@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\ActivitySession;
 use App\Models\ActivityScheduleTemplate;
 use App\Models\ActivityTemplateApplication;
-use App\Models\SessionEnrollment;
+use App\Models\ActivityEnrollment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -846,34 +846,34 @@ class SessionTemplateController extends Controller
                 // Handle enrollment preservation/transfer
                 if ($request->preserve_enrollments) {
                     if ($request->offer_alternative && $request->alternative_session_id) {
-                        // Transfer enrollments to alternative session
-                        foreach ($session->sessionEnrollments as $enrollment) {
-                            // Check if trainee is already enrolled in alternative session
-                            $existingEnrollment = SessionEnrollment::where('session_id', $request->alternative_session_id)
-                                ->where('trainee_id', $enrollment->trainee_id)
-                                ->first();
+                        // Transfer enrollments to the alternative session's activity when different
+                        $altSession = ActivitySession::find($request->alternative_session_id);
+                        $altActivityId = $altSession?->activity_id;
 
-                            if (!$existingEnrollment) {
-                                SessionEnrollment::create([
-                                    'session_id' => $request->alternative_session_id,
-                                    'trainee_id' => $enrollment->trainee_id,
-                                    'enrollment_date' => now(),
-                                    'attendance_status' => 'enrolled',
-                                    'transferred_from_session' => $session->id,
-                                    'enrollment_notes' => 'Transferred due to session cancellation'
-                                ]);
-                                $enrollmentTransfers++;
-                            }
-                        }
-                    } else {
-                        // Just preserve enrollment data in cancelled session
                         foreach ($session->sessionEnrollments as $enrollment) {
-                            $enrollment->update([
-                                'attendance_status' => 'cancelled',
-                                'cancellation_reason' => $request->cancellation_reason
-                            ]);
+                            if ($altActivityId && $altActivityId !== $session->activity_id) {
+                                // Different activity — ensure the trainee is enrolled there
+                                $existingEnrollment = ActivityEnrollment::where('activity_id', $altActivityId)
+                                    ->where('trainee_id', $enrollment->trainee_id)
+                                    ->first();
+
+                                if (!$existingEnrollment) {
+                                    ActivityEnrollment::create([
+                                        'activity_id'       => $altActivityId,
+                                        'trainee_id'        => $enrollment->trainee_id,
+                                        'enrollment_date'   => now(),
+                                        'enrollment_status' => 'enrolled',
+                                        'enrollment_notes'  => 'Transferred due to session cancellation',
+                                        'enrolled_by'       => session('id'),
+                                    ]);
+                                    $enrollmentTransfers++;
+                                }
+                            }
+                            // Same activity: trainee already enrolled — no action needed.
                         }
                     }
+                    // Cancelled session: activity-level enrollment remains intact;
+                    // per-session attendance will show no record (absence) for this date.
                 }
 
                 $cancelledCount++;

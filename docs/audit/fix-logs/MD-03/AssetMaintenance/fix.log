@@ -1,0 +1,30 @@
+MD-03 AssetMaintenance — FULL REPAIR (model + call sites)
+Model: app/Models/AssetMaintenance.php  Table: asset_maintenance (live: asset_id, maintenance_type,
+  scheduled_date, completed_date, status, priority, description, cost, performed_by,
+  performed_by_user_id, notes, created_at, updated_at, deleted_at)
+
+BEFORE (broken — LIVE write path, not dormant):
+  Model $fillable used phantom 'type' (real column is maintenance_type) and 'created_by' (no column).
+  3 live call sites passed these phantom keys:
+    - AssetController::scheduleMaintenance (line ~752): 'type', 'created_by'
+    - AssetController bulk schedule_maintenance (line ~833): 'type', 'created_by'
+    - AssetService (line ~283): 'type', 'created_by'
+  Result: AssetMaintenance::create(...) -> "SQLSTATE[42S22] Unknown column 'type'" -> QueryException
+  -> caught by global handler -> 302. Maintenance scheduling was BROKEN in production.
+  Write-proof (transactional, rolled back): old 'type' payload -> FAILED "Unknown column 'type'".
+
+FIX (Option: full repair — rename to real column, drop nonexistent column):
+  - app/Models/AssetMaintenance.php $fillable: 'type' -> 'maintenance_type'; removed 'created_by'.
+  - app/Http/Controllers/Centre/AssetController.php (2 sites): create key 'type' -> 'maintenance_type';
+    removed 'created_by' => session('id').
+  - app/Services/AssetService.php (1 site): same.
+  Note: asset_maintenance has no 'created_by' column (creator tracking not stored); dropped. If creator
+  tracking is wanted, that is a migration (deferred — needs owner approval).
+
+AFTER (verified):
+  Write-proof (transactional, rolled back): AssetMaintenance::create([... 'maintenance_type' => ...])
+  -> SUCCEEDED (id=1, maintenance_type=preventive). No rows persisted (rollback).
+  php -l on all 3 changed files: No syntax errors.
+  PHPUnit: 392 passed / 0 failed (636 assertions) — EXECUTED 2026-06-23.
+Evidence: this fix.log (write-path fix — proof is the transactional create test, not a page screenshot).
+Timestamp: 2026-06-23T06:55:00Z

@@ -1,0 +1,29 @@
+NF-02 — BEFORE FIX
+Route: GET http://localhost:8000/centre/attendance/analytics  (name: centre.attendance.analytics, web.php:328)
+HTTP Status: 302 (graceful redirect — opaqueredirect on manual fetch). NOT a hard 500.
+Behaviour observed: analytics() builds null analytics (helper methods getActivityAttendanceAnalytics/
+  getLearningProgressAnalytics/getTraineePerformanceAnalytics/getIepProgressAnalytics are empty
+  stubs at lines 537-540, return null), then returns view('centre.enhanced-attendance.analytics')
+  which does NOT exist -> InvalidArgumentException thrown synchronously inside try (line 261) ->
+  caught at line 270 -> redirect()->back() -> lands on /admin/dashboard. User never sees an
+  analytics page (feature broken-but-graceful).
+Context: route('centre.attendance.analytics') is linked from centre/attendance/index.blade.php:218
+  and :234 (the live centre attendance page) -> removing the route would 500 that page, so the
+  fix is to create the missing view (Option A), not remove the route.
+Login: super.admin@uat.creams.test (admin)
+Screenshot: 01-before.png (shows /admin/dashboard — the redirect destination; no analytics page)
+Timestamp: 2026-06-23T05:24:24Z
+
+## NF-02 — AFTER FIX
+Route: GET http://localhost:8000/centre/attendance/analytics
+HTTP Status: 200 OK
+Result: Renders "Attendance Analytics | CREAMS" placeholder page (stays on the analytics URL, no
+  redirect); 0 console errors. The 2 centre-attendance index links now lead to a 200 page.
+Change: NEW FILE resources/views/centre/enhanced-attendance/analytics.blade.php — minimal
+  empty-state placeholder (extends layouts.app), consistent with attendance/report.blade.php.
+  No controller change; data helpers remain unimplemented stubs (no PHANTOM-02 entanglement).
+Option chosen: A (create placeholder view)
+Screenshot: 02-after.png
+Timestamp: 2026-06-23T05:25:49Z
+
+PHPUnit: 392 passed / 0 failed (636 assertions) — EXECUTED 2026-06-23

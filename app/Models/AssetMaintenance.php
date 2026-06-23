@@ -31,7 +31,7 @@ class AssetMaintenance extends Model
 
     protected $fillable = [
         'asset_id',
-        'type',
+        'maintenance_type',
         'priority',
         'scheduled_date',
         'completed_date',
@@ -40,7 +40,6 @@ class AssetMaintenance extends Model
         'cost',
         'description',
         'notes',
-        'created_by'
     ];
 
     protected $casts = [

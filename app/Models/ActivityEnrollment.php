@@ -16,7 +16,6 @@ class ActivityEnrollment extends Model
     protected $fillable = [
         'trainee_id',
         'activity_id',
-        'session_id',
         'enrollment_status',
         'enrollment_date',
         'enrollment_notes',
@@ -24,22 +23,14 @@ class ActivityEnrollment extends Model
         'attendance_count',
         'completion_date',
         'completion_notes',
-        'start_date',
-        'status',
         'enrolled_by',
-        'attendance_marked',
-        'participation_score',
-        'progress_notes',
-        'assessment_data'
     ];
 
     protected $casts = [
         'enrollment_date' => 'date',
         'completion_date' => 'date',
-        'attendance_marked' => 'boolean',
-        'assessment_data' => 'array',
         'progress_percentage' => 'decimal:2',
-        'attendance_count' => 'integer'
+        'attendance_count' => 'integer',
     ];
 
     protected $appends = ['status_badge_class', 'participation_level'];

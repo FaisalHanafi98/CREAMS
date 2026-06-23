@@ -12,21 +12,11 @@ class AttendanceAlert extends Model
 
     protected $fillable = [
         'trainee_id',
-        'activity_id', 
         'alert_type',
-        'absence_count',
-        'last_attendance_date',
-        'alert_description',
-        'priority',
-        'status',
-        'created_by',
-        'assigned_to',
-        'action_taken',
-        'resolved_at'
+        'resolved_at',
     ];
 
     protected $casts = [
-        'last_attendance_date' => 'date',
         'resolved_at' => 'datetime'
     ];
 

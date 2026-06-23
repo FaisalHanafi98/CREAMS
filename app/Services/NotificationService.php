@@ -138,8 +138,6 @@ class NotificationService
                     'message_id' => $message->id,
                     'recipient_type' => 'App\\Models\\User',
                     'recipient_id' => $recipient['id'],
-                    'recipient_type_specific' => 'user',
-                    'delivered_at' => $options['scheduled_at'] ? null : $timestamp,
                     'created_at' => $timestamp,
                     'updated_at' => $timestamp
                 ];

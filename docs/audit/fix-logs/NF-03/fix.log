@@ -1,0 +1,28 @@
+NF-03 — BEFORE FIX
+Route: GET http://localhost:8000/traineeprofile/{encrypted_id}/download  (name: traineeprofile.download, web.php:743)
+HTTP Status: 302 (graceful redirect — opaqueredirect on manual fetch). NOT a hard 500.
+Behaviour observed: downloadProfile() calls Pdf::loadView('trainees.pdf-profile', ...) (WITH hyphen)
+  at TraineeProfileController.php:685, but the on-disk template is trainees/pdfprofile.blade.php
+  (NO hyphen). Pdf::loadView -> view()->make() throws InvalidArgumentException synchronously inside
+  try (line 650) -> caught at line 703 -> redirect()->route('traineeprofile')->with('error', ...).
+  The PDF never downloads; user is bounced back to the trainee profile with an error flash.
+Test trainee: "Smoke TestTrainee" (synthetic UAT data — no real PII).
+Login: super.admin@uat.creams.test (admin)
+Screenshot: 01-before.png (trainee profile after the failed-download redirect)
+Timestamp: 2026-06-23T05:38:37Z
+
+## NF-03 — AFTER FIX
+Route: GET http://localhost:8000/traineeprofile/{encrypted_id}/download
+HTTP Status: 200 OK
+Result: Real PDF now downloads. Authoritative evidence (authenticated fetch of the app-generated
+  download URL): status=200, Content-Type=application/pdf, header bytes="%PDF-", size=12629 bytes.
+  (A PDF download has no rendered HTML page; 02-after.png shows the generated PDF loaded inline via
+  a blob iframe.)
+Change: app/Http/Controllers/Trainee/TraineeProfileController.php:685 — one-character view-name fix:
+  Pdf::loadView('trainees.pdf-profile', ...) -> Pdf::loadView('trainees.pdfprofile', ...) to match
+  the existing template resources/views/trainees/pdfprofile.blade.php.
+Option chosen: A (fix the loadView string)
+Screenshot: 02-after.png
+Timestamp: 2026-06-23T05:39:00Z
+
+PHPUnit: 392 passed / 0 failed (636 assertions) — EXECUTED 2026-06-23

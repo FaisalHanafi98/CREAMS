@@ -6,12 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Models\Trainee;
 use App\Models\Activity;
 use App\Models\ActivitySession;
-use App\Models\SessionEnrollment;
 use App\Models\Attendance;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
+use Carbon\Carbon;
 
 class AttendanceController extends Controller
 {
@@ -56,7 +56,8 @@ class AttendanceController extends Controller
                 'teacher:id,name',
                 'sessionEnrollments' => function($q) {
                     $q->with('trainee:id,trainee_first_name,trainee_last_name,unique_identifier');
-                }
+                },
+                'traineeAttendances',
             ])
             ->where('session_date', $selectedDate);
             
@@ -131,7 +132,74 @@ class AttendanceController extends Controller
             return back()->with('error', 'Failed to load attendance data: ' . $e->getMessage());
         }
     }
-    
+
+    /**
+     * Display one trainee's attendance history: summary rate, monthly calendar, and timeline.
+     *
+     * The {id} resolves through the Trainee CentreScope, so a non-admin requesting a trainee
+     * outside their own centre receives a 404 (PDPA centre isolation) rather than a data leak.
+     */
+    public function trainee(Request $request, $id)
+    {
+        $trainee = Trainee::findOrFail($id);
+
+        $endDate = $request->input('end_date', now()->toDateString());
+        $startDate = $request->input('start_date', now()->subMonth()->toDateString());
+
+        $attendanceRate = Attendance::calculateAttendanceRate($trainee->id, $startDate, $endDate);
+
+        $attendanceRecords = Attendance::with(['activity', 'markedBy'])
+            ->where('trainee_id', $trainee->id)
+            ->whereBetween('attendance_date', [$startDate, $endDate])
+            ->orderBy('attendance_date', 'desc')
+            ->get();
+
+        // Build a Sunday–Saturday calendar grid spanning the selected month. Records are
+        // keyed by date so each day cell can show its status dot without an N+1 query.
+        $calendarMonth = $request->input('month', now()->format('Y-m'));
+        $monthStart = Carbon::createFromFormat('Y-m', $calendarMonth)->startOfMonth();
+        $monthEnd = (clone $monthStart)->endOfMonth();
+        $gridStart = (clone $monthStart)->startOfWeek(Carbon::SUNDAY);
+        $gridEnd = (clone $monthEnd)->endOfWeek(Carbon::SATURDAY);
+
+        $monthRecords = Attendance::where('trainee_id', $trainee->id)
+            ->whereBetween('attendance_date', [$gridStart->toDateString(), $gridEnd->toDateString()])
+            ->get()
+            ->keyBy(fn ($record) => Carbon::parse($record->attendance_date)->toDateString());
+
+        $calendarDays = [];
+        for ($day = clone $gridStart; $day <= $gridEnd; $day->addDay()) {
+            $key = $day->toDateString();
+            $cell = [
+                'day' => $day->day,
+                'current_month' => $day->month === $monthStart->month,
+                'is_today' => $day->isToday(),
+            ];
+            if (isset($monthRecords[$key])) {
+                $cell['status'] = $monthRecords[$key]->status;
+                $cell['remarks'] = $monthRecords[$key]->notes;
+            }
+            $calendarDays[] = $cell;
+        }
+
+        $calendarLabel = $monthStart->format('F Y');
+        $prevMonth = (clone $monthStart)->subMonth()->format('Y-m');
+        $nextMonth = (clone $monthStart)->addMonth()->format('Y-m');
+
+        return view('attendance.trainee', compact(
+            'trainee',
+            'startDate',
+            'endDate',
+            'attendanceRate',
+            'attendanceRecords',
+            'calendarMonth',
+            'calendarDays',
+            'calendarLabel',
+            'prevMonth',
+            'nextMonth'
+        ));
+    }
+
     /**
      * Store attendance with enhanced validation and security
      */
@@ -188,36 +256,21 @@ class AttendanceController extends Controller
             $attendanceCount = 0;
             
             foreach ($validated['attendance'] as $record) {
-                // Update session enrollment
-                $enrollment = SessionEnrollment::updateOrCreate(
-                    [
-                        'session_id' => $session->id,
-                        'trainee_id' => $record['trainee_id']
-                    ],
-                    [
-                        'attendance_status' => $record['status'],
-                        'participation_score' => $record['participation_score'] ?? null,
-                        'progress_notes' => $record['progress_notes'] ?? null,
-                        'checked_in_at' => $record['status'] === 'present' ? now() : null
-                    ]
-                );
-                
-                // Also update main attendance table for backward compatibility
                 Attendance::updateOrCreate(
                     [
                         'trainee_id' => $record['trainee_id'],
-                        'activity_id' => $session->activity_id,
-                        'session_id' => $session->id,
-                        'attendance_date' => $session->session_date
+                        'session_id'  => $session->id,
                     ],
                     [
-                        'attendance_status' => $record['status'],
-                        'recorded_by' => $user->id,
-                        'attendance_notes' => $record['progress_notes'] ?? null,
-                        'participation_score' => $record['participation_score'] ?? null
+                        'activity_id'       => $session->activity_id,
+                        'attendance_date'   => $session->session_date,
+                        'status'            => $record['status'],
+                        'marked_by_user_id' => $user->id,
+                        'notes'             => $record['progress_notes'] ?? null,
+                        'marked_at'         => now(),
                     ]
                 );
-                
+
                 $attendanceCount++;
             }
             
@@ -275,7 +328,7 @@ class AttendanceController extends Controller
         $stats = Cache::remember($cacheKey, 300, function () use ($user) {
             $today = now()->toDateString();
             
-            $sessionsQuery = ActivitySession::with('sessionEnrollments')
+            $sessionsQuery = ActivitySession::with(['sessionEnrollments', 'traineeAttendances'])
                 ->where('session_date', $today);
                 
             // Apply role-based filtering
@@ -299,6 +352,17 @@ class AttendanceController extends Controller
     }
     
     /**
+     * Display the attendance reports page.
+     *
+     * NF-04: route attendance.report had no controller method (hard 500).
+     * The view is a static placeholder; render it directly.
+     */
+    public function report()
+    {
+        return view('attendance.report');
+    }
+
+    /**
      * Calculate attendance statistics efficiently
      */
     private function calculateAttendanceStats($sessions)
@@ -316,19 +380,23 @@ class AttendanceController extends Controller
         ];
         
         foreach ($sessions as $session) {
-            if ($session->attendance_marked) {
+            if ($session->session_status === 'completed') {
                 $stats['completed_sessions']++;
             }
-            
-            foreach ($session->sessionEnrollments as $enrollment) {
-                $stats['total_enrollments']++;
-                
-                if ($enrollment->attendance_status) {
-                    $stats[$enrollment->attendance_status]++;
-                } else {
-                    $stats['unmarked']++;
+
+            $enrollmentCount = $session->sessionEnrollments->count();
+            $stats['total_enrollments'] += $enrollmentCount;
+
+            $attendances = $session->traineeAttendances;
+            foreach ($attendances as $attendance) {
+                $status = $attendance->status;
+                if (array_key_exists($status, $stats)) {
+                    $stats[$status]++;
                 }
             }
+
+            // Trainees enrolled but not yet marked
+            $stats['unmarked'] += max(0, $enrollmentCount - $attendances->count());
         }
         
         // Calculate attendance rate
@@ -452,21 +520,19 @@ class AttendanceController extends Controller
      */
     private function getAttendanceForExport($dateFrom, $dateTo, $centreId = null)
     {
-        $query = SessionEnrollment::with([
-            'trainee:id,unique_identifier,trainee_first_name,trainee_last_name,centre_id',
-            'session.activity:id,activity_name,centre_id',
-            'session.teacher:id,name'
+        $query = Attendance::with([
+            'trainee:id,trainee_id,unique_identifier,trainee_first_name,trainee_last_name',
+            'activity:id,activity_name,centre_id',
+            'session.teacher:id,name',
         ])
-        ->whereHas('session', function ($q) use ($dateFrom, $dateTo) {
-            $q->whereBetween('session_date', [$dateFrom, $dateTo]);
-        });
-        
+        ->whereBetween('attendance_date', [$dateFrom, $dateTo]);
+
         if ($centreId) {
-            $query->whereHas('session.activity', function ($q) use ($centreId) {
+            $query->whereHas('activity', function ($q) use ($centreId) {
                 $q->where('centre_id', $centreId);
             });
         }
-        
+
         return $query->get();
     }
     
@@ -494,15 +560,15 @@ class AttendanceController extends Controller
             // CSV data
             foreach ($data as $record) {
                 fputcsv($file, [
-                    $record->session->session_date,
-                    $record->trainee->unique_identifier,
+                    $record->attendance_date,
+                    $record->trainee->unique_identifier ?? $record->trainee->trainee_id ?? 'N/A',
                     $record->trainee->trainee_first_name . ' ' . $record->trainee->trainee_last_name,
-                    $record->session->activity->activity_name,
+                    $record->activity->activity_name ?? 'N/A',
                     $record->session->teacher->name ?? 'N/A',
-                    ucfirst($record->attendance_status ?? 'Not Marked'),
-                    $record->participation_score ?? 'N/A',
-                    $record->progress_notes ?? '',
-                    $record->checked_in_at ? $record->checked_in_at->format('H:i:s') : 'N/A'
+                    ucfirst($record->status ?? 'Not Marked'),
+                    'N/A',
+                    $record->notes ?? '',
+                    $record->marked_at ? $record->marked_at->format('H:i:s') : 'N/A',
                 ]);
             }
             
@@ -577,7 +643,7 @@ class AttendanceController extends Controller
             }
 
             // Return HTML form
-            $html = view('attendance.form-modal', [
+            $html = view('attendance.formmodal', [
                 'session' => $session,
                 'enrollments' => $enrollments
             ])->render();

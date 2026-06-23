@@ -97,19 +97,10 @@ class DashboardController extends Controller
                 'error' => $e->getMessage()
             ]);
             
-            return view('dashboard.modernnew', [
-                'error' => 'Unable to load dashboard data',
-                'role' => $role ?? 'unknown',
-                'user_name' => session('name', 'User'),
-                'current_time' => now()->format('l, F j, Y - g:i A'),
-                'todays_centre_activities' => [],
-                'calendar_data' => ['events' => [], 'week_start' => now()->startOfWeek(), 'week_end' => now()->endOfWeek()],
-                'recent_activities_centre' => [],
-                'upcoming_sessions' => [],
-                'user_encrypted_id' => '',
-                'stats' => [],
-                'personal_stats' => []
-            ]);
+            // NF-01: dashboard.modernnew view does not exist; rendering it here re-threw
+            // out of the catch as a hard 500. Degrade to the working dashboard instead.
+            return redirect()->route('dashboard')
+                ->with('error', 'Unable to load the modern dashboard.');
         }
     }
 

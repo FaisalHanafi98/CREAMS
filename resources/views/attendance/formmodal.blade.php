@@ -174,7 +174,7 @@ $('#attendanceForm').on('submit', function(e) {
     
     // Submit attendance
     $.ajax({
-        url: '{{ route("enhanced-attendance.store") }}',
+        url: '{{ route("activity-attendance.store") }}',
         method: 'POST',
         data: form.serialize(),
         headers: {

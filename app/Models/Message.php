@@ -366,7 +366,6 @@ class Message extends Model
                 'message_id' => $message->id,
                 'recipient_type' => $recipient['type'],
                 'recipient_id' => $recipient['id'],
-                'recipient_type_specific' => $recipient['specific_type'] ?? 'user'
             ]);
         }
         

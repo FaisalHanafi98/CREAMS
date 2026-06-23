@@ -14,15 +14,16 @@ class SessionAttendance extends Model
     protected $fillable = [
         'session_id',
         'trainee_id',
-        'attended',
-        'recorded_by',
-        'recorded_at',
-        'notes'
+        'attendance_status',
+        'check_in_time',
+        'check_out_time',
+        'notes',
+        'marked_by',
     ];
 
     protected $casts = [
-        'attended' => 'boolean',
-        'recorded_at' => 'datetime'
+        'check_in_time' => 'datetime',
+        'check_out_time' => 'datetime',
     ];
 
     // Relationships
@@ -38,6 +39,6 @@ class SessionAttendance extends Model
 
     public function recordedBy()
     {
-        return $this->belongsTo(User::class, 'recorded_by');
+        return $this->belongsTo(User::class, 'marked_by');
     }
 }

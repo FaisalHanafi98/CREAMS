@@ -28,6 +28,7 @@ class LearningOutcomeController extends Controller
      */
     public function index(Request $request, $activityId = null)
     {
+        try {
         $centreId = session('centre_id');
         
         // Get activity if specified
@@ -76,6 +77,18 @@ class LearningOutcomeController extends Controller
         $stats = $this->getLearningOutcomeStats($centreId, $activityId);
 
         return view('learning-outcomes.index', compact('outcomes', 'activities', 'activity', 'stats'));
+        } catch (\Throwable $e) {
+            // NF-09 defensive guard: LearningOutcome is a non-Eloquent compatibility class, so the
+            // Eloquent-style query above throws a hard Error (undefined method) that the global
+            // QueryException handler does NOT catch -> HTTP 500. Degrade gracefully until the
+            // learning-outcomes feature (PHANTOM-02) is implemented or removed.
+            \Illuminate\Support\Facades\Log::error('Learning outcomes index unavailable', [
+                'error' => $e->getMessage(),
+                'user_id' => session('id'),
+            ]);
+            return redirect()->route('dashboard')
+                ->with('error', 'Learning outcomes are currently unavailable.');
+        }
     }
 
     /**
@@ -83,6 +96,7 @@ class LearningOutcomeController extends Controller
      */
     public function create(Request $request)
     {
+        try {
         $centreId = session('centre_id');
         $activityId = $request->get('activity_id');
         
@@ -97,6 +111,17 @@ class LearningOutcomeController extends Controller
         }
 
         return view('learning-outcomes.create', compact('activities', 'selectedActivity'));
+        } catch (\Throwable $e) {
+            if ($e instanceof \Illuminate\Validation\ValidationException) {
+                throw $e;
+            }
+            \Illuminate\Support\Facades\Log::error('Learning outcomes action unavailable', [
+                'error' => $e->getMessage(),
+                'user_id' => session('id'),
+            ]);
+            return redirect()->route('dashboard')
+                ->with('error', 'Learning outcomes are currently unavailable.');
+        }
     }
 
     /**
@@ -104,8 +129,9 @@ class LearningOutcomeController extends Controller
      */
     public function store(Request $request)
     {
+        try {
         $centreId = session('centre_id');
-        
+
         $validated = $request->validate([
             'activity_id' => [
                 'required',
@@ -156,6 +182,17 @@ class LearningOutcomeController extends Controller
                 ->withInput()
                 ->with('error', 'Failed to create learning outcome: ' . $e->getMessage());
         }
+        } catch (\Throwable $e) {
+            if ($e instanceof \Illuminate\Validation\ValidationException) {
+                throw $e;
+            }
+            \Illuminate\Support\Facades\Log::error('Learning outcomes action unavailable', [
+                'error' => $e->getMessage(),
+                'user_id' => session('id'),
+            ]);
+            return redirect()->route('dashboard')
+                ->with('error', 'Learning outcomes are currently unavailable.');
+        }
     }
 
     /**
@@ -163,8 +200,9 @@ class LearningOutcomeController extends Controller
      */
     public function show($id)
     {
+        try {
         $centreId = session('centre_id');
-        
+
         $outcome = LearningOutcome::with(['activity', 'creator', 'competencyProgress.trainee', 'competencyProgress.assessor'])
             ->whereHas('activity', function ($q) use ($centreId) {
                 $q->where('centre_id', $centreId);
@@ -182,6 +220,17 @@ class LearningOutcomeController extends Controller
             ->get();
 
         return view('learning-outcomes.show', compact('outcome', 'progressStats', 'recentProgress'));
+        } catch (\Throwable $e) {
+            if ($e instanceof \Illuminate\Validation\ValidationException) {
+                throw $e;
+            }
+            \Illuminate\Support\Facades\Log::error('Learning outcomes action unavailable', [
+                'error' => $e->getMessage(),
+                'user_id' => session('id'),
+            ]);
+            return redirect()->route('dashboard')
+                ->with('error', 'Learning outcomes are currently unavailable.');
+        }
     }
 
     /**
@@ -189,8 +238,9 @@ class LearningOutcomeController extends Controller
      */
     public function edit($id)
     {
+        try {
         $centreId = session('centre_id');
-        
+
         $outcome = LearningOutcome::whereHas('activity', function ($q) use ($centreId) {
                 $q->where('centre_id', $centreId);
             })
@@ -202,6 +252,17 @@ class LearningOutcomeController extends Controller
             ->get(['id', 'activity_name']);
 
         return view('learning-outcomes.edit', compact('outcome', 'activities'));
+        } catch (\Throwable $e) {
+            if ($e instanceof \Illuminate\Validation\ValidationException) {
+                throw $e;
+            }
+            \Illuminate\Support\Facades\Log::error('Learning outcomes action unavailable', [
+                'error' => $e->getMessage(),
+                'user_id' => session('id'),
+            ]);
+            return redirect()->route('dashboard')
+                ->with('error', 'Learning outcomes are currently unavailable.');
+        }
     }
 
     /**
@@ -209,8 +270,9 @@ class LearningOutcomeController extends Controller
      */
     public function update(Request $request, $id)
     {
+        try {
         $centreId = session('centre_id');
-        
+
         $outcome = LearningOutcome::whereHas('activity', function ($q) use ($centreId) {
                 $q->where('centre_id', $centreId);
             })
@@ -259,6 +321,17 @@ class LearningOutcomeController extends Controller
                 ->withInput()
                 ->with('error', 'Failed to update learning outcome: ' . $e->getMessage());
         }
+        } catch (\Throwable $e) {
+            if ($e instanceof \Illuminate\Validation\ValidationException) {
+                throw $e;
+            }
+            \Illuminate\Support\Facades\Log::error('Learning outcomes action unavailable', [
+                'error' => $e->getMessage(),
+                'user_id' => session('id'),
+            ]);
+            return redirect()->route('dashboard')
+                ->with('error', 'Learning outcomes are currently unavailable.');
+        }
     }
 
     /**
@@ -266,8 +339,9 @@ class LearningOutcomeController extends Controller
      */
     public function destroy($id)
     {
+        try {
         $centreId = session('centre_id');
-        
+
         $outcome = LearningOutcome::whereHas('activity', function ($q) use ($centreId) {
                 $q->where('centre_id', $centreId);
             })
@@ -295,6 +369,17 @@ class LearningOutcomeController extends Controller
             DB::rollback();
             return back()->with('error', 'Failed to delete learning outcome: ' . $e->getMessage());
         }
+        } catch (\Throwable $e) {
+            if ($e instanceof \Illuminate\Validation\ValidationException) {
+                throw $e;
+            }
+            \Illuminate\Support\Facades\Log::error('Learning outcomes action unavailable', [
+                'error' => $e->getMessage(),
+                'user_id' => session('id'),
+            ]);
+            return redirect()->route('dashboard')
+                ->with('error', 'Learning outcomes are currently unavailable.');
+        }
     }
 
     /**
@@ -302,6 +387,7 @@ class LearningOutcomeController extends Controller
      */
     public function updateOrder(Request $request)
     {
+        try {
         $validated = $request->validate([
             'orders' => 'required|array',
             'orders.*' => 'integer|exists:learning_outcomes,id'
@@ -326,6 +412,16 @@ class LearningOutcomeController extends Controller
         } catch (\Exception $e) {
             DB::rollback();
             return response()->json(['success' => false, 'error' => $e->getMessage()]);
+        }
+        } catch (\Throwable $e) {
+            if ($e instanceof \Illuminate\Validation\ValidationException) {
+                throw $e;
+            }
+            \Illuminate\Support\Facades\Log::error('Learning outcomes action unavailable', [
+                'error' => $e->getMessage(),
+                'user_id' => session('id'),
+            ]);
+            return response()->json(['success' => false, 'error' => 'Learning outcomes are currently unavailable.'], 503);
         }
     }
 

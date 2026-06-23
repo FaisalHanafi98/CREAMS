@@ -1,69 +1,75 @@
 # CREAMS — Unresolved Bugs
 
-**Last updated**: 2026-05-08
+**Last updated**: 2026-06-22 (phantom table audit + stale-bug sweep)
 
 ---
 
-## BUG-09 [P0 — CRITICAL]: demo_demo_route() typo in login.blade.php
+## STALE BUGS (resolved in prior sessions — kept for history)
 
-**Symptom**: 5 test failures. Login page returns HTTP 500 in tests.
-**Root cause**: `resources/views/auth/login.blade.php` lines 424 and 473 call `demo_demo_route()`. This function does NOT exist. Correct helper is `demo_route()`.
-**Evidence**: `php artisan test --filter AuthenticationTest` → `Error: Call to undefined function demo_demo_route()`
-**Fix**: In `resources/views/auth/login.blade.php`, change both occurrences: `demo_demo_route(` → `demo_route(`
-**Acceptance criteria**: `php artisan test` → 359 passed, 0 failed.
+| Bug | Status | Verified |
+|-----|--------|---------|
+| BUG-09: `demo_demo_route()` typo in login.blade.php | RESOLVED — not in file | 2026-06-22 |
+| BUG-06: ExampleTest expects 200 on GET /, gets 302 | RESOLVED — test passes 200 | 2026-06-22 |
+| BUG-03: SearchController uses raw `encrypt()` | RESOLVED — uses `EncryptionHelper::generateEncryptedId()` | 2026-06-22 |
+| BUG-08: GET /auth/logout does not clear session | RESOLVED — GET route uses same session-clearing handler as POST | 2026-06-22 |
+
+---
+
+## BUG-01 [P2]: Bootstrap 4 `data-toggle="tab"` in registration view
+
+**Symptom**: Tab navigation broken on trainee registration form (tabs do not switch content).
+**Root cause**: `resources/views/trainees/registration.blade.php` used `data-toggle="tab"` (BS4); Bootstrap 5 ignores it.
+**Fix applied 2026-06-22**: Replaced all `data-toggle="tab"` → `data-bs-toggle="tab"` in `registration.blade.php`.
+**Profile view**: `profile/home.blade.php` was already using `data-bs-toggle="tab"` — no change needed.
+**Status**: FIXED (uncommitted)
+
+---
+
+## BUG-07 [P3]: Category model points at dropped table `activity_categories`
+
+**Status**: Effectively guarded — all `Category::` calls in active controllers are inside try/catch blocks.
+- `ActivityController::edit()` line 919 — try/catch with enum fallback
+- `ActivityController::getFilteredTrainees()` line 2034 — inside try block; `$category` is null-checked before use
+- Tech debt, deferred post-deployment.
+
+---
+
+## PHANTOM-01 [P2]: `classes` + `class_trainee` tables — unimplemented feature
+
+**Symptom**: `GET /teacher/schedule` route exists but `classes` table does not — returns 302 redirect with error (gracefully degraded via exception handler).
+**Root cause**: Classes feature was scaffolded (model, controller, routes) but never completed (no migration, no views).
+**Current state**: Route returns 302 + error flash; exception handler catches QueryException.
+**Fix needed**: Business decision — implement or remove. Schema change required (STOP condition).
+
+---
+
+## PHANTOM-02 [P2]: `trainee_competency_progress` table — unimplemented learning outcomes tracking
+
+**Symptom**: Learning outcomes progress endpoints (routes 263-267 in web.php) return error JSON or redirect-with-error when progress is written/read.
+**Root cause**: `trainee_competency_progress` table has no migration.
+**Current state**: All active usages are inside try/catch — no unguarded crashes.
+**Fix needed**: Migration to create the table. Schema change (STOP condition).
 
 ---
 
 ## DEPLOY-01 [P1]: DemoSampleUsersSeeder.php untracked — UATSeeder fails on server
 
 **Symptom**: `php artisan db:seed --class=UATSeeder --force` fails on server.
-**Root cause**: Updated UATSeeder calls `$this->call(DemoSampleUsersSeeder::class)` but `DemoSampleUsersSeeder.php` is untracked locally and therefore absent on server after `git pull`.
 **Fix**: Commit `database/seeders/DemoSampleUsersSeeder.php` together with updated `UATSeeder.php`.
-**Acceptance criteria**: Seeder completes on server without class-not-found error.
 
 ---
 
 ## DEPLOY-02 [P1]: Nginx subdomain config not on server
 
-**Symptom**: `https://creams.faisalhanafi.com` not serving CREAMS.
-**Root cause**: Nginx config file for subdomain never created on server.
-**Files**: `/etc/nginx/conf.d/creams.faisalhanafi.com.conf` (does not yet exist on server).
-**Critical constraint**: Do NOT touch `/etc/nginx/conf.d/faisalhanafi.conf` — Portfolio config.
-**Fix**: Create subdomain config using PHP-FPM socket `/run/php-fpm/www.sock`.
-**Acceptance criteria**: HTTP 200 on `https://creams.faisalhanafi.com/auth/login`.
+**Superseded**: Previous docs referenced `creams.faisalhanafi.com` / Lightsail. Live site is `pdk-creams.org` on Hostinger.
+**Status**: Possibly stale — deployment method is now manual SSH `git pull` on Hostinger, not Nginx subdomain config.
 
 ---
 
 ## DEPLOY-03 [P1]: Certbot HTTPS not configured for subdomain
 
-**Symptom**: No SSL certificate for `creams.faisalhanafi.com`.
-**Fix**: `sudo certbot --nginx -d creams.faisalhanafi.com` after Nginx HTTP config confirmed working.
-**Acceptance criteria**: `https://creams.faisalhanafi.com` serves with valid SSL.
-
----
-
-## BUG-01 [P2]: Profile tabs stuck — Bootstrap 4 data-toggle still in views
-
-**Symptom**: Profile page tabs do not switch content.
-**Evidence**: `data-toggle="tab"` (Bootstrap 4) in profile views; Bootstrap 5 ignores it.
-**Files**: `resources/views/profile/home.blade.php` (search data-toggle="tab")
-**Fix**: Replace `data-toggle="tab"` with `data-bs-toggle="tab"`.
-
----
-
-## BUG-03 [P2]: Search expired-link — raw encrypt() vs EncryptionHelper
-
-**Symptom**: Search result links expire or generate invalid token errors.
-**Files**: `app/Http/Controllers/SearchController.php`
-**Fix**: Replace `encrypt()` with `EncryptionHelper::encrypt()`.
-
----
-
-## BUG-08 [P2]: GET /auth/logout does not clear session
-
-**Symptom**: Navigating to `GET /auth/logout` does not log out. POST (button) works.
-**Fix**: Ensure GET logout properly invalidates session or remove the GET route.
-**Do not repeat**: Always use the Logout button during demos.
+**Superseded**: Same as DEPLOY-02 — current target is `pdk-creams.org` on Hostinger, which may already have HTTPS.
+**Status**: Possibly stale — verify against live Hostinger config.
 
 ---
 
@@ -85,16 +91,14 @@
 
 ---
 
-## BUG-06 [P3]: ExampleTest expects 200 on GET /, gets 302
+## DEBT-01 [P3]: `SessionEnrollment` references in dead-code controllers
 
-**Root cause**: Test assertion wrong. Redirect is correct behavior.
-**Fix**: Change `assertStatus(200)` to `assertRedirect()` in `tests/Feature/ExampleTest.php`.
+Dead-code controllers still reference the phantom `SessionEnrollment` model:
+- `Activity/EnrollmentController.php` (no routes)
+- `Activity/ActivitySessionController.php` (no routes)
+- `Trainee/ParentPortalController::viewProgress()` (no route — dashboard() is routed but uses User, not SE)
 
----
-
-## BUG-07 [P3]: Category.php model points at dropped table activity_categories
-
-**Fix**: Delete `app/Models/Category.php` or repurpose. Tech debt, deferred post-deployment.
+Not blocking any test. Cleanup deferred to dedicated dead-code removal session.
 
 ---
 

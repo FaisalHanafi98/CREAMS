@@ -47,11 +47,7 @@ class Centre extends Model
         'centre_status',
         'centre_description',
         'centre_facilities',
-        'centre_image',
-        'centre_latitude',
-        'centre_longitude',
         'is_active',
-        'attendance_policies'
     ];
 
     /**
@@ -122,8 +118,6 @@ class Centre extends Model
      */
     protected $casts = [
         'is_active' => 'boolean',
-        'facilities' => 'array',
-        'attendance_policies' => 'array'
     ];
 
     /**

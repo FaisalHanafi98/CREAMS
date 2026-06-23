@@ -1,0 +1,31 @@
+MD-03 Letter — BEFORE FIX
+Model: app/Models/Letter.php  Table: letters (live schema = ground truth, 37 columns)
+Drift found (model vs live letters columns):
+  Phantom $fillable (10, no column): letter_description, recipient_organization, purpose,
+    priority_level, is_archived, archived_at, archived_by, sent_date, delivery_method, delivery_notes.
+  Phantom $casts (3): sent_date => date, archived_at => datetime, is_archived => boolean.
+  No $guarded/$hidden. 8 read accessors (getPdfUrlAttribute etc.) are derived values — fine.
+Usage verification (why removal is safe):
+  - Letter::create() in ModernLetterGeneratorController.php:132-155 mass-assigns ONLY real columns;
+    delivery_method/notes/priority are stored INSIDE the letter_data JSON array (line 137-149), not
+    as model columns.
+  - sent_date: referenced only in Letter.php (no controller/view); real send-tracking uses sent_at.
+  - priority_level's other code refs are all the IEP models (real column in iep_activity_goals), not Letter.
+Runtime impact (BEFORE): dormant — live letter generation never mass-assigns the phantoms. Latent risk only.
+Page check: GET /letters -> 200 ("Letter Generation - CREAMS").
+Screenshot: 01-before.png
+Timestamp: 2026-06-23T06:35:55Z
+
+## MD-03 Letter — AFTER FIX
+Option chosen: A (remove phantom entries; no rename, no migration).
+Changes (app/Models/Letter.php):
+  - $fillable: removed the 10 phantom entries (kept all real columns incl. sent_at, is_sent,
+    letter_data, generation_metadata, letter_status, pdf_*, generated_*, recipient_*, etc.).
+  - $casts: removed sent_date=>date, archived_at=>datetime, is_archived=>boolean; kept letter_date,
+    sent_at, generated_at, is_sent, letter_data, generation_metadata.
+Verification:
+  - php -l app/Models/Letter.php -> No syntax errors.
+  - GET /letters -> 200, 0 console errors.
+  - PHPUnit: 392 passed / 0 failed (636 assertions).
+Screenshot: 02-after.png
+Timestamp: 2026-06-23T06:36:43Z

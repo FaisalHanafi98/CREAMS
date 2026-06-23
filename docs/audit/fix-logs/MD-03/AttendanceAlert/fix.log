@@ -1,0 +1,26 @@
+MD-03 AttendanceAlert — BEFORE FIX
+Model: app/Models/AttendanceAlert.php  Table: attendance_alerts (live: id, alert_type, user_id,
+  trainee_id, alert_message, severity, is_read, is_resolved, resolved_by, resolved_at,
+  resolution_notes, created_at, updated_at)
+Reachability: ORPHANED — AttendanceAlert is referenced NOWHERE in app/ outside its own file
+  (no create/new/updateOrCreate/query). Zero runtime impact; the cleanup is config hygiene.
+Drift:
+  Phantom $fillable (9): activity_id, absence_count, last_attendance_date, alert_description,
+    priority, status, created_by, assigned_to, action_taken.
+  Phantom $cast (1): last_attendance_date => date.
+  (Also: scopes scopeActive->status, scopeUrgent/scopeHighPriority->priority and relationships
+   creator->created_by, assignedStaff->assigned_to reference phantom columns — left as-is; the
+   whole model mismatches its table and is a removal-or-rebuild candidate for a dead-code session.)
+
+## MD-03 AttendanceAlert — AFTER FIX
+Option chosen: A (remove phantom $fillable + $cast per MD-03 scope).
+Changes (app/Models/AttendanceAlert.php):
+  - $fillable: kept trainee_id, alert_type, resolved_at; removed the 9 phantom entries.
+  - $casts: removed last_attendance_date => date; kept resolved_at => datetime.
+Verification:
+  - php -l -> No syntax errors.
+  - PHPUnit: 392 passed / 0 failed (636 assertions).
+  - No screenshot: model is orphaned (no reachable UI/route exercises it).
+Note: model remains orphaned with schema-mismatched scopes/relationships — flagged for the
+  dead-code/asset session, not fixed here (out of MD-03 fillable/casts scope).
+Timestamp: 2026-06-23T07:00:00Z

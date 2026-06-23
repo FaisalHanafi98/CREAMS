@@ -243,12 +243,12 @@
                         </div>
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-centre mb-3">
-                                <h5 class="mb-0">{{ date('F Y', strtotime($calendarMonth)) }}</h5>
+                                <h5 class="mb-0">{{ $calendarLabel }}</h5>
                                 <div>
-                                    <a href="{{ route('attendance.trainee', ['id' => $trainee->id, 'month' => date('Y-m', strtotime($calendarMonth . ' -1 month')), 'start_date' => request('start_date'), 'end_date' => request('end_date')]) }}" class="btn btn-sm btn-outline-primary">
+                                    <a href="{{ route('attendance.trainee', ['id' => $trainee->id, 'month' => $prevMonth, 'start_date' => request('start_date'), 'end_date' => request('end_date')]) }}" class="btn btn-sm btn-outline-primary">
                                         <i class="fas fa-chevron-left"></i> Previous Month
                                     </a>
-                                    <a href="{{ route('attendance.trainee', ['id' => $trainee->id, 'month' => date('Y-m', strtotime($calendarMonth . ' +1 month')), 'start_date' => request('start_date'), 'end_date' => request('end_date')]) }}" class="btn btn-sm btn-outline-primary">
+                                    <a href="{{ route('attendance.trainee', ['id' => $trainee->id, 'month' => $nextMonth, 'start_date' => request('start_date'), 'end_date' => request('end_date')]) }}" class="btn btn-sm btn-outline-primary">
                                         Next Month <i class="fas fa-chevron-right"></i>
                                     </a>
                                 </div>
@@ -320,7 +320,7 @@
                                         </div>
                                         <div class="timeline-content">
                                             <div class="d-flex justify-content-between">
-                                                <h6 class="mb-1">{{ date('l, F j, Y', strtotime($record->date)) }}</h6>
+                                                <h6 class="mb-1">{{ date('l, F j, Y', strtotime($record->attendance_date)) }}</h6>
                                                 <span class="badge badge-{{ 
                                                     $record->status == 'present' ? 'success' : 
                                                     ($record->status == 'absent' ? 'danger' : 
@@ -329,11 +329,11 @@
                                             </div>
                                             
                                             @if($record->activity_id)
-                                                <p class="mb-1"><strong>Activity:</strong> {{ $record->activity->name ?? 'Unknown Activity' }}</p>
+                                                <p class="mb-1"><strong>Activity:</strong> {{ $record->activity->activity_name ?? 'Unknown Activity' }}</p>
                                             @endif
                                             
-                                            @if($record->remarks)
-                                                <p class="mb-0"><strong>Remarks:</strong> {{ $record->remarks }}</p>
+                                            @if($record->notes)
+                                                <p class="mb-0"><strong>Remarks:</strong> {{ $record->notes }}</p>
                                             @endif
                                             
                                             <small class="text-muted">Marked by: {{ $record->markedBy->name ?? 'System' }}</small>

@@ -282,13 +282,12 @@ class AssetService
 
             $maintenance = AssetMaintenance::create([
                 'asset_id' => $assetId,
-                'type' => $type,
+                'maintenance_type' => $type,
                 'scheduled_date' => $scheduledDate,
                 'status' => 'scheduled',
                 'performed_by' => $performedBy,
                 'description' => $description,
                 'notes' => $notes,
-                'created_by' => session('id')
             ]);
 
             Log::info('Maintenance scheduled', [

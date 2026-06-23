@@ -1,0 +1,123 @@
+CREAMS — Exhaustive API-level authorization classification (105 mutating endpoints)
+==============================================================================
+
+## ROLE:admin  (23)
+  DELETE activities/{id}                               ActivityController@destroy
+  DELETE admin/centres/{id}                            CentreController@destroy
+  DELETE assets/{id}                                   AssetController@destroy
+  DELETE centres/{id}                                  CentreController@destroy
+  DELETE trainees/{encrypted_id}                       TraineeProfileController@destroy
+  POST   activities                                    ActivityController@store
+  POST   activities/{id}/sessions                      ActivityController@createSession
+  POST   admin/centres                                 CentreController@store
+  POST   admin/letter-templates/update                 LetterTemplateController@store
+  POST   assets                                        AssetController@store
+  POST   centre/assets                                 AssetController@store
+  POST   centres                                       CentreController@store
+  POST   centres/{id}/statistics/refresh               CentreController@refreshStatistics
+  POST   profile/letter-generate                       LetterTemplateController@generate
+  POST   profile/letter-preview                        LetterTemplateController@preview
+  POST   profile/letter-template                       LetterTemplateController@store
+  POST   volunteer/applications/{id}/approve           VolunteerController@approve
+  POST   volunteer/applications/{id}/reject            VolunteerController@reject
+  POST   volunteer/applications/{id}/status            VolunteerController@updateStatus
+  PUT    activities/{id}                               ActivityController@update
+  PUT    admin/centres/{id}                            CentreController@update
+  PUT    assets/{id}                                   AssetController@update
+  PUT    centres/{id}                                  CentreController@update
+
+## ROLE:admin,supervisor  (14)
+  DELETE activities/templates/{id}                     ScheduleTemplateController@destroy
+  DELETE letters/{id}/destroy                          LetterTemplateController@destroy
+  POST   activities/bulk/cancel                        SessionTemplateController@bulkCancel
+  POST   activities/bulk/change-venue                  SessionTemplateController@bulkChangeVenue
+  POST   activities/bulk/reschedule                    SessionTemplateController@bulkReschedule
+  POST   activities/templates                          ScheduleTemplateController@store
+  POST   activities/templates/apply                    ScheduleTemplateController@applyTemplate
+  POST   activities/{activityId}/apply-template-similar SessionTemplateController@applyTemplateToSimilar
+  POST   auth/save                                     MainController@save
+  POST   letters/generate                              ModernLetterController@generate
+  POST   letters/modern/generate                       ModernLetterGeneratorController@generate
+  POST   letters/modern/{id}/archive                   ModernLetterGeneratorController@archive
+  POST   profile/letters/generate                      LetterTemplateController@generate
+  PUT    letters/{id}/update                           LetterTemplateController@update
+
+## ROLE:admin,supervisor,teacher  (11)
+  POST   activity-attendance                           AttendanceController@store
+  POST   activity-attendance/export                    AttendanceController@export
+  POST   api/activities/check-conflicts                ActivityController@checkScheduleConflicts
+  POST   assets/maintenance/schedule                   AssetController@scheduleMaintenance
+  POST   assets/{id}/rent                              AssetController@rentAsset
+  POST   assets/{id}/return                            AssetController@returnAsset
+  POST   attendance                                    AttendanceController@store
+  POST   centre/attendance/session/{sessionId}/store   AttendanceController@storeActivityAttendance
+  POST   centres/attendance/mark                       StaffAttendanceController@markAttendance
+  POST   centres/attendance/mark-trainee               StaffAttendanceController@markTraineeAttendance
+  POST   trainees                                      TraineeRegistrationController@store
+
+## ROLE:teacher,admin,supervisor  (21)
+  DELETE activities/learning-outcomes/{id}             LearningOutcomeController@destroy
+  DELETE activities/{activityId}/sessions/{sessionId}/enrollments/{traineeId} ActivityController@removeEnrollment
+  DELETE iep/{id}                                      IepController@destroy
+  POST   activities/learning-outcomes                  LearningOutcomeController@store
+  POST   activities/learning-outcomes/update-order     LearningOutcomeController@updateOrder
+  POST   activities/sessions/{sessionId}/create-template SessionTemplateController@createTemplateFromSession
+  POST   activities/sessions/{sessionId}/learning-outcomes SessionLearningOutcomeController@store
+  POST   activities/sessions/{sessionId}/learning-outcomes/progress SessionLearningOutcomeController@updateTraineeProgress
+  POST   activities/sessions/{sessionId}/notes         AttendanceController@updateSessionNotes
+  POST   activities/sessions/{sessionId}/template-modify SessionTemplateController@applyTemplateModifications
+  POST   activities/sessions/{sessionId}/template-preview SessionTemplateController@previewTemplateChanges
+  POST   activities/{activityId}/sessions/{sessionId}/attendance ActivityController@storeAttendance
+  POST   activities/{activityId}/sessions/{sessionId}/enroll ActivityController@enrollTrainees
+  POST   activities/{activityId}/sessions/{sessionId}/enrollments/add ActivityController@addEnrollment
+  POST   activities/{id}/enroll                        ActivityController@enrollTrainees
+  POST   activities/{id}/schedule                      ActivityController@storeSchedule
+  POST   iep                                           IepController@store
+  POST   iep/{iepId}/goals                             IepController@storeGoal
+  PUT    activities/learning-outcomes/{id}             LearningOutcomeController@update
+  PUT    iep/goals/{goalId}/progress                   IepController@updateGoalProgress
+  PUT    iep/{id}                                      IepController@update
+
+## CENTRE-GATED  (9)
+  DELETE traineeprofile/{encrypted_id}                 TraineeProfileController@destroy
+  POST   traineeprofile/{encrypted_id}/activity        TraineeProfileController@addActivity
+  POST   traineeprofile/{encrypted_id}/attendance      TraineeProfileController@recordAttendance
+  POST   traineeprofile/{encrypted_id}/progress        TraineeProfileController@updateProgress
+  POST   trainees/attendance/{encrypted_id}/mark       TraineeHomeController@markAttendance
+  POST   traineesregistrationstore                     TraineeRegistrationController@store
+  POST   validateEmail                                 TraineeRegistrationController@validateEmail
+  PUT    traineeprofile/{encrypted_id}                 TraineeProfileController@update
+  PUT    trainees/{encrypted_id}                       TraineeProfileController@update
+
+## AUTH-ONLY  (20)
+  DELETE messages/{id}                                 MessageController@destroy
+  DELETE notifications/{id}                            NotificationController@destroy
+  POST   auth/check                                    MainController@check
+  POST   dashboard/refresh-stats                       DashboardController@refreshStats
+  POST   dashboard/refresh-widget                      DashboardController@refreshWidget
+  POST   logout                                        MainController@logout
+  POST   logout-enhanced                               LoginController@logout
+  POST   messages                                      MessageController@store
+  POST   notifications/clear-read                      NotificationController@clearRead
+  POST   notifications/mark-all-read                   NotificationController@markAllAsRead
+  POST   notifications/{id}/mark-read                  NotificationController@markAsRead
+  POST   profile/change-password                       UserProfileController@changePassword
+  POST   profile/templates/load-single                 UserProfileController@loadTemplate
+  POST   profile/templates/save                        UserProfileController@saveTemplate
+  POST   profile/update                                UserProfileController@updateProfile
+  POST   profile/upload-avatar                         UserProfileController@uploadAvatar
+  POST   search                                        SearchController@search
+  POST   settings                                      SettingController@update
+  POST   staff-attendance/mark                         StaffAttendanceController@markAttendance
+  PUT    staffs/profile/update/{encrypted_id}          StaffController@updateProfile
+
+## PUBLIC  (5)
+  POST   api/forgot-password                           ForgotPasswordController@forgot
+  POST   auth/extend-session                           LoginController@extendSession
+  POST   auth/refresh-session                          LoginController@refreshSession
+  POST   forgot-password                               ForgotPasswordController@submitForgotPasswordForm
+  POST   reset-password                                ForgotPasswordController@submitResetPasswordForm
+
+## NONE  (2)
+  POST   contact/submit                                ContactController@submit
+  POST   volunteer/submit                              VolunteerController@submit

@@ -1,0 +1,29 @@
+NF-05 — BEFORE FIX
+Route: GET http://localhost:8000/admin/centres/01/assets  (name: admin.centres.assets, web.php:813)
+HTTP Status: 500 Internal Server Error
+Error observed: CentreController@assets is commented out (CentreController.php:272 starts with
+  "/* public function assets($id)"). Route dispatch to a non-existent method ->
+  ReflectionException/Error -> not caught by the QueryException-only global handler -> hard 500.
+  Page title: "Server Error - CREAMS". Authenticated fetch returned status 500.
+Context: working sibling route web.php:511 (name centres.assets, GET /centres/{id}/assets) uses
+  the live assetParents() method (CentreController.php:317) which renders centres.asset-parents.
+  No route('admin.centres.assets') / route('centres.assets') references exist in views/tests.
+Login: super.admin@uat.creams.test (admin); centre id used: 01
+Screenshot: 01-before.png
+Timestamp: 2026-06-23T04:59:26Z
+
+## NF-05 — AFTER FIX
+Route: GET http://localhost:8000/admin/centres/01/assets
+HTTP Status: 200 OK
+Result: Renders "Test Centre - Assets" (centres.asset-parents view) with centre + asset-parents
+  + stats; no Server Error page, 0 console errors.
+Change: routes/web.php:813 — controller method repointed from 'assets' (commented out) to
+  'assetParents' (the live method already used by the identical sibling route at web.php:511).
+  Route name 'admin.centres.assets' unchanged.
+Option chosen: A (repoint to assetParents)
+Screenshot: 02-after.png
+Timestamp: 2026-06-23T05:03:21Z
+
+PHPUnit: 392 passed / 0 failed (636 assertions) — EXECUTED 2026-06-23
+Note: dev server (php artisan serve) died mid-session and was restarted (new bg id byoevha9y);
+  session re-established. Route change hot-reloaded with no route cache.
