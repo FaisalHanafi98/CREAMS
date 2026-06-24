@@ -316,13 +316,13 @@ class AssetManagementService
     private function recordMovement(Asset $asset, ?int $fromLocationId, ?int $toLocationId, string $reason): void
     {
         AssetMovement::create([
-            'asset_id' => $asset->id,
+            'asset_id'         => $asset->id,
             'from_location_id' => $fromLocationId,
-            'to_location_id' => $toLocationId,
-            'moved_by_id' => auth()->id() ?? session('id'),
-            'movement_reason' => $reason,
-            'movement_date' => now(),
-            'notes' => request('movement_notes'),
+            'to_location_id'   => $toLocationId,
+            'moved_by_user_id' => auth()->id() ?? session('id'),
+            'reason'           => $reason,
+            'movement_date'    => now(),
+            'notes'            => request('movement_notes'),
         ]);
     }
 

@@ -620,11 +620,10 @@ class AssetController extends Controller
 
             // Create disposal movement record
             AssetMovement::create([
-                'asset_id' => $asset->id,
-                'type' => AssetMovement::TYPE_DISPOSAL,
-                'reason' => 'Asset deleted from system',
-                'performed_by' => session('id'),
-                'movement_date' => now()
+                'asset_id'         => $asset->id,
+                'reason'           => 'Asset disposed — deleted from system',
+                'moved_by_user_id' => session('id'),
+                'movement_date'    => now(),
             ]);
 
             $assetCode = $asset->asset_code;

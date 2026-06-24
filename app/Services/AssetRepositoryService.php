@@ -137,14 +137,11 @@ class AssetRepositoryService
 
             // Record movement
             AssetMovement::create([
-                'asset_id' => $assetId,
-                'movement_type' => 'centre_transfer',
-                'from_centre_id' => $fromCentreId,
-                'to_centre_id' => $toCentreId,
-                'movement_date' => Carbon::now(),
-                'performed_by' => $performedBy,
-                'reason' => $reason ?? 'Inter-centre transfer',
-                'status' => 'completed'
+                'asset_id'         => $assetId,
+                'moved_by_user_id' => $performedBy,
+                'reason'           => $reason ?? 'Inter-centre transfer',
+                'notes'            => "Centre transfer: {$fromCentreId} → {$toCentreId}",
+                'movement_date'    => Carbon::now(),
             ]);
 
             DB::commit();
@@ -194,9 +191,10 @@ class AssetRepositoryService
 
             // Calculate utilization metrics
             $totalMovements = $movements->count();
-            $assignmentMovements = $movements->where('movement_type', 'assignment')->count();
-            $returnMovements = $movements->where('movement_type', 'return')->count();
-            $maintenanceMovements = $movements->where('movement_type', 'maintenance')->count();
+            // movement_type is not persisted in the DB schema; breakdown by type is not available
+            $assignmentMovements = 0;
+            $returnMovements = 0;
+            $maintenanceMovements = 0;
 
             // Most utilized assets
             $mostUtilized = $movements
