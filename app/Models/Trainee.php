@@ -309,14 +309,6 @@ class Trainee extends Model
         return $this->belongsTo(Centre::class, 'centre_id', 'centre_id');
     }
 
-    /**
-     * Get the classes that the trainee is enrolled in.
-     */
-    public function classes()
-    {
-        return $this->belongsToMany(ClassModel::class, 'class_trainee', 'trainee_id', 'class_id')
-                    ->withTimestamps();
-    }
 
     /**
      * Get the trainee's competency progress records.

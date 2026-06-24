@@ -453,20 +453,7 @@ class User extends Authenticatable
         return $this->hasMany(Centre::class, 'user_id');
     }
     
-    /**
-     * Get the classes taught by this teacher.
-     * 
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
-     */
-    public function classes()
-    {
-        if ($this->isTeacher()) {
-            return $this->hasMany(ClassModel::class, 'teacher_id');
-        }
-        
-        return null;
-    }
-    
+
     /**
      * Get the courses associated with this user.
      *

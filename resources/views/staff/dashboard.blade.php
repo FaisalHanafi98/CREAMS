@@ -13,7 +13,7 @@
     <div class="card-header">
       <h5 class="card-title">Today's Schedule</h5>
       <div class="card-options">
-        <a href="{{ route('teacher.schedule') }}" class="btn btn-sm btn-primary">View Full Schedule</a>
+        <a href="{{ route('teacher.dashboard') }}" class="btn btn-sm btn-primary">Go to Dashboard</a>
       </div>
     </div>
     <div class="card-body">

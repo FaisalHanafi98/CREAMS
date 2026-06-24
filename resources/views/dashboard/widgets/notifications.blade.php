@@ -77,7 +77,7 @@
                                 $notificationData[] = [
                                     'type' => 'info',
                                     'message' => "You have {$todaysSessions} sessions scheduled for today",
-                                    'action' => route('teacher.schedule'),
+                                    'action' => route('teacher.dashboard'),
                                     'created_at' => \Carbon\Carbon::now()->subHours(1),
                                     'read' => false,
                                     'icon' => 'fas fa-calendar-day'
@@ -93,7 +93,7 @@
                                 $notificationData[] = [
                                     'type' => 'success',
                                     'message' => "{$upcomingSessions} sessions scheduled for next 3 days",
-                                    'action' => route('teacher.schedule'),
+                                    'action' => route('teacher.dashboard'),
                                     'created_at' => \Carbon\Carbon::now()->subHours(3),
                                     'read' => true,
                                     'icon' => 'fas fa-calendar-alt'

@@ -19,7 +19,6 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\Trainee\TraineeController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\Staff\SupervisorController;
-use App\Http\Controllers\Staff\TeacherController;
 use App\Http\Controllers\Staff\AJKController;
 use App\Http\Controllers\Staff\StaffController;
 
@@ -35,7 +34,6 @@ use App\Http\Controllers\Activity\ActivityController;
 use App\Http\Controllers\Activity\ScheduleTemplateController;
 use App\Http\Controllers\Centre\CentreController;
 use App\Http\Controllers\Centre\AssetController;
-use App\Http\Controllers\ClassController;
 use App\Http\Controllers\EventController;
 
 // Report and Admin Controllers
@@ -864,7 +862,6 @@ Route::prefix('teacher')->middleware(['auth', 'role:teacher'])->group(function (
     Route::get('/trainees', function () {
         return redirect()->route('trainees.home');
     })->name('teacher.trainees');
-    Route::get('/schedule', [ClassController::class, 'schedule'])->name('teacher.schedule');
 });
 
 // AJK Routes
