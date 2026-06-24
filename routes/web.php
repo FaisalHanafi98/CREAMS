@@ -246,27 +246,6 @@ Route::middleware(['auth', 'validate.params'])->group(function () {
         // Sessions view - accessible to all authenticated users (CRUD restricted in controller)
         Route::get('/{id}/sessions', [ActivityController::class, 'sessions'])->name('sessions');
 
-        // Learning Outcomes routes (Teacher, Admin, Supervisor)
-        Route::prefix('learning-outcomes')->name('learning-outcomes.')->middleware(['role:teacher,admin,supervisor'])->group(function () {
-            Route::get('/', [App\Http\Controllers\LearningOutcomeController::class, 'index'])->name('index');
-            Route::get('/create', [App\Http\Controllers\LearningOutcomeController::class, 'create'])->name('create');
-            Route::post('/', [App\Http\Controllers\LearningOutcomeController::class, 'store'])->name('store');
-            Route::get('/{id}', [App\Http\Controllers\LearningOutcomeController::class, 'show'])->name('show');
-            Route::get('/{id}/edit', [App\Http\Controllers\LearningOutcomeController::class, 'edit'])->name('edit');
-            Route::put('/{id}', [App\Http\Controllers\LearningOutcomeController::class, 'update'])->name('update');
-            Route::delete('/{id}', [App\Http\Controllers\LearningOutcomeController::class, 'destroy'])->name('destroy');
-            Route::post('/update-order', [App\Http\Controllers\LearningOutcomeController::class, 'updateOrder'])->name('update-order');
-        });
-
-        // Session-Level Learning Outcomes Management (Teacher, Admin, Supervisor)
-        Route::prefix('sessions')->name('sessions.')->middleware(['role:teacher,admin,supervisor'])->group(function () {
-            Route::get('/{sessionId}/learning-outcomes', [App\Http\Controllers\Activity\SessionLearningOutcomeController::class, 'index'])->name('learning-outcomes.index');
-            Route::post('/{sessionId}/learning-outcomes', [App\Http\Controllers\Activity\SessionLearningOutcomeController::class, 'store'])->name('learning-outcomes.store');
-            Route::post('/{sessionId}/learning-outcomes/progress', [App\Http\Controllers\Activity\SessionLearningOutcomeController::class, 'updateTraineeProgress'])->name('learning-outcomes.update-progress');
-            Route::get('/{sessionId}/learning-outcomes/analytics', [App\Http\Controllers\Activity\SessionLearningOutcomeController::class, 'getSessionAnalytics'])->name('learning-outcomes.analytics');
-            Route::get('/{sessionId}/learning-outcomes/available', [App\Http\Controllers\Activity\SessionLearningOutcomeController::class, 'getAvailableOutcomes'])->name('learning-outcomes.available');
-        });
-
         // Session notes routes - accessible by teachers, admin, supervisor
         Route::middleware(['role:teacher,admin,supervisor'])->group(function () {
             Route::post('/sessions/{sessionId}/notes', [App\Http\Controllers\Centre\AttendanceController::class, 'updateSessionNotes'])->name('sessions.notes.update');
