@@ -176,13 +176,11 @@ class IepController extends Controller
         $centreId = session('centre_id');
         
         $iep = TraineeEducationPlan::with([
-                'trainee', 
-                'creator', 
+                'trainee',
+                'creator',
                 'lastUpdater',
                 'goals.activity',
-                'goals.learningOutcome',
                 'goals.assignedStaff',
-                'progressReports'
             ])
             ->whereHas('trainee', function ($q) use ($centreId) {
                 if (session('role') !== 'admin') {
@@ -387,7 +385,7 @@ class IepController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Goal created successfully.',
-                'goal' => $goal->load(['activity', 'learningOutcome', 'assignedStaff'])
+                'goal' => $goal->load(['activity', 'assignedStaff'])
             ]);
                 
         } catch (\Exception $e) {
