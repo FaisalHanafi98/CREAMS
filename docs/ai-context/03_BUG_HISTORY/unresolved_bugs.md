@@ -34,12 +34,13 @@
 
 ---
 
-## PHANTOM-01 [P2]: `classes` + `class_trainee` tables — unimplemented feature
+## PHANTOM-01 [P2]: `classes` + `class_trainee` tables — unimplemented feature — RESOLVED
 
-**Symptom**: `GET /teacher/schedule` route exists but `classes` table does not — returns 302 redirect with error (gracefully degraded via exception handler).
+**Symptom**: `GET /teacher/schedule` route existed but `classes` table did not — returned 302 redirect with error.
 **Root cause**: Classes feature was scaffolded (model, controller, routes) but never completed (no migration, no views).
-**Current state**: Route returns 302 + error flash; exception handler catches QueryException.
-**Fix needed**: Business decision — implement or remove. Schema change required (STOP condition).
+**Resolution**: Removed scaffold end-to-end in commit `9d23877` (routes, controllers, model, relationships, tests, dead view refs).
+**Current state**: Route no longer exists; no remaining `ClassModel` / `ClassController` / `TeacherController` / `teacher.schedule` references.
+**Verified**: PHPUnit 392/0.
 
 ---
 
