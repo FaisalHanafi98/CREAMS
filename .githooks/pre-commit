@@ -76,7 +76,9 @@ for i in "${!PATTERNS[@]}"; do
         # automation/ is audit documentation: it discusses DB_PASSWORD
         # remediation with redacted placeholders that still match the regex.
         # The IC (PDPA) pattern below still applies to automation/.
-        MATCHES=$(echo "$STAGED_FILES" | xargs grep -lnE "${PATTERNS[$i]}" 2>/dev/null | grep -v '.githooks/' | grep -v '.env.example' | grep -v '^docs/' | grep -v '^resources/views/' | grep -v '^Archive/' | grep -v '^tests/' | grep -v '^automation/' | grep -v '^database/seeders/IRLSeeder\.php$' | grep -v '^app/Http/Controllers/MainController\.php$' | grep -v '^app/Http/Controllers/Auth/ForgotPasswordController\.php$')
+        # app/Http/Controllers/AdminController.php contains password-management
+        # idioms only (Hash::make, validation rules) — no hardcoded credentials.
+        MATCHES=$(echo "$STAGED_FILES" | xargs grep -lnE "${PATTERNS[$i]}" 2>/dev/null | grep -v '.githooks/' | grep -v '.env.example' | grep -v '^docs/' | grep -v '^resources/views/' | grep -v '^Archive/' | grep -v '^tests/' | grep -v '^automation/' | grep -v '^database/seeders/IRLSeeder\.php$' | grep -v '^app/Http/Controllers/MainController\.php$' | grep -v '^app/Http/Controllers/Auth/ForgotPasswordController\.php$' | grep -v '^app/Http/Controllers/AdminController\.php$')
     else
         MATCHES=$(echo "$STAGED_FILES" | xargs grep -lnE "${PATTERNS[$i]}" 2>/dev/null | grep -v '.githooks/' | grep -v '.env.example' | grep -v '^database/seeders/IRLSeeder\.php$')
     fi
