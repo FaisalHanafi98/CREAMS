@@ -1,6 +1,19 @@
 # CREAMS — Unresolved Bugs
 
-**Last updated**: 2026-06-22 (phantom table audit + stale-bug sweep)
+**Last updated**: 2026-06-24 (AssetMovement alignment — task_d9a381b5 partially resolved)
+
+---
+
+## task_d9a381b5 [RESOLVED — 2026-06-24]: AssetMovement schema-model alignment
+
+**Scope resolved**: `AssetMovement` model rewritten to match `asset_movements` DB schema (commit `07c5320`).
+- `$fillable` corrected: removed phantom fields (`type, from_user, to_user, from_location, to_location, performed_by`); real fields used (`asset_id, from_location_id, to_location_id, moved_by_user_id, movement_date, reason, notes`).
+- `AssetController::destroy()` — fixed disposal log (was throwing QueryException on every asset delete).
+- `AssetManagementService::recordMovement()` — fixed column names (`moved_by_user_id`, `reason`).
+- `AssetRepositoryService::transferAssetBetweenCentres()` — removed phantom columns; fixed write path.
+- `AssetRepositoryService::getAssetUtilizationReport()` — removed phantom `movement_type` filters.
+
+**Deferred (read-only risk only)**: `AssetLocation`, `AssetParent`, `AssetEnhanced` — these models have phantom or unverified columns but none have active write paths through any live controller. Deferred to next session.
 
 ---
 

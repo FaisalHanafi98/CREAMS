@@ -1,7 +1,7 @@
 # CREAMS — Current Status
 
-**Last updated**: 2026-06-24 (Fixers branch — PHANTOM-01 removal + pre-commit hook fix)
-**Evidence basis**: git log, PHPUnit 392/0 (verified 2026-06-24); Playwright baseline not re-verified (Laravel dev server not running)
+**Last updated**: 2026-06-24 (Fixers branch — AssetMovement schema-model alignment + working tree clean)
+**Evidence basis**: git log, PHPUnit 392/0 (verified 2026-06-24); Playwright 215/0/3 (verified 2026-06-24)
 
 ---
 
@@ -17,9 +17,9 @@ Deployment remains on hold pending CF-08 resolution and explicit owner approval.
 | Field | Value |
 |---|---|
 | Branch | `Fixers` |
-| HEAD | `35a365a` — Fix(Git): Exclude AdminController from hardcoded-password pre-commit check |
-| Working tree | **DIRTY** — resume-tooling files from prior session still uncommitted |
-| Pushed to origin | `35a365a` (2026-06-24) |
+| HEAD | `07c5320` — Fix(Asset): Align AssetMovement model with asset_movements table schema |
+| Working tree | Dirty — tooling/doc files uncommitted (Chore commit pending Playwright re-verify) |
+| Pushed to origin | `07c5320` (2026-06-24) |
 
 ---
 
@@ -35,7 +35,7 @@ Deployment remains on hold pending CF-08 resolution and explicit owner approval.
 
 Command: `php -d memory_limit=512M vendor/bin/phpunit --no-coverage`
 
-### Playwright (EXECUTED — 2026-06-24)
+### Playwright (EXECUTED — 2026-06-24, re-verified post AssetMovement alignment)
 
 | Metric | Value |
 |---|---|
@@ -56,6 +56,8 @@ Suite: `npx playwright test` from `tests/Browser/`
 | `8e1e2ff` | Fix(Tests): Playwright test 94 IEP locator — click-navigation race + CSS comma union selector bug. 214/1/3 → 215/0/3. |
 | `9d23877` | PHANTOM-01: Removed classes feature scaffold — routes, controllers, model, relationships, scaffold test, dead view refs. PHPUnit 392/0. |
 | `35a365a` | Fix(Git): Excluded AdminController from hardcoded-password pre-commit regex false positive. |
+| `892f129` | Docs(Status): Session history + status docs updated for PHANTOM-01 removal. |
+| `07c5320` | Fix(Asset): AssetMovement model + 3 write-path fixes — AssetController, AssetManagementService, AssetRepositoryService. All use real DB columns. |
 
 All prior RC remediation (65 files, `ccea28e`) was also pushed this session.
 
@@ -66,7 +68,7 @@ All prior RC remediation (65 files, `ccea28e`) was also pushed this session.
 | ID | Severity | Description | Status |
 |---|---|---|---|
 | B5-01 | Low | `GET /staff/updateuser/{id}` → missing `profile.blade.php` | Graceful catch in place, deferred |
-| task_d9a381b5 | Medium | 4 deferred asset models (AssetMovement, AssetLocation, AssetParent, AssetEnhanced) + cascade cleanup of LearningOutcome refs in IepActivityGoal + ActivityWizardController | Dedicated migration-aware session required |
+| task_d9a381b5 | ~~Medium~~ | ~~4 deferred asset models + cascade cleanup~~ | **RESOLVED** — AssetMovement aligned; AssetLocation/AssetParent/AssetEnhanced deferred (read-only risk only) |
 | CF-08 | Blocker | Production `LOG_LEVEL` on Hostinger SSH check | Owner-only — deploy hold in force |
 
 ---

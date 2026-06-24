@@ -18,6 +18,8 @@
 
 3. **Execute the resume protocol from `docs/CODEX_INIT_PROMPT.md` STEP 1** before doing any other work. Output the standard summary block, then say "Context reconstructed. Ready to continue — confirm to proceed." and wait for the user.
 
+> **OpenCode users**: a native `resume` skill and `/resume` command are registered under `.opencode/skills/creams-resume/SKILL.md` and `.opencode/command/resume.md`. Invoking `resume` (or mentioning "resume work" / "continue") loads the same protocol automatically.
+
 ## Hard reminders that bypass everything else
 
 - No real PDPA data in seeders, factories, tests, commits, or `.memsearch/` checkpoints.

@@ -59,7 +59,11 @@ tests/Browser/playwright-report/
 tests/Browser/test-results/
 tests/Browser/test-results.json/
 tests/Browser/dashboard-test-results.txt
+tests/Browser/*.log
 test-results/
+
+# MCP tool ephemeral artefacts
+.playwright-mcp/
 
 # Real-data artefacts — never track (PDPA). Kept on local disk only.
 # IRL_Files holds real PDK centre photos, invoices, and forms.

@@ -1,6 +1,50 @@
 # CREAMS — Playwright Test Results
 
-**Last updated**: 2026-05-07
+**Last updated**: 2026-06-24
+
+---
+
+## Full suite (218 tests) — 2026-06-24 RE-VERIFIED CURRENT
+
+**Date run**: 2026-06-24 (second run — post AssetMovement alignment + PHANTOM-01 removal)
+**Command**: `npx playwright test --reporter=line` from `tests/Browser/`
+**Branch**: `Fixers` @ `07c5320`
+
+| Metric | Value |
+|---|---|
+| Passed | **215** |
+| Failed | **0** |
+| Skipped | **3** (staff-crud 118, 119, 125 — pre-existing) |
+| Duration | 21.4 minutes |
+
+**Skipped tests** (pre-existing, not regressions):
+- `staff-crud.spec.ts:169` — weak password validation
+- `staff-crud.spec.ts:187` — duplicate email validation
+- `staff-crud.spec.ts:295` — invalid update validation
+
+**Verification purpose**: Confirmed no regressions after PHANTOM-01 classes scaffold removal (commit `9d23877`) and AssetMovement model rewrite (commit `07c5320`). Result matches prior 215/0/3 baseline exactly.
+
+---
+
+## Full suite (218 tests) — 2026-06-24 PRIOR RUN
+
+**Date run**: 2026-06-24 (first run this day — post IEP spec fix)
+**Command**: `npx playwright test` from `tests/Browser/`
+**Branch**: `Fixers` @ `8e1e2ff`
+
+| Metric | Value |
+|---|---|
+| Passed | **215** |
+| Failed | **0** |
+| Skipped | **3** (staff-crud 118, 119, 125 — pre-existing) |
+| Duration | ~20.5 minutes |
+
+**Test fixed this session**:
+- `functional/iep-management.spec.ts:102` "IEP details shows goals and objectives"
+  — was failing 214/1/3 before fix. Root cause: CSS comma union locator bug +
+  click-navigation race. Fix: `getAttribute('href')` + `page.goto()` + `waitForLoadState`.
+
+---
 
 ---
 
