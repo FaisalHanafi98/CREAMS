@@ -9,6 +9,8 @@ use Faker\Factory as Faker;
 
 class CREAMSSeederFoundationManagement extends Seeder
 {
+    private const DEFAULT_SECRET = 'password';
+
     /**
      * CREAMS Foundation Management Seeder
      * Seeds: Malaysian centres, real Gombak users, demo users
@@ -205,7 +207,7 @@ class CREAMSSeederFoundationManagement extends Seeder
                         'iium_id' => 'DEMO' . $centre->centre_id . sprintf('%03d', rand(100, 999)),
                         'name' => $staff['name'],
                         'email' => $email,
-                        'password' => Hash::make('password123'),
+                        'password' => Hash::make(self::DEFAULT_SECRET),
                         'phone' => '+60' . rand(10, 19) . '-' . rand(100, 999) . '-' . rand(1000, 9999),
                         'address' => $faker->address,
                         'date_of_birth' => $faker->dateTimeBetween('-60 years', '-25 years')->format('Y-m-d'),
@@ -263,7 +265,7 @@ class CREAMSSeederFoundationManagement extends Seeder
                     'iium_id' => 'ADD' . $centreId . sprintf('%03d', rand(100, 999)),
                     'name' => $user['name'],
                     'email' => $email,
-                    'password' => Hash::make('password123'),
+                    'password' => Hash::make(self::DEFAULT_SECRET),
                     'phone' => '+60' . rand(10, 19) . '-' . rand(100, 999) . '-' . rand(1000, 9999),
                     'address' => $faker->address,
                     'date_of_birth' => $faker->dateTimeBetween('-50 years', '-25 years')->format('Y-m-d'),

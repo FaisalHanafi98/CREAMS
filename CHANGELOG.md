@@ -13,29 +13,27 @@
 2. **FLASH-GLOBAL-001**: Standardize flash message format across ALL forms in system
 3. **VOLUNTEER-FLASH-001**: Success message disappears too fast on volunteer forms
 
-### AUTHENTICATION ISSUES
-4. **AUTH-LOGIN-001**: Login fails for seeded users (password is 'password123' not 'password')
-
 ### DASHBOARD ISSUES
-5. **DASH-SEARCH-001**: Search function not working (should search Trainees, Users/Staff, Activities)
-6. **DASH-SEARCH-002**: Search results format needs standardization
-7. **DASH-HERO-001**: Remove confusing statistics from hero section (Online status, redundant counts)
-8. **DASH-HERO-002**: Move date/time to right, add weather API integration
-9. **DASH-HERO-003**: Make activity schedule messages more specific per centre
-10. **DASH-DEBUG-001**: Remove debug messages from general section
-11. **DASH-ACTIVITIES-001**: Implement recent activities tracking table
-12. **DASH-STATS-001**: Move "Live Data" info before statistics section
-13. **DASH-ATTEND-001**: Prevent duplicate attendance marking on same day
-14. **DASH-ATTEND-002**: Add attendance symbols to calendar
-15. **DASH-ATTEND-003**: Fix attendance marking - should be per user, not global
-16. **DASH-QUICKACTIONS-001**: Make quick actions role-specific (not same for all roles)
-17. **DASH-AJK-001**: Elevate AJK role level to match Supervisor access
-18. **DASH-AJK-002**: Add Staff module view access to AJK left navbar
+4. **DASH-SEARCH-001**: Search function not working (should search Trainees, Users/Staff, Activities)
+5. **DASH-SEARCH-002**: Search results format needs standardization
+6. **DASH-HERO-001**: Remove confusing statistics from hero section (Online status, redundant counts)
+7. **DASH-HERO-002**: Move date/time to right, add weather API integration
+8. **DASH-HERO-003**: Make activity schedule messages more specific per centre
+9. **DASH-DEBUG-001**: Remove debug messages from general section
+10. **DASH-ACTIVITIES-001**: Implement recent activities tracking table
+11. **DASH-STATS-001**: Move "Live Data" info before statistics section
+12. **DASH-ATTEND-001**: Prevent duplicate attendance marking on same day
+13. **DASH-ATTEND-002**: Add attendance symbols to calendar
+14. **DASH-ATTEND-003**: Fix attendance marking - should be per user, not global
+15. **DASH-QUICKACTIONS-001**: Make quick actions role-specific (not same for all roles)
+16. **DASH-AJK-001**: Elevate AJK role level to match Supervisor access
+17. **DASH-AJK-002**: Add Staff module view access to AJK left navbar
 
 ---
 
 ## Completed Fixes
 
+- **AUTH-LOGIN-001**: Standardized seeded staff passwords to `'password'` in `CREAMSSeederFoundationManagement.php` to match `UserFactory` and `UserTestSeeder`.
 - **AUTH-MESSAGE-001**: Error message updated to "No account found with this email or IIUM ID" in `MainController::check()` (line 393).
 
 ---
