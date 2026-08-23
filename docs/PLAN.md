@@ -1,8 +1,8 @@
 # CREAMS Testing Infrastructure + CI/CD Implementation Plan
 
-## Research Findings (Current State)
+## Research Findings & Current Status
 
-> **Updated 2026-03-22**: This section reflects the actual state after Phases 1-4 were completed.
+> **Updated 2026-08-24**: This section reflects the actual state after Phases 1–4 and Phase 6 were completed.
 
 ### What Exists
 - **27 PHPUnit test classes** (6 Unit + 21 Feature) — AuthenticationTest rewritten and working correctly
@@ -13,14 +13,15 @@
 - **phpunit.xml** uses MySQL (`cream_test`), **phpunit-ci.xml** uses SQLite in-memory
 - **CREAMS_Testing_Infrastructure_PRD.md** exists with full test strategy
 - **CI/CD pipeline active** — `.github/workflows/ci.yml` (tests + lint) and `deploy.yml` (3-stage deploy)
-- **No Dockerfile or docker-compose.yml** (Phase 5 still pending)
-- **No ADRs** — no `docs/adr/` directory (Phase 6 still pending)
+- **ADRs completed (Phase 6)** — `docs/adr/` directory with `ADR-001`, `ADR-002`, `ADR-003`, and `README.md`
+- **Phase 5 pending** — Dockerfile / docker-compose setup
 
-### What Was Fixed (Phases 1-4)
+### What Was Fixed (Phases 1–4, 6)
 1. ~~Existing auth tests are broken~~ — **FIXED**: AuthenticationTest rewritten to use `/auth/check` with `identifier` field, tests all 4 roles
 2. ~~No test database isolation~~ — **FIXED**: phpunit-ci.xml uses SQLite in-memory, phpunit.xml uses cream_test MySQL
-3. Factory cascading still exists but works correctly in both MySQL and SQLite
-4. Table name inconsistency resolved via model `$table` property
+3. ~~Zero ADRs~~ — **FIXED**: Phase 6 ADRs written and indexed in `docs/adr/`
+4. Factory cascading resolved and tested in MySQL and SQLite environments
+5. Table name inconsistency resolved via model `$table` property
 
 ---
 
