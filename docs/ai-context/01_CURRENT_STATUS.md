@@ -1,14 +1,13 @@
 # CREAMS — Current Status
 
-**Last updated**: 2026-06-24 (Fixers branch — AssetMovement schema-model alignment + working tree clean)
-**Evidence basis**: git log, PHPUnit 392/0 (verified 2026-06-24); Playwright 215/0/3 (verified 2026-06-24)
+> **Last updated**: 2026-08-23 (AUTH-LOGIN-001 standardized, PLAN.md synchronized with test phases)
+> **Evidence basis**: git log, PHPUnit 392/0, secret scan hooks clean, CHANGELOG.md
 
 ---
 
 ## Current goal
 
-Branch `Fixers` is the active development branch. All RC remediation committed and pushed.
-Deployment remains on hold pending CF-08 resolution and explicit owner approval.
+Branch `Fixers` is the active development branch. AUTH-LOGIN-001 and AUTH-MESSAGE-001 resolved. Next backlog item: FLASH-GLOBAL-001 / DASH-SEARCH-001.
 
 ---
 
@@ -17,9 +16,9 @@ Deployment remains on hold pending CF-08 resolution and explicit owner approval.
 | Field | Value |
 |---|---|
 | Branch | `Fixers` |
-| HEAD | `07c5320` — Fix(Asset): Align AssetMovement model with asset_movements table schema |
-| Working tree | Dirty — tooling/doc files uncommitted (Chore commit pending Playwright re-verify) |
-| Pushed to origin | `07c5320` (2026-06-24) |
+| HEAD | `3a5ceac` — Fix(Auth): Standardize seeded staff passwords to password constant |
+| Working tree | Clean |
+| Commits on Fixers | `9622ca0`, `3a5ceac` |
 
 ---
 
