@@ -1,3 +1,43 @@
+## Current recovery register — 4 November 2026
+
+Owner resumed the existing release. This table owns current cross-layer leads;
+entries below retain their dated scope. State is static observation until a
+specific synthetic runtime reproduction is recorded in
+[the recovery evidence](../../audit/LOCAL_RECOVERY_2026-11-04.md).
+
+### Central provisional decisions
+
+Owner instruction on 4 November: retain all questions in one place and act on
+reasonable industry-informed defaults, subject to later owner revision. This is
+the single decision log; link it from implementation/configuration rather than
+creating a second question backlog. Defaults are reversible product choices,
+not institutional approval, clinical rules or regulatory certification.
+
+| Decision | Provisional choice / rationale | Evidence / limitation | How to revise |
+|---|---|---|---|
+| P01 Current release | Stabilise existing C01-C18 capabilities; keep future roles and D02 expansions deferred. Preserve existing IEP; do not rebuild removed classes/outcomes scaffolds automatically | Owner's current handoffs/workflow; standalone scaffold overlap still needs trace | Owner changes release matrix scope explicitly |
+| P02 Attendance unit | One trainee in one eligible, non-cancelled activity session is one opportunity. Compute a percentage against eligible opportunities, never trainee marks divided by number of sessions | [DfE published methodology](https://explore-education-statistics.service.gov.uk/methodology/pupil-absence-statistics-methodology) uses possible sessions as denominator. This is a useful education-sector analogy, not a Malaysian PPDK rule | Change the owning attendance policy/configuration and acceptance cases |
+| P03 Attendance states | `present` and `late` count as attended for the generic CREAMS late flag; `absent` and `excused` do not. No automatic positive attendance. Keep unmarked opportunities explicitly unmarked and disclose recording coverage | Product default: current schema has no registration cutoff for late; external school coding cannot be transplanted directly. No allowance/eligibility consequence | Change the central status policy; preserve stored original marks |
+| P04 Attendance period/history | Use due sessions in the selected period, enrolment start dates and available completion dates; exclude cancelled, deleted and out-of-centre objects. Current mutable enrolment state cannot prove complete historical membership; disclose that limitation | Actual schema has no complete membership history; never claim an exact historical expected roster from present-day state | Add a separately scoped membership-history contract before retrospective statutory use |
+| P05 Role/centre permissions | Preserve current four-role server boundaries; admin cross-centre, other roles assigned-centre only, teacher writes only assigned sessions, AJK attendance writes denied. Tighten demonstrated bypasses without adding roles or broader privileges | Current role/middleware/source contract and owner handoff; consequential ambiguous privileges stay visible here | Owner revises the role matrix and its permitted/denied tests |
+| P06 Existing time rules | Preserve current weekday and session-time validations while repairing schema references. Do not infer public-holiday calendars, clinic policy or compulsory attendance from these code checks | Existing model validations are observed behaviour, not proven stakeholder policy | Owner changes rule plus targeted tests; no unrelated time-rule rewrite |
+| P07 Recovery | No automatic down() is promised for irreversible/unclear historical migration changes. Use synthetic upgrade/retry cases and documented forward repair/verified restore before release claims | Historical migration ownership lead; production schema and tested real recovery remain unknown | Separate authorized schema/recovery work order |
+
+Implementation status is tracked by the corresponding CR-I entry below. A chosen
+default is not evidence that it has been implemented or verified. New material
+questions/defaults belong in this same table; do not interrupt for routine choices.
+
+| ID | Requirement / expected vs actual / trace | Confidence and impact | Owner / disposition / acceptance | State |
+|---|---|---|---|---|
+| CR-I01 | Centre recent activities: `/centres/{id}` -> `CentreController::show/getRecentActivities` -> query selected absent `activity_status` and concealed valid records | Reproduced with a real nonzero fixture; repaired with scoped Activity query/soft deletes | Commit `aa42757`; permitted/deleted/inactive/foreign/guest cases; 13 tests / 24 assertions in centre subset | VERIFIED selected local read; module-wide acceptance remains open |
+| CR-I02 | Category navigation: working controller queried removed `activity_categories`, while `Activity.category` is canonical enum | Reproduced redirect, blank canonical fields and invalid affordance; reconciled only category methods against HEAD | Commit `0c540c7`; nonzero/empty/slug/admin/centre cases; 12 tests / 30 assertions in category/activity subset | VERIFIED selected local navigation; unrelated controller work preserved |
+| CR-I03 | Session attendance reads: `centre.attendance.*` -> legacy helpers / computed collections as Eloquent relations | Nonempty dashboard reproduced missing category relationship; canonical summary now reads actual enrolment/marks | Dashboard policy subset 3 tests / 23 assertions; mark form, reports/exports and other paths still require reproduction | PARTIAL local work, not yet committed |
+| CR-I04 | Historical requirements describe Trainee/Parent accounts and standalone classes/outcomes as functional; current owner keeps future roles deferred and code removed scaffolds | Confirmed source contradiction; risks rebuilding unapproved features | Owner retains consequential scope decisions; C10 existing IEP remains in release, no automatic deletion/restoration | Open scope boundary |
+| CR-I05 | Attendance rate: old code could divide trainee marks by session count or infer attendance | Owner delegated defaults P02-P04; canonical summary tested at 2 attended / 4 eligible opportunities, 3 recorded, 1 unmarked | Config and summary are local in-progress work; original marks retained; no allowance/clinical interpretation | Provisional default locally verified for dashboard; broader paths pending |
+| CR-I06 | Migration skipped-up/down ownership and asset remove/restore chain; fresh install success does not prove upgrade/recovery | Static lead, no ordinary/live ledger inspected | CR02 inspect actual chain; synthetic prior schemas and sentinels; no historical migration deletion or unsafe automatic rollback | Unverified |
+| CR-I07 | Passing suite contains caught SQL failures and dormant service fallback tests | Dated October evidence; shape assertions can hide incorrect results | QA: positive/negative records and zero unexpected schema errors for accepted paths; do not wire dormant service into production | Open verification gap |
+| CR-I08 | Historical public letter/avatar exposure and cached authenticated pages | Historical security leads only; current reachability unverified | Synthetic scoped reproduction before remediation; protect real file contents; preserve retention/business rules | Unverified |
+
 # CREAMS — Deviation Register
 
 **Last updated**: 2026-05-08

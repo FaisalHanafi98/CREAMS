@@ -1,5 +1,20 @@
 # CREAMS — Current Session
 
+## Resumed existing-release recovery — 4 November 2026
+
+Owner explicitly resumed CREAMS after the required reconstruction/confirmation.
+Continue CR01 baseline -> bounded CR02/CR03 investigation/repairs using the
+[current status](ai-context/01_CURRENT_STATUS.md),
+[release matrix](MODULE_FUNCTIONALITY_INVENTORY.md#current-release-acceptance-matrix--4-november-2026),
+[inconsistency register](ai-context/08_DOC_ALIGNMENT/deviation_register.md) and
+[current local evidence](audit/LOCAL_RECOVERY_2026-11-04.md).
+Preserve all existing work and logs. Use owned synthetic resources only. No ordinary
+database/production access, dependencies, future module expansion, push or deployment.
+The dated pause and containment instructions below are historical context; do not
+run their example commands against an ordinary environment.
+
+## Historical containment
+
 > **Document type**: Active session prompt (convention pointer)
 > **Last containment pass**: 2026-04-24
 > **Status**: Re-baselining phase — no deployment permitted

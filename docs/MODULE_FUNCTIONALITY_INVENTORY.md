@@ -1,5 +1,45 @@
 # CREAMS - Module Functionality Inventory
 
+## Current-release acceptance matrix — 4 November 2026
+
+Owner resumed the existing-release recovery in chat after context reconstruction.
+This matrix owns current acceptance; the numbered inventory below is historical.
+The release target is maintainability and correct existing end-to-end workflows.
+No numerical completion percentage is inferred. A module remains UNVERIFIED or
+PARTIAL until all its relevant permitted/denied, persisted and failure cases have
+evidence. A green legacy suite alone does not close a row.
+
+| ID | Release capability / actual source entry point | Required observable acceptance | State / evidence |
+|---|---|---|---|
+| C01 | Custom login, logout, reset; `MainController`, `Auth/ForgotPasswordController`, `routes/web.php` | Four active roles establish/clear real sessions; invalid, inactive, expired and unauthorized access denied; reset does not disclose secrets | UNVERIFIED now; dated October four-role HTTP evidence |
+| C02 | Staff lifecycle; `Staff/StaffController`, `User` (`staffs`) | Permitted register/edit/assign/deactivate persists; restricted roles and foreign-centre records denied; invalid input preserves data | UNVERIFIED; existing `StaffManagementTest`/RBAC tests require acceptance review |
+| C03 | Trainee lifecycle; `Trainee/*Controller`, `Trainee` | Registration/edit/status changes and documents persist; malformed input and cross-centre access denied; empty/search states correct | UNVERIFIED; existing trainee and isolation tests |
+| C04 | Centres; `Centre/CentreController`, `Centre` | Admin changes persist; other roles see permitted centre information only; counts and recent activities reflect live, non-deleted records | PARTIAL: recent-record read repaired in `aa42757`, centre subset 13 / 24; broader lifecycle not accepted |
+| C05 | Activities / enrolment / category navigation; `Activity/ActivityController`, `Activity`, `ActivityEnrollment` | Create/edit/category/list/enrol transitions use current enum and canonical records; capacity/state/centre rules preserved; categories with no records remain usable | PARTIAL: category navigation repaired in `0c540c7`, subset 12 / 30; remaining create/edit/enrol workflows not accepted |
+| C06 | Scheduling / templates; `ActivitySession`, `SessionTemplateController`, `ScheduleTemplateController` | Valid sessions/templates persist and appear on calendar; conflicting/invalid times and unauthorized changes denied | UNVERIFIED; historical weekday/time rules require requirement reconciliation |
+| C07 | Staff attendance; `Activity/AttendanceController` | Authorized arrival/departure and corrections persist; invalid/cross-centre changes denied; displayed percentages agree with approved status definition | PARTIAL: October write/metric evidence; correction/status business rules still to reconcile |
+| C08 | Trainee/session attendance; `Centre/AttendanceController`, `Attendance` (`trainee_attendances`) | Permitted instructor/admin/supervisor save and reread session attendance; other instructor/centre/AJK denied; dashboard uses canonical attendance/enrolments without silent SQL fallback | PARTIAL: October write/isolation evidence; read/analytics paths still address legacy enrolments |
+| C09 | Assets / movements / maintenance; `Centre/AssetController`, asset services/models | Permitted register/assign/move/maintain/dispose transitions persist atomically; foreign-centre access and invalid transitions denied; existing history preserved | UNVERIFIED now; existing movement/maintenance isolation tests and October dashboard subset |
+| C10 | IEP goals/review/progress; `IepController`, `Iep`, `IepGoal`, `IepActivityGoal` | Existing plan/goal/review workflows persist and enforce trainee/centre access; unsupported assessment storage is reported honestly | UNVERIFIED; removed standalone learning-outcome scaffold is not automatically reinstated |
+| C11 | Internal messages / notifications; owning controllers/models | Intended recipients see messages/notifications; unrelated users/centres cannot read or mutate them; state changes and empty/error states persist correctly | UNVERIFIED; existing message/notification/isolation tests |
+| C12 | Letter templates / generation / download; `Letters/*`, `Profile/LetterTemplateController` | Authorized template/generation/history/PDF works; unauthorized download/upload rejected; generated files remain within owned protected storage | UNVERIFIED; historical public-file exposure lead requires synthetic reproduction |
+| C13 | Existing dashboards / APIs; `Dashboard/DashboardController`, `Api/ApiController` | Role/centre-specific nonzero and empty metrics match canonical records; no invented health figures; denied roles/centres do not query protected data | PARTIAL: October selected repairs only; remaining query methods unverified |
+| C14 | Existing reports / exports | Existing agreed reports match source records and approved date/status meanings; authorization applies to exported content; failures cannot masquerade as empty success | UNVERIFIED; inspect actual consumers before choosing scope, no expanded analytics |
+| C15 | Own profile / avatar / password; `UserProfileController` | Own permitted fields persist; identity/role/centre escalation denied; valid/invalid upload and password outcomes verified | UNVERIFIED now; October custom POST route tests are dated evidence |
+| C16 | Search / navigation; `SearchController` and real sidebar links | Results and direct links respect role/centre/deletion scope; invalid IDs/empty results handled without leaks | UNVERIFIED; no historical route count accepted as behaviour proof |
+| C17 | Public home / contact; public controllers/views | Existing public pages and validation work; valid synthetic inquiry persists; outbound delivery faked locally; admin inquiry view authorized | UNVERIFIED; existing public tests |
+| C18 | Volunteer applications / administration; `VolunteerController` | Synthetic valid application persists; invalid/duplicate submissions and restricted review actions handled correctly; status workflow follows approved rules | UNVERIFIED; existing volunteer tests and pre-existing Blade changes preserved |
+| D01 | Trainee/Parent login portals and standalone learning-outcome/classes scaffolds | Future roles remain deferred; removed scaffolds are not release obligations without an updated owner requirement; existing IEP responsibilities remain in C10 | EXPLICITLY DEFERRED roles; standalone feature scope unresolved rather than silently restored/deleted |
+| D02 | Expanded analytics, funding/budgets, allowance reconciliation, RPI/rubric assistance | Separate future work orders and business/domain decisions | EXPLICITLY DEFERRED by owner workflow |
+
+Cross-cutting acceptance: centre/record authorization; synthetic-only verification;
+validation and persisted outcomes; real error/empty/loading states; reproducible
+setup; distinct fresh/upgrade/retry/recovery evidence. Keep unresolved business
+rules in the [inconsistency register](ai-context/08_DOC_ALIGNMENT/deviation_register.md).
+Current execution and evidence: [4 November recovery](audit/LOCAL_RECOVERY_2026-11-04.md).
+
+## Historical inventory — February/March 2026
+
 **Generated:** 2026-02-06
 **Last Updated:** 2026-03-24
 **Total Features:** 163

@@ -1,3 +1,20 @@
+## Current recovery resumed — 4 November 2026
+
+Owner explicitly resumed the existing-release workflow after context reconstruction
+and required confirmation. CR01 baseline/release acceptance is recorded in the
+[current release matrix](../MODULE_FUNCTIONALITY_INVENTORY.md#current-release-acceptance-matrix--4-november-2026)
+and [recovery evidence](../audit/LOCAL_RECOVERY_2026-11-04.md). CR02/CR03 local
+investigation proceeds incrementally with synthetic isolated resources. Fresh
+baseline: 409 tests / 721 assertions, including caught errors outside accepted
+paths. Local commits `aa42757` (centre recent records, 13 tests / 24 assertions)
+and `0c540c7` (category browse, 12 tests / 30 assertions) are recorded. Attendance
+dashboard policy tests pass 3 / 23 locally; that slice is still in progress.
+Owner delegated reversible defaults to the central decision register; no more
+routine approval pauses. Existing dirty work is preserved. Production,
+ordinary database access, dependency installation, push/deployment and future
+funding/allowance/RPI expansions remain unauthorized. Business-rule decisions stay
+in the [current inconsistency register](08_DOC_ALIGNMENT/deviation_register.md).
+
 # CREAMS — Current Status
 
 > **Last updated**: 2026-08-23 (AUTH-LOGIN-001 standardized, PLAN.md synchronized with test phases)
