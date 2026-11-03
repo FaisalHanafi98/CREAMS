@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Centre;
 
 use App\Http\Controllers\Controller;
+use App\Services\Attendance\SessionAttendanceSummary;
 use Illuminate\Http\Request;
 use App\Models\ActivitySession;
 use App\Models\Trainee;
@@ -24,45 +25,20 @@ class AttendanceController extends Controller
      */
     public function index(Request $request)
     {
+        $validated = $request->validate(['date' => 'nullable|date_format:Y-m-d', 'centre_id' => 'nullable|string|max:10']);
+        $centreId = $validated['centre_id'] ?? session('centre_id');
+        abort_if(!$centreId, 422, 'Select a centre to view attendance.');
+        abort_if(session('role') !== 'admin' && $centreId !== session('centre_id'), 403);
+        $centre = Centre::where('centre_id', $centreId)->firstOrFail();
+        $selectedDate = $validated['date'] ?? now()->toDateString();
+
         try {
-            // Authentication check
-            if (!session()->has('id')) {
-                return redirect()->route('auth.loginpage');
-            }
+            $data = app(SessionAttendanceSummary::class)->dashboard($centreId, Carbon::parse($selectedDate));
 
-            $role = session('role');
-            $centreId = session('centre_id');
-            $selectedDate = $request->input('date', now()->toDateString());
-            
-            // Get centre information
-            $centre = Centre::where('centre_id', $centreId)->first();
-            
-            // Get today's scheduled activity sessions
-            $activitySessions = $this->getTodayActivitySessions($centreId, $selectedDate);
-            
-            // Get general attendance overview
-            $attendanceOverview = $this->getAttendanceOverview($centreId, $selectedDate);
-            
-            // Get trainees with their activity enrollments
-            $trainees = $this->getTraineesWithEnrollments($centreId);
-            
-            // Get attendance analytics
-            $analytics = $this->getAttendanceAnalytics($centreId, $selectedDate);
-
-            return view('centre.attendance.index', compact(
-                'centre',
-                'activitySessions',
-                'attendanceOverview',
-                'trainees',
-                'analytics',
-                'selectedDate'
-            ));
+            return view('centre.attendance.index', $data + compact('centre', 'selectedDate'));
 
         } catch (Exception $e) {
-            Log::error('Enhanced attendance error: ' . $e->getMessage(), [
-                'user_id' => session('id'),
-                'trace' => $e->getTraceAsString()
-            ]);
+            Log::error('Attendance dashboard failed', ['error_type' => get_class($e)]);
             
             return redirect()->back()->with('error', 'Unable to load attendance dashboard.');
         }

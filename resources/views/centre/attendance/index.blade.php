@@ -22,10 +22,11 @@
                             </div>
                             <div class="header-actions">
                                 <div class="input-group" style="width: 200px;">
+                                    <label for="dateSelector" class="visually-hidden">Attendance date</label>
                                     <input type="date" class="form-control" id="dateSelector" 
                                            value="{{ $selectedDate }}" onchange="changeDate(this.value)">
                                     <div class="input-group-append">
-                                        <button class="btn btn-outline-secondary" type="button" onclick="setToday()">
+                                        <button class="btn btn-outline-secondary" type="button" onclick="setToday()" aria-label="Show today's attendance">
                                             <i class="fas fa-calendar-day"></i>
                                         </button>
                                     </div>
@@ -121,12 +122,9 @@
                                         <div class="col-md-6">
                                             <h5 class="mb-1">{{ $session->activity->activity_name }}</h5>
                                             <p class="text-muted mb-1">
-                                                <i class="fas fa-tag"></i> {{ $session->activity->category->category_name ?? 'Uncategorized' }}
+                                                <i class="fas fa-tag"></i> {{ $session->activity->category_name ?? 'Uncategorized' }}
                                                 <span class="mx-2">|</span>
-                                                <i class="fas fa-map-marker-alt"></i> {{ $session->venue }}
-                                                @if($session->room_number)
-                                                    - Room {{ $session->room_number }}
-                                                @endif
+                                                <i class="fas fa-map-marker-alt"></i> {{ $session->location }}
                                             </p>
                                             <p class="text-muted mb-0">
                                                 <i class="fas fa-user-tie"></i> {{ $session->teacher->name ?? 'Unassigned' }}
@@ -138,11 +136,13 @@
                                             </div>
                                         </div>
                                         <div class="col-md-2 text-center">
-                                            @if($session->attendance_marked)
+                                            @if($session->session_status === 'cancelled')
+                                                <span class="badge badge-secondary">Cancelled</span>
+                                            @elseif($session->attendance_marked)
                                                 <span class="badge badge-success">
                                                     <i class="fas fa-check"></i> Completed
                                                 </span>
-                                            @else
+                                            @elseif($session->can_mark_attendance)
                                                 <a href="{{ route('centre.attendance.mark-session', $session->id) }}" 
                                                    class="btn btn-outline-primary btn-sm">
                                                     <i class="fas fa-clipboard-check"></i> Mark Attendance
@@ -156,8 +156,8 @@
                                             <small class="text-muted">Enrolled Trainees:</small>
                                             <div class="trainee-avatars">
                                                 @foreach(optional($session->enrollments)->take(5) ?? collect() as $enrollment)
-                                                    <span class="avatar-sm" title="{{ $enrollment->trainee->trainee_name }}">
-                                                        {{ substr($enrollment->trainee->trainee_name, 0, 2) }}
+                                                    <span class="avatar-sm" title="{{ $enrollment->trainee->name }}">
+                                                        {{ substr($enrollment->trainee->name, 0, 2) }}
                                                     </span>
                                                 @endforeach
                                                 @if(optional($session->enrollments)->count() > 5)
@@ -194,15 +194,21 @@
                     <div class="analytics-item mb-3">
                         <div class="d-flex justify-content-between align-items-center">
                             <span>Weekly Attendance Rate</span>
-                            <span class="badge badge-success">{{ $analytics['weekly_attendance_rate'] }}%</span>
+                            <span class="badge badge-success">{{ $analytics['weekly_attendance_rate'] === null ? 'No eligible sessions' : $analytics['weekly_attendance_rate'].'%' }}</span>
                         </div>
-                        <div class="progress mt-1">
-                            <div class="progress-bar bg-success" style="width: {{ $analytics['weekly_attendance_rate'] }}%"></div>
-                        </div>
+                        @if($analytics['weekly_attendance_rate'] !== null)
+                            <div class="progress mt-1">
+                                <div class="progress-bar bg-success" role="progressbar" aria-label="Weekly attendance rate" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ $analytics['weekly_attendance_rate'] }}" style="width: {{ $analytics['weekly_attendance_rate'] }}%"></div>
+                            </div>
+                        @endif
+                        <p class="small text-muted mt-2 mb-0">{{ $analytics['recorded'] }} of {{ $analytics['expected'] }} due trainee-session opportunities recorded; {{ $analytics['unmarked'] }} unmarked.</p>
+                        <p class="small text-muted">Present and late count as attended. Past enrolment changes may limit historical totals.</p>
                     </div>
 
                     <!-- Learning Progress Summary -->
-                    @if(isset($analytics['learning_progress_summary']) && count($analytics['learning_progress_summary']) > 0)
+                    @if(!$analytics['learning_progress_available'])
+                        <p class="text-muted small">Learning-progress reporting is unavailable here.</p>
+                    @elseif(isset($analytics['learning_progress_summary']) && count($analytics['learning_progress_summary']) > 0)
                         <div class="analytics-item">
                             <h6>Today's Learning Progress</h6>
                             @foreach($analytics['learning_progress_summary'] as $level => $count)
