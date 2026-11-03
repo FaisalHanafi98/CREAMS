@@ -419,8 +419,8 @@ class CentreController extends Controller
     private function getRecentActivities($centreId)
     {
         try {
-            return DB::table('activities')
-                ->select('id', 'activity_name as name', 'created_at as date', 'is_active', 'activity_status')
+            return Activity::query()
+                ->select('id', 'activity_name as name', 'created_at as date', 'is_active')
                 ->where('centre_id', $centreId)
                 ->where('is_active', true) // Use is_active boolean field
                 ->orderBy('created_at', 'desc')
