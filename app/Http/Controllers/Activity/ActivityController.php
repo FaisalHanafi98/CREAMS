@@ -508,55 +508,17 @@ class ActivityController extends Controller
     public function categories()
     {
         try {
-            $centreId = session('centre_id');
-            $baseQuery = Activity::where('is_active', true);
-            if ($centreId) {
-                $baseQuery->where('centre_id', $centreId);
-            }
-
-            $categoryCounts = $baseQuery->clone()
-                ->select('category', DB::raw('COUNT(*) as activities_count'))
-                ->whereNotNull('category')
+            $counts = Activity::active()
+                ->select('category', DB::raw('COUNT(*) as aggregate'))
                 ->groupBy('category')
-                ->pluck('activities_count', 'category');
+                ->pluck('aggregate', 'category');
+            $categoriesGrouped = $this->categoryCatalogue()
+                ->map(function ($category) use ($counts) {
+                    $category->activities_count = (int) ($counts[$category->name] ?? 0);
 
-            $categoryMeta = [
-                'Autism Spectrum Support' => ['type' => 'rehabilitation', 'color_code' => '#8B5CF6'],
-                'Hearing Impairment' => ['type' => 'rehabilitation', 'color_code' => '#2563EB'],
-                'Visual Impairment' => ['type' => 'rehabilitation', 'color_code' => '#059669'],
-                'Physical Disabilities' => ['type' => 'rehabilitation', 'color_code' => '#DC2626'],
-                'Learning Support' => ['type' => 'academic', 'color_code' => '#D97706'],
-                'Speech Therapy' => ['type' => 'academic', 'color_code' => '#0EA5E9'],
-            ];
-
-            $categoriesGrouped = [
-                'faith' => collect(),
-                'rehabilitation' => collect(),
-                'academic' => collect(),
-                'creative_social' => collect(),
-            ];
-
-            foreach ($categoryCounts as $name => $count) {
-                $meta = $categoryMeta[$name] ?? ['type' => 'rehabilitation', 'color_code' => '#8B5CF6'];
-                $type = $meta['type'];
-                $categoriesGrouped[$type]->push((object) [
-                    'id' => null,
-                    'name' => $name,
-                    'slug' => \Illuminate\Support\Str::slug($name),
-                    'description' => "Activities in the {$name} category",
-                    'activities_count' => (int) $count,
-                    'color_code' => $meta['color_code'],
-                    'icon_class' => $this->getCategoryIcon($name),
-                    'type' => $type,
-                    'type_display' => ucwords(str_replace('_', ' ', $type)),
-                ]);
-            }
-
-            Log::info('Categories loaded successfully', [
-                'rehabilitation_count' => $categoriesGrouped['rehabilitation']->count(),
-                'academic_count' => $categoriesGrouped['academic']->count(),
-                'creative_social_count' => $categoriesGrouped['creative_social']->count()
-            ]);
+                    return $category;
+                })
+                ->groupBy('type');
 
             return view('rehabilitation.categories', ['categories' => $categoriesGrouped]);
         } catch (Exception $e) {
@@ -571,36 +533,17 @@ class ActivityController extends Controller
      */
     public function categoryShow($categorySlug)
     {
+        $category = $this->categoryCatalogue()->firstWhere('slug', $categorySlug);
+        abort_unless($category, 404);
+
         try {
             $this->logUserAction('view_category_activities', ['category_slug' => $categorySlug]);
 
-            $categoryName = str_replace('-', ' ', $categorySlug);
-            $categoryName = ucwords($categoryName);
-
-            $activitiesQuery = Activity::where('category', $categoryName)
-                ->where('is_active', true)
-                ->with(['sessions', 'creator']);
-
-            $centreId = session('centre_id');
-            if ($centreId) {
-                $activitiesQuery->where('centre_id', $centreId);
-            }
-
-            $activities = $activitiesQuery->paginate(9);
-            if ($activities->total() === 0) {
-                return redirect()->route('activities.categories')
-                    ->with('error', 'Category not found.');
-            }
-
-            $category = (object) [
-                'id' => null,
-                'name' => $categoryName,
-                'slug' => $categorySlug,
-                'description' => "Activities in the {$categoryName} category",
-                'type' => 'rehabilitation',
-                'icon_class' => $this->getCategoryIcon($categoryName),
-                'color_code' => '#8B5CF6',
-            ];
+            $activities = Activity::where('category', $category->name)
+                ->active()
+                ->with(['sessions', 'creator'])
+                ->withCount(['sessions', 'activeEnrollments'])
+                ->paginate(9);
 
             return view('rehabilitation.categoryshow', compact('category', 'activities'));
         } catch (Exception $e) {
@@ -610,9 +553,22 @@ class ActivityController extends Controller
         }
     }
 
-    /**
-     * Show the form for creating a new activity
-     */
+    private function categoryCatalogue()
+    {
+        return collect($this->getActivityCategories())->map(function ($name) {
+            $activity = new Activity(['category' => $name]);
+
+            return (object) [
+                'name' => $name,
+                'slug' => \Illuminate\Support\Str::slug($name),
+                'description' => "Activities in the {$name} category",
+                'color_code' => $activity->category_color,
+                'icon_class' => $activity->category_icon,
+                'type' => $activity->overarching_type,
+            ];
+        });
+    }
+
     public function create()
     {
         $role = session('role');

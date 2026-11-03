@@ -13,7 +13,7 @@
             <a href="{{ route('activities.categories') }}" class="btn btn-secondary btn-sm">
                 <i class="fas fa-arrow-left"></i> Back to Category
             </a>
-            @if(in_array(session('role'), ['admin', 'supervisor']))
+            @if(session('role') === 'admin')
                 <a href="{{ route('activities.create') }}" class="btn btn-primary btn-sm">
                     <i class="fas fa-plus"></i> Create New Activity
                 </a>
@@ -30,13 +30,10 @@
                             <div class="row no-gutters align-items-center">
                                 <div class="col mr-2">
                                     <div class="text-xs font-weight-bold text-uppercase mb-1" style="color: {{ $category->color_code ?? '#8B5CF6' }}">
-                                        {{ $activity->category->name ?? $activity->category }}
+                                        {{ $activity->category_name }}
                                     </div>
                                     <div class="h5 mb-0 font-weight-bold text-gray-800">
                                         {{ $activity->activity_name }}
-                                    </div>
-                                    <div class="text-xs text-gray-500 mt-1">
-                                        Code: {{ $activity->activity_code }}
                                     </div>
                                 </div>
                                 <div class="col-auto">
@@ -46,22 +43,19 @@
                             
                             <div class="mt-3">
                                 <p class="text-sm text-gray-700 mb-3">
-                                    {{ Str::limit($activity->description, 100) }}
+                                    {{ Str::limit($activity->activity_description, 100) }}
                                 </p>
                                 
                                 <div class="d-flex justify-content-between align-items-center mb-2">
                                     <small class="text-muted">
-                                        <i class="fas fa-clock"></i> {{ $activity->duration_minutes }} min
+                                        <i class="fas fa-clock"></i> {{ $activity->session_duration_minutes }} min
                                     </small>
                                     <small class="text-muted">
-                                        <i class="fas fa-users"></i> {{ $activity->min_participants }}-{{ $activity->max_participants }}
+                                        <i class="fas fa-users"></i> Up to {{ $activity->max_participants }} participants
                                     </small>
                                 </div>
                                 
                                 <div class="d-flex justify-content-between align-items-center mb-3">
-                                    <span class="badge badge-{{ $activity->difficulty_level === 'Beginner' ? 'success' : ($activity->difficulty_level === 'Intermediate' ? 'warning' : 'danger') }}">
-                                        {{ $activity->difficulty_level }}
-                                    </span>
                                     <span class="badge badge-{{ $activity->is_active ? 'success' : 'secondary' }}">
                                         {{ $activity->is_active ? 'Active' : 'Inactive' }}
                                     </span>
@@ -71,7 +65,7 @@
                                     <a href="{{ route('activities.show', $activity->id) }}" class="btn btn-sm" style="background-color: {{ $category->color_code ?? '#8B5CF6' }}; border-color: {{ $category->color_code ?? '#8B5CF6' }}; color: white;">
                                         <i class="fas fa-eye"></i> View Details
                                     </a>
-                                    @if(in_array(session('role'), ['admin', 'supervisor']))
+                                    @if(session('role') === 'admin')
                                         <a href="{{ route('activities.edit', $activity->id) }}" class="btn btn-outline-secondary btn-sm">
                                             <i class="fas fa-edit"></i> Edit
                                         </a>
@@ -105,7 +99,7 @@
                     There are currently no activities in the {{ $category->name }} category.
                 </p>
                 <p class="text-muted mb-4">{{ $category->description }}</p>
-                @if(in_array(session('role'), ['admin', 'supervisor']))
+                @if(session('role') === 'admin')
                     <a href="{{ route('activities.create') }}" class="btn btn-primary">
                         <i class="fas fa-plus"></i> Create First Activity
                     </a>
