@@ -35,6 +35,9 @@ function intendedChecks(id) {
     }
     const mark = 'centre/attendance/session/{sessionId}/mark';
     const store = 'centre/attendance/session/{sessionId}/store';
+    if (id.startsWith('C08-report-denied-')) {
+        return [['GET', 'centre/attendance/analytics', 'denied role'], ['GET', 'centre/attendance/export', 'denied role'], ['POST', 'activity-attendance/export', 'denied role']];
+    }
     return ({
         'C04-centre-read': [['GET', 'centres/{id}', 'assigned and denied centre']],
         'C05-category-navigation': [['GET', 'activities/categories', 'render and navigate'], ['GET', 'activities/categories/{categorySlug}', 'populated, empty and invalid']],
@@ -43,6 +46,10 @@ function intendedChecks(id) {
         'C08-attendance-foreign': [['GET', mark, 'denied centre'], ['POST', store, 'denied centre']],
         'C08-attendance-ajk': [['GET', 'centre/attendance', 'denied role'], ['GET', mark, 'denied role'], ['POST', store, 'denied role']],
         'C08-attendance-invalid': [['POST', store, 'invalid value preserves saved mark']],
+        'C08-report-supervisor': [['GET', 'centre/attendance/analytics', 'filter assigned centre'], ['GET', 'centre/attendance/export', 'scoped CSV and PDF downloads'], ['POST', 'activity-attendance/export', 'legacy CSV and denied centre']],
+        'C08-report-admin': [['GET', 'centre/attendance/analytics', 'select a centre without mixing records']],
+        'C08-report-narrow': [['GET', 'centre/attendance/analytics', 'keyboard filter on narrow viewport']],
+        'C08-report-empty-invalid': [['GET', 'centre/attendance/analytics', 'empty report and recoverable invalid range']],
     })[id] ?? [];
 }
 

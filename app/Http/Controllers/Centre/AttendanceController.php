@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Centre;
 use App\Http\Controllers\Controller;
 use App\Services\Attendance\SessionAttendanceSummary;
 use Illuminate\Http\Request;
+use App\Http\Requests\AttendanceReportRequest;
+use App\Services\Attendance\RecordedAttendanceReport;
 use App\Models\ActivitySession;
 use App\Models\Trainee;
 use App\Models\Activity;
@@ -150,66 +152,24 @@ class AttendanceController extends Controller
     /**
      * Attendance analytics and reports
      */
-    public function analytics(Request $request)
+    public function analytics(AttendanceReportRequest $request, RecordedAttendanceReport $report)
     {
-        try {
-            $centreId = session('centre_id');
-            $role = session('role');
-            
-            // Date range filtering
-            $startDate = $request->input('start_date', now()->subMonth()->toDateString());
-            $endDate = $request->input('end_date', now()->toDateString());
-            
-            // Activity-based attendance analytics
-            $activityAttendance = $this->getActivityAttendanceAnalytics($centreId, $startDate, $endDate);
-            
-            // Learning outcome progress analytics
-            $learningProgress = $this->getLearningProgressAnalytics($centreId, $startDate, $endDate);
-            
-            // Individual trainee performance
-            $traineePerformance = $this->getTraineePerformanceAnalytics($centreId, $startDate, $endDate);
-            
-            // IEP goal progress
-            $iepProgress = $this->getIepProgressAnalytics($centreId, $startDate, $endDate);
+        $filters = $request->validated();
+        $centreId = $filters['centre_id'] ?? null;
+        $centre = $centreId ? Centre::where('centre_id', $centreId)->firstOrFail() : null;
+        $centres = session('role') === 'admin'
+            ? Centre::orderBy('centre_name')->get(['centre_id', 'centre_name'])
+            : collect();
+        $startDate = $filters['start_date'];
+        $endDate = $filters['end_date'];
+        $marks = $centre ? $report->marks($centreId, $startDate, $endDate)->paginate(50)->withQueryString() : null;
 
-            return view('centre.enhanced-attendance.analytics', compact(
-                'activityAttendance',
-                'learningProgress',
-                'traineePerformance',
-                'iepProgress',
-                'startDate',
-                'endDate'
-            ));
-
-        } catch (Exception $e) {
-            Log::error('Attendance analytics error: ' . $e->getMessage());
-            return redirect()->back()->with('error', 'Unable to load attendance analytics.');
-        }
+        return view('centre.attendance.report', compact('centre', 'centres', 'startDate', 'endDate', 'marks'));
     }
 
-    /**
-     * Export attendance data with learning outcomes
-     */
-    public function export(Request $request)
+    public function export(AttendanceReportRequest $request, RecordedAttendanceReport $report)
     {
-        try {
-            $format = $request->input('format', 'excel');
-            $startDate = $request->input('start_date', now()->subMonth()->toDateString());
-            $endDate = $request->input('end_date', now()->toDateString());
-            $centreId = session('centre_id');
-
-            $data = $this->getComprehensiveAttendanceData($centreId, $startDate, $endDate);
-
-            if ($format === 'pdf') {
-                return $this->exportToPdf($data, $startDate, $endDate);
-            } else {
-                return $this->exportToExcel($data, $startDate, $endDate);
-            }
-
-        } catch (Exception $e) {
-            Log::error('Attendance export error: ' . $e->getMessage());
-            return redirect()->back()->with('error', 'Unable to export attendance data.');
-        }
+        return $report->download($request->validated());
     }
 
     // Private helper methods
@@ -428,13 +388,4 @@ class AttendanceController extends Controller
                 ->pluck('count', 'current_level')
                 ->toArray();
     }
-
-    // Additional analytics methods would be implemented here...
-    private function getActivityAttendanceAnalytics($centreId, $startDate, $endDate) { /* Implementation */ }
-    private function getLearningProgressAnalytics($centreId, $startDate, $endDate) { /* Implementation */ }
-    private function getTraineePerformanceAnalytics($centreId, $startDate, $endDate) { /* Implementation */ }
-    private function getIepProgressAnalytics($centreId, $startDate, $endDate) { /* Implementation */ }
-    private function getComprehensiveAttendanceData($centreId, $startDate, $endDate) { /* Implementation */ }
-    private function exportToPdf($data, $startDate, $endDate) { /* Implementation */ }
-    private function exportToExcel($data, $startDate, $endDate) { /* Implementation */ }
 }

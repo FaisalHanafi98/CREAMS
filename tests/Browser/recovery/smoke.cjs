@@ -14,8 +14,8 @@ const fixture = JSON.parse(fs.readFileSync(fixturePath, 'utf8'));
 const cases = [];
 const outcomes = [];
 
-function check(id, description, run) {
-    cases.push({ id, description, run });
+function check(id, description, run, viewport = { width: 1280, height: 800 }) {
+    cases.push({ id, description, run, viewport });
 }
 
 function safeError(error) {
@@ -148,6 +148,122 @@ check('C08-attendance-invalid', 'Reject an invalid status without changing the s
     assert.equal(await status.inputValue(), before);
 });
 
+async function applyReportDay(page, day = fixture.report_date) {
+    await page.getByLabel('Start date', { exact: true }).fill(day);
+    await page.getByLabel('End date', { exact: true }).fill(day);
+    await Promise.all([
+        page.waitForURL((url) => url.searchParams.get('start_date') === day),
+        page.getByRole('button', { name: 'Apply filters', exact: true }).click(),
+    ]);
+    await page.getByRole('heading', { name: 'Recorded attendance', exact: true }).waitFor();
+}
+
+async function legacyExport(page, centreId) {
+    return page.evaluate(async ({ centreId, day }) => {
+        const token = document.querySelector('meta[name="csrf-token"]')?.content;
+        const response = await fetch('/activity-attendance/export', {
+            method: 'POST',
+            headers: { Accept: 'application/json', 'Content-Type': 'application/json', 'X-CSRF-TOKEN': token },
+            body: JSON.stringify({ centre_id: centreId, date_from: day, date_to: day, format: 'excel' }),
+        });
+        return { status: response.status, contentType: response.headers.get('content-type'), body: await response.text() };
+    }, { centreId, day: fixture.report_date });
+}
+
+check('C08-report-supervisor', 'Filter own-centre attendance and download CSV, PDF and the legacy export', async (page, recordDownload) => {
+    await login(page, 'supervisor');
+    await open(page, '/centre/attendance');
+    await page.getByRole('link', { name: 'View attendance report', exact: true }).click();
+    await page.waitForURL((url) => url.pathname === '/centre/attendance/analytics');
+    await applyReportDay(page);
+    const table = page.getByRole('table', { name: 'Recorded attendance marks' });
+    await table.getByText('Synthetic Browser Learner', { exact: false }).waitFor({ state: 'visible' });
+    assert.equal(await table.getByText('Synthetic Foreign Browser Learner', { exact: false }).count(), 0);
+
+    for (const [format, label] of [['csv', 'Download CSV'], ['pdf', 'Download PDF']]) {
+        const [download] = await Promise.all([
+            page.waitForEvent('download'),
+            page.getByRole('link', { name: label, exact: true }).click(),
+        ]);
+        assert.ok(download.suggestedFilename().endsWith(`.${format}`), `${format} download filename`);
+        const contents = fs.readFileSync(await download.path());
+        if (format === 'csv') {
+            assert.ok(contents.toString('utf8').includes('Synthetic Browser Learner'));
+            assert.ok(!contents.toString('utf8').includes('Synthetic Foreign Browser Learner'));
+        } else {
+            assert.equal(contents.subarray(0, 5).toString('ascii'), '%PDF-');
+            assert.ok(contents.length > 512);
+        }
+        recordDownload(download);
+    }
+
+    const legacy = await legacyExport(page, '01');
+    assert.equal(legacy.status, 200);
+    assert.match(legacy.contentType, /^text\/csv/);
+    assert.ok(legacy.body.includes('Synthetic Browser Learner'));
+    assert.ok(!legacy.body.includes('Synthetic Foreign Browser Learner'));
+    assert.equal((await legacyExport(page, '02')).status, 403);
+    await open(page, '/centre/attendance/export?centre_id=02', 403);
+});
+
+check('C08-report-admin', 'Select another centre as Admin without mixing its report with the first', async (page) => {
+    await login(page, 'admin');
+    await open(page, '/centre/attendance/analytics');
+    await page.getByLabel('Centre', { exact: true }).selectOption('02');
+    await applyReportDay(page);
+    const table = page.getByRole('table', { name: 'Recorded attendance marks' });
+    await table.getByText('Synthetic Foreign Browser Learner', { exact: false }).waitFor({ state: 'visible' });
+    assert.equal(await table.getByText('Synthetic Browser Learner', { exact: false }).count(), 0);
+});
+
+for (const role of ['teacher', 'ajk']) {
+    check(`C08-report-denied-${role}`, `Deny centre reports and both exports for ${role}`, async (page) => {
+        await login(page, role);
+        assert.equal((await legacyExport(page, '01')).status, 403);
+        await open(page, '/centre/attendance/analytics', 403);
+        await open(page, '/centre/attendance/export?centre_id=01', 403);
+    });
+}
+
+check('C08-report-narrow', 'Filter recorded marks with the keyboard on a narrow viewport', async (page) => {
+    await login(page, 'supervisor');
+    await open(page, '/centre/attendance/analytics');
+    const start = page.getByLabel('Start date', { exact: true });
+    await start.focus();
+    assert.equal(await start.evaluate((element) => element === document.activeElement), true);
+    let focused = 'report-start';
+    for (let step = 0; step < 7 && focused === 'report-start'; step++) {
+        await page.keyboard.press('Tab');
+        focused = await page.evaluate(() => document.activeElement?.id);
+    }
+    assert.equal(focused, 'report-end');
+    await applyReportDay(page);
+    assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1), 'Page should not overflow horizontally.');
+}, { width: 390, height: 844 });
+
+check('C08-report-empty-invalid', 'Distinguish an empty period from an invalid range and preserve the inputs', async (page) => {
+    await login(page, 'supervisor');
+    await open(page, '/centre/attendance/analytics');
+    const previous = new Date(`${fixture.report_date}T00:00:00Z`);
+    previous.setUTCDate(previous.getUTCDate() - 1);
+    const emptyDay = previous.toISOString().slice(0, 10);
+    await applyReportDay(page, emptyDay);
+    await textVisible(page, 'No recorded attendance in this period.');
+
+    await page.getByLabel('Start date', { exact: true }).fill(fixture.report_date);
+    await Promise.all([
+        page.waitForResponse((response) => {
+            const url = new URL(response.url());
+            return url.pathname === '/centre/attendance/analytics' && url.searchParams.get('start_date') === fixture.report_date
+                && url.searchParams.get('end_date') === emptyDay && response.status() === 302;
+        }),
+        page.getByRole('button', { name: 'Apply filters', exact: true }).click(),
+    ]);
+    await page.getByRole('alert').getByText(/end date field must be a date after/i).waitFor({ state: 'visible' });
+    assert.equal(await page.getByLabel('Start date', { exact: true }).inputValue(), fixture.report_date);
+    assert.equal(await page.getByLabel('End date', { exact: true }).inputValue(), emptyDay);
+});
+
 async function main() {
     const filter = process.env.CREAMS_BROWSER_CASE_FILTER || '';
     const selected = cases.filter((test) => test.id.startsWith(filter));
@@ -158,7 +274,7 @@ async function main() {
     });
     try {
         for (const test of selected) {
-            const context = await browser.newContext({ viewport: { width: 1280, height: 800 }, serviceWorkers: 'block' });
+            const context = await browser.newContext({ viewport: test.viewport, serviceWorkers: 'block' });
             let externalBlocked = 0;
             await context.route('**/*', (route) => {
                 const url = new URL(route.request().url());
@@ -182,14 +298,18 @@ async function main() {
             const start = Date.now();
             let failure;
             try {
-                await test.run(page);
+                await test.run(page, (download) => {
+                    const url = new URL(download.url());
+                    assert.equal(url.origin, origin);
+                    observations.push({ method: 'GET', path: url.pathname, status: null, browser_download: true });
+                });
             } catch (error) {
                 failure = safeError(error);
             } finally {
                 await context.close();
             }
             const result = {
-                id: test.id, description: test.description,
+                id: test.id, description: test.description, viewport: test.viewport,
                 status: failure ? 'FAILED' : errors.size ? 'PARTIAL' : 'PASSED',
                 failure, browser_errors: [...errors], observed_requests: observations,
                 external_requests_blocked: externalBlocked, duration_ms: Date.now() - start,

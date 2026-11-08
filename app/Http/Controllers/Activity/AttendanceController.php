@@ -8,6 +8,8 @@ use App\Models\Activity;
 use App\Models\ActivitySession;
 use App\Models\Attendance;
 use Illuminate\Http\Request;
+use App\Http\Requests\AttendanceReportRequest;
+use App\Services\Attendance\RecordedAttendanceReport;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
@@ -447,157 +449,11 @@ class AttendanceController extends Controller
     /**
      * Export attendance data with proper permissions
      */
-    public function export(Request $request)
+    public function export(AttendanceReportRequest $request, RecordedAttendanceReport $report)
     {
-        $request->validate([
-            'date_from' => 'required|date',
-            'date_to' => 'required|date|after_or_equal:date_from',
-            'format' => 'required|in:csv,excel,pdf',
-            'centre_id' => 'nullable|exists:centres,id'
-        ]);
-        
-        $user = (object) [
-            'id' => session('id'),
-            'role' => session('role'),
-            'centre_id' => session('centre_id')
-        ];
-        
-        // Permission check for data access
-        $centreId = $request->centre_id;
-        if ($user->role === 'teacher') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Teacher cannot export attendance data'
-            ], 403);
-        } elseif (!in_array($user->role, ['admin']) && $centreId !== $user->centre_id) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Unauthorized: Cannot export data from other centres'
-            ], 403);
-        }
-        
-        try {
-            // Get attendance data with optimized queries
-            $attendanceData = $this->getAttendanceForExport(
-                $request->date_from,
-                $request->date_to,
-                $centreId
-            );
-            
-            Log::info('Attendance export requested', [
-                'user_id' => $user->id,
-                'date_from' => $request->date_from,
-                'date_to' => $request->date_to,
-                'format' => $request->format,
-                'records_count' => $attendanceData->count()
-            ]);
-            
-            // Generate export based on format
-            switch ($request->format) {
-                case 'csv':
-                    return $this->exportToCsv($attendanceData);
-                case 'excel':
-                    return $this->exportToExcel($attendanceData);
-                case 'pdf':
-                    return $this->exportToPdf($attendanceData);
-            }
-            
-        } catch (\Exception $e) {
-            Log::error('Attendance export failed', [
-                'user_id' => $user->id,
-                'error' => $e->getMessage()
-            ]);
-            
-            return response()->json([
-                'success' => false,
-                'message' => 'Export failed: ' . $e->getMessage()
-            ], 500);
-        }
+        return $report->download($request->validated());
     }
-    
-    /**
-     * Get attendance data for export with optimized queries
-     */
-    private function getAttendanceForExport($dateFrom, $dateTo, $centreId = null)
-    {
-        $query = Attendance::with([
-            'trainee:id,trainee_id,unique_identifier,trainee_first_name,trainee_last_name',
-            'activity:id,activity_name,centre_id',
-            'session.teacher:id,name',
-        ])
-        ->whereBetween('attendance_date', [$dateFrom, $dateTo]);
 
-        if ($centreId) {
-            $query->whereHas('activity', function ($q) use ($centreId) {
-                $q->where('centre_id', $centreId);
-            });
-        }
-
-        return $query->get();
-    }
-    
-    /**
-     * Export to CSV format
-     */
-    private function exportToCsv($data)
-    {
-        $filename = 'attendance_export_' . date('Y-m-d_H-i-s') . '.csv';
-        
-        $headers = [
-            'Content-Type' => 'text/csv',
-            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
-        ];
-        
-        $callback = function() use ($data) {
-            $file = fopen('php://output', 'w');
-            
-            // CSV headers
-            fputcsv($file, [
-                'Date', 'Trainee ID', 'Trainee Name', 'Activity', 'Teacher',
-                'Status', 'Participation Score', 'Notes', 'Check-in Time'
-            ]);
-            
-            // CSV data
-            foreach ($data as $record) {
-                fputcsv($file, [
-                    $record->attendance_date,
-                    $record->trainee->unique_identifier ?? $record->trainee->trainee_id ?? 'N/A',
-                    $record->trainee->trainee_first_name . ' ' . $record->trainee->trainee_last_name,
-                    $record->activity->activity_name ?? 'N/A',
-                    $record->session->teacher->name ?? 'N/A',
-                    ucfirst($record->status ?? 'Not Marked'),
-                    'N/A',
-                    $record->notes ?? '',
-                    $record->marked_at ? $record->marked_at->format('H:i:s') : 'N/A',
-                ]);
-            }
-            
-            fclose($file);
-        };
-        
-        return response()->stream($callback, 200, $headers);
-    }
-    
-    /**
-     * Export to Excel format (placeholder for now)
-     */
-    private function exportToExcel($data)
-    {
-        // For now, return CSV. In production, use PhpSpreadsheet or Laravel Excel
-        return $this->exportToCsv($data);
-    }
-    
-    /**
-     * Export to PDF format (placeholder for now)
-     */
-    private function exportToPdf($data)
-    {
-        return response()->json([
-            'success' => false,
-            'message' => 'PDF export functionality will be implemented in the next update'
-        ]);
-    }
-    
     /**
      * Get attendance form for a specific session
      */

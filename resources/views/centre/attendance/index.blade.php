@@ -220,11 +220,13 @@
                         </div>
                     @endif
                 </div>
-                <div class="card-footer">
-                    <a href="{{ route('centre.attendance.analytics') }}" class="btn btn-outline-success btn-sm btn-block">
-                        <i class="fas fa-chart-bar"></i> View Detailed Analytics
-                    </a>
-                </div>
+                @if(in_array(session('role'), ['admin', 'supervisor'], true))
+                    <div class="card-footer">
+                        <a href="{{ route('centre.attendance.analytics', ['centre_id' => $centre->centre_id]) }}" class="btn btn-outline-success btn-sm btn-block">
+                            <i class="fas fa-chart-bar" aria-hidden="true"></i> View attendance report
+                        </a>
+                    </div>
+                @endif
             </div>
 
             <!-- Quick Actions Panel -->
@@ -237,12 +239,11 @@
                 </div>
                 <div class="card-body">
                     <div class="quick-actions">
-                        <a href="{{ route('centre.attendance.analytics') }}" class="btn btn-outline-info btn-block mb-2">
-                            <i class="fas fa-chart-bar"></i> Attendance Reports
-                        </a>
-                        <a href="{{ route('centre.attendance.export') }}?format=excel" class="btn btn-outline-success btn-block mb-2">
-                            <i class="fas fa-file-excel"></i> Export to Excel
-                        </a>
+                        @if(in_array(session('role'), ['admin', 'supervisor'], true))
+                            <a href="{{ route('centre.attendance.export', ['centre_id' => $centre->centre_id, 'format' => 'csv']) }}" class="btn btn-outline-success btn-block mb-2">
+                                <i class="fas fa-file-csv" aria-hidden="true"></i> Download attendance CSV
+                            </a>
+                        @endif
                         <a href="{{ route('activities.index') }}" class="btn btn-outline-primary btn-block mb-2">
                             <i class="fas fa-calendar-alt"></i> Manage Activities
                         </a>
