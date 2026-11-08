@@ -24,11 +24,7 @@ class SessionAttendanceSummary
         $todaySessions = collect();
         foreach ($sessions as $session) {
             $roster = $this->roster($session, $centreId);
-            $marks = $session->traineeAttendances
-                ->filter(fn ($mark) => $mark->activity_id === $session->activity_id
-                    && $mark->attendance_date->isSameDay($session->session_date)
-                    && $roster->contains('trainee_id', $mark->trainee_id))
-                ->sortByDesc('id')->unique('trainee_id');
+            $marks = $this->recordedMarks($session, $roster);
             $attended = $marks->whereIn('status', config('attendance.attended_statuses'));
             $session->setRelation('enrollments', $roster);
             $session->setRelation('traineeAttendances', $marks);
@@ -72,7 +68,16 @@ class SessionAttendanceSummary
         ];
     }
 
-    private function roster(ActivitySession $session, string $centreId): Collection
+    public function recordedMarks(ActivitySession $session, Collection $roster): Collection
+    {
+        return $session->traineeAttendances
+            ->filter(fn ($mark) => $mark->activity_id === $session->activity_id
+                && $mark->attendance_date->isSameDay($session->session_date)
+                && $roster->contains('trainee_id', $mark->trainee_id))
+            ->sortByDesc('id')->unique('trainee_id');
+    }
+
+    public function roster(ActivitySession $session, string $centreId): Collection
     {
         return $session->enrollments->filter(fn ($enrollment) => $enrollment->trainee
             && $enrollment->trainee->centre_id === $centreId

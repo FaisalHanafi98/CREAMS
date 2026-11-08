@@ -58,6 +58,12 @@ class CentreAttendanceStoreTest extends TestCase
         $activity = Activity::factory()->create(['centre_id' => '01']);
         $session  = ActivitySession::factory()->create(['activity_id' => $activity->id]);
         $trainee  = Trainee::factory()->create(['centre_id' => '01']);
+        \App\Models\ActivityEnrollment::create([
+            'activity_id' => $activity->id,
+            'trainee_id' => $trainee->id,
+            'enrollment_date' => $session->session_date,
+            'enrollment_status' => 'enrolled',
+        ]);
 
         $response = $this->actingAsAdmin('01')
             ->post(route('centre.attendance.store-session', $session->id), [

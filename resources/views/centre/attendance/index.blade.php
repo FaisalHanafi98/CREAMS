@@ -145,7 +145,7 @@
                                             @elseif($session->can_mark_attendance)
                                                 <a href="{{ route('centre.attendance.mark-session', $session->id) }}" 
                                                    class="btn btn-outline-primary btn-sm">
-                                                    <i class="fas fa-clipboard-check"></i> Mark Attendance
+                                                    <i class="fas fa-clipboard-check" aria-hidden="true"></i> Mark Attendance
                                                 </a>
                                             @endif
                                         </div>

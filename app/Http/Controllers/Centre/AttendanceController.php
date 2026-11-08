@@ -49,164 +49,102 @@ class AttendanceController extends Controller
      */
     public function markActivityAttendance($sessionId)
     {
-        try {
-            // Check if today is a weekend (Saturday or Sunday)
-            $today = now();
-            if ($today->isWeekend()) {
-                return redirect()->back()->with('error', 'Attendance marking is not allowed on weekends. Please try again on a weekday.');
-            }
-            
-            $session = ActivitySession::with([
-                'activity.learningOutcomes',
-                'activity.category',
-                'sessionEnrollments.trainee',
-                'teacher'
-            ])->findOrFail($sessionId);
-
-            // Check if user can mark attendance for this session
-            if (!$this->canMarkAttendance($session)) {
-                abort(403, 'You do not have permission to mark attendance for this session.');
-            }
-
-            // Get enrolled trainees
-            $enrolledTrainees = $session->sessionEnrollments()
-                                      ->with('trainee')
-                                      ->get();
-
-            // Get learning outcomes for progress tracking
-            $learningOutcomes = $session->activity->learningOutcomes;
-
-            // Get IEP goals related to this activity
-            $iepGoals = IepActivityGoal::where('activity_id', $session->activity_id)
-                                     ->with('iep.trainee')
-                                     ->get();
-
-            return view('centre.attendance.mark-session', compact(
-                'session',
-                'enrolledTrainees',
-                'learningOutcomes',
-                'iepGoals'
-            ));
-
-        } catch (Exception $e) {
-            Log::error('Activity attendance marking error: ' . $e->getMessage());
-            return redirect()->back()->with('error', 'Unable to load attendance marking interface.');
+        $session = $this->resolveMarkingSession($sessionId);
+        if (now()->isWeekend()) {
+            return redirect()->route('centre.attendance.index')->with('error', 'Attendance marking is not allowed on weekends.');
         }
+
+        $summary = app(SessionAttendanceSummary::class);
+        $enrolledTrainees = $summary->roster($session, $session->activity->centre_id);
+        $marks = $summary->recordedMarks($session, $enrolledTrainees)->keyBy('trainee_id');
+        $learningOutcomes = collect();
+        $iepGoals = IepActivityGoal::where('activity_id', $session->activity_id)
+            ->whereHas('iep.trainee', fn ($query) => $query->whereIn('id', $enrolledTrainees->pluck('trainee_id')))
+            ->with('iep.trainee')->get();
+
+        return view('centre.attendance.mark-session', compact('session', 'enrolledTrainees', 'marks', 'learningOutcomes', 'iepGoals'));
     }
 
-    /**
-     * Store enhanced attendance with learning outcome progress
-     */
     public function storeActivityAttendance(Request $request, $sessionId)
     {
-        try {
-            $session = ActivitySession::findOrFail($sessionId);
-            
-            // Check if today is a weekend (Saturday or Sunday)
-            $today = now();
-            if ($today->isWeekend()) {
-                return response()->json([
-                    'success' => false,
-                    'error' => 'Attendance marking is not allowed on weekends. Please try again on a weekday.'
-                ], 422);
-            }
-            
-            // Validate request
-            $validated = $request->validate([
-                'attendance' => 'required|array',
-                'attendance.*.trainee_id' => 'required|exists:trainees,id',
-                'attendance.*.status' => 'required|in:present,absent,late,excused',
-                'attendance.*.participation_score' => 'nullable|integer|min:0|max:10',
-                'attendance.*.notes' => 'nullable|string|max:500',
-                'learning_progress' => 'nullable|array',
-                'learning_progress.*.trainee_id' => 'required|exists:trainees,id',
-                'learning_progress.*.outcome_id' => 'required|exists:learning_outcomes,id',
-                'learning_progress.*.progress_level' => 'required|in:Not Started,In Progress,Achieved,Mastered',
-                'learning_progress.*.notes' => 'nullable|string|max:500',
-                'session_notes' => 'nullable|string|max:1000'
+        $session = $this->resolveMarkingSession($sessionId);
+        if (now()->isWeekend()) {
+            $message = 'Attendance marking is not allowed on weekends.';
+            return $request->expectsJson()
+                ? response()->json(['error' => $message], 422)
+                : redirect()->route('centre.attendance.index')->with('error', $message);
+        }
+
+        $validated = $request->validate([
+            'attendance' => 'required|array|min:1',
+            'attendance.*.trainee_id' => 'required|integer|distinct',
+            'attendance.*.status' => 'required|in:present,absent,late,excused',
+            'attendance.*.notes' => 'nullable|string|max:500',
+            'attendance.*.participation_score' => 'prohibited',
+            'learning_progress' => 'prohibited',
+            'session_notes' => 'nullable|string|max:1000',
+        ]);
+
+        $roster = app(SessionAttendanceSummary::class)->roster($session, $session->activity->centre_id);
+        if (collect($validated['attendance'])->pluck('trainee_id')->diff($roster->pluck('trainee_id'))->isNotEmpty()) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'attendance' => 'Choose trainees on this session roster.',
             ]);
+        }
 
-            DB::beginTransaction();
-
-            foreach ($validated['attendance'] as $attendanceData) {
-                Attendance::updateOrCreate(
-                    [
-                        'trainee_id' => $attendanceData['trainee_id'],
+        try {
+            DB::transaction(function () use ($validated, $session) {
+                foreach ($validated['attendance'] as $mark) {
+                    Attendance::updateOrCreate([
+                        'trainee_id' => $mark['trainee_id'],
                         'session_id' => $session->id,
-                    ],
-                    [
-                        'activity_id'       => $session->activity_id,
-                        'attendance_date'   => $session->session_date,
-                        'status'            => $attendanceData['status'],
+                        'activity_id' => $session->activity_id,
+                        'attendance_date' => $session->session_date,
+                    ], [
+                        'status' => $mark['status'],
+                        'notes' => $mark['notes'] ?? null,
                         'marked_by_user_id' => session('id'),
-                        'notes'             => $attendanceData['notes'] ?? null,
-                        'marked_at'         => now(),
-                    ]
-                );
-            }
-
-            // Update learning outcome progress if provided
-            if (isset($validated['learning_progress'])) {
-                try {
-                    foreach ($validated['learning_progress'] as $progressData) {
-                        TraineeCompetencyProgress::updateOrCreate(
-                            [
-                                'trainee_id' => $progressData['trainee_id'],
-                                'learning_outcome_id' => $progressData['outcome_id']
-                            ],
-                            [
-                                'current_level' => $progressData['progress_level'],
-                                'progress_percentage' => $this->calculateProgressPercentage($progressData['progress_level']),
-                                'last_assessed_at' => now(),
-                                'assessed_by' => session('id'),
-                                'notes' => $progressData['notes'] ?? null
-                            ]
-                        );
-                    }
-                } catch (Exception $e) {
-                    // trainee_competency_progress table not yet migrated; attendance commit is unaffected
-                    Log::warning('Competency progress update skipped — table unavailable: ' . $e->getMessage(), [
-                        'session_id' => $sessionId,
+                        'marked_at' => now(),
                     ]);
                 }
-            }
 
-            // Update session notes if provided
-            if (isset($validated['session_notes'])) {
-                $session->update([
-                    'session_notes' => $validated['session_notes']
-                ]);
-            }
-
-            // Update session status to completed
-            $session->update([
-                'session_status' => 'completed'
-            ]);
-
-            DB::commit();
-
-            Log::info('Enhanced attendance marked successfully', [
-                'session_id' => $sessionId,
-                'marked_by' => session('id'),
-                'attendees_count' => count($validated['attendance'])
-            ]);
-
-            return redirect()->route('centre.attendance.index')
-                           ->with('success', 'Attendance and learning progress recorded successfully!');
-
-        } catch (Exception $e) {
-            DB::rollBack();
-            
-            Log::error('Enhanced attendance storage error: ' . $e->getMessage(), [
-                'session_id' => $sessionId,
-                'user_id' => session('id'),
-                'trace' => $e->getTraceAsString()
-            ]);
-
-            return redirect()->back()
-                           ->withInput()
-                           ->with('error', 'Failed to record attendance. Please try again.');
+                $changes = ['session_status' => 'completed'];
+                if (array_key_exists('session_notes', $validated)) {
+                    $changes['session_notes'] = $validated['session_notes'];
+                }
+                $session->update($changes);
+            });
+        } catch (Exception $exception) {
+            Log::error('Attendance save failed', ['error_type' => get_class($exception)]);
+            $message = 'Attendance was not saved. Please try again.';
+            return $request->expectsJson()
+                ? response()->json(['error' => $message], 500)
+                : redirect()->back()->withInput()->with('error', $message);
         }
+
+        return $request->expectsJson()
+            ? response()->json(['success' => true])
+            : redirect()->route('centre.attendance.index')->with('success', 'Attendance recorded successfully!');
+    }
+
+    private function resolveMarkingSession($sessionId): ActivitySession
+    {
+        $role = session('role');
+        $centreId = session('centre_id');
+        abort_unless(session()->has('id') && in_array($role, ['admin', 'supervisor', 'teacher'], true), 403);
+        abort_if($role !== 'admin' && !$centreId, 403);
+
+        $session = ActivitySession::with(['activity', 'teacher', 'enrollments.trainee', 'traineeAttendances'])
+            ->whereHas('activity', function ($query) use ($role, $centreId) {
+                if ($role !== 'admin') {
+                    $query->where('centre_id', $centreId);
+                }
+            })->findOrFail($sessionId);
+
+        abort_if($role === 'teacher' && (int) $session->instructor_id !== (int) session('id'), 403);
+        abort_if($session->session_status === 'cancelled', 422, 'This session was cancelled.');
+
+        return $session;
     }
 
     /**
@@ -358,24 +296,6 @@ class AttendanceController extends Controller
                 'learning_progress_summary' => []
             ];
         }
-    }
-
-    private function canMarkAttendance($session)
-    {
-        $role = session('role');
-        $userId = session('id');
-
-        // Admin and supervisors can mark any attendance
-        if (in_array($role, ['admin', 'supervisor'])) {
-            return true;
-        }
-
-        // Teachers can mark attendance for their assigned sessions
-        if ($role === 'teacher' && $session->teacher_id == $userId) {
-            return true;
-        }
-
-        return false;
     }
 
     private function calculateProgressPercentage($level)

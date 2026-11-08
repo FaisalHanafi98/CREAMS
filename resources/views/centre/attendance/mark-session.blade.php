@@ -4,6 +4,18 @@
 
 @section('content')
 <div class="container-fluid">
+    @if ($errors->any() || session('error'))
+        <div class="alert alert-danger" role="alert">
+            <p>{{ session('error', 'Attendance was not saved. Check the entries below.') }}</p>
+            @if ($errors->any())
+                <ul class="mb-0">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            @endif
+        </div>
+    @endif
     <!-- Session Header -->
     <div class="session-header mb-4">
         <div class="row">
@@ -19,7 +31,7 @@
                                 <h4 class="text-primary">{{ $session->activity->activity_name }}</h4>
                                 <div class="session-details mt-2">
                                     <span class="badge badge-info me-2">
-                                        <i class="fas fa-tag"></i> {{ $session->activity->category->category_name ?? 'Uncategorized' }}
+                                        <i class="fas fa-tag"></i> {{ $session->activity->category_name ?? 'Uncategorized' }}
                                     </span>
                                     <span class="badge badge-secondary me-2">
                                         <i class="fas fa-clock"></i> 
@@ -27,8 +39,7 @@
                                         {{ \Carbon\Carbon::parse($session->end_time)->format('H:i') }}
                                     </span>
                                     <span class="badge badge-success me-2">
-                                        <i class="fas fa-map-marker-alt"></i> {{ $session->venue }}
-                                        @if($session->room_number) - Room {{ $session->room_number }} @endif
+                                        <i class="fas fa-map-marker-alt"></i> {{ $session->location }}
                                     </span>
                                     <span class="badge badge-warning">
                                         <i class="fas fa-user-tie"></i> {{ $session->teacher->name ?? 'Unassigned' }}
@@ -82,10 +93,10 @@
                                                 <div class="trainee-info">
                                                     <div class="d-flex align-items-center">
                                                         <div class="trainee-avatar me-2">
-                                                            {{ substr($enrollment->trainee->trainee_name, 0, 2) }}
+                                                            {{ substr($enrollment->trainee->name, 0, 2) }}
                                                         </div>
                                                         <div>
-                                                            <h6 class="mb-0">{{ $enrollment->trainee->trainee_name }}</h6>
+                                                            <h6 class="mb-0">{{ $enrollment->trainee->name }}</h6>
                                                             <small class="text-muted">ID: {{ $enrollment->trainee->id }}</small>
                                                         </div>
                                                     </div>
@@ -93,14 +104,15 @@
                                             </div>
                                             <div class="col-md-3">
                                                 <div class="attendance-status">
+                                                    <label for="attendance-status-{{ $index }}" class="visually-hidden">Attendance for {{ $enrollment->trainee->name }}</label>
                                                     <select class="form-control form-control-sm attendance-select" 
+                                                            id="attendance-status-{{ $index }}"
                                                             name="attendance[{{ $index }}][status]" 
                                                             data-trainee="{{ $enrollment->trainee->id }}" required>
                                                         <option value="">Select Status</option>
-                                                        <option value="present">Present</option>
-                                                        <option value="absent">Absent</option>
-                                                        <option value="late">Late</option>
-                                                        <option value="excused">Excused</option>
+                                                        @foreach(['present', 'absent', 'late', 'excused'] as $status)
+                                                            <option value="{{ $status }}" @selected(old('attendance.'.$index.'.status', $marks->get($enrollment->trainee->id)?->status) === $status)>{{ ucfirst($status) }}</option>
+                                                        @endforeach
                                                     </select>
                                                     <input type="hidden" name="attendance[{{ $index }}][trainee_id]" 
                                                            value="{{ $enrollment->trainee->id }}">
@@ -108,10 +120,7 @@
                                             </div>
                                             <div class="col-md-2">
                                                 <div class="participation-score" style="display: none;">
-                                                    <label class="form-label">Participation (0-10)</label>
-                                                    <input type="number" class="form-control form-control-sm" 
-                                                           name="attendance[{{ $index }}][participation_score]" 
-                                                           min="0" max="10" placeholder="Score">
+                                                    <span class="small text-muted">Participation scoring is unavailable.</span>
                                                 </div>
                                             </div>
                                             <div class="col-md-3">
@@ -133,15 +142,16 @@
                                             <div class="row">
                                                 <div class="col-md-6">
                                                     <div class="form-group">
-                                                        <label class="form-label">Session Notes</label>
+                                                        <label for="attendance-note-{{ $index }}" class="form-label">Trainee notes</label>
                                                         <textarea class="form-control form-control-sm" 
+                                                                id="attendance-note-{{ $index }}"
                                                                 name="attendance[{{ $index }}][notes]" 
-                                                                rows="2" placeholder="Any notes about this trainee's participation..."></textarea>
+                                                                rows="2" maxlength="500" placeholder="Any notes about this trainee's participation...">{{ old('attendance.'.$index.'.notes', $marks->get($enrollment->trainee->id)?->notes) }}</textarea>
                                                     </div>
                                                 </div>
                                                 <div class="col-md-6">
                                                     <div class="learning-progress">
-                                                        <label class="form-label">Real-time Learning Progress</label>
+                                                        <p class="small text-muted">Learning-progress recording is unavailable in this form.</p>
                                                         @foreach($learningOutcomes->take(2) as $outcome)
                                                             <div class="learning-outcome-assessment mb-2" data-outcome-id="{{ $outcome->id }}" data-trainee-id="{{ $enrollment->trainee->id }}">
                                                                 <div class="outcome-header d-flex justify-content-between align-items-center mb-1">
@@ -269,7 +279,7 @@
                         <div class="card-body">
                             @foreach($iepGoals as $goal)
                                 <div class="iep-goal-item mb-2">
-                                    <h6 class="mb-1">{{ $goal->iep->trainee->trainee_name }}</h6>
+                                    <h6 class="mb-1">{{ $goal->iep->trainee->name }}</h6>
                                     <small class="text-muted">{{ $goal->goal_description }}</small>
                                     <div class="mt-1">
                                         <small class="text-info">Target: {{ \Carbon\Carbon::parse($goal->target_completion_date)->format('M j, Y') }}</small>
@@ -298,7 +308,7 @@
                                           id="session_notes"
                                           rows="4"
                                           placeholder="Add notes about this session (activities, observations, issues, achievements, etc.)"
-                                          maxlength="1000">{{ $session->session_notes ?? '' }}</textarea>
+                                          maxlength="1000">{{ old('session_notes', $session->session_notes ?? '') }}</textarea>
                                 <div class="form-text">
                                     <small class="text-muted">
                                         <span id="notesCounter">{{ strlen($session->session_notes ?? '') }}</span>/1000 characters
@@ -306,9 +316,11 @@
                                 </div>
                             </div>
                             <div class="notes-actions">
-                                <button type="button" class="btn btn-sm btn-outline-info" onclick="saveSessionNotes()">
-                                    <i class="fas fa-save"></i> Save Notes Only
-                                </button>
+                                @if(session('role') === 'admin')
+                                    <button type="button" class="btn btn-sm btn-outline-info" onclick="saveSessionNotes(event)">
+                                        <i class="fas fa-save"></i> Save Notes Only
+                                    </button>
+                                @endif
                                 <button type="button" class="btn btn-sm btn-outline-secondary" onclick="clearSessionNotes()">
                                     <i class="fas fa-eraser"></i> Clear
                                 </button>
@@ -851,17 +863,16 @@ function saveAllProgressUpdates(traineeId) {
 }
 
 // Session Notes Functions
-function saveSessionNotes() {
+function saveSessionNotes(event) {
     const notes = $('#session_notes').val();
-    const sessionId = {{ $session->id }};
 
     // Show loading state
-    const saveBtn = event.target;
+    const saveBtn = event.currentTarget;
     const originalText = saveBtn.innerHTML;
     saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
     saveBtn.disabled = true;
 
-    fetch(`/sessions/${sessionId}/notes`, {
+    fetch(@json(route('activities.sessions.notes.update', $session->id)), {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
