@@ -31,6 +31,8 @@ PATTERN_NAMES=(
     'Malaysian IC number pattern'
 )
 
+DB_PASSWORD_ENV="^[[:space:]]*'password' => env\('[A-Z_][A-Z0-9_]*'(, ''|, env\('[A-Z_][A-Z0-9_]*', ''\))?\),[[:space:]]*$"
+
 STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACM)
 
 if [ -z "$STAGED_FILES" ]; then
@@ -79,6 +81,13 @@ for i in "${!PATTERNS[@]}"; do
         # app/Http/Controllers/AdminController.php contains password-management
         # idioms only (Hash::make, validation rules) — no hardcoded credentials.
         MATCHES=$(echo "$STAGED_FILES" | xargs grep -lnE "${PATTERNS[$i]}" 2>/dev/null | grep -v '.githooks/' | grep -v '.env.example' | grep -v '^docs/' | grep -v '^resources/views/' | grep -v '^Archive/' | grep -v '^tests/' | grep -v '^automation/' | grep -v '^database/seeders/IRLSeeder\.php$' | grep -v '^app/Http/Controllers/MainController\.php$' | grep -v '^app/Http/Controllers/Auth/ForgotPasswordController\.php$' | grep -v '^app/Http/Controllers/AdminController\.php$' | grep -v '^\.claude/')
+        if [[ "${PATTERN_NAMES[$i]}" == 'Hardcoded password' ]] && grep -Fxq 'config/database.php' <<< "$STAGED_FILES"; then
+            DATABASE_CONFIG=$(git show :config/database.php) || exit 1
+            MATCHES=$(grep -Fvx 'config/database.php' <<< "$MATCHES")
+            if grep -E "${PATTERNS[$i]}" <<< "$DATABASE_CONFIG" | grep -qvE "$DB_PASSWORD_ENV"; then
+                MATCHES="${MATCHES:+$MATCHES$'\n'}config/database.php"
+            fi
+        fi
     else
         MATCHES=$(echo "$STAGED_FILES" | xargs grep -lnE "${PATTERNS[$i]}" 2>/dev/null | grep -v '.githooks/' | grep -v '.env.example' | grep -v '^database/seeders/IRLSeeder\.php$')
     fi
