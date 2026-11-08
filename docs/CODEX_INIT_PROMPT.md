@@ -4,6 +4,11 @@
 > **How to use**: Copy the section labelled `=== PASTE THIS BLOCK INTO CODEX AT SESSION START ===` and send it as the first message of a new Codex session.
 > **Why this exists**: Claude Code uses custom slash commands and hooks (defined in `.claude/commands/`, `.claude/settings.local.json`, and `scripts/`) that Codex does not understand. The mechanism has to be re-stated inline for Codex.
 
+For a new workstation or a request to research or discover the repository,
+read the [workstation migration prompt](../SESSION_MIGRATION_PROMPT.md) first.
+Its checklist feeds the single resume report below. Use the tracked evidence
+when the old workstation's project checkpoints are unavailable.
+
 ---
 
 ## What this prompt replicates from Claude Code
@@ -37,7 +42,7 @@ You are working on CREAMS (Community-based Rehabilitation Management System), a 
 
 Do not modify files, do not write code, do not propose changes until you have completed all of the following:
 
-1. List the files in `.memsearch/memory/` and read the most recent one end-to-end.
+1. On a new workstation or during folder discovery, read the root `SESSION_MIGRATION_PROMPT.md` and follow its discovery checklist. If `.memsearch/memory/` exists, list its files and read the most recent checkpoint end-to-end.
    Command: `ls -t .memsearch/memory/*.md 2>/dev/null | head -3` then read each.
 2. Read the project root `CLAUDE.md` (the Claude Code overlay — Codex should follow it too, since it documents project rules and the memory protocol).
 3. Read `docs/CREAMS_SESSION_CURRENT.md` for the active mission and DO-NOTs.

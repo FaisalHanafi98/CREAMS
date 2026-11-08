@@ -21,6 +21,10 @@ This archive helps any AI coding agent (Claude Code, Codex, OpenCode, or other) 
 
 ## How to use this archive on `/resume`
 
+For a workstation move or repository discovery, begin with the
+[workstation migration prompt](../../SESSION_MIGRATION_PROMPT.md). It links
+the current evidence and identifies which local files a fresh clone lacks.
+
 Read files **in this exact order**:
 
 1. `docs/ai-context/README.md` ← you are here
@@ -31,8 +35,8 @@ Read files **in this exact order**:
 6. `docs/ai-context/03_BUG_HISTORY/failed_attempts.md` — do not repeat these
 7. Latest file under `docs/ai-context/02_SESSION_HISTORY/` — most recent session
 8. `git status`, `git log --oneline -10`, `git diff --stat` — current repo reality
-9. `php artisan migrate:status` — DB state
-10. `php artisan test` (or test output in `06_TESTING_EVIDENCE/`) — test state
+9. Recorded migration evidence — check live migration status only on a verified owned synthetic database
+10. Dated test evidence or `php artisan test` on that isolated fixture
 
 Then output a **Resume Report** (format defined in `CLAUDE.md`).
 
