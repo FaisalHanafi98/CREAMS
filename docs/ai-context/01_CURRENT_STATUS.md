@@ -1,3 +1,22 @@
+## Current recovery evidence — 8 November 2026
+
+The clean Git publication candidate completed a fresh MySQL 8.4.3 migration,
+413 PHPUnit tests with 756 assertions, and all 17 isolated Chromium cases.
+The route ledger records assertions for 16 of 301 direct registrations. The
+other 285 require browser coverage. Demo and deferred-role routes are tracked
+separately. The checks used synthetic local fixtures.
+
+The candidate includes centre and category reads, attendance marking and
+reports, and live dashboard counts for the four supported staff roles.
+Centre reports and CSV/PDF downloads follow decision P09 in the
+[central register](08_DOC_ALIGNMENT/deviation_register.md). The
+[release matrix](../MODULE_FUNCTIONALITY_INVENTORY.md#current-release-acceptance-matrix--4-november-2026)
+remains the browser acceptance checklist.
+
+The owner authorised publication of the Fixers branch on GitHub. This
+verification does not establish production behaviour or populated-database
+upgrade safety. See the [8 November session record](02_SESSION_HISTORY/2026-11-08_browser_verification.md).
+
 ## Current recovery resumed — 4 November 2026
 
 Owner explicitly resumed the existing-release workflow after context reconstruction
