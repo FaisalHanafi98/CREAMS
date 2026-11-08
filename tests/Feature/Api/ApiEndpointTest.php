@@ -4,6 +4,7 @@ namespace Tests\Feature\Api;
 
 use App\Models\User;
 use App\Models\Centre;
+use App\Models\ContactMessages;
 use Tests\TestCase;
 
 class ApiEndpointTest extends TestCase
@@ -46,11 +47,20 @@ class ApiEndpointTest extends TestCase
     {
         $user = User::factory()->admin()->create(['centre_id' => '01']);
 
-        $response = $this->actingAs($user)->get('/api/dashboard-data');
-        $this->assertTrue(
-            in_array($response->getStatusCode(), [200, 302, 500]),
-            'Dashboard data should respond (got ' . $response->getStatusCode() . ')'
-        );
+        foreach (['new', 'read'] as $status) {
+            ContactMessages::create([
+                'name' => 'Synthetic Enquirer',
+                'email' => 'dashboard-inquiry@example.test',
+                'subject' => 'Synthetic inquiry',
+                'message' => 'Dashboard API fixture.',
+                'status' => $status,
+            ]);
+        }
+
+        $this->actingAs($user)->getJson('/api/dashboard-data')
+            ->assertOk()
+            ->assertJsonPath('data.user.id', $user->id)
+            ->assertJsonPath('data.stats.pending_messages', 1);
     }
 
     public function test_notification_check_endpoint(): void

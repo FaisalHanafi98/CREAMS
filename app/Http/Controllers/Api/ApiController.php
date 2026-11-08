@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use App\Models\User;
 use App\Models\Activity;
+use App\Models\ActivityEnrollment;
+use App\Models\ActivitySession;
 use App\Models\Trainee;
 use App\Models\ContactMessages;
 use App\Models\Volunteer;
@@ -173,6 +175,15 @@ class ApiController extends Controller
             ], 401);
         }
 
+        $centreId = session('centre_id');
+        if (!in_array($role, ['admin', 'supervisor', 'teacher', 'ajk'], true)
+            || ($role !== 'admin' && blank($centreId))) {
+            return response()->json([
+                'success' => false,
+                'message' => 'A valid role and centre assignment are required',
+            ], 403);
+        }
+
         try {
             $data = [
                 'user' => [
@@ -189,23 +200,31 @@ class ApiController extends Controller
                         'total_users' => User::count(),
                         'total_activities' => Activity::count(),
                         'total_trainees' => Trainee::count(),
-                        'pending_messages' => ContactMessage::where('message_status', 'new')->count()
+                        'pending_messages' => ContactMessages::new()->count()
                     ];
                     break;
 
                 case 'teacher':
+                    $assignedActivityIds = Activity::whereHas('sessions', function ($query) use ($userId) {
+                        $query->where('instructor_id', $userId);
+                    })->pluck('id');
                     $data['stats'] = [
-                        'my_activities' => Activity::whereHas('sessions', function($q) use ($userId) {
-                            $q->where('teacher_id', $userId);
-                        })->count(),
-                        'my_sessions_today' => 0, // This would need activity_occurrences with proper date filtering
-                        'assigned_trainees' => 0 // This would need proper relationship
+                        'my_activities' => $assignedActivityIds->count(),
+                        'my_sessions_today' => ActivitySession::whereIn('activity_id', $assignedActivityIds)
+                            ->where('instructor_id', $userId)
+                            ->whereDate('session_date', today())
+                            ->where('session_status', '!=', 'cancelled')
+                            ->count(),
+                        'assigned_trainees' => ActivityEnrollment::whereIn('activity_id', $assignedActivityIds)
+                            ->where('enrollment_status', 'enrolled')
+                            ->whereHas('trainee', fn ($query) => $query->where('centre_id', $centreId))
+                            ->distinct()->count('trainee_id'),
                     ];
                     break;
 
                 default:
                     $data['stats'] = [
-                        'activities_count' => Activity::whereIn('activity_status', ['scheduled', 'ongoing'])->count(),
+                        'activities_count' => Activity::where('is_active', true)->count(),
                         'trainees_count' => Trainee::count()
                     ];
             }
